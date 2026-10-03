@@ -8,6 +8,9 @@ pub(super) fn exact_offset_join_band_semantics(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<(bool, bool)>> {
+    if offset_ends_meet_at_tangent_junction(previous, next, distance, policy) {
+        return Ok(Classification::Decided((true, true)));
+    }
     let endpoint_reason = match previous.offset_end.same_point(&next.offset_start, policy) {
         Classification::Decided(true) => {
             // A span that collapses to a point intentionally has no tangent.
@@ -51,6 +54,78 @@ pub(super) fn exact_offset_join_band_semantics(
         exact_sign_product(turn, distance) == RealSign::Positive,
         turn == RealSign::Positive,
     )))
+}
+
+/// Proves that the offset ends meet at a tangent-continuous source junction
+/// without an exact equality of their representations.
+///
+/// Offset tangents are parallel to their source tangents, so parallel offset
+/// tangents, in either direction, imply parallel source tangents at the
+/// shared source vertex `V`. Equal source tangents put both ends at
+/// `V + d n`; opposite ones, a 180-degree source turn, put them at
+/// `V +/- d n`, `2|d|` apart. A certified enclosure placing the ends closer
+/// than `|d|` on both axes therefore decides the first case. Equal generated
+/// points can be expensive to compare exactly, whereas this needs only
+/// coarse boxes.
+fn offset_ends_meet_at_tangent_junction(
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> bool {
+    let Some((previous_tangent, next_tangent)) = previous
+        .end_tangent
+        .as_ref()
+        .zip(next.start_tangent.as_ref())
+    else {
+        return false;
+    };
+    if curve_tangent_cross_sign(previous_tangent, next_tangent, policy)
+        != Classification::Decided(RealSign::Zero)
+    {
+        return false;
+    }
+    let Some(separation) = distance.exact_rational_ref().map(|_| distance.abs()) else {
+        return false;
+    };
+    for refinement_steps in [0_usize, 4, 16] {
+        let (Classification::Decided(first), Classification::Decided(second)) = (
+            crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                &previous.offset_end,
+                refinement_steps,
+                policy,
+            ),
+            crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                &next.offset_start,
+                refinement_steps,
+                policy,
+            ),
+        ) else {
+            continue;
+        };
+        let closer =
+            |first_low: &Real, first_high: &Real, second_low: &Real, second_high: &Real| {
+                [first_high - second_low, second_high - first_low]
+                    .iter()
+                    .all(|gap| {
+                        compare_reals(gap, &separation, policy) == Some(std::cmp::Ordering::Less)
+                    })
+            };
+        if closer(
+            first.min().x(),
+            first.max().x(),
+            second.min().x(),
+            second.max().x(),
+        ) && closer(
+            first.min().y(),
+            first.max().y(),
+            second.min().y(),
+            second.max().y(),
+        ) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Signs `cross(previous.offset_end - V, next.offset_start - V)` for the

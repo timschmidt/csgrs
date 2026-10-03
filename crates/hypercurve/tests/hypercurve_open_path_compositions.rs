@@ -652,14 +652,14 @@ fn chamfered_line_arc_stroke_round_trips() {
 }
 
 /// A bevel stroke of a filleted hyperbola/hyperbola path (two weight-2
-/// rational quadratics). The stroke alone completes in about 24 s; after
-/// the fillet trims both hyperbolas at algebraic tangency parameters, the
-/// stroke spends minutes in selected-fiber isolation over the trimmed
-/// offsets and then in `exact_offset_corner_band` point equality through
-/// algebraic tensor images (Bareiss resultants). It did not complete within
-/// 26 minutes.
+/// rational quadratics). The stroke alone completes in about 24 s. After the
+/// fillet trims both hyperbolas at algebraic tangency parameters, the
+/// stroke's tangent junctions are certified without exact point equality,
+/// but regularizing its bands pairs a join chord with a parallel whose
+/// recursive projective intersection kernel declines, so the stroke is
+/// blocked as Unsupported.
 #[test]
-#[ignore = "open: offsets of fillet-trimmed hyperbolas over recursive towers are too slow"]
+#[ignore = "open: recursive chord/parallel intersection declines for fillet-trimmed hyperbolas"]
 fn bevel_stroke_of_a_filleted_hyperbola_pair_completes() {
     let seed = Seed {
         x: 3,
@@ -923,15 +923,12 @@ fn chamfered_cubic_line_bevel_stroke_round_trips() {
 }
 
 /// A round stroke of a filleted rational-cubic/NURBS/NURBS path (weight 5).
-/// The fillet itself takes about five minutes. At the fillet's tangent
-/// junction the stroke's join semantics must prove the two offset ends equal
-/// (`exact_offset_join_band_semantics` → `same_point`); one is a cusp-chord
-/// derived point and the other an analytic parallel point, so equality runs
-/// through algebraic tensor images and did not finish within ten minutes.
-/// The fillet knows that junction is tangent-continuous, but the path does
-/// not carry it.
+/// The fillet itself takes about five minutes. The stroke's tangent
+/// junctions are certified without exact point equality, but regularizing
+/// its bands pairs a join chord with a parallel whose recursive projective
+/// intersection kernel declines, so the stroke is blocked as Unsupported.
 #[test]
-#[ignore = "open: tangent-junction provenance is not carried into stroke joins"]
+#[ignore = "open: recursive chord/parallel intersection declines for a filleted heavy NURBS stroke"]
 fn round_stroke_of_a_filleted_heavy_nurbs_path_completes() {
     let seed = Seed {
         x: 2,
