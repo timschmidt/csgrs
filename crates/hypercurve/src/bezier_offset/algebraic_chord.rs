@@ -3143,7 +3143,17 @@ impl BezierAlgebraicChord2 {
                 )))
             }
             CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => Ok(point
-                .transform_affine(m00, m01, m10, m11, tx, ty, policy)?
+                .transform_affine(
+                    m00,
+                    m01,
+                    m10,
+                    m11,
+                    tx,
+                    ty,
+                    similarity,
+                    similarity_cache,
+                    policy,
+                )?
                 .map(CurvePoint2::from)),
             CurvePoint2(CurvePointData2::AlgebraicChordParallel(point)) => {
                 let (Some(similarity), Some(similarity_cache)) = (similarity, similarity_cache)

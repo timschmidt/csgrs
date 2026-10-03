@@ -1372,3 +1372,28 @@ fn wide_weighted_conic_miter_bevel_bevel_offsets_complete() {
     })
     .unwrap();
 }
+
+/// Translating a twice round-eroded conic seed. The second erosion's band
+/// connectors end at chord-pair points whose defining supports have
+/// procedural parallel endpoints; transforming such a pair point must keep
+/// the retained similarity, which those endpoints require, rather than
+/// asking for an affine coordinate image that is unsupported.
+#[test]
+fn twice_round_eroded_conic_translates() {
+    let seeds = [Seed {
+        x: 0,
+        y: 0,
+        width: 8,
+        height: 6,
+        lower: 0,
+        upper: 2,
+        curvature: 1,
+        weight: 1,
+    }];
+    let steps = [
+        Step::Offset(0, -1, 0),
+        Step::Offset(1, -1, 0),
+        Step::Translate(2, 0, 1),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}

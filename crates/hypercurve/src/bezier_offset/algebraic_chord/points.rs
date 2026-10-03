@@ -411,6 +411,9 @@ impl BezierAlgebraicChordPairPoint2 {
         )))
     }
 
+    /// Transforms both defining supports. A retained similarity, when the
+    /// map is one, lets procedural parallel endpoints of those supports keep
+    /// their construction instead of requiring an affine coordinate image.
     #[allow(clippy::too_many_arguments)]
     pub(in crate::bezier_offset) fn transform_affine(
         &self,
@@ -420,6 +423,8 @@ impl BezierAlgebraicChordPairPoint2 {
         m11: &Real,
         tx: &Real,
         ty: &Real,
+        similarity: Option<&Similarity2>,
+        mut similarity_cache: Option<&mut BezierAlgebraicCuspSemicircleSimilarityCache2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if !self.accepts_policy(policy) {
@@ -434,21 +439,33 @@ impl BezierAlgebraicChordPairPoint2 {
             Some(RealSign::Zero) => return Err(CurveError::InvalidAffineTransform),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let first = match self
-            .data
-            .first
-            .transform_affine(m00, m01, m10, m11, tx, ty, policy)?
-        {
+        let first = match self.data.first.transform_affine_with_similarity(
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            similarity,
+            similarity_cache.as_deref_mut(),
+            policy,
+        )? {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let second = match self
-            .data
-            .second
-            .transform_affine(m00, m01, m10, m11, tx, ty, policy)?
-        {
+        let second = match self.data.second.transform_affine_with_similarity(
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            similarity,
+            similarity_cache,
+            policy,
+        )? {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
