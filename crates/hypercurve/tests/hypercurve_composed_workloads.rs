@@ -1510,3 +1510,29 @@ fn filleted_union_miter_dilation_completes() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// An inward miter offset of the ring left by Xor-ing a weighted-conic seed
+/// with its own inward miter offset. The second offset's band arrangement
+/// projects a chord/parallel incidence over the first offset's recursive
+/// fields through dense tensor resultants without completing; this is the
+/// repeated-miter class of `repeated_inward_miter_offset_of_a_weighted_quadratic_completes`.
+#[test]
+#[ignore = "open: repeated miter chord/parallel projection over recursive fields"]
+fn miter_eroded_ring_miter_erosion_completes() {
+    let seeds = [Seed {
+        x: -6,
+        y: -5,
+        width: 13,
+        height: 10,
+        lower: 3,
+        upper: 5,
+        curvature: 2,
+        weight: 4,
+    }];
+    let steps = [
+        Step::Offset(0, -2, 2),
+        Step::Boolean(1, 0, 3),
+        Step::Offset(2, -1, 2),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
