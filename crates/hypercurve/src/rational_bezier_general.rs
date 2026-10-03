@@ -7227,6 +7227,72 @@ pub(crate) fn resultant_parameter_projection(
             return Ok(Classification::Uncertain(reason));
         }
     };
+    // Only distinct roots matter to the projection. A rational resultant's
+    // exact square-free part has exactly those roots and certifies each
+    // Bernstein sign variation as one simple root, whereas the Sturm
+    // sequence of a high-degree resultant grows prohibitively; a split root
+    // or undecided sign still replays the complete isolator.
+    // Only distinct roots matter to the projection. A rational resultant's
+    // exact square-free part has exactly those roots and certifies each
+    // Bernstein sign variation as one simple root, whereas the Sturm
+    // sequence of a high-degree resultant grows prohibitively; a split root
+    // or undecided sign still replays the complete isolator. A finite domain
+    // inside the unit interval keeps the unit isolation's roots it contains.
+    // Each root's interval isolates the same distinct root of the resultant.
+    if let Some(square_free) = rational_square_free_polynomial(&polynomial, policy) {
+        let within_unit = domain.is_closed_unit()
+            || match domain.finite_envelope(policy)? {
+                Classification::Decided((_, [lower, upper])) => {
+                    compare_reals(lower, &Real::zero(), policy).is_some_and(Ordering::is_ge)
+                        && compare_reals(upper, &Real::one(), policy).is_some_and(Ordering::is_le)
+                }
+                Classification::Uncertain(_) => false,
+            };
+        if within_unit {
+            let roots = match square_free.isolate_square_free_unit_interval_roots(policy)? {
+                Classification::Decided(roots) => roots,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let mut parameters = Vec::with_capacity(roots.len());
+            for root in roots {
+                if !domain.is_closed_unit() {
+                    match domain.contains_finite_parameter(&root.clone().into(), policy)? {
+                        Classification::Decided(true) => {}
+                        Classification::Decided(false) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                // The square-free part only isolates. The resultant keeps
+                // root ownership, since its multiplicities are contact
+                // evidence, and rational roots stay exact parameters as the
+                // complete isolator reports them.
+                parameters.push(match root {
+                    BezierParameter2::Algebraic(root) => {
+                        match square_free
+                            .square_free_rational_root_in_interval(root.interval(), policy)?
+                        {
+                            Classification::Decided(Some(value)) => BezierParameter2::Exact(value),
+                            Classification::Decided(None) => BezierParameter2::Algebraic(
+                                BezierAlgebraicParameter2::from_certified_singleton(
+                                    polynomial.clone(),
+                                    root.interval().clone(),
+                                ),
+                            ),
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    exact @ BezierParameter2::Exact(_) => exact,
+                });
+            }
+            return extend_resultant_parameter_projection(&polynomial, parameters, domain, policy);
+        }
+    }
     let parameters = match domain.finite_roots(&polynomial, policy)? {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => {
@@ -7234,6 +7300,27 @@ pub(crate) fn resultant_parameter_projection(
         }
     };
     extend_resultant_parameter_projection(&polynomial, parameters, domain, policy)
+}
+
+/// Returns the exact square-free part of an exactly rational polynomial.
+fn rational_square_free_polynomial(
+    polynomial: &BezierParameterPolynomial,
+    policy: &CurveContext,
+) -> Option<BezierParameterPolynomial> {
+    let coefficients = polynomial.coefficients();
+    if coefficients.len() < 3
+        || coefficients
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return None;
+    }
+    let square_free =
+        hypersolve::square_free_part(coefficients.to_vec(), hypersolve::PredicatePolicy::STRICT)?;
+    match BezierParameterPolynomial::try_new_power_basis(square_free, policy) {
+        Ok(Classification::Decided(square_free)) => Some(square_free),
+        _ => None,
+    }
 }
 
 /// Extends an already certified finite projection while retaining its root

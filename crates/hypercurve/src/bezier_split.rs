@@ -767,16 +767,22 @@ impl<'a> CurveParameterDomain2<'a> {
     /// Isolates in an outward envelope, then clips against the original
     /// endpoint authorities. The polynomial and every retained root stay in
     /// the original chart, including finite intervals outside the unit span.
+    /// Returns whether this is the closed unit parameter interval.
+    pub(crate) fn is_closed_unit(&self) -> bool {
+        self.finite
+            .as_bezier_parameters()
+            .is_some_and(|(start, end)| {
+                start.scalar() == Some(&Real::zero()) && end.scalar() == Some(&Real::one())
+            })
+            && self.inclusion == [true; 2]
+    }
+
     pub(crate) fn finite_roots(
         self,
         polynomial: &crate::BezierParameterPolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-        if let Some((start, end)) = self.finite.as_bezier_parameters()
-            && start.scalar() == Some(&Real::zero())
-            && end.scalar() == Some(&Real::one())
-            && self.inclusion == [true; 2]
-        {
+        if self.is_closed_unit() {
             return polynomial.isolate_unit_interval_roots(policy);
         }
         policy.strict_predicate_pass(|| {

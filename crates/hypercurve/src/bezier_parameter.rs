@@ -287,6 +287,63 @@ impl BezierParameterPolynomial {
         Real::eval_poly(&self.coefficients, parameter)
     }
 
+    /// Returns the rational root of this square-free rational polynomial in
+    /// an isolating interval of one simple root, if that root is rational.
+    ///
+    /// The polynomial changes sign across the interval, so exact bisection
+    /// narrows it below the rational-root denominator bound's separation
+    /// without a Sturm sequence; continued fractions then name the only
+    /// possible rational candidate.
+    pub(crate) fn square_free_rational_root_in_interval(
+        &self,
+        interval: &BezierParameterInterval,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        let Some(denominator_bound) = rational_root_denominator_bound(self) else {
+            return Ok(Classification::Decided(None));
+        };
+        let (Some(mut start), Some(mut end)) = (
+            real_as_big_rational(interval.start()),
+            real_as_big_rational(interval.end()),
+        ) else {
+            return Ok(Classification::Decided(None));
+        };
+        let sign_at = |value: &BigRational| -> CurveResult<Option<RealSign>> {
+            Ok(real_sign(
+                &self.evaluate(&real_from_big_rational(value)?),
+                policy,
+            ))
+        };
+        let Some(start_sign) = sign_at(&start)? else {
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+        };
+        let two = BigInt::from(2_u8);
+        let bound = BigInt::from(denominator_bound);
+        let target_width = BigRational::new(BigInt::one(), &two * &bound * &bound);
+        while &end - &start >= target_width {
+            let midpoint = (&start + &end) / &two;
+            match sign_at(&midpoint)? {
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Decided(Some(real_from_big_rational(
+                        &midpoint,
+                    )?)));
+                }
+                Some(sign) if sign == start_sign => start = midpoint,
+                Some(_) => end = midpoint,
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        let narrowed = match BezierParameterInterval::try_new(
+            real_from_big_rational(&start)?,
+            real_from_big_rational(&end)?,
+            policy,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        reconstruct_rational_root(self, &narrowed, (&start + &end) / &two, &bound, policy)
+    }
+
     /// Removes every factor at the supplied exact values. Callers retaining a
     /// selected root must certify that these values are excluded from it.
     /// Synthetic division preserves the certified nonzero leading coefficient.
