@@ -1446,3 +1446,26 @@ fn chamfered_conic_minus_its_fillet_completes() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// An outward miter offset of the Xor of a weighted-conic seed with the
+/// nested island/hole region. Regularizing the offset boundary walk isolates
+/// a degree-14 squared chord/parallel enumerator over a recursive tower for
+/// a band connector that starts on the opposite parallel sheet; the incidence
+/// parts are coprime, so no common sheet root explains the stall, and local
+/// Bernstein subdivision does not complete.
+#[test]
+#[ignore = "open: degree-14 recursive chord/parallel enumerator in a miter offset"]
+fn nested_xor_miter_dilation_completes() {
+    let seeds = [Seed {
+        x: -11,
+        y: -5,
+        width: 9,
+        height: 10,
+        lower: 5,
+        upper: 2,
+        curvature: 2,
+        weight: 1,
+    }];
+    let steps = [Step::Boolean(0, 1, 3), Step::Offset(2, 1, 2)];
+    run_sequence(&seeds, &steps, true).unwrap();
+}
