@@ -4285,7 +4285,7 @@ fn boolean_trivial_region(
     if first.is_empty() || second.is_empty() {
         return empty_operand_result(first, second, operation).map(Some);
     }
-    if first == second {
+    if first == second || first.has_equivalent_exact_boundary(second) {
         return identical_operand_result(first, operation).map(Some);
     }
     Ok(None)

@@ -1397,3 +1397,25 @@ fn twice_round_eroded_conic_translates() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// An outward bevel offset of a chamfered weighted-conic seed round-trips
+/// through boundary export. The offset retained chords between rational
+/// points, which reimport publishes as native lines, so the rebuilt region
+/// differed only in that representation. Without identity, the Xor met a
+/// materialized offset curve at a shared vertex held in another form. The
+/// identical-operand Boolean now treats both line representations as equal.
+#[test]
+fn chamfered_conic_bevel_dilation_round_trips() {
+    let seeds = [Seed {
+        x: 0,
+        y: 0,
+        width: 10,
+        height: 6,
+        lower: 0,
+        upper: 1,
+        curvature: 3,
+        weight: 1,
+    }];
+    let steps = [Step::Chamfer(0, 3), Step::Offset(1, 1, 1)];
+    run_sequence(&seeds, &steps, false).unwrap();
+}

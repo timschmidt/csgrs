@@ -1413,8 +1413,10 @@ impl BezierSelectedFiberFragment2 {
             }
         };
         match &self.source {
+            // Selected ranges may lie on the source's extension beyond the
+            // unit span; the affine chart evaluates any finite parameter.
             BezierSelectedFiberSource2::Rational(curve) => {
-                Ok(curve.point_at_classified(&parameter, policy))
+                Ok(curve.point_at_affine_classified(&parameter, policy))
             }
             BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
                 parallel.point_at(&parameter, policy)

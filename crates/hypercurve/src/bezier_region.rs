@@ -543,6 +543,75 @@ impl std::fmt::Debug for CurveRegion2 {
     }
 }
 
+impl CurveRegion2 {
+    /// Whether both regions retain the same boundary up to the one
+    /// representation choice construction routes make differently: a straight
+    /// edge between two rational points held as an algebraic chord or as a
+    /// native line. Such boundaries, roles and states describe the same set.
+    pub(crate) fn has_equivalent_exact_boundary(&self, other: &Self) -> bool {
+        self.data.certified_loop_roles == other.data.certified_loop_roles
+            && self.data.state == other.data.state
+            && self.data.boundary_loops.len() == other.data.boundary_loops.len()
+            && self
+                .data
+                .boundary_loops
+                .iter()
+                .zip(&other.data.boundary_loops)
+                .all(|(first, second)| {
+                    first.fragments().len() == second.fragments().len()
+                        && first.fragments().iter().zip(second.fragments()).all(
+                            |(first, second)| {
+                                first == second
+                                    || exact_rational_line_endpoints(first).is_some_and(
+                                        |endpoints| {
+                                            exact_rational_line_endpoints(second) == Some(endpoints)
+                                        },
+                                    )
+                            },
+                        )
+                })
+    }
+}
+
+/// Returns the endpoints of a fragment that is exactly the segment between two
+/// rational points, whether held as an algebraic chord or as a native line
+/// (a midpoint-control quadratic on its full unit chart).
+fn exact_rational_line_endpoints(fragment: &BezierSplitFragment2) -> Option<(&Point2, &Point2)> {
+    let rational = |point: &Point2| {
+        point.x().exact_rational_ref().is_some() && point.y().exact_rational_ref().is_some()
+    };
+    let (start, end) = match fragment {
+        BezierSplitFragment2::AlgebraicChord(chord) => match (chord.start(), chord.end()) {
+            (
+                CurvePoint2(CurvePointData2::Exact(start)),
+                CurvePoint2(CurvePointData2::Exact(end)),
+            ) => (start, end),
+            _ => return None,
+        },
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(lower),
+            end: BezierParameter2::Exact(upper),
+            curve: BezierSubcurve2::Quadratic(quadratic),
+        } if lower.zero_status() == hyperreal::ZeroKnowledge::Zero
+            && (upper - Real::one()).zero_status() == hyperreal::ZeroKnowledge::Zero
+            && [
+                Real::from(2_i8) * quadratic.control().x()
+                    - quadratic.start().x()
+                    - quadratic.end().x(),
+                Real::from(2_i8) * quadratic.control().y()
+                    - quadratic.start().y()
+                    - quadratic.end().y(),
+            ]
+            .iter()
+            .all(|offset| offset.zero_status() == hyperreal::ZeroKnowledge::Zero) =>
+        {
+            (quadratic.start(), quadratic.end())
+        }
+        _ => return None,
+    };
+    (rational(start) && rational(end)).then_some((start, end))
+}
+
 impl PartialEq for CurveRegion2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
