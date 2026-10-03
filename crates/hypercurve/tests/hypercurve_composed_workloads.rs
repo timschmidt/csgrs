@@ -1422,15 +1422,12 @@ fn chamfered_conic_bevel_dilation_round_trips() {
 
 /// The difference between a chamfered weighted-conic seed and its fillet.
 ///
-/// The fillet arc is tangent to the chamfer chord at a contact inside the
-/// other operand's untrimmed chord. The arc's endpoint is shared with a
-/// trimmed sub-chord of the same retained support in its own operand, so the
-/// pair has exactly that one tangential contact, but the circle/chord kernel
-/// rediscovers it through recursive-field signs and dense tensor-image
-/// resultants without completing. Mapping the shared endpoint into the other
-/// chord's chart through their common support would certify it directly.
+/// The fillet arc touches the other operand's untrimmed chamfer chord at a
+/// point inside that chord. The arc's authored neighbor shares the chord's
+/// retained support and meets the circle only at their shared endpoint, so
+/// the pair has exactly that one contact. Recovering it through
+/// recursive-field signs and dense tensor-image resultants did not complete.
 #[test]
-#[ignore = "open: cross-operand fillet tangency to an untrimmed chamfer chord"]
 fn chamfered_conic_minus_its_fillet_completes() {
     let seeds = [Seed {
         x: -5,

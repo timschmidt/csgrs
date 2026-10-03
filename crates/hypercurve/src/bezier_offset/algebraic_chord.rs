@@ -811,7 +811,7 @@ impl BezierAlgebraicChord2 {
         start.shares_normal_offset_carrier(end) && start.shares_normal_offset_carrier(point)
     }
 
-    pub(super) fn shares_retained_support(&self, other: &Self) -> bool {
+    pub(crate) fn shares_retained_support(&self, other: &Self) -> bool {
         let first = self.retained_support();
         let second = other.retained_support();
         Arc::ptr_eq(&first.data, &second.data)

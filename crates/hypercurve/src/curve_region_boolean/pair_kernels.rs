@@ -648,6 +648,111 @@ impl<'a> CurveRegionBooleanContext<'a> {
     /// represented by the other half. Retain the sibling chart and both
     /// endpoint identities, with any additional contact proof: the authored
     /// angular parameter decides half-chart ownership without a new solve.
+    /// Certifies a circle/chord pair across operands from a shared support.
+    ///
+    /// A fillet or round join meets its authored chord neighbor's whole
+    /// supporting line only at their shared endpoint, by construction-time
+    /// tangency or by the authored-adjacency certificate. When that neighbor
+    /// shares its retained support with `chord` from the other operand, the
+    /// same holds for `chord`'s line. The pair therefore has exactly that
+    /// contact when the shared endpoint lies on the finite chord, and none
+    /// otherwise, without rediscovering it through recursive field signs.
+    fn cross_operand_tangent_support_contact(
+        &self,
+        cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        cusp_index: usize,
+        chord: &crate::BezierAlgebraicChord2,
+        chord_index: usize,
+        cusp_is_first: bool,
+    ) -> ExactCurveResult<Option<RegionPairResult>> {
+        let cusp_carrier = &self.data.carriers[cusp_index];
+        if cusp_carrier.operand == self.data.carriers[chord_index].operand {
+            return Ok(None);
+        }
+        for (sibling_index, sibling) in self.data.carriers.iter().enumerate() {
+            let CurveSupport2::Line(sibling_chord) = &sibling.geometry else {
+                continue;
+            };
+            if sibling.operand != cusp_carrier.operand
+                || sibling.loop_index != cusp_carrier.loop_index
+                || !sibling_chord.shares_retained_support(chord)
+            {
+                continue;
+            }
+            let Some((cusp_at_start, sibling_at_start)) =
+                self.authored_carrier_shared_endpoints(cusp_index, sibling_index)
+            else {
+                continue;
+            };
+            // Either retained proof bounds the full supporting line to the
+            // shared endpoint: construction-time tangency, or the authored
+            // adjacency certificate that the sibling's support meets the
+            // circle only there.
+            let support_meets_only_at_endpoint = (cusp.certified_tangent_endpoint(cusp_at_start)
+                && !cusp.selected_chord_normal_contact_endpoint(cusp_at_start))
+                || cusp
+                    .authored_adjacent_chord_is_structurally_endpoint_only(
+                        sibling_chord,
+                        cusp_at_start,
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(sibling_index, cause))?
+                || self
+                    .data
+                    .policy
+                    .strict_predicate_pass(|| {
+                        cusp.certified_adjacent_chord_is_endpoint_only(
+                            sibling_chord,
+                            cusp_at_start,
+                            &self.data.policy,
+                        )
+                    })
+                    .map_err(|cause| self.invalid(sibling_index, cause))?
+                    == Classification::Decided(true);
+            if !support_meets_only_at_endpoint {
+                continue;
+            }
+            let point = if sibling_at_start {
+                sibling_chord.start().clone()
+            } else {
+                sibling_chord.end().clone()
+            };
+            let chord_parameter = match chord
+                .parameter_at_certified_point(point.clone(), &self.data.policy)
+                .map_err(|cause| self.invalid(chord_index, cause))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(_) => continue,
+            };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-chord-pair",
+                "cross-operand-tangent-support",
+            );
+            let Some(chord_parameter) = chord_parameter else {
+                return Ok(Some(RegionPairResult::empty()));
+            };
+            return self
+                .retained_cusp_chord_pair_result(
+                    cusp,
+                    chord,
+                    chord_index,
+                    cusp_is_first,
+                    vec![
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                            cusp_parameter: cusp.endpoint_parameter(cusp_at_start).clone(),
+                            chord_parameter,
+                            point,
+                            tangent_cross_sign: RealSign::Zero,
+                        },
+                    ],
+                )
+                .map(Some);
+        }
+        Ok(None)
+    }
+
     pub(super) fn authored_supporting_circle_endpoint(
         &self,
         cusp_index: usize,
@@ -3057,6 +3162,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             *cusp_is_first,
                             vec![contact],
                         );
+                    }
+                    if let Some(result) = self.cross_operand_tangent_support_contact(
+                        cusp,
+                        cusp_index,
+                        chord,
+                        chord_index,
+                        *cusp_is_first,
+                    )? {
+                        return Ok(result);
                     }
                     // Refined bounds are only a rejection accelerator. Keep
                     // their proof budget small and fall through to the exact
