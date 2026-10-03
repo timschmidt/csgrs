@@ -1536,3 +1536,48 @@ fn miter_eroded_ring_miter_erosion_completes() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// A miter erosion after a fillet and a Boolean over a nested pool. The
+/// erosion's band arrangement isolates a selected-fiber equation of degree
+/// 40 over a degree-14 algebraic parameter. The incidence polynomial is
+/// square-free over the rationals and the diagonal is not a root, yet the
+/// bounded Bernstein accelerator exhausts its 32 subdivision levels at the
+/// selected parameter, and the complete local Sturm sequence of that size
+/// did not finish within ten minutes.
+#[test]
+#[ignore = "open: degree-40 selected fiber over a degree-14 field needs a cheaper complete isolator"]
+fn filleted_boolean_miter_erosion_completes() {
+    let seeds = [
+        Seed {
+            x: 7,
+            y: -7,
+            width: 14,
+            height: 16,
+            lower: 3,
+            upper: 1,
+            curvature: 3,
+            weight: 4,
+        },
+        Seed {
+            x: 2,
+            y: 3,
+            width: 19,
+            height: 13,
+            lower: 7,
+            upper: 5,
+            curvature: 3,
+            weight: 2,
+        },
+    ];
+    run_sequence(
+        &seeds,
+        &[
+            Step::Similarity(1, 3, 1, true),
+            Step::Fillet(5, 2),
+            Step::Boolean(4, 12, 3),
+            Step::Offset(4, -1, 2),
+        ],
+        true,
+    )
+    .unwrap();
+}
