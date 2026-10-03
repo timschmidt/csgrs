@@ -797,3 +797,39 @@ fn chamfered_spline_bevel_stroke_round_trips() {
     };
     run_sequence(&seed, &[Step::Chamfer(2, 2), Step::Stroke(2, 1)]).unwrap();
 }
+
+/// A miter stroke of a filleted rational-cubic/arc path (weight 6). The
+/// offset spans meet the fillet's tangency at a selected-fiber parameter.
+/// Promoting it to a Bezier parameter (endpoint tangents, span fragments,
+/// recursive support lines) forms a high-degree bivariate resultant, and its
+/// square-free reduction runs a Euclidean GCD over radical coefficients;
+/// keeping the selected-fiber form instead moves the cost into repeated
+/// local-field refinements. The stroke did not finish within ten minutes.
+#[test]
+#[ignore = "open: selected-fiber fillet tangency in a high-weight rational stroke is too slow"]
+fn miter_stroke_of_a_filleted_heavy_rational_cubic_completes() {
+    let seed = Seed {
+        x: -1,
+        y: 1,
+        edges: vec![
+            Edge {
+                family: 5,
+                dx: 8,
+                dy: 2,
+                outward: 1,
+            },
+            Edge {
+                family: 1,
+                dx: 3,
+                dy: 5,
+                outward: 1,
+            },
+        ],
+        weight: 6,
+    };
+    run_sequence(
+        &seed,
+        &[Step::Reverse, Step::Fillet(3, 2), Step::Stroke(2, 2)],
+    )
+    .unwrap();
+}
