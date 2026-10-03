@@ -754,3 +754,46 @@ fn mixed_cubic_arc_miter_stroke_completes() {
     };
     run_sequence(&seed, &[Step::Stroke(3, 2)]).unwrap();
 }
+
+/// A bevel stroke of a chamfered NURBS/B-spline/rational-quadratic/cubic
+/// path. Rebuilding its exported boundary pairs an algebraic chord with a
+/// parallel carrier; `parallel_tangent_cross_sign_on_region_range` refines a
+/// recursive projective parameter whose defining sign is evaluated in a
+/// recursive quadratic tower through algebraic tensor images and Sturm
+/// refinement, which did not finish within fourteen minutes.
+#[test]
+#[ignore = "open: chord/parallel tangent sign over a recursive quadratic tower is too slow"]
+fn chamfered_spline_bevel_stroke_round_trips() {
+    let seed = Seed {
+        x: 1,
+        y: -5,
+        edges: vec![
+            Edge {
+                family: 7,
+                dx: 5,
+                dy: -3,
+                outward: -2,
+            },
+            Edge {
+                family: 6,
+                dx: 8,
+                dy: -1,
+                outward: -1,
+            },
+            Edge {
+                family: 4,
+                dx: 3,
+                dy: 6,
+                outward: 2,
+            },
+            Edge {
+                family: 3,
+                dx: 8,
+                dy: 4,
+                outward: 2,
+            },
+        ],
+        weight: 2,
+    };
+    run_sequence(&seed, &[Step::Chamfer(2, 2), Step::Stroke(2, 1)]).unwrap();
+}
