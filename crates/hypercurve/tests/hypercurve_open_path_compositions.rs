@@ -550,3 +550,44 @@ fn stroke_of_a_fillet_at_its_radius_completes() {
     };
     run_sequence(&seed, &[Step::Fillet(0, 1), Step::Stroke(1, 0)]).unwrap();
 }
+
+/// A miter stroke of a four-edge line/arc/rational-cubic/NURBS path. The
+/// stroke completes, but rebuilding its exported boundary forms a curve
+/// resultant whose leading coefficient is an undecidable zero of opaque
+/// radical coordinates, so reconstruction is blocked by RealSign.
+#[test]
+#[ignore = "open: stroke boundary reconstruction over opaque radical coordinates"]
+fn mixed_family_miter_stroke_round_trips() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 0,
+                dx: 6,
+                dy: 1,
+                outward: 2,
+            },
+            Edge {
+                family: 1,
+                dx: 8,
+                dy: 1,
+                outward: -1,
+            },
+            Edge {
+                family: 5,
+                dx: 4,
+                dy: 3,
+                outward: 1,
+            },
+            Edge {
+                family: 7,
+                dx: 4,
+                dy: 1,
+                outward: 1,
+            },
+        ],
+        weight: 5,
+    };
+    run_sequence(&seed, &[Step::Stroke(2, 2)]).unwrap();
+}
