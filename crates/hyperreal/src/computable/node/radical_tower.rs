@@ -29,7 +29,7 @@ struct RadicalTower {
 // cheap; a declined query leaves the existing exact cascade in charge and
 // restricts no representable value.
 const RADICAL_TOWER_MAX_NODES: usize = 256;
-const RADICAL_TOWER_MAX_GENERATORS: usize = 6;
+const RADICAL_TOWER_MAX_GENERATORS: usize = 10;
 const RADICAL_TOWER_MAX_TERMS: usize = 256;
 const RADICAL_TOWER_MAX_COEFFICIENT_BITS: u64 = 4_096;
 
