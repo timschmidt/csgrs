@@ -1079,3 +1079,36 @@ fn trimmed_chamfered_arc_cubic_bevel_stroke_completes() {
     )
     .unwrap();
 }
+
+/// A round stroke, a fillet of the stroked boundary path and a bevel stroke
+/// of a cubic/arc path (weight 5). The second stroke proves analytic
+/// parallel points equal through recursive quadratic field signs and
+/// algebraic tensor images; it did not finish within fourteen minutes.
+#[test]
+#[ignore = "open: point equality over recursive quadratic fields in a repeated stroke is too slow"]
+fn stroke_fillet_stroke_of_a_cubic_arc_path_completes() {
+    let seed = Seed {
+        x: -6,
+        y: -4,
+        edges: vec![
+            Edge {
+                family: 3,
+                dx: 8,
+                dy: -5,
+                outward: -1,
+            },
+            Edge {
+                family: 1,
+                dx: 8,
+                dy: -5,
+                outward: -1,
+            },
+        ],
+        weight: 5,
+    };
+    run_sequence(
+        &seed,
+        &[Step::Stroke(2, 0), Step::Fillet(1, 2), Step::Stroke(2, 1)],
+    )
+    .unwrap();
+}
