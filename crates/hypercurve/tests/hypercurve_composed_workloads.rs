@@ -1583,15 +1583,15 @@ fn filleted_boolean_miter_erosion_completes() {
 }
 
 /// Bevel and round dilations by 1/4 followed by a round erosion by 1/2.
-/// The net zero offset returns seed pieces exactly as zero-distance
-/// parallels with rational coordinates, while an adjacent bevel offset line
-/// reaches the same rational corner through nested unit-normal radicals.
-/// Reconstructing the result maps that shared corner onto the line; the
-/// mapped parameter is exactly 0 or 1 but is a radical expression whose
-/// range test is undecidable, so the line-image shortcut declines and the
-/// general resultant meets the same undecidable zero (RealSign).
+/// The net zero offset returns seed pieces as zero-distance parallels,
+/// trimmed at irrational source parameters where an adjacent bevel offset
+/// line meets them. Each side names that shared corner by its own radical
+/// expression. Reconstructing the result maps the conic's corner onto the
+/// line; the parameter is exactly 0 or 1 but undecidable, so the line-image
+/// shortcut declines and the general resultant meets the same undecidable
+/// zero (RealSign).
 #[test]
-#[ignore = "open: a rational junction reached through nested radicals is undecidable"]
+#[ignore = "open: a shared corner named by two radical expressions is undecidable"]
 fn bevel_round_dilations_then_round_erosion_reconstructs() {
     let seeds = [
         Seed {
