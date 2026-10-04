@@ -309,12 +309,20 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
 pub fn compact_algebraic_root_low_degree_witness(
     root: &AlgebraicRootRepresentation,
 ) -> Option<AlgebraicRootRepresentation> {
-    if !root.is_valid()
-        || validate_algebraic_root_representation(root, PredicatePolicy::STRICT).status
-            != AlgebraicRootValidationStatus::Valid
-    {
+    if !root.is_valid() {
         return None;
     }
+    // Candidate selection relies on a STRICT isolating interval. Prove it
+    // only once a proposed witness exists: for high-degree roots without a
+    // low-degree factor that validation dominates, and no proposal is used
+    // before it succeeds.
+    let strictly_valid = std::cell::OnceCell::new();
+    let strictly_valid = || {
+        *strictly_valid.get_or_init(|| {
+            validate_algebraic_root_representation(root, PredicatePolicy::STRICT).status
+                == AlgebraicRootValidationStatus::Valid
+        })
+    };
     let direct = (|| -> Option<Vec<Real>> {
         match root.polynomial_coefficients.as_slice() {
             [constant, linear] => Some(vec![(-constant / linear).ok()?]),
@@ -329,6 +337,9 @@ pub fn compact_algebraic_root_low_degree_witness(
         }
     })();
     if let Some(candidates) = direct {
+        if !strictly_valid() {
+            return None;
+        }
         return compact_selected_root_from_candidates(
             root,
             &root.polynomial_coefficients,
@@ -341,6 +352,9 @@ pub fn compact_algebraic_root_low_degree_witness(
         64,
     ) {
         let factor = [-witness.clone(), Real::one()];
+        if !strictly_valid() {
+            return None;
+        }
         if let Some(compact) = compact_selected_root_from_candidates(root, &factor, [witness]) {
             return Some(compact);
         }
@@ -369,6 +383,7 @@ pub fn compact_algebraic_root_low_degree_witness(
     {
         centers.push(center);
     }
+    let screen = finite_coefficient_images(&root.polynomial_coefficients);
     for center in centers {
         let Some(center_approximation) = center.to_f64_lossy().filter(|value| value.is_finite())
         else {
@@ -389,8 +404,19 @@ pub fn compact_algebraic_root_low_degree_witness(
                 Real::from(-2) * &center,
                 Real::one(),
             ];
+            if let Some(images) = &screen {
+                let root_offset = (numerator / denominator as f64).sqrt();
+                if polynomial_clearly_nonzero_at(images, center_approximation + root_offset)
+                    && polynomial_clearly_nonzero_at(images, center_approximation - root_offset)
+                {
+                    continue;
+                }
+            }
             if !exact_polynomial_divides(&root.polynomial_coefficients, &factor) {
                 continue;
+            }
+            if !strictly_valid() {
+                return None;
             }
             let radius = radius_squared.sqrt().ok()?;
             if let Some(compact) = compact_selected_root_from_candidates(
@@ -913,6 +939,29 @@ fn exact_cardinal_root_in_interval(
     None
 }
 
+/// Floating-point screen for a proposed exact root of a polynomial.
+///
+/// Returns `true` only when `polynomial(x)` is clearly nonzero: its value
+/// exceeds `1e-9` of the absolute-value Horner scale, far above the rounding
+/// error of that evaluation. A genuine root is therefore never rejected, and
+/// a rejected proposal only skips an optional exact witness test.
+fn polynomial_clearly_nonzero_at(coefficients: &[f64], x: f64) -> bool {
+    let (mut value, mut scale) = (0.0_f64, 0.0_f64);
+    for coefficient in coefficients.iter().rev() {
+        value = value * x + coefficient;
+        scale = scale * x.abs() + coefficient.abs();
+    }
+    value.is_finite() && scale.is_finite() && value.abs() > 1e-9 * scale
+}
+
+/// Finite `f64` images of exact coefficients, when every one has one.
+fn finite_coefficient_images(coefficients: &[Real]) -> Option<Vec<f64>> {
+    coefficients
+        .iter()
+        .map(|coefficient| coefficient.to_f64_lossy().filter(|value| value.is_finite()))
+        .collect()
+}
+
 fn exact_bounded_denominator_root_in_interval(
     polynomial_coefficients: &[Real],
     interval: &IsolatedRootInterval,
@@ -924,6 +973,7 @@ fn exact_bounded_denominator_root_in_interval(
         return None;
     }
     let midpoint = lower / 2.0 + upper / 2.0;
+    let screen = finite_coefficient_images(polynomial_coefficients);
     for denominator in 1..=max_denominator {
         let numerator = (midpoint * denominator as f64).round();
         if !numerator.is_finite() || numerator < i64::MIN as f64 || numerator > i64::MAX as f64 {
@@ -934,6 +984,13 @@ fn exact_bounded_denominator_root_in_interval(
         if candidate
             .to_f64_lossy()
             .is_none_or(|candidate| candidate < lower || candidate > upper)
+        {
+            continue;
+        }
+        if let Some(images) = &screen
+            && candidate
+                .to_f64_lossy()
+                .is_some_and(|candidate| polynomial_clearly_nonzero_at(images, candidate))
         {
             continue;
         }
