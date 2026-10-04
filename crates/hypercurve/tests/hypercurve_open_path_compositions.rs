@@ -924,11 +924,10 @@ fn chamfered_cubic_line_bevel_stroke_round_trips() {
 
 /// A round stroke of a filleted rational-cubic/NURBS/NURBS path (weight 5).
 /// The fillet itself takes about five minutes. The stroke's tangent
-/// junctions are certified without exact point equality, but regularizing
-/// its bands pairs a join chord with a parallel whose recursive projective
-/// intersection kernel declines, so the stroke is blocked as Unsupported.
+/// junctions and join chord/parallel endpoints are certified, but the stroke
+/// then did not finish within twenty-five minutes.
 #[test]
-#[ignore = "open: recursive chord/parallel intersection declines for a filleted heavy NURBS stroke"]
+#[ignore = "open: a filleted heavy NURBS round stroke is too slow"]
 fn round_stroke_of_a_filleted_heavy_nurbs_path_completes() {
     let seed = Seed {
         x: 2,
