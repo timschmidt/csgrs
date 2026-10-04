@@ -1388,7 +1388,52 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             None
         };
+        // The squared incidence also contains the parallel at the negated
+        // distance. When that reflected branch sits at the authored radial
+        // separation, the same exact diagonal factor divides the incidence
+        // and would otherwise remain a repeated root of every center fiber.
+        let reflected_diagonal = diagonal_location.is_none()
+            && incident.is_none()
+            && other.source() == frame.center_support.source()
+            && {
+                let negated = -other.distance();
+                [
+                    frame.center_support.distance() + self.radial_distance(),
+                    frame.center_support.distance() - self.radial_distance(),
+                ]
+                .iter()
+                .any(|distance| {
+                    compare_reals(&negated, distance, policy) == Some(std::cmp::Ordering::Equal)
+                })
+            };
         let mut deflated_candidates = None;
+        if reflected_diagonal
+            && let Some(residual) = deflate_bivariate_parameter_diagonal_exact(&incidence)
+        {
+            let residual = match reduce_bivariate_in_selected_parameter(
+                residual,
+                &BezierParameter2::Algebraic(center_parameter.clone()),
+                policy,
+            )? {
+                Classification::Decided(residual) => residual,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            // The diagonal root rejoins the candidates; the circle and
+            // half-plane tests below decide whether it is a contact.
+            deflated_candidates = match selected_normal_deflated_diagonal_candidates(
+                &residual,
+                &center_parameter,
+                range,
+                policy,
+            )? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        }
         if let Some(location) = diagonal_location {
             // Equal-source parallels at the authored radial separation meet
             // the circle on the complete parameter diagonal, not merely at
