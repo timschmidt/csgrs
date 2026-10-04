@@ -31,6 +31,7 @@ include!("node/logarithms.rs");
 include!("node/roots_inverse_hyperbolic.rs");
 include!("node/algebra.rs");
 include!("node/quadratic_tower.rs");
+include!("node/radical_tower.rs");
 include!("node/approximation_queries.rs");
 include!("node/scale.rs");
 include!("node/tests.rs");

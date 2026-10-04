@@ -99,6 +99,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "quadratic_tower_annihilating_polynomial",
     "quadratic_tower_positive_rational_branch",
     "quadratic_tower_sign",
+    "radical_tower_sign",
     "sign_polynomial_at_rational_square_root",
     // Certified domain/evidence queries. MPFR reports a value or NaN but does
     // not expose Hyperreal's proof state, precision schedule, or refinement API.

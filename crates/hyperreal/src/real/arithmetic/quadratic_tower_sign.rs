@@ -70,6 +70,24 @@ impl Real {
         )
     }
 
+    /// Sign proved by reduction in an iterated square-root tower
+    /// `Q(sqrt(r_1))...(sqrt(r_k))`, where each radicand may itself contain
+    /// earlier roots.
+    ///
+    /// This extends [`Self::quadratic_tower_sign`] to several independent or
+    /// nested radicals. `None` means the expression leaves that tower or
+    /// exceeds this query's size guards; the value itself is unchanged.
+    pub fn radical_tower_sign(&self) -> Option<RealSign> {
+        let scale_sign = real_sign_from_num(self.rational.sign());
+        if scale_sign == RealSign::Zero || matches!(self.class, One) {
+            return Some(scale_sign);
+        }
+        multiply_public_sign(
+            Some(scale_sign),
+            self.computable_ref().radical_tower_sign(),
+        )
+    }
+
     /// Rational center `s` when this value is `s + r√q` with `r > 0` and only
     /// one real choice of `q`. The conjugate `s - r√q` is the other real root.
     pub fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {
@@ -319,5 +337,72 @@ mod quadratic_tower_real_tests {
         let quotient = (&radicand / &(norm.clone() * &norm)).unwrap();
         let difference = quotient - Real::one();
         assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+    }
+}
+
+#[cfg(test)]
+mod radical_tower_real_tests {
+    use super::*;
+
+    fn root(value: i64) -> Real {
+        Real::from(value).sqrt().unwrap()
+    }
+
+    #[test]
+    fn independent_radicals_cancel_exactly() {
+        let sum = root(2) + root(3);
+        let nested = (Real::from(5) + Real::from(2) * root(6)).sqrt().unwrap();
+        assert_eq!((&sum - &nested).radical_tower_sign(), Some(RealSign::Zero));
+        assert_eq!((root(5) * root(7) - root(35)).radical_tower_sign(), Some(RealSign::Zero));
+        assert_eq!(
+            (root(2) + root(3) + root(5) - root(2) - root(5) - root(3)).radical_tower_sign(),
+            Some(RealSign::Zero)
+        );
+    }
+
+    #[test]
+    fn nested_radicals_denest_exactly() {
+        // sqrt(3 + sqrt(5)) = (sqrt(10) + sqrt(2)) / 2.
+        let nested = (Real::from(3) + root(5)).sqrt().unwrap();
+        let denested = ((root(10) + root(2)) / Real::from(2)).unwrap();
+        assert_eq!((&nested - &denested).radical_tower_sign(), Some(RealSign::Zero));
+        let shifted = &nested - &denested + (Real::from(1) / Real::from(1_000_000_i64)).unwrap();
+        assert_eq!(shifted.radical_tower_sign(), Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn unit_normal_offsets_meet_exactly() {
+        // A corner offset by d along two unit normals, reached by two
+        // different expression orders, is one exact point.
+        let d = (Real::from(1) / Real::from(4)).unwrap();
+        let n1 = (Real::from(4) / root(17)).unwrap();
+        let n2 = (Real::from(3) / root(10)).unwrap();
+        let first = &d * &n1 + &d * &n2;
+        let second = &d * (&n2 + &n1);
+        assert_eq!((&first - &second).radical_tower_sign(), Some(RealSign::Zero));
+        let rationalized = &d * ((Real::from(4) * root(17)) / Real::from(17)).unwrap()
+            + &d * ((Real::from(3) * root(10)) / Real::from(10)).unwrap();
+        assert_eq!((&first - &rationalized).radical_tower_sign(), Some(RealSign::Zero));
+    }
+
+    #[test]
+    fn nonzero_signs_match_refinement() {
+        let values = [
+            root(2) + root(3) - root(10),
+            root(7) - root(2) - root(3),
+            (Real::from(2) + root(3)).sqrt().unwrap() - root(2) - (Real::from(1) / Real::from(5)).unwrap(),
+            root(11) * root(13) - Real::from(12),
+            (root(5) - Real::from(2)).sqrt().unwrap() - (Real::from(1) / Real::from(2)).unwrap(),
+        ];
+        for value in values {
+            let refined = value.certified_sign_until(-256);
+            assert_eq!(value.radical_tower_sign(), refined.sign(), "{value:?}");
+        }
+    }
+
+    #[test]
+    fn negative_radicands_and_non_radicals_decline() {
+        assert_eq!(Real::pi().radical_tower_sign(), None);
+        assert_eq!(Real::from(3).radical_tower_sign(), Some(RealSign::Positive));
     }
 }
