@@ -1677,3 +1677,40 @@ fn booleans_then_double_round_erosion_completes() {
     )
     .unwrap();
 }
+
+/// A bevel erosion then a round erosion by 1/2 of a weight-6 nested pool.
+/// The second offset refines recursive projective parameters whose defining
+/// signs square dense two-root tensor expressions in a recursive quadratic
+/// tower; it did not finish within forty minutes.
+#[test]
+#[ignore = "open: recursive quadratic tower signs of a twice-eroded weight-6 conic are too slow"]
+fn bevel_then_round_erosion_of_a_weight_six_conic_completes() {
+    let seeds = [
+        Seed {
+            x: 2,
+            y: -7,
+            width: 16,
+            height: 7,
+            lower: 6,
+            upper: 5,
+            curvature: 2,
+            weight: 6,
+        },
+        Seed {
+            x: 3,
+            y: -2,
+            width: 14,
+            height: 10,
+            lower: 7,
+            upper: 7,
+            curvature: 3,
+            weight: 4,
+        },
+    ];
+    run_sequence(
+        &seeds,
+        &[Step::Offset(13, -2, 1), Step::Offset(15, -2, 0)],
+        true,
+    )
+    .unwrap();
+}
