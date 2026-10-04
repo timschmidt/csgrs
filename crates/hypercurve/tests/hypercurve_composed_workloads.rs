@@ -1581,3 +1581,48 @@ fn filleted_boolean_miter_erosion_completes() {
     )
     .unwrap();
 }
+
+/// Bevel and round dilations by 1/4 followed by a round erosion by 1/2.
+/// The net zero offset returns seed pieces exactly as zero-distance
+/// parallels with rational coordinates, while an adjacent bevel offset line
+/// reaches the same rational corner through nested unit-normal radicals.
+/// Reconstructing the result maps that shared corner onto the line; the
+/// mapped parameter is exactly 0 or 1 but is a radical expression whose
+/// range test is undecidable, so the line-image shortcut declines and the
+/// general resultant meets the same undecidable zero (RealSign).
+#[test]
+#[ignore = "open: a rational junction reached through nested radicals is undecidable"]
+fn bevel_round_dilations_then_round_erosion_reconstructs() {
+    let seeds = [
+        Seed {
+            x: 0,
+            y: 0,
+            width: 8,
+            height: 6,
+            lower: 2,
+            upper: 0,
+            curvature: 1,
+            weight: 1,
+        },
+        Seed {
+            x: 0,
+            y: 0,
+            width: 8,
+            height: 6,
+            lower: 0,
+            upper: 0,
+            curvature: 1,
+            weight: 1,
+        },
+    ];
+    run_sequence(
+        &seeds,
+        &[
+            Step::Offset(0, 1, 1),
+            Step::Offset(11, 1, 0),
+            Step::Offset(3, -2, 0),
+        ],
+        false,
+    )
+    .unwrap();
+}
