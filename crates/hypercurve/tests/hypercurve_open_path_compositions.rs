@@ -1034,3 +1034,48 @@ fn chamfered_rational_nurbs_miter_stroke_completes() {
     };
     run_sequence(&seed, &[Step::Chamfer(2, 3), Step::Stroke(2, 2)]).unwrap();
 }
+
+/// A bevel stroke of a trimmed, chamfered arc/cubic/rational-cubic path
+/// (weight 5). Regularizing the stroke bands meets analytic parallels cut at
+/// algebraic parameters: their arrangement endpoint data requires scalar
+/// range endpoints, and even topology-only endpoints leave tangent-ordered
+/// successor choice at a shared vertex without the parallel's end tangent,
+/// so the stroke is blocked by Boundary.
+#[test]
+#[ignore = "open: tangent order of analytic parallels cut at algebraic parameters"]
+fn trimmed_chamfered_arc_cubic_bevel_stroke_completes() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 1,
+                dx: 8,
+                dy: 3,
+                outward: -2,
+            },
+            Edge {
+                family: 3,
+                dx: 5,
+                dy: 6,
+                outward: 1,
+            },
+            Edge {
+                family: 5,
+                dx: 3,
+                dy: 3,
+                outward: 1,
+            },
+        ],
+        weight: 5,
+    };
+    run_sequence(
+        &seed,
+        &[
+            Step::Trim(4, -4, 13, 8),
+            Step::Chamfer(1, 2),
+            Step::Stroke(1, 1),
+        ],
+    )
+    .unwrap();
+}
