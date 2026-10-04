@@ -2436,3 +2436,49 @@ mod structural_overlap_trace_regression {
         reparameterized_offset(CurveContext::APPROXIMATE_512, true);
     }
 }
+
+/// Collinear chords may retain different monotone parameter axes: offset
+/// bevel construction certifies one axis, while a generic split chooses
+/// another. Their `coordinate_increases` flags then describe different
+/// coordinates and cannot fix the relative traversal on their own.
+#[test]
+fn collinear_chords_on_distinct_parameter_axes_compare_traversal_exactly() {
+    let policy = CurveContext::STRICT;
+    let point = |x: i32, y: i32| CurvePoint2::from(Point2::from_values(x, y));
+    // Along y = -3x/2, traversed toward +y (and -x).
+    let owner = BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+        point(0, 0),
+        point(-2, 3),
+        Axis2::Y,
+        true,
+        &policy,
+    );
+    // The same support traversed toward +x (and -y).
+    let opposite = BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+        point(-4, 6),
+        point(2, -3),
+        Axis2::X,
+        true,
+        &policy,
+    );
+    // The same support traversed toward -x (and +y).
+    let along = BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+        point(2, -3),
+        point(-4, 6),
+        Axis2::X,
+        false,
+        &policy,
+    );
+    let reversed = |first: &BezierAlgebraicChord2, second: &BezierAlgebraicChord2| match first
+        .collinear_traversal_reversed(second, &policy)
+        .unwrap()
+    {
+        Classification::Decided(reversed) => reversed,
+        Classification::Uncertain(reason) => panic!("{reason:?}"),
+    };
+    assert!(reversed(&owner, &opposite));
+    assert!(reversed(&opposite, &owner));
+    assert!(!reversed(&owner, &along));
+    assert!(!reversed(&along, &owner));
+    assert!(reversed(&opposite, &along));
+}

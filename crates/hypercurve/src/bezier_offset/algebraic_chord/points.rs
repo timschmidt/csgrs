@@ -2217,10 +2217,12 @@ impl BezierAlgebraicChordPairPoint2 {
             && let Some(pair_to_other) =
                 Self::anchor_separation_order_on_owner(owner, at_end, order, other, policy)
         {
-            let reversed = owner.shared_tangent_orientation(chord).unwrap_or(
-                owner.data.parameter_axis.coordinate_increases
-                    != chord.data.parameter_axis.coordinate_increases,
-            );
+            let reversed = match owner.collinear_traversal_reversed(chord, policy)? {
+                Classification::Decided(reversed) => reversed,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -2419,17 +2421,16 @@ impl BezierAlgebraicChordPairPoint2 {
             // requested chord traversal, a positive chord/opposite cross
             // enters the right half-plane after the intersection, while a
             // negative cross enters the left half-plane.
+            let owner_reversed = match owner.collinear_traversal_reversed(chord, policy)? {
+                Classification::Decided(reversed) => reversed,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let retained_cross = retained_pair_cross.map(|mut sign| {
                 if !shares_first_support {
                     sign = product_sign(sign, RealSign::Negative);
                 }
-                let owner_reversed =
-                    if owner.data.parameter_axis.axis == chord.data.parameter_axis.axis {
-                        owner.data.parameter_axis.coordinate_increases
-                            != chord.data.parameter_axis.coordinate_increases
-                    } else {
-                        owner.shared_tangent_orientation(chord).unwrap_or(false)
-                    };
                 if owner_reversed {
                     sign = product_sign(sign, RealSign::Negative);
                 }
@@ -2473,15 +2474,9 @@ impl BezierAlgebraicChordPairPoint2 {
             }
             return compare_coordinates();
         };
-        Ok(Classification::Decided(
-            if owner.data.parameter_axis.coordinate_increases
-                == chord.data.parameter_axis.coordinate_increases
-            {
-                order
-            } else {
-                order.reverse()
-            },
-        ))
+        Ok(owner
+            .collinear_traversal_reversed(chord, policy)?
+            .map(|reversed| if reversed { order.reverse() } else { order }))
     }
 
     pub(in crate::bezier_offset) fn cmp_on_common_chord(

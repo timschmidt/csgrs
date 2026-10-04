@@ -1036,13 +1036,14 @@ fn chamfered_rational_nurbs_miter_stroke_completes() {
 }
 
 /// A bevel stroke of a trimmed, chamfered arc/cubic/rational-cubic path
-/// (weight 5). Regularizing the stroke bands meets analytic parallels cut at
-/// algebraic parameters: their arrangement endpoint data requires scalar
-/// range endpoints, and even topology-only endpoints leave tangent-ordered
-/// successor choice at a shared vertex without the parallel's end tangent,
-/// so the stroke is blocked by Boundary.
+/// (weight 5). A bevel triangle edge overlaps half of a segment band's end
+/// cap in reverse; ordering a cap point along that edge must relate two
+/// collinear chords with different monotone parameter axes, which once
+/// misordered the point and left a dangling cap edge. Band regularization
+/// now completes, and rebuilding the stroke region then spends its time in
+/// recursive quadratic tower refinement of chord/parallel tangent signs.
 #[test]
-#[ignore = "open: tangent order of analytic parallels cut at algebraic parameters"]
+#[ignore = "open: recursive tower refinement while rebuilding the stroke region"]
 fn trimmed_chamfered_arc_cubic_bevel_stroke_completes() {
     let seed = Seed {
         x: 0,

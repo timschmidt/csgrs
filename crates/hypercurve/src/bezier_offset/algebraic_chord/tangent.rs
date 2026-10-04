@@ -166,6 +166,43 @@ impl BezierAlgebraicChord2 {
         self.retained_normal_offset_tangent_reversal_to(other)
     }
 
+    /// Whether `other` traverses a collinear support opposite to this chord.
+    ///
+    /// Construction provenance decides first. Equal parameter axes compare
+    /// their monotone directions directly. Distinct axes cannot be compared
+    /// through their flags: each flag describes a different coordinate.
+    /// Every injective axis of the common line is injective for both chords,
+    /// so this chord's endpoint order along `other`'s axis is strict and
+    /// fixes the relative traversal exactly.
+    pub(in crate::bezier_offset) fn collinear_traversal_reversed(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if let Some(reversed) = self.shared_tangent_orientation(other) {
+            return Ok(Classification::Decided(reversed));
+        }
+        let other_axis = other.data.parameter_axis;
+        if self.data.parameter_axis.axis == other_axis.axis {
+            return Ok(Classification::Decided(
+                self.data.parameter_axis.coordinate_increases != other_axis.coordinate_increases,
+            ));
+        }
+        Ok(
+            match Self::point_axis_order(self.start(), self.end(), other_axis.axis, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Err(CurveError::Topology(
+                        "a collinear chord was constant along an injective support axis".into(),
+                    ));
+                }
+                Classification::Decided(order) => Classification::Decided(
+                    (order == std::cmp::Ordering::Less) != other_axis.coordinate_increases,
+                ),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     /// Recognizes two finite subchords of the same retained radial line even
     /// when clipping replaced both endpoints. Each authority has direction
     /// `(a_end-a_start)(P-C)`; comparing the two exact scalar signs is enough
