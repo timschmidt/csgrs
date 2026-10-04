@@ -61,6 +61,11 @@ pub(crate) fn resolve_real_sign(
         return PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, Escalation::Exact);
     }
 
+    if let Some(sign) = value.radical_tower_sign() {
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "radical-tower");
+        return PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, Escalation::Exact);
+    }
+
     if let Some(outcome) = approximate_real_sign(value, policy) {
         crate::trace_dispatch!(
             "hyperlimit",
@@ -120,6 +125,14 @@ pub(crate) fn resolve_real_sign_direct(
             }
             if let Some(sign) = value.quadratic_tower_sign() {
                 crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "quadratic-tower");
+                return PredicateOutcome::decided(
+                    map_real_sign(sign),
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
+            }
+            if let Some(sign) = value.radical_tower_sign() {
+                crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "radical-tower");
                 return PredicateOutcome::decided(
                     map_real_sign(sign),
                     Certainty::Exact,
