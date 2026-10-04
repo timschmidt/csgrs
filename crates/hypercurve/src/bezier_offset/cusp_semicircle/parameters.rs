@@ -2819,6 +2819,27 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 };
                 return source.selected_fiber_analytic_point(policy);
             }
+            // The contact radius is a signed left normal of `parallel` at
+            // `parameter`, so the fillet contact is that parallel's point.
+            Self::SelectedParallelContact {
+                parallel,
+                parameter,
+                policy: retained,
+                ..
+            } => {
+                if !policy.accepts_retained_policy(*retained) {
+                    return Err(CurveError::Topology(
+                        "a selected parallel contact point used a different predicate policy"
+                            .into(),
+                    ));
+                }
+                BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                    parallel.clone(),
+                    parameter,
+                    Real::zero(),
+                    policy,
+                )
+            }
             _ => None,
         })
     }

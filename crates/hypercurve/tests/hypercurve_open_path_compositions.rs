@@ -654,12 +654,12 @@ fn chamfered_line_arc_stroke_round_trips() {
 /// A bevel stroke of a filleted hyperbola/hyperbola path (two weight-2
 /// rational quadratics). The stroke alone completes in about 24 s. After the
 /// fillet trims both hyperbolas at algebraic tangency parameters, the
-/// stroke's tangent junctions are certified without exact point equality,
-/// but regularizing its bands pairs a join chord with a parallel whose
-/// recursive projective intersection kernel declines, so the stroke is
-/// blocked as Unsupported.
+/// stroke's tangent junctions and its join chord/parallel pairs are
+/// certified, but regularizing its bands then isolates a selected
+/// cusp-semicircle/parallel fiber through a local Sturm sequence that did
+/// not finish within fifteen minutes.
 #[test]
-#[ignore = "open: recursive chord/parallel intersection declines for fillet-trimmed hyperbolas"]
+#[ignore = "open: selected cusp-semicircle/parallel fiber isolation is too slow for fillet-trimmed hyperbolas"]
 fn bevel_stroke_of_a_filleted_hyperbola_pair_completes() {
     let seed = Seed {
         x: 3,
