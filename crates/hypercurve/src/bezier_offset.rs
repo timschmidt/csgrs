@@ -194,12 +194,12 @@ use hypersolve::{
 };
 use hypersolve::{
     AlgebraicRootMobiusTransformStatus, AlgebraicRootRepresentation, AlgebraicRootSquareRootStatus,
-    DenseTensorPolynomial, IsolatedRootInterval, OrderedFieldPolynomialContext,
-    OrderedFieldRootIsolationConfig, OrderedFieldRootIsolationStatus,
-    algebraic_root_affine_relation, divide_univariate_polynomial_exact,
-    greatest_common_divisor_univariate_polynomials_exact, isolate_ordered_field_polynomial_roots,
-    project_selected_tensor_fiber_via_tagged_norm, square_root_algebraic_root_representation,
-    transform_algebraic_root_mobius, validate_algebraic_root_representation,
+    DenseTensorPolynomial, IsolatedRootInterval, OrderedFieldRootIsolationConfig,
+    OrderedFieldRootIsolationStatus, algebraic_root_affine_relation,
+    divide_univariate_polynomial_exact, greatest_common_divisor_univariate_polynomials_exact,
+    isolate_ordered_field_polynomial_roots, project_selected_tensor_fiber_via_tagged_norm,
+    square_root_algebraic_root_representation, transform_algebraic_root_mobius,
+    validate_algebraic_root_representation,
 };
 use hypersolve::{
     BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
@@ -11460,14 +11460,14 @@ impl BezierParallelPointQuery2<'_> {
         let common = match hypersolve::ordered_field_polynomial_gcd(
             &equations[0],
             &equations[1],
-            &mut BezierRecursiveOrderedFieldContext2 {
+            &mut RecursiveQuadraticOrderedFieldContext {
                 field: field.clone(),
                 policy: strict,
             },
         ) {
             Ok(common) => common,
-            Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
-            Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+            Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
+            Err(RecursiveQuadraticOrderedFieldError::Uncertain) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         };

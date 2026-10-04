@@ -2160,7 +2160,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let mut roots = vec![(endpoint_branch, endpoint_scalar, Some(location))];
             if derivative_sign != RealSign::Zero {
-                let mut context = BezierRecursiveOrderedFieldContext2 {
+                let mut context = RecursiveQuadraticOrderedFieldContext {
                     field: parent_field.clone(),
                     policy: policy.strict_counterpart(),
                 };
@@ -2170,8 +2170,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     &mut context,
                 ) {
                     Ok(quotient) => quotient,
-                    Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
-                    Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+                    Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
+                    Err(RecursiveQuadraticOrderedFieldError::Uncertain) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                     }
                 };

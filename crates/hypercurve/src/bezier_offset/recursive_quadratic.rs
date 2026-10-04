@@ -1739,116 +1739,6 @@ pub(super) fn recursive_projective_polynomial_sign_at_parameter(
     .sign(policy)
 }
 
-pub(super) enum BezierRecursiveOrderedFieldError2 {
-    Curve(CurveError),
-    Uncertain,
-}
-
-/// Leading-term eliminations a bounded pass spends on one recursive-field
-/// selected-root replay. A gcd of two quartic-scale relations needs about
-/// ten; degree-twelve tower relations against degree-fourteen queries, whose
-/// coefficients grow several-fold per elimination, decline to the complete
-/// promotion route.
-const BOUNDED_RECURSIVE_REMAINDER_ELIMINATIONS: usize = 10;
-
-pub(super) struct BezierRecursiveOrderedFieldContext2 {
-    pub(super) field: RecursiveQuadraticField,
-    pub(super) policy: CurveContext,
-}
-
-impl OrderedFieldPolynomialContext<RecursiveQuadraticValue>
-    for BezierRecursiveOrderedFieldContext2
-{
-    type Error = BezierRecursiveOrderedFieldError2;
-
-    fn constant(&mut self, value: &Real) -> Result<RecursiveQuadraticValue, Self::Error> {
-        self.field.constant(value.clone()).ok_or_else(|| {
-            BezierRecursiveOrderedFieldError2::Curve(CurveError::Topology(
-                "a recursive polynomial isolator lost its coefficient-field constant".into(),
-            ))
-        })
-    }
-
-    fn add(
-        &mut self,
-        left: &RecursiveQuadraticValue,
-        right: &RecursiveQuadraticValue,
-    ) -> Result<RecursiveQuadraticValue, Self::Error> {
-        left.add(right).ok_or_else(|| {
-            BezierRecursiveOrderedFieldError2::Curve(CurveError::Topology(
-                "a recursive polynomial isolator crossed coefficient fields".into(),
-            ))
-        })
-    }
-
-    fn multiply(
-        &mut self,
-        left: &RecursiveQuadraticValue,
-        right: &RecursiveQuadraticValue,
-    ) -> Result<RecursiveQuadraticValue, Self::Error> {
-        left.multiply(right).ok_or_else(|| {
-            BezierRecursiveOrderedFieldError2::Curve(CurveError::Topology(
-                "a recursive polynomial product exceeded its coefficient field".into(),
-            ))
-        })
-    }
-
-    fn scale(
-        &mut self,
-        value: &RecursiveQuadraticValue,
-        scale: &Real,
-    ) -> Result<RecursiveQuadraticValue, Self::Error> {
-        value.scale(scale).ok_or_else(|| {
-            BezierRecursiveOrderedFieldError2::Curve(CurveError::Topology(
-                "a recursive polynomial isolator exceeded its coefficient field".into(),
-            ))
-        })
-    }
-
-    fn normalize_positive_scale(&mut self, coefficients: &mut [RecursiveQuadraticValue]) {
-        RecursiveQuadraticValue::normalize_positive_scale(coefficients);
-    }
-
-    fn sign(&mut self, value: &RecursiveQuadraticValue) -> Result<std::cmp::Ordering, Self::Error> {
-        // The shared isolator and remainder engine consume these signs as
-        // exact algebraic evidence, including polynomial degree decisions.
-        match self
-            .policy
-            .strict_predicate_pass(|| value.sign(&self.policy))
-            .map_err(BezierRecursiveOrderedFieldError2::Curve)?
-        {
-            Classification::Decided(RealSign::Negative) => Ok(std::cmp::Ordering::Less),
-            Classification::Decided(RealSign::Zero) => Ok(std::cmp::Ordering::Equal),
-            Classification::Decided(RealSign::Positive) => Ok(std::cmp::Ordering::Greater),
-            Classification::Uncertain(_) => Err(BezierRecursiveOrderedFieldError2::Uncertain),
-        }
-    }
-
-    fn remainder_elimination_budget(&self) -> Option<usize> {
-        // Tower coefficients compound at every elimination; a bounded pass
-        // keeps only replays of low-degree relations.
-        self.policy
-            .has_bounded_exact_predicate_budget()
-            .then_some(BOUNDED_RECURSIVE_REMAINDER_ELIMINATIONS)
-    }
-
-    fn sign_if_separated(
-        &mut self,
-        value: &RecursiveQuadraticValue,
-    ) -> Result<Option<std::cmp::Ordering>, Self::Error> {
-        if value.is_coefficientwise_stored_zero() || value.is_structurally_zero() {
-            return Ok(Some(std::cmp::Ordering::Equal));
-        }
-        Ok(value
-            .bounded_or_exact_real_witness_sign()
-            .map(|sign| match sign {
-                RealSign::Negative => std::cmp::Ordering::Less,
-                RealSign::Zero => std::cmp::Ordering::Equal,
-                RealSign::Positive => std::cmp::Ordering::Greater,
-            }))
-    }
-}
-
 /// Keeps simple roots in the already-selected recursive coefficient field.
 /// The shared Hypersolve Bernstein engine is division-free; an unresolved
 /// repeated root merely declines so the complete dense projection below can
@@ -1859,7 +1749,7 @@ pub(super) fn recursive_quadratic_polynomial_local_parameters(
     bounds: [&Real; 2],
     policy: &CurveContext,
 ) -> CurveResult<Option<Vec<CurveParameter2>>> {
-    let mut context = BezierRecursiveOrderedFieldContext2 {
+    let mut context = RecursiveQuadraticOrderedFieldContext {
         field: field.clone(),
         policy: *policy,
     };
@@ -1878,14 +1768,14 @@ pub(super) fn recursive_quadratic_polynomial_local_parameters(
         &mut context,
     ) {
         Ok(report) => report,
-        Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+        Err(RecursiveQuadraticOrderedFieldError::Uncertain) => {
             #[cfg(test)]
             if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
                 eprintln!("recursive polynomial local isolation stage=sign-uncertain");
             }
             return Ok(None);
         }
-        Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+        Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
     };
     #[cfg(test)]
     if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {

@@ -800,7 +800,7 @@ impl BezierRecursiveMonotoneParameter2 {
         let Some(query) = recursive_quadratic_real_polynomial(&self.system.field, &composed) else {
             return Ok(None);
         };
-        let mut context = BezierRecursiveOrderedFieldContext2 {
+        let mut context = RecursiveQuadraticOrderedFieldContext {
             field: self.system.field.clone(),
             policy: *policy,
         };
@@ -816,8 +816,8 @@ impl BezierRecursiveMonotoneParameter2 {
             &mut context,
         ) {
             Ok(vanishes) => Ok(vanishes),
-            Err(BezierRecursiveOrderedFieldError2::Uncertain) => Ok(None),
-            Err(BezierRecursiveOrderedFieldError2::Curve(error)) => Err(error),
+            Err(RecursiveQuadraticOrderedFieldError::Uncertain) => Ok(None),
+            Err(RecursiveQuadraticOrderedFieldError::Context(error)) => Err(error),
         }
     }
 
@@ -1532,7 +1532,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         {
             return Ok(None);
         }
-        let mut context = BezierRecursiveOrderedFieldContext2 {
+        let mut context = RecursiveQuadraticOrderedFieldContext {
             field: self.field.clone(),
             policy: *policy,
         };
@@ -1548,8 +1548,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             &mut context,
         ) {
             Ok(vanishes) => Ok(vanishes),
-            Err(BezierRecursiveOrderedFieldError2::Uncertain) => Ok(None),
-            Err(BezierRecursiveOrderedFieldError2::Curve(error)) => Err(error),
+            Err(RecursiveQuadraticOrderedFieldError::Uncertain) => Ok(None),
+            Err(RecursiveQuadraticOrderedFieldError::Context(error)) => Err(error),
         }
     }
 
@@ -1632,7 +1632,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                     return Ok(Classification::Decided(sign));
                 }
             }
-            let mut context = BezierRecursiveOrderedFieldContext2 {
+            let mut context = RecursiveQuadraticOrderedFieldContext {
                 field: self.field.clone(),
                 policy: *policy,
             };
@@ -1657,8 +1657,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                         "a retained polynomial root lost its defining relation".into(),
                     ));
                 }
-                Err(BezierRecursiveOrderedFieldError2::Uncertain) => None,
-                Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+                Err(RecursiveQuadraticOrderedFieldError::Uncertain) => None,
+                Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
             }
         } else {
             None
@@ -1738,7 +1738,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 // defining polynomial. Intervals cannot prove that equality;
                 // ask the shared native-field authority before deeper
                 // bisection or global scalar promotion.
-                let mut context = BezierRecursiveOrderedFieldContext2 {
+                let mut context = RecursiveQuadraticOrderedFieldContext {
                     field: self.field.clone(),
                     policy: *policy,
                 };
@@ -1771,8 +1771,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                             std::cmp::Ordering::Greater => RealSign::Positive,
                         }));
                     }
-                    Ok(None) | Err(BezierRecursiveOrderedFieldError2::Uncertain) => {}
-                    Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+                    Ok(None) | Err(RecursiveQuadraticOrderedFieldError::Uncertain) => {}
+                    Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
                 }
             }
         }
@@ -2142,7 +2142,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         };
         let mut coefficients = Cow::Borrowed(coefficients);
         let mut owned_roots: Vec<CurveParameter2> = Vec::new();
-        let mut context = BezierRecursiveOrderedFieldContext2 {
+        let mut context = RecursiveQuadraticOrderedFieldContext {
             field: self.field.clone(),
             policy: policy.strict_counterpart(),
         };
@@ -2170,8 +2170,8 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 &mut context,
             ) {
                 Ok(quotient) => Cow::Owned(quotient),
-                Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
-                Err(BezierRecursiveOrderedFieldError2::Uncertain) => return Ok(None),
+                Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
+                Err(RecursiveQuadraticOrderedFieldError::Uncertain) => return Ok(None),
             };
             owned_roots.push(parameter);
             #[cfg(feature = "dispatch-trace")]
@@ -2849,7 +2849,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
         )>,
     > {
         let mut coefficients = self.incidence.clone();
-        let mut field = BezierRecursiveOrderedFieldContext2 {
+        let mut field = RecursiveQuadraticOrderedFieldContext {
             field: self.field.clone(),
             policy: policy.strict_counterpart(),
         };
@@ -2913,8 +2913,8 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
                 &mut field,
             ) {
                 Ok(coefficients) => coefficients,
-                Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
-                Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+                Err(RecursiveQuadraticOrderedFieldError::Context(error)) => return Err(error),
+                Err(RecursiveQuadraticOrderedFieldError::Uncertain) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
             };

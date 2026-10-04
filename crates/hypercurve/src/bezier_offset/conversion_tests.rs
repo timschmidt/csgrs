@@ -25531,13 +25531,14 @@ fn recursive_ordered_field_isolation_does_not_guess_polynomial_degree() {
             isolated.is_none(),
             "{policy:?}: an unresolved leading coefficient cannot be deleted to publish an exact half: {isolated:?}"
         );
-        let mut context = BezierRecursiveOrderedFieldContext2 {
+        use hypersolve::OrderedFieldPolynomialContext;
+        let mut context = RecursiveQuadraticOrderedFieldContext {
             field: field.clone(),
             policy,
         };
         assert!(matches!(
             context.sign(&coefficients[2]),
-            Err(BezierRecursiveOrderedFieldError2::Uncertain)
+            Err(RecursiveQuadraticOrderedFieldError::Uncertain)
         ));
     }
 }
