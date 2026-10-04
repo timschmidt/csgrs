@@ -140,6 +140,8 @@ struct CachedApproximation {
 struct CachedEvaluation {
     approximation: Option<CachedApproximation>,
     quadratic_tower: Option<Box<Tower>>,
+    /// The iterated radical-tower sign reduction declined this root.
+    radical_tower_declined: bool,
 }
 
 /// Lazily allocated synchronized evaluation cache. Approximation-only nodes
@@ -256,6 +258,21 @@ impl EvaluationCache {
             .read()
             .unwrap_or_else(|error| error.into_inner());
         guard.quadratic_tower.as_deref().cloned()
+    }
+
+    fn radical_tower_declined(&self) -> bool {
+        self.cell().is_some_and(|cell| {
+            cell.read()
+                .unwrap_or_else(|error| error.into_inner())
+                .radical_tower_declined
+        })
+    }
+
+    fn mark_radical_tower_declined(&self) {
+        self.cell_or_init()
+            .write()
+            .unwrap_or_else(|error| error.into_inner())
+            .radical_tower_declined = true;
     }
 
     fn store_quadratic_tower(&self, tower: &Tower) {
