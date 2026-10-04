@@ -1585,13 +1585,11 @@ fn filleted_boolean_miter_erosion_completes() {
 /// Bevel and round dilations by 1/4 followed by a round erosion by 1/2.
 /// The net zero offset returns seed pieces as zero-distance parallels,
 /// trimmed at irrational source parameters where an adjacent bevel offset
-/// line meets them. Each side names that shared corner by its own radical
-/// expression. Reconstructing the result maps the conic's corner onto the
-/// line; the parameter is exactly 0 or 1 but undecidable, so the line-image
-/// shortcut declines and the general resultant meets the same undecidable
-/// zero (RealSign).
+/// line meets them, so each side names the shared corner by its own nested
+/// radical expression. Reconstruction maps that corner onto the line, and
+/// the exact iterated square-root tower sign decides the resulting zero
+/// that bounded refinement cannot.
 #[test]
-#[ignore = "open: a shared corner named by two radical expressions is undecidable"]
 fn bevel_round_dilations_then_round_erosion_reconstructs() {
     let seeds = [
         Seed {

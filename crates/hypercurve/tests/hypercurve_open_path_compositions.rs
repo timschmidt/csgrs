@@ -552,12 +552,12 @@ fn stroke_of_a_fillet_at_its_radius_completes() {
 }
 
 /// A miter stroke of a four-edge line/arc/rational-cubic/NURBS path. The
-/// stroke completes, but rebuilding its exported boundary pairs a rational
-/// Bezier with a quadratic piece whose relation needs an undecidable sign
-/// over opaque radical coordinates, so reconstruction is blocked by
-/// RealSign.
+/// stroke completes, and rebuilding its exported boundary pairs a rational
+/// Bezier with a quadratic piece whose relation needs a sign over nested
+/// radical coordinates; the exact iterated square-root tower sign decides it.
+/// The round trip takes about two minutes.
 #[test]
-#[ignore = "open: rational/quadratic stroke boundary pair over opaque radical coordinates"]
+#[ignore = "slow: the mixed-family miter stroke round trip takes about two minutes"]
 fn mixed_family_miter_stroke_round_trips() {
     let seed = Seed {
         x: 0,
