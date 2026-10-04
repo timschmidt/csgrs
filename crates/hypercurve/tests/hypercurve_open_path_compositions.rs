@@ -1112,3 +1112,33 @@ fn stroke_fillet_stroke_of_a_cubic_arc_path_completes() {
     )
     .unwrap();
 }
+
+/// A round stroke of a filleted NURBS/NURBS path (weight 6). Regularizing
+/// the stroke bands isolates the round join's selected-fiber intersections
+/// with the neighbouring parallel; the fillet's tangent junction leaves a
+/// double root that Bernstein subdivision cannot separate, and the local
+/// Sturm fallback did not finish within fourteen minutes.
+#[test]
+#[ignore = "open: tangent-junction double root in selected cusp-semicircle/parallel isolation"]
+fn round_stroke_of_a_filleted_nurbs_pair_completes() {
+    let seed = Seed {
+        x: -3,
+        y: 4,
+        edges: vec![
+            Edge {
+                family: 7,
+                dx: 5,
+                dy: 3,
+                outward: -2,
+            },
+            Edge {
+                family: 7,
+                dx: 8,
+                dy: -2,
+                outward: 1,
+            },
+        ],
+        weight: 6,
+    };
+    run_sequence(&seed, &[Step::Fillet(1, 2), Step::Stroke(1, 0)]).unwrap();
+}
