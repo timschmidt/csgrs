@@ -1624,3 +1624,56 @@ fn bevel_round_dilations_then_round_erosion_reconstructs() {
     )
     .unwrap();
 }
+
+/// A nested pool, two Booleans and two round erosions by 1/2. The second
+/// erosion compares offset-of-offset corners whose coordinates combine more
+/// than six distinct square roots; the iterated square-root tower sign
+/// decides their equality once it admits that many generators. The sequence
+/// takes about seventy-five seconds.
+#[test]
+#[ignore = "slow: two round erosions after Booleans take about seventy-five seconds"]
+fn booleans_then_double_round_erosion_completes() {
+    let seeds = [
+        Seed {
+            x: 0,
+            y: 0,
+            width: 8,
+            height: 6,
+            lower: 0,
+            upper: 0,
+            curvature: 1,
+            weight: 1,
+        },
+        Seed {
+            x: -6,
+            y: -2,
+            width: 16,
+            height: 6,
+            lower: 0,
+            upper: 1,
+            curvature: 1,
+            weight: 1,
+        },
+        Seed {
+            x: 0,
+            y: 0,
+            width: 8,
+            height: 6,
+            lower: 0,
+            upper: 0,
+            curvature: 1,
+            weight: 1,
+        },
+    ];
+    run_sequence(
+        &seeds,
+        &[
+            Step::Boolean(0, 0, 0),
+            Step::Boolean(8, 1, 1),
+            Step::Offset(5, -2, 0),
+            Step::Offset(6, -2, 0),
+        ],
+        true,
+    )
+    .unwrap();
+}
