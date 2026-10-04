@@ -2254,6 +2254,124 @@ impl RecursiveQuadraticForeignBaseEmbedding {
     }
 }
 
+/// Failure of an ordered-field polynomial computation over one recursive
+/// quadratic coefficient field.
+#[derive(Debug)]
+pub enum RecursiveQuadraticOrderedFieldError<E> {
+    /// The selected-algebra context or a field invariant failed.
+    Context(E),
+    /// A coefficient sign stayed undecided under the context's policy.
+    Uncertain,
+}
+
+/// Leading-term eliminations a bounded pass spends on one recursive-field
+/// selected-root replay. A gcd of two quartic-scale relations needs about
+/// ten; degree-twelve tower relations against degree-fourteen queries, whose
+/// coefficients grow several-fold per elimination, decline to the caller's
+/// complete route.
+const BOUNDED_RECURSIVE_REMAINDER_ELIMINATIONS: usize = 10;
+
+/// Ordered-field polynomial arithmetic over one recursive quadratic tower,
+/// for the shared isolator and remainder engine in [`crate::ordered_field_roots`].
+///
+/// Coefficient signs are exact algebraic evidence (they also decide degrees),
+/// so each one is taken in the context's strict pass.
+pub struct RecursiveQuadraticOrderedFieldContext<C> {
+    /// The tower holding every coefficient.
+    pub field: RecursiveQuadraticField,
+    /// The selected-algebra context supplying sign policy and passes.
+    pub policy: C,
+}
+
+impl<C: SelectedAlgebraContext> RecursiveQuadraticOrderedFieldContext<C> {
+    fn invariant(message: &str) -> RecursiveQuadraticOrderedFieldError<C::Error> {
+        RecursiveQuadraticOrderedFieldError::Context(FieldInvariantError(message.to_owned()).into())
+    }
+}
+
+impl<C: SelectedAlgebraContext> OrderedFieldPolynomialContext<RecursiveQuadraticValue>
+    for RecursiveQuadraticOrderedFieldContext<C>
+{
+    type Error = RecursiveQuadraticOrderedFieldError<C::Error>;
+
+    fn constant(&mut self, value: &Real) -> Result<RecursiveQuadraticValue, Self::Error> {
+        self.field.constant(value.clone()).ok_or_else(|| {
+            Self::invariant("a recursive polynomial isolator lost its coefficient-field constant")
+        })
+    }
+
+    fn add(
+        &mut self,
+        left: &RecursiveQuadraticValue,
+        right: &RecursiveQuadraticValue,
+    ) -> Result<RecursiveQuadraticValue, Self::Error> {
+        left.add(right).ok_or_else(|| {
+            Self::invariant("a recursive polynomial isolator crossed coefficient fields")
+        })
+    }
+
+    fn multiply(
+        &mut self,
+        left: &RecursiveQuadraticValue,
+        right: &RecursiveQuadraticValue,
+    ) -> Result<RecursiveQuadraticValue, Self::Error> {
+        left.multiply(right).ok_or_else(|| {
+            Self::invariant("a recursive polynomial product exceeded its coefficient field")
+        })
+    }
+
+    fn scale(
+        &mut self,
+        value: &RecursiveQuadraticValue,
+        scale: &Real,
+    ) -> Result<RecursiveQuadraticValue, Self::Error> {
+        value.scale(scale).ok_or_else(|| {
+            Self::invariant("a recursive polynomial isolator exceeded its coefficient field")
+        })
+    }
+
+    fn normalize_positive_scale(&mut self, coefficients: &mut [RecursiveQuadraticValue]) {
+        RecursiveQuadraticValue::normalize_positive_scale(coefficients);
+    }
+
+    fn sign(&mut self, value: &RecursiveQuadraticValue) -> Result<std::cmp::Ordering, Self::Error> {
+        match self
+            .policy
+            .strict_predicate_pass(|| value.sign(&self.policy))
+            .map_err(RecursiveQuadraticOrderedFieldError::Context)?
+        {
+            Classification::Decided(RealSign::Negative) => Ok(std::cmp::Ordering::Less),
+            Classification::Decided(RealSign::Zero) => Ok(std::cmp::Ordering::Equal),
+            Classification::Decided(RealSign::Positive) => Ok(std::cmp::Ordering::Greater),
+            Classification::Uncertain(_) => Err(RecursiveQuadraticOrderedFieldError::Uncertain),
+        }
+    }
+
+    fn remainder_elimination_budget(&self) -> Option<usize> {
+        // Tower coefficients compound at every elimination; a bounded pass
+        // keeps only replays of low-degree relations.
+        self.policy
+            .has_bounded_exact_predicate_budget()
+            .then_some(BOUNDED_RECURSIVE_REMAINDER_ELIMINATIONS)
+    }
+
+    fn sign_if_separated(
+        &mut self,
+        value: &RecursiveQuadraticValue,
+    ) -> Result<Option<std::cmp::Ordering>, Self::Error> {
+        if value.is_coefficientwise_stored_zero() || value.is_structurally_zero() {
+            return Ok(Some(std::cmp::Ordering::Equal));
+        }
+        Ok(value
+            .bounded_or_exact_real_witness_sign()
+            .map(|sign| match sign {
+                RealSign::Negative => std::cmp::Ordering::Less,
+                RealSign::Zero => std::cmp::Ordering::Equal,
+                RealSign::Positive => std::cmp::Ordering::Greater,
+            }))
+    }
+}
+
 pub fn recursive_quadratic_bases_equivalent(
     first: &RecursiveQuadraticBaseField,
     second: &RecursiveQuadraticBaseField,
