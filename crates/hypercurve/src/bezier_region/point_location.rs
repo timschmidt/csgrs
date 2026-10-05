@@ -144,7 +144,7 @@ pub(super) fn subcurve_control_hull_contains_point(
         }
     };
     match bounds {
-        Classification::Decided(bounds) => bounds.contains_point(point, policy),
+        Classification::Decided(bounds) => bounds.contains_point_with_policy(point, policy),
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
 }
@@ -1519,7 +1519,7 @@ pub(super) fn classify_point_against_retained_loop_with_fill_rule(
         matches!(
             retained_loop_query_bounds(boundary_loop, policy),
             Classification::Decided(bounds)
-                if bounds.contains_point(point, &CurveContext::STRICT)
+                if bounds.contains_point_with_policy(point, &CurveContext::STRICT)
                     == Classification::Decided(false)
         )
     }) {
@@ -2533,7 +2533,7 @@ pub(super) fn retained_loops_have_pairwise_disjoint_bounds(
             }
         };
         for previous in &bounds {
-            match previous.overlaps(&current, policy) {
+            match previous.overlaps_with_policy(&current, policy) {
                 Classification::Decided(false) => {}
                 Classification::Decided(true) => {
                     #[cfg(feature = "dispatch-trace")]

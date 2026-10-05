@@ -2,11 +2,17 @@
 
 use hypercurve::CurveContext;
 
+/// Whether `policy` selects the APPROXIMATE_512 terminal; a strict preview
+/// context runs directly.
+fn selects_approximate(policy: &CurveContext) -> bool {
+    policy.predicate_policy() != CurveContext::STRICT.predicate_policy()
+}
+
 /// Runs a principal exact operation directly under STRICT, or inside
 /// `hypercurve::provisional` for any other policy.
 #[allow(dead_code)]
 pub fn under<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
-    if *policy == CurveContext::STRICT {
+    if !selects_approximate(policy) {
         operation()
     } else {
         hypercurve::provisional(operation).into_unverified()
@@ -20,7 +26,7 @@ pub fn certified_under<T, E>(
     policy: &CurveContext,
     operation: impl FnOnce() -> Result<T, E>,
 ) -> Option<T> {
-    if *policy == CurveContext::STRICT {
+    if !selects_approximate(policy) {
         operation().ok()
     } else {
         hypercurve::provisional(operation).certified()?.ok()
@@ -70,4 +76,14 @@ pub fn under_classified<T>(
 ) -> hypercurve::Classification<T> {
     under_classified_result(policy, operation)
         .unwrap_or_else(|error| panic!("exact predicate rejected its input: {error:?}"))
+}
+
+/// Runs an exact principal predicate under `policy`, keeping an undecided
+/// predicate as `Classification::Uncertain`.
+#[allow(dead_code)]
+pub fn under_outcome_classification<T>(
+    policy: &CurveContext,
+    operation: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
+) -> hypercurve::Classification<T> {
+    under_classified(policy, operation)
 }

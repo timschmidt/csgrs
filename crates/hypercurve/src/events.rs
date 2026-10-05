@@ -99,7 +99,23 @@ impl ContourIntersectionSet {
     }
 
     /// Returns events for one segment sorted by that segment's local parameter.
-    pub fn sorted_events_for_segment<'a>(
+    pub fn sorted_events_for_segment(
+        &self,
+        operand: ContourOperand,
+        segment_index: usize,
+    ) -> crate::ExactCurveResult<Vec<&ContourIntersection>> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            self.sorted_events_for_segment_with_policy(
+                operand,
+                segment_index,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::sorted_events_for_segment`] under an explicit predicate policy.
+    pub(crate) fn sorted_events_for_segment_with_policy<'a>(
         &'a self,
         operand: ContourOperand,
         segment_index: usize,
@@ -636,7 +652,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
             let relation = if aabb_overlap_certified {
                 a_segment.intersect_segment_with_certified_aabb_overlap(b_segment, policy)?
             } else {
-                a_segment.intersect_segment(b_segment, policy)?
+                a_segment.intersect_segment_with_policy(b_segment, policy)?
             };
             append_segment_relation_events(
                 &mut events,
@@ -661,7 +677,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
                     continue;
                 }
 
-                let relation = a_segment.intersect_segment(b_segment, policy)?;
+                let relation = a_segment.intersect_segment_with_policy(b_segment, policy)?;
                 append_segment_relation_events(
                     &mut events,
                     a_segment_index,
@@ -1227,8 +1243,8 @@ pub(crate) fn intersect_contour_self_with_cached_aabbs(
                 continue;
             }
 
-            let relation =
-                segments[first_index].intersect_segment(&segments[second_index], policy)?;
+            let relation = segments[first_index]
+                .intersect_segment_with_policy(&segments[second_index], policy)?;
             let mut pair_events = Vec::new();
             append_segment_relation_events(
                 &mut pair_events,

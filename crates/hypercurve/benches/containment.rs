@@ -47,7 +47,7 @@ fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let mut outside_count = 0_usize;
 
     for _ in 0..iterations {
-        match contour.classify_point(&point, &policy) {
+        match crate::support::under_classified(&policy, || contour.classify_point(&point)) {
             Classification::Decided(ContourPointLocation::Outside) => {
                 outside_count += black_box(1);
             }
@@ -66,14 +66,14 @@ fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
 fn bench_batched_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let contour = rectangle(0, 0, 10, 10);
     let points = vec![p(100, 100); 64];
-    let policy = CurveContext::STRICT;
+    let _policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
     for _ in 0..iterations {
-        for result in Contour2::classify_points(&contour, black_box(&points), &policy) {
+        for result in contour.classify_points(black_box(&points)) {
             match result {
-                Classification::Decided(ContourPointLocation::Outside) => {
+                Ok(ContourPointLocation::Outside) => {
                     outside_count += black_box(1);
                 }
                 other => panic!("batched contour bbox miss expected outside, got {other:?}"),

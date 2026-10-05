@@ -1,8 +1,7 @@
 #![cfg(feature = "dispatch-trace")]
+mod support;
 
-use hypercurve::{
-    BulgeVertex2, Contour2, CurveContext, LineSeg2, Point2, Real, StraightSkeletonStage2,
-};
+use hypercurve::{BulgeVertex2, Contour2, LineSeg2, Point2, Real, StraightSkeletonStage2};
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -57,10 +56,8 @@ fn public_straight_skeleton_emits_correlated_exact_path_trace() {
     .unwrap();
 
     hyperreal::dispatch_trace::reset();
-    let evidence = hyperreal::dispatch_trace::with_recording(|| {
-        contour.straight_skeleton(&CurveContext::STRICT)
-    })
-    .unwrap();
+    let evidence =
+        hyperreal::dispatch_trace::with_recording(|| contour.straight_skeleton()).unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
 
     let summary = hyperreal::dispatch_trace::take_trace().correlation_summary();

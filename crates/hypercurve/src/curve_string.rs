@@ -172,6 +172,30 @@ impl CurveString2 {
         other: &Self,
         first_endpoint: CurveStringEndpoint2,
         second_endpoint: CurveStringEndpoint2,
+    ) -> crate::ExactCurveResult<bool> {
+        self.endpoint_connection_with_policy(
+            other,
+            first_endpoint,
+            second_endpoint,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Classification,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+        })
+    }
+
+    /// [`Self::endpoint_connection`] under an explicit predicate policy.
+    pub(crate) fn endpoint_connection_with_policy(
+        &self,
+        other: &Self,
+        first_endpoint: CurveStringEndpoint2,
+        second_endpoint: CurveStringEndpoint2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         Ok(self
@@ -181,6 +205,23 @@ impl CurveString2 {
 
     /// Links two open curve strings when exactly one endpoint pair is certified.
     pub fn link_connected_endpoints(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<Option<CurveString2>> {
+        self.link_connected_endpoints_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+            })
+    }
+
+    /// [`Self::link_connected_endpoints`] under an explicit predicate policy.
+    pub(crate) fn link_connected_endpoints_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -213,6 +254,25 @@ impl CurveString2 {
     /// Links an ordered sequence of open curve strings by certified endpoints.
     pub fn link_ordered_connected_endpoints(
         curve_strings: impl IntoIterator<Item = Self>,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        Self::link_ordered_connected_endpoints_with_policy(
+            curve_strings,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Construction,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+        })
+    }
+
+    /// [`Self::link_ordered_connected_endpoints`] under an explicit predicate policy.
+    pub(crate) fn link_ordered_connected_endpoints_with_policy(
+        curve_strings: impl IntoIterator<Item = Self>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut iter = curve_strings.into_iter();
@@ -220,7 +280,7 @@ impl CurveString2 {
             return Err(CurveError::EmptyCurveString);
         };
         for next in iter {
-            accumulated = match accumulated.link_connected_endpoints(&next, policy)? {
+            accumulated = match accumulated.link_connected_endpoints_with_policy(&next, policy)? {
                 Classification::Decided(Some(linked)) => linked,
                 Classification::Decided(None) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -237,13 +297,56 @@ impl CurveString2 {
     pub fn connect_end_to_start_with_line(
         &self,
         other: &Self,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.connect_end_to_start_with_line_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+            })
+    }
+
+    /// [`Self::connect_end_to_start_with_line`] under an explicit predicate policy.
+    pub(crate) fn connect_end_to_start_with_line_with_policy(
+        &self,
+        other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
-        self.connect_endpoints_with_line(other, CurveStringLinkKind2::FirstEndToSecondStart, policy)
+        self.connect_endpoints_with_line_with_policy(
+            other,
+            CurveStringLinkKind2::FirstEndToSecondStart,
+            policy,
+        )
     }
 
     /// Connects a selected endpoint pair with an exact line segment.
     pub fn connect_endpoints_with_line(
+        &self,
+        other: &Self,
+        kind: CurveStringLinkKind2,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.connect_endpoints_with_line_with_policy(
+            other,
+            kind,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Construction,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+        })
+    }
+
+    /// [`Self::connect_endpoints_with_line`] under an explicit predicate policy.
+    pub(crate) fn connect_endpoints_with_line_with_policy(
         &self,
         other: &Self,
         kind: CurveStringLinkKind2,
@@ -263,6 +366,26 @@ impl CurveString2 {
 
     /// Connects the uniquely nearest certified-disconnected endpoint pair.
     pub fn connect_nearest_endpoints_with_line(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.connect_nearest_endpoints_with_line_with_policy(
+            other,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Construction,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+        })
+    }
+
+    /// [`Self::connect_nearest_endpoints_with_line`] under an explicit predicate policy.
+    pub(crate) fn connect_nearest_endpoints_with_line_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -314,7 +437,21 @@ impl CurveString2 {
     /// real authored backtracking topology. If a line-line pair cannot be
     /// classified under the active policy, the operation returns an unresolved
     /// evidence instead of guessing a merge boundary.
-    pub fn merge_adjacent_collinear_lines(
+    pub fn merge_adjacent_collinear_lines(&self) -> crate::ExactCurveResult<CurveString2> {
+        self.merge_adjacent_collinear_lines_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+            })
+    }
+
+    /// [`Self::merge_adjacent_collinear_lines`] under an explicit predicate policy.
+    pub(crate) fn merge_adjacent_collinear_lines_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
@@ -378,6 +515,24 @@ impl CurveString2 {
         &self,
         start: CurveStringTrimPoint2,
         end: CurveStringTrimPoint2,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.trim_between_parameters_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Subdivision,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+            })
+    }
+
+    /// [`Self::trim_between_parameters`] under an explicit predicate policy.
+    pub(crate) fn trim_between_parameters_with_policy(
+        &self,
+        start: CurveStringTrimPoint2,
+        end: CurveStringTrimPoint2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         validate_trim_point(self, &start, policy)?;
@@ -427,6 +582,25 @@ impl CurveString2 {
         &self,
         start_point: &Point2,
         end_point: &Point2,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.trim_between_points_with_policy(
+            start_point,
+            end_point,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Subdivision, cause)
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+        })
+    }
+
+    /// [`Self::trim_between_points`] under an explicit predicate policy.
+    pub(crate) fn trim_between_points_with_policy(
+        &self,
+        start_point: &Point2,
+        end_point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let start = match locate_trim_point(self, start_point, policy)? {
@@ -449,6 +623,25 @@ impl CurveString2 {
 
     /// Trims this open curve string between exact point intersections with two cutters.
     pub fn trim_between_curve_intersections(
+        &self,
+        start_cutter: &Self,
+        end_cutter: &Self,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.trim_between_curve_intersections_with_policy(
+            start_cutter,
+            end_cutter,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Subdivision, cause)
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+        })
+    }
+
+    /// [`Self::trim_between_curve_intersections`] under an explicit predicate policy.
+    pub(crate) fn trim_between_curve_intersections_with_policy(
         &self,
         start_cutter: &Self,
         end_cutter: &Self,
@@ -488,6 +681,28 @@ impl CurveString2 {
 
     /// Extends one endpoint segment to an exact target point.
     pub fn extend_endpoint_to_point(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        target_point: Point2,
+    ) -> crate::ExactCurveResult<CurveString2> {
+        self.extend_endpoint_to_point_with_policy(
+            endpoint,
+            target_point,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Construction,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+        })
+    }
+
+    /// [`Self::extend_endpoint_to_point`] under an explicit predicate policy.
+    pub(crate) fn extend_endpoint_to_point_with_policy(
         &self,
         endpoint: CurveStringEndpoint2,
         target_point: Point2,
@@ -651,7 +866,7 @@ impl CurveString2 {
             Err(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
-        self.trim_between_points(&start_point, &end_point, policy)
+        self.trim_between_points_with_policy(&start_point, &end_point, policy)
     }
 
     fn trim_between_located_points(
@@ -715,6 +930,20 @@ impl CurveString2 {
     /// candidate-pruning role used by sweep-line intersection methods such as
     /// sweep-line scheduling.
     pub fn intersect_curve_string(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<Vec<CurveStringIntersection>> {
+        self.intersect_curve_string_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Intersection,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_curve_string`] under an explicit predicate policy.
+    pub(crate) fn intersect_curve_string_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1133,7 +1362,7 @@ fn locate_trim_point(
 ) -> CurveResult<Classification<LocatedTrimPoint2>> {
     let mut located = Vec::new();
     for (segment_index, segment) in curve_string.segments().iter().enumerate() {
-        match segment.contains_point(point, policy) {
+        match segment.contains_point_with_policy(point, policy) {
             Classification::Decided(true) => {
                 let param = match segment_point_parameter(segment, point, policy)? {
                     Classification::Decided(param) => param,
@@ -1409,7 +1638,7 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs(
                 continue;
             }
 
-            let relation = a_segment.intersect_segment(b_segment, policy)?;
+            let relation = a_segment.intersect_segment_with_policy(b_segment, policy)?;
             if !relation.is_none() {
                 intersections.push(CurveStringIntersection {
                     a_segment_index,

@@ -25,13 +25,19 @@ impl<T> Outcome<T> {
     }
 }
 
+/// Whether `policy` selects the APPROXIMATE_512 terminal. Preview contexts
+/// keep their own predicate selection, so a strict preview runs directly.
+fn selects_approximate(policy: &hypercurve::CurveContext) -> bool {
+    policy.predicate_policy() != hypercurve::CurveContext::STRICT.predicate_policy()
+}
+
 /// Runs an exact principal operation directly under STRICT, or inside
 /// `hypercurve::provisional` for any other policy, keeping its certainty.
 pub(crate) fn under<T, E>(
     policy: &hypercurve::CurveContext,
     evaluate: impl FnOnce() -> Result<T, E>,
 ) -> Result<Outcome<T>, E> {
-    if *policy == hypercurve::CurveContext::STRICT {
+    if !selects_approximate(policy) {
         return evaluate().map(|value| Outcome {
             value,
             certainty: hypercurve::CurveCertainty::Certified,
@@ -105,7 +111,7 @@ pub(crate) fn under_outcome_classified<T>(
     policy: &hypercurve::CurveContext,
     evaluate: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
 ) -> hypercurve::ExactCurveResult<Outcome<hypercurve::Classification<T>>> {
-    let (result, certainty) = if *policy == hypercurve::CurveContext::STRICT {
+    let (result, certainty) = if !selects_approximate(policy) {
         (evaluate(), hypercurve::CurveCertainty::Certified)
     } else {
         let provisional = hypercurve::provisional(evaluate);
@@ -123,4 +129,17 @@ pub(crate) fn under_outcome_classified<T>(
         }),
         Err(error) => Err(error),
     }
+}
+
+/// Runs an exact principal predicate under `policy`, keeping its certainty
+/// and an undecided predicate as `Classification::Uncertain`.
+///
+/// The predicate's inputs are valid by construction, so an invalid-state
+/// error is a test failure.
+pub(crate) fn under_outcome_classification<T>(
+    policy: &hypercurve::CurveContext,
+    evaluate: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
+) -> Outcome<hypercurve::Classification<T>> {
+    under_outcome_classified(policy, evaluate)
+        .unwrap_or_else(|error| panic!("exact predicate rejected its input: {error:?}"))
 }

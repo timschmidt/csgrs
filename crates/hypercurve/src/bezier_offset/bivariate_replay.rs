@@ -69,7 +69,7 @@ pub(super) fn parallel_pair_equation_system_with_tangent_fields(
         && let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) =
             (first.conservative_bounds()?, second.conservative_bounds()?)
         && matches!(
-            first_bounds.overlaps(&second_bounds, policy),
+            first_bounds.overlaps_with_policy(&second_bounds, policy),
             Classification::Decided(false)
         )
     {

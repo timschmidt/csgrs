@@ -94,7 +94,9 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
                     let actual =
                         crate::support::under(&policy, || clamped.point_at_side(&parameter, side))
                             .unwrap();
-                    let equality = actual.value.coincides_with(&expected.value, &policy);
+                    let equality = crate::support::under_outcome_classification(&policy, || {
+                        actual.value.coincides_with(&expected.value)
+                    });
                     assert_eq!(actual.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(true));
@@ -145,7 +147,9 @@ fn assert_fillet_candidates(
                 .windows(2)
                 .map(|pair| (pair[0].end(), pair[1].start())),
         ) {
-            let equality = first.coincides_with(&second, policy);
+            let equality = crate::support::under_outcome_classification(policy, || {
+                first.coincides_with(&second)
+            });
             assert_eq!(equality.certainty, CurveCertainty::Certified);
             assert_eq!(equality.value, Classification::Decided(true));
         }
@@ -1633,7 +1637,9 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let same_point = |actual: &hypercurve::CurvePoint2, expected: &hypercurve::CurvePoint2| {
-            let equality = actual.coincides_with(expected, &policy);
+            let equality = crate::support::under_outcome_classification(&policy, || {
+                actual.coincides_with(expected)
+            });
             assert_eq!(equality.certainty, CurveCertainty::Certified);
             assert_eq!(equality.value, Classification::Decided(true));
         };
@@ -1754,7 +1760,9 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
                     } else {
                         candidate.curves()[chamfer_index].end()
                     };
-                    let extension = contact.coincides_with(&lower_contact, &policy);
+                    let extension = crate::support::under_outcome_classification(&policy, || {
+                        contact.coincides_with(&lower_contact)
+                    });
                     assert_eq!(extension.certainty, CurveCertainty::Certified);
                     match extension.value {
                         Classification::Decided(true) => extensions += 1,
@@ -2671,7 +2679,9 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
                 .any(|curve| curve.geometry().is_none())
         );
         for pair in result.curves().windows(2) {
-            let equality = pair[0].end().coincides_with(&pair[1].start(), &policy);
+            let equality = crate::support::under_outcome_classification(&policy, || {
+                pair[0].end().coincides_with(&pair[1].start())
+            });
             assert_eq!(equality.certainty, CurveCertainty::Certified);
             assert_eq!(equality.value, Classification::Decided(true));
         }
@@ -3193,7 +3203,9 @@ fn direct_bezier_pair_fillet_retains_both_incident_extensions() {
                     (curves[0].end(), expected_previous),
                     (curves.last().unwrap().start(), expected_next),
                 ] {
-                    let same = actual.coincides_with(&expected.clone().into(), &policy);
+                    let same = crate::support::under_outcome_classification(&policy, || {
+                        actual.coincides_with(&expected.clone().into())
+                    });
                     assert_eq!(same.certainty, CurveCertainty::Certified);
                     if same.value != Classification::Decided(true) {
                         return false;

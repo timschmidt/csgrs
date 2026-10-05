@@ -96,9 +96,28 @@ impl TranslationObstacle2 {
     pub fn classify_translation(
         &self,
         translation: &Point2,
+    ) -> crate::ExactCurveResult<ContourPointLocation> {
+        self.classify_translation_with_policy(translation, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+            })
+    }
+
+    /// [`Self::classify_translation`] under an explicit predicate policy.
+    pub(crate) fn classify_translation_with_policy(
+        &self,
+        translation: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<ContourPointLocation>> {
-        Ok(self.boundary.classify_point(translation, policy))
+        Ok(self
+            .boundary
+            .classify_point_with_policy(translation, policy))
     }
 }
 
@@ -224,7 +243,7 @@ fn normalized_convex_vertices(
             }
         }
     }
-    match contour.has_self_contacts(policy)? {
+    match contour.has_self_contacts_with_policy(policy)? {
         Classification::Decided(false) => {}
         Classification::Decided(true) => {
             return Ok(Err(TranslationObstacleBlocker2::SelfContact { operand }));
@@ -439,7 +458,10 @@ mod tests {
         assert_eq!(
             decided(
                 obstacle
-                    .classify_translation(&Point2::new(r(0), r(0)), &CurveContext::STRICT)
+                    .classify_translation_with_policy(
+                        &Point2::new(r(0), r(0)),
+                        &CurveContext::STRICT
+                    )
                     .unwrap()
             ),
             ContourPointLocation::Inside
@@ -447,7 +469,10 @@ mod tests {
         assert_eq!(
             decided(
                 obstacle
-                    .classify_translation(&Point2::new(r(2), r(0)), &CurveContext::STRICT)
+                    .classify_translation_with_policy(
+                        &Point2::new(r(2), r(0)),
+                        &CurveContext::STRICT
+                    )
                     .unwrap()
             ),
             ContourPointLocation::Boundary
@@ -455,7 +480,10 @@ mod tests {
         assert_eq!(
             decided(
                 obstacle
-                    .classify_translation(&Point2::new(r(3), r(0)), &CurveContext::STRICT)
+                    .classify_translation_with_policy(
+                        &Point2::new(r(3), r(0)),
+                        &CurveContext::STRICT
+                    )
                     .unwrap()
             ),
             ContourPointLocation::Outside

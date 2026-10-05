@@ -1201,7 +1201,7 @@ impl RationalBezier2 {
                             hull,
                             Classification::Decided(bounds)
                                 if matches!(
-                                    bounds.contains_point(point, policy),
+                                    bounds.contains_point_with_policy(point, policy),
                                     Classification::Decided(false)
                                 )
                         ) {
@@ -1632,7 +1632,7 @@ impl RationalBezier2 {
             return false;
         };
         matches!(
-            first_bounds.overlaps(&second_bounds, policy),
+            first_bounds.overlaps_with_policy(&second_bounds, policy),
             Classification::Decided(false)
         )
     }

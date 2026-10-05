@@ -986,7 +986,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 other.conservative_bounds_refined(refinement_steps, policy),
             ) {
                 terminal_refined |= refinement_steps == 512;
-                if first.overlaps(&second, policy) == Classification::Decided(false) {
+                if first.overlaps_with_policy(&second, policy) == Classification::Decided(false) {
                     return Classification::Decided(false);
                 }
             }
@@ -2027,7 +2027,7 @@ impl BezierAlgebraicChordPairPoint2 {
             ) else {
                 continue;
             };
-            if pair_bounds.overlaps(&other_bounds, &CurveContext::STRICT)
+            if pair_bounds.overlaps_with_policy(&other_bounds, &CurveContext::STRICT)
                 == Classification::Decided(false)
             {
                 #[cfg(feature = "dispatch-trace")]
@@ -6750,7 +6750,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            if first.overlaps(&second, policy) == Classification::Decided(false) {
+            if first.overlaps_with_policy(&second, policy) == Classification::Decided(false) {
                 return Classification::Decided(false);
             }
         }

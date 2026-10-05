@@ -49,7 +49,8 @@ impl BezierAlgebraicChord2 {
                 ) else {
                     continue;
                 };
-                if first.overlaps(&second, &CurveContext::STRICT) == Classification::Decided(false)
+                if first.overlaps_with_policy(&second, &CurveContext::STRICT)
+                    == Classification::Decided(false)
                 {
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(

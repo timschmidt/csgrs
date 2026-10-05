@@ -931,7 +931,7 @@ mod tests {
                 };
                 for witness in &witnesses {
                     assert_eq!(
-                        bounds.contains_point(witness, &CurveContext::STRICT),
+                        bounds.contains_point_with_policy(witness, &CurveContext::STRICT),
                         Classification::Decided(true)
                     );
                 }

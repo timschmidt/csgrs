@@ -88,7 +88,7 @@ fuzz_target!(|data: &[u8]| {
     let curve = Curve2::from(curve);
     let coincide = |first: &CurvePoint2, second: &CurvePoint2| {
         assert_eq!(
-            first.coincides_with(second, &policy).value,
+            support::under_outcome_classification(&policy, || first.coincides_with(second)),
             Classification::Decided(true)
         );
     };

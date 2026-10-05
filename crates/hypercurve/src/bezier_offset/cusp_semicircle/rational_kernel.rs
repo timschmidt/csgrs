@@ -3946,7 +3946,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                 if let Classification::Decided(circle_bounds) =
                     self.conservative_bounds_refined(refinement_steps, policy)?
-                    && circle_bounds.overlaps(&other_bounds, &CurveContext::STRICT)
+                    && circle_bounds.overlaps_with_policy(&other_bounds, &CurveContext::STRICT)
                         == Classification::Decided(false)
                 {
                     return Ok(Classification::Decided((

@@ -3441,7 +3441,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 crate::curve_support::CurveSupport2::Parallel(other.clone())
                     .certified_outer_bounds(range, 0, policy),
             )
-            && first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false)
+            && first_bounds.overlaps_with_policy(&second_bounds, policy)
+                == Classification::Decided(false)
         {
             return Ok(Classification::Decided(
                 BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {

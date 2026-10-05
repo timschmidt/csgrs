@@ -12116,7 +12116,7 @@ fn retained_point_evidence_equality_by_refinement(
         ) else {
             return None;
         };
-        if first.overlaps(&second, policy) == Classification::Decided(false) {
+        if first.overlaps_with_policy(&second, policy) == Classification::Decided(false) {
             return Some(false);
         }
         let first_is_point = compare_reals(first.min().x(), first.max().x(), &CurveContext::STRICT)
@@ -13604,7 +13604,7 @@ pub(crate) fn recursive_projective_point_evidence_equality(
         if let (Classification::Decided(first), Classification::Decided(second)) = (
             algebraic_chord_endpoint_local_bounds_refined(first, steps, &strict),
             algebraic_chord_endpoint_local_bounds_refined(second, steps, &strict),
-        ) && first.overlaps(&second, &strict) == Classification::Decided(false)
+        ) && first.overlaps_with_policy(&second, &strict) == Classification::Decided(false)
         {
             return Ok(Classification::Decided(Some(false)));
         }

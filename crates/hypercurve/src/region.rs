@@ -159,7 +159,7 @@ impl<'a> RegionView2<'a> {
                 continue;
             }
 
-            match contour.classify_point(point, policy) {
+            match contour.classify_point_with_policy(point, policy) {
                 Classification::Decided(ContourPointLocation::Inside) => depth += 1,
                 Classification::Decided(ContourPointLocation::Outside) => {}
                 Classification::Decided(ContourPointLocation::Boundary) => {
@@ -174,7 +174,7 @@ impl<'a> RegionView2<'a> {
                 continue;
             }
 
-            match contour.classify_point(point, policy) {
+            match contour.classify_point_with_policy(point, policy) {
                 Classification::Decided(ContourPointLocation::Inside) => depth -= 1,
                 Classification::Decided(ContourPointLocation::Outside) => {}
                 Classification::Decided(ContourPointLocation::Boundary) => {

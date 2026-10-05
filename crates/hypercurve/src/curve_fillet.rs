@@ -2897,7 +2897,7 @@ mod tests {
     }
 
     fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
-        let result = actual.coincides_with(expected, policy);
+        let result = actual.coincides_with_with_policy(expected, policy);
         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
         assert_eq!(result.value, Classification::Decided(true));
     }
@@ -5392,7 +5392,10 @@ mod tests {
             let mut corners = 0;
             for (loop_index, boundary) in source.boundary_loops().iter().enumerate() {
                 for (vertex, curve) in boundary.curves().iter().enumerate() {
-                    if curve.start().coincides_with(&join, &policy).value
+                    if curve
+                        .start()
+                        .coincides_with_with_policy(&join, &policy)
+                        .value
                         != Classification::Decided(true)
                     {
                         continue;
@@ -5447,7 +5450,10 @@ mod tests {
                                     .curves()
                                     .iter()
                                     .position(|curve| {
-                                        curve.start().coincides_with(&apex, &policy).value
+                                        curve
+                                            .start()
+                                            .coincides_with_with_policy(&apex, &policy)
+                                            .value
                                             == Classification::Decided(true)
                                     })
                                     .map(|vertex| (loop_index, vertex))
@@ -5634,7 +5640,7 @@ mod stationary_continuous_family_regression {
                             &contacts[usize::from(!reversed)],
                         ),
                     ] {
-                        let same = actual.coincides_with(expected, &policy);
+                        let same = actual.coincides_with_with_policy(expected, &policy);
                         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(same.value, Classification::Decided(true));
                     }
@@ -5684,7 +5690,8 @@ mod stationary_continuous_family_regression {
                             crate::classify::real_sign(&(radius_squared - q(1, 16384)), &policy),
                             Some(RealSign::Zero)
                         );
-                        let center_match = actual_center.coincides_with(&center, &policy);
+                        let center_match =
+                            actual_center.coincides_with_with_policy(&center, &policy);
                         assert_eq!(center_match.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(center_match.value, Classification::Decided(true));
                         assert_eq!(clockwise, !reversed);
@@ -5814,9 +5821,15 @@ mod algebraic_bridge_fillet_regression {
                 for expected in &contacts {
                     assert!(
                         solution.curves().windows(2).any(|pair| {
-                            pair[0].end().coincides_with(expected, &policy).value
+                            pair[0]
+                                .end()
+                                .coincides_with_with_policy(expected, &policy)
+                                .value
                                 == Classification::Decided(true)
-                                && pair[1].start().coincides_with(expected, &policy).value
+                                && pair[1]
+                                    .start()
+                                    .coincides_with_with_policy(expected, &policy)
+                                    .value
                                     == Classification::Decided(true)
                         }),
                         "each independently known contact must be a retained path junction"
@@ -5924,7 +5937,10 @@ mod stationary_family_composition_regression {
             let mut corners = 0;
             for (loop_index, boundary) in source.boundary_loops().iter().enumerate() {
                 for (vertex, curve) in boundary.curves().iter().enumerate() {
-                    if curve.start().coincides_with(&join, &policy).value
+                    if curve
+                        .start()
+                        .coincides_with_with_policy(&join, &policy)
+                        .value
                         != Classification::Decided(true)
                     {
                         continue;
@@ -5979,7 +5995,10 @@ mod stationary_family_composition_regression {
                                     .curves()
                                     .iter()
                                     .position(|curve| {
-                                        curve.start().coincides_with(&apex, &policy).value
+                                        curve
+                                            .start()
+                                            .coincides_with_with_policy(&apex, &policy)
+                                            .value
                                             == Classification::Decided(true)
                                     })
                                     .map(|vertex| (loop_index, vertex))
@@ -6097,7 +6116,7 @@ mod stationary_retained_point_constraint_regression {
         assert!(result.value.coordinates().is_none());
         let same = result
             .value
-            .coincides_with(&CurvePoint2::from(point.clone()), policy);
+            .coincides_with_with_policy(&CurvePoint2::from(point.clone()), policy);
         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
         assert_eq!(same.value, Classification::Decided(true));
         result.value
@@ -6196,8 +6215,10 @@ mod stationary_retained_point_constraint_regression {
                             &contacts[usize::from(!reversed)],
                         ),
                     ] {
-                        let same =
-                            actual.coincides_with(&CurvePoint2::from(expected.clone()), &policy);
+                        let same = actual.coincides_with_with_policy(
+                            &CurvePoint2::from(expected.clone()),
+                            &policy,
+                        );
                         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(same.value, Classification::Decided(true));
                     }
@@ -6243,7 +6264,7 @@ mod stationary_recursive_point_constraint_regression {
         );
         let result = CurvePoint2::from(point_image);
         assert!(result.coordinates().is_none());
-        let same = result.coincides_with(&CurvePoint2::from(point.clone()), policy);
+        let same = result.coincides_with_with_policy(&CurvePoint2::from(point.clone()), policy);
         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
         assert_eq!(same.value, Classification::Decided(true));
         result
@@ -6342,8 +6363,10 @@ mod stationary_recursive_point_constraint_regression {
                             &contacts[usize::from(!reversed)],
                         ),
                     ] {
-                        let same =
-                            actual.coincides_with(&CurvePoint2::from(expected.clone()), &policy);
+                        let same = actual.coincides_with_with_policy(
+                            &CurvePoint2::from(expected.clone()),
+                            &policy,
+                        );
                         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(same.value, Classification::Decided(true));
                     }
@@ -6367,7 +6390,7 @@ mod incident_parallel_cusp_fillet_regression {
     }
 
     fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
-        let result = actual.coincides_with(expected, policy);
+        let result = actual.coincides_with_with_policy(expected, policy);
         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
         assert_eq!(result.value, Classification::Decided(true));
     }
@@ -6496,9 +6519,15 @@ mod incident_parallel_cusp_fillet_regression {
                         let expected = CurvePoint2::from(expected);
                         assert!(
                             solution.curves().windows(2).any(|pair| {
-                                pair[0].end().coincides_with(&expected, &policy).value
+                                pair[0]
+                                    .end()
+                                    .coincides_with_with_policy(&expected, &policy)
+                                    .value
                                     == Classification::Decided(true)
-                                    && pair[1].start().coincides_with(&expected, &policy).value
+                                    && pair[1]
+                                        .start()
+                                        .coincides_with_with_policy(&expected, &policy)
+                                        .value
                                         == Classification::Decided(true)
                             }),
                             "the independently known contact must remain a path junction"
@@ -6530,7 +6559,7 @@ mod incident_parallel_cusp_nonlinear_regression {
     }
 
     fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
-        let result = actual.coincides_with(expected, policy);
+        let result = actual.coincides_with_with_policy(expected, policy);
         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
         assert_eq!(result.value, Classification::Decided(true));
     }
@@ -6682,9 +6711,15 @@ mod incident_parallel_cusp_nonlinear_regression {
                         let expected = CurvePoint2::from(expected);
                         assert!(
                             solution.curves().windows(2).any(|pair| {
-                                pair[0].end().coincides_with(&expected, &policy).value
+                                pair[0]
+                                    .end()
+                                    .coincides_with_with_policy(&expected, &policy)
+                                    .value
                                     == Classification::Decided(true)
-                                    && pair[1].start().coincides_with(&expected, &policy).value
+                                    && pair[1]
+                                        .start()
+                                        .coincides_with_with_policy(&expected, &policy)
+                                        .value
                                         == Classification::Decided(true)
                             }),
                             "the independently known contact must remain a path junction"

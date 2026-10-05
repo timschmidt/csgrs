@@ -121,11 +121,13 @@ fn bench_parameter_trim(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.trim_between_parameters(
-            CurveStringTrimPoint2::new(0, q(1, 5)),
-            CurveStringTrimPoint2::new(2, q(1, 2)),
-            &policy,
-        )?;
+        let result = crate::support::under_classified_result(&policy, || {
+            curve.trim_between_parameters(
+                CurveStringTrimPoint2::new(0, q(1, 5)),
+                CurveStringTrimPoint2::new(2, q(1, 2)),
+            )
+        })
+        .expect("benchmark fixture remains exact");
         let trimmed = expect_decided(result, "parameter trim benchmark should materialize");
         total_segments += black_box(trimmed.len());
     }
@@ -149,7 +151,10 @@ fn bench_point_arc_trim(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.trim_between_points(&p(1, -1), &p(2, 0), &policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            curve.trim_between_points(&p(1, -1), &p(2, 0))
+        })
+        .expect("benchmark fixture remains exact");
         let trimmed = expect_decided(
             result,
             "point-bearing arc trim benchmark should materialize",
@@ -178,7 +183,10 @@ fn bench_parameter_arc_trim(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.trim_between_parameters(start.clone(), end.clone(), &policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            curve.trim_between_parameters(start.clone(), end.clone())
+        })
+        .expect("benchmark fixture remains exact");
         let trimmed = expect_decided(result, "parameter arc trim benchmark should materialize");
         total_segments += black_box(trimmed.len());
     }
@@ -200,7 +208,10 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.trim_between_curve_intersections(&start_cutter, &end_cutter, &policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            curve.trim_between_curve_intersections(&start_cutter, &end_cutter)
+        })
+        .expect("benchmark fixture remains exact");
         let trimmed = expect_decided(
             result,
             "curve-intersection trim benchmark should materialize",
@@ -1648,8 +1659,10 @@ fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result =
-            curve.extend_endpoint_to_point(CurveStringEndpoint2::End, p(-1, 0), &policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            curve.extend_endpoint_to_point(CurveStringEndpoint2::End, p(-1, 0))
+        })
+        .expect("benchmark fixture remains exact");
         let Classification::Decided(extended) = result else {
             panic!("arc extension benchmark became uncertain");
         };
@@ -1676,7 +1689,10 @@ fn bench_curve_string_line_merge_evidence(iterations: u32) -> CurveResult<()> {
     let mut total_spans = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.merge_adjacent_collinear_lines(&policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            curve.merge_adjacent_collinear_lines()
+        })
+        .expect("benchmark fixture remains exact");
         let Classification::Decided(merged) = result else {
             panic!("curve string line merge benchmark became uncertain");
         };
@@ -1726,7 +1742,10 @@ fn bench_curve_string_pair_link_evidence(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let Classification::Decided(Some(linked)) =
-            first.link_connected_endpoints(&second, &policy)?
+            crate::support::under_classified_result(&policy, || {
+                first.link_connected_endpoints(&second)
+            })
+            .expect("benchmark fixture remains exact")
         else {
             panic!("pair link benchmark should materialize");
         };
@@ -1752,7 +1771,10 @@ fn bench_curve_string_ordered_link_evidence(iterations: u32) -> CurveResult<()> 
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = CurveString2::link_ordered_connected_endpoints(curves.clone(), &policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            CurveString2::link_ordered_connected_endpoints(curves.clone())
+        })
+        .expect("benchmark fixture remains exact");
         let linked = expect_decided(result, "ordered link benchmark should materialize");
         total_segments += black_box(linked.len());
     }
@@ -1773,7 +1795,10 @@ fn bench_curve_string_connect_evidence(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = first.connect_end_to_start_with_line(&second, &policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            first.connect_end_to_start_with_line(&second)
+        })
+        .expect("benchmark fixture remains exact");
         let connected = expect_decided(result, "connect benchmark should materialize");
         total_segments += black_box(connected.len());
     }
@@ -1894,7 +1919,10 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
     let mut total_spans = 0_usize;
 
     for _ in 0..iterations {
-        let result = contour.merge_adjacent_collinear_lines(&policy)?;
+        let result = crate::support::under_classified_result(&policy, || {
+            contour.merge_adjacent_collinear_lines()
+        })
+        .expect("benchmark fixture remains exact");
         let Classification::Decided(merged) = result else {
             panic!("contour line merge benchmark became uncertain");
         };

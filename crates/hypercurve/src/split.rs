@@ -84,10 +84,27 @@ impl ContourSplitMarkers {
         contour: &Contour2,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
+    ) -> crate::ExactCurveResult<Self> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            Self::from_intersections_with_policy(
+                contour,
+                intersections,
+                operand,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::from_intersections`] under an explicit predicate policy.
+    pub(crate) fn from_intersections_with_policy(
+        contour: &Contour2,
+        intersections: &ContourIntersectionSet,
+        operand: ContourOperand,
         policy: &CurveContext,
     ) -> Classification<Self> {
         let mut markers = Self::with_contour_endpoints(contour);
-        match markers.merge_intersections(intersections, operand, policy) {
+        match markers.merge_intersections_with_policy(intersections, operand, policy) {
             Classification::Decided(()) => Classification::Decided(markers),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
@@ -101,10 +118,25 @@ impl ContourSplitMarkers {
     pub fn from_self_intersections(
         contour: &Contour2,
         intersections: &ContourIntersectionSet,
+    ) -> crate::ExactCurveResult<Self> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            Self::from_self_intersections_with_policy(
+                contour,
+                intersections,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::from_self_intersections`] under an explicit predicate policy.
+    pub(crate) fn from_self_intersections_with_policy(
+        contour: &Contour2,
+        intersections: &ContourIntersectionSet,
         policy: &CurveContext,
     ) -> Classification<Self> {
         let mut markers = Self::with_contour_endpoints(contour);
-        match markers.merge_self_intersections(intersections, policy) {
+        match markers.merge_self_intersections_with_policy(intersections, policy) {
             Classification::Decided(()) => Classification::Decided(markers),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
@@ -141,6 +173,22 @@ impl ContourSplitMarkers {
         &mut self,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
+    ) -> crate::ExactCurveResult<()> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            self.merge_intersections_with_policy(
+                intersections,
+                operand,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::merge_intersections`] under an explicit predicate policy.
+    pub(crate) fn merge_intersections_with_policy(
+        &mut self,
+        intersections: &ContourIntersectionSet,
+        operand: ContourOperand,
         policy: &CurveContext,
     ) -> Classification<()> {
         for event in intersections.events() {
@@ -155,6 +203,20 @@ impl ContourSplitMarkers {
 
     /// Merges self-intersection events into this marker set.
     pub fn merge_self_intersections(
+        &mut self,
+        intersections: &ContourIntersectionSet,
+    ) -> crate::ExactCurveResult<()> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            self.merge_self_intersections_with_policy(
+                intersections,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::merge_self_intersections`] under an explicit predicate policy.
+    pub(crate) fn merge_self_intersections_with_policy(
         &mut self,
         intersections: &ContourIntersectionSet,
         policy: &CurveContext,
@@ -291,10 +353,27 @@ impl ContourSplitMap {
         segment_count: usize,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
+    ) -> crate::ExactCurveResult<Self> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            Self::from_intersections_with_policy(
+                segment_count,
+                intersections,
+                operand,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::from_intersections`] under an explicit predicate policy.
+    pub(crate) fn from_intersections_with_policy(
+        segment_count: usize,
+        intersections: &ContourIntersectionSet,
+        operand: ContourOperand,
         policy: &CurveContext,
     ) -> Classification<Self> {
         let mut map = Self::with_segment_count(segment_count);
-        match map.merge_intersections(intersections, operand, policy) {
+        match map.merge_intersections_with_policy(intersections, operand, policy) {
             Classification::Decided(()) => Classification::Decided(map),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
@@ -324,6 +403,22 @@ impl ContourSplitMap {
 
     /// Merges another contour-pair event set into this split map.
     pub fn merge_intersections(
+        &mut self,
+        intersections: &ContourIntersectionSet,
+        operand: ContourOperand,
+    ) -> crate::ExactCurveResult<()> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Arrangement,
+            self.merge_intersections_with_policy(
+                intersections,
+                operand,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::merge_intersections`] under an explicit predicate policy.
+    pub(crate) fn merge_intersections_with_policy(
         &mut self,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,

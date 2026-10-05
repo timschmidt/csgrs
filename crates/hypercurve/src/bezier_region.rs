@@ -2179,7 +2179,7 @@ impl CurveRegion2 {
             // Compact certified codirected line runs before building carriers;
             // unresolved collinearity leaves the original contour intact.
             let compact = |contour: Contour2| match contour
-                .merge_adjacent_collinear_lines(&CurveContext::STRICT)
+                .merge_adjacent_collinear_lines_with_policy(&CurveContext::STRICT)
             {
                 Ok(Classification::Decided(compact)) => compact,
                 _ => contour,
@@ -3176,7 +3176,7 @@ impl CurveRegion2 {
             for second_index in first_index + 1..native_loops.len() {
                 if native_bounds.is_some_and(|bounds| {
                     matches!(
-                        bounds[first_index].overlaps(&bounds[second_index], policy),
+                        bounds[first_index].overlaps_with_policy(&bounds[second_index], policy),
                         Classification::Decided(false)
                     )
                 }) {
@@ -3269,7 +3269,7 @@ impl CurveRegion2 {
                 }
                 if native_bounds.is_some_and(|bounds| {
                     matches!(
-                        bounds[container_index].contains_point(sample, policy),
+                        bounds[container_index].contains_point_with_policy(sample, policy),
                         Classification::Decided(false)
                     )
                 }) {
@@ -3411,7 +3411,7 @@ impl CurveRegion2 {
                 if sample.coordinates().is_some_and(|point| {
                     bounds[container_index].as_ref().is_some_and(|bounds| {
                         matches!(
-                            bounds.contains_point(point, policy),
+                            bounds.contains_point_with_policy(point, policy),
                             Classification::Decided(false)
                         )
                     })
@@ -5433,7 +5433,7 @@ impl CurveRegion2 {
         for (index, boundary_loop) in native_loops.iter().enumerate() {
             if native_bounds.is_some_and(|bounds| {
                 matches!(
-                    bounds[index].contains_point(point, policy),
+                    bounds[index].contains_point_with_policy(point, policy),
                     Classification::Decided(false)
                 )
             }) {

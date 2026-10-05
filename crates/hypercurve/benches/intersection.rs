@@ -149,7 +149,9 @@ fn bench_sparse_curve_self_contacts(segment_count: i32, iterations: u32) -> Curv
     let mut decided_false_count = 0_usize;
 
     for _ in 0..iterations {
-        match curve.has_self_contacts(&policy)? {
+        match crate::support::under_classified_result(&policy, || curve.has_self_contacts())
+            .expect("benchmark fixture remains exact")
+        {
             Classification::Decided(false) => {
                 decided_false_count += black_box(1);
             }
@@ -187,7 +189,8 @@ fn bench_sparse_curve_string_intersections(segment_count: i32, iterations: u32) 
     let mut total_events = 0_usize;
 
     for _ in 0..iterations {
-        let events = curve.intersect_curve_string(&cutter, &policy)?;
+        let events = crate::support::under_value(&policy, || curve.intersect_curve_string(&cutter))
+            .expect("benchmark fixture remains exact");
         if events.len() != 1 {
             panic!("sparse curve-string benchmark expected one segment-pair event");
         }

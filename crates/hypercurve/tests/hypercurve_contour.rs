@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveContext, CurveError,
     FillRule, Real, Segment2, SegmentKindCounts, UncertaintyReason,
@@ -92,7 +93,11 @@ fn contour_merge_adjacent_collinear_lines() {
     ])
     .unwrap();
 
-    let merged = match contour.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        contour.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(contour) => contour,
         other => panic!("expected a merged contour, got {other:?}"),
     };
@@ -112,7 +117,11 @@ fn contour_line_merge_preserves_mixed_segment_kinds() {
     ])
     .unwrap();
 
-    let merged = match contour.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        contour.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(contour) => contour,
         other => panic!("expected an unchanged mixed contour, got {other:?}"),
     };
@@ -134,7 +143,11 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
     ])
     .unwrap();
 
-    let merged = match contour.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        contour.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(contour) => contour,
         other => panic!("expected a wraparound merge, got {other:?}"),
     };
@@ -149,19 +162,19 @@ fn rectangle_classifies_inside_outside_and_boundary() {
     let contour = rectangle();
 
     assert_eq!(
-        contour.classify_point(&p(1, 1), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(1, 1))),
         Classification::Decided(ContourPointLocation::Inside)
     );
     assert_eq!(
-        contour.classify_point(&p(-1, 1), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(-1, 1))),
         Classification::Decided(ContourPointLocation::Outside)
     );
     assert_eq!(
-        contour.classify_point(&p(4, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(4, 2))),
         Classification::Decided(ContourPointLocation::Boundary)
     );
     assert_eq!(
-        contour.classify_point(&p(0, 0), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(0, 0))),
         Classification::Decided(ContourPointLocation::Boundary)
     );
 }
@@ -169,16 +182,16 @@ fn rectangle_classifies_inside_outside_and_boundary() {
 #[test]
 fn batched_contour_classification_matches_scalar_classification() {
     let contour = rectangle();
-    let policy = policy();
+    let _policy = policy();
     let points = [p(1, 1), p(-1, 1), p(4, 2), p(0, 0), p(9, 2)];
     let facts = hypercurve::Contour2::structural_facts(&contour);
     assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 4, arcs: 0 });
-    let batched = hypercurve::Contour2::classify_points(&contour, &points, &policy);
+    let batched = contour.classify_points(&points);
     assert_eq!(
         batched,
         points
             .iter()
-            .map(|point| contour.classify_point(point, &policy))
+            .map(|point| contour.classify_point(point))
             .collect::<Vec<_>>()
     );
 }
@@ -196,7 +209,7 @@ fn batched_line_contour_classification_preserves_half_open_vertex_cases() {
         vertex(-1, 1, 0),
     ])
     .unwrap();
-    let policy = policy();
+    let _policy = policy();
     let points = [
         p(0, 0),
         p(0, 1),
@@ -208,12 +221,12 @@ fn batched_line_contour_classification_preserves_half_open_vertex_cases() {
         p(3, 2),
         p(0, -2),
     ];
-    let batched = hypercurve::Contour2::classify_points(&contour, &points, &policy);
+    let batched = contour.classify_points(&points);
     assert_eq!(
         batched,
         points
             .iter()
-            .map(|point| contour.classify_point(point, &policy))
+            .map(|point| contour.classify_point(point))
             .collect::<Vec<_>>()
     );
 }
@@ -223,15 +236,15 @@ fn contour_aabb_miss_classifies_outside_and_zero_winding() {
     let contour = rectangle();
 
     assert_eq!(
-        contour.point_on_boundary(&p(9, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.point_on_boundary(&p(9, 2))),
         Classification::Decided(false)
     );
     assert_eq!(
-        contour.winding_number(&p(9, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.winding_number(&p(9, 2))),
         Classification::Decided(0)
     );
     assert_eq!(
-        contour.classify_point(&p(9, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(9, 2))),
         Classification::Decided(ContourPointLocation::Outside)
     );
 }
@@ -241,11 +254,11 @@ fn contour_aabb_edge_hit_still_checks_boundary() {
     let contour = rectangle();
 
     assert_eq!(
-        contour.point_on_boundary(&p(4, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.point_on_boundary(&p(4, 2))),
         Classification::Decided(true)
     );
     assert_eq!(
-        contour.classify_point(&p(4, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(4, 2))),
         Classification::Decided(ContourPointLocation::Boundary)
     );
 }
@@ -255,11 +268,11 @@ fn rectangle_winding_is_positive_inside_and_boundary_is_explicit() {
     let contour = rectangle();
 
     assert_eq!(
-        contour.winding_number(&p(2, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.winding_number(&p(2, 2))),
         Classification::Decided(1)
     );
     assert_eq!(
-        contour.winding_number(&p(4, 2), &policy()),
+        crate::support::under_classified(&policy(), || contour.winding_number(&p(4, 2))),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -307,11 +320,11 @@ fn even_odd_fill_uses_winding_parity() {
     .unwrap();
 
     assert_eq!(
-        twice.winding_number(&p(1, 0), &policy()),
+        crate::support::under_classified(&policy(), || twice.winding_number(&p(1, 0))),
         Classification::Decided(2)
     );
     assert_eq!(
-        twice.classify_point(&p(1, 0), &policy()),
+        crate::support::under_classified(&policy(), || twice.classify_point(&p(1, 0))),
         Classification::Decided(ContourPointLocation::Outside)
     );
 }
@@ -321,17 +334,17 @@ fn circular_contour_winds_positive_semicircle_counter_clockwise() {
     let contour = Contour2::from_bulge_vertices(&[vertex(0, 0, 1), vertex(2, 0, 1)]).unwrap();
 
     assert_eq!(
-        contour.winding_number(&p(1, 0), &policy()),
+        crate::support::under_classified(&policy(), || contour.winding_number(&p(1, 0))),
         Classification::Decided(1)
     );
     assert_eq!(
-        contour.classify_point(&p(3, 0), &policy()),
+        crate::support::under_classified(&policy(), || contour.classify_point(&p(3, 0))),
         Classification::Decided(ContourPointLocation::Outside)
     );
 
     let reversed = Contour2::from_bulge_vertices(&[vertex(2, 0, -1), vertex(0, 0, -1)]).unwrap();
     assert_eq!(
-        reversed.winding_number(&p(1, 0), &policy()),
+        crate::support::under_classified(&policy(), || reversed.winding_number(&p(1, 0))),
         Classification::Decided(-1)
     );
 }

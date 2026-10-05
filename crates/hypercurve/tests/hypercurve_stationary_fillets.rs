@@ -110,8 +110,12 @@ mod contacts {
         let solution = solutions.into_solutions().pop().unwrap();
         assert_eq!(solution.curves().len(), 3);
         let arc = &solution.curves()[1];
-        let first = arc.start().coincides_with(&contact0.into(), &policy);
-        let second = arc.end().coincides_with(&contact1.into(), &policy);
+        let first = crate::support::under_outcome_classification(&policy, || {
+            arc.start().coincides_with(&contact0.into())
+        });
+        let second = crate::support::under_outcome_classification(&policy, || {
+            arc.end().coincides_with(&contact1.into())
+        });
         assert!(
             first.certainty == CurveCertainty::Certified
                 && first.value == Classification::Decided(true)
@@ -253,12 +257,14 @@ mod contacts {
         assert_eq!(solution.curves().len(), 3);
         let arc = &solution.curves()[1];
         let contacts = [Point2::from_values(0, 0), point(q(-3, 5), q(-1, 5))];
-        let first = arc
-            .start()
-            .coincides_with(&contacts[usize::from(reversed)].clone().into(), &policy);
-        let second = arc
-            .end()
-            .coincides_with(&contacts[usize::from(!reversed)].clone().into(), &policy);
+        let first = crate::support::under_outcome_classification(&policy, || {
+            arc.start()
+                .coincides_with(&contacts[usize::from(reversed)].clone().into())
+        });
+        let second = crate::support::under_outcome_classification(&policy, || {
+            arc.end()
+                .coincides_with(&contacts[usize::from(!reversed)].clone().into())
+        });
         assert!(
             first.certainty == CurveCertainty::Certified
                 && first.value == Classification::Decided(true)
@@ -569,7 +575,9 @@ mod exact_scalars {
                     (arc.start(), &contacts[usize::from(reversed)]),
                     (arc.end(), &contacts[usize::from(!reversed)]),
                 ] {
-                    let result = actual.coincides_with(&expected.clone().into(), &policy);
+                    let result = crate::support::under_outcome_classification(&policy, || {
+                        actual.coincides_with(&expected.clone().into())
+                    });
                     assert!(
                         result.certainty == CurveCertainty::Certified
                             && result.value == Classification::Decided(true)
@@ -665,7 +673,9 @@ mod retained_domains {
         let solution = solutions.into_solutions().pop().unwrap();
         let arc = &solution.curves()[1];
         let endpoint = if reversed { arc.start() } else { arc.end() };
-        let result = endpoint.coincides_with(&contact.into(), &policy);
+        let result = crate::support::under_outcome_classification(&policy, || {
+            endpoint.coincides_with(&contact.into())
+        });
         assert!(
             result.certainty == CurveCertainty::Certified
                 && result.value == Classification::Decided(true)

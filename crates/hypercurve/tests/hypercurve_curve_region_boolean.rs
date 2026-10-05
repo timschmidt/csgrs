@@ -129,7 +129,8 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         let sample = Point2::new(-(&t * &t), t);
                         for bounds in [&curve_bounds, &region_bounds] {
                             assert_eq!(
-                                bounds.contains_point(&sample, &policy),
+                                crate::support::under_classified(&policy, || bounds
+                                    .contains_point(&sample)),
                                 Classification::Decided(true)
                             );
                         }
@@ -219,7 +220,7 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
             let bounds = bounds.value.expect("a nonempty region has bounds");
             for sample in [&a, &b, &middle, &inside] {
                 assert_eq!(
-                    bounds.contains_point(sample, &policy),
+                    crate::support::under_classified(&policy, || bounds.contains_point(sample)),
                     Classification::Decided(true)
                 );
             }
@@ -314,7 +315,8 @@ fn assert_same_point(
     second: &hypercurve::CurvePoint2,
     policy: &CurveContext,
 ) {
-    let same = first.coincides_with(second, policy);
+    let same =
+        crate::support::under_outcome_classification(policy, || first.coincides_with(second));
     assert_eq!(same.certainty, CurveCertainty::Certified);
     assert_eq!(same.value, Classification::Decided(true));
 }
@@ -2243,10 +2245,10 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
         let pieces = narrow_topology.first()[0].curves();
         assert_eq!(pieces.len(), 2);
         assert_eq!(
-            pieces[0]
+            crate::support::under_outcome_classification(&CurveContext::STRICT, || pieces[0]
                 .end()
-                .coincides_with(&point(2, 0).into(), &CurveContext::STRICT)
-                .value,
+                .coincides_with(&point(2, 0).into()))
+            .value,
             Classification::Decided(true)
         );
         let narrow = boolean_paths(&first, &narrow_clip, BooleanOp::Intersection, &policy);
@@ -2268,10 +2270,10 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
             let pieces = wide_topology.first()[0].curves();
             assert_eq!(pieces.len(), 2);
             assert_eq!(
-                pieces[0]
+                crate::support::under_outcome_classification(&CurveContext::STRICT, || pieces[0]
                     .end()
-                    .coincides_with(&point(3, 0).into(), &CurveContext::STRICT)
-                    .value,
+                    .coincides_with(&point(3, 0).into()))
+                .value,
                 Classification::Decided(true)
             );
             let wide = boolean_paths(wide_path, &wide_clip, BooleanOp::Intersection, &policy);

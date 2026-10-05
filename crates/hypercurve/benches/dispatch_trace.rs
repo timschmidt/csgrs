@@ -135,7 +135,8 @@ fn main() {
     ])
     .expect("trace concave contour is valid");
     trace("straight_skeleton", || {
-        let evidence = concave.straight_skeleton(&policy)?;
+        let evidence = crate::support::under_value(&policy, || concave.straight_skeleton())
+            .expect("benchmark fixture remains exact");
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         Ok::<_, CurveError>(evidence)
     });

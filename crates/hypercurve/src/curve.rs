@@ -2287,7 +2287,7 @@ impl CurvePath2 {
             }
             let equality = adjacent[0]
                 .end()
-                .coincides_with(&adjacent[1].start(), policy);
+                .coincides_with_with_policy(&adjacent[1].start(), policy);
             strict_connectivity_certified &= equality.certainty == crate::CurveCertainty::Certified;
             match equality.into_value() {
                 Classification::Decided(true) => {}
@@ -6039,7 +6039,7 @@ mod tests {
             .point_at_with_policy(parameter, policy)
             .expect("selected cut lies in the authored knot domain");
         assert_eq!(point.certainty, crate::CurveCertainty::Certified);
-        let equal = point.value.coincides_with(&cut.point, policy);
+        let equal = point.value.coincides_with_with_policy(&cut.point, policy);
         assert_eq!(equal.certainty, crate::CurveCertainty::Certified);
         assert_eq!(equal.value, Classification::Decided(true));
     }
@@ -6144,7 +6144,7 @@ mod tests {
         drop(curve);
         assert!(owner.upgrade().is_none());
         for point in [start, end] {
-            let bounds = point.bounds(&CurveContext::STRICT);
+            let bounds = point.bounds_with_policy(&CurveContext::STRICT);
             assert_eq!(bounds.certainty, crate::CurveCertainty::Certified);
             assert!(matches!(bounds.value, Classification::Decided(_)));
         }

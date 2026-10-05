@@ -107,7 +107,7 @@ fn rational_point_images_require_finite_affine_coordinates() {
                 let point = CurvePoint2::from(image);
                 assert!(matches!(
                     point
-                        .coincides_with(&CurvePoint2::from(expected.clone()), &policy)
+                        .coincides_with_with_policy(&CurvePoint2::from(expected.clone()), &policy)
                         .value,
                     Classification::Decided(true)
                 ));
@@ -155,7 +155,7 @@ fn polynomial_point_images_share_exact_replay_across_coefficient_domains() {
             ] {
                 for point in [image, decided(endpoint.point().unwrap()).clone()] {
                     let outcome = CurvePoint2::from(point)
-                        .coincides_with(&CurvePoint2::from(expected.clone()), &policy);
+                        .coincides_with_with_policy(&CurvePoint2::from(expected.clone()), &policy);
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert_eq!(outcome.value, Classification::Decided(true));
                 }

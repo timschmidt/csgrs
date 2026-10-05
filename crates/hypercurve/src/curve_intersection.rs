@@ -3566,7 +3566,9 @@ mod point_component_dispatch_tests {
                                 assert_eq!(fixed.scalar(), Some(&parameter));
                                 assert_eq!(
                                     certified(
-                                        component.point().coincides_with(&p(0, 0).into(), &policy)
+                                        component
+                                            .point()
+                                            .coincides_with_with_policy(&p(0, 0).into(), &policy)
                                     ),
                                     Classification::Decided(true)
                                 );
@@ -3652,7 +3654,11 @@ mod point_component_dispatch_tests {
                     assert!(parameters.iter().any(|p| p == &Real::zero()));
                     assert!(parameters.iter().any(|p| p == &end));
                     assert_eq!(
-                        certified(source.start().coincides_with(&source.end(), &policy)),
+                        certified(
+                            source
+                                .start()
+                                .coincides_with_with_policy(&source.end(), &policy)
+                        ),
                         Classification::Decided(true)
                     );
                 }
@@ -3828,7 +3834,7 @@ mod overlap_restriction_tests {
                     .point_at_with_policy(b_parameter, policy)
                     .unwrap()
                     .into_value();
-                assert!(exact(a.coincides_with(&b, policy)));
+                assert!(exact(a.coincides_with_with_policy(&b, policy)));
             }
             for _ in 0..8 {
                 assert_eq!(

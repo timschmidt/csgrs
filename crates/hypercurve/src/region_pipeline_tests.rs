@@ -724,7 +724,9 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     assert!(first.end().coordinates().is_none());
     assert!(second.start().coordinates().is_none());
     assert!(decided(
-        first.end().coincides_with(&second.start(), &policy)
+        first
+            .end()
+            .coincides_with_with_policy(&second.start(), &policy)
     ));
     let lower = Curve2::from(QuadraticBezier2::new(p(1, 0), p(0, -2), p(-1, 0)));
     let path = CurvePath2::try_new_with_policy(vec![first, second, lower], &policy)

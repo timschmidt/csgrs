@@ -48,11 +48,11 @@ fn assert_contacts_coincide(
         })
         .unwrap();
         assert_eq!(
-            first.coincides_with(&second, policy).value,
+            support::under_outcome_classification(policy, || first.coincides_with(&second)),
             Classification::Decided(true)
         );
         assert_eq!(
-            first.coincides_with(contact.point(), policy).value,
+            support::under_outcome_classification(policy, || first.coincides_with(contact.point())),
             Classification::Decided(true)
         );
     }

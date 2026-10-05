@@ -85,7 +85,11 @@ fn loop_vertex_at(region: &CurveRegion2, point: Point2, policy: &CurveContext) -
         .curves()
         .iter()
         .position(|curve| {
-            curve.start().coincides_with(&point, policy).value == Classification::Decided(true)
+            crate::support::under_outcome_classification(policy, || {
+                curve.start().coincides_with(&point)
+            })
+            .value
+                == Classification::Decided(true)
         })
         .expect("the authored corner survives normalization")
 }
@@ -446,7 +450,9 @@ fn check_policy(policy: CurveContext) {
         (fragment.end(), point(0, 1)),
     ] {
         assert_eq!(
-            actual.coincides_with(&expected.into(), &policy).value,
+            crate::support::under_outcome_classification(&policy, || actual
+                .coincides_with(&expected.into()))
+            .value,
             Classification::Decided(true)
         );
     }
@@ -1049,17 +1055,17 @@ fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
         let reversed = crate::support::under(&policy, || analytic.reversed()).unwrap();
         assert_eq!(reversed.certainty, CurveCertainty::Certified);
         assert_eq!(
-            analytic
+            crate::support::under_outcome_classification(&policy, || analytic
                 .start()
-                .coincides_with(&reversed.value.end(), &policy)
-                .value,
+                .coincides_with(&reversed.value.end()))
+            .value,
             Classification::Decided(true),
         );
         assert_eq!(
-            analytic
+            crate::support::under_outcome_classification(&policy, || analytic
                 .end()
-                .coincides_with(&reversed.value.start(), &policy)
-                .value,
+                .coincides_with(&reversed.value.start()))
+            .value,
             Classification::Decided(true),
         );
         assert!(analytic.bounds().is_ok());

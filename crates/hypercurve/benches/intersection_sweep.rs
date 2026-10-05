@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -105,9 +107,10 @@ fn bench_direct(segment_count: usize, iterations: u32, policy: &CurveContext) {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let result = black_box(&first)
-            .intersect_curve_string(black_box(&second), black_box(policy))
-            .expect("separated exact paths should be decidable");
+        let result = crate::support::under_value(black_box(policy), || {
+            black_box(&first).intersect_curve_string(black_box(&second))
+        })
+        .expect("separated exact paths should be decidable");
         assert!(result.is_empty());
         checksum = checksum.wrapping_add(black_box(result.len()));
     }
@@ -124,9 +127,10 @@ fn bench_x_dense(segment_count: usize, iterations: u32, policy: &CurveContext) {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let result = black_box(&first)
-            .intersect_curve_string(black_box(&second), black_box(policy))
-            .expect("separated exact paths should be decidable");
+        let result = crate::support::under_value(black_box(policy), || {
+            black_box(&first).intersect_curve_string(black_box(&second))
+        })
+        .expect("separated exact paths should be decidable");
         assert!(result.is_empty());
         checksum = checksum.wrapping_add(black_box(result.len()));
     }
@@ -143,9 +147,10 @@ fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurveConte
     let started = Instant::now();
     let mut checksum = 0;
     for _ in 0..iterations {
-        let intersections = black_box(&first)
-            .intersect_contour(black_box(&second), black_box(policy))
-            .expect("separated exact contours should be decidable");
+        let intersections = crate::support::under_value(black_box(policy), || {
+            black_box(&first).intersect_contour(black_box(&second))
+        })
+        .expect("separated exact contours should be decidable");
         assert!(intersections.is_empty());
         checksum += black_box(intersections.len());
     }

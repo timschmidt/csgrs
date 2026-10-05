@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveContext, CurveString2, LineSeg2, Point2, Real,
     Segment2,
@@ -36,7 +37,7 @@ fn curve_string_self_contact_detector_does_not_ignore_closing_endpoint() {
     .unwrap();
 
     assert_eq!(
-        curve.has_self_contacts(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || curve.has_self_contacts()).unwrap(),
         Classification::Decided(true)
     );
 }
@@ -50,7 +51,7 @@ fn self_contact_detector_finds_nonadjacent_crossing() {
     ]);
 
     assert_eq!(
-        bowtie.has_self_contacts(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || bowtie.has_self_contacts()).unwrap(),
         Classification::Decided(true)
     );
 }
@@ -68,7 +69,7 @@ fn self_contact_detector_finds_nonadjacent_line_arc_crossing() {
     ]);
 
     assert_eq!(
-        contour.has_self_contacts(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || contour.has_self_contacts()).unwrap(),
         Classification::Decided(true)
     );
 }
@@ -83,7 +84,7 @@ fn self_contact_detector_finds_adjacent_line_arc_crossing_beyond_shared_endpoint
     ]);
 
     assert_eq!(
-        contour.has_self_contacts(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || contour.has_self_contacts()).unwrap(),
         Classification::Decided(true)
     );
 }
@@ -99,7 +100,7 @@ fn self_contact_detector_finds_repeated_nonadjacent_endpoint() {
     ]);
 
     assert_eq!(
-        pinched.has_self_contacts(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || pinched.has_self_contacts()).unwrap(),
         Classification::Decided(true)
     );
 }

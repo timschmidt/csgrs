@@ -360,7 +360,19 @@ impl Aabb2 {
     }
 
     /// Classifies whether this closed box contains `point`.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.contains_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
         if !policy.is_edge_preview() {
             return match policy.consume_predicate(hyperlimit::point_in_ordered_aabb2_coordinates(
                 [self.min_x(), self.min_y()],
@@ -390,7 +402,19 @@ impl Aabb2 {
     ///
     /// Edge and corner contacts count as overlap. This inclusive convention is
     /// necessary for tangent, endpoint, and shared-boundary curve topology.
-    pub fn overlaps(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
+    pub fn overlaps(&self, other: &Self) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.overlaps_with_policy(other, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::overlaps`] under an explicit predicate policy.
+    pub(crate) fn overlaps_with_policy(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
         if !policy.is_edge_preview() {
             return match policy.consume_predicate(hyperlimit::ordered_aabb2s_intersect_coordinates(
                 [self.min_x(), self.min_y()],
@@ -511,7 +535,7 @@ pub(crate) fn decided_contour_aabb(contour: &Contour2) -> Option<Aabb2> {
 
 pub(crate) fn aabbs_decided_disjoint(first: &Aabb2, second: &Aabb2, policy: &CurveContext) -> bool {
     matches!(
-        first.overlaps(second, policy),
+        first.overlaps_with_policy(second, policy),
         Classification::Decided(false)
     )
 }
@@ -522,7 +546,7 @@ pub(crate) fn aabb_decided_misses_point(
     policy: &CurveContext,
 ) -> bool {
     matches!(
-        bbox.contains_point(point, policy),
+        bbox.contains_point_with_policy(point, policy),
         Classification::Decided(false)
     )
 }
@@ -751,7 +775,10 @@ mod tests {
             // Rounding sqrt(3) to f64 moves the previous upper bound inward.
             let radius = Real::from(3_i8).sqrt().unwrap();
             assert_eq!(
-                bounds.contains_point(&Point2::new(Real::zero(), radius), &CurveContext::STRICT,),
+                bounds.contains_point_with_policy(
+                    &Point2::new(Real::zero(), radius),
+                    &CurveContext::STRICT,
+                ),
                 Classification::Decided(true),
             );
         }

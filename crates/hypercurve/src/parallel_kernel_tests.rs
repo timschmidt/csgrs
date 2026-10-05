@@ -2122,7 +2122,7 @@ fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
                     assert_eq!(
                         contact
                             .point()
-                            .coincides_with(&p(0, 1).into(), &policy)
+                            .coincides_with_with_policy(&p(0, 1).into(), &policy)
                             .value,
                         Classification::Decided(true)
                     );

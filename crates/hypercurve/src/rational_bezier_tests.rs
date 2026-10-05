@@ -425,7 +425,7 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
     assert!(point.coordinates().is_none());
     let expected_height = CurvePoint2::from(Point2::new(Real::zero(), q(1, 2)));
     let height_order = point
-        .compare_coordinate(&expected_height, crate::Axis2::Y, &policy)
+        .compare_coordinate_with_policy(&expected_height, crate::Axis2::Y, &policy)
         .expect("selected contact height remains exactly comparable");
     assert_eq!(height_order.certainty, crate::CurveCertainty::Certified);
     assert_eq!(

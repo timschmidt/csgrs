@@ -932,7 +932,7 @@ mod tests {
                     for n in 4..=12 {
                         let point = decided(support.point_at(&q(n, 4), &policy).unwrap());
                         assert_eq!(
-                            bounds.contains_point(&point, &policy),
+                            bounds.contains_point_with_policy(&point, &policy),
                             Classification::Decided(true)
                         );
                     }
@@ -968,7 +968,7 @@ mod tests {
                     for parameter in [&start, &end] {
                         let point = decided(support.point_at(parameter, &policy).unwrap());
                         assert_eq!(
-                            bounds.contains_point(&point, &policy),
+                            bounds.contains_point_with_policy(&point, &policy),
                             Classification::Decided(true)
                         );
                     }

@@ -10,7 +10,24 @@ use crate::{
 
 impl CurveString2 {
     /// Classifies whether this open curve string has non-adjacent self contacts.
-    pub fn has_self_contacts(&self, policy: &CurveContext) -> CurveResult<Classification<bool>> {
+    pub fn has_self_contacts(&self) -> crate::ExactCurveResult<bool> {
+        self.has_self_contacts_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+            })
+    }
+
+    /// [`Self::has_self_contacts`] under an explicit predicate policy.
+    pub(crate) fn has_self_contacts_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
         let boxes = self
             .segments()
             .iter()
@@ -22,7 +39,24 @@ impl CurveString2 {
 
 impl Contour2 {
     /// Classifies whether this contour has non-adjacent self contacts.
-    pub fn has_self_contacts(&self, policy: &CurveContext) -> CurveResult<Classification<bool>> {
+    pub fn has_self_contacts(&self) -> crate::ExactCurveResult<bool> {
+        self.has_self_contacts_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+            })
+    }
+
+    /// [`Self::has_self_contacts`] under an explicit predicate policy.
+    pub(crate) fn has_self_contacts_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
         let boxes = self
             .segments()
             .iter()
@@ -55,8 +89,8 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs(
                 continue;
             }
 
-            let relation =
-                segments[first_index].intersect_segment(&segments[second_index], policy)?;
+            let relation = segments[first_index]
+                .intersect_segment_with_policy(&segments[second_index], policy)?;
             let connectivity_vertices =
                 connected_segments_vertices(segments, first_index, second_index, closed);
             match segment_relation_has_contact(&relation, connectivity_vertices, policy) {
@@ -367,7 +401,9 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            contour.has_self_contacts(&CurveContext::STRICT).unwrap(),
+            contour
+                .has_self_contacts_with_policy(&CurveContext::STRICT)
+                .unwrap(),
             Classification::Decided(false),
         );
     }

@@ -1,4 +1,5 @@
 #![cfg(feature = "triangulation")]
+mod support;
 
 use hypercurve::{
     BulgeVertex2, Contour2, CurveContext, CurveError, CurveRegion2, FiniteProjectionOptions,
@@ -118,10 +119,7 @@ fn finite_region_profile_triangulates_material_with_owned_hole() {
     assert_eq!(profiles.len(), 1);
     assert_eq!(profiles[0].holes().len(), 1);
 
-    let triangles = profiles[0]
-        .triangulate(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let triangles = profiles[0].triangulate().unwrap();
     assert!(!triangles.is_empty());
     assert!((signed_area(&triangles).abs() - 32.0).abs() < 1.0e-9);
 }

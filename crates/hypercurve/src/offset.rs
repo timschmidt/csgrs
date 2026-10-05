@@ -145,7 +145,18 @@ impl Segment2 {
     /// when the requested distance leaves a positive radius; radius collapse or
     /// reversal is reported as uncertainty instead of fabricating degenerate
     /// topology.
-    pub fn offset_left(
+    pub fn offset_left(&self, distance: Real) -> crate::ExactCurveResult<Self> {
+        self.offset_left_with_policy(distance, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Offset, value)
+            })
+    }
+
+    /// [`Self::offset_left`] under an explicit predicate policy.
+    pub(crate) fn offset_left_with_policy(
         &self,
         distance: Real,
         policy: &CurveContext,

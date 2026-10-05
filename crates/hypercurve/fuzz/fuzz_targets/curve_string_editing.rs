@@ -60,24 +60,21 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<CurveRegion
 }
 
 fn touch_curve(curve: &CurveString2, policy: &CurveContext, data: &[u8]) {
-    let _ = curve.merge_adjacent_collinear_lines(policy);
+    let _ = support::under_classified_result(policy, || curve.merge_adjacent_collinear_lines());
     let _ = curve.remove_adjacent_reversed_duplicates();
 
     if !curve.is_empty() {
         let start = CurveStringTrimPoint2::new(0, q(data[0]));
         let end = CurveStringTrimPoint2::new(curve.len() - 1, q(data[1]));
-        let _ = curve.trim_between_parameters(start, end, policy);
+        let _ =
+            support::under_classified_result(policy, || curve.trim_between_parameters(start, end));
 
-        let _ = curve.extend_endpoint_to_point(
-            CurveStringEndpoint2::Start,
-            point(data[2], data[3]),
-            policy,
-        );
-        let _ = curve.extend_endpoint_to_point(
-            CurveStringEndpoint2::End,
-            point(data[4], data[5]),
-            policy,
-        );
+        let _ = support::under_classified_result(policy, || {
+            curve.extend_endpoint_to_point(CurveStringEndpoint2::Start, point(data[2], data[3]))
+        });
+        let _ = support::under_classified_result(policy, || {
+            curve.extend_endpoint_to_point(CurveStringEndpoint2::End, point(data[4], data[5]))
+        });
     }
 }
 
@@ -98,9 +95,14 @@ fuzz_target!(|data: &[u8]| {
     touch_curve(&curve, &policy, data);
 
     if let Some(other) = curve_from_points(&points[2..6]) {
-        let _ = curve.link_connected_endpoints(&other, &policy);
-        let _ = curve.connect_nearest_endpoints_with_line(&other, &policy);
-        let _ = curve.trim_between_curve_intersections(&other, &other, &policy);
+        let _ =
+            support::under_classified_result(&policy, || curve.link_connected_endpoints(&other));
+        let _ = support::under_classified_result(&policy, || {
+            curve.connect_nearest_endpoints_with_line(&other)
+        });
+        let _ = support::under_classified_result(&policy, || {
+            curve.trim_between_curve_intersections(&other, &other)
+        });
     }
 
     let curves = curve
@@ -127,9 +129,9 @@ fuzz_target!(|data: &[u8]| {
         });
     }
 
-    if let Ok(Classification::Decided(linked)) =
-        CurveString2::link_connected_endpoints(&curve, &curve, &policy)
-    {
+    if let Ok(Classification::Decided(linked)) = support::under_classified_result(&policy, || {
+        CurveString2::link_connected_endpoints(&curve, &curve)
+    }) {
         let _ = linked.as_ref().map(CurveString2::len);
     }
 });

@@ -221,7 +221,21 @@ impl Contour2 {
     /// arcs, and collinear reversals, and evidence source segment indices for
     /// every output contour segment. If any line-line support or direction
     /// predicate is unresolved, no contour is materialized.
-    pub fn merge_adjacent_collinear_lines(
+    pub fn merge_adjacent_collinear_lines(&self) -> crate::ExactCurveResult<Contour2> {
+        self.merge_adjacent_collinear_lines_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+            })
+    }
+
+    /// [`Self::merge_adjacent_collinear_lines`] under an explicit predicate policy.
+    pub(crate) fn merge_adjacent_collinear_lines_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
@@ -346,7 +360,19 @@ impl Contour2 {
     /// number is not well-defined there. A decided bounding-box miss returns
     /// zero before boundary and winding scans; otherwise this follows
     /// boundary-first winding classification, extended to native circular arcs.
-    pub fn winding_number(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
+    pub fn winding_number(&self, point: &Point2) -> crate::ExactCurveResult<i32> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.winding_number_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::winding_number`] under an explicit predicate policy.
+    pub(crate) fn winding_number_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<i32> {
         let contour_box = decided_contour_aabb(self);
         let segment_boxes = decided_segment_boxes(self.segments());
         contour_winding_number_with_cached_aabbs(
@@ -364,7 +390,15 @@ impl Contour2 {
     /// test, then checks the boundary explicitly before applying the fill rule
     /// to the winding number. Keeping those stages separate makes boundary
     /// handling explicit.
-    pub fn classify_point(
+    pub fn classify_point(&self, point: &Point2) -> crate::ExactCurveResult<ContourPointLocation> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.classify_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::classify_point`] under an explicit predicate policy.
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -383,8 +417,23 @@ impl Contour2 {
     /// Classifies a batch of points through one immediate exact contour pass.
     ///
     /// Conservative bounds, winding order, and prepared predicate facts are
-    /// built once for the batch and remain internal to this call.
+    /// built once for the batch and remain internal to this call. Each point
+    /// is decided independently, so one undecided point does not block the
+    /// others.
     pub fn classify_points(
+        &self,
+        points: &[Point2],
+    ) -> Vec<crate::ExactCurveResult<ContourPointLocation>> {
+        self.classify_points_with_policy(points, &crate::policy::principal_context())
+            .into_iter()
+            .map(|location| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, location)
+            })
+            .collect()
+    }
+
+    /// [`Self::classify_points`] under an explicit predicate policy.
+    pub(crate) fn classify_points_with_policy(
         &self,
         points: &[Point2],
         policy: &CurveContext,
@@ -406,7 +455,19 @@ impl Contour2 {
     /// Segment boxes are used only to skip decided misses. A box hit or
     /// uncertain ordering still falls back to exact segment containment so edge
     /// and vertex boundary cases remain explicit.
-    pub fn point_on_boundary(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
+    pub fn point_on_boundary(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.point_on_boundary_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::point_on_boundary`] under an explicit predicate policy.
+    pub(crate) fn point_on_boundary_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
         let contour_box = decided_contour_aabb(self);
         let segment_boxes = decided_segment_boxes(self.segments());
         point_on_contour_boundary_with_cached_aabbs(
@@ -422,6 +483,20 @@ impl Contour2 {
     pub fn intersect_contour(
         &self,
         other: &Self,
+    ) -> crate::ExactCurveResult<crate::ContourIntersectionSet> {
+        self.intersect_contour_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Intersection,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_contour`] under an explicit predicate policy.
+    pub(crate) fn intersect_contour_with_policy(
+        &self,
+        other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<crate::ContourIntersectionSet> {
         crate::events::intersect_contours(self, other, policy)
@@ -434,7 +509,18 @@ impl Contour2 {
     /// that are not just the connected vertex remain in the result. This keeps
     /// the same exact pair enumeration used for contour-pair intersections,
     /// with the bounding-box candidate pruning pattern described by sweep-line scheduling.
-    pub fn intersect_self(
+    pub fn intersect_self(&self) -> crate::ExactCurveResult<crate::ContourIntersectionSet> {
+        self.intersect_self_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Intersection,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_self`] under an explicit predicate policy.
+    pub(crate) fn intersect_self_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<crate::ContourIntersectionSet> {
@@ -447,6 +533,25 @@ impl Contour2 {
         &self,
         intersections: &crate::ContourIntersectionSet,
         operand: crate::ContourOperand,
+    ) -> crate::ExactCurveResult<crate::ContourFragmentSet> {
+        self.split_at_intersections_with_policy(
+            intersections,
+            operand,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Subdivision, cause)
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+        })
+    }
+
+    /// [`Self::split_at_intersections`] under an explicit predicate policy.
+    pub(crate) fn split_at_intersections_with_policy(
+        &self,
+        intersections: &crate::ContourIntersectionSet,
+        operand: crate::ContourOperand,
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
         crate::fragment::split_contour_at_intersections(self, intersections, operand, policy)
@@ -455,6 +560,23 @@ impl Contour2 {
     /// Splits this contour into traversal-order fragments at self-intersection
     /// events collected from this same contour.
     pub fn split_at_self_intersections(
+        &self,
+        intersections: &crate::ContourIntersectionSet,
+    ) -> crate::ExactCurveResult<crate::ContourFragmentSet> {
+        self.split_at_self_intersections_with_policy(
+            intersections,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Subdivision, cause)
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+        })
+    }
+
+    /// [`Self::split_at_self_intersections`] under an explicit predicate policy.
+    pub(crate) fn split_at_self_intersections_with_policy(
         &self,
         intersections: &crate::ContourIntersectionSet,
         policy: &CurveContext,
@@ -569,7 +691,7 @@ pub(crate) fn point_on_contour_boundary_with_cached_aabbs(
             continue;
         }
 
-        match segment.contains_point(point, policy) {
+        match segment.contains_point_with_policy(point, policy) {
             Classification::Decided(true) => return Classification::Decided(true),
             Classification::Decided(false) => {}
             Classification::Uncertain(reason) => {
@@ -1290,7 +1412,7 @@ mod tests {
         ] {
             assert!(
                 contour
-                    .intersect_self(&CurveContext::STRICT)
+                    .intersect_self_with_policy(&CurveContext::STRICT)
                     .unwrap()
                     .is_empty()
             );

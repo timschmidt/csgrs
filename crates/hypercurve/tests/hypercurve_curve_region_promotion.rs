@@ -422,7 +422,9 @@ fn boundary_vertex_at(
             region.boundary_loops()[loop_index].len()
         );
         if let Some(vertex) = path.curves().iter().position(|curve| {
-            certified(curve.start().coincides_with(&point, policy)) == Classification::Decided(true)
+            certified(crate::support::under_outcome_classification(policy, || {
+                curve.start().coincides_with(&point)
+            })) == Classification::Decided(true)
         }) {
             return (loop_index, vertex);
         }
@@ -573,9 +575,10 @@ fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> O
             let start = curve.start();
             let end = curve.end();
             let contact = if decided(
-                start
-                    .compare_coordinate(&end, hypercurve::Axis2::X, policy)
-                    .unwrap(),
+                crate::support::under(policy, || {
+                    start.compare_coordinate(&end, hypercurve::Axis2::X)
+                })
+                .unwrap(),
             )
             .is_gt()
             {
@@ -584,9 +587,10 @@ fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> O
                 end
             };
             if decided(
-                contact
-                    .compare_coordinate(&corner, hypercurve::Axis2::X, policy)
-                    .unwrap(),
+                crate::support::under(policy, || {
+                    contact.compare_coordinate(&corner, hypercurve::Axis2::X)
+                })
+                .unwrap(),
             ) != std::cmp::Ordering::Greater
             {
                 continue;
@@ -607,9 +611,10 @@ fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> O
                 && topology.first().len() == 1
                 && furthest.as_ref().is_none_or(|previous| {
                     decided(
-                        contact
-                            .compare_coordinate(previous, hypercurve::Axis2::X, policy)
-                            .unwrap(),
+                        crate::support::under(policy, || {
+                            contact.compare_coordinate(previous, hypercurve::Axis2::X)
+                        })
+                        .unwrap(),
                     )
                     .is_gt()
                 })
@@ -656,11 +661,19 @@ fn assert_boundary_bounds_contain_endpoints(region: &CurveRegion2, policy: &Curv
             for endpoint in [curve.start(), curve.end()] {
                 for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
                     assert_ne!(
-                        decided(endpoint.compare_coordinate(&minimum, axis, policy).unwrap()),
+                        decided(
+                            crate::support::under(policy, || endpoint
+                                .compare_coordinate(&minimum, axis))
+                            .unwrap()
+                        ),
                         std::cmp::Ordering::Less,
                     );
                     assert_ne!(
-                        decided(endpoint.compare_coordinate(&maximum, axis, policy).unwrap()),
+                        decided(
+                            crate::support::under(policy, || endpoint
+                                .compare_coordinate(&maximum, axis))
+                            .unwrap()
+                        ),
                         std::cmp::Ordering::Greater,
                     );
                 }
@@ -1850,7 +1863,12 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                     ];
                     let locate = |endpoint: &CurvePoint2, points: &[Point2]| {
                         points.iter().position(|point| {
-                            decided(endpoint.coincides_with(&point.clone().into(), &policy))
+                            decided(
+                                crate::support::under(&policy, || {
+                                    endpoint.coincides_with(&point.clone().into())
+                                })
+                                .unwrap(),
+                            )
                         })
                     };
                     let mut selected = None;
@@ -2535,29 +2553,28 @@ fn unified_region_corners_use_canonical_spline_bezier_spans() {
             })
             .unwrap()
             .into_value();
-            let has_expected = |candidate: &CurveRegion2| {
-                let paths = crate::support::under(&policy, || candidate.boundary_paths())
-                    .unwrap()
-                    .into_value();
-                paths[0].curves()[2].family() == canonical_family
-                    && paths[0].curves()[1].family() == CurveFamily2::RationalQuadraticBezier
-                    && paths[0].curves()[0]
-                        .end()
-                        .coincides_with(
-                            &hypercurve::CurvePoint2::from(expected_line_cut.clone()),
-                            &policy,
-                        )
+            let has_expected =
+                |candidate: &CurveRegion2| {
+                    let paths = crate::support::under(&policy, || candidate.boundary_paths())
+                        .unwrap()
+                        .into_value();
+                    paths[0].curves()[2].family() == canonical_family
+                        && paths[0].curves()[1].family() == CurveFamily2::RationalQuadraticBezier
+                        && crate::support::under_outcome_classification(&policy, || {
+                            paths[0].curves()[0].end().coincides_with(
+                                &hypercurve::CurvePoint2::from(expected_line_cut.clone()),
+                            )
+                        })
                         .into_value()
-                        == Classification::Decided(true)
-                    && paths[0].curves()[2]
-                        .start()
-                        .coincides_with(
-                            &hypercurve::CurvePoint2::from(expected_cut.clone()),
-                            &policy,
-                        )
+                            == Classification::Decided(true)
+                        && crate::support::under_outcome_classification(&policy, || {
+                            paths[0].curves()[2].start().coincides_with(
+                                &hypercurve::CurvePoint2::from(expected_cut.clone()),
+                            )
+                        })
                         .into_value()
-                        == Classification::Decided(true)
-            };
+                            == Classification::Decided(true)
+                };
             assert!(fillets.solutions().iter().any(has_expected));
         }
     }
@@ -3532,7 +3549,9 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
                 let replay =
                     crate::support::under(&policy, || carrier.curve().point_at(parameter)).unwrap();
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
-                let same = replay.value.coincides_with(point, &policy);
+                let same = crate::support::under_outcome_classification(&policy, || {
+                    replay.value.coincides_with(point)
+                });
                 assert_eq!(same.certainty, CurveCertainty::Certified);
                 assert_eq!(same.value, Classification::Decided(true));
             }
@@ -4111,7 +4130,14 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
             let vertex = paths[0]
                 .curves()
                 .iter()
-                .position(|curve| decided(curve.start().coincides_with(&seam_corner, &policy)))
+                .position(|curve| {
+                    decided(
+                        crate::support::under(&policy, || {
+                            curve.start().coincides_with(&seam_corner)
+                        })
+                        .unwrap(),
+                    )
+                })
                 .expect("the authored cusp seam survives normalization");
             let cut = crate::support::under(&policy, || {
                 region.chamfer_loop_vertex_by_setbacks(
@@ -4662,7 +4688,12 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                 .into_iter()
                 .find(|candidate| {
                     parabola_extension_contact(candidate, &policy).is_some_and(|contact| {
-                        decided(contact.coincides_with(&exact_cut.clone().into(), &policy))
+                        decided(
+                            crate::support::under(&policy, || {
+                                contact.coincides_with(&exact_cut.clone().into())
+                            })
+                            .unwrap(),
+                        )
                     })
                 })
                 .expect("the represented exterior parabola cut must be retained");
@@ -4817,7 +4848,12 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
                 .iter()
                 .find(|candidate| {
                     parabola_extension_contact(candidate, &policy).is_some_and(|contact| {
-                        decided(contact.coincides_with(&exact_cut.clone().into(), &policy))
+                        decided(
+                            crate::support::under(&policy, || {
+                                contact.coincides_with(&exact_cut.clone().into())
+                            })
+                            .unwrap(),
+                        )
                     })
                 })
                 .expect("the represented exterior parabola contact must be retained");

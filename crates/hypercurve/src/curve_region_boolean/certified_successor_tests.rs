@@ -2592,7 +2592,7 @@ fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
                 .unwrap()
                 .into_value();
             assert_eq!(
-                a.coincides_with(&b, &policy).value,
+                a.coincides_with_with_policy(&b, &policy).value,
                 Classification::Decided(true)
             );
         }
@@ -3349,7 +3349,7 @@ fn assert_chord_parallel_evidence_replays(
     let replay = |first, second| {
         let first = evidence_carrier_point(evidence, true, first, policy);
         let second = evidence_carrier_point(evidence, false, second, policy);
-        let equality = first.coincides_with(&second, policy);
+        let equality = first.coincides_with_with_policy(&second, policy);
         assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
         assert_eq!(equality.value, Classification::Decided(true));
     };
@@ -4832,7 +4832,8 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                                         continue;
                                     };
                                     if certified(
-                                        certified(point).coincides_with(&p(-1, 0).into(), &policy),
+                                        certified(point)
+                                            .coincides_with_with_policy(&p(-1, 0).into(), &policy),
                                     ) != Classification::Decided(true)
                                     {
                                         continue;

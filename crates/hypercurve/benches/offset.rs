@@ -65,7 +65,10 @@ fn bench_arc_offset(name: &str, segment: &Segment2, iterations: u32) -> CurveRes
     let mut checksum = 0_usize;
 
     for _ in 0..iterations {
-        let Classification::Decided(offset) = segment.offset_left(s(1), &policy)? else {
+        let Classification::Decided(offset) =
+            crate::support::under_classified_result(&policy, || segment.offset_left(s(1)))
+                .expect("benchmark fixture remains exact")
+        else {
             panic!("{name} became uncertain during benchmark");
         };
         checksum += black_box(offset.end().y().to_f64_lossy().is_some() as usize);
@@ -966,7 +969,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(offset) =
-            counter_clockwise_right_offset.offset_left(s(-1), &policy)?
+            crate::support::under_classified_result(&policy, || {
+                counter_clockwise_right_offset.offset_left(s(-1))
+            })?
         else {
             panic!("counter_clockwise_arc_right_offset became uncertain during benchmark");
         };

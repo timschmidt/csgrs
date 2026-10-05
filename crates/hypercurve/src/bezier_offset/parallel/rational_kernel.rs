@@ -132,7 +132,7 @@ impl BezierParallel2 {
         if let (Classification::Decided(parallel_bounds), Classification::Decided(other_bounds)) =
             (self.conservative_bounds()?, other_bounds)
             && matches!(
-                parallel_bounds.overlaps(&other_bounds, policy),
+                parallel_bounds.overlaps_with_policy(&other_bounds, policy),
                 Classification::Decided(false)
             )
         {

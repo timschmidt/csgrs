@@ -17,7 +17,7 @@ fn point(x: u8, y: u8) -> Point2 {
 
 fn coincide(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
     assert_eq!(
-        first.coincides_with(second, policy).value,
+        support::under_outcome_classification(policy, || first.coincides_with(second)),
         Classification::Decided(true)
     );
 }

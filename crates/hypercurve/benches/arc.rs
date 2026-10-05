@@ -243,10 +243,12 @@ fn main() {
     .expect("major benchmark contour is valid");
     let policy = CurveContext::STRICT;
     let major_query = p(-1, 0);
-    major.classify_point(&major_query, &policy);
+    crate::support::under_classified(&policy, || major.classify_point(&major_query));
     let started = Instant::now();
     for _ in 0..iterations {
-        black_box(major.classify_point(black_box(&major_query), &policy));
+        black_box(crate::support::under_classified(&policy, || {
+            major.classify_point(black_box(&major_query))
+        }));
     }
     let elapsed = started.elapsed();
     println!(

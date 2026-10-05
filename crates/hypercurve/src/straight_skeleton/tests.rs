@@ -105,7 +105,9 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
             .collect(),
     )
     .unwrap();
-    let evidence = path.straight_skeleton(&CurveContext::STRICT).unwrap();
+    let evidence = path
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
 
     let line_start = Point2::new(r(0), r(0));
@@ -182,7 +184,9 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
             ),
         ])
         .unwrap();
-        let evidence = path.straight_skeleton(&CurveContext::STRICT).unwrap();
+        let evidence = path
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
+            .unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -245,7 +249,7 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
         ])
         .unwrap();
         let evidence = rational_sector
-            .straight_skeleton(&CurveContext::STRICT)
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(
             evidence.stage(),
@@ -283,7 +287,7 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
     ])
     .unwrap();
     let evidence = unsupported
-        .straight_skeleton(&CurveContext::STRICT)
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
         .unwrap();
     assert_eq!(
         evidence.blocker(),
@@ -312,7 +316,7 @@ fn mixed_line_arc_vertices_have_exact_parabolic_trajectories() {
     ])
     .unwrap();
     let Classification::Decided(trajectories) = source
-        .straight_skeleton_vertex_trajectories(&CurveContext::STRICT)
+        .straight_skeleton_vertex_trajectories_with_policy(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("mixed line/arc trajectories must be decided");
@@ -373,7 +377,9 @@ fn circular_segment_materializes_exact_parabolic_terminal_branches() {
             ),
         ])
         .unwrap();
-        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+        let evidence = source
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
+            .unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -440,7 +446,9 @@ fn circular_sector_materializes_exact_three_support_vanish_event() {
             Segment2::Line(LineSeg2::try_new(first_line_end, second_line_end).unwrap()),
         ])
         .unwrap();
-        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+        let evidence = source
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
+            .unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -501,7 +509,7 @@ fn local_arc_queue_distinguishes_vanish_and_bubble_candidates() {
     ])
     .unwrap();
     let Classification::Decided(events) = sector
-        .straight_skeleton_local_arc_events(&CurveContext::STRICT)
+        .straight_skeleton_local_arc_events_with_policy(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("sector local event must be decided");
@@ -524,7 +532,7 @@ fn local_arc_queue_distinguishes_vanish_and_bubble_candidates() {
     ])
     .unwrap();
     let bubble_events = bubble_source
-        .straight_skeleton_local_arc_events(&CurveContext::STRICT)
+        .straight_skeleton_local_arc_events_with_policy(&CurveContext::STRICT)
         .unwrap();
     let Classification::Decided(events) = bubble_events else {
         panic!("bubble local event must be decided: {bubble_events:?}");
@@ -532,7 +540,7 @@ fn local_arc_queue_distinguishes_vanish_and_bubble_candidates() {
     assert_eq!(events.len(), 1);
     assert_eq!(events[0].kind(), StraightSkeletonLocalArcEventKind2::Bubble);
     let Classification::Decided(splices) = bubble_source
-        .straight_skeleton_splice_events(&CurveContext::STRICT)
+        .straight_skeleton_splice_events_with_policy(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("bubble fixture splice candidates must be decided");
@@ -544,7 +552,7 @@ fn local_arc_queue_distinguishes_vanish_and_bubble_candidates() {
             .all(|event| [1, 2].contains(&event.source_vertex()))
     );
     let evidence = bubble_source
-        .straight_skeleton(&CurveContext::STRICT)
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
         .unwrap();
     assert_eq!(
         evidence.stage(),
@@ -585,7 +593,9 @@ fn local_arc_queue_distinguishes_vanish_and_bubble_candidates() {
         ),
     ])
     .unwrap();
-    let evidence = clockwise.straight_skeleton(&CurveContext::STRICT).unwrap();
+    let evidence = clockwise
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(
         evidence.stage(),
         StraightSkeletonStage2::Complete,
@@ -615,7 +625,7 @@ fn local_arc_queue_rejects_an_extraneous_cone_sheet_root() {
     ])
     .unwrap();
     let Classification::Decided(events) = contour
-        .straight_skeleton_local_arc_events(&CurveContext::STRICT)
+        .straight_skeleton_local_arc_events_with_policy(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("branch validation must be decided");
@@ -650,11 +660,13 @@ fn reflex_line_arc_fixture_has_an_exact_first_splice() {
         Some(RealSign::Positive)
     );
     assert_eq!(
-        source.has_self_contacts(&CurveContext::STRICT).unwrap(),
+        source
+            .has_self_contacts_with_policy(&CurveContext::STRICT)
+            .unwrap(),
         Classification::Decided(false)
     );
     let Classification::Decided(splices) = source
-        .straight_skeleton_splice_events(&CurveContext::STRICT)
+        .straight_skeleton_splice_events_with_policy(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("splice fixture must be decided");
@@ -729,7 +741,9 @@ fn reflex_line_arc_fixture_has_an_exact_first_splice() {
         .expect("coincident anti-parallel overlap must terminate exactly");
     assert!(arcs.iter().any(|arc| arc.end_node() == overlap_node
         && arc.kind() == &StraightSkeletonArcKind2::TerminalRidge));
-    let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+    let evidence = source
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(
         evidence.stage(),
         StraightSkeletonStage2::Complete,
@@ -1675,7 +1689,9 @@ fn convex_mixed_wavefront_processes_successive_native_vanish_events() {
             )
         }));
         let source = Contour2::try_new(segments).unwrap();
-        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+        let evidence = source
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
+            .unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -1727,7 +1743,9 @@ fn cocircular_smooth_contour_has_exact_empty_shape_preserving_skeleton() {
             ),
         ])
         .unwrap();
-        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+        let evidence = source
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
+            .unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -2087,7 +2105,7 @@ fn active_circular_edge_validation_uses_its_finite_evolved_sweep() {
 #[test]
 fn square_collapses_to_one_exact_center_event() {
     let evidence = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)])
-        .straight_skeleton(&CurveContext::STRICT)
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
         .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.event_count(), 1);
@@ -2103,7 +2121,7 @@ fn square_collapses_to_one_exact_center_event() {
 #[test]
 fn rectangle_retains_the_terminal_ridge() {
     let evidence = contour(&[(0, 0), (4, 0), (4, 2), (0, 2)])
-        .straight_skeleton(&CurveContext::STRICT)
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
         .unwrap();
     let skeleton = evidence.skeleton().unwrap();
     assert_eq!(skeleton.nodes().len(), 6);
@@ -2120,7 +2138,7 @@ fn rectangle_retains_the_terminal_ridge() {
 #[test]
 fn clockwise_square_has_the_same_exact_collapse() {
     let evidence = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)])
-        .straight_skeleton(&CurveContext::STRICT)
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
         .unwrap();
     let skeleton = evidence.skeleton().unwrap();
     assert_eq!(
@@ -2136,7 +2154,7 @@ fn codirected_collinear_source_edges_are_normalized_exactly() {
         &[(0, 2), (2, 2), (2, 0), (1, 0), (0, 0)][..],
     ] {
         let evidence = contour(points)
-            .straight_skeleton(&CurveContext::STRICT)
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.source_edge_count(), 5);
@@ -2147,7 +2165,7 @@ fn codirected_collinear_source_edges_are_normalized_exactly() {
 #[test]
 fn non_general_position_l_shape_materializes_terminal_vertex_event() {
     let evidence = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
-        .straight_skeleton(&CurveContext::STRICT)
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
         .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.vertex_event_count(), 1);
@@ -2184,7 +2202,7 @@ fn general_position_concave_polygon_materializes_exact_split_topology() {
         (0, 24),
     ]);
     let global_contacts = source
-        .straight_skeleton_global_contact_events(&CurveContext::STRICT)
+        .straight_skeleton_global_contact_events_with_policy(&CurveContext::STRICT)
         .unwrap();
     let Classification::Decided(global_contacts) = global_contacts else {
         panic!("line split candidates must be decided: {global_contacts:?}");
@@ -2198,7 +2216,9 @@ fn general_position_concave_polygon_materializes_exact_split_topology() {
             ..
         }
     )));
-    let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+    let evidence = source
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.split_event_count(), 1);
     let skeleton = evidence.skeleton().unwrap();
@@ -2258,7 +2278,7 @@ fn mixed_arc_polygon_split_is_validated_on_the_finite_evolved_edge() {
     ));
     let source = Contour2::try_new(segments).unwrap();
     let contacts = source
-        .straight_skeleton_global_contact_events(&CurveContext::STRICT)
+        .straight_skeleton_global_contact_events_with_policy(&CurveContext::STRICT)
         .unwrap();
     let Classification::Decided(contacts) = contacts else {
         panic!("mixed split queue must be decided: {contacts:?}");
@@ -2348,7 +2368,9 @@ fn mixed_arc_polygon_split_is_validated_on_the_finite_evolved_edge() {
             hit_source_edge: 0,
         }
     )));
-    let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+    let evidence = source
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(
         evidence.stage(),
         StraightSkeletonStage2::Complete,
@@ -2384,11 +2406,13 @@ fn nonadjacent_line_and_arc_interiors_schedule_an_exact_squeeze() {
     ])
     .unwrap();
     assert_eq!(
-        source.has_self_contacts(&CurveContext::STRICT).unwrap(),
+        source
+            .has_self_contacts_with_policy(&CurveContext::STRICT)
+            .unwrap(),
         Classification::Decided(false)
     );
     let contacts = source
-        .straight_skeleton_global_contact_events(&CurveContext::STRICT)
+        .straight_skeleton_global_contact_events_with_policy(&CurveContext::STRICT)
         .unwrap();
     let Classification::Decided(contacts) = contacts else {
         panic!("squeeze queue must be decided: {contacts:?}");
@@ -2453,7 +2477,9 @@ fn nonadjacent_line_and_arc_interiors_schedule_an_exact_squeeze() {
             .iter()
             .any(|node| matches!(node.kind(), StraightSkeletonNodeKind2::SqueezeEvent { .. }))
     );
-    let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
+    let evidence = source
+        .straight_skeleton_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(
         evidence.stage(),
         StraightSkeletonStage2::Complete,
@@ -2473,7 +2499,7 @@ fn clockwise_general_position_concave_polygon_completes() {
         (30, 0),
         (0, 0),
     ])
-    .straight_skeleton(&CurveContext::STRICT)
+    .straight_skeleton_with_policy(&CurveContext::STRICT)
     .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.split_event_count(), 1);
@@ -2542,7 +2568,7 @@ fn non_general_position_line_fixtures_complete_exactly() {
     ];
     for (name, points) in fixtures {
         let evidence = contour(points)
-            .straight_skeleton(&CurveContext::STRICT)
+            .straight_skeleton_with_policy(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(
             evidence.stage(),
@@ -2575,7 +2601,7 @@ fn nonterminal_bridge_collapse_splits_into_two_live_cycles() {
         (4, 4),
         (0, 4),
     ])
-    .straight_skeleton(&CurveContext::STRICT)
+    .straight_skeleton_with_policy(&CurveContext::STRICT)
     .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.vertex_event_count(), 2);
@@ -2604,7 +2630,7 @@ fn clockwise_nonterminal_bridge_collapse_completes() {
         (4, 0),
         (0, 0),
     ])
-    .straight_skeleton(&CurveContext::STRICT)
+    .straight_skeleton_with_policy(&CurveContext::STRICT)
     .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.vertex_event_count(), 2);
@@ -2642,7 +2668,7 @@ fn same_point_nonterminal_multi_vertex_event_splits_four_live_cycles() {
         (5, 4),
         (4, 4),
     ])
-    .straight_skeleton(&CurveContext::STRICT)
+    .straight_skeleton_with_policy(&CurveContext::STRICT)
     .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
     assert_eq!(evidence.vertex_event_count(), 5);

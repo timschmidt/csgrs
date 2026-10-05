@@ -526,7 +526,9 @@ mod tests {
         )])
         .unwrap();
 
-        let intersections = a.intersect_curve_string(&b, &topology_policy()).unwrap();
+        let intersections = a
+            .intersect_curve_string_with_policy(&b, &topology_policy())
+            .unwrap();
         assert_eq!(intersections.len(), 1);
         assert_eq!(intersections[0].a_segment_index, 0);
         assert_eq!(intersections[0].b_segment_index, 0);
@@ -552,7 +554,7 @@ mod tests {
         .unwrap();
 
         let intersections = line_curve
-            .intersect_curve_string(&arc_curve, &topology_policy())
+            .intersect_curve_string_with_policy(&arc_curve, &topology_policy())
             .unwrap();
         assert_eq!(intersections.len(), 1);
 
@@ -578,7 +580,9 @@ mod tests {
         )])
         .unwrap();
 
-        let intersections = a.intersect_curve_string(&b, &topology_policy()).unwrap();
+        let intersections = a
+            .intersect_curve_string_with_policy(&b, &topology_policy())
+            .unwrap();
         assert!(intersections.is_empty());
     }
 
@@ -971,7 +975,9 @@ mod tests {
     fn segment_intersection_dispatches_line_line() {
         let a = Segment2::Line(LineSeg2::try_new(p(0, 0), p(2, 2)).unwrap());
         let b = Segment2::Line(LineSeg2::try_new(p(0, 2), p(2, 0)).unwrap());
-        let intersection = a.intersect_segment(&b, &topology_policy()).unwrap();
+        let intersection = a
+            .intersect_segment_with_policy(&b, &topology_policy())
+            .unwrap();
 
         let SegmentIntersection::LineLine(LineLineIntersection::Point { point, kind, .. }) =
             intersection
@@ -987,7 +993,9 @@ mod tests {
     fn segment_intersection_dispatches_line_arc_with_order() {
         let line = Segment2::Line(LineSeg2::try_new(p(1, -2), p(1, 2)).unwrap());
         let arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap());
-        let intersection = line.intersect_segment(&arc, &topology_policy()).unwrap();
+        let intersection = line
+            .intersect_segment_with_policy(&arc, &topology_policy())
+            .unwrap();
 
         let SegmentIntersection::LineArc {
             order,
@@ -1005,7 +1013,9 @@ mod tests {
     fn segment_intersection_dispatches_arc_line_with_order() {
         let arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap());
         let line = Segment2::Line(LineSeg2::try_new(p(1, -2), p(1, 2)).unwrap());
-        let intersection = arc.intersect_segment(&line, &topology_policy()).unwrap();
+        let intersection = arc
+            .intersect_segment_with_policy(&line, &topology_policy())
+            .unwrap();
 
         let SegmentIntersection::LineArc {
             order,
@@ -1026,7 +1036,9 @@ mod tests {
         );
         let b =
             Segment2::Arc(CircularArc2::try_from_center(p(3, 0), p(13, 0), p(8, 0), true).unwrap());
-        let intersection = a.intersect_segment(&b, &topology_policy()).unwrap();
+        let intersection = a
+            .intersect_segment_with_policy(&b, &topology_policy())
+            .unwrap();
 
         let SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) = intersection else {
             panic!("expected dispatched arc-arc point");

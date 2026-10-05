@@ -3,8 +3,7 @@ use std::cmp::Ordering;
 
 use hypercurve::{
     Axis2, BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    Classification, CurveCertainty, CurveContext, CurveOutcome, CurvePoint2, Point2,
-    RationalBezier2, Real,
+    Classification, CurveCertainty, CurveContext, CurvePoint2, Point2, RationalBezier2, Real,
 };
 
 fn decided<T>(value: Classification<T>) -> T {
@@ -14,7 +13,7 @@ fn decided<T>(value: Classification<T>) -> T {
     }
 }
 
-fn certified<T: std::fmt::Debug>(outcome: CurveOutcome<Classification<T>>) -> T {
+fn certified<T: std::fmt::Debug>(outcome: crate::support::Outcome<Classification<T>>) -> T {
     assert_eq!(outcome.certainty, CurveCertainty::Certified);
     decided(outcome.value)
 }
@@ -72,41 +71,48 @@ fn independent_selected_charts_share_the_general_point_queries() {
     assert!(first.coordinates().is_none());
     assert!(second.coordinates().is_none());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        assert!(certified(first.coincides_with(&second, &policy)));
+        assert!(certified(crate::support::under_outcome_classification(
+            &policy,
+            || first.coincides_with(&second)
+        )));
         assert_eq!(
             certified(
-                first
-                    .compare_coordinate(&second, Axis2::X, &policy)
-                    .unwrap()
+                crate::support::under_outcome_classified(&policy, || first
+                    .compare_coordinate(&second, Axis2::X))
+                .unwrap()
             ),
             Ordering::Equal,
         );
         let at_height = CurvePoint2::from(Point2::new(Real::zero(), Real::pi()));
         assert_eq!(
             certified(
-                first
-                    .compare_coordinate(&at_height, Axis2::Y, &policy)
-                    .unwrap()
+                crate::support::under_outcome_classified(&policy, || first
+                    .compare_coordinate(&at_height, Axis2::Y))
+                .unwrap()
             ),
             Ordering::Equal,
         );
         assert_eq!(
             certified(
-                first
-                    .compare_coordinate(&at_height, Axis2::X, &policy)
-                    .unwrap()
+                crate::support::under_outcome_classified(&policy, || first
+                    .compare_coordinate(&at_height, Axis2::X))
+                .unwrap()
             ),
             Ordering::Greater,
         );
-        let bounds = certified(first.bounds(&policy));
+        let bounds = certified(crate::support::under_outcome_classification(
+            &policy,
+            || first.bounds(),
+        ));
         assert_eq!(bounds.min().y(), &Real::pi());
         assert_eq!(bounds.max().y(), &Real::pi());
     }
     // Queries keep the selected parameter representation available for reuse.
     assert!(first.coordinates().is_none());
-    assert!(certified(
-        first.coincides_with(&first.clone(), &CurveContext::STRICT)
-    ));
+    assert!(certified(crate::support::under_outcome_classification(
+        &CurveContext::STRICT,
+        || first.coincides_with(&first.clone())
+    )));
 }
 
 #[test]
@@ -114,31 +120,40 @@ fn coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty() {
     let coordinates = Point2::new(Real::pi(), Real::e());
     let point = CurvePoint2::from(coordinates.clone());
     assert_eq!(point.coordinates(), Some(&coordinates));
-    let bounds = certified(point.bounds(&CurveContext::APPROXIMATE_512));
+    let bounds = certified(crate::support::under_outcome_classification(
+        &CurveContext::APPROXIMATE_512,
+        || point.bounds(),
+    ));
     assert_eq!(bounds.min(), &coordinates);
     assert_eq!(bounds.max(), &coordinates);
-    assert!(certified(
-        point.coincides_with(&point.clone(), &CurveContext::APPROXIMATE_512)
-    ));
+    assert!(certified(crate::support::under_outcome_classification(
+        &CurveContext::APPROXIMATE_512,
+        || point.coincides_with(&point.clone())
+    )));
 
     let origin = CurvePoint2::from(Point2::new(Real::zero(), Real::zero()));
     let unresolved = CurvePoint2::from(Point2::new(
         support::terminally_unresolved_zero(),
         Real::zero(),
     ));
-    let strict = origin.coincides_with(&unresolved, &CurveContext::STRICT);
+    let strict = crate::support::under_outcome_classification(&CurveContext::STRICT, || {
+        origin.coincides_with(&unresolved)
+    });
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(strict.value, Classification::Uncertain(_)));
-    let approximate = origin.coincides_with(&unresolved, &CurveContext::APPROXIMATE_512);
+    let approximate =
+        crate::support::under_outcome_classification(&CurveContext::APPROXIMATE_512, || {
+            origin.coincides_with(&unresolved)
+        });
     assert_eq!(
         approximate.certainty,
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(approximate.value, Classification::Decided(true));
     assert!(matches!(
-        origin
-            .coincides_with(&unresolved, &CurveContext::STRICT)
-            .value,
+        crate::support::under_outcome_classification(&CurveContext::STRICT, || origin
+            .coincides_with(&unresolved))
+        .value,
         Classification::Uncertain(_),
     ));
 }

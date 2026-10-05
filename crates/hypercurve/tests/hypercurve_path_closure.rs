@@ -14,7 +14,8 @@ fn q(n: i32, d: i32) -> Real {
 }
 
 fn assert_same_point(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
-    let equal = actual.coincides_with(expected, policy);
+    let equal =
+        crate::support::under_outcome_classification(policy, || actual.coincides_with(expected));
     assert_eq!(equal.certainty, CurveCertainty::Certified);
     assert_eq!(equal.value, Classification::Decided(true));
 }
@@ -234,7 +235,10 @@ fn selected_chamfers_preserve_all_major_arc_contacts() {
                     vec![Point2::new(q(1, 2), y.clone()), Point2::new(q(1, 2), -y)]
                 };
                 assert!(expected.into_iter().any(|point| {
-                    contact.coincides_with(&point.into(), &policy).value
+                    crate::support::under_outcome_classification(&policy, || {
+                        contact.coincides_with(&point.into())
+                    })
+                    .value
                         == Classification::Decided(true)
                 }));
             }
@@ -557,7 +561,10 @@ fn check_major_arc_fillet(clockwise: bool) {
                     clockwise
                         || candidate.curves().iter().any(|curve| {
                             let endpoint = if reversed { curve.start() } else { curve.end() };
-                            endpoint.coincides_with(&exact_contact, &policy).value
+                            crate::support::under_outcome_classification(&policy, || {
+                                endpoint.coincides_with(&exact_contact)
+                            })
+                            .value
                                 == Classification::Decided(true)
                         })
                 })
@@ -813,7 +820,9 @@ mod finite_fixed_distance_domains {
     }
     fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         assert_eq!(
-            certified(first.coincides_with(second, policy)),
+            certified(crate::support::under_outcome_classification(policy, || {
+                first.coincides_with(second)
+            })),
             Classification::Decided(true)
         );
     }
@@ -1040,7 +1049,9 @@ mod finite_selected_point_domains {
     }
     fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         assert_eq!(
-            certified(first.coincides_with(second, policy)),
+            certified(crate::support::under_outcome_classification(policy, || {
+                first.coincides_with(second)
+            })),
             Classification::Decided(true)
         );
     }

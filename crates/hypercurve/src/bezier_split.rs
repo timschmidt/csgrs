@@ -2811,7 +2811,7 @@ mod finite_conic_split_regression {
                         let (left, right) = split.value;
                         for point in [left.end(), right.start()] {
                             assert!(matches!(
-                                point.coincides_with(&expected, &policy).value,
+                                point.coincides_with_with_policy(&expected, &policy).value,
                                 Classification::Decided(true)
                             ));
                         }
@@ -2843,7 +2843,7 @@ mod finite_conic_split_regression {
                                     .unwrap()
                                     .value;
                                 assert!(matches!(
-                                    actual.coincides_with(&expected, &policy).value,
+                                    actual.coincides_with_with_policy(&expected, &policy).value,
                                     Classification::Decided(true)
                                 ));
                             }

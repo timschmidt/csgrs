@@ -3953,7 +3953,8 @@ mod tests {
         let first = Curve2::from_retained_fragment(fragments[0].clone());
         let last = Curve2::from_retained_fragment(fragments.last().unwrap().clone());
         for (actual, expected) in [(first.start(), start), (last.end(), end)] {
-            let equality = actual.coincides_with(&CurvePoint2::from(expected.clone()), policy);
+            let equality =
+                actual.coincides_with_with_policy(&CurvePoint2::from(expected.clone()), policy);
             assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
             assert_eq!(equality.value, Classification::Decided(true));
         }
@@ -4119,7 +4120,7 @@ mod tests {
                         // imply every circle point has y > 11/10. The old
                         // companion chart produced an endpoint with y < 1.
                         let center_order = center
-                            .compare_coordinate(
+                            .compare_coordinate_with_policy(
                                 &CurvePoint2::from(Point2::new(Real::zero(), q(3, 2))),
                                 crate::Axis2::Y,
                                 &policy,
@@ -4138,7 +4139,7 @@ mod tests {
                             assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                             let order = point
                                 .value
-                                .compare_coordinate(
+                                .compare_coordinate_with_policy(
                                     &CurvePoint2::from(Point2::new(Real::zero(), q(11, 10))),
                                     crate::Axis2::Y,
                                     &policy,

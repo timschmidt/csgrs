@@ -1395,7 +1395,7 @@ impl RationalBezier2 {
         }
         if let Classification::Decided(bounds) = self.certified_bounds_classified()
             && matches!(
-                bounds.contains_point(point, policy),
+                bounds.contains_point_with_policy(point, policy),
                 Classification::Decided(false)
             )
         {
@@ -6508,7 +6508,10 @@ mod tests {
                             (height / Real::from(3)).unwrap(),
                         ));
                         assert!(matches!(
-                            contact.point().coincides_with(&expected, &policy).value,
+                            contact
+                                .point()
+                                .coincides_with_with_policy(&expected, &policy)
+                                .value,
                             Classification::Decided(true)
                         ));
                         for (source, parameter) in [
@@ -6528,7 +6531,10 @@ mod tests {
                                 }
                             };
                             assert!(matches!(
-                                contact.point().coincides_with(&point, &policy).value,
+                                contact
+                                    .point()
+                                    .coincides_with_with_policy(&point, &policy)
+                                    .value,
                                 Classification::Decided(true)
                             ));
                         }
@@ -6596,7 +6602,7 @@ mod tests {
                         let point = decided(result);
                         assert!(matches!(
                             point
-                                .coincides_with(&CurvePoint2::from(expected), &policy)
+                                .coincides_with_with_policy(&CurvePoint2::from(expected), &policy)
                                 .value,
                             Classification::Decided(true)
                         ));
@@ -7148,7 +7154,7 @@ mod tests {
                 let expected = source.point_at_with_policy(&parameter, &policy).unwrap();
                 let actual = elevated.point_at_with_policy(&parameter, &policy).unwrap();
                 assert_eq!(
-                    bounds.contains_point(&actual, &policy),
+                    bounds.contains_point_with_policy(&actual, &policy),
                     Classification::Decided(true)
                 );
                 assert_eq!(

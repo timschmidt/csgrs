@@ -1,10 +1,11 @@
 #![allow(clippy::too_many_arguments)]
+mod support;
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, ContourFragment,
     ContourFragmentSet, ContourIntersection, ContourOperand, ContourSplitMarkers, CurveContext,
-    CurveError, CurvePreviewOptions, LineArcIntersection, LineLineIntersection, LineSeg2,
-    ParamRange, Point2, Real, Segment2, SegmentIntersection, SegmentSplitMarker,
+    CurveError, CurvePreviewOptions, ExactCurveError, LineArcIntersection, LineLineIntersection,
+    LineSeg2, ParamRange, Point2, Real, Segment2, SegmentIntersection, SegmentSplitMarker,
 };
 use proptest::prelude::*;
 
@@ -56,6 +57,17 @@ fn preview<T>(evaluate: impl FnOnce(&CurveContext) -> T) -> T {
         .evaluate(evaluate)
 }
 
+fn assert_exact_topology_error<T>(result: hypercurve::ExactCurveResult<T>) {
+    match result {
+        Err(ExactCurveError::Invalid {
+            cause: CurveError::Topology(_),
+            ..
+        }) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
+}
+
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
     match result {
         Err(CurveError::Topology(_)) => {}
@@ -78,10 +90,11 @@ fn contour_fragments_split_line_segments_at_point_events() {
         vertex(1, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let fragments = a
-        .split_at_intersections(&events, ContourOperand::First, &policy())
-        .unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let fragments = crate::support::under_classified_result(&policy(), || {
+        a.split_at_intersections(&events, ContourOperand::First)
+    })
+    .unwrap();
     let Classification::Decided(fragments) = fragments else {
         panic!("expected decided fragments");
     };
@@ -110,9 +123,11 @@ fn contour_fragment_set_constructor_rejects_duplicate_fragments() {
         vertex(1, 1, 0),
         vertex(1, -1, 0),
     ]);
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let Classification::Decided(fragments) = a
-        .split_at_intersections(&events, ContourOperand::First, &policy())
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let Classification::Decided(fragments) =
+        crate::support::under_classified_result(&policy(), || {
+            a.split_at_intersections(&events, ContourOperand::First)
+        })
         .unwrap()
     else {
         panic!("expected decided fragments");
@@ -132,7 +147,7 @@ fn contour_split_rejects_events_outside_supplied_contour() {
         vertex(1, 1, 0),
         vertex(1, -1, 0),
     ]);
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
     let mut forged_events = events.events().to_vec();
     match &mut forged_events[0] {
         ContourIntersection::Point(point) => point.a_segment_index = a.len(),
@@ -141,7 +156,9 @@ fn contour_split_rejects_events_outside_supplied_contour() {
     }
     let forged = hypercurve::ContourIntersectionSet::new(forged_events).unwrap();
 
-    assert_topology_error(a.split_at_intersections(&forged, ContourOperand::First, &policy()));
+    assert_exact_topology_error(crate::support::under_classified_result(&policy(), || {
+        a.split_at_intersections(&forged, ContourOperand::First)
+    }));
 }
 
 #[test]
@@ -204,11 +221,9 @@ fn contour_fragments_reject_forged_line_split_marker_geometry() {
     ])
     .unwrap();
 
-    assert_topology_error(ContourFragmentSet::from_split_markers(
-        &contour,
-        &markers,
-        &policy(),
-    ));
+    assert_exact_topology_error(crate::support::under_classified_result(&policy(), || {
+        ContourFragmentSet::from_split_markers(&contour, &markers)
+    }));
 }
 
 #[test]
@@ -270,9 +285,11 @@ fn contour_fragments_split_line_segments_at_overlap_endpoints() {
         vertex(2, -2, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let Classification::Decided(fragments) = a
-        .split_at_intersections(&events, ContourOperand::First, &policy())
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let Classification::Decided(fragments) =
+        crate::support::under_classified_result(&policy(), || {
+            a.split_at_intersections(&events, ContourOperand::First)
+        })
         .unwrap()
     else {
         panic!("expected decided fragments");
@@ -293,9 +310,12 @@ fn contour_fragments_split_arc_segments_at_event_points() {
         vertex(3, -2, 0),
     ]);
 
-    let events = circle.intersect_contour(&cutter, &policy()).unwrap();
-    let Classification::Decided(fragments) = circle
-        .split_at_intersections(&events, ContourOperand::First, &policy())
+    let events =
+        crate::support::under_value(&policy(), || circle.intersect_contour(&cutter)).unwrap();
+    let Classification::Decided(fragments) =
+        crate::support::under_classified_result(&policy(), || {
+            circle.split_at_intersections(&events, ContourOperand::First)
+        })
         .unwrap()
     else {
         panic!("expected decided fragments");
@@ -344,11 +364,9 @@ fn contour_fragments_reject_forged_arc_split_marker_geometry() {
     ])
     .unwrap();
 
-    assert_topology_error(ContourFragmentSet::from_split_markers(
-        &contour,
-        &markers,
-        &policy(),
-    ));
+    assert_exact_topology_error(crate::support::under_classified_result(&policy(), || {
+        ContourFragmentSet::from_split_markers(&contour, &markers)
+    }));
 }
 
 #[test]
@@ -356,9 +374,12 @@ fn contour_fragments_split_arc_segments_at_overlap_endpoints() {
     let circle = contour(&[vertex(0, 0, 1), vertex(2, 0, 1)]);
     let cutter = arc_overlap_cutter();
 
-    let events = circle.intersect_contour(&cutter, &policy()).unwrap();
-    let Classification::Decided(fragments) = circle
-        .split_at_intersections(&events, ContourOperand::First, &policy())
+    let events =
+        crate::support::under_value(&policy(), || circle.intersect_contour(&cutter)).unwrap();
+    let Classification::Decided(fragments) =
+        crate::support::under_classified_result(&policy(), || {
+            circle.split_at_intersections(&events, ContourOperand::First)
+        })
         .unwrap()
     else {
         panic!("expected decided arc overlap fragments");
@@ -411,10 +432,12 @@ fn approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points
     ])
     .unwrap();
 
-    let Classification::Decided(fragments) =
-        preview(|context| ContourFragmentSet::from_split_markers(&contour, &markers, context))
-            .unwrap()
-    else {
+    let Classification::Decided(fragments) = preview(|context| {
+        crate::support::under_classified_result(context, || {
+            ContourFragmentSet::from_split_markers(&contour, &markers)
+        })
+    })
+    .unwrap() else {
         panic!("policy-on-circle split points should produce decided fragments");
     };
 
@@ -443,9 +466,11 @@ fn contour_self_fragments_split_nonadjacent_line_arc_crossing() {
         vertex(-1, -3, 0),
     ]);
 
-    let events = contour.intersect_self(&policy()).unwrap();
-    let Classification::Decided(fragments) = contour
-        .split_at_self_intersections(&events, &policy())
+    let events = crate::support::under_value(&policy(), || contour.intersect_self()).unwrap();
+    let Classification::Decided(fragments) =
+        crate::support::under_classified_result(&policy(), || {
+            contour.split_at_self_intersections(&events)
+        })
         .unwrap()
     else {
         panic!("expected decided self-intersection fragments");
@@ -471,7 +496,7 @@ fn contour_self_split_rejects_events_outside_supplied_contour() {
         vertex(3, -3, 0),
         vertex(-1, -3, 0),
     ]);
-    let events = contour.intersect_self(&policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || contour.intersect_self()).unwrap();
     let mut forged_events = events.events().to_vec();
     match &mut forged_events[0] {
         ContourIntersection::Point(point) => point.b_segment_index = contour.len(),
@@ -480,7 +505,9 @@ fn contour_self_split_rejects_events_outside_supplied_contour() {
     }
     let forged = hypercurve::ContourIntersectionSet::new(forged_events).unwrap();
 
-    assert_topology_error(contour.split_at_self_intersections(&forged, &policy()));
+    assert_exact_topology_error(crate::support::under_classified_result(&policy(), || {
+        contour.split_at_self_intersections(&forged)
+    }));
 }
 
 #[test]
@@ -492,9 +519,11 @@ fn contour_self_fragments_split_adjacent_line_arc_extra_crossing() {
         vertex(-1, 0, 0),
     ]);
 
-    let events = contour.intersect_self(&policy()).unwrap();
-    let Classification::Decided(fragments) = contour
-        .split_at_self_intersections(&events, &policy())
+    let events = crate::support::under_value(&policy(), || contour.intersect_self()).unwrap();
+    let Classification::Decided(fragments) =
+        crate::support::under_classified_result(&policy(), || {
+            contour.split_at_self_intersections(&events)
+        })
         .unwrap()
     else {
         panic!("expected decided self-intersection fragments");
@@ -527,15 +556,21 @@ fn edge_preview_retains_rotated_arc_arc_event_regression() {
         0.0,
         0.0,
     );
-    let direct =
-        preview(|context| first.segments()[0].intersect_segment(&second.segments()[0], context))
-            .unwrap();
+    let direct = preview(|context| {
+        crate::support::under_value(context, || {
+            first.segments()[0].intersect_segment(&second.segments()[0])
+        })
+    })
+    .unwrap();
     assert!(
         relation_has_evidenceable_intersection(&direct),
         "direct arc-arc relation should retain the preview hit: {direct:?}"
     );
 
-    let events = preview(|context| first.intersect_contour(&second, context)).unwrap();
+    let events = preview(|context| {
+        crate::support::under_value(context, || first.intersect_contour(&second))
+    })
+    .unwrap();
     assert!(
         events
             .events()
@@ -565,10 +600,17 @@ proptest! {
     ) {
         let first = approx_radial_contour(vertex_count, &first_radii, &first_bulges, 0.0, 0.0, 0.0);
         let second = approx_radial_contour(vertex_count, &second_radii, &second_bulges, dx, dy, angle_shift);
-        let events = match preview(|context| first.intersect_contour(&second, context)) {
+        let events = match preview(|context| crate::support::under_value(context, || first.intersect_contour(&second))) {
             Ok(events) => events,
             Err(error) => {
-                prop_assert!(!matches!(error, CurveError::RadiusMismatch));
+                let no_radius_mismatch = !matches!(
+                    error,
+                    ExactCurveError::Invalid {
+                        cause: CurveError::RadiusMismatch,
+                        ..
+                    }
+                );
+                prop_assert!(no_radius_mismatch);
                 return Ok(());
             }
         };
@@ -578,12 +620,11 @@ proptest! {
             (&second, ContourOperand::Second),
         ] {
             let split = preview(|context| {
-                contour.split_at_intersections(&events, operand, context)
+                crate::support::under_classified_result(context, || contour.split_at_intersections(&events, operand))
             });
-            prop_assert!(
-                !matches!(split, Err(CurveError::RadiusMismatch)),
-                "split returned RadiusMismatch for {operand:?}"
-            );
+            let no_radius_mismatch = !matches!(split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+            prop_assert!(no_radius_mismatch,
+                "split returned RadiusMismatch for {operand:?}");
         }
     }
 
@@ -601,18 +642,17 @@ proptest! {
             radius * top_scale,
             -radius * bottom_scale,
         );
-        let events = preview(|context| contour.intersect_self(context)).unwrap();
+        let events = preview(|context| crate::support::under_value(context, || contour.intersect_self())).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 3)),
             "expected a retained self line-arc point between arc segment 0 and line segment 3"
         );
 
-        let split = preview(|context| contour.split_at_self_intersections(&events, context));
-        prop_assert!(
-            !matches!(split, Err(CurveError::RadiusMismatch)),
-            "self split returned RadiusMismatch"
-        );
+        let split = preview(|context| crate::support::under_classified_result(context, || contour.split_at_self_intersections(&events)));
+        let no_radius_mismatch = !matches!(split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+        prop_assert!(no_radius_mismatch,
+            "self split returned RadiusMismatch");
         let Classification::Decided(fragments) = split.unwrap() else {
             return Ok(());
         };
@@ -624,18 +664,17 @@ proptest! {
     #[test]
     fn self_line_arc_slices_fuzz_adjacent_crossings(radius in 0.75_f64..30.0) {
         let contour = approx_adjacent_self_line_arc_contour(radius);
-        let events = preview(|context| contour.intersect_self(context)).unwrap();
+        let events = preview(|context| crate::support::under_value(context, || contour.intersect_self())).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 1)),
             "expected the interior adjacent line-arc crossing to remain after endpoint filtering"
         );
 
-        let split = preview(|context| contour.split_at_self_intersections(&events, context));
-        prop_assert!(
-            !matches!(split, Err(CurveError::RadiusMismatch)),
-            "adjacent self split returned RadiusMismatch"
-        );
+        let split = preview(|context| crate::support::under_classified_result(context, || contour.split_at_self_intersections(&events)));
+        let no_radius_mismatch = !matches!(split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+        prop_assert!(no_radius_mismatch,
+            "adjacent self split returned RadiusMismatch");
         let Classification::Decided(fragments) = split.unwrap() else {
             return Ok(());
         };
@@ -673,18 +712,17 @@ proptest! {
             tx,
             ty,
         );
-        let events = preview(|context| contour.intersect_self(context)).unwrap();
+        let events = preview(|context| crate::support::under_value(context, || contour.intersect_self())).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 3)),
             "expected a retained rotated line-arc self-slice event on arc 0 and cutter 3"
         );
 
-        let split = preview(|context| contour.split_at_self_intersections(&events, context));
-        prop_assert!(
-            !matches!(split, Err(CurveError::RadiusMismatch)),
-            "rotated self split returned RadiusMismatch"
-        );
+        let split = preview(|context| crate::support::under_classified_result(context, || contour.split_at_self_intersections(&events)));
+        let no_radius_mismatch = !matches!(split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+        prop_assert!(no_radius_mismatch,
+            "rotated self split returned RadiusMismatch");
         let Classification::Decided(fragments) = split.unwrap() else {
             return Ok(());
         };
@@ -715,7 +753,7 @@ proptest! {
             ty,
         );
         let events =
-            preview(|context| arc_contour.intersect_contour(&cutter_contour, context)).unwrap();
+            preview(|context| crate::support::under_value(context, || arc_contour.intersect_contour(&cutter_contour))).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 0)),
@@ -723,19 +761,17 @@ proptest! {
         );
 
         let first_split = preview(|context| {
-            arc_contour.split_at_intersections(&events, ContourOperand::First, context)
+            crate::support::under_classified_result(context, || arc_contour.split_at_intersections(&events, ContourOperand::First))
         });
-        prop_assert!(
-            !matches!(first_split, Err(CurveError::RadiusMismatch)),
-            "rotated pair split returned RadiusMismatch for first contour"
-        );
+        let no_radius_mismatch = !matches!(first_split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+        prop_assert!(no_radius_mismatch,
+            "rotated pair split returned RadiusMismatch for first contour");
         let second_split = preview(|context| {
-            cutter_contour.split_at_intersections(&events, ContourOperand::Second, context)
+            crate::support::under_classified_result(context, || cutter_contour.split_at_intersections(&events, ContourOperand::Second))
         });
-        prop_assert!(
-            !matches!(second_split, Err(CurveError::RadiusMismatch)),
-            "rotated pair split returned RadiusMismatch for second contour"
-        );
+        let no_radius_mismatch = !matches!(second_split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+        prop_assert!(no_radius_mismatch,
+            "rotated pair split returned RadiusMismatch for second contour");
 
         let Classification::Decided(first_fragments) = first_split.unwrap() else {
             return Ok(());
@@ -790,7 +826,7 @@ proptest! {
             ty,
         );
         let direct = preview(|context| {
-            first.segments()[0].intersect_segment(&second.segments()[0], context)
+            crate::support::under_value(context, || first.segments()[0].intersect_segment(&second.segments()[0]))
         })
         .unwrap();
 
@@ -799,7 +835,7 @@ proptest! {
             "mixed pair generator should place a direct segment hit: {direct:?}"
         );
 
-        let events = preview(|context| first.intersect_contour(&second, context)).unwrap();
+        let events = preview(|context| crate::support::under_value(context, || first.intersect_contour(&second))).unwrap();
         prop_assert!(
             events.events().iter().any(|event| event_on_pair(event, 0, 0)),
             "contour event pipeline lost a direct mixed segment hit: {direct:?}"
@@ -840,7 +876,7 @@ proptest! {
             ty,
         );
         let direct = preview(|context| {
-            contour.segments()[0].intersect_segment(&contour.segments()[3], context)
+            crate::support::under_value(context, || contour.segments()[0].intersect_segment(&contour.segments()[3]))
         })
         .unwrap();
 
@@ -849,17 +885,16 @@ proptest! {
             "mixed self generator should place a direct segment hit: {direct:?}"
         );
 
-        let events = preview(|context| contour.intersect_self(context)).unwrap();
+        let events = preview(|context| crate::support::under_value(context, || contour.intersect_self())).unwrap();
         prop_assert!(
             events.events().iter().any(|event| event_on_pair(event, 0, 3)),
             "self event pipeline lost a direct mixed segment hit: {direct:?}"
         );
 
-        let split = preview(|context| contour.split_at_self_intersections(&events, context));
-        prop_assert!(
-            !matches!(split, Err(CurveError::RadiusMismatch)),
-            "mixed self split returned RadiusMismatch"
-        );
+        let split = preview(|context| crate::support::under_classified_result(context, || contour.split_at_self_intersections(&events)));
+        let no_radius_mismatch = !matches!(split, Err(ExactCurveError::Invalid { cause: CurveError::RadiusMismatch, .. }));
+        prop_assert!(no_radius_mismatch,
+            "mixed self split returned RadiusMismatch");
         let Classification::Decided(fragments) = split.unwrap() else {
             return Ok(());
         };

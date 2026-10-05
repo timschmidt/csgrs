@@ -812,5 +812,5 @@ fn point_on_line_interval(
         Classification::Decided(_) => return Classification::Decided(false),
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
-    envelope.contains_point(point, policy)
+    envelope.contains_point_with_policy(point, policy)
 }

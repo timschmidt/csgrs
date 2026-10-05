@@ -726,8 +726,10 @@ impl Polyline {
         };
         let mut out = Vec::new();
         for segment in segments {
-            match preview(|context| segment.offset_left(distance.clone(), context))
-                .map_err(|e| e.to_string())?
+            match preview(|_context| {
+                crate::geometry::classified(segment.offset_left(distance.clone()))
+            })
+            .map_err(|e| e.to_string())?
             {
                 Classification::Decided(offset) => out.push(Self::from_segments(&[offset], false)),
                 Classification::Uncertain(_) => {}
@@ -1198,8 +1200,7 @@ pub fn contour_intersections(
 ) -> Result<(Vec<[f64; 2]>, Vec<Polyline>), String> {
     let first = first.to_contour()?;
     let second = second.to_contour()?;
-    let events =
-        preview(|context| first.intersect_contour(&second, context)).map_err(|e| e.to_string())?;
+    let events = preview(|_context| first.intersect_contour(&second)).map_err(|e| e.to_string())?;
     let mut points = Vec::new();
     let mut overlaps = Vec::new();
     for event in events.events() {
@@ -1223,7 +1224,7 @@ pub fn contour_slices(
 ) -> Result<(Vec<Polyline>, Vec<Polyline>), String> {
     let first_contour = first.to_contour()?;
     let second_contour = second.to_contour()?;
-    let events = preview(|context| first_contour.intersect_contour(&second_contour, context))
+    let events = preview(|_context| first_contour.intersect_contour(&second_contour))
         .map_err(|e| e.to_string())?;
     let first_fragments = split_contour_for_slices(&first_contour, &events, ContourOperand::First)?;
     let second_fragments =
@@ -1263,22 +1264,26 @@ fn split_contour_for_slices(
     // fallback to source fragments is intentionally local to the UI boundary;
     // exact library booleans still propagate uncertainty. Keeping finite output
     // separate avoids presenting a broken branch graph as exact topology.
-    preview(|context| {
+    preview(|_context| {
         let self_events = contour
-            .intersect_self(context)
+            .intersect_self()
             .map_err(|error| error.to_string())?;
         let mut markers = ContourSplitMarkers::with_contour_endpoints(contour);
 
-        match markers.merge_intersections(pair_events, operand, context) {
+        match crate::geometry::classified(markers.merge_intersections(pair_events, operand))
+            .map_err(|error| error.to_string())?
+        {
             Classification::Decided(()) => {}
             Classification::Uncertain(_) => return source_contour_fragments(contour),
         }
-        match markers.merge_self_intersections(&self_events, context) {
+        match crate::geometry::classified(markers.merge_self_intersections(&self_events))
+            .map_err(|error| error.to_string())?
+        {
             Classification::Decided(()) => {}
             Classification::Uncertain(_) => return source_contour_fragments(contour),
         }
 
-        match ContourFragmentSet::from_split_markers(contour, &markers, context)
+        match crate::geometry::classified(ContourFragmentSet::from_split_markers(contour, &markers))
             .map_err(|error| error.to_string())?
         {
             Classification::Decided(fragments) => Ok(fragments),
@@ -2248,17 +2253,15 @@ mod tests {
     fn contour_has_slice_events(first: &Polyline, second: &Polyline) -> Result<bool, String> {
         let first = first.to_contour()?;
         let second = second.to_contour()?;
-        Ok(
-            !preview(|context| first.intersect_contour(&second, context))
+        Ok(!preview(|_context| first.intersect_contour(&second))
+            .map_err(|error| error.to_string())?
+            .is_empty()
+            || !preview(|_context| first.intersect_self())
                 .map_err(|error| error.to_string())?
                 .is_empty()
-                || !preview(|context| first.intersect_self(context))
-                    .map_err(|error| error.to_string())?
-                    .is_empty()
-                || !preview(|context| second.intersect_self(context))
-                    .map_err(|error| error.to_string())?
-                    .is_empty(),
-        )
+            || !preview(|_context| second.intersect_self())
+                .map_err(|error| error.to_string())?
+                .is_empty())
     }
 
     fn alternating_band_polyline(

@@ -490,7 +490,9 @@ fn polynomial_point_images_retain_nonrational_source_roots() {
             (Axis2::Y, r(2), Ordering::Less),
         ] {
             let reference = CurvePoint2::from(Point2::new(coordinate.clone(), coordinate));
-            let outcome = point.compare_coordinate(&reference, axis, &policy).unwrap();
+            let outcome = point
+                .compare_coordinate_with_policy(&reference, axis, &policy)
+                .unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             assert_eq!(outcome.value, Classification::Decided(expected));
         }

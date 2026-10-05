@@ -2283,7 +2283,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         else {
                             continue;
                         };
-                        if point_bounds.overlaps(&chord_bounds, &self.data.policy)
+                        if point_bounds.overlaps_with_policy(&chord_bounds, &self.data.policy)
                             == Classification::Decided(false)
                         {
                             disjoint = true;
@@ -3193,7 +3193,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         else {
                             continue;
                         };
-                        if circle_bounds.overlaps(&chord_bounds, &self.data.policy)
+                        if circle_bounds.overlaps_with_policy(&chord_bounds, &self.data.policy)
                             == Classification::Decided(false)
                         {
                             #[cfg(feature = "dispatch-trace")]

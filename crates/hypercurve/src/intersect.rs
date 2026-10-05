@@ -425,7 +425,18 @@ impl SegmentIntersection {
 
 impl Segment2 {
     /// Intersects this segment with another native segment.
-    pub fn intersect_segment(
+    pub fn intersect_segment(&self, other: &Self) -> crate::ExactCurveResult<SegmentIntersection> {
+        self.intersect_segment_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Intersection,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_segment`] under an explicit predicate policy.
+    pub(crate) fn intersect_segment_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -2771,7 +2782,7 @@ mod tests {
         ] {
             assert_eq!(
                 first.intersect_segment_with_certified_aabb_overlap(&second, &policy),
-                first.intersect_segment(&second, &policy),
+                first.intersect_segment_with_policy(&second, &policy),
             );
         }
     }

@@ -58,6 +58,23 @@ impl ContourFragmentSet {
     pub fn from_split_markers(
         contour: &Contour2,
         markers: &ContourSplitMarkers,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::from_split_markers_with_policy(contour, markers, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Subdivision,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+            })
+    }
+
+    /// [`Self::from_split_markers`] under an explicit predicate policy.
+    pub(crate) fn from_split_markers_with_policy(
+        contour: &Contour2,
+        markers: &ContourSplitMarkers,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if contour.len() != markers.segment_count() {
@@ -374,13 +391,17 @@ pub(crate) fn split_contour_at_intersections(
 ) -> CurveResult<Classification<ContourFragmentSet>> {
     validate_contour_intersection_evidence_against_contour(contour, intersections, &[operand])?;
 
-    let markers =
-        match ContourSplitMarkers::from_intersections(contour, intersections, operand, policy) {
-            Classification::Decided(markers) => markers,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let markers = match ContourSplitMarkers::from_intersections_with_policy(
+        contour,
+        intersections,
+        operand,
+        policy,
+    ) {
+        Classification::Decided(markers) => markers,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
 
-    ContourFragmentSet::from_split_markers(contour, &markers, policy)
+    ContourFragmentSet::from_split_markers_with_policy(contour, &markers, policy)
 }
 
 pub(crate) fn split_contour_at_self_intersections(
@@ -394,13 +415,16 @@ pub(crate) fn split_contour_at_self_intersections(
         &[crate::ContourOperand::First, crate::ContourOperand::Second],
     )?;
 
-    let markers = match ContourSplitMarkers::from_self_intersections(contour, intersections, policy)
-    {
+    let markers = match ContourSplitMarkers::from_self_intersections_with_policy(
+        contour,
+        intersections,
+        policy,
+    ) {
         Classification::Decided(markers) => markers,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
-    ContourFragmentSet::from_split_markers(contour, &markers, policy)
+    ContourFragmentSet::from_split_markers_with_policy(contour, &markers, policy)
 }
 
 fn validate_contour_intersection_evidence_against_contour(

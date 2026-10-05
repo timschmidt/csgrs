@@ -2946,7 +2946,7 @@ impl BezierAlgebraicChord2 {
             if let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
                 first_start.union(&first_end),
                 second_start.union(&second_end),
-            ) && first_bounds.overlaps(&second_bounds, &CurveContext::STRICT)
+            ) && first_bounds.overlaps_with_policy(&second_bounds, &CurveContext::STRICT)
                 == Classification::Decided(false)
             {
                 #[cfg(feature = "dispatch-trace")]

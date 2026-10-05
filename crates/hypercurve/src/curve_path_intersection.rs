@@ -121,7 +121,7 @@ fn curve_pair_bounds_decided_disjoint(
         return false;
     };
     matches!(
-        first_bounds.overlaps(second_bounds, policy),
+        first_bounds.overlaps_with_policy(second_bounds, policy),
         Classification::Decided(false)
     )
 }

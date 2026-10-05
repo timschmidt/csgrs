@@ -1150,7 +1150,7 @@ fn chord_pair_bounds_refine_native_fibers_before_global_projection() {
                 panic!("the finite intersection must retain native bounds");
             };
             assert_eq!(
-                bounds.contains_point(&expected, &CurveContext::STRICT),
+                bounds.contains_point_with_policy(&expected, &CurveContext::STRICT),
                 Classification::Decided(true),
             );
         }
@@ -7024,7 +7024,7 @@ fn conservative_chord_envelopes_preserve_requested_refinement() {
                             let coarse = bounds(0);
                             let fine = bounds(gap_bits + 64);
                             assert_eq!(
-                                fine[0].overlaps(&fine[1], &CurveContext::STRICT),
+                                fine[0].overlaps_with_policy(&fine[1], &CurveContext::STRICT),
                                 Classification::Decided(false),
                                 "{axis:?}, gap 2^-{gap_bits}, local={local_only}, reversed={reversed}",
                             );
@@ -7037,7 +7037,10 @@ fn conservative_chord_envelopes_preserve_requested_refinement() {
                                     assert!(corner.x().exact_rational_ref().is_some());
                                     assert!(corner.y().exact_rational_ref().is_some());
                                     assert_eq!(
-                                        coarse.contains_point(corner, &CurveContext::STRICT),
+                                        coarse.contains_point_with_policy(
+                                            corner,
+                                            &CurveContext::STRICT
+                                        ),
                                         Classification::Decided(true),
                                     );
                                 }
@@ -24239,7 +24242,7 @@ fn analytic_point_equality_replays_algebraic_source_and_normal_sheet() {
                     ),
                 );
                 for (first, second) in [(&point, &image), (&image, &point)] {
-                    let result = first.coincides_with(second, &policy);
+                    let result = first.coincides_with_with_policy(second, &policy);
                     assert_eq!(result.value, Classification::Decided(expected));
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                 }
@@ -24306,7 +24309,7 @@ fn selected_analytic_point_replays_reduced_and_opposite_frames_locally() {
                     let first = CurvePoint2::from(raw.clone());
                     let second = CurvePoint2::from(reduced.clone());
                     for (first, second) in [(&first, &second), (&second, &first)] {
-                        let result = first.coincides_with(second, &policy);
+                        let result = first.coincides_with_with_policy(second, &policy);
                         assert_eq!(result.value, Classification::Decided(expected));
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                     }
@@ -27016,7 +27019,8 @@ fn recursive_incidence_accepts_cusp_contact_and_derived_points() {
             (derived, quarter.end().clone()),
         ] {
             assert!(point.coordinates().is_none());
-            let same = point.coincides_with(&CurvePoint2::from(expected.clone()), &policy);
+            let same =
+                point.coincides_with_with_policy(&CurvePoint2::from(expected.clone()), &policy);
             assert_eq!(same.certainty, crate::CurveCertainty::Certified);
             assert_eq!(same.value, Classification::Decided(true));
             let source = QuadraticBezier2::new(
@@ -27087,7 +27091,8 @@ fn algebraic_image_incidence_retains_a_collapsed_parallel_domain() {
             ),
         );
         assert!(point.coordinates().is_none());
-        let same = point.coincides_with(&CurvePoint2::from(Point2::from_values(1, 0)), &policy);
+        let same = point
+            .coincides_with_with_policy(&CurvePoint2::from(Point2::from_values(1, 0)), &policy);
         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
         assert_eq!(same.value, Classification::Decided(true));
         for (distance, expected) in [(1, 1), (-1, 0)] {
@@ -27264,7 +27269,7 @@ fn recursive_incidence_preserves_selected_point_fields() {
                 assert!(point.coordinates().is_none());
                 assert_eq!(
                     point
-                        .coincides_with(&image(Real::zero(), -Real::one()), &policy)
+                        .coincides_with_with_policy(&image(Real::zero(), -Real::one()), &policy)
                         .value,
                     Classification::Decided(true)
                 );
@@ -41501,7 +41506,7 @@ fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
                 let actual = CurvePoint2::from(point.translated(&dx, &dy, &policy).unwrap());
                 let exact = CurvePoint2::from(expected.translated(dx.clone(), dy.clone()));
                 for (first, second) in [(&actual, &exact), (&exact, &actual)] {
-                    let equality = first.coincides_with(second, &policy);
+                    let equality = first.coincides_with_with_policy(second, &policy);
                     assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(true));
                 }
@@ -41511,8 +41516,10 @@ fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
                     Point2::new(-&x, fifth.clone()),
                     Point2::new(x.clone(), Real::zero()),
                 ] {
-                    let equality = actual
-                        .coincides_with(&other.translated(dx.clone(), dy.clone()).into(), &policy);
+                    let equality = actual.coincides_with_with_policy(
+                        &other.translated(dx.clone(), dy.clone()).into(),
+                        &policy,
+                    );
                     assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(false));
                 }
@@ -44612,7 +44619,7 @@ fn denominator_sign_excludes_a_pole_outside_selected_bounds() {
                     panic!("the selected interval contains finite points");
                 };
                 assert_eq!(
-                    bounds.contains_point(&point, &policy),
+                    bounds.contains_point_with_policy(&point, &policy),
                     Classification::Decided(true)
                 );
             }
@@ -47978,7 +47985,7 @@ fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fibe
             panic!("the selected-fiber rational point must refine exactly");
         };
         assert_eq!(
-            bounds.contains_point(&Point2::from_values(0, 0), &policy),
+            bounds.contains_point_with_policy(&Point2::from_values(0, 0), &policy),
             Classification::Decided(false),
         );
 
@@ -51414,7 +51421,8 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
                 panic!("the retained analytic point must refine without a compositum");
             };
             assert_eq!(
-                bounds.contains_point(&Point2::new(-half.clone(), Real::zero()), &policy),
+                bounds
+                    .contains_point_with_policy(&Point2::new(-half.clone(), Real::zero()), &policy),
                 Classification::Decided(true),
             );
         }

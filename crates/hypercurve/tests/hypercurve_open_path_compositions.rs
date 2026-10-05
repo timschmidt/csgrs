@@ -172,7 +172,13 @@ fn same_point(
     actual: &CurvePoint2,
     expected: &CurvePoint2,
 ) -> Result<(), TestCaseError> {
-    let equal = required(label, Ok(actual.coincides_with(expected, &STRICT)))?;
+    let equal = required(
+        label,
+        Ok(crate::support::under_outcome_classification(
+            &STRICT,
+            || actual.coincides_with(expected),
+        )),
+    )?;
     prop_assert_eq!(
         equal.value,
         Classification::Decided(true),

@@ -1102,6 +1102,19 @@ impl Contour2 {
     /// vertex. No tessellation or finite sampling participates in this API.
     pub fn straight_skeleton_vertex_trajectories(
         &self,
+    ) -> crate::ExactCurveResult<Vec<StraightSkeletonVertexTrajectory2>> {
+        self.straight_skeleton_vertex_trajectories_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Offset, value)
+            })
+    }
+
+    /// [`Self::straight_skeleton_vertex_trajectories`] under an explicit predicate policy.
+    pub(crate) fn straight_skeleton_vertex_trajectories_with_policy(
+        &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonVertexTrajectory2>>> {
         let Some(area) = self.signed_area()? else {
@@ -1159,6 +1172,19 @@ impl Contour2 {
     /// endpoints, but they are not both smooth. Global split and squeeze
     /// validity is intentionally separate from this local queue.
     pub fn straight_skeleton_local_arc_events(
+        &self,
+    ) -> crate::ExactCurveResult<Vec<StraightSkeletonLocalArcEvent2>> {
+        self.straight_skeleton_local_arc_events_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Offset, value)
+            })
+    }
+
+    /// [`Self::straight_skeleton_local_arc_events`] under an explicit predicate policy.
+    pub(crate) fn straight_skeleton_local_arc_events_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonLocalArcEvent2>>> {
@@ -1301,6 +1327,19 @@ impl Contour2 {
     /// against earlier local or global contacts is decided by the combined
     /// event queue, not by this per-class predictor.
     pub fn straight_skeleton_splice_events(
+        &self,
+    ) -> crate::ExactCurveResult<Vec<StraightSkeletonSpliceEvent2>> {
+        self.straight_skeleton_splice_events_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Offset, value)
+            })
+    }
+
+    /// [`Self::straight_skeleton_splice_events`] under an explicit predicate policy.
+    pub(crate) fn straight_skeleton_splice_events_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonSpliceEvent2>>> {
@@ -1464,6 +1503,13 @@ impl Contour2 {
     /// evolution window used by the arc-polygon event algorithm.
     pub fn straight_skeleton_global_contact_events(
         &self,
+    ) -> crate::ExactCurveResult<Vec<StraightSkeletonGlobalContactEvent2>> {
+        self.straight_skeleton_global_contact_events_with_policy(&crate::policy::principal_context()).map_err(|cause| crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)).and_then(|value| crate::ExactCurveError::decided(crate::CurveOperation2::Offset, value))
+    }
+
+    /// [`Self::straight_skeleton_global_contact_events`] under an explicit predicate policy.
+    pub(crate) fn straight_skeleton_global_contact_events_with_policy(
+        &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonGlobalContactEvent2>>> {
         let Some(area) = self.signed_area()? else {
@@ -1496,7 +1542,7 @@ impl Contour2 {
             .iter()
             .all(|segment| matches!(segment, Segment2::Line(_)))
         {
-            let evidence = self.straight_skeleton(policy)?;
+            let evidence = self.straight_skeleton_with_policy(policy)?;
             let Some(skeleton) = evidence.skeleton() else {
                 return Ok(Classification::Uncertain(
                     crate::UncertaintyReason::Predicate,
@@ -1616,7 +1662,7 @@ impl Contour2 {
                 ));
             }
         }
-        let splices = match self.straight_skeleton_splice_events(policy)? {
+        let splices = match self.straight_skeleton_splice_events_with_policy(policy)? {
             Classification::Decided(events) => events,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -1782,7 +1828,18 @@ impl Contour2 {
     /// approximation. Generic concave input uses exact reflex split events;
     /// unresolved algebraic orderings and non-general-position event clusters
     /// remain explicit blockers.
-    pub fn straight_skeleton(&self, policy: &CurveContext) -> CurveResult<StraightSkeletonResult2> {
+    pub fn straight_skeleton(&self) -> crate::ExactCurveResult<StraightSkeletonResult2> {
+        self.straight_skeleton_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)
+            })
+    }
+
+    /// [`Self::straight_skeleton`] under an explicit predicate policy.
+    pub(crate) fn straight_skeleton_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<StraightSkeletonResult2> {
         let source_edge_count = self.segments().len();
         let blocked = |stage, blocker| StraightSkeletonResult2 {
             stage,
@@ -1824,7 +1881,7 @@ impl Contour2 {
             }
         }
 
-        match self.has_self_contacts(policy)? {
+        match self.has_self_contacts_with_policy(policy)? {
             Classification::Decided(false) => {}
             Classification::Decided(true) => {
                 return Ok(blocked(
@@ -2148,7 +2205,7 @@ impl Contour2 {
             center.x() - normal_x * &signed_distance,
             center.y() - normal_y * signed_distance,
         );
-        let trajectories = match self.straight_skeleton_vertex_trajectories(policy)? {
+        let trajectories = match self.straight_skeleton_vertex_trajectories_with_policy(policy)? {
             Classification::Decided(trajectories) => trajectories,
             Classification::Uncertain(_) => {
                 return Ok(Some(StraightSkeletonResult2 {
@@ -2223,7 +2280,7 @@ impl Contour2 {
         {
             return Ok(None);
         }
-        match self.has_self_contacts(policy)? {
+        match self.has_self_contacts_with_policy(policy)? {
             Classification::Decided(false) => {}
             Classification::Decided(true) => {
                 return Ok(Some(blocked_shape_preserving_evidence(
@@ -2488,7 +2545,18 @@ impl CurvePath2 {
     /// circular-conic reductions; every other instance returns a typed
     /// capability blocker with its curve index. No flattening or tolerance
     /// substitution is performed.
-    pub fn straight_skeleton(&self, policy: &CurveContext) -> CurveResult<StraightSkeletonResult2> {
+    pub fn straight_skeleton(&self) -> crate::ExactCurveResult<StraightSkeletonResult2> {
+        self.straight_skeleton_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Offset, cause)
+            })
+    }
+
+    /// [`Self::straight_skeleton`] under an explicit predicate policy.
+    pub(crate) fn straight_skeleton_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<StraightSkeletonResult2> {
         let source_edge_count = self.curves().len();
         let mut segments = Vec::with_capacity(source_edge_count);
         for (curve_index, curve) in self.curves().iter().enumerate() {
@@ -2710,7 +2778,7 @@ impl CurvePath2 {
                 }
             }
         }
-        Contour2::try_new(segments)?.straight_skeleton(policy)
+        Contour2::try_new(segments)?.straight_skeleton_with_policy(policy)
     }
 }
 
@@ -2982,7 +3050,7 @@ fn certified_single_bubble_reduction(
     {
         return Ok(Ok(None));
     }
-    let local_events = match contour.straight_skeleton_local_arc_events(policy)? {
+    let local_events = match contour.straight_skeleton_local_arc_events_with_policy(policy)? {
         Classification::Decided(events) => events,
         Classification::Uncertain(_) => {
             return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
@@ -3025,7 +3093,7 @@ fn certified_single_bubble_reduction(
         }
     }
 
-    let splices = match contour.straight_skeleton_splice_events(policy)? {
+    let splices = match contour.straight_skeleton_splice_events_with_policy(policy)? {
         Classification::Decided(events) => events,
         Classification::Uncertain(_) => {
             return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));

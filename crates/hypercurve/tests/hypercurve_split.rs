@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourOperand, ContourSplitMap, ContourSplitMarkers,
     CurveContext, CurveError, Real, SegmentSplitMarker,
@@ -50,9 +51,10 @@ fn split_map_includes_endpoints_and_sorted_point_events() {
         vertex(1, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let split_map =
-        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First, &policy());
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let split_map = crate::support::under_classified(&policy(), || {
+        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First)
+    });
     let Classification::Decided(split_map) = split_map else {
         panic!("expected decided split map");
     };
@@ -78,9 +80,10 @@ fn split_map_deduplicates_overlap_endpoints() {
         vertex(2, -2, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let split_map =
-        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First, &policy());
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let split_map = crate::support::under_classified(&policy(), || {
+        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First)
+    });
     let Classification::Decided(split_map) = split_map else {
         panic!("expected decided split map");
     };
@@ -101,9 +104,10 @@ fn split_map_sorts_reversed_overlap_parameters_for_second_operand() {
         vertex(5, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let split_map =
-        ContourSplitMap::from_intersections(b.len(), &events, ContourOperand::Second, &policy());
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let split_map = crate::support::under_classified(&policy(), || {
+        ContourSplitMap::from_intersections(b.len(), &events, ContourOperand::Second)
+    });
     let Classification::Decided(split_map) = split_map else {
         panic!("expected decided split map");
     };
@@ -119,10 +123,10 @@ fn split_map_preserves_same_circle_arc_overlap_endpoints() {
     let a = contour(&[vertex(0, 0, 1), vertex(2, 0, 1)]);
     let b = contour(&[vertex(0, 0, 1), vertex(2, 0, 1)]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let Classification::Decided(split_map) =
-        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First, &policy())
-    else {
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let Classification::Decided(split_map) = crate::support::under_classified(&policy(), || {
+        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First)
+    }) else {
         panic!("expected decided split map");
     };
 
@@ -187,10 +191,10 @@ fn split_points_flatten_in_segment_order() {
         vertex(1, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
-    let Classification::Decided(split_map) =
-        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First, &policy())
-    else {
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
+    let Classification::Decided(split_map) = crate::support::under_classified(&policy(), || {
+        ContourSplitMap::from_intersections(a.len(), &events, ContourOperand::First)
+    }) else {
         panic!("expected decided split map");
     };
 

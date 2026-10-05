@@ -1085,7 +1085,9 @@ fn analytic_corner_restrictions_keep_common_scalar_cuts_and_one_source() {
                 let replay = Curve2::from_retained_fragment(fragment.clone())
                     .point_at_with_policy(&parameter, &policy)
                     .unwrap();
-                let equality = replay.value.coincides_with(&point.value, &policy);
+                let equality = replay
+                    .value
+                    .coincides_with_with_policy(&point.value, &policy);
                 assert_eq!(equality.certainty, CurveCertainty::Certified);
                 assert_eq!(equality.value, Classification::Decided(true));
             }
@@ -1207,7 +1209,9 @@ fn native_corner_intervals_retain_general_cuts_and_replay_after_trimming() {
                     let actual = Curve2::from_retained_fragment(retained.clone())
                         .point_at_with_policy(&probe, &policy)
                         .unwrap();
-                    let equality = actual.value.coincides_with(&expected.value, &policy);
+                    let equality = actual
+                        .value
+                        .coincides_with_with_policy(&expected.value, &policy);
                     assert_eq!(actual.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(true));
@@ -1306,14 +1310,14 @@ fn corner_trims_drop_consumed_ranges_without_dropping_closed_traces() {
                 .expect("a nonempty closed trace survives trimming");
                 let closed = Curve2::from_retained_fragment(closed);
                 for endpoint in [closed.start(), closed.end()] {
-                    let equality = endpoint.coincides_with(&p(0, 0).into(), &policy);
+                    let equality = endpoint.coincides_with_with_policy(&p(0, 0).into(), &policy);
                     assert_eq!(equality.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(true));
                 }
                 let probe = CurveParameter2::from(if retained { q(1, 4) } else { q(1, 2) });
                 let actual = closed.point_at_with_policy(&probe, &policy).unwrap();
                 let expected = Point2::new(q(21, 32), q(27, 32)).into();
-                let equality = actual.value.coincides_with(&expected, &policy);
+                let equality = actual.value.coincides_with_with_policy(&expected, &policy);
                 assert_eq!(actual.certainty, CurveCertainty::Certified);
                 assert_eq!(equality.certainty, CurveCertainty::Certified);
                 assert_eq!(equality.value, Classification::Decided(true));
@@ -1372,7 +1376,7 @@ fn repeated_circle_corner_restrictions_preserve_only_outer_tangency() {
                     } else {
                         (curve.end(), original.end())
                     };
-                    let equality = outer.coincides_with(&expected, &policy);
+                    let equality = outer.coincides_with_with_policy(&expected, &policy);
                     assert_eq!(equality.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(true));
                 }
@@ -2713,7 +2717,7 @@ fn retained_fragment_has_exact_endpoint(
         else {
             return false;
         };
-        let equality = point.coincides_with(&expected, &CurveContext::STRICT);
+        let equality = point.coincides_with_with_policy(&expected, &CurveContext::STRICT);
         equality.certainty == CurveCertainty::Certified
             && equality.value == Classification::Decided(true)
     })
@@ -3410,7 +3414,7 @@ fn one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once() {
                                 source.clone(), parameter, Real::zero(), &policy,
                             ).expect("a cubic source accepts each retained scalar")
                         );
-                        let equality = replay.coincides_with(point, &policy);
+                        let equality = replay.coincides_with_with_policy(point, &policy);
                         assert_eq!(equality.certainty, CurveCertainty::Certified);
                         assert_eq!(
                             equality.value,
@@ -15051,7 +15055,7 @@ fn native_query_bounds_use_exact_conservative_control_hulls() {
     for numerator in 0_i32..=8 {
         let parameter = (Real::from(numerator) / Real::from(8_i32)).unwrap();
         assert_eq!(
-            query_bounds.contains_point(&cubic.point_at(parameter), &policy),
+            query_bounds.contains_point_with_policy(&cubic.point_at(parameter), &policy),
             Classification::Decided(true)
         );
     }

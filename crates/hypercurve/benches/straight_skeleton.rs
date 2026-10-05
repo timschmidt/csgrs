@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -110,8 +112,10 @@ fn main() {
     let concave_path = as_curve_path(&concave);
 
     measure("straight_skeleton/concave/trajectories", 1_000, || {
-        let Classification::Decided(trajectories) = concave
-            .straight_skeleton_vertex_trajectories(black_box(&policy))
+        let Classification::Decided(trajectories) =
+            crate::support::under_classified_result(black_box(&policy), || {
+                concave.straight_skeleton_vertex_trajectories()
+            })
             .expect("trajectory query is exact")
         else {
             panic!("trajectory query became uncertain")
@@ -119,8 +123,10 @@ fn main() {
         trajectories.len()
     });
     measure("straight_skeleton/concave/global_contacts", 250, || {
-        let Classification::Decided(events) = concave
-            .straight_skeleton_global_contact_events(black_box(&policy))
+        let Classification::Decided(events) =
+            crate::support::under_classified_result(black_box(&policy), || {
+                concave.straight_skeleton_global_contact_events()
+            })
             .expect("global contact query is exact")
         else {
             panic!("global contact query became uncertain")
@@ -128,17 +134,17 @@ fn main() {
         events.len()
     });
     measure("straight_skeleton/concave/contour", 100, || {
-        let evidence = concave
-            .straight_skeleton(black_box(&policy))
-            .expect("contour construction is exact");
+        let evidence =
+            crate::support::under_value(black_box(&policy), || concave.straight_skeleton())
+                .expect("contour construction is exact");
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         let skeleton = evidence.skeleton().expect("construction completes");
         skeleton.nodes().len() + skeleton.arcs().len()
     });
     measure("straight_skeleton/concave/curve_path", 100, || {
-        let evidence = concave_path
-            .straight_skeleton(black_box(&policy))
-            .expect("path dispatch is exact");
+        let evidence =
+            crate::support::under_value(black_box(&policy), || concave_path.straight_skeleton())
+                .expect("path dispatch is exact");
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         let skeleton = evidence.skeleton().expect("construction completes");
         skeleton.nodes().len() + skeleton.arcs().len()
@@ -155,9 +161,9 @@ fn main() {
             &format!("straight_skeleton/comb_{}/evidence", source.len()),
             iterations,
             || {
-                let evidence = source
-                    .straight_skeleton(black_box(&policy))
-                    .expect("comb construction evidence is exact");
+                let evidence =
+                    crate::support::under_value(black_box(&policy), || source.straight_skeleton())
+                        .expect("comb construction evidence is exact");
                 evidence.event_count()
                     + evidence
                         .skeleton()

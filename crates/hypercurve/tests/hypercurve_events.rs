@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection,
     ContourIntersectionSet, ContourOperand, ContourOverlapIntersection, ContourPointIntersection,
@@ -70,10 +71,12 @@ fn contour_events_sort_points_by_first_segment_parameter() {
         vertex(1, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
     assert_eq!(events.len(), 2);
 
-    let sorted = events.sorted_events_for_segment(ContourOperand::First, 0, &policy());
+    let sorted = crate::support::under_classified(&policy(), || {
+        events.sorted_events_for_segment(ContourOperand::First, 0)
+    });
     let Classification::Decided(sorted) = sorted else {
         panic!("expected ordered events");
     };
@@ -95,7 +98,7 @@ fn contour_intersection_set_constructor_rejects_duplicate_events() {
         vertex(1, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
     assert_eq!(events.len(), 2);
     ContourIntersectionSet::new(events.events().to_vec()).unwrap();
 
@@ -192,10 +195,13 @@ fn contour_events_sort_line_arc_hits_by_second_segment_parameter() {
         vertex(3, -2, 0),
     ]);
 
-    let events = circle.intersect_contour(&cutter, &policy()).unwrap();
+    let events =
+        crate::support::under_value(&policy(), || circle.intersect_contour(&cutter)).unwrap();
     assert_eq!(events.len(), 2);
 
-    let sorted = events.sorted_events_for_segment(ContourOperand::Second, 0, &policy());
+    let sorted = crate::support::under_classified(&policy(), || {
+        events.sorted_events_for_segment(ContourOperand::Second, 0)
+    });
     let Classification::Decided(sorted) = sorted else {
         panic!("expected ordered line-arc events");
     };
@@ -215,7 +221,7 @@ fn contour_events_preserve_line_overlap() {
         vertex(2, -2, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
     let overlap = events.events().iter().find_map(|event| match event {
         ContourIntersection::Overlap(overlap) => Some(overlap),
         _ => None,
@@ -243,7 +249,7 @@ fn contour_events_preserve_arc_overlap() {
     let a = contour(&[vertex(0, 0, 1), vertex(2, 0, 1)]);
     let b = arc_overlap_cutter();
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
     let overlap = events.events().iter().find_map(|event| match event {
         ContourIntersection::Overlap(overlap) if matches!(overlap.segment, Segment2::Arc(_)) => {
             Some(overlap)
@@ -268,7 +274,7 @@ fn contour_event_kinds_are_carried_to_point_events() {
         vertex(6, -1, 0),
     ]);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
     assert!(events.events().iter().any(|event| {
         matches!(
             event,
@@ -286,7 +292,7 @@ fn contour_event_broad_phase_skips_decided_disjoint_boxes() {
     let a = rectangle(0, 0, 4, 4);
     let b = rectangle(10, 10, 14, 14);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
 
     assert!(events.is_empty());
 }
@@ -295,7 +301,7 @@ fn contour_event_broad_phase_skips_decided_disjoint_boxes() {
 fn contour_self_events_ignore_ordinary_connectivity() {
     let rectangle = rectangle(0, 0, 4, 4);
 
-    let events = rectangle.intersect_self(&policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || rectangle.intersect_self()).unwrap();
 
     assert!(events.is_empty());
 }
@@ -312,7 +318,7 @@ fn contour_self_events_keep_nonadjacent_line_arc_crossing() {
         vertex(-1, -3, 0),
     ]);
 
-    let events = contour.intersect_self(&policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || contour.intersect_self()).unwrap();
 
     assert!(events.events().iter().any(|event| {
         matches!(
@@ -335,7 +341,7 @@ fn contour_self_events_keep_adjacent_line_arc_crossing_but_drop_shared_endpoint(
         vertex(-1, 0, 0),
     ]);
 
-    let events = contour.intersect_self(&policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || contour.intersect_self()).unwrap();
 
     assert!(events.events().iter().any(|event| {
         matches!(
@@ -362,7 +368,7 @@ fn contour_event_broad_phase_keeps_edge_touching_boxes() {
     let a = rectangle(0, 0, 4, 4);
     let b = rectangle(4, 1, 6, 3);
 
-    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let events = crate::support::under_value(&policy(), || a.intersect_contour(&b)).unwrap();
 
     assert!(events.events().iter().any(|event| {
         matches!(

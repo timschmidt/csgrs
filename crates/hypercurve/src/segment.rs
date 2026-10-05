@@ -1737,7 +1737,19 @@ impl Segment2 {
     }
 
     /// Classifies whether a point lies on this finite segment.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.contains_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
         match self {
             Self::Line(line) => line.contains_point_with_policy(point, policy),
             Self::Arc(arc) => arc.contains_point_with_policy(point, policy),
@@ -1750,16 +1762,44 @@ impl Segment2 {
     }
 
     /// Returns a point in the interior of this segment.
-    pub fn representative_point(
+    pub fn representative_point(&self) -> crate::ExactCurveResult<Point2> {
+        self.representative_point_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, value)
+            })
+    }
+
+    /// [`Self::representative_point`] under an explicit predicate policy.
+    pub(crate) fn representative_point_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         let half = (Real::one() / Real::from(2_i8))?;
-        self.point_at(&half, policy)
+        self.point_at_with_policy(&half, policy)
     }
 
     /// Evaluates this segment at a normalized traversal parameter in `[0, 1]`.
-    pub fn point_at(
+    pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, value)
+            })
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,

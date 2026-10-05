@@ -7843,7 +7843,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     Classification::Decided(circle_bounds),
                     Classification::Decided(chord_bounds),
                 ) = (circle_bounds, chord_bounds)
-                    && circle_bounds.overlaps(&chord_bounds, &CurveContext::STRICT)
+                    && circle_bounds.overlaps_with_policy(&chord_bounds, &CurveContext::STRICT)
                         == Classification::Decided(false)
                 {
                     return Ok(Classification::Decided(Vec::new()));

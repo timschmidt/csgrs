@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, Curve2, CurveContext, CurvePath2, Point2, Real,
     Segment2, StraightSkeletonStage2,
@@ -64,37 +66,35 @@ fuzz_target!(|data: &[u8]| {
     let contour = transformed_fixture(data);
     let policy = CurveContext::STRICT;
 
-    let Classification::Decided(trajectories) = contour
-        .straight_skeleton_vertex_trajectories(&policy)
-        .expect("integer fixture trajectories remain exact")
-    else {
+    let Classification::Decided(trajectories) = support::under_classified_result(&policy, || {
+        contour.straight_skeleton_vertex_trajectories()
+    })
+    .expect("integer fixture trajectories remain exact") else {
         panic!("integer fixture trajectories became uncertain")
     };
     assert_eq!(trajectories.len(), contour.len());
 
-    let Classification::Decided(local_events) = contour
-        .straight_skeleton_local_arc_events(&policy)
-        .expect("line fixture local queue remains exact")
+    let Classification::Decided(local_events) =
+        support::under_classified_result(&policy, || contour.straight_skeleton_local_arc_events())
+            .expect("line fixture local queue remains exact")
     else {
         panic!("line fixture local queue became uncertain")
     };
     assert!(local_events.is_empty());
 
     assert!(matches!(
-        contour
-            .straight_skeleton_splice_events(&policy)
+        support::under_classified_result(&policy, || contour.straight_skeleton_splice_events())
             .expect("fixture splice query remains exact"),
         Classification::Decided(_)
     ));
     assert!(matches!(
-        contour
-            .straight_skeleton_global_contact_events(&policy)
-            .expect("fixture contact query remains exact"),
+        support::under_classified_result(&policy, || contour
+            .straight_skeleton_global_contact_events())
+        .expect("fixture contact query remains exact"),
         Classification::Decided(_)
     ));
 
-    let contour_evidence = contour
-        .straight_skeleton(&policy)
+    let contour_evidence = support::under_value(&policy, || contour.straight_skeleton())
         .expect("fixture construction remains exact");
     assert_eq!(contour_evidence.stage(), StraightSkeletonStage2::Complete);
     let skeleton = contour_evidence
@@ -120,7 +120,7 @@ fuzz_target!(|data: &[u8]| {
     )
     .expect("fixture path remains connected");
     assert_eq!(
-        path.straight_skeleton(&policy)
+        support::under_value(&policy, || path.straight_skeleton())
             .expect("native path dispatch remains exact"),
         contour_evidence,
     );

@@ -4078,7 +4078,7 @@ impl BezierAlgebraicChord2 {
             } else if self.has_composite_endpoint() {
                 if let Classification::Decided(bounds) =
                     self.conservative_local_bounds_refined(0, policy)?
-                    && bounds.contains_point(represented, &CurveContext::STRICT)
+                    && bounds.contains_point_with_policy(represented, &CurveContext::STRICT)
                         == Classification::Decided(false)
                 {
                     #[cfg(feature = "dispatch-trace")]

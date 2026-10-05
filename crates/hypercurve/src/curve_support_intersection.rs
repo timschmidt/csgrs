@@ -2461,7 +2461,7 @@ mod circle_dispatch_tests {
         }
     }
     pub(super) fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
-        let equal = first.coincides_with(second, policy);
+        let equal = first.coincides_with_with_policy(second, policy);
         assert_eq!(equal.certainty, CurveCertainty::Certified);
         assert_eq!(equal.value, Classification::Decided(true));
     }
@@ -2637,7 +2637,7 @@ mod circle_dispatch_tests {
                             assert!(result.contacts().iter().any(|contact| {
                                 contact
                                     .point()
-                                    .coincides_with(&point.clone().into(), &policy)
+                                    .coincides_with_with_policy(&point.clone().into(), &policy)
                                     .value
                                     == Classification::Decided(true)
                             }));

@@ -369,10 +369,11 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                             crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                         assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                         assert_eq!(
-                            evaluated
-                                .value
-                                .coincides_with(&point.clone().into(), &CurveContext::STRICT)
-                                .value,
+                            crate::support::under_outcome_classification(
+                                &CurveContext::STRICT,
+                                || evaluated.value.coincides_with(&point.clone().into())
+                            )
+                            .value,
                             Classification::Decided(true),
                         );
                         let split =
@@ -380,9 +381,11 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                         assert_eq!(split.certainty, CurveCertainty::Certified);
                         for endpoint in [split.value.0.end(), split.value.1.start()] {
                             assert_eq!(
-                                endpoint
-                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
-                                    .value,
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || endpoint.coincides_with(&point.clone().into())
+                                )
+                                .value,
                                 Classification::Decided(true),
                             );
                         }
@@ -525,10 +528,11 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                             paths.value.contacts()[0].contact(),
                         ] {
                             assert!(decided(
-                                contact
-                                    .point()
-                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || contact.point().coincides_with(&point.clone().into())
+                                )
+                                .value
                             ));
                             let location = if swapped {
                                 contact.second()
@@ -556,10 +560,11 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                                     .unwrap();
                             assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                             assert!(decided(
-                                evaluated
-                                    .value
-                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || evaluated.value.coincides_with(&point.clone().into())
+                                )
+                                .value
                             ));
                             if *interior {
                                 let split =
@@ -568,12 +573,11 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                                 assert_eq!(split.certainty, CurveCertainty::Certified);
                                 for endpoint in [split.value.0.end(), split.value.1.start()] {
                                     assert!(decided(
-                                        endpoint
-                                            .coincides_with(
-                                                &point.clone().into(),
-                                                &CurveContext::STRICT
-                                            )
-                                            .value
+                                        crate::support::under_outcome_classification(
+                                            &CurveContext::STRICT,
+                                            || endpoint.coincides_with(&point.clone().into())
+                                        )
+                                        .value
                                     ));
                                 }
                             }
@@ -680,19 +684,20 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                             for point in &points {
                                 assert!(expected.iter().any(|expected| {
                                     decided(
-                                        point
-                                            .coincides_with(
-                                                &expected.clone().into(),
-                                                &CurveContext::STRICT,
-                                            )
-                                            .value,
+                                        crate::support::under_outcome_classification(
+                                            &CurveContext::STRICT,
+                                            || point.coincides_with(&expected.clone().into()),
+                                        )
+                                        .value,
                                     )
                                 }));
                             }
                             assert!(!decided(
-                                points[0]
-                                    .coincides_with(&points[1], &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || points[0].coincides_with(&points[1])
+                                )
+                                .value
                             ));
                         }
                     } else {
@@ -700,13 +705,13 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                         assert_eq!(result.contacts().len(), 1);
                         assert!(!result.contacts()[0].is_certified_transverse());
                         assert!(decided(
-                            result.contacts()[0]
-                                .point()
-                                .coincides_with(
-                                    &Point2::new(root.clone(), q(1, 2)).into(),
-                                    &CurveContext::STRICT,
-                                )
-                                .value
+                            crate::support::under_outcome_classification(
+                                &CurveContext::STRICT,
+                                || result.contacts()[0]
+                                    .point()
+                                    .coincides_with(&Point2::new(root.clone(), q(1, 2)).into())
+                            )
+                            .value
                         ));
                     }
                 }
@@ -790,10 +795,11 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
                                 .iter()
                                 .any(|endpoint| {
                                     decided(
-                                        point
-                                            .value
-                                            .coincides_with(endpoint, &CurveContext::STRICT)
-                                            .value,
+                                        crate::support::under_outcome_classification(
+                                            &CurveContext::STRICT,
+                                            || point.value.coincides_with(endpoint),
+                                        )
+                                        .value,
                                     )
                                 })
                         );
@@ -843,9 +849,9 @@ fn assert_single_contact_curve_pieces(
         (pieces[1].start(), contact.clone().into()),
     ] {
         assert!(decided(
-            actual
-                .coincides_with(&expected, &CurveContext::STRICT)
-                .value
+            crate::support::under_outcome_classification(&CurveContext::STRICT, || actual
+                .coincides_with(&expected))
+            .value
         ));
     }
     for piece in pieces {
@@ -855,10 +861,10 @@ fn assert_single_contact_curve_pieces(
             assert_eq!(point.certainty, CurveCertainty::Certified);
             assert!([piece.start(), piece.end()].iter().any(|endpoint| {
                 decided(
-                    point
-                        .value
-                        .coincides_with(endpoint, &CurveContext::STRICT)
-                        .value,
+                    crate::support::under_outcome_classification(&CurveContext::STRICT, || {
+                        point.value.coincides_with(endpoint)
+                    })
+                    .value,
                 )
             }));
         }
@@ -921,10 +927,13 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                             assert_eq!(replay.value.contacts().len(), 1);
                             assert!(replay.value.overlaps().is_empty());
                             assert!(decided(
-                                replay.value.contacts()[0]
-                                    .point()
-                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || replay.value.contacts()[0]
+                                        .point()
+                                        .coincides_with(&point.clone().into())
+                                )
+                                .value
                             ));
                         }
                     }
@@ -1123,9 +1132,11 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                         (line_pieces[2].start(), p(10, 0).into()),
                     ] {
                         assert!(decided(
-                            actual
-                                .coincides_with(&expected, &CurveContext::STRICT)
-                                .value
+                            crate::support::under_outcome_classification(
+                                &CurveContext::STRICT,
+                                || actual.coincides_with(&expected)
+                            )
+                            .value
                         ));
                     }
                     for (piece, expected) in pieces.iter().zip(&sides) {
@@ -1136,10 +1147,13 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                         assert!(replay.value.is_complete());
                         assert_eq!(replay.value.contacts().len(), 1);
                         assert!(decided(
-                            replay.value.contacts()[0]
-                                .point()
-                                .coincides_with(&expected.clone().into(), &CurveContext::STRICT)
-                                .value
+                            crate::support::under_outcome_classification(
+                                &CurveContext::STRICT,
+                                || replay.value.contacts()[0]
+                                    .point()
+                                    .coincides_with(&expected.clone().into())
+                            )
+                            .value
                         ));
                     }
                     let counts = [topology.first().len(), topology.second().len()];
@@ -1224,10 +1238,11 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                             paths.value.contacts()[0].contact(),
                         ] {
                             assert!(decided(
-                                contact
-                                    .point()
-                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || contact.point().coincides_with(&point.clone().into())
+                                )
+                                .value
                             ));
                             for (curve, location) in
                                 [(first, contact.first()), (second, contact.second())]
@@ -1243,13 +1258,11 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                                         .unwrap();
                                 assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                                 assert!(decided(
-                                    evaluated
-                                        .value
-                                        .coincides_with(
-                                            &point.clone().into(),
-                                            &CurveContext::STRICT
-                                        )
-                                        .value
+                                    crate::support::under_outcome_classification(
+                                        &CurveContext::STRICT,
+                                        || evaluated.value.coincides_with(&point.clone().into())
+                                    )
+                                    .value
                                 ));
                                 if interior {
                                     let split = crate::support::under(&policy, || {
@@ -1259,12 +1272,11 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                                     assert_eq!(split.certainty, CurveCertainty::Certified);
                                     for endpoint in [split.value.0.end(), split.value.1.start()] {
                                         assert!(decided(
-                                            endpoint
-                                                .coincides_with(
-                                                    &point.clone().into(),
-                                                    &CurveContext::STRICT
-                                                )
-                                                .value
+                                            crate::support::under_outcome_classification(
+                                                &CurveContext::STRICT,
+                                                || endpoint.coincides_with(&point.clone().into())
+                                            )
+                                            .value
                                         ));
                                     }
                                 }
@@ -1376,10 +1388,11 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                             assert_eq!(first_point.certainty, CurveCertainty::Certified);
                             assert_eq!(second_point.certainty, CurveCertainty::Certified);
                             assert!(decided(
-                                first_point
-                                    .value
-                                    .coincides_with(&second_point.value, &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || first_point.value.coincides_with(&second_point.value)
+                                )
+                                .value
                             ));
                         }
                         for (curve, range) in [
@@ -1398,16 +1411,18 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                                 assert!(
                                     expected.iter().any(|expected| {
                                         decided(
-                                            point
-                                                .coincides_with(
-                                                    &expected.clone().into(),
-                                                    &CurveContext::STRICT,
-                                                )
-                                                .value,
+                                            crate::support::under_outcome_classification(
+                                                &CurveContext::STRICT,
+                                                || point.coincides_with(&expected.clone().into()),
+                                            )
+                                            .value,
                                         )
                                     }),
                                     "case={case} reverse_chord={reverse_chord} reverse_other={reverse_other} swapped={swapped} boundary={boundary} point bounds={:?}",
-                                    point.bounds(&policy).value.map(|b| [
+                                    crate::support::under_outcome_classification(&policy, || point
+                                        .bounds())
+                                    .value
+                                    .map(|b| [
                                         b.min_x().to_f64_lossy(),
                                         b.max_x().to_f64_lossy(),
                                         b.min_y().to_f64_lossy(),
@@ -1416,9 +1431,11 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                                 );
                             }
                             assert!(!decided(
-                                points[0]
-                                    .coincides_with(&points[1], &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || points[0].coincides_with(&points[1])
+                                )
+                                .value
                             ));
                         }
                         let assert_pieces = |first_pieces: &[Curve2], second_pieces: &[Curve2]| {
@@ -1440,9 +1457,11 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                                         (pieces[0].end(), source.end()),
                                     ] {
                                         assert!(decided(
-                                            actual
-                                                .coincides_with(&expected, &CurveContext::STRICT)
-                                                .value
+                                            crate::support::under_outcome_classification(
+                                                &CurveContext::STRICT,
+                                                || actual.coincides_with(&expected)
+                                            )
+                                            .value
                                         ));
                                     }
                                 }
@@ -1585,21 +1604,28 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                                 (pieces[0].end(), source.end()),
                             ] {
                                 assert!(decided(
-                                    actual
-                                        .coincides_with(&expected, &CurveContext::STRICT)
-                                        .value
+                                    crate::support::under_outcome_classification(
+                                        &CurveContext::STRICT,
+                                        || actual.coincides_with(&expected)
+                                    )
+                                    .value
                                 ));
                             }
                         }
                         assert!(
                             decided(
-                                contact
-                                    .point()
-                                    .coincides_with(&expected.clone().into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || contact.point().coincides_with(&expected.clone().into())
+                                )
+                                .value
                             ),
                             "case={case} reverse_first={reverse_first} reverse_second={reverse_second} swapped={swapped} point bounds={:?}",
-                            contact.point().bounds(&policy).value.map(|b| [
+                            crate::support::under_outcome_classification(&policy, || contact
+                                .point()
+                                .bounds())
+                            .value
+                            .map(|b| [
                                 b.min_x().to_f64_lossy(),
                                 b.max_x().to_f64_lossy(),
                                 b.min_y().to_f64_lossy(),
@@ -1620,10 +1646,11 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                                     .unwrap();
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             assert!(decided(
-                                point
-                                    .value
-                                    .coincides_with(&expected.clone().into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || point.value.coincides_with(&expected.clone().into())
+                                )
+                                .value
                             ));
                         }
                     }
@@ -1708,13 +1735,15 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                                 .iter()
                                 .find(|contact| {
                                     decided(
-                                        contact
-                                            .point()
-                                            .coincides_with(
-                                                &point.clone().into(),
-                                                &CurveContext::STRICT,
-                                            )
-                                            .value,
+                                        crate::support::under_outcome_classification(
+                                            &CurveContext::STRICT,
+                                            || {
+                                                contact
+                                                    .point()
+                                                    .coincides_with(&point.clone().into())
+                                            },
+                                        )
+                                        .value,
                                     )
                                 })
                                 .expect("every independent intersection is retained once");
@@ -1742,10 +1771,11 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                                 crate::support::under(&policy, || curve.point_at(&mapped)).unwrap();
                             assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                             assert!(decided(
-                                evaluated
-                                    .value
-                                    .coincides_with(&point.into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || evaluated.value.coincides_with(&point.into())
+                                )
+                                .value
                             ));
                         }
                     }
@@ -1826,10 +1856,11 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                             .iter()
                             .find(|contact| {
                                 decided(
-                                    contact
-                                        .point()
-                                        .coincides_with(&p(0, 0).into(), &CurveContext::STRICT)
-                                        .value,
+                                    crate::support::under_outcome_classification(
+                                        &CurveContext::STRICT,
+                                        || contact.point().coincides_with(&p(0, 0).into()),
+                                    )
+                                    .value,
                                 )
                             })
                             .expect(
@@ -1874,10 +1905,11 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                                     .unwrap();
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             assert!(decided(
-                                point
-                                    .value
-                                    .coincides_with(&p(0, 0).into(), &CurveContext::STRICT)
-                                    .value
+                                crate::support::under_outcome_classification(
+                                    &CurveContext::STRICT,
+                                    || point.value.coincides_with(&p(0, 0).into())
+                                )
+                                .value
                             ));
                         }
                     }
@@ -1935,7 +1967,10 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
                     Some(hypercurve::RealSign::Zero)
                 );
                 assert!(decided(
-                    contact.point().coincides_with(&endpoint, &policy).value
+                    crate::support::under_outcome_classification(&policy, || contact
+                        .point()
+                        .coincides_with(&endpoint))
+                    .value
                 ));
                 for (curve, location) in [(first, contact.first()), (second, contact.second())] {
                     let parameter = decided(
@@ -1946,7 +1981,10 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
                         crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     assert_eq!(
-                        point.value.coincides_with(contact.point(), &policy).value,
+                        crate::support::under_outcome_classification(&policy, || point
+                            .value
+                            .coincides_with(contact.point()))
+                        .value,
                         Classification::Decided(true),
                         "point replay on {:?}",
                         curve.family(),
@@ -2022,11 +2060,16 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                         (&point.value, contact.point()),
                         (contact.point(), &point.value),
                     ] {
-                        let equal = point.coincides_with(contact, &policy);
+                        let equal = crate::support::under_outcome_classification(&policy, || {
+                            point.coincides_with(contact)
+                        });
                         assert_eq!(equal.certainty, CurveCertainty::Certified);
                         assert_eq!(equal.value, Classification::Decided(true));
                         for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
-                            let order = point.compare_coordinate(contact, axis, &policy).unwrap();
+                            let order = crate::support::under_outcome_classified(&policy, || {
+                                point.compare_coordinate(contact, axis)
+                            })
+                            .unwrap();
                             assert_eq!(order.certainty, CurveCertainty::Certified);
                             assert_eq!(
                                 order.value,
@@ -2039,7 +2082,9 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                     assert_eq!(split.certainty, CurveCertainty::Certified);
                     let (prefix, tail) = split.value;
                     for endpoint in [prefix.end(), tail.start()] {
-                        let equal = endpoint.coincides_with(contact.point(), &policy);
+                        let equal = crate::support::under_outcome_classification(&policy, || {
+                            endpoint.coincides_with(contact.point())
+                        });
                         assert_eq!(equal.certainty, CurveCertainty::Certified);
                         assert_eq!(equal.value, Classification::Decided(true));
                     }
@@ -2066,12 +2111,16 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                         let point =
                             crate::support::under(&policy, || piece.point_at(&parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
-                        let equal = point.value.coincides_with(contact.point(), &policy);
+                        let equal = crate::support::under_outcome_classification(&policy, || {
+                            point.value.coincides_with(contact.point())
+                        });
                         assert_eq!(equal.certainty, CurveCertainty::Certified);
                         assert_eq!(equal.value, Classification::Decided(true));
                     }
                 }
-                let unequal = contact.point().coincides_with(&parabola.start(), &policy);
+                let unequal = crate::support::under_outcome_classification(&policy, || {
+                    contact.point().coincides_with(&parabola.start())
+                });
                 assert_eq!(unequal.certainty, CurveCertainty::Certified);
                 assert_eq!(unequal.value, Classification::Decided(false));
                 let topology =
@@ -2146,7 +2195,11 @@ fn native_retraced_overlaps_survive_independent_restriction() {
                     let b = crate::support::under(&policy, || second.point_at(b))
                         .unwrap()
                         .into_value();
-                    assert!(decided(a.coincides_with(&b, &policy).value));
+                    assert!(decided(
+                        crate::support::under_outcome_classification(&policy, || a
+                            .coincides_with(&b))
+                        .value
+                    ));
                 }
             }
             let a =
@@ -2226,10 +2279,10 @@ fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
                 );
                 assert!(contact.is_certified_transverse());
                 assert!(decided(
-                    contact
+                    crate::support::under_outcome_classification(&policy, || contact
                         .point()
-                        .coincides_with(&p(3, 0).into(), &policy)
-                        .value
+                        .coincides_with(&p(3, 0).into()))
+                    .value
                 ));
             }
             let topology =
@@ -2312,7 +2365,10 @@ fn native_nodal_spline_contacts_retain_authored_charts() {
                         crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     assert!(decided(
-                        point.value.coincides_with(contact.point(), &policy).value
+                        crate::support::under_outcome_classification(&policy, || point
+                            .value
+                            .coincides_with(contact.point()))
+                        .value
                     ));
                 }
             }
@@ -2362,7 +2418,10 @@ fn retained_retraced_domains_retain_every_parameter_component() {
                 assert_eq!(a.certainty, CurveCertainty::Certified);
                 assert_eq!(b.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    a.value.coincides_with(&b.value, &policy).value,
+                    crate::support::under_outcome_classification(&policy, || a
+                        .value
+                        .coincides_with(&b.value))
+                    .value,
                     Classification::Decided(true)
                 );
             }
@@ -2530,10 +2589,10 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 
     assert_eq!(topology.first().len(), 2);
     assert!(decided(
-        topology.first()[1]
+        crate::support::under_outcome_classification(&CurveContext::STRICT, || topology.first()[1]
             .start()
-            .coincides_with(&Point2::new(q(1, 2), r(0)).into(), &CurveContext::STRICT)
-            .value
+            .coincides_with(&Point2::new(q(1, 2), r(0)).into()))
+        .value
     ));
     assert_eq!(topology.second().len(), 1);
     assert_eq!(topology.first().len() + topology.second().len(), 3);
@@ -3417,10 +3476,10 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     let root = r(2).sqrt().unwrap();
     for (piece, x) in pieces.iter().zip([-root.clone(), root]) {
         assert!(decided(
-            piece
+            crate::support::under_outcome_classification(&CurveContext::STRICT, || piece
                 .end()
-                .coincides_with(&Point2::new(x, r(2)).into(), &CurveContext::STRICT)
-                .value
+                .coincides_with(&Point2::new(x, r(2)).into()))
+            .value
         ));
     }
 
@@ -3673,7 +3732,9 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
                         let b = crate::support::under(&policy, || second.point_at(b)).unwrap();
                         assert_eq!(a.certainty, CurveCertainty::Certified);
                         assert_eq!(b.certainty, CurveCertainty::Certified);
-                        let same = a.value.coincides_with(&b.value, &policy);
+                        let same = crate::support::under_outcome_classification(&policy, || {
+                            a.value.coincides_with(&b.value)
+                        });
                         assert_eq!(same.certainty, CurveCertainty::Certified);
                         assert_eq!(same.value, Classification::Decided(true));
                     }
@@ -3758,7 +3819,9 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
                         let point =
                             crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
-                        let same = point.value.coincides_with(contact.point(), &policy);
+                        let same = crate::support::under_outcome_classification(&policy, || {
+                            point.value.coincides_with(contact.point())
+                        });
                         assert_eq!(same.certainty, CurveCertainty::Certified);
                         assert_eq!(
                             same.value,
@@ -3793,7 +3856,9 @@ mod finite_selected_circle_domains {
     }
     fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         assert_eq!(
-            certified(first.coincides_with(second, policy)),
+            certified(crate::support::under_outcome_classification(policy, || {
+                first.coincides_with(second)
+            })),
             Classification::Decided(true)
         );
     }

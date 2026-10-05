@@ -101,7 +101,16 @@ impl CurvePoint2 {
     /// Structural `PartialEq` is a positive identity check. This query also
     /// compares points created by independent constructions and reports any
     /// predicate that the requested policy cannot certify.
-    pub fn coincides_with(
+    pub fn coincides_with(&self, other: &Self) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Classification,
+            self.coincides_with_with_policy(other, &crate::policy::principal_context())
+                .into_value(),
+        )
+    }
+
+    /// [`Self::coincides_with`] under an explicit predicate policy.
+    pub(crate) fn coincides_with_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -111,6 +120,27 @@ impl CurvePoint2 {
 
     /// Compares one coordinate using retained exact evidence.
     pub fn compare_coordinate(
+        &self,
+        other: &Self,
+        axis: Axis2,
+    ) -> crate::ExactCurveResult<std::cmp::Ordering> {
+        self.compare_coordinate_with_policy(other, axis, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Classification,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::compare_coordinate`] under an explicit predicate policy.
+    pub(crate) fn compare_coordinate_with_policy(
         &self,
         other: &Self,
         axis: Axis2,
@@ -125,7 +155,19 @@ impl CurvePoint2 {
     ///
     /// A selected point may produce a nonzero box. The box encloses the exact
     /// point and does not replace its retained scalar or geometric evidence.
-    pub fn bounds(&self, policy: &CurveContext) -> CurveOutcome<Classification<Aabb2>> {
+    pub fn bounds(&self) -> crate::ExactCurveResult<Aabb2> {
+        crate::ExactCurveError::decided(
+            crate::CurveOperation2::Evaluation,
+            self.bounds_with_policy(&crate::policy::principal_context())
+                .into_value(),
+        )
+    }
+
+    /// [`Self::bounds`] under an explicit predicate policy.
+    pub(crate) fn bounds_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveOutcome<Classification<Aabb2>> {
         crate::policy::resolve_certified_value(policy, |attempt| {
             crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(self, 0, attempt)
         })
@@ -342,7 +384,7 @@ impl CurvePoint2 {
                 ) = (
                     first.parametric_source_bounds(policy),
                     second.parametric_source_bounds(policy),
-                ) && first_bounds.overlaps(&second_bounds, policy)
+                ) && first_bounds.overlaps_with_policy(&second_bounds, policy)
                     == Classification::Decided(false)
                 {
                     #[cfg(feature = "dispatch-trace")]

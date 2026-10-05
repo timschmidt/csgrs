@@ -96,15 +96,15 @@ fn aabb_overlap_is_inclusive_at_edge_and_corner_contacts() {
     };
 
     assert_eq!(
-        first.overlaps(&edge_touching, &policy()),
+        crate::support::under_classified(&policy(), || first.overlaps(&edge_touching)),
         Classification::Decided(true)
     );
     assert_eq!(
-        first.overlaps(&corner_touching, &policy()),
+        crate::support::under_classified(&policy(), || first.overlaps(&corner_touching)),
         Classification::Decided(true)
     );
     assert_eq!(
-        first.overlaps(&disjoint, &policy()),
+        crate::support::under_classified(&policy(), || first.overlaps(&disjoint)),
         Classification::Decided(false)
     );
 }
@@ -207,7 +207,8 @@ fn curve_string_intersection_broad_phase_keeps_real_hits() {
     ])
     .unwrap();
 
-    let intersections = first.intersect_curve_string(&second, &policy()).unwrap();
+    let intersections =
+        crate::support::under_value(&policy(), || first.intersect_curve_string(&second)).unwrap();
 
     assert_eq!(intersections.len(), 1);
     assert_eq!(intersections[0].a_segment_index, 1);

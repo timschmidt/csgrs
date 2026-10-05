@@ -102,7 +102,7 @@ fuzz_target!(|data: &[u8]| {
         let half = CurveParameter2::from(q(1, 2));
         let represented = support::under(&policy, || general.point_at(&half)).unwrap();
         assert_eq!(
-            point.coincides_with(&represented, &policy).value,
+            support::under_outcome_classification(&policy, || point.coincides_with(&represented)),
             Classification::Decided(true)
         );
         let represented_tangent = support::under(&policy, || general.derivative_at(&half)).unwrap();
@@ -123,10 +123,9 @@ fuzz_target!(|data: &[u8]| {
         ] {
             let bound = CurvePoint2::from(Point2::new(bound, Real::zero()));
             assert_eq!(
-                point
-                    .compare_coordinate(&bound, Axis2::X, &policy)
-                    .unwrap()
-                    .value,
+                support::under_outcome_classified(&policy, || point
+                    .compare_coordinate(&bound, Axis2::X))
+                .unwrap(),
                 Classification::Decided(ordering)
             );
         }
@@ -145,7 +144,8 @@ fuzz_target!(|data: &[u8]| {
             })
             .unwrap();
             assert_eq!(
-                rational_point.coincides_with(&represented, &policy).value,
+                support::under_outcome_classification(&policy, || rational_point
+                    .coincides_with(&represented)),
                 Classification::Decided(true)
             );
         }

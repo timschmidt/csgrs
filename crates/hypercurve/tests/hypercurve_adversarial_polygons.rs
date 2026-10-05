@@ -123,7 +123,8 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
     let policy = policy();
     assert_contour_finite(contour);
 
-    let _ = contour.has_self_contacts(&policy).unwrap();
+    let _ =
+        crate::support::under_classified_result(&policy, || contour.has_self_contacts()).unwrap();
     let source = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![contour.clone()])
     })
@@ -163,8 +164,10 @@ fn exercise_reconstruction(points: &[(i32, i32)]) {
     let contour =
         Contour2::reconstruct_from_closed_polyline(&samples, reconstruction_options()).unwrap();
     assert_contour_finite(&contour);
-    let _ = contour.intersect_self(&policy()).unwrap();
-    if contour.has_self_contacts(&policy()).unwrap() == Classification::Decided(false) {
+    let _ = crate::support::under_value(&policy(), || contour.intersect_self()).unwrap();
+    if crate::support::under_classified_result(&policy(), || contour.has_self_contacts()).unwrap()
+        == Classification::Decided(false)
+    {
         exercise_offsets(&contour, 1);
     }
 }
@@ -310,7 +313,7 @@ fn self_intersecting_closed_polyline_reconstruction_evidence_contacts() {
     let contour = contour_from_points(&points);
 
     assert_eq!(
-        contour.has_self_contacts(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || contour.has_self_contacts()).unwrap(),
         Classification::Decided(true)
     );
     exercise_reconstruction(&points);

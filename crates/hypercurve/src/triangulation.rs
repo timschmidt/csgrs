@@ -134,7 +134,19 @@ impl FiniteRegionProfile2 {
     /// from winding. Earcut-style triangulation is handled by hypertri using
     /// exact hyperreal predicates; see ear clipping and the exactness model, cited in
     /// the module documentation.
-    pub fn triangulate(
+    pub fn triangulate(&self) -> crate::ExactCurveResult<Vec<FiniteTriangle2>> {
+        self.triangulate_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Subdivision,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::triangulate`] under an explicit predicate policy.
+    pub(crate) fn triangulate_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Vec<FiniteTriangle2>>> {

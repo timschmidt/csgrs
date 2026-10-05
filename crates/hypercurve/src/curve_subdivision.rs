@@ -811,7 +811,7 @@ mod tests {
     }
 
     fn assert_same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
-        let equality = actual.coincides_with(expected, policy);
+        let equality = actual.coincides_with_with_policy(expected, policy);
         assert_eq!(equality.certainty, CurveCertainty::Certified);
         assert_eq!(equality.value, Classification::Decided(true));
     }
@@ -1250,7 +1250,7 @@ mod tests {
                             .point_at_with_policy(&probe, &policy)
                             .unwrap()
                             .value
-                            .coincides_with(&expected, &policy)
+                            .coincides_with_with_policy(&expected, &policy)
                             .value,
                         Classification::Decided(false)
                     );
@@ -1366,7 +1366,7 @@ mod tests {
                     .unwrap()
                     .value;
                 assert_eq!(
-                    left.coincides_with(&right, &policy).value,
+                    left.coincides_with_with_policy(&right, &policy).value,
                     Classification::Decided(false)
                 );
                 for reversed in [false, true] {

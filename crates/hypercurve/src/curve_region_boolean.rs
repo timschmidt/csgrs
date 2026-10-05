@@ -3794,7 +3794,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let contour =
                 crate::Contour2::from_validated_closed_segments(segments, FillRule::NonZero);
             let contour = match contour
-                .merge_adjacent_collinear_lines(&self.data.policy)
+                .merge_adjacent_collinear_lines_with_policy(&self.data.policy)
                 .map_err(|cause| self.invalid(0, cause))?
             {
                 Classification::Decided(contour) => contour,
@@ -4372,7 +4372,7 @@ fn carrier_bounds_decided_disjoint(
                 carrier_optional_outer_bounds_refined(second, refinement_steps, policy);
             if let (Classification::Decided(first), Classification::Decided(second)) =
                 (first_bounds, second_bounds)
-                && first.overlaps(&second, policy) == Classification::Decided(false)
+                && first.overlaps_with_policy(&second, policy) == Classification::Decided(false)
             {
                 return true;
             }
@@ -6863,7 +6863,8 @@ fn exact_contact_point_box(point: &CurvePoint2) -> Option<[f64; 4]> {
         let [y_low, y_high] = certified_f64_enclosure(point.y())?;
         return Some([x_low, x_high, y_low, y_high]);
     }
-    let Classification::Decided(bounds) = point.bounds(&CurveContext::STRICT).value else {
+    let Classification::Decided(bounds) = point.bounds_with_policy(&CurveContext::STRICT).value
+    else {
         return None;
     };
     Some([
@@ -7163,7 +7164,8 @@ fn contacts_decided_distinct_from_carriers(
                 Classification::Decided(existing_bounds),
                 Classification::Decided(current_bounds),
             ) = (existing_bounds, current_bounds)
-                && existing_bounds.overlaps(current_bounds, &policy.strict_counterpart())
+                && existing_bounds
+                    .overlaps_with_policy(current_bounds, &policy.strict_counterpart())
                     == Classification::Decided(false)
             {
                 return Ok(true);

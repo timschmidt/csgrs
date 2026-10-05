@@ -543,7 +543,7 @@ mod tests {
     }
 
     fn assert_point(point: &CurvePoint2, expected: Point2, policy: &CurveContext) {
-        let equality = point.coincides_with(&CurvePoint2::from(expected), policy);
+        let equality = point.coincides_with_with_policy(&CurvePoint2::from(expected), policy);
         assert_eq!(equality.certainty, CurveCertainty::Certified);
         assert_eq!(equality.value, Classification::Decided(true));
     }
@@ -731,7 +731,9 @@ mod tests {
                 .point_at_with_policy(&represented.clone().into(), &policy)
                 .unwrap();
             assert_eq!(expanded.certainty, CurveCertainty::Certified);
-            let equality = point.value.coincides_with(&expanded.value, &policy);
+            let equality = point
+                .value
+                .coincides_with_with_policy(&expanded.value, &policy);
             assert_eq!(equality.certainty, CurveCertainty::Certified);
             assert_eq!(equality.value, Classification::Decided(true));
         }
@@ -851,7 +853,7 @@ mod tests {
             for (bound, expected) in [(0, Ordering::Greater), (1, Ordering::Less)] {
                 let order = point
                     .value
-                    .compare_coordinate(
+                    .compare_coordinate_with_policy(
                         &Point2::from_values(bound, 0).into(),
                         crate::Axis2::X,
                         &policy,

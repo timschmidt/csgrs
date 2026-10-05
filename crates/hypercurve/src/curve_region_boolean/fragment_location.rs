@@ -324,7 +324,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         separated_from_boundary = false;
                         break;
                     };
-                    if bounds.overlaps(boundary_bounds, &self.data.policy)
+                    if bounds.overlaps_with_policy(boundary_bounds, &self.data.policy)
                         != Classification::Decided(false)
                     {
                         separated_from_boundary = false;
@@ -866,7 +866,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         cell.get().expect("the exact operand envelope was retained")
                     };
                     let disjoint = other_bounds.as_ref().is_none_or(|other_bounds| {
-                        carrier_bounds.overlaps(other_bounds, &self.data.policy)
+                        carrier_bounds.overlaps_with_policy(other_bounds, &self.data.policy)
                             == Classification::Decided(false)
                     });
                     decided_overlap = !disjoint;

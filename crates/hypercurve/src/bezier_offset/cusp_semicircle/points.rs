@@ -223,7 +223,7 @@ impl BezierAlgebraicCuspChordPoint2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            if first.overlaps(&second, policy) == Classification::Decided(false) {
+            if first.overlaps_with_policy(&second, policy) == Classification::Decided(false) {
                 return Classification::Decided(false);
             }
         }

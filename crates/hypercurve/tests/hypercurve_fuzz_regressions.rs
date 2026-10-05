@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     CurveContext, LineArcIntersection, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
 };
@@ -19,7 +20,8 @@ fn fuzz_line_arc_candidate_outside_finite_line_is_rejected() {
     let arc = Segment2::from_bulge(p(-29, 16), p(13, 16), s(1)).unwrap();
     let line = Segment2::Line(LineSeg2::try_new(p(9, 41), p(-15, 17)).unwrap());
 
-    let intersection = arc.intersect_segment(&line, &policy()).unwrap();
+    let intersection =
+        crate::support::under_value(&policy(), || arc.intersect_segment(&line)).unwrap();
     match &intersection {
         SegmentIntersection::LineArc {
             result: LineArcIntersection::None,

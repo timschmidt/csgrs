@@ -34,7 +34,9 @@ fn range(
 }
 
 fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
-    assert!(decided(certified(actual.coincides_with(expected, policy))));
+    assert!(decided(certified(
+        crate::support::under_outcome_classification(policy, || actual.coincides_with(expected))
+    )));
 }
 
 #[test]

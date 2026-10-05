@@ -2,7 +2,7 @@ mod support;
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurvePath2,
     CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
-    LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
+    ExactCurveError, LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -85,14 +85,12 @@ fn curve_string_endpoint_connection_classifies_exactly() {
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();
 
     assert_eq!(
-        first
-            .endpoint_connection(
-                &second,
-                CurveStringEndpoint2::End,
-                CurveStringEndpoint2::Start,
-                &policy(),
-            )
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || first.endpoint_connection(
+            &second,
+            CurveStringEndpoint2::End,
+            CurveStringEndpoint2::Start
+        ))
+        .unwrap(),
         Classification::Decided(true)
     );
 }
@@ -137,7 +135,11 @@ fn curve_string_merge_adjacent_collinear_lines() {
     ])
     .unwrap();
 
-    let merged = match curve.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        curve.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(curve) => curve,
         other => panic!("expected merged line runs, got {other:?}"),
     };
@@ -152,7 +154,11 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_corners() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 3)]).unwrap();
 
-    let merged = match curve.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        curve.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(curve) => curve,
         other => panic!("expected preserved corner, got {other:?}"),
     };
@@ -170,7 +176,11 @@ fn curve_string_line_merge_preserves_mixed_segment_kinds() {
     ])
     .unwrap();
 
-    let merged = match curve.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        curve.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(curve) => curve,
         other => panic!("expected preserved mixed segments, got {other:?}"),
     };
@@ -185,7 +195,11 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_reversal() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 1, 0)]).unwrap();
 
-    let merged = match curve.merge_adjacent_collinear_lines(&policy()).unwrap() {
+    let merged = match crate::support::under_classified_result(&policy(), || {
+        curve.merge_adjacent_collinear_lines()
+    })
+    .unwrap()
+    {
         Classification::Decided(curve) => curve,
         other => panic!("expected preserved reversal, got {other:?}"),
     };
@@ -275,7 +289,10 @@ fn curve_string_link_preserves_mixed_segment_kinds() {
     .unwrap();
 
     let Classification::Decided(Some(linked)) =
-        first.link_connected_endpoints(&second, &policy()).unwrap()
+        crate::support::under_classified_result(&policy(), || {
+            first.link_connected_endpoints(&second)
+        })
+        .unwrap()
     else {
         panic!("exact endpoint link should materialize");
     };
@@ -291,7 +308,10 @@ fn curve_string_link_reverses_second_curve_for_end_to_end_match() {
     let second = CurveString2::try_new(vec![line_segment(4, 0, 2, 0)]).unwrap();
 
     let Classification::Decided(Some(linked)) =
-        first.link_connected_endpoints(&second, &policy()).unwrap()
+        crate::support::under_classified_result(&policy(), || {
+            first.link_connected_endpoints(&second)
+        })
+        .unwrap()
     else {
         panic!("end-to-end link should materialize");
     };
@@ -307,7 +327,10 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
         CurveString2::try_new(vec![line_segment(2, 0, 3, 0)]).unwrap(),
     ];
     let Classification::Decided(linked) =
-        CurveString2::link_ordered_connected_endpoints(curves.clone(), &policy()).unwrap()
+        crate::support::under_classified_result(&policy(), || {
+            CurveString2::link_ordered_connected_endpoints(curves.clone())
+        })
+        .unwrap()
     else {
         panic!("ordered link should materialize");
     };
@@ -316,7 +339,10 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
     assert_eq!(linked.end(), Some(&p(3, 0)));
 
     let Classification::Decided(borrowed) =
-        CurveString2::link_ordered_connected_endpoints(curves.iter().cloned(), &policy()).unwrap()
+        crate::support::under_classified_result(&policy(), || {
+            CurveString2::link_ordered_connected_endpoints(curves.iter().cloned())
+        })
+        .unwrap()
     else {
         panic!("borrowed ordered link should materialize");
     };
@@ -330,7 +356,10 @@ fn curve_string_ordered_link_evidence_disconnected_step() {
         CurveString2::try_new(vec![line_segment(2, 0, 3, 0)]).unwrap(),
     ];
     assert_eq!(
-        CurveString2::link_ordered_connected_endpoints(curves, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            CurveString2::link_ordered_connected_endpoints(curves)
+        })
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -342,8 +371,10 @@ fn curve_string_connect_materializes_connector_and_preserves_geometry() {
         CircularArc2::from_bulge(p(3, 0), p(5, 0), s(1)).unwrap(),
     )])
     .unwrap();
-    let Classification::Decided(connected) = first
-        .connect_end_to_start_with_line(&second, &policy())
+    let Classification::Decided(connected) =
+        crate::support::under_classified_result(&policy(), || {
+            first.connect_end_to_start_with_line(&second)
+        })
         .unwrap()
     else {
         panic!("connector should materialize");
@@ -358,9 +389,9 @@ fn curve_string_connect_nearest_endpoints_evidence_tie_boundary() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 2, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(1, 3, 1, 5)]).unwrap();
     assert_eq!(
-        first
-            .connect_nearest_endpoints_with_line(&second, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || first
+            .connect_nearest_endpoints_with_line(&second))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -370,9 +401,9 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();
     assert_eq!(
-        first
-            .connect_end_to_start_with_line(&second, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || first
+            .connect_end_to_start_with_line(&second))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -381,23 +412,27 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
 fn curve_string_connect_and_endpoint_classification_reject_empty_input() {
     let empty = CurveString2::new_unchecked(Vec::new());
     let nonempty = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
-    assert_eq!(
-        empty
-            .connect_end_to_start_with_line(&nonempty, &policy())
-            .unwrap_err(),
-        CurveError::EmptyCurveString
-    );
-    assert_eq!(
-        empty
-            .endpoint_connection(
-                &nonempty,
-                CurveStringEndpoint2::Start,
-                CurveStringEndpoint2::Start,
-                &policy(),
-            )
-            .unwrap_err(),
-        CurveError::EmptyCurveString
-    );
+    assert!(matches!(
+        crate::support::under_classified_result(&policy(), || empty
+            .connect_end_to_start_with_line(&nonempty))
+        .unwrap_err(),
+        ExactCurveError::Invalid {
+            cause: CurveError::EmptyCurveString,
+            ..
+        }
+    ));
+    assert!(matches!(
+        crate::support::under_classified_result(&policy(), || empty.endpoint_connection(
+            &nonempty,
+            CurveStringEndpoint2::Start,
+            CurveStringEndpoint2::Start
+        ))
+        .unwrap_err(),
+        ExactCurveError::Invalid {
+            cause: CurveError::EmptyCurveString,
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -406,8 +441,10 @@ fn curve_string_extend_line_start_to_exact_target() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 2)]).unwrap();
 
-    let Classification::Decided(extended) = curve
-        .extend_endpoint_to_point(CurveStringEndpoint2::Start, p(-3, 0), &policy())
+    let Classification::Decided(extended) =
+        crate::support::under_classified_result(&policy(), || {
+            curve.extend_endpoint_to_point(CurveStringEndpoint2::Start, p(-3, 0))
+        })
         .unwrap()
     else {
         panic!("start line extension should materialize");
@@ -422,9 +459,9 @@ fn curve_string_extend_line_start_to_exact_target() {
 fn curve_string_extend_line_evidence_interior_target_boundary() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     assert_eq!(
-        curve
-            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(1, 0), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(1, 0)))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -433,9 +470,9 @@ fn curve_string_extend_line_evidence_interior_target_boundary() {
 fn curve_string_extend_line_evidence_off_support_boundary() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     assert_eq!(
-        curve
-            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(5, 1), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(5, 1)))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -446,9 +483,9 @@ fn curve_string_extend_arc_endpoint_evidence_off_circle_boundary() {
     )])
     .unwrap();
     assert_eq!(
-        curve
-            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(3, 0), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(3, 0)))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -460,9 +497,9 @@ fn curve_string_extend_arc_endpoint_blocks_existing_arc_point() {
     )])
     .unwrap();
     assert_eq!(
-        curve
-            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(1, -1), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(1, -1)))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -475,12 +512,13 @@ fn curve_string_trim_materializes_across_line_segments_with_source_ranges() {
     ])
     .unwrap();
 
-    let Classification::Decided(trimmed) = curve
-        .trim_between_parameters(
-            CurveStringTrimPoint2::new(0, q(1, 2)),
-            CurveStringTrimPoint2::new(2, q(1, 2)),
-            &policy(),
-        )
+    let Classification::Decided(trimmed) =
+        crate::support::under_classified_result(&policy(), || {
+            curve.trim_between_parameters(
+                CurveStringTrimPoint2::new(0, q(1, 2)),
+                CurveStringTrimPoint2::new(2, q(1, 2)),
+            )
+        })
         .unwrap()
     else {
         panic!("line-chain trim should materialize");
@@ -495,12 +533,13 @@ fn curve_string_trim_preserves_whole_arc_segment() {
     let arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap());
     let curve = CurveString2::try_new(vec![arc.clone()]).unwrap();
 
-    let Classification::Decided(trimmed) = curve
-        .trim_between_parameters(
-            CurveStringTrimPoint2::new(0, s(0)),
-            CurveStringTrimPoint2::new(0, s(1)),
-            &policy(),
-        )
+    let Classification::Decided(trimmed) =
+        crate::support::under_classified_result(&policy(), || {
+            curve.trim_between_parameters(
+                CurveStringTrimPoint2::new(0, s(0)),
+                CurveStringTrimPoint2::new(0, s(1)),
+            )
+        })
         .unwrap()
     else {
         panic!("whole-arc trim should materialize");
@@ -519,12 +558,13 @@ fn curve_string_trim_materializes_exact_partial_arc_from_sweep_parameters() {
     let expected_start = Point2::new(Real::one() - &half_sqrt_two, -half_sqrt_two.clone());
     let expected_end = Point2::new(Real::one() + &half_sqrt_two, -half_sqrt_two);
 
-    let Classification::Decided(trimmed) = curve
-        .trim_between_parameters(
-            CurveStringTrimPoint2::new(0, q(1, 4)),
-            CurveStringTrimPoint2::new(0, q(3, 4)),
-            &policy(),
-        )
+    let Classification::Decided(trimmed) =
+        crate::support::under_classified_result(&policy(), || {
+            curve.trim_between_parameters(
+                CurveStringTrimPoint2::new(0, q(1, 4)),
+                CurveStringTrimPoint2::new(0, q(3, 4)),
+            )
+        })
         .unwrap()
     else {
         panic!("arc trim should materialize");
@@ -572,14 +612,13 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
         panic!("source midpoint fraction should evaluate exactly");
     };
 
-    let Classification::Decided(trimmed) = curve
-        .trim_between_parameters(
+    let Classification::Decided(trimmed) = crate::support::under_classified_result(&policy, || {
+        curve.trim_between_parameters(
             CurveStringTrimPoint2::new(0, start_fraction),
             CurveStringTrimPoint2::new(0, end_fraction),
-            &policy,
         )
-        .unwrap()
-    else {
+    })
+    .unwrap() else {
         panic!("exact arc trim should materialize");
     };
     let [Segment2::Arc(trimmed_arc)] = trimmed.segments() else {
@@ -609,12 +648,13 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
         Classification::Decided(expected_midpoint.clone())
     );
 
-    let Classification::Decided(repeated_trim) = curve
-        .trim_between_parameters(
-            CurveStringTrimPoint2::new(0, q(1, 7)),
-            CurveStringTrimPoint2::new(0, q(5, 7)),
-            &policy,
-        )
+    let Classification::Decided(repeated_trim) =
+        crate::support::under_classified_result(&policy, || {
+            curve.trim_between_parameters(
+                CurveStringTrimPoint2::new(0, q(1, 7)),
+                CurveStringTrimPoint2::new(0, q(5, 7)),
+            )
+        })
         .unwrap()
     else {
         panic!("repeated exact arc trim should materialize");
@@ -632,12 +672,13 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
     ));
 
     let nested_curve = CurveString2::try_new(vec![Segment2::Arc(trimmed_arc.clone())]).unwrap();
-    let Classification::Decided(nested_trim) = nested_curve
-        .trim_between_parameters(
-            CurveStringTrimPoint2::new(0, q(1, 4)),
-            CurveStringTrimPoint2::new(0, q(3, 4)),
-            &policy,
-        )
+    let Classification::Decided(nested_trim) =
+        crate::support::under_classified_result(&policy, || {
+            nested_curve.trim_between_parameters(
+                CurveStringTrimPoint2::new(0, q(1, 4)),
+                CurveStringTrimPoint2::new(0, q(3, 4)),
+            )
+        })
         .unwrap()
     else {
         panic!("nested exact arc trim should materialize");
@@ -657,26 +698,28 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
 fn curve_string_trim_rejects_reversed_and_out_of_domain_ranges() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 
-    assert_eq!(
-        curve
-            .trim_between_parameters(
-                CurveStringTrimPoint2::new(0, q(3, 4)),
-                CurveStringTrimPoint2::new(0, q(1, 4)),
-                &policy(),
-            )
-            .unwrap_err(),
-        CurveError::InvalidCurveRange
-    );
-    assert_eq!(
-        curve
-            .trim_between_parameters(
-                CurveStringTrimPoint2::new(0, s(-1)),
-                CurveStringTrimPoint2::new(0, q(1, 4)),
-                &policy(),
-            )
-            .unwrap_err(),
-        CurveError::InvalidCurveParameter
-    );
+    assert!(matches!(
+        crate::support::under_classified_result(&policy(), || curve.trim_between_parameters(
+            CurveStringTrimPoint2::new(0, q(3, 4)),
+            CurveStringTrimPoint2::new(0, q(1, 4))
+        ))
+        .unwrap_err(),
+        ExactCurveError::Invalid {
+            cause: CurveError::InvalidCurveRange,
+            ..
+        }
+    ));
+    assert!(matches!(
+        crate::support::under_classified_result(&policy(), || curve.trim_between_parameters(
+            CurveStringTrimPoint2::new(0, s(-1)),
+            CurveStringTrimPoint2::new(0, q(1, 4))
+        ))
+        .unwrap_err(),
+        ExactCurveError::Invalid {
+            cause: CurveError::InvalidCurveParameter,
+            ..
+        }
+    ));
 }
 #[test]
 fn curve_string_trim_between_points_materializes_partial_arc() {
@@ -685,8 +728,10 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
     )])
     .unwrap();
 
-    let Classification::Decided(trimmed) = curve
-        .trim_between_points(&p(0, 0), &p(1, -1), &policy())
+    let Classification::Decided(trimmed) =
+        crate::support::under_classified_result(&policy(), || {
+            curve.trim_between_points(&p(0, 0), &p(1, -1))
+        })
         .unwrap()
     else {
         panic!("point-bearing arc trim should materialize");
@@ -705,8 +750,10 @@ fn curve_string_trim_between_points_accepts_shared_vertex_once() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 2)]).unwrap();
 
-    let Classification::Decided(trimmed) = curve
-        .trim_between_points(&p(2, 0), &p(2, 2), &policy())
+    let Classification::Decided(trimmed) =
+        crate::support::under_classified_result(&policy(), || {
+            curve.trim_between_points(&p(2, 0), &p(2, 2))
+        })
         .unwrap()
     else {
         panic!("shared vertex trim should materialize");
@@ -726,9 +773,9 @@ fn curve_string_trim_between_points_evidence_repeated_nonadjacent_point_boundary
     .unwrap();
 
     assert_eq!(
-        curve
-            .trim_between_points(&p(0, 0), &p(0, 1), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .trim_between_points(&p(0, 0), &p(0, 1)))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -744,9 +791,9 @@ fn curve_string_trim_between_curve_intersections_evidence_ambiguous_cutter_hits(
     let end_cutter = CurveString2::try_new(vec![line_segment(9, -1, 9, 1)]).unwrap();
 
     assert_eq!(
-        curve
-            .trim_between_curve_intersections(&ambiguous_cutter, &end_cutter, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .trim_between_curve_intersections(&ambiguous_cutter, &end_cutter))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -758,9 +805,9 @@ fn curve_string_trim_between_curve_intersections_evidence_overlap_blocker() {
     let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)]).unwrap();
 
     assert_eq!(
-        curve
-            .trim_between_curve_intersections(&overlapping_cutter, &end_cutter, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || curve
+            .trim_between_curve_intersections(&overlapping_cutter, &end_cutter))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

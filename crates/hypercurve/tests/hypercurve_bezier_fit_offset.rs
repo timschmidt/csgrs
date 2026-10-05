@@ -1207,7 +1207,7 @@ fn exact_parallel_conservative_bounds_cover_both_offset_sides() {
                     panic!("parallel point was uncertain");
                 };
                 assert_eq!(
-                    bounds.contains_point(&point, &policy),
+                    crate::support::under_classified(&policy, || bounds.contains_point(&point)),
                     Classification::Decided(true)
                 );
             }

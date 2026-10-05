@@ -45,6 +45,10 @@ std::thread_local! {
     /// Lossy tolerances scoped to an explicit preview adapter.
     static ACTIVE_PREVIEW_TOLERANCE: Cell<Option<PreviewTolerance>> = const { Cell::new(None) };
 
+    /// Edge-preview predicate context of the innermost preview adapter, which
+    /// principal operations inside it use.
+    static ACTIVE_PREVIEW_CONTEXT: Cell<Option<CurveContext>> = const { Cell::new(None) };
+
     /// Whether principal operations on this thread run inside [`provisional`].
     static PROVISIONAL_SCOPE: Cell<bool> = const { Cell::new(false) };
 }
@@ -135,12 +139,15 @@ pub fn provisional<T>(evaluate: impl FnOnce() -> T) -> Provisional<T> {
 }
 
 /// The policy of a principal operation on this thread: STRICT, or
-/// `APPROXIMATE_512` inside [`provisional`].
+/// `APPROXIMATE_512` inside [`provisional`]. Inside
+/// [`CurvePreviewOptions::evaluate`] it is the adapter's edge-preview context.
 pub(crate) fn principal_context() -> CurveContext {
-    if PROVISIONAL_SCOPE.with(Cell::get) {
-        CurveContext::APPROXIMATE_512
-    } else {
-        CurveContext::STRICT
+    let provisional = PROVISIONAL_SCOPE.with(Cell::get);
+    match ACTIVE_PREVIEW_CONTEXT.with(Cell::get) {
+        Some(_) if provisional => CurveContext::APPROXIMATE_512.with_edge_preview(),
+        Some(preview) => preview,
+        None if provisional => CurveContext::APPROXIMATE_512,
+        None => CurveContext::STRICT,
     }
 }
 
@@ -220,13 +227,15 @@ impl Drop for OperationObservation {
 
 struct PreviewFrame {
     prior: Option<PreviewTolerance>,
+    prior_context: Option<CurveContext>,
     active: bool,
 }
 
 impl PreviewFrame {
-    fn begin(tolerance: PreviewTolerance) -> Self {
+    fn begin(tolerance: PreviewTolerance, context: CurveContext) -> Self {
         Self {
             prior: ACTIVE_PREVIEW_TOLERANCE.with(|active| active.replace(Some(tolerance))),
+            prior_context: ACTIVE_PREVIEW_CONTEXT.with(|active| active.replace(Some(context))),
             active: true,
         }
     }
@@ -234,6 +243,7 @@ impl PreviewFrame {
     fn restore(&mut self) {
         if self.active {
             ACTIVE_PREVIEW_TOLERANCE.with(|active| active.set(self.prior));
+            ACTIVE_PREVIEW_CONTEXT.with(|active| active.set(self.prior_context));
             self.active = false;
         }
     }
@@ -360,11 +370,14 @@ impl CurvePreviewOptions {
 
     /// Evaluate one synchronous lossy preview operation.
     ///
-    /// The returned value is preview evidence. It must not be retained as
-    /// certified topology or exact construction provenance.
+    /// Principal operations called inside `evaluate` run under this adapter's
+    /// edge-preview context, which is also passed to the closure. The returned
+    /// value is preview evidence. It must not be retained as certified
+    /// topology or exact construction provenance.
     pub fn evaluate<T>(&self, evaluate: impl FnOnce(&CurveContext) -> T) -> T {
-        let _frame = PreviewFrame::begin(self.tolerance);
-        evaluate(&self.context.with_edge_preview())
+        let context = self.context.with_edge_preview();
+        let _frame = PreviewFrame::begin(self.tolerance, context);
+        evaluate(&context)
     }
 }
 
@@ -1264,5 +1277,29 @@ impl hypersolve::ApproximationPolicy for CurveContext {
     #[track_caller]
     fn observe_approximate_512(&self) {
         Self::observe_approximate_512(self);
+    }
+}
+
+#[cfg(test)]
+mod principal_context_tests {
+    use super::*;
+
+    #[test]
+    fn principal_operations_follow_preview_and_provisional_scopes() {
+        assert_eq!(principal_context(), CurveContext::STRICT);
+        let preview = CurvePreviewOptions::try_strict(1e-7, 1e-7).unwrap();
+        preview.evaluate(|context| {
+            assert_eq!(principal_context(), *context);
+            assert!(principal_context().is_edge_preview());
+            assert!(!principal_context().selects_approximate_512());
+            let _ = provisional(|| {
+                assert!(principal_context().is_edge_preview());
+                assert!(principal_context().selects_approximate_512());
+            });
+        });
+        assert_eq!(principal_context(), CurveContext::STRICT);
+        let _ = provisional(|| {
+            assert_eq!(principal_context(), CurveContext::APPROXIMATE_512);
+        });
     }
 }
