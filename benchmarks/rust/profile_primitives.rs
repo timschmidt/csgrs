@@ -6,7 +6,7 @@ mod support;
 use std::hint::black_box;
 
 use csgrs::{GeometryContext, Real, curve};
-use hypercurve::{CurveContext, CurvePath2, CurveRegion2, FiniteProjectionOptions, Point2};
+use hypercurve::{CurvePath2, CurveRegion2, FiniteProjectionOptions, Point2};
 use hyperlattice::Matrix4;
 use support::{Config, Measurement, print_header};
 
@@ -237,9 +237,8 @@ fn main() {
         8,
         || {
             let polyline = black_box(&cubic_wire)
-                .project_to_finite_polyline(&projection, &CurveContext::STRICT)
-                .expect("finite Bezier projection")
-                .into_value();
+                .project_to_finite_polyline(&projection)
+                .expect("finite Bezier projection");
             let points = polyline.points().len();
             Measurement::new(1, points as u64, points as u64)
         },

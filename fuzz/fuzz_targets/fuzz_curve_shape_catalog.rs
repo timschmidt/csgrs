@@ -112,8 +112,7 @@ fuzz_target!(|bytes: &[u8]| {
             outcome.into_value()
         },
         12 => {
-            let Ok(outcome) =
-                curve::reuleaux(reuleaux_sides, a, reuleaux_segments, &context)
+            let Ok(outcome) = curve::reuleaux(reuleaux_sides, a, reuleaux_segments, &context)
             else {
                 return;
             };
@@ -128,7 +127,8 @@ fuzz_target!(|bytes: &[u8]| {
         14 => curve::pie_slice(a, b, c, segments),
         15 => curve::heart(a, b, segments),
         16 => {
-            let Ok(outcome) = curve::crescent(positive_a, positive_b, c, segments, &context) else {
+            let Ok(outcome) = curve::crescent(positive_a, positive_b, c, segments, &context)
+            else {
                 return;
             };
             outcome.into_value()
@@ -181,10 +181,7 @@ fuzz_target!(|bytes: &[u8]| {
             ) {
                 let options =
                     FiniteProjectionOptions::try_new(1.0e-3).expect("positive tolerance");
-                if let Ok(polyline) = path
-                    .project_to_finite_polyline(&options, &CurveContext::STRICT)
-                    .map(|outcome| outcome.into_value())
-                {
+                if let Ok(polyline) = path.project_to_finite_polyline(&options) {
                     for point in polyline.points() {
                         assert!(point[0].is_finite());
                         assert!(point[1].is_finite());
