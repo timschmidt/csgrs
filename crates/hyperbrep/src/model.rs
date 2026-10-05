@@ -1474,9 +1474,8 @@ impl CertifiedRevolutionBoundary {
         match self {
             Self::Native(contour) => contour.signed_x_first_moment().map_err(GeometryError::from),
             Self::Curved(path) => path
-                .boundary_loop(&CurveContext::STRICT)
+                .boundary_loop()
                 .map_err(GeometryError::from)?
-                .into_value()
                 .area_moments(&CurveContext::STRICT)
                 .map_err(GeometryError::from)
                 .and_then(|outcome| resolve_planar_classification(outcome.into_value()))
@@ -1491,10 +1490,10 @@ impl CertifiedRevolutionBoundary {
     ) -> Result<Classification<ContourPointLocation>, GeometryError> {
         match self {
             Self::Native(contour) => Ok(contour.classify_point(point, policy)),
-            Self::Curved(path) => path
-                .classify_point(&point.clone().into(), policy)
-                .map(|outcome| outcome.into_value())
-                .map_err(GeometryError::from),
+            Self::Curved(path) => {
+                crate::error::classified(path.classify_point(&point.clone().into()))
+                    .map_err(GeometryError::from)
+            }
         }
     }
 
@@ -1533,9 +1532,8 @@ impl CertifiedRevolutionBoundary {
         }
         let result = self
             .as_curve_path()?
-            .intersect_path(&other.as_curve_path()?, policy)
-            .map_err(GeometryError::from)?
-            .into_value();
+            .intersect_path(&other.as_curve_path()?)
+            .map_err(GeometryError::from)?;
         if !result.blockers().is_empty() {
             return Err(GeometryError::UnsupportedIntersection);
         }
@@ -2691,9 +2689,8 @@ impl Model {
         let loop_path = CurvePath2::try_new(vec![materialized_loop.curve().clone()])
             .map_err(GeometryError::from)?;
         let loop_area = loop_path
-            .boundary_loop(&CurveContext::STRICT)
+            .boundary_loop()
             .map_err(GeometryError::from)?
-            .into_value()
             .signed_area(&CurveContext::STRICT)
             .map_err(GeometryError::from)?
             .into_value();
@@ -2713,15 +2710,13 @@ impl Model {
         };
         let interior_forward = area_order == expected_outer_order;
 
-        let policy = CurveContext::STRICT;
+        let _policy = CurveContext::STRICT;
         let loop_start = materialized_loop.curve().start();
         let classify = |path: &CurvePath2,
                         point: &hypercurve::CurvePoint2|
          -> Result<ContourPointLocation, TopologyEditError> {
-            match path
-                .classify_point(point, &policy)
+            match crate::error::classified(path.classify_point(point))
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(location) => Ok(location),
                 Classification::Uncertain(reason) => {
@@ -3018,9 +3013,8 @@ impl Model {
             for second_index in (first_index + 1)..ordered.len() {
                 let relation = materialized[first_index]
                     .curve()
-                    .intersect_curve(materialized[second_index].curve(), &CurveContext::STRICT)
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                    .intersect_curve(materialized[second_index].curve())
+                    .map_err(GeometryError::from)?;
                 if !relation.is_complete() {
                     return Err(GeometryError::UnsupportedIntersection.into());
                 }
@@ -3642,17 +3636,15 @@ impl Model {
             .collect::<Vec<_>>();
         let first_region = staged.build_model_wire_curve_path(*outer)?;
         let second_region = staged.build_model_wire_curve_path(target_inner)?;
-        let policy = CurveContext::STRICT;
+        let _policy = CurveContext::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         for wire in remaining_inner {
             let contour = staged.build_model_wire_contour(wire)?;
             let representative = contour.segments()[0].start();
             let classify = |path: &CurvePath2| -> Result<bool, TopologyEditError> {
-                match path
-                    .classify_point(&representative.clone().into(), &policy)
+                match crate::error::classified(path.classify_point(&representative.clone().into()))
                     .map_err(GeometryError::from)?
-                    .into_value()
                 {
                     Classification::Decided(ContourPointLocation::Inside) => Ok(true),
                     Classification::Decided(ContourPointLocation::Outside) => Ok(false),
@@ -4526,7 +4518,7 @@ impl Model {
         });
 
         reset_model_caches(data);
-        let policy = CurveContext::STRICT;
+        let _policy = CurveContext::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         if !inner.is_empty() {
@@ -4536,10 +4528,10 @@ impl Model {
                 let contour = staged.build_model_wire_contour(wire)?;
                 let representative = contour.segments()[0].start();
                 let classify = |path: &CurvePath2| -> Result<bool, TopologyEditError> {
-                    match path
-                        .classify_point(&representative.clone().into(), &policy)
-                        .map_err(GeometryError::from)?
-                        .into_value()
+                    match crate::error::classified(
+                        path.classify_point(&representative.clone().into()),
+                    )
+                    .map_err(GeometryError::from)?
                     {
                         Classification::Decided(ContourPointLocation::Inside) => Ok(true),
                         Classification::Decided(ContourPointLocation::Outside) => Ok(false),
@@ -5665,9 +5657,8 @@ impl Model {
             Err(GeometryError::UnsupportedPcurveContour) => {
                 let area = self
                     .build_model_wire_curve_path(wire)?
-                    .boundary_loop(&CurveContext::STRICT)
+                    .boundary_loop()
                     .map_err(GeometryError::from)?
-                    .into_value()
                     .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value();
@@ -6577,13 +6568,11 @@ impl Model {
             return Ok(SolidPointLocation::Outside);
         }
         let planar = hypercurve::CurvePoint2::from(CurvePoint2::new(planar_u, planar_v));
-        let policy = CurveContext::STRICT;
+        let _policy = CurveContext::STRICT;
         let planar_location = match &prism.profile {
             CertifiedPrismProfile::Paths { outer, holes } => {
-                match outer
-                    .classify_point(&planar, &policy)
+                match crate::error::classified(outer.classify_point(&planar))
                     .map_err(GeometryError::from)?
-                    .into_value()
                 {
                     Classification::Decided(ContourPointLocation::Outside) => {
                         RegionPointLocation::Outside
@@ -6594,10 +6583,8 @@ impl Model {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         let mut location = RegionPointLocation::Inside;
                         for hole in holes {
-                            match hole
-                                .classify_point(&planar, &policy)
+                            match crate::error::classified(hole.classify_point(&planar))
                                 .map_err(GeometryError::from)?
-                                .into_value()
                             {
                                 Classification::Decided(ContourPointLocation::Inside) => {
                                     location = RegionPointLocation::Outside;
@@ -7130,12 +7117,12 @@ impl Model {
         let FaceBoundary::Trimmed { outer, inner } = &face.boundary else {
             return Ok(Classification::Decided(ContourPointLocation::Inside));
         };
-        let policy = CurveContext::STRICT;
-        match self
-            .build_model_wire_curve_path(*outer)?
-            .classify_point(&point.clone().into(), &policy)
-            .map_err(GeometryError::from)?
-            .into_value()
+        let _policy = CurveContext::STRICT;
+        match crate::error::classified(
+            self.build_model_wire_curve_path(*outer)?
+                .classify_point(&point.clone().into()),
+        )
+        .map_err(GeometryError::from)?
         {
             Classification::Decided(ContourPointLocation::Outside) => {
                 return Ok(Classification::Decided(ContourPointLocation::Outside));
@@ -7149,11 +7136,11 @@ impl Model {
             Classification::Decided(ContourPointLocation::Inside) => {}
         }
         for wire in inner {
-            match self
-                .build_model_wire_curve_path(*wire)?
-                .classify_point(&point.clone().into(), &policy)
-                .map_err(GeometryError::from)?
-                .into_value()
+            match crate::error::classified(
+                self.build_model_wire_curve_path(*wire)?
+                    .classify_point(&point.clone().into()),
+            )
+            .map_err(GeometryError::from)?
             {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(Classification::Decided(ContourPointLocation::Outside));
@@ -10482,9 +10469,8 @@ impl ModelBuilder {
             Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
                 let path = self.build_wire_curve_path(wire)?;
                 let area = path
-                    .boundary_loop(&CurveContext::STRICT)
+                    .boundary_loop()
                     .map_err(GeometryError::from)?
-                    .into_value()
                     .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value();
@@ -10813,24 +10799,21 @@ impl ModelBuilder {
         if inner.is_empty() {
             return Ok(());
         }
-        let policy = CurveContext::STRICT;
+        let _policy = CurveContext::STRICT;
         let outer_path = self.build_wire_curve_path(outer)?;
         for wire in inner {
             let path = self.build_wire_curve_path(*wire)?;
             let intersection = outer_path
-                .intersect_path(&path, &policy)
-                .map_err(GeometryError::from)?
-                .into_value();
+                .intersect_path(&path)
+                .map_err(GeometryError::from)?;
             if !intersection.is_disjoint() {
                 return Err(BuildError::IntersectingFaceWires {
                     first: outer,
                     second: *wire,
                 });
             }
-            match outer_path
-                .classify_point(&path.start(), &policy)
+            match crate::error::classified(outer_path.classify_point(&path.start()))
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(ContourPointLocation::Inside) => {}
                 Classification::Decided(_) => return Err(BuildError::InnerWireOutside(*wire)),
@@ -10846,9 +10829,8 @@ impl ModelBuilder {
             for second in &inner[(index + 1)..] {
                 let second_path = self.build_wire_curve_path(*second)?;
                 let intersection = first_path
-                    .intersect_path(&second_path, &policy)
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                    .intersect_path(&second_path)
+                    .map_err(GeometryError::from)?;
                 if !intersection.is_disjoint() {
                     return Err(BuildError::IntersectingFaceWires {
                         first: *first,
@@ -10856,15 +10838,11 @@ impl ModelBuilder {
                     });
                 }
                 let nested = classification_is_inside(
-                    first_path
-                        .classify_point(&second_path.start(), &policy)
-                        .map_err(GeometryError::from)?
-                        .into_value(),
+                    crate::error::classified(first_path.classify_point(&second_path.start()))
+                        .map_err(GeometryError::from)?,
                 )? || classification_is_inside(
-                    second_path
-                        .classify_point(&first_path.start(), &policy)
-                        .map_err(GeometryError::from)?
-                        .into_value(),
+                    crate::error::classified(second_path.classify_point(&first_path.start()))
+                        .map_err(GeometryError::from)?,
                 )?;
                 if nested {
                     return Err(BuildError::NestedInnerWires {
@@ -10917,9 +10895,8 @@ impl ModelBuilder {
         let policy = CurveContext::STRICT;
         for curve in path.curves() {
             let fragments = curve
-                .native_bezier_fragments(&policy)
-                .map_err(GeometryError::from)?
-                .into_value();
+                .native_bezier_fragments()
+                .map_err(GeometryError::from)?;
             if fragments.len() != 1
                 || !fragments[0]
                     .has_certified_injective_axis(&policy)
@@ -11383,9 +11360,8 @@ impl ModelBuilder {
         let policy = CurveContext::STRICT;
         if curves.len() == 2 {
             let relation = curves[0]
-                .intersect_curve(&curves[1], &policy)
-                .map_err(GeometryError::from)?
-                .into_value();
+                .intersect_curve(&curves[1])
+                .map_err(GeometryError::from)?;
             if !relation.is_complete()
                 || !relation.overlaps().is_empty()
                 || relation.contacts().len() != 2
@@ -11452,9 +11428,8 @@ impl ModelBuilder {
         for first_index in 0..curves.len() {
             for second_index in (first_index + 1)..curves.len() {
                 let relation = curves[first_index]
-                    .intersect_curve(&curves[second_index], &policy)
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                    .intersect_curve(&curves[second_index])
+                    .map_err(GeometryError::from)?;
                 if !relation.is_complete() {
                     return Err(GeometryError::UnsupportedIntersection.into());
                 }
@@ -17044,24 +17019,11 @@ impl ModelBuilder {
                         return Ok(None);
                     };
                     if weights.iter().all(|weight| weight == &weights[0]) {
-                        Curve2::try_polynomial_bspline(
-                            degree,
-                            controls,
-                            knots.clone(),
-                            &CurveContext::STRICT,
-                        )
-                        .map_err(GeometryError::from)?
-                        .into_value()
+                        Curve2::try_polynomial_bspline(degree, controls, knots.clone())
+                            .map_err(GeometryError::from)?
                     } else {
-                        Curve2::try_nurbs(
-                            degree,
-                            controls,
-                            weights.clone(),
-                            knots.clone(),
-                            &CurveContext::STRICT,
-                        )
-                        .map_err(GeometryError::from)?
-                        .into_value()
+                        Curve2::try_nurbs(degree, controls, weights.clone(), knots.clone())
+                            .map_err(GeometryError::from)?
                     }
                 }
                 Curve3ExactData::EllipseArc(data) if data.circle => {
@@ -17212,9 +17174,8 @@ impl ModelBuilder {
         } else {
             let path = CurvePath2::try_new(ordered).map_err(GeometryError::from)?;
             let area = path
-                .boundary_loop(&CurveContext::STRICT)
+                .boundary_loop()
                 .map_err(GeometryError::from)?
-                .into_value()
                 .signed_area(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value();
@@ -20553,8 +20514,7 @@ fn update_max(current: &mut Real, candidate: &Real) -> Result<(), GeometryError>
 
 fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, GeometryError> {
     let area = path
-        .boundary_loop(&CurveContext::STRICT)?
-        .into_value()
+        .boundary_loop()?
         .signed_area(&CurveContext::STRICT)?
         .into_value();
     resolve_planar_classification(area)?.ok_or(GeometryError::UnsupportedMeasurement)

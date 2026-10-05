@@ -6,8 +6,7 @@ use hyperbrep::{
     Surface, SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
 };
 use hypercurve::{
-    CircularArc2, Curve2, CurveContext, CurvePath2, LineSeg2, Point2 as CurvePoint2,
-    QuadraticBezier2,
+    CircularArc2, Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2,
 };
 use hyperlimit::compare_reals;
 
@@ -857,10 +856,8 @@ fn main() {
                 Real::from(5),
                 Real::from(5),
             ],
-            &CurveContext::STRICT,
         )
-        .expect("benchmark planar NURBS boundary")
-        .into_value(),
+        .expect("benchmark planar NURBS boundary"),
         line(4, 0, 4, 4),
         line(4, 4, 0, 4),
         line(0, 4, 0, 0),
@@ -2091,10 +2088,8 @@ fn main() {
                 Real::one(),
                 Real::one(),
             ],
-            &CurveContext::STRICT,
         )
-        .expect("benchmark exact NURBS half-loop")
-        .into_value(),
+        .expect("benchmark exact NURBS half-loop"),
     ])
     .expect("benchmark mixed spline region");
     let (mixed_plane, mixed_plane_face) = builder::planar_face(

@@ -167,10 +167,7 @@ impl Pcurve {
 
     /// Evaluates an exact point in surface parameter space.
     pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
-        let point = self
-            .curve
-            .point_at(&parameter.clone().into(), &CurveContext::STRICT)?
-            .into_value();
+        let point = self.curve.point_at(&parameter.clone().into())?;
         let point = point
             .coordinates()
             .ok_or(GeometryError::UnsupportedPcurveContour)?;
@@ -179,18 +176,13 @@ impl Pcurve {
 
     /// Splits this pcurve exactly at a strict interior public parameter.
     pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
-        let (first, second) = self
-            .curve
-            .split_at(parameter.clone().into(), &CurveContext::STRICT)?
-            .into_value();
+        let (first, second) = self.curve.split_at(parameter.clone().into())?;
         Ok((Self::new(first), Self::new(second)))
     }
 
     /// Returns the same exact parameter-space image with reversed traversal.
     pub fn reversed(&self) -> GeometryResult<Self> {
-        Ok(Self::new(
-            self.curve.reversed(&CurveContext::STRICT)?.into_value(),
-        ))
+        Ok(Self::new(self.curve.reversed()?))
     }
 
     pub(crate) fn endpoints(&self) -> GeometryResult<(Point2, Point2)> {
@@ -2089,9 +2081,7 @@ impl SurfaceIntersectionPcurve {
                 Err(GeometryError::UnsupportedIntersection)
             }
             SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
-                let point = curve
-                    .point_at(&source_parameter.clone().into(), &CurveContext::STRICT)?
-                    .into_value();
+                let point = curve.point_at(&source_parameter.clone().into())?;
                 let point = point
                     .coordinates()
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
@@ -2182,10 +2172,7 @@ impl SurfaceIntersectionPcurve {
         };
         let orient_curve = |curve: Curve2| -> GeometryResult<Curve2> {
             if descending {
-                curve
-                    .reversed(&CurveContext::STRICT)
-                    .map(|outcome| outcome.into_value())
-                    .map_err(GeometryError::from)
+                curve.reversed().map_err(GeometryError::from)
             } else {
                 Ok(curve)
             }
@@ -2213,13 +2200,10 @@ impl SurfaceIntersectionPcurve {
                 {
                     curve.clone()
                 } else {
-                    curve
-                        .subcurve(
-                            ordered_source_start.clone().into(),
-                            ordered_source_end.clone().into(),
-                            &CurveContext::STRICT,
-                        )?
-                        .into_value()
+                    curve.subcurve(
+                        ordered_source_start.clone().into(),
+                        ordered_source_end.clone().into(),
+                    )?
                 };
                 materialized_surface_pcurve_from_matching_domains(
                     orient_curve(restricted)?,
@@ -2324,10 +2308,7 @@ impl SurfaceIntersectionPcurve {
                     {
                         carrier.curve
                     } else {
-                        carrier
-                            .curve
-                            .subcurve(start.into(), end.into(), &CurveContext::STRICT)?
-                            .into_value()
+                        carrier.curve.subcurve(start.into(), end.into())?
                     };
                     if boundaries.is_empty() {
                         boundaries.push(overlap_start);
@@ -2426,7 +2407,7 @@ impl SurfaceIntersectionPcurve {
                     return Ok(None);
                 };
                 if descending {
-                    curve = curve.reversed(&CurveContext::STRICT)?.into_value();
+                    curve = curve.reversed()?;
                 }
                 let curve_domain = curve.parameter_domain();
                 let (curve_domain_start, curve_domain_end) = curve_domain
@@ -2512,10 +2493,7 @@ impl MaterializedSurfacePcurve {
                 let Some(CurveGeometry2::CircularArc(arc)) = self.curve.geometry() else {
                     return Err(GeometryError::UnsupportedPcurveContour);
                 };
-                let point = self
-                    .curve
-                    .point_at(&parameter.clone().into(), &CurveContext::STRICT)?
-                    .into_value();
+                let point = self.curve.point_at(&parameter.clone().into())?;
                 let point = point
                     .coordinates()
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
@@ -5019,19 +4997,15 @@ pub(crate) fn project_curve_to_plane_frame(
             control_points,
             weights,
             knots,
-        } => Ok(Some(
-            Curve2::try_nurbs(
-                degree,
-                control_points
-                    .iter()
-                    .map(project)
-                    .collect::<GeometryResult<Vec<_>>>()?,
-                weights,
-                knots,
-                &CurveContext::STRICT,
-            )?
-            .into_value(),
-        )),
+        } => Ok(Some(Curve2::try_nurbs(
+            degree,
+            control_points
+                .iter()
+                .map(project)
+                .collect::<GeometryResult<Vec<_>>>()?,
+            weights,
+            knots,
+        )?)),
         Curve3ExactData::EllipseArc(data) if data.circle => {
             let center = project(&data.center)?;
             let projected_x =
@@ -5317,15 +5291,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
         boundaries.last().expect("at least two boundaries").clone(),
         degree + 1,
     ));
-    Curve2::try_nurbs(
-        degree,
-        control_points,
-        weights,
-        knots,
-        &CurveContext::STRICT,
-    )
-    .map(|outcome| outcome.into_value())
-    .map_err(GeometryError::from)
+    Curve2::try_nurbs(degree, control_points, weights, knots).map_err(GeometryError::from)
 }
 
 pub(crate) fn materialize_nurbs_parameter_graph(
@@ -5724,9 +5690,7 @@ fn clip_rational_bilinear_parameter_graph(
         &Real::zero(),
         &Real::one(),
     )?;
-    let trimmed = pcurve
-        .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)?
-        .into_value();
+    let trimmed = pcurve.trim_inside_region_with_parameters(&region)?;
     let mut intervals: Vec<(Real, Real)> = Vec::with_capacity(trimmed.len());
     for fragment in trimmed {
         let Some((start, end)) = fragment.represented_parameter_range() else {
@@ -5750,10 +5714,7 @@ fn clip_rational_bilinear_parameter_graph(
             rational_bilinear_section(
                 plane,
                 surface,
-                pcurve
-                    .clone()
-                    .subcurve(start.into(), end.into(), &CurveContext::STRICT)?
-                    .into_value(),
+                pcurve.clone().subcurve(start.into(), end.into())?,
             )
         })
         .collect::<GeometryResult<Vec<_>>>()?;
@@ -6544,19 +6505,14 @@ fn intersect_coaxial_revolutions(
     let first_meridian = project_revolution_meridian(first, &first.axis_origin, &first.axis)?;
     let second_meridian = project_revolution_meridian(second, &first.axis_origin, &first.axis)?;
     if first_meridian.curve == second_meridian.curve
-        || first_meridian.curve
-            == second_meridian
-                .curve
-                .reversed(&CurveContext::STRICT)?
-                .into_value()
+        || first_meridian.curve == second_meridian.curve.reversed()?
     {
         return Ok(SurfaceSurfaceIntersection::Coincident);
     }
 
     let intersections = first_meridian
         .curve
-        .intersect_curve(&second_meridian.curve, &CurveContext::STRICT)?
-        .into_value();
+        .intersect_curve(&second_meridian.curve)?;
     if !intersections.is_complete() || !intersections.overlaps().is_empty() {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -6589,12 +6545,10 @@ fn intersect_coaxial_revolutions(
             .ok_or(GeometryError::UnrepresentableParameter)?;
         let first_point = first_meridian
             .curve
-            .point_at(&first_parameter.clone().into(), &CurveContext::STRICT)?
-            .into_value();
+            .point_at(&first_parameter.clone().into())?;
         let second_point = second_meridian
             .curve
-            .point_at(&second_parameter.clone().into(), &CurveContext::STRICT)?
-            .into_value();
+            .point_at(&second_parameter.clone().into())?;
         let first_point = first_point
             .coordinates()
             .ok_or(GeometryError::UnrepresentableParameter)?;
@@ -7085,8 +7039,7 @@ fn clip_linear_tensor_section(
     let materialized = section.second_pcurve.materialize()?;
     let trimmed = materialized
         .curve()
-        .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)?
-        .into_value();
+        .trim_inside_region_with_parameters(&region)?;
     let mut intervals: Vec<(Real, Real)> = Vec::with_capacity(trimmed.len());
     for fragment in trimmed {
         let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
@@ -9352,10 +9305,7 @@ fn locate_rational_bezier_parameters(
         control_coordinate(point, first_axis).clone(),
         control_coordinate(point, second_axis).clone(),
     );
-    match projected
-        .point_locations(&query.into(), &CurveContext::STRICT)?
-        .value
-    {
+    match projected.point_locations(&query.into())? {
         CurvePointLocations2::EntireCurve => Err(GeometryError::UnsupportedParameterLocation),
         CurvePointLocations2::Locations(locations) => {
             let mut represented = Vec::new();
@@ -11845,9 +11795,8 @@ mod tests {
         assert_eq!(inverse.degree(), 4);
         for parameter in [Real::zero(), q(1, 2), Real::one()] {
             let uv = pcurve
-                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+                .point_at(&parameter.clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone();
@@ -11898,9 +11847,8 @@ mod tests {
         );
         for parameter in [Real::zero(), q(1, 2), Real::one()] {
             let uv = native
-                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+                .point_at(&parameter.clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone();
@@ -12051,9 +11999,8 @@ mod tests {
         assert_eq!(
             materialized
                 .curve()
-                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+                .point_at(&parameter.clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone(),
@@ -12213,10 +12160,8 @@ mod tests {
                 forged_controls,
                 graph.weights().to_vec(),
                 graph.knots().to_vec(),
-                &CurveContext::STRICT,
             )
-            .unwrap()
-            .into_value(),
+            .unwrap(),
         );
         let mut edit = split.edit();
         edit.replace_pcurve(graph_use.pcurve(), forged).unwrap();
@@ -12352,9 +12297,8 @@ mod tests {
             hypercurve::CurvePath2::try_new(vec![materialized.curve().clone()]).unwrap();
         assert!(matches!(
             loop_path
-                .boundary_loop(&CurveContext::STRICT)
+                .boundary_loop()
                 .unwrap()
-                .into_value()
                 .signed_area(&CurveContext::STRICT)
                 .unwrap()
                 .into_value(),
@@ -12690,9 +12634,8 @@ mod tests {
         assert_eq!(
             materialized
                 .curve()
-                .point_at(&q(1, 2).clone().into(), &CurveContext::STRICT)
+                .point_at(&q(1, 2).clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone(),
@@ -13964,9 +13907,8 @@ mod tests {
         assert_eq!(
             materialized
                 .curve()
-                .point_at(&q(1, 2).clone().into(), &CurveContext::STRICT)
+                .point_at(&q(1, 2).clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone(),
@@ -14033,9 +13975,8 @@ mod tests {
         for parameter in [r(2), r(3), r(4), r(5)] {
             let surface_parameter = materialized
                 .curve()
-                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+                .point_at(&parameter.clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone();
@@ -14071,10 +14012,8 @@ mod tests {
                 forged_controls,
                 graph.weights().to_vec(),
                 graph.knots().to_vec(),
-                &CurveContext::STRICT,
             )
-            .unwrap()
-            .into_value(),
+            .unwrap(),
         );
         let mut edit = split.edit();
         edit.replace_pcurve(graph_use.pcurve(), forged).unwrap();
@@ -14172,9 +14111,8 @@ mod tests {
             .expect("one rational extrusion span");
         let extrusion_parameter = extrusion_clip
             .curve
-            .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+            .point_at(&parameter.clone().into())
             .unwrap()
-            .into_value()
             .coordinates()
             .expect("native pcurve coordinates")
             .clone();
@@ -14205,9 +14143,8 @@ mod tests {
             .expect("one projected rational span");
         let plane_parameter = plane_clip
             .curve
-            .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+            .point_at(&parameter.clone().into())
             .unwrap()
-            .into_value()
             .coordinates()
             .expect("native pcurve coordinates")
             .clone();
@@ -14255,9 +14192,8 @@ mod tests {
                 let spatial_parameter = &carrier.spatial_scale * &local + &carrier.spatial_offset;
                 let materialized = carrier
                     .curve
-                    .point_at(&local.clone().into(), &CurveContext::STRICT)
+                    .point_at(&local.clone().into())
                     .unwrap()
-                    .into_value()
                     .coordinates()
                     .expect("native pcurve coordinates")
                     .clone();
@@ -14300,9 +14236,8 @@ mod tests {
         for carrier in &carriers {
             for fragment in carrier
                 .curve
-                .trim_inside_region_with_parameters(&trim_region, &CurveContext::STRICT)
+                .trim_inside_region_with_parameters(&trim_region)
                 .unwrap()
-                .into_value()
             {
                 let (local_start, local_end) = fragment
                     .represented_parameter_range()

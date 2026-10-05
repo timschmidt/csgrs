@@ -1648,9 +1648,8 @@ fn append_curved_boundary_witness_candidates(
     let mut outer_boundary_probes = vertices.to_vec();
     for curve in outer.curves() {
         let midpoint = curve
-            .point_at(&half.clone().into(), &CurveContext::STRICT)
-            .map_err(GeometryError::from)?
-            .into_value();
+            .point_at(&half.clone().into())
+            .map_err(GeometryError::from)?;
         let midpoint = midpoint
             .coordinates()
             .cloned()
@@ -1701,9 +1700,8 @@ fn append_curved_boundary_witness_candidates(
         for curve in inner.curves() {
             inner_boundary_probes.push(
                 curve
-                    .point_at(&half.clone().into(), &CurveContext::STRICT)
-                    .map_err(GeometryError::from)?
-                    .into_value(),
+                    .point_at(&half.clone().into())
+                    .map_err(GeometryError::from)?,
             );
         }
         for outer_probe in &outer_boundary_probes {
@@ -2392,10 +2390,7 @@ fn copy_selected_wire(
         };
         let (pcurve, correspondence) = if let Some(mut curve) = projected_curve {
             if direction == crate::Direction::Reversed {
-                curve = curve
-                    .reversed(&CurveContext::STRICT)
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                curve = curve.reversed().map_err(GeometryError::from)?;
             }
             let pcurve = crate::Pcurve::new(curve);
             let pcurve_start = pcurve.domain_start()?;
@@ -3219,12 +3214,11 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
     for curve in paths.iter().flat_map(|path| path.curves()) {
         if let Some(region) = &plane_region {
             for fragment in curve
-                .trim_inside_region(region, &CurveContext::STRICT)
+                .trim_inside_region(region)
                 .map_err(GeometryError::from)?
-                .into_value()
             {
-                let spans = match fragment.native_bezier_fragments(&CurveContext::STRICT) {
-                    Ok(spans) => spans.into_value(),
+                let spans = match fragment.native_bezier_fragments() {
+                    Ok(spans) => spans,
                     Err(ExactCurveError::Blocked(_)) => return Ok(None),
                     Err(error) => return Err(GeometryError::from(error).into()),
                 };
@@ -3237,9 +3231,8 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
             }
         } else {
             for fragment in curve
-                .native_bezier_fragments(&CurveContext::STRICT)
+                .native_bezier_fragments()
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 let Some(line) = lift_planar_line_image(plane, &fragment.curve())? else {
                     return Ok(None);
@@ -3474,9 +3467,8 @@ fn concatenate_closed_contained_spline_trace(
         }
         for fragment in pcurve
             .curve()
-            .native_bezier_fragments(&CurveContext::STRICT)
+            .native_bezier_fragments()
             .map_err(GeometryError::from)?
-            .into_value()
         {
             let rational = match fragment.curve() {
                 CurveGeometry2::QuadraticBezier(curve) => RationalBezier2::try_new(
@@ -3824,11 +3816,8 @@ fn retained_curve_face_intervals(
     let region = planar_face_region(model, face)?;
     let mut intervals = Vec::new();
     for carrier in carriers {
-        let trimmed = match carrier
-            .curve
-            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
-        {
-            Ok(fragments) => fragments.into_value(),
+        let trimmed = match carrier.curve.trim_inside_region_with_parameters(&region) {
+            Ok(fragments) => fragments,
             Err(ExactCurveError::Blocked(blocker)) => {
                 return Ok(Classification::Uncertain(blocker.reason()));
             }
@@ -3840,11 +3829,8 @@ fn retained_curve_face_intervals(
             };
             let middle = ((&pcurve_start + &pcurve_end) / Real::from(2_u8))
                 .expect("division by the nonzero integer two");
-            let representative = match carrier
-                .curve
-                .point_at(&middle.into(), &CurveContext::STRICT)
-            {
-                Ok(point) => point.into_value(),
+            let representative = match carrier.curve.point_at(&middle.into()) {
+                Ok(point) => point,
                 Err(ExactCurveError::Blocked(blocker)) => {
                     return Ok(Classification::Uncertain(blocker.reason()));
                 }
@@ -4302,8 +4288,8 @@ fn parameter_lines_face_trim_intervals(
         let end = point_on_parameter_line(&origin, &direction, &span_end);
         let source_line = LineSeg2::try_new(start, end)?;
         let source = CurvePath2::try_new(vec![source_line.clone().into()])?;
-        let trimmed = match source.trim_inside_region(&region, &CurveContext::STRICT) {
-            Ok(paths) => paths.into_value(),
+        let trimmed = match source.trim_inside_region(&region) {
+            Ok(paths) => paths,
             Err(ExactCurveError::Blocked(blocker)) => {
                 return Ok(Classification::Uncertain(blocker.reason()));
             }
@@ -6413,14 +6399,13 @@ fn trim_conic_to_planar_face(
             weight.clone(),
             Real::one(),
         )?);
-        let fragments =
-            match planar.trim_inside_region_with_parameters(&region, &CurveContext::STRICT) {
-                Ok(fragments) => fragments.into_value(),
-                Err(ExactCurveError::Blocked(blocker)) => {
-                    return Ok(FacePairTrim::Unresolved(blocker.reason()));
-                }
-                Err(error) => return Err(GeometryError::from(error)),
-            };
+        let fragments = match planar.trim_inside_region_with_parameters(&region) {
+            Ok(fragments) => fragments,
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(FacePairTrim::Unresolved(blocker.reason()));
+            }
+            Err(error) => return Err(GeometryError::from(error)),
+        };
         for fragment in fragments {
             let Some(start_contacts) = model_boundary_contacts(
                 model,
@@ -6440,11 +6425,8 @@ fn trim_conic_to_planar_face(
             else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
             };
-            let spans = match fragment
-                .curve()
-                .native_bezier_fragments(&CurveContext::STRICT)
-            {
-                Ok(spans) => spans.into_value(),
+            let spans = match fragment.curve().native_bezier_fragments() {
+                Ok(spans) => spans,
                 Err(ExactCurveError::Blocked(blocker)) => {
                     return Ok(FacePairTrim::Unresolved(blocker.reason()));
                 }
@@ -6705,9 +6687,8 @@ mod tests {
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
             let materialized_point = materialized
                 .curve()
-                .point_at(&curve_parameter.clone().into(), &CurveContext::STRICT)
+                .point_at(&curve_parameter.clone().into())
                 .unwrap()
-                .into_value()
                 .coordinates()
                 .expect("native pcurve coordinates")
                 .clone();
@@ -7410,10 +7391,8 @@ mod tests {
                 Real::one(),
                 Real::one(),
             ],
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value();
+        .unwrap();
         let outer = CurvePath2::try_new(vec![
             curved,
             Curve2::from(
@@ -7585,10 +7564,8 @@ mod tests {
                 Real::one(),
                 Real::one(),
             ],
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value();
+        .unwrap();
         let outer = CurvePath2::try_new(vec![upper, lower]).unwrap();
         let (plane, plane_face) = crate::builder::planar_face(
             &outer,
@@ -11458,10 +11435,8 @@ mod tests {
                     Real::one(),
                     Real::one(),
                 ],
-                &CurveContext::STRICT,
             )
-            .unwrap()
-            .into_value(),
+            .unwrap(),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])
@@ -11548,10 +11523,8 @@ mod tests {
                     Real::from(2),
                     Real::from(2),
                 ],
-                &CurveContext::STRICT,
             )
-            .unwrap()
-            .into_value(),
+            .unwrap(),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])

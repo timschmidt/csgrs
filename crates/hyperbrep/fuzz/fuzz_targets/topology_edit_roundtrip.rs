@@ -360,10 +360,8 @@ fuzz_target!(|bytes: &[u8]| {
                     Real::one(),
                     Real::one(),
                 ],
-                &hypercurve::CurveContext::STRICT,
             )
-            .expect("positive-weight cubic NURBS half-loop")
-            .into_value(),
+            .expect("positive-weight cubic NURBS half-loop"),
         ])
         .expect("mixed spline loop is simple");
         let (plane, plane_face) = builder::planar_face(

@@ -1,5 +1,5 @@
 use hyperbrep::{Real, builder};
-use hypercurve::{Curve2, CurveContext, CurvePath2, LineSeg2, Point2};
+use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let point = |x, y| Point2::new(Real::from(x), Real::from(y));
@@ -17,9 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Real::from(5),
                 Real::from(5),
             ],
-            &CurveContext::STRICT,
-        )?
-        .into_value(),
+        )?,
         line(4, 0, 4, 3)?,
         line(4, 3, 0, 3)?,
         line(0, 3, 0, 0)?,
