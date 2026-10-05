@@ -789,13 +789,7 @@ fn curve_point_in_closed_box(
     let max = hypercurve::CurvePoint2::from(curve_point(max));
     for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
         for (bound, outside) in [(&min, Ordering::Less), (&max, Ordering::Greater)] {
-            let Classification::Decided(order) = point
-                .compare_coordinate(bound, axis, &CurveContext::STRICT)
-                .ok()?
-                .into_value()
-            else {
-                return None;
-            };
+            let order = point.compare_coordinate(bound, axis).ok()?;
             if order == outside {
                 return Some(false);
             }
