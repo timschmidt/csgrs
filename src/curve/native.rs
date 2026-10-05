@@ -1831,10 +1831,9 @@ pub fn bspline_path_with_context(
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect();
-    let spline = decisions.consume_curve(
-        PolynomialSplineCurve2::try_new(degree, points, knots, decisions.curve_policy())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let spline = decisions
+        .exact_curve(|| PolynomialSplineCurve2::try_new(degree, points, knots))
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
     let path = CurvePath2::try_new(vec![Curve2::from(spline)])
         .map_err(|error| ValidationError::Geometry(error.to_string()))?;
     Ok(decisions.finish(path))
