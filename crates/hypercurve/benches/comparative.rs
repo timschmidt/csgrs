@@ -1967,10 +1967,8 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
             .collect(),
         weights.iter().copied().map(real).collect(),
         knots.iter().copied().map(real).collect(),
-        &CurveContext::STRICT,
     )
-    .expect("valid hypercurve NURBS fixture")
-    .into_value();
+    .expect("valid hypercurve NURBS fixture");
     let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
         3,
         control_points
@@ -1987,9 +1985,8 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
         hypercurve_parameters.iter().zip(parameters.iter().copied())
     {
         let hypercurve_point = hypercurve_curve
-            .point_at(hypercurve_parameter, &CurveContext::STRICT)
-            .expect("hypercurve NURBS fixture evaluates")
-            .into_value();
+            .point_at(hypercurve_parameter)
+            .expect("hypercurve NURBS fixture evaluates");
         let curvo_point = curvo_curve.point_at(curvo_parameter);
         let x = hypercurve_point.x().to_f64_lossy().unwrap();
         let y = hypercurve_point.y().to_f64_lossy().unwrap();
@@ -2004,12 +2001,8 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
         hypercurve_index += 1;
         black_box(
             hypercurve_curve
-                .point_at(
-                    black_box(&hypercurve_parameters[index]),
-                    &CurveContext::STRICT,
-                )
-                .expect("hypercurve NURBS fixture evaluates")
-                .into_value(),
+                .point_at(black_box(&hypercurve_parameters[index]))
+                .expect("hypercurve NURBS fixture evaluates"),
         );
         index
     });
@@ -2041,10 +2034,8 @@ fn benchmark_nurbs_interpolation(runner: &Runner) {
         .map(|point| NalgebraPoint2::new(point[0], point[1]))
         .collect::<Vec<_>>();
 
-    let exact =
-        NurbsCurve2::interpolate_chord_length(2, hypercurve_points.clone(), &CurveContext::STRICT)
-            .expect("exact chord-length interpolation is certified")
-            .into_value();
+    let exact = NurbsCurve2::interpolate_chord_length(2, hypercurve_points.clone())
+        .expect("exact chord-length interpolation is certified");
     let numeric = CurvoNurbsCurve2D::<f64>::interpolate(&curvo_points, 2)
         .expect("finite chord-length interpolation completes");
     assert_eq!(
@@ -2054,13 +2045,8 @@ fn benchmark_nurbs_interpolation(runner: &Runner) {
 
     runner.measure(name, "hypercurve_exact_strict_certified", || {
         black_box(
-            NurbsCurve2::interpolate_chord_length(
-                2,
-                hypercurve_points.clone(),
-                &CurveContext::STRICT,
-            )
-            .expect("exact chord-length interpolation remains certified")
-            .into_value(),
+            NurbsCurve2::interpolate_chord_length(2, hypercurve_points.clone())
+                .expect("exact chord-length interpolation remains certified"),
         )
         .homogeneous_controls()
         .len()
@@ -2093,10 +2079,8 @@ fn benchmark_nurbs_editing(runner: &Runner) {
             .collect(),
         weights.iter().copied().map(real).collect(),
         knots.iter().copied().map(real).collect(),
-        &CurveContext::STRICT,
     )
-    .expect("valid exact NURBS edit fixture")
-    .into_value();
+    .expect("valid exact NURBS edit fixture");
     let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
         3,
         control_points
@@ -2110,16 +2094,14 @@ fn benchmark_nurbs_editing(runner: &Runner) {
 
     if runner.group_enabled(refinement_name) {
         let refined = hypercurve_curve
-            .insert_knots(vec![real(0.5), real(1.5)], &CurveContext::STRICT)
-            .expect("exact retained refinement fixture is valid")
-            .into_value();
+            .insert_knots(vec![real(0.5), real(1.5)])
+            .expect("exact retained refinement fixture is valid");
         assert_eq!(refined.homogeneous_controls().len(), 7);
         runner.measure(refinement_name, "hypercurve_exact_retained", || {
             black_box(
                 hypercurve_curve
-                    .insert_knots(vec![real(0.5), real(1.5)], &CurveContext::STRICT)
-                    .expect("exact retained refinement replays")
-                    .into_value(),
+                    .insert_knots(vec![real(0.5), real(1.5)])
+                    .expect("exact retained refinement replays"),
             )
             .homogeneous_controls()
             .len()
@@ -2135,16 +2117,14 @@ fn benchmark_nurbs_editing(runner: &Runner) {
 
     if runner.group_enabled(elevation_name) {
         let elevated = hypercurve_curve
-            .elevated_to_degree(6, &CurveContext::STRICT)
-            .expect("exact retained elevation fixture is valid")
-            .into_value();
+            .elevated_to_degree(6)
+            .expect("exact retained elevation fixture is valid");
         assert_eq!(elevated.degree(), 6);
         runner.measure(elevation_name, "hypercurve_exact_retained", || {
             black_box(
                 hypercurve_curve
-                    .elevated_to_degree(6, &CurveContext::STRICT)
-                    .expect("exact retained elevation replays")
-                    .into_value(),
+                    .elevated_to_degree(6)
+                    .expect("exact retained elevation replays"),
             )
             .degree()
         });

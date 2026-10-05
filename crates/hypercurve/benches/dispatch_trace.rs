@@ -102,13 +102,8 @@ fn main() {
 
     trace("nurbs_global_interpolation", || {
         Ok::<_, CurveError>(
-            NurbsCurve2::interpolate_uniform(
-                2,
-                vec![p(0, 0), p(2, 2), p(4, 0)],
-                &CurveContext::STRICT,
-            )
-            .expect("trace interpolation remains exact")
-            .into_value(),
+            NurbsCurve2::interpolate_uniform(2, vec![p(0, 0), p(2, 2), p(4, 0)])
+                .expect("trace interpolation remains exact"),
         )
     });
 

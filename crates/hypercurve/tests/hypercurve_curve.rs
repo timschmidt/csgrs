@@ -31,17 +31,19 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
             .into_iter()
             .map(r)
             .collect::<Vec<_>>();
-        let polynomial =
-            PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .value;
-        let rational = NurbsCurve2::try_new(
-            2,
-            controls,
-            vec![r(1), r(2), r(3), r(5), r(7), r(11)],
-            knots,
-            &policy,
-        )
+        let polynomial = crate::support::under(&policy, || {
+            PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone())
+        })
+        .unwrap()
+        .value;
+        let rational = crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                2,
+                controls,
+                vec![r(1), r(2), r(3), r(5), r(7), r(11)],
+                knots,
+            )
+        })
         .unwrap()
         .value;
         for curve in [Curve2::from(polynomial), Curve2::from(rational)] {
@@ -54,14 +56,16 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
                     curve.clone()
                 };
                 let clamped = match source.geometry().unwrap() {
-                    CurveGeometry2::PolynomialBSpline(curve) => curve
-                        .clamped_subcurve(r(0), r(2), &policy)
-                        .unwrap()
-                        .map(Curve2::from),
-                    CurveGeometry2::Nurbs(curve) => curve
-                        .clamped_subcurve(r(0), r(2), &policy)
-                        .unwrap()
-                        .map(Curve2::from),
+                    CurveGeometry2::PolynomialBSpline(curve) => {
+                        crate::support::under(&policy, || curve.clamped_subcurve(r(0), r(2)))
+                            .unwrap()
+                            .map(Curve2::from)
+                    }
+                    CurveGeometry2::Nurbs(curve) => {
+                        crate::support::under(&policy, || curve.clamped_subcurve(r(0), r(2)))
+                            .unwrap()
+                            .map(Curve2::from)
+                    }
                     _ => unreachable!("authored spline fixture"),
                 };
                 assert_eq!(clamped.certainty, CurveCertainty::Certified);
@@ -601,10 +605,10 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     );
     assert_eq!(
         hypercurve::CurveVector2::from(
-            retained_spline
-                .derivative_at(&r(1), &CurveContext::STRICT)
-                .unwrap()
-                .into_value()
+            crate::support::under(&CurveContext::STRICT, || retained_spline
+                .derivative_at(&r(1)))
+            .unwrap()
+            .into_value()
         ),
         spline_derivative
     );

@@ -44,6 +44,21 @@ impl NurbsCurve2 {
         degree: usize,
         data_points: Vec<Point2>,
         parameters: Vec<Real>,
+    ) -> crate::ExactCurveResult<NurbsCurve2> {
+        Self::interpolate_global_with_policy(
+            degree,
+            data_points,
+            parameters,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::interpolate_global`] under an explicit predicate policy.
+    pub(crate) fn interpolate_global_with_policy(
+        degree: usize,
+        data_points: Vec<Point2>,
+        parameters: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
         resolve_certified_operation(policy, |attempt| {
@@ -66,6 +81,19 @@ impl NurbsCurve2 {
     pub fn interpolate_uniform(
         degree: usize,
         data_points: Vec<Point2>,
+    ) -> crate::ExactCurveResult<NurbsCurve2> {
+        Self::interpolate_uniform_with_policy(
+            degree,
+            data_points,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::interpolate_uniform`] under an explicit predicate policy.
+    pub(crate) fn interpolate_uniform_with_policy(
+        degree: usize,
+        data_points: Vec<Point2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
         resolve_certified_operation(policy, |attempt| {
@@ -86,6 +114,19 @@ impl NurbsCurve2 {
     pub fn interpolate_chord_length(
         degree: usize,
         data_points: Vec<Point2>,
+    ) -> crate::ExactCurveResult<NurbsCurve2> {
+        Self::interpolate_chord_length_with_policy(
+            degree,
+            data_points,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::interpolate_chord_length`] under an explicit predicate policy.
+    pub(crate) fn interpolate_chord_length_with_policy(
+        degree: usize,
+        data_points: Vec<Point2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
         resolve_certified_operation(policy, |attempt| {
@@ -100,6 +141,19 @@ impl NurbsCurve2 {
 
     /// Globally interpolates using exact centripetal parameters.
     pub fn interpolate_centripetal(
+        degree: usize,
+        data_points: Vec<Point2>,
+    ) -> crate::ExactCurveResult<NurbsCurve2> {
+        Self::interpolate_centripetal_with_policy(
+            degree,
+            data_points,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::interpolate_centripetal`] under an explicit predicate policy.
+    pub(crate) fn interpolate_centripetal_with_policy(
         degree: usize,
         data_points: Vec<Point2>,
         policy: &CurveContext,
@@ -123,6 +177,25 @@ impl NurbsCurve2 {
     /// their residual reports are the authoritative interpolation proof. The
     /// outcome records any selected terminal consumed along that complete path.
     pub fn interpolate_with_parameters_and_knots(
+        degree: usize,
+        data_points: Vec<Point2>,
+        parameters: Vec<Real>,
+        control_weights: Vec<Real>,
+        knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<NurbsCurve2> {
+        Self::interpolate_with_parameters_and_knots_with_policy(
+            degree,
+            data_points,
+            parameters,
+            control_weights,
+            knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::interpolate_with_parameters_and_knots`] under an explicit predicate policy.
+    pub(crate) fn interpolate_with_parameters_and_knots_with_policy(
         degree: usize,
         data_points: Vec<Point2>,
         parameters: Vec<Real>,
@@ -676,14 +749,17 @@ mod tests {
                 .all(|value| value.exact_rational_ref().is_some())
         );
 
-        let curve =
-            NurbsCurve2::interpolate_uniform(3, second_points.clone(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value();
+        let curve = NurbsCurve2::interpolate_uniform_with_policy(
+            3,
+            second_points.clone(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
         let parameters = uniform_interpolation_parameters(second_points.len()).unwrap();
         for (parameter, expected) in parameters.iter().zip(second_points) {
             let actual = curve
-                .point_at(parameter, &CurveContext::STRICT)
+                .point_at_with_policy(parameter, &CurveContext::STRICT)
                 .unwrap()
                 .into_value();
             assert_eq!(actual, expected);

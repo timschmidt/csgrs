@@ -1016,17 +1016,19 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
             .into_iter()
             .map(r)
             .collect::<Vec<_>>();
-        let polynomial =
-            PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .value;
-        let rational = NurbsCurve2::try_new(
-            2,
-            controls,
-            vec![r(1), r(2), r(3), r(5), r(7), r(11)],
-            knots,
-            &policy,
-        )
+        let polynomial = crate::support::under(&policy, || {
+            PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone())
+        })
+        .unwrap()
+        .value;
+        let rational = crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                2,
+                controls,
+                vec![r(1), r(2), r(3), r(5), r(7), r(11)],
+                knots,
+            )
+        })
         .unwrap()
         .value;
         for curve in [Curve2::from(polynomial), Curve2::from(rational)] {
@@ -4083,16 +4085,19 @@ mod self_intersections {
     fn refined(controls: [Point2; 4], knots: Vec<Real>, policy: &CurveContext) -> Curve2 {
         let zero = Real::zero;
         let one = Real::one;
-        let nurbs = NurbsCurve2::try_new(
-            3,
-            controls.to_vec(),
-            vec![r(1); 4],
-            vec![zero(), zero(), zero(), zero(), one(), one(), one(), one()],
-            policy,
-        )
-        .unwrap()
-        .into_value()
-        .insert_knots(knots, policy)
+        let nurbs = crate::support::under(policy, || {
+            crate::support::under(policy, || {
+                NurbsCurve2::try_new(
+                    3,
+                    controls.to_vec(),
+                    vec![r(1); 4],
+                    vec![zero(), zero(), zero(), zero(), one(), one(), one(), one()],
+                )
+            })
+            .unwrap()
+            .into_value()
+            .insert_knots(knots)
+        })
         .unwrap()
         .into_value();
         Curve2::from(nurbs)

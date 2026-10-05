@@ -19,7 +19,7 @@ fn p(x: i32, y: i32) -> Point2 {
 }
 
 fn quadratic_nurbs() -> NurbsCurve2 {
-    NurbsCurve2::try_new(
+    NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(4), r(1)],
@@ -33,7 +33,7 @@ fn quadratic_nurbs() -> NurbsCurve2 {
 fn terminal_nurbs() -> (NurbsCurve2, Real) {
     let half = q(1, 2);
     let symbolic_half = &half + support::terminally_unresolved_zero();
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
         vec![Real::one(); 5],
@@ -63,7 +63,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     let knots = vec![r(0), r(0), symbolic_end.clone(), r(1)];
 
     assert!(matches!(
-        NurbsCurve2::try_new(
+        NurbsCurve2::try_new_with_policy(
             1,
             controls.clone(),
             weights.clone(),
@@ -75,7 +75,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
-    let constructed = NurbsCurve2::try_new(
+    let constructed = NurbsCurve2::try_new_with_policy(
         1,
         controls.clone(),
         weights.clone(),
@@ -92,7 +92,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
 
     let half = q(1, 2);
     let symbolic_half = &half + undecidable_zero;
-    let evaluation_curve = NurbsCurve2::try_new(
+    let evaluation_curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
         vec![Real::one(); 5],
@@ -140,7 +140,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     );
     assert_eq!(spans.value.spans().len(), 2);
     let native = evaluation_curve
-        .native_subcurves(&CurveContext::APPROXIMATE_512)
+        .native_subcurves_with_policy(&CurveContext::APPROXIMATE_512)
         .expect("native promotion must use the same terminal policy");
     assert_eq!(
         native.certainty,
@@ -149,13 +149,13 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     assert_eq!(native.value.len(), 2);
 
     assert!(matches!(
-        evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
+        evaluation_curve.point_at_with_policy(&symbolic_half, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = evaluation_curve
-        .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
+        .point_at_with_policy(&symbolic_half, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must evaluate the exact symbolic knot");
     assert_eq!(
         point.certainty,
@@ -163,7 +163,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     );
     assert_eq!(point.value, p(2, 0));
     let derivative = evaluation_curve
-        .derivative_at_side(
+        .derivative_at_side_with_policy(
             &symbolic_half,
             CurveParameterSide2::Left,
             &CurveContext::APPROXIMATE_512,
@@ -176,7 +176,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     assert_eq!(derivative.value.dx(), &r(4));
     assert_eq!(derivative.value.dy(), &r(-8));
     let derivatives = evaluation_curve
-        .derivatives_at_side(
+        .derivatives_at_side_with_policy(
             &symbolic_half,
             2,
             CurveParameterSide2::Left,
@@ -216,7 +216,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     assert!(matches!(
-        evaluation_curve.native_subcurves(&CurveContext::STRICT),
+        evaluation_curve.native_subcurves_with_policy(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::NativeTopology
                 && blocker.reason() == crate::UncertaintyReason::Ordering
@@ -243,7 +243,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     let parameter = r(1) + undecidable_zero;
 
     let strict = curve
-        .split_at(parameter.clone(), &CurveContext::STRICT)
+        .split_at_with_policy(parameter.clone(), &CurveContext::STRICT)
         .unwrap_err();
     assert!(
         matches!(
@@ -256,7 +256,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     );
 
     let split = curve
-        .split_at(parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .split_at_with_policy(parameter.clone(), &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must resolve the symbolically equal knot");
     assert_eq!(
         split.certainty,
@@ -268,7 +268,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     assert_eq!(left.end(), right.start());
 
     let subcurve = curve
-        .subcurve(r(0), parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .subcurve_with_policy(r(0), parameter.clone(), &CurveContext::APPROXIMATE_512)
         .expect("terminal policy must propagate through reconstructed subcurves");
     assert_eq!(
         subcurve.certainty,
@@ -296,7 +296,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     );
 
     assert!(matches!(
-        curve.split_at(parameter, &CurveContext::STRICT),
+        curve.split_at_with_policy(parameter, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Subdivision
                 && blocker.reason() == crate::UncertaintyReason::Ordering
@@ -309,7 +309,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     let knot = q(3, 4);
 
     let strict_insertion = curve
-        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .insert_knot_with_policy(knot.clone(), &CurveContext::STRICT)
         .unwrap_err();
     assert!(matches!(
         strict_insertion,
@@ -317,7 +317,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
             if blocker.operation() == CurveOperation2::KnotInsertion
     ));
     let inserted = curve
-        .insert_knot(knot.clone(), &CurveContext::APPROXIMATE_512)
+        .insert_knot_with_policy(knot.clone(), &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must refine the exact symbolic carrier");
     assert_eq!(
         inserted.certainty,
@@ -332,7 +332,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
             .any(|value| value == &symbolic_half)
     );
     let inserted_replay = curve
-        .insert_knot(knot.clone(), &CurveContext::APPROXIMATE_512)
+        .insert_knot_with_policy(knot.clone(), &CurveContext::APPROXIMATE_512)
         .expect("the retained terminal refinement must replay");
     assert_eq!(
         inserted_replay.certainty,
@@ -344,13 +344,13 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     ));
     assert_eq!(
         curve
-            .insert_knot(knot.clone(), &CurveContext::STRICT)
+            .insert_knot_with_policy(knot.clone(), &CurveContext::STRICT)
             .unwrap_err(),
         strict_insertion
     );
     let approximate_first_knot = q(7, 8);
     let approximate_first = curve
-        .insert_knot(
+        .insert_knot_with_policy(
             approximate_first_knot.clone(),
             &CurveContext::APPROXIMATE_512,
         )
@@ -360,18 +360,18 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
-        curve.insert_knot(approximate_first_knot, &CurveContext::STRICT),
+        curve.insert_knot_with_policy(approximate_first_knot, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::KnotInsertion
     ));
 
     let strict_removal = inserted
         .value
-        .remove_knot(knot.clone(), &CurveContext::STRICT)
+        .remove_knot_with_policy(knot.clone(), &CurveContext::STRICT)
         .unwrap_err();
     let removed = inserted
         .value
-        .remove_knot(knot, &CurveContext::APPROXIMATE_512)
+        .remove_knot_with_policy(knot, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must certify inverse knot removal");
     assert_eq!(
         removed.certainty,
@@ -388,7 +388,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     assert_eq!(
         inserted
             .value
-            .remove_knot(q(3, 4), &CurveContext::STRICT)
+            .remove_knot_with_policy(q(3, 4), &CurveContext::STRICT)
             .unwrap_err(),
         strict_removal
     );
@@ -418,10 +418,10 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     );
 
     let strict_carrier = curve
-        .elevated_to_degree(3, &CurveContext::STRICT)
+        .elevated_to_degree_with_policy(3, &CurveContext::STRICT)
         .unwrap_err();
     let elevated = curve
-        .elevated_to_degree(3, &CurveContext::APPROXIMATE_512)
+        .elevated_to_degree_with_policy(3, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must reconstruct the elevated carrier");
     assert_eq!(
         elevated.certainty,
@@ -429,7 +429,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     );
     assert_eq!(elevated.value.degree(), 3);
     let elevated_replay = curve
-        .elevated_to_degree(3, &CurveContext::APPROXIMATE_512)
+        .elevated_to_degree_with_policy(3, &CurveContext::APPROXIMATE_512)
         .expect("the retained elevated carrier must replay");
     assert!(std::ptr::eq(
         elevated.value.homogeneous_controls(),
@@ -437,20 +437,20 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     ));
     assert_eq!(
         curve
-            .elevated_to_degree(3, &CurveContext::STRICT)
+            .elevated_to_degree_with_policy(3, &CurveContext::STRICT)
             .unwrap_err(),
         strict_carrier
     );
 
     let reversed = curve
-        .reversed(&CurveContext::APPROXIMATE_512)
+        .reversed_with_policy(&CurveContext::APPROXIMATE_512)
         .expect("reversal must validate exact reflected symbolic knots");
     assert_eq!(
         reversed.certainty,
         crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
-        curve.reversed(&CurveContext::STRICT),
+        curve.reversed_with_policy(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Reversal
     ));
@@ -480,7 +480,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
 
 #[test]
 fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(4, 0)],
         vec![r(1), r(3)],
@@ -495,20 +495,20 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
     assert_eq!(curve.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(
         curve
-            .point_at(&half, &CurveContext::STRICT)
+            .point_at_with_policy(&half, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(3, 0)
     );
     let derivative = curve
-        .derivative_at(&half, &CurveContext::STRICT)
+        .derivative_at_with_policy(&half, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(derivative.dx(), &r(3));
     assert_eq!(derivative.dy(), &r(0));
     assert_eq!(
         curve
-            .derivative_at(&half, &CurveContext::STRICT)
+            .derivative_at_with_policy(&half, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         derivative
@@ -520,7 +520,7 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
     assert_eq!(decomposition.spans().len(), 1);
     assert_eq!(decomposition.spans()[0].knot_interval(), (&r(0), &r(1)));
     let native = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     let CurveGeometry2::RationalBezier(span) = &native[0] else {
@@ -539,7 +539,7 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
 
 #[test]
 fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(4, 8)],
         vec![r(1), r(1)],
@@ -552,14 +552,14 @@ fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators() {
 
     assert_eq!(curve.parameter_domain(), (&r(2), &r(6)));
     let derivative = curve
-        .derivative_at(&r(3), &CurveContext::STRICT)
+        .derivative_at_with_policy(&r(3), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(derivative.dx(), &r(1));
     assert_eq!(derivative.dy(), &r(2));
     assert_eq!(
         clone
-            .derivative_at(&r(5), &CurveContext::STRICT)
+            .derivative_at_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         derivative
@@ -568,7 +568,7 @@ fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators() {
 
 #[test]
 fn nurbs_higher_derivatives_use_each_authored_parameter_chain_power() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(4, 0)],
         vec![r(1), r(3)],
@@ -579,7 +579,7 @@ fn nurbs_higher_derivatives_use_each_authored_parameter_chain_power() {
     .into_value();
 
     let derivatives = curve
-        .derivatives_at(&r(4), 3, &CurveContext::STRICT)
+        .derivatives_at_with_policy(&r(4), 3, &CurveContext::STRICT)
         .unwrap()
         .into_value();
 
@@ -600,7 +600,7 @@ fn nurbs_higher_derivatives_use_each_authored_parameter_chain_power() {
 
 #[test]
 fn nurbs_internal_corner_requires_explicit_derivative_side() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(1), r(1), r(1)],
@@ -611,7 +611,7 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
     .into_value();
 
     let error = curve
-        .derivative_at(&r(1), &CurveContext::STRICT)
+        .derivative_at_with_policy(&r(1), &CurveContext::STRICT)
         .unwrap_err();
     assert!(matches!(
         error,
@@ -619,11 +619,11 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
             if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     let left = curve
-        .derivative_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
+        .derivative_at_side_with_policy(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let right = curve
-        .derivative_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+        .derivative_at_side_with_policy(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!((left.dx(), left.dy()), (&r(1), &r(0)));
@@ -650,7 +650,7 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
 
 #[test]
 fn discontinuous_nurbs_knot_requires_explicit_point_side() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)],
         vec![r(1); 6],
@@ -661,27 +661,27 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     .into_value();
 
     assert!(matches!(
-        curve.point_at(&r(1), &CurveContext::STRICT),
+        curve.point_at_with_policy(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     assert_eq!(
         curve
-            .point_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
+            .point_at_side_with_policy(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(2, 0)
     );
     assert_eq!(
         curve
-            .point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+            .point_at_side_with_policy(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(10, 0)
     );
 
     let (left, right) = curve
-        .split_at(r(1), &CurveContext::STRICT)
+        .split_at_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
@@ -705,7 +705,7 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
 
 #[test]
 fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
@@ -719,18 +719,18 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         .iter()
         .map(|parameter| {
             curve
-                .point_at(parameter, &CurveContext::STRICT)
+                .point_at_with_policy(parameter, &CurveContext::STRICT)
                 .unwrap()
                 .into_value()
         })
         .collect::<Vec<_>>();
 
     let once = curve
-        .insert_knot(r(1), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let twice = once
-        .insert_knot(r(1), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(
@@ -749,7 +749,7 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         samples
             .iter()
             .map(|parameter| twice
-                .point_at(parameter, &CurveContext::STRICT)
+                .point_at_with_policy(parameter, &CurveContext::STRICT)
                 .unwrap()
                 .into_value())
             .collect::<Vec<_>>(),
@@ -761,7 +761,7 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         .unwrap()
         .into_value();
     let no_op = twice
-        .insert_knot(r(1), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert!(std::ptr::eq(
@@ -776,7 +776,7 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
 
 #[test]
 fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
@@ -789,21 +789,21 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
     let request = vec![r(1), r(1)];
 
     let batch = curve
-        .insert_knots(request.clone(), &CurveContext::STRICT)
+        .insert_knots_with_policy(request.clone(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let sequential = curve
-        .insert_knot(r(1), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value()
-        .insert_knot(r(1), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(batch, sequential);
     for parameter in [r(0), q(1, 2), r(1), q(3, 2), r(2)] {
         assert_eq!(
-            batch.point_at(&parameter, &CurveContext::STRICT),
-            curve.point_at(&parameter, &CurveContext::STRICT)
+            batch.point_at_with_policy(&parameter, &CurveContext::STRICT),
+            curve.point_at_with_policy(&parameter, &CurveContext::STRICT)
         );
     }
 
@@ -812,7 +812,7 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
         .unwrap()
         .into_value();
     let replay = clone
-        .insert_knots(request, &CurveContext::STRICT)
+        .insert_knots_with_policy(request, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert!(std::ptr::eq(
@@ -831,13 +831,13 @@ fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_sourc
     let request = vec![r(1), r(3)];
 
     let first = curve
-        .insert_knots(request.clone(), &CurveContext::STRICT)
+        .insert_knots_with_policy(request.clone(), &CurveContext::STRICT)
         .unwrap_err();
     assert_eq!(first.operation(), CurveOperation2::KnotInsertion);
     assert_eq!(first.family(), Some(CurveFamily2::Nurbs));
     assert_eq!(
         curve
-            .insert_knots(request, &CurveContext::STRICT)
+            .insert_knots_with_policy(request, &CurveContext::STRICT)
             .unwrap_err(),
         first
     );
@@ -846,7 +846,7 @@ fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_sourc
 
 #[test]
 fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 4), p(4, 3), p(6, 0)],
         vec![r(1), r(2), r(5), r(3)],
@@ -857,13 +857,13 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
     .into_value();
     let knot = q(3, 4);
     let refined = curve
-        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .insert_knot_with_policy(knot.clone(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let clone = refined.clone();
 
     let removed = refined
-        .remove_knot(knot.clone(), &CurveContext::STRICT)
+        .remove_knot_with_policy(knot.clone(), &CurveContext::STRICT)
         .unwrap()
         .into_value()
         .unwrap();
@@ -873,8 +873,8 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
     assert_eq!(removed.weights(), curve.weights());
     for parameter in [r(0), q(1, 4), q(3, 4), q(3, 2), r(2)] {
         assert_eq!(
-            removed.point_at(&parameter, &CurveContext::STRICT),
-            curve.point_at(&parameter, &CurveContext::STRICT)
+            removed.point_at_with_policy(&parameter, &CurveContext::STRICT),
+            curve.point_at_with_policy(&parameter, &CurveContext::STRICT)
         );
     }
 
@@ -883,7 +883,7 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
         .unwrap()
         .into_value();
     let replay = clone
-        .remove_knot(knot, &CurveContext::STRICT)
+        .remove_knot_with_policy(knot, &CurveContext::STRICT)
         .unwrap()
         .into_value()
         .unwrap();
@@ -902,21 +902,23 @@ fn nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors
     let clone = curve.clone();
     assert!(
         curve
-            .remove_knot(r(1), &CurveContext::STRICT)
+            .remove_knot_with_policy(r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
             .is_none()
     );
     assert!(
         clone
-            .remove_knot(r(1), &CurveContext::STRICT)
+            .remove_knot_with_policy(r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
             .is_none()
     );
 
     for knot in [r(-1), r(0), r(2), r(3)] {
-        let error = curve.remove_knot(knot, &CurveContext::STRICT).unwrap_err();
+        let error = curve
+            .remove_knot_with_policy(knot, &CurveContext::STRICT)
+            .unwrap_err();
         assert_eq!(error.operation(), CurveOperation2::KnotRemoval);
         assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
         assert!(matches!(
@@ -931,7 +933,7 @@ fn nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors
 
 #[test]
 fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
-    let curve = NurbsCurve2::try_new_periodic(
+    let curve = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(3, 0), p(4, 2), p(2, 5), p(-1, 2)],
         vec![r(1), r(2), r(5), r(3), r(4)],
@@ -942,11 +944,11 @@ fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
     .into_value();
     let knot = q(5, 2);
     let refined = curve
-        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .insert_knot_with_policy(knot.clone(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let removed = refined
-        .remove_knot(knot, &CurveContext::STRICT)
+        .remove_knot_with_policy(knot, &CurveContext::STRICT)
         .unwrap()
         .into_value()
         .unwrap();
@@ -955,15 +957,15 @@ fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
     assert_eq!(removed.start(), removed.end());
     for parameter in [r(-3), r(0), q(5, 2), r(7), r(13)] {
         assert_eq!(
-            removed.point_at_wrapped(&parameter, &CurveContext::STRICT),
-            curve.point_at_wrapped(&parameter, &CurveContext::STRICT)
+            removed.point_at_wrapped_with_policy(&parameter, &CurveContext::STRICT),
+            curve.point_at_wrapped_with_policy(&parameter, &CurveContext::STRICT)
         );
     }
 }
 
 #[test]
 fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -991,7 +993,7 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
                     .point_at(&local, &CurveContext::STRICT)
                     .unwrap(),
                 curve
-                    .point_at_side(
+                    .point_at_side_with_policy(
                         &source_parameter,
                         if local == r(0) {
                             CurveParameterSide2::Right
@@ -1017,7 +1019,7 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
 
 #[test]
 fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -1029,7 +1031,7 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
     let clone = curve.clone();
 
     let elevated = curve
-        .elevated_to_degree(4, &CurveContext::STRICT)
+        .elevated_to_degree_with_policy(4, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(elevated.degree(), 4);
@@ -1044,14 +1046,14 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
     );
     for parameter in [r(0), q(1, 4), q(3, 4), r(1), q(3, 2), r(2)] {
         assert_eq!(
-            elevated.point_at(&parameter, &CurveContext::STRICT),
-            curve.point_at(&parameter, &CurveContext::STRICT)
+            elevated.point_at_with_policy(&parameter, &CurveContext::STRICT),
+            curve.point_at_with_policy(&parameter, &CurveContext::STRICT)
         );
     }
     for parameter in [q(1, 2), r(1), q(3, 2)] {
         assert_eq!(
-            elevated.derivative_at(&parameter, &CurveContext::STRICT),
-            curve.derivative_at(&parameter, &CurveContext::STRICT)
+            elevated.derivative_at_with_policy(&parameter, &CurveContext::STRICT),
+            curve.derivative_at_with_policy(&parameter, &CurveContext::STRICT)
         );
     }
 
@@ -1060,7 +1062,7 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
         .unwrap()
         .into_value();
     let replay = clone
-        .elevated_to_degree(4, &CurveContext::STRICT)
+        .elevated_to_degree_with_policy(4, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert!(std::ptr::eq(
@@ -1074,7 +1076,7 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
 
 #[test]
 fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)],
         vec![r(1); 6],
@@ -1084,7 +1086,7 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
     .unwrap()
     .into_value();
     let elevated = curve
-        .elevated_to_degree(4, &CurveContext::STRICT)
+        .elevated_to_degree_with_policy(4, &CurveContext::STRICT)
         .unwrap()
         .into_value();
 
@@ -1098,15 +1100,19 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
         5
     );
     assert_eq!(
-        elevated.point_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT),
-        curve.point_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
+        elevated.point_at_side_with_policy(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT),
+        curve.point_at_side_with_policy(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
     );
     assert_eq!(
-        elevated.point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT),
-        curve.point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+        elevated.point_at_side_with_policy(
+            &r(1),
+            CurveParameterSide2::Right,
+            &CurveContext::STRICT
+        ),
+        curve.point_at_side_with_policy(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
     );
     assert!(matches!(
-        elevated.point_at(&r(1), &CurveContext::STRICT),
+        elevated.point_at_with_policy(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
@@ -1114,7 +1120,7 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
 
 #[test]
 fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
-    let curve = NurbsCurve2::try_new_periodic(
+    let curve = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(2), r(3), r(4)],
@@ -1124,7 +1130,7 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
     .unwrap()
     .into_value();
     let elevated = curve
-        .elevated_to_degree(3, &CurveContext::STRICT)
+        .elevated_to_degree_with_policy(3, &CurveContext::STRICT)
         .unwrap()
         .into_value();
 
@@ -1133,12 +1139,12 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
     assert_eq!(elevated.start(), elevated.end());
     for parameter in [r(-3), q(1, 2), q(7, 2), r(4), q(17, 2)] {
         assert_eq!(
-            elevated.point_at_wrapped(&parameter, &CurveContext::STRICT),
-            curve.point_at_wrapped(&parameter, &CurveContext::STRICT)
+            elevated.point_at_wrapped_with_policy(&parameter, &CurveContext::STRICT),
+            curve.point_at_wrapped_with_policy(&parameter, &CurveContext::STRICT)
         );
         assert_eq!(
-            elevated.derivative_at_wrapped(&parameter, &CurveContext::STRICT),
-            curve.derivative_at_wrapped(&parameter, &CurveContext::STRICT)
+            elevated.derivative_at_wrapped_with_policy(&parameter, &CurveContext::STRICT),
+            curve.derivative_at_wrapped_with_policy(&parameter, &CurveContext::STRICT)
         );
     }
 }
@@ -1152,7 +1158,7 @@ fn nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles() {
     assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);
     assert_eq!(invalid.family(), Some(CurveFamily2::Nurbs));
 
-    let singular = NurbsCurve2::try_new(
+    let singular = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(2, 0)],
         vec![r(1), r(-1)],
@@ -1177,7 +1183,9 @@ fn nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles() {
 #[test]
 fn out_of_domain_nurbs_knot_insertion_has_contextual_error() {
     let curve = quadratic_nurbs();
-    let error = curve.insert_knot(r(3), &CurveContext::STRICT).unwrap_err();
+    let error = curve
+        .insert_knot_with_policy(r(3), &CurveContext::STRICT)
+        .unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::KnotInsertion);
     assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
@@ -1185,7 +1193,7 @@ fn out_of_domain_nurbs_knot_insertion_has_contextual_error() {
 
 #[test]
 fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
@@ -1196,7 +1204,7 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
     .into_value();
 
     let (left, right) = curve
-        .split_at(r(1), &CurveContext::STRICT)
+        .split_at_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
@@ -1205,56 +1213,56 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
     assert_eq!(
         left.end(),
         &curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
-        left.point_at(&q(1, 2), &CurveContext::STRICT)
+        left.point_at_with_policy(&q(1, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(1, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         right
-            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(3, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(3, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
 
     let middle = curve
-        .subcurve(q(1, 2), q(3, 2), &CurveContext::STRICT)
+        .subcurve_with_policy(q(1, 2), q(3, 2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(middle.parameter_domain(), (&q(1, 2), &q(3, 2)));
     assert_eq!(
         middle.start(),
         &curve
-            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(1, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         middle.end(),
         &curve
-            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(3, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         middle
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -1263,34 +1271,37 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
 #[test]
 fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
     let curve = quadratic_nurbs();
-    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = curve
+        .reversed_with_policy(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(reversed.parameter_domain(), curve.parameter_domain());
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
         reversed
-            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(1, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(3, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     let forward_derivative = curve
-        .derivative_at(&q(3, 2), &CurveContext::STRICT)
+        .derivative_at_with_policy(&q(3, 2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let reverse_derivative = reversed
-        .derivative_at(&q(1, 2), &CurveContext::STRICT)
+        .derivative_at_with_policy(&q(1, 2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(reverse_derivative.dx(), &(-forward_derivative.dx()));
     assert_eq!(reverse_derivative.dy(), &(-forward_derivative.dy()));
     assert_eq!(
         reversed
-            .reversed(&CurveContext::STRICT)
+            .reversed_with_policy(&CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
@@ -1301,12 +1312,14 @@ fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
 fn invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context() {
     let curve = quadratic_nurbs();
     for error in [
-        curve.split_at(r(0), &CurveContext::STRICT).unwrap_err(),
         curve
-            .subcurve(r(1), r(1), &CurveContext::STRICT)
+            .split_at_with_policy(r(0), &CurveContext::STRICT)
             .unwrap_err(),
         curve
-            .subcurve(r(-1), r(1), &CurveContext::STRICT)
+            .subcurve_with_policy(r(1), r(1), &CurveContext::STRICT)
+            .unwrap_err(),
+        curve
+            .subcurve_with_policy(r(-1), r(1), &CurveContext::STRICT)
             .unwrap_err(),
     ] {
         assert_eq!(error.operation(), CurveOperation2::Subdivision);
@@ -1349,11 +1362,11 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
     let curve = quadratic_nurbs();
 
     let first = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     let second = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
 
@@ -1380,27 +1393,27 @@ fn nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates() {
 
     assert_eq!(
         curve
-            .point_at(&r(0), &CurveContext::STRICT)
+            .point_at_with_policy(&r(0), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(0, 0)
     );
     let join = curve
-        .point_at(&r(1), &CurveContext::STRICT)
+        .point_at_with_policy(&r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(join.x(), &(Real::from(10) / Real::from(3)).unwrap());
     assert_eq!(join.y(), &r(4));
     assert_eq!(
         curve
-            .point_at(&r(2), &CurveContext::STRICT)
+            .point_at_with_policy(&r(2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(6, 0)
     );
     assert_eq!(
         curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         join
@@ -1411,7 +1424,9 @@ fn nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates() {
 fn out_of_domain_nurbs_evaluation_has_contextual_error() {
     let curve = quadratic_nurbs();
 
-    let error = curve.point_at(&r(3), &CurveContext::STRICT).unwrap_err();
+    let error = curve
+        .point_at_with_policy(&r(3), &CurveContext::STRICT)
+        .unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
     assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
@@ -1426,7 +1441,7 @@ fn out_of_domain_nurbs_evaluation_has_contextual_error() {
 
 #[test]
 fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(1), r(2), r(4), r(8), r(16)],
@@ -1437,11 +1452,11 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
     .into_value();
 
     let first = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     let second = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(first, second);
@@ -1453,7 +1468,7 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
     );
 
     let spans = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(spans.len(), 2);
@@ -1461,7 +1476,7 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
 
 #[test]
 fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         4,
         vec![p(0, 0), p(1, 4), p(2, 0), p(3, 4), p(4, 0)],
         vec![r(1); 5],
@@ -1474,7 +1489,7 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
     assert_eq!(curve.degree(), 4);
     assert_eq!(
         curve
-            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .point_at_with_policy(&q(1, 2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(2, 2)
@@ -1486,13 +1501,13 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
     assert_eq!(decomposition.spans().len(), 1);
     assert_eq!(decomposition.spans()[0].curve().degree(), 4);
     let native = curve
-        .native_subcurves(&CurveContext::STRICT)
+        .native_subcurves_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert!(matches!(native[0], CurveGeometry2::RationalBezier(_)));
 
     let (left, right) = curve
-        .split_at(q(1, 2), &CurveContext::STRICT)
+        .split_at_with_policy(q(1, 2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.end(), &p(2, 2));
@@ -1501,7 +1516,7 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
 
 #[test]
 fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1); 4],
@@ -1516,28 +1531,28 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(curve.end(), &Point2::new(r(5), r(2)));
     assert_eq!(
         curve
-            .point_at(&r(3), &CurveContext::STRICT)
+            .point_at_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(3, 4)
     );
 
     let inserted = curve
-        .insert_knot(r(3), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(3), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(inserted.start(), curve.start());
     assert_eq!(inserted.end(), curve.end());
     assert_eq!(
         inserted
-            .point_at(&r(3), &CurveContext::STRICT)
+            .point_at_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(3, 4)
     );
 
     let (left, right) = curve
-        .split_at(r(3), &CurveContext::STRICT)
+        .split_at_with_policy(r(3), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.parameter_domain(), (&r(2), &r(3)));
@@ -1547,16 +1562,19 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(right.start(), &p(3, 4));
     assert_eq!(right.end(), curve.end());
 
-    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = curve
+        .reversed_with_policy(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
         reversed
-            .point_at(&r(3), &CurveContext::STRICT)
+            .point_at_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&r(3), &CurveContext::STRICT)
+            .point_at_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -1564,7 +1582,7 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
 
 #[test]
 fn unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence() {
-    let curve = NurbsCurve2::try_new(
+    let curve = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -1578,14 +1596,14 @@ fn unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence() {
     assert_eq!(curve.end(), &Point2::new(q(36, 7), q(12, 7)));
     assert_eq!(
         curve
-            .point_at(&r(2), &CurveContext::STRICT)
+            .point_at_with_policy(&r(2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve.start().clone()
     );
     assert_eq!(
         curve
-            .point_at(&r(4), &CurveContext::STRICT)
+            .point_at_with_policy(&r(4), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve.end().clone()
@@ -1603,7 +1621,7 @@ fn unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence() {
 
 #[test]
 fn invalid_nurbs_construction_returns_contextual_error() {
-    let error = NurbsCurve2::try_new(
+    let error = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(1, 1)],
         vec![r(1), r(1)],
@@ -1625,7 +1643,7 @@ fn invalid_nurbs_construction_returns_contextual_error() {
 
 #[test]
 fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
-    let curve = NurbsCurve2::try_new_periodic(
+    let curve = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(1), r(1), r(1)],
@@ -1646,49 +1664,49 @@ fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
     assert_eq!(curve.start(), curve.end());
     assert_eq!(
         curve
-            .point_at(&r(0), &CurveContext::STRICT)
+            .point_at_with_policy(&r(0), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(1, 0)
     );
     assert_eq!(
         curve
-            .point_at_wrapped(&r(-1), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(-1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(0, 1)
     );
     assert_eq!(
         curve
-            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(2, 1)
     );
     assert_eq!(
         curve
-            .point_at_wrapped(&r(9), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(9), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(2, 1)
     );
     assert_eq!(
         curve
-            .derivatives_at_wrapped(&q(11, 2), 3, &CurveContext::STRICT)
+            .derivatives_at_wrapped_with_policy(&q(11, 2), 3, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .derivatives_at(&q(3, 2), 3, &CurveContext::STRICT)
+            .derivatives_at_with_policy(&q(3, 2), 3, &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         curve
-            .derivatives_at_wrapped(&r(4), 1, &CurveContext::STRICT)
+            .derivatives_at_wrapped_with_policy(&r(4), 1, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .derivatives_at(&r(0), 1, &CurveContext::STRICT)
+            .derivatives_at_with_policy(&r(0), 1, &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -1696,7 +1714,7 @@ fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
 
 #[test]
 fn periodic_nurbs_wrapping_obeys_terminal_policy() {
-    let curve = NurbsCurve2::try_new_periodic(
+    let curve = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(2), r(3), r(4)],
@@ -1709,13 +1727,13 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
     let wrapped_seam = r(4) + undecidable_zero;
 
     assert!(matches!(
-        curve.point_at_wrapped(&wrapped_seam, &CurveContext::STRICT),
+        curve.point_at_wrapped_with_policy(&wrapped_seam, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = curve
-        .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
+        .point_at_wrapped_with_policy(&wrapped_seam, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must resolve an undecidable NURBS seam");
     assert_eq!(
         point.certainty,
@@ -1724,7 +1742,7 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
     assert_eq!(point.value, curve.start().clone());
 
     let derivatives = curve
-        .derivatives_at_wrapped_side(
+        .derivatives_at_wrapped_side_with_policy(
             &wrapped_seam,
             2,
             CurveParameterSide2::Right,
@@ -1738,7 +1756,12 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
     assert_eq!(
         derivatives.value,
         curve
-            .derivatives_at_side(&r(0), 2, CurveParameterSide2::Right, &CurveContext::STRICT,)
+            .derivatives_at_side_with_policy(
+                &r(0),
+                2,
+                CurveParameterSide2::Right,
+                &CurveContext::STRICT,
+            )
             .unwrap()
             .into_value()
     );
@@ -1762,7 +1785,7 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
 
 #[test]
 fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
-    let curve = NurbsCurve2::try_new_periodic(
+    let curve = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(2), r(3), r(4)],
@@ -1773,17 +1796,17 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     .into_value();
 
     let inserted = curve
-        .insert_knots(vec![q(1, 2), q(3, 2)], &CurveContext::STRICT)
+        .insert_knots_with_policy(vec![q(1, 2), q(3, 2)], &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(inserted.period(), curve.period());
     assert_eq!(
         inserted
-            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -1823,22 +1846,25 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
         curve.end().clone()
     );
 
-    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = curve
+        .reversed_with_policy(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(reversed.period(), curve.period());
     assert_eq!(reversed.start(), reversed.end());
     assert_eq!(
         reversed
-            .point_at_wrapped(&r(1), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at_wrapped(&r(3), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
 
     let (left, right) = curve
-        .split_at(r(2), &CurveContext::STRICT)
+        .split_at_with_policy(r(2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.period(), None);
@@ -1847,7 +1873,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     assert_ne!(right.start(), right.end());
 
     let clamped = curve
-        .clamped_subcurve(r(0), r(1), &CurveContext::STRICT)
+        .clamped_subcurve_with_policy(r(0), r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(clamped.period(), None);
@@ -1856,14 +1882,14 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     assert_eq!(
         clamped.start(),
         &curve
-            .point_at(&r(0), &CurveContext::STRICT)
+            .point_at_with_policy(&r(0), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         clamped.end(),
         &curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -1871,7 +1897,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
 
 #[test]
 fn nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots() {
-    let curve = NurbsCurve2::try_new_periodic(
+    let curve = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(3, 0), p(4, 2), p(2, 5), p(-1, 2)],
         vec![r(1), r(2), r(5), r(3), r(4)],
@@ -1887,21 +1913,21 @@ fn nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots() {
     assert_eq!(curve.start(), curve.end());
     assert_eq!(
         curve
-            .point_at_wrapped(&shifted, &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&shifted, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&parameter, &CurveContext::STRICT)
+            .point_at_with_policy(&parameter, &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         curve
-            .derivative_at_wrapped(&shifted, &CurveContext::STRICT)
+            .derivative_at_wrapped_with_policy(&shifted, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .derivative_at(&parameter, &CurveContext::STRICT)
+            .derivative_at_with_policy(&parameter, &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -1918,7 +1944,7 @@ fn nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots() {
 
 #[test]
 fn periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping() {
-    let invalid = NurbsCurve2::try_new_periodic(
+    let invalid = NurbsCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(1), r(1)],
@@ -1936,7 +1962,7 @@ fn periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping() {
 
     let open = quadratic_nurbs();
     let error = open
-        .point_at_wrapped(&r(3), &CurveContext::STRICT)
+        .point_at_wrapped_with_policy(&r(3), &CurveContext::STRICT)
         .unwrap_err();
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
     assert!(matches!(
@@ -1949,7 +1975,7 @@ fn periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping() {
 }
 
 fn finite_mixed_weight_nurbs(policy: &CurveContext) -> NurbsCurve2 {
-    NurbsCurve2::try_new(
+    NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 1), p(2, 0)],
         vec![r(1), q(-1, 2), r(1)],
@@ -1964,14 +1990,17 @@ fn finite_mixed_weight_nurbs(policy: &CurveContext) -> NurbsCurve2 {
 fn homogeneous_nurbs_elevation_remains_recomposable_and_refinable() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = finite_mixed_weight_nurbs(&policy);
-        let elevated = source.elevated_to_degree(3, &policy).unwrap();
+        let elevated = source.elevated_to_degree_with_policy(3, &policy).unwrap();
         assert_eq!(elevated.certainty, crate::CurveCertainty::Certified);
         let elevated = elevated.into_value();
         assert_eq!(elevated.degree(), 3);
         assert_eq!(elevated.weights(), &[r(1), r(0), r(0), r(1)]);
-        let inserted = elevated.insert_knot(q(2, 3), &policy).unwrap().into_value();
+        let inserted = elevated
+            .insert_knot_with_policy(q(2, 3), &policy)
+            .unwrap()
+            .into_value();
         let removed = inserted
-            .remove_knot(q(2, 3), &policy)
+            .remove_knot_with_policy(q(2, 3), &policy)
             .unwrap()
             .into_value()
             .expect("an inserted exact knot must remain removable");
@@ -1979,8 +2008,14 @@ fn homogeneous_nurbs_elevation_remains_recomposable_and_refinable() {
             assert_eq!(curve.parameter_domain(), source.parameter_domain());
             for parameter in [r(0), q(1, 4), q(1, 2), q(2, 3), r(1)] {
                 assert_eq!(
-                    curve.point_at(&parameter, &policy).unwrap().into_value(),
-                    source.point_at(&parameter, &policy).unwrap().into_value()
+                    curve
+                        .point_at_with_policy(&parameter, &policy)
+                        .unwrap()
+                        .into_value(),
+                    source
+                        .point_at_with_policy(&parameter, &policy)
+                        .unwrap()
+                        .into_value()
                 );
             }
         }
@@ -1993,9 +2028,15 @@ fn homogeneous_nurbs_knot_insertion_retains_infinite_controls() {
         let source = finite_mixed_weight_nurbs(&policy);
         // Boehm insertion creates a zero intermediate weight while the
         // denominator 1-3t+3t^2 remains strictly positive on the whole span.
-        let inserted = source.insert_knot(q(2, 3), &policy).unwrap().into_value();
+        let inserted = source
+            .insert_knot_with_policy(q(2, 3), &policy)
+            .unwrap()
+            .into_value();
         assert!(inserted.weights().contains(&r(0)));
-        let (left, right) = inserted.split_at(q(2, 3), &policy).unwrap().into_value();
+        let (left, right) = inserted
+            .split_at_with_policy(q(2, 3), &policy)
+            .unwrap()
+            .into_value();
         assert_eq!(left.end(), right.start());
         for (curve, parameters) in [
             (&left, [r(0), q(1, 3), q(2, 3)]),
@@ -2003,8 +2044,14 @@ fn homogeneous_nurbs_knot_insertion_retains_infinite_controls() {
         ] {
             for parameter in parameters {
                 assert_eq!(
-                    curve.point_at(&parameter, &policy).unwrap().into_value(),
-                    source.point_at(&parameter, &policy).unwrap().into_value()
+                    curve
+                        .point_at_with_policy(&parameter, &policy)
+                        .unwrap()
+                        .into_value(),
+                    source
+                        .point_at_with_policy(&parameter, &policy)
+                        .unwrap()
+                        .into_value()
                 );
             }
         }
@@ -2016,7 +2063,7 @@ fn homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization
     use crate::HomogeneousControl2;
     let h = |x, y, w| HomogeneousControl2::new(r(x), r(y), r(w));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let unclamped = NurbsCurve2::from_homogeneous_controls(
+        let unclamped = NurbsCurve2::from_homogeneous_controls_with_policy(
             2,
             vec![h(0, 1, 0), h(0, 0, 1), h(2, 0, 1)],
             (0..=5).map(r).collect(),
@@ -2027,7 +2074,7 @@ fn homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization
         .into_value();
         assert_eq!(unclamped.start(), &p(0, 1));
         assert_eq!(unclamped.end(), &p(1, 0));
-        let discontinuous = NurbsCurve2::from_homogeneous_controls(
+        let discontinuous = NurbsCurve2::from_homogeneous_controls_with_policy(
             2,
             vec![
                 h(1, 0, 1),
@@ -2047,10 +2094,13 @@ fn homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization
             Similarity2::try_from_real_affine(r(0), r(-2), r(2), r(0), r(3), r(4)).unwrap();
         for source in [unclamped, discontinuous] {
             assert!(source.affine_control_points().is_none());
-            let elevated = source.elevated_to_degree(4, &policy).unwrap().into_value();
-            let reversed = source.reversed(&policy).unwrap().into_value();
+            let elevated = source
+                .elevated_to_degree_with_policy(4, &policy)
+                .unwrap()
+                .into_value();
+            let reversed = source.reversed_with_policy(&policy).unwrap().into_value();
             let transformed = source
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .unwrap()
                 .into_value();
             let (start, end) = source.parameter_domain();
@@ -2063,26 +2113,26 @@ fn homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization
                         _ => CurveParameterSide2::Left,
                     };
                     let point = source
-                        .point_at_side(&parameter, side, &policy)
+                        .point_at_side_with_policy(&parameter, side, &policy)
                         .unwrap()
                         .into_value();
                     assert_eq!(
                         elevated
-                            .point_at_side(&parameter, side, &policy)
+                            .point_at_side_with_policy(&parameter, side, &policy)
                             .unwrap()
                             .into_value(),
                         point
                     );
                     assert_eq!(
                         reversed
-                            .point_at_side(&(&sum - &parameter), opposite, &policy)
+                            .point_at_side_with_policy(&(&sum - &parameter), opposite, &policy)
                             .unwrap()
                             .into_value(),
                         point
                     );
                     assert_eq!(
                         transformed
-                            .point_at_side(&parameter, side, &policy)
+                            .point_at_side_with_policy(&parameter, side, &policy)
                             .unwrap()
                             .into_value(),
                         Point2::new(r(3) - r(2) * point.y(), r(4) + r(2) * point.x())
@@ -2101,11 +2151,15 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
         .collect();
     let knots: Vec<_> = (0..=SPANS).flat_map(|i| [r(i * i), r(i * i)]).collect();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let polynomial =
-            crate::PolynomialSplineCurve2::try_new(1, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .into_value();
-        let rational = NurbsCurve2::try_new(
+        let polynomial = crate::PolynomialSplineCurve2::try_new_with_policy(
+            1,
+            controls.clone(),
+            knots.clone(),
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let rational = NurbsCurve2::try_new_with_policy(
             1,
             controls.clone(),
             (0..SPANS).flat_map(|_| [r(1), r(3)]).collect(),

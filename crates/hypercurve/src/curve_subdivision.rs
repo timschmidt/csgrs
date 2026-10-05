@@ -1044,12 +1044,17 @@ mod tests {
                 .unwrap(),
             ),
             Curve2::from(
-                PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), policy)
-                    .unwrap()
-                    .value,
+                PolynomialSplineCurve2::try_new_with_policy(
+                    2,
+                    controls.clone(),
+                    knots.clone(),
+                    policy,
+                )
+                .unwrap()
+                .value,
             ),
             Curve2::from(
-                NurbsCurve2::try_new(
+                NurbsCurve2::try_new_with_policy(
                     2,
                     controls,
                     vec![Real::one(), Real::from(2), Real::from(3), Real::one()],
@@ -1313,11 +1318,15 @@ mod tests {
                 .into_iter()
                 .map(Real::from)
                 .collect::<Vec<_>>();
-            let polynomial =
-                PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), &policy)
-                    .unwrap()
-                    .value;
-            let rational = NurbsCurve2::try_new(
+            let polynomial = PolynomialSplineCurve2::try_new_with_policy(
+                2,
+                controls.clone(),
+                knots.clone(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let rational = NurbsCurve2::try_new_with_policy(
                 2,
                 controls,
                 [1, 2, 3, 5, 7, 11].into_iter().map(Real::from).collect(),
@@ -1675,7 +1684,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let weight = q(1, 2).sqrt().unwrap();
             let source = Curve2::from(
-                NurbsCurve2::try_new(
+                NurbsCurve2::try_new_with_policy(
                     2,
                     vec![
                         p(1, 0),

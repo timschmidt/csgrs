@@ -44,43 +44,46 @@ fuzz_target!(|data: &[u8]| {
     let mut knots = vec![Real::zero(); degree + 1];
     knots.push(Real::one());
     knots.extend(std::iter::repeat_n(Real::from(2_i8), degree + 1));
-    if let Ok(spline) =
-        PolynomialSplineCurve2::try_new(degree, controls.clone(), knots.clone(), &policy)
-    {
-        touch_native_fragments(Curve2::from(spline.into_value()), &policy);
+    if let Ok(spline) = support::under(&policy, || {
+        PolynomialSplineCurve2::try_new(degree, controls.clone(), knots.clone())
+    }) {
+        touch_native_fragments(Curve2::from(spline), &policy);
     }
     let weights = controls
         .iter()
         .enumerate()
         .map(|(index, _)| Real::from(((data[index % data.len()] % 7) as i32) + 1))
         .collect::<Vec<_>>();
-    let authored = NurbsCurve2::try_new(degree, controls.clone(), weights, knots.clone(), &policy);
-    let homogeneous = NurbsCurve2::from_homogeneous_controls(
-        degree,
-        controls
-            .iter()
-            .enumerate()
-            .map(|(index, point)| {
-                let weight = if index == 0 || index + 1 == controls.len() {
-                    Real::one()
-                } else {
-                    r(i32::from(data[index] % 7) - 3)
-                };
-                HomogeneousControl2::new(point.x().clone(), point.y().clone(), weight)
-            })
-            .collect(),
-        knots,
-        SplinePeriodicity2::NonPeriodic,
-        &policy,
-    );
+    let authored = support::under(&policy, || {
+        NurbsCurve2::try_new(degree, controls.clone(), weights, knots.clone())
+    });
+    let homogeneous = support::under(&policy, || {
+        NurbsCurve2::from_homogeneous_controls(
+            degree,
+            controls
+                .iter()
+                .enumerate()
+                .map(|(index, point)| {
+                    let weight = if index == 0 || index + 1 == controls.len() {
+                        Real::one()
+                    } else {
+                        r(i32::from(data[index] % 7) - 3)
+                    };
+                    HomogeneousControl2::new(point.x().clone(), point.y().clone(), weight)
+                })
+                .collect(),
+            knots,
+            SplinePeriodicity2::NonPeriodic,
+        )
+    });
     for construction in [authored, homogeneous] {
         let Ok(spline) = construction else {
             continue;
         };
-        let spline = spline.into_value();
+        let spline = spline;
         touch_native_fragments(Curve2::from(spline.clone()), &policy);
-        if let Ok(refined) = spline.insert_knot(Real::one(), &policy) {
-            let _ = refined.into_value().remove_knot(Real::one(), &policy);
+        if let Ok(refined) = support::under(&policy, || spline.insert_knot(Real::one())) {
+            let _ = support::under(&policy, || refined.remove_knot(Real::one()));
         }
     }
 });

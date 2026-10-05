@@ -87,6 +87,23 @@ impl NurbsCurve2 {
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_new_with_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_new`] under an explicit predicate policy.
+    pub(crate) fn try_new_with_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
@@ -118,6 +135,23 @@ impl NurbsCurve2 {
     /// exactly and certifies closure at the canonical seam. The outcome records
     /// any terminal decision consumed by that complete construction.
     pub fn try_new_periodic(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        period_knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_new_periodic_with_policy(
+            degree,
+            control_points,
+            weights,
+            period_knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_new_periodic`] under an explicit predicate policy.
+    pub(crate) fn try_new_periodic_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
@@ -191,6 +225,23 @@ impl NurbsCurve2 {
     /// period and must close at the active-domain seam. Interior zero weights
     /// remain valid coefficients; evaluation certifies the actual denominator.
     pub fn from_homogeneous_controls(
+        degree: usize,
+        controls: Vec<HomogeneousControl2>,
+        knots: Vec<Real>,
+        periodicity: SplinePeriodicity2,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::from_homogeneous_controls_with_policy(
+            degree,
+            controls,
+            knots,
+            periodicity,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::from_homogeneous_controls`] under an explicit predicate policy.
+    pub(crate) fn from_homogeneous_controls_with_policy(
         degree: usize,
         controls: Vec<HomogeneousControl2>,
         knots: Vec<Real>,
@@ -328,12 +379,18 @@ impl NurbsCurve2 {
     /// The curve image, parameterization, and endpoints are preserved. If an
     /// interior knot already has full Bezier multiplicity, this returns a clone
     /// sharing the original carrier and caches.
-    pub fn insert_knot(
+    pub fn insert_knot(&self, knot: Real) -> crate::ExactCurveResult<Self> {
+        self.insert_knot_with_policy(knot, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::insert_knot`] under an explicit predicate policy.
+    pub(crate) fn insert_knot_with_policy(
         &self,
         knot: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        self.insert_knots(vec![knot], policy)
+        self.insert_knots_with_policy(vec![knot], policy)
     }
 
     /// Inserts an ordered batch of exact knots in one homogeneous refinement pass.
@@ -341,7 +398,13 @@ impl NurbsCurve2 {
     /// The working control net is projected and validated only once. Exact
     /// periodicity, endpoints, and parameterization are preserved. Repeated
     /// equal requests from any clone reuse a bounded retained result.
-    pub fn insert_knots(
+    pub fn insert_knots(&self, knots: Vec<Real>) -> crate::ExactCurveResult<Self> {
+        self.insert_knots_with_policy(knots, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::insert_knots`] under an explicit predicate policy.
+    pub(crate) fn insert_knots_with_policy(
         &self,
         knots: Vec<Real>,
         policy: &CurveContext,
@@ -352,12 +415,10 @@ impl NurbsCurve2 {
                 crate::CurveCertainty::Certified,
             ));
         }
-        resolve_certified_operation(policy, |attempt| {
-            self.insert_knots_with_policy(knots, attempt)
-        })
+        resolve_certified_operation(policy, |attempt| self.insert_knots_raw(knots, attempt))
     }
 
-    pub(crate) fn insert_knots_with_policy(
+    pub(crate) fn insert_knots_raw(
         &self,
         knots: Vec<Real>,
         policy: &CurveContext,
@@ -383,21 +444,21 @@ impl NurbsCurve2 {
     /// every authored homogeneous control and knot. `None` means the requested
     /// knot is absent or is not exactly removable. Results are retained across
     /// clones, including negative results and blockers.
-    pub fn remove_knot(
+    pub fn remove_knot(&self, knot: Real) -> crate::ExactCurveResult<Option<Self>> {
+        self.remove_knot_with_policy(knot, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::remove_knot`] under an explicit predicate policy.
+    pub(crate) fn remove_knot_with_policy(
         &self,
         knot: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Option<Self>>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.remove_knot_with_policy(knot, attempt)
-        })
+        resolve_certified_operation(policy, |attempt| self.remove_knot_raw(knot, attempt))
     }
 
-    fn remove_knot_with_policy(
-        &self,
-        knot: Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Option<Self>> {
+    fn remove_knot_raw(&self, knot: Real, policy: &CurveContext) -> ExactCurveResult<Option<Self>> {
         resolve_bounded_cached_result(
             &self.data.knot_removals,
             knot,
@@ -444,7 +505,13 @@ impl NurbsCurve2 {
     /// NURBS preserves the authored parameter domain, periodicity, source, and
     /// parameterized image. Equal requests and blockers are retained across
     /// clones.
-    pub fn elevated_to_degree(
+    pub fn elevated_to_degree(&self, target_degree: usize) -> crate::ExactCurveResult<Self> {
+        self.elevated_to_degree_with_policy(target_degree, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::elevated_to_degree`] under an explicit predicate policy.
+    pub(crate) fn elevated_to_degree_with_policy(
         &self,
         target_degree: usize,
         policy: &CurveContext,
@@ -463,11 +530,11 @@ impl NurbsCurve2 {
             ));
         }
         resolve_certified_operation(policy, |attempt| {
-            self.elevated_to_degree_with_policy(target_degree, attempt)
+            self.elevated_to_degree_raw(target_degree, attempt)
         })
     }
 
-    fn elevated_to_degree_with_policy(
+    fn elevated_to_degree_raw(
         &self,
         target_degree: usize,
         policy: &CurveContext,
@@ -527,7 +594,7 @@ impl NurbsCurve2 {
         for (knot, removal_count) in removable_knots {
             for _ in 0..removal_count {
                 elevated = elevated
-                    .remove_knot_with_policy(knot.clone(), policy)
+                    .remove_knot_raw(knot.clone(), policy)
                     .map_err(|error| {
                         remap_nurbs_operation(error, CurveOperation2::DegreeElevation)
                     })?
@@ -655,7 +722,13 @@ impl NurbsCurve2 {
     /// refinement, or reconstructed-carrier validation consumed the
     /// `APPROXIMATE_512` terminal.
     #[inline(always)]
-    pub fn split_at(
+    pub fn split_at(&self, parameter: Real) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::split_at`] under an explicit predicate policy.
+    pub(crate) fn split_at_with_policy(
         &self,
         parameter: Real,
         policy: &CurveContext,
@@ -670,7 +743,7 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<(Self, Self)> {
         validate_strict_interior_parameter(self, &parameter, policy)?;
         let refined = self
-            .insert_knots_with_policy(vec![parameter.clone(); self.degree()], policy)
+            .insert_knots_raw(vec![parameter.clone(); self.degree()], policy)
             .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
         let equal_indices = refined
             .knots()
@@ -726,7 +799,13 @@ impl NurbsCurve2 {
     /// One operation outcome covers range validation, every split, and exact
     /// reconstructed-carrier validation.
     #[inline(always)]
-    pub fn subcurve(
+    pub fn subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
+        self.subcurve_with_policy(start, end, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::subcurve`] under an explicit predicate policy.
+    pub(crate) fn subcurve_with_policy(
         &self,
         start: Real,
         end: Real,
@@ -779,7 +858,13 @@ impl NurbsCurve2 {
     /// No fitting, sampling, or endpoint-only reconstruction is involved.
     /// The returned [`CurveOutcome`] covers the complete exact materialization.
     #[inline(always)]
-    pub fn clamped_subcurve(
+    pub fn clamped_subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
+        self.clamped_subcurve_with_policy(start, end, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::clamped_subcurve`] under an explicit predicate policy.
+    pub(crate) fn clamped_subcurve_with_policy(
         &self,
         start: Real,
         end: Real,
@@ -882,7 +967,16 @@ impl NurbsCurve2 {
     ///
     /// Controls and weights are reversed, while knots are reflected through
     /// the parameter-domain midpoint. The parameter domain is preserved exactly.
-    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+    pub fn reversed(&self) -> crate::ExactCurveResult<Self> {
+        self.reversed_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::reversed`] under an explicit predicate policy.
+    pub(crate) fn reversed_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
     }
 
@@ -907,7 +1001,13 @@ impl NurbsCurve2 {
     }
 
     /// Applies an exact planar similarity while retaining periodicity.
-    pub fn transform_similarity(
+    pub fn transform_similarity(&self, transform: &Similarity2) -> crate::ExactCurveResult<Self> {
+        self.transform_similarity_with_policy(transform, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::transform_similarity`] under an explicit predicate policy.
+    pub(crate) fn transform_similarity_with_policy(
         &self,
         transform: &Similarity2,
         policy: &CurveContext,
@@ -994,7 +1094,13 @@ impl NurbsCurve2 {
     /// Linear rational spans are elevated exactly in homogeneous coordinates,
     /// quadratics use native conics, equal-weight cubics collapse to polynomial
     /// cubics, and all remaining spans use exact general rational Beziers.
-    pub fn native_subcurves(
+    pub fn native_subcurves(&self) -> crate::ExactCurveResult<Vec<crate::CurveGeometry2>> {
+        self.native_subcurves_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::native_subcurves`] under an explicit predicate policy.
+    pub(crate) fn native_subcurves_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<crate::CurveGeometry2>>> {
@@ -1010,7 +1116,7 @@ impl NurbsCurve2 {
         })
     }
 
-    pub(crate) fn native_subcurves_with_policy(
+    pub(crate) fn native_subcurves_raw(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<&[BezierSubcurve2]>> {
@@ -1038,7 +1144,7 @@ impl NurbsCurve2 {
         operation: CurveOperation2,
     ) -> ExactCurveResult<&[BezierSubcurve2]> {
         require_classification(
-            self.native_subcurves_with_policy(policy)
+            self.native_subcurves_raw(policy)
                 .map_err(|error| remap_nurbs_operation(error, operation))?,
             operation,
         )
@@ -1049,12 +1155,18 @@ impl NurbsCurve2 {
     /// The exact homogeneous Bezier decomposition is retained on first use.
     /// Evaluation then selects the source knot span and applies homogeneous de
     /// Casteljau interpolation without finite projection.
-    pub fn point_at(
+    pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.point_at_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit knot-boundary side policy.
@@ -1062,14 +1174,24 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Point2> {
+        self.point_at_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_side`] under an explicit predicate policy.
+    pub(crate) fn point_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.point_at_side_with_policy(parameter, side, attempt)
+            self.point_at_side_raw(parameter, side, attempt)
         })
     }
 
-    pub(crate) fn point_at_side_with_policy(
+    pub(crate) fn point_at_side_raw(
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
@@ -1093,12 +1215,18 @@ impl NurbsCurve2 {
     }
 
     /// Evaluates a periodic NURBS at any exactly wrappable parameter.
-    pub fn point_at_wrapped(
+    pub fn point_at_wrapped(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_wrapped_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn point_at_wrapped_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.point_at_wrapped_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates a periodic NURBS with explicit side selection at wrapped seams.
@@ -1106,14 +1234,24 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Point2> {
+        self.point_at_wrapped_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn point_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.point_at_wrapped_side_with_policy(parameter, side, attempt)
+            self.point_at_wrapped_side_raw(parameter, side, attempt)
         })
     }
 
-    pub(crate) fn point_at_wrapped_side_with_policy(
+    pub(crate) fn point_at_wrapped_side_raw(
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
@@ -1129,7 +1267,7 @@ impl NurbsCurve2 {
             CurveFamily2::Nurbs,
             policy,
         )?;
-        self.point_at_side_with_policy(&wrapped, side, policy)
+        self.point_at_side_raw(&wrapped, side, policy)
     }
 
     fn point_at_canonical_side(
@@ -1182,12 +1320,18 @@ impl NurbsCurve2 {
     }
 
     /// Evaluates the exact first derivative in the authored knot parameter.
-    pub fn derivative_at(
+    pub fn derivative_at(&self, parameter: &Real) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.derivative_at_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
@@ -1195,11 +1339,20 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_side`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
         resolve_certified_operation(policy, |attempt| {
-            let mut derivatives =
-                self.derivatives_at_side_with_policy(parameter, 1, side, attempt)?;
+            let mut derivatives = self.derivatives_at_side_raw(parameter, 1, side, attempt)?;
             Ok(derivatives.pop().expect("one derivative requested"))
         })
     }
@@ -1208,9 +1361,22 @@ impl NurbsCurve2 {
     pub fn derivative_at_wrapped(
         &self,
         parameter: &Real,
+    ) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_wrapped_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_wrapped_with_policy(
+        &self,
+        parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.derivative_at_wrapped_side_with_policy(
+            parameter,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -1218,11 +1384,25 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_wrapped_side_with_policy(
+            parameter,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
         resolve_certified_operation(policy, |attempt| {
             let mut derivatives =
-                self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
+                self.derivatives_at_wrapped_side_raw(parameter, 1, side, attempt)?;
             Ok(derivatives.pop().expect("one derivative requested"))
         })
     }
@@ -1236,9 +1416,24 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_with_policy(parameter, max_order, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
+        self.derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates exact derivatives with explicit knot-boundary side policy.
@@ -1247,14 +1442,30 @@ impl NurbsCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_side`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivatives_at_side_with_policy(parameter, max_order, side, attempt)
+            self.derivatives_at_side_raw(parameter, max_order, side, attempt)
         })
     }
 
-    pub(crate) fn derivatives_at_side_with_policy(
+    pub(crate) fn derivatives_at_side_raw(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -1291,9 +1502,23 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_wrapped_with_policy(
+            parameter,
+            max_order,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_wrapped_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.derivatives_at_wrapped_side(
+        self.derivatives_at_wrapped_side_with_policy(
             parameter,
             max_order,
             CurveParameterSide2::Automatic,
@@ -1307,14 +1532,30 @@ impl NurbsCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_wrapped_side_with_policy(
+            parameter,
+            max_order,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)
+            self.derivatives_at_wrapped_side_raw(parameter, max_order, side, attempt)
         })
     }
 
-    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+    pub(crate) fn derivatives_at_wrapped_side_raw(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -1331,7 +1572,7 @@ impl NurbsCurve2 {
             CurveFamily2::Nurbs,
             policy,
         )?;
-        self.derivatives_at_side_with_policy(&wrapped, max_order, side, policy)
+        self.derivatives_at_side_raw(&wrapped, max_order, side, policy)
     }
 
     fn derivatives_at_canonical_side(
@@ -1760,7 +2001,7 @@ mod native_span_cache_tests {
     #[test]
     fn native_spans_are_promoted_once_and_borrowed() {
         let p = |x, y| Point2::new(Real::from(x), Real::from(y));
-        let curve = NurbsCurve2::try_new(
+        let curve = NurbsCurve2::try_new_with_policy(
             3,
             vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
             [1, 2, 4, 8, 16].map(Real::from).to_vec(),
@@ -1769,16 +2010,10 @@ mod native_span_cache_tests {
         )
         .unwrap()
         .into_value();
-        let first = crate::tests::decided(
-            curve
-                .native_subcurves_with_policy(&CurveContext::STRICT)
-                .unwrap(),
-        );
-        let second = crate::tests::decided(
-            curve
-                .native_subcurves_with_policy(&CurveContext::STRICT)
-                .unwrap(),
-        );
+        let first =
+            crate::tests::decided(curve.native_subcurves_raw(&CurveContext::STRICT).unwrap());
+        let second =
+            crate::tests::decided(curve.native_subcurves_raw(&CurveContext::STRICT).unwrap());
         assert_eq!(first.len(), 2);
         assert!(std::ptr::eq(first, second));
     }

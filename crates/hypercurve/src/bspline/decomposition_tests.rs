@@ -35,7 +35,7 @@ fn assert_point_eq(left: &Point2, right: &Point2) {
 
 #[test]
 fn linear_bspline_spans_are_elevated_exactly() {
-    let spline = PolynomialSplineCurve2::try_new(
+    let spline = PolynomialSplineCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(2, 2), p(4, 0)],
         vec![r(0), r(0), r(1), r(2), r(2)],
@@ -57,7 +57,7 @@ fn linear_bspline_spans_are_elevated_exactly() {
 
 #[test]
 fn rational_linear_span_preserves_homogeneous_parameterization() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(4, 0)],
         vec![r(1), r(3)],
@@ -78,7 +78,7 @@ fn rational_linear_span_preserves_homogeneous_parameterization() {
 
 #[test]
 fn rational_linear_span_retains_its_denominator_pole() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(4, 0)],
         vec![r(1), r(-1)],
@@ -100,7 +100,7 @@ fn rational_linear_span_retains_its_denominator_pole() {
 
 #[test]
 fn quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion() {
-    let spline = PolynomialSplineCurve2::try_new(
+    let spline = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
@@ -132,7 +132,7 @@ fn quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion() {
 
 #[test]
 fn cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot() {
-    let spline = PolynomialSplineCurve2::try_new(
+    let spline = PolynomialSplineCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
@@ -167,7 +167,7 @@ fn cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot() {
 #[test]
 fn bspline_constructor_rejects_degenerate_knot_vectors() {
     assert!(matches!(
-        PolynomialSplineCurve2::try_new(
+        PolynomialSplineCurve2::try_new_with_policy(
             2,
             vec![p(0, 0), p(1, 1), p(2, 0)],
             vec![r(0), r(0), r(1), r(1), r(1), r(1)],
@@ -179,7 +179,7 @@ fn bspline_constructor_rejects_degenerate_knot_vectors() {
         })
     ));
     assert!(matches!(
-        PolynomialSplineCurve2::try_new(
+        PolynomialSplineCurve2::try_new_with_policy(
             2,
             vec![p(0, 0), p(1, 1), p(2, 0)],
             vec![r(0), r(0), r(0), r(0), r(0), r(0)],
@@ -191,7 +191,7 @@ fn bspline_constructor_rejects_degenerate_knot_vectors() {
         })
     ));
     assert!(matches!(
-        PolynomialSplineCurve2::try_new(
+        PolynomialSplineCurve2::try_new_with_policy(
             2,
             vec![p(0, 0), p(1, 1), p(2, 0)],
             vec![r(0), r(0), r(0), r(2), r(1), r(1)],
@@ -206,7 +206,7 @@ fn bspline_constructor_rejects_degenerate_knot_vectors() {
 
 #[test]
 fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
-    let spline = PolynomialSplineCurve2::try_new(
+    let spline = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         (0..=6).map(r).collect(),
@@ -230,7 +230,7 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
     assert!(first.start() == &Point2::new(r(1), r(2)));
     assert!(second.end() == &Point2::new(r(5), r(2)));
 
-    let rational = NurbsCurve2::try_new(
+    let rational = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -250,7 +250,7 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
 
 #[test]
 fn extracted_bspline_spans_feed_unified_region_area() {
-    let upper = PolynomialSplineCurve2::try_new(
+    let upper = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
@@ -258,7 +258,7 @@ fn extracted_bspline_spans_feed_unified_region_area() {
     )
     .unwrap()
     .into_value();
-    let lower = PolynomialSplineCurve2::try_new(
+    let lower = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(6, 0), p(4, -4), p(2, -4), p(0, 0)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
@@ -304,7 +304,7 @@ fn extracted_bspline_spans_feed_unified_region_area() {
 
 #[test]
 fn rational_quadratic_bspline_extracts_homogeneous_bezier_spans() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(4), r(1)],
@@ -353,13 +353,19 @@ fn rational_quadratic_bspline_extracts_homogeneous_bezier_spans() {
 fn equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans() {
     let controls = vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)];
     let knots = vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)];
-    let polynomial = PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), &policy())
-        .unwrap()
-        .into_value();
-    let rational =
-        NurbsCurve2::try_new(2, controls, vec![r(1), r(1), r(1), r(1)], knots, &policy())
+    let polynomial =
+        PolynomialSplineCurve2::try_new_with_policy(2, controls.clone(), knots.clone(), &policy())
             .unwrap()
             .into_value();
+    let rational = NurbsCurve2::try_new_with_policy(
+        2,
+        controls,
+        vec![r(1), r(1), r(1), r(1)],
+        knots,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
     let polynomial = polynomial
         .bezier_decomposition(&policy())
         .unwrap()
@@ -387,7 +393,7 @@ fn equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans() {
 
 #[test]
 fn retained_rational_cubic_bspline_extracts_bezier_span_evidence() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(1), r(2), r(4), r(8), r(16)],
@@ -429,10 +435,11 @@ fn retained_rational_cubic_bspline_extracts_bezier_span_evidence() {
 fn equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans() {
     let controls = vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)];
     let knots = vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)];
-    let polynomial = PolynomialSplineCurve2::try_new(3, controls.clone(), knots.clone(), &policy())
-        .unwrap()
-        .into_value();
-    let rational = NurbsCurve2::try_new(3, controls, vec![r(1); 5], knots, &policy())
+    let polynomial =
+        PolynomialSplineCurve2::try_new_with_policy(3, controls.clone(), knots.clone(), &policy())
+            .unwrap()
+            .into_value();
+    let rational = NurbsCurve2::try_new_with_policy(3, controls, vec![r(1); 5], knots, &policy())
         .unwrap()
         .into_value();
     let polynomial = polynomial
@@ -472,7 +479,7 @@ fn equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans() {
 
 #[test]
 fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(3)],
@@ -494,7 +501,7 @@ fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
 
 #[test]
 fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
-    let upper = NurbsCurve2::try_new(
+    let upper = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(5, 3), p(6, 0)],
         vec![r(7), r(7), r(7), r(7)],
@@ -503,7 +510,7 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
     )
     .unwrap()
     .into_value();
-    let lower = NurbsCurve2::try_new(
+    let lower = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(6, 0), p(5, -3), p(1, -3), p(0, 0)],
         vec![r(7), r(7), r(7), r(7)],
@@ -549,7 +556,7 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
 
 #[test]
 fn nonuniform_rational_cubic_spans_promote_without_degree_reduction() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(1), r(2), r(4), r(8), r(16)],
@@ -575,7 +582,7 @@ fn nonuniform_rational_cubic_spans_promote_without_degree_reduction() {
 
 #[test]
 fn equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics() {
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(5), r(5), r(5), r(5), r(5)],
@@ -599,21 +606,21 @@ fn equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics() {
 #[test]
 fn retained_rational_bspline_rejects_invalid_degree_and_zero_weight() {
     assert!(matches!(
-        NurbsCurve2::try_new(0, vec![p(0, 0)], vec![r(1)], vec![r(0), r(1)], &policy(),),
+        NurbsCurve2::try_new_with_policy(0, vec![p(0, 0)], vec![r(1)], vec![r(0), r(1)], &policy(),),
         Err(ExactCurveError::Invalid {
             cause: CurveError::InvalidBSpline,
             ..
         })
     ));
     assert!(matches!(
-        NurbsCurve2::try_new(usize::MAX, Vec::new(), Vec::new(), Vec::new(), &policy()),
+        NurbsCurve2::try_new_with_policy(usize::MAX, Vec::new(), Vec::new(), Vec::new(), &policy()),
         Err(ExactCurveError::Invalid {
             cause: CurveError::InvalidBSpline,
             ..
         })
     ));
     assert!(matches!(
-        NurbsCurve2::try_new(
+        NurbsCurve2::try_new_with_policy(
             3,
             vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
             vec![r(1), r(2), r(0), r(8), r(16)],
@@ -630,7 +637,7 @@ fn retained_rational_bspline_rejects_invalid_degree_and_zero_weight() {
 #[test]
 fn affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints() {
     assert!(matches!(
-        NurbsCurve2::try_new(
+        NurbsCurve2::try_new_with_policy(
             2,
             vec![p(0, 0), p(1, 1), p(2, 1)],
             vec![r(1), r(0), r(1)],
@@ -643,7 +650,7 @@ fn affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoin
         })
     ));
 
-    let spline = NurbsCurve2::try_new(
+    let spline = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(1), r(-1), r(1)],
@@ -659,7 +666,7 @@ fn affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoin
 
 #[test]
 fn extracted_rational_bspline_spans_feed_conic_region_area() {
-    let upper = NurbsCurve2::try_new(
+    let upper = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 2), p(4, 2), p(6, 0)],
         vec![r(1), q(1, 2), q(1, 2), r(1)],
@@ -668,7 +675,7 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
     )
     .unwrap()
     .into_value();
-    let lower = NurbsCurve2::try_new(
+    let lower = NurbsCurve2::try_new_with_policy(
         2,
         vec![p(6, 0), p(4, -2), p(2, -2), p(0, 0)],
         vec![r(1), q(1, 2), q(1, 2), r(1)],

@@ -26,19 +26,16 @@ fn symbolic_interpolation_solve_and_replay_are_strictly_affine_exact() {
     let parameters = vec![r(0), q(1, 2), r(1)];
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let interpolated =
-            NurbsCurve2::interpolate_global(2, points.clone(), parameters.clone(), &policy)
-                .expect("the symbolic affine solve and authored-point replay must stay exact");
+        let interpolated = crate::support::under(&policy, || {
+            NurbsCurve2::interpolate_global(2, points.clone(), parameters.clone())
+        })
+        .expect("the symbolic affine solve and authored-point replay must stay exact");
         assert_eq!(
             interpolated.certainty,
             hypercurve::CurveCertainty::Certified
         );
         for (parameter, expected) in parameters.iter().zip(&points) {
-            let actual = interpolated
-                .value
-                .point_at(parameter, &CurveContext::STRICT)
-                .unwrap()
-                .into_value();
+            let actual = interpolated.value.point_at(parameter).unwrap();
             for (actual, expected) in [(actual.x(), expected.x()), (actual.y(), expected.y())] {
                 assert!(matches!(
                     hyperlimit::compare_reals(
@@ -66,27 +63,26 @@ fn explicit_interpolation_obeys_terminal_policy_and_retains_symbolic_domain() {
     let knots = vec![r(0), r(0), symbolic_end.clone(), symbolic_end.clone()];
 
     assert!(matches!(
-        NurbsCurve2::interpolate_with_parameters_and_knots(
+        crate::support::under(&CurveContext::STRICT, || NurbsCurve2::interpolate_with_parameters_and_knots(
             1,
             points.clone(),
             parameters.clone(),
             weights.clone(),
-            knots.clone(),
-            &CurveContext::STRICT,
-        ),
+            knots.clone())),
         Err(hypercurve::ExactCurveError::Blocked(blocker))
             if blocker.operation() == hypercurve::CurveOperation2::Interpolation
                 && blocker.reason() == hypercurve::UncertaintyReason::Ordering
     ));
 
-    let interpolation = NurbsCurve2::interpolate_with_parameters_and_knots(
-        1,
-        points,
-        parameters,
-        weights,
-        knots.clone(),
-        &CurveContext::APPROXIMATE_512,
-    )
+    let interpolation = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        NurbsCurve2::interpolate_with_parameters_and_knots(
+            1,
+            points,
+            parameters,
+            weights,
+            knots.clone(),
+        )
+    })
     .expect("the terminal policy must validate the symbolic interpolation endpoint");
     assert_eq!(
         interpolation.certainty,
@@ -99,29 +95,22 @@ fn explicit_interpolation_obeys_terminal_policy_and_retains_symbolic_domain() {
 #[test]
 fn chord_length_and_centripetal_interpolation_retain_exact_parameters() {
     let points = vec![p(0, 0), p(1, 0), p(5, 0), p(14, 0)];
-    let chord = NurbsCurve2::interpolate_chord_length(2, points.clone(), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let chord = NurbsCurve2::interpolate_chord_length(2, points.clone()).unwrap();
     let chord_parameters = [r(0), q(1, 14), q(5, 14), r(1)];
     for (parameter, point) in chord_parameters.iter().zip(&points) {
         assert_eq!(
-            chord
-                .point_at(parameter, &CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || chord.point_at(parameter))
                 .unwrap()
                 .into_value(),
             point.clone()
         );
     }
 
-    let centripetal =
-        NurbsCurve2::interpolate_centripetal(2, points.clone(), &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
+    let centripetal = NurbsCurve2::interpolate_centripetal(2, points.clone()).unwrap();
     let centripetal_parameters = [r(0), q(1, 6), q(1, 2), r(1)];
     for (parameter, point) in centripetal_parameters.iter().zip(points) {
         assert_eq!(
-            centripetal
-                .point_at(parameter, &CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || centripetal.point_at(parameter))
                 .unwrap()
                 .into_value(),
             point
@@ -148,17 +137,14 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
         parameters.clone(),
         weights.clone(),
         vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
 
     assert_eq!(interpolation.affine_control_points().unwrap(), controls);
     assert_eq!(interpolation.weights(), weights);
     for (parameter, point) in parameters.iter().zip(data_points) {
         assert_eq!(
-            interpolation
-                .point_at(parameter, &CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || interpolation.point_at(parameter))
                 .unwrap()
                 .into_value(),
             point
@@ -170,14 +156,8 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
 fn nonuniform_global_interpolation_derives_averaged_knots_and_replays_every_point() {
     let parameters = vec![r(2), r(3), r(5), r(8), r(12)];
     let points = vec![p(0, 0), p(1, 3), p(4, 2), p(7, 5), p(9, 0)];
-    let interpolation = NurbsCurve2::interpolate_global(
-        2,
-        points.clone(),
-        parameters.clone(),
-        &CurveContext::STRICT,
-    )
-    .unwrap()
-    .into_value();
+    let interpolation =
+        NurbsCurve2::interpolate_global(2, points.clone(), parameters.clone()).unwrap();
 
     assert_eq!(
         interpolation.knots(),
@@ -185,8 +165,7 @@ fn nonuniform_global_interpolation_derives_averaged_knots_and_replays_every_poin
     );
     for (parameter, point) in parameters.iter().zip(points) {
         assert_eq!(
-            interpolation
-                .point_at(parameter, &CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || interpolation.point_at(parameter))
                 .unwrap()
                 .into_value(),
             point
@@ -217,11 +196,9 @@ proptest! {
             })
             .collect::<Vec<_>>();
 
-        let interpolation = NurbsCurve2::interpolate_uniform(
+        let interpolation = crate::support::under(&CurveContext::STRICT, || NurbsCurve2::interpolate_uniform(
             3,
-            data_points,
-            &CurveContext::STRICT,
-        )
+            data_points))
         .unwrap()
         .into_value();
 

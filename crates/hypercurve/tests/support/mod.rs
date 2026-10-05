@@ -16,6 +16,13 @@ impl<T> Outcome<T> {
     pub(crate) fn into_value(self) -> T {
         self.value
     }
+
+    pub(crate) fn map<U>(self, map: impl FnOnce(T) -> U) -> Outcome<U> {
+        Outcome {
+            value: map(self.value),
+            certainty: self.certainty,
+        }
+    }
 }
 
 /// Runs an exact principal operation directly under STRICT, or inside

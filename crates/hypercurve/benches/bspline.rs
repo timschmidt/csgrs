@@ -72,15 +72,8 @@ fn bench_large_nurbs() {
     let started = Instant::now();
     let mut cold_checksum = 0_usize;
     for _ in 0..iterations {
-        let curve = NurbsCurve2::try_new(
-            3,
-            controls.clone(),
-            weights.clone(),
-            knots.clone(),
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+        let curve =
+            NurbsCurve2::try_new(3, controls.clone(), weights.clone(), knots.clone()).unwrap();
         cold_checksum ^= black_box(fragment_count(curve, &CurveContext::STRICT));
     }
     let elapsed = started.elapsed();
@@ -89,21 +82,15 @@ fn bench_large_nurbs() {
         elapsed / iterations
     );
 
-    let curve = NurbsCurve2::try_new(3, controls, weights, knots, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let curve = NurbsCurve2::try_new(3, controls, weights, knots).unwrap();
     let domain_end = i32::try_from(control_count - 3).unwrap();
     let parameter = q(domain_end, 2);
-    curve
-        .point_at(&parameter, &CurveContext::STRICT)
+    crate::support::under(&CurveContext::STRICT, || curve.point_at(&parameter))
         .expect("large NURBS midpoint evaluates exactly");
     let started = Instant::now();
     let mut evaluation_checksum = 0_usize;
     for _ in 0..iterations {
-        let point = curve
-            .point_at(&parameter, &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
+        let point = curve.point_at(&parameter).unwrap();
         evaluation_checksum ^=
             black_box(point.x().to_f64_lossy().unwrap_or_default().to_bits() as usize);
     }
@@ -122,12 +109,13 @@ fn main() -> CurveResult<()> {
 
     let policy = CurveContext::STRICT;
     let spline = || {
-        PolynomialSplineCurve2::try_new(
-            3,
-            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            PolynomialSplineCurve2::try_new(
+                3,
+                vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+                vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            )
+        })
         .expect("benchmark spline operation remains exact")
         .into_value()
     };
@@ -145,12 +133,13 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let cached_polynomial = PolynomialSplineCurve2::try_new(
-        3,
-        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-        &policy,
-    )
+    let cached_polynomial = crate::support::under(&policy, || {
+        PolynomialSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        )
+    })
     .expect("benchmark polynomial spline is valid")
     .into_value();
     let started = Instant::now();
@@ -185,13 +174,14 @@ fn main() -> CurveResult<()> {
     );
 
     let rational = || {
-        NurbsCurve2::try_new(
-            2,
-            vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
-            vec![r(1), r(2), r(4), r(1)],
-            vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                2,
+                vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+                vec![r(1), r(2), r(4), r(1)],
+                vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+            )
+        })
         .expect("benchmark spline operation remains exact")
         .into_value()
     };
@@ -208,13 +198,14 @@ fn main() -> CurveResult<()> {
     );
 
     let rational_cubic = || {
-        NurbsCurve2::try_new(
-            3,
-            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-            vec![r(1), r(2), r(4), r(8), r(16)],
-            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                3,
+                vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+                vec![r(1), r(2), r(4), r(8), r(16)],
+                vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            )
+        })
         .expect("benchmark spline operation remains exact")
         .into_value()
     };
@@ -231,13 +222,14 @@ fn main() -> CurveResult<()> {
     );
 
     let equal_weight_rational_cubic = || {
-        NurbsCurve2::try_new(
-            3,
-            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-            vec![r(5), r(5), r(5), r(5), r(5)],
-            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                3,
+                vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+                vec![r(5), r(5), r(5), r(5), r(5)],
+                vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            )
+        })
         .expect("benchmark spline operation remains exact")
         .into_value()
     };
@@ -265,22 +257,22 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let cached_nurbs = NurbsCurve2::try_new(
-        3,
-        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-        vec![r(1), r(2), r(4), r(8), r(16)],
-        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-        &policy,
-    )
+    let cached_nurbs = crate::support::under(&policy, || {
+        NurbsCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(4), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        )
+    })
     .expect("benchmark NURBS is valid")
     .into_value();
     let started = Instant::now();
     let mut cached_checksum = 0_usize;
     for _ in 0..iterations {
         let native = cached_nurbs
-            .native_subcurves(&CurveContext::STRICT)
-            .expect("general rational cubic remains native")
-            .into_value();
+            .native_subcurves()
+            .expect("general rational cubic remains native");
         cached_checksum ^= black_box(native.len());
     }
     let elapsed = started.elapsed();
@@ -290,15 +282,13 @@ fn main() -> CurveResult<()> {
     );
 
     let parameter = (r(1) / r(2)).expect("two is nonzero");
-    cached_nurbs
-        .point_at(&parameter, &CurveContext::STRICT)
+    crate::support::under(&CurveContext::STRICT, || cached_nurbs.point_at(&parameter))
         .expect("initial rational evaluation remains exact");
     let started = Instant::now();
     let mut evaluation_count = 0_u32;
     for _ in 0..iterations {
         black_box(
-            cached_nurbs
-                .point_at(&parameter, &CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || cached_nurbs.point_at(&parameter))
                 .expect("cached rational evaluation remains exact"),
         );
         evaluation_count += 1;
@@ -309,16 +299,18 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    cached_nurbs
-        .derivative_at(&parameter, &CurveContext::STRICT)
-        .expect("initial rational derivative remains exact");
+    crate::support::under(&CurveContext::STRICT, || {
+        cached_nurbs.derivative_at(&parameter)
+    })
+    .expect("initial rational derivative remains exact");
     let started = Instant::now();
     let mut derivative_count = 0_u32;
     for _ in 0..iterations {
         black_box(
-            cached_nurbs
-                .derivative_at(&parameter, &CurveContext::STRICT)
-                .expect("cached rational derivative remains exact"),
+            crate::support::under(&CurveContext::STRICT, || {
+                cached_nurbs.derivative_at(&parameter)
+            })
+            .expect("cached rational derivative remains exact"),
         );
         derivative_count += 1;
     }
@@ -333,9 +325,8 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         higher_derivative_count += black_box(
             cached_nurbs
-                .derivatives_at(&parameter, 3, &CurveContext::STRICT)
+                .derivatives_at(&parameter, 3)
                 .expect("cached higher rational derivatives remain exact")
-                .into_value()
                 .len(),
         );
     }
@@ -352,13 +343,14 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut periodic_construction_checksum = 0_usize;
     for _ in 0..construction_iterations {
-        let curve = NurbsCurve2::try_new_periodic(
-            2,
-            periodic_controls.clone(),
-            periodic_weights.clone(),
-            periodic_knots.clone(),
-            &policy,
-        )
+        let curve = crate::support::under(&policy, || {
+            NurbsCurve2::try_new_periodic(
+                2,
+                periodic_controls.clone(),
+                periodic_weights.clone(),
+                periodic_knots.clone(),
+            )
+        })
         .expect("periodic benchmark NURBS is valid")
         .into_value();
         periodic_construction_checksum ^=
@@ -370,26 +362,24 @@ fn main() -> CurveResult<()> {
         elapsed / construction_iterations
     );
 
-    let periodic = NurbsCurve2::try_new_periodic(
-        2,
-        periodic_controls,
-        periodic_weights,
-        periodic_knots,
-        &policy,
-    )
+    let periodic = crate::support::under(&policy, || {
+        NurbsCurve2::try_new_periodic(2, periodic_controls, periodic_weights, periodic_knots)
+    })
     .expect("periodic benchmark NURBS is valid")
     .into_value();
     let wrapped_parameter = r(4_000_000) + q(1, 2);
-    periodic
-        .point_at_wrapped(&wrapped_parameter, &CurveContext::STRICT)
-        .expect("large periodic parameter wraps exactly");
+    crate::support::under(&CurveContext::STRICT, || {
+        periodic.point_at_wrapped(&wrapped_parameter)
+    })
+    .expect("large periodic parameter wraps exactly");
     let started = Instant::now();
     let mut periodic_evaluation_count = 0_u32;
     for _ in 0..iterations {
         black_box(
-            periodic
-                .point_at_wrapped(&wrapped_parameter, &CurveContext::STRICT)
-                .expect("cached periodic evaluation remains exact"),
+            crate::support::under(&CurveContext::STRICT, || {
+                periodic.point_at_wrapped(&wrapped_parameter)
+            })
+            .expect("cached periodic evaluation remains exact"),
         );
         periodic_evaluation_count += 1;
     }
@@ -400,13 +390,14 @@ fn main() -> CurveResult<()> {
     );
 
     let refinement_source = || {
-        NurbsCurve2::try_new(
-            2,
-            vec![p(0, 0), p(2, 4), p(4, 0)],
-            vec![r(1), r(2), r(1)],
-            vec![r(0), r(0), r(0), r(2), r(2), r(2)],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                2,
+                vec![p(0, 0), p(2, 4), p(4, 0)],
+                vec![r(1), r(2), r(1)],
+                vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+            )
+        })
         .expect("refinement benchmark NURBS is valid")
         .into_value()
     };
@@ -418,8 +409,7 @@ fn main() -> CurveResult<()> {
     let mut batch_refinement_checksum = 0_usize;
     for curve in &cold_batch_inputs {
         batch_refinement_checksum ^= black_box(
-            curve
-                .insert_knots(vec![r(1), r(1)], &policy)
+            crate::support::under(&policy, || curve.insert_knots(vec![r(1), r(1)]))
                 .unwrap()
                 .into_value()
                 .homogeneous_controls()
@@ -439,15 +429,16 @@ fn main() -> CurveResult<()> {
     let mut sequential_refinement_checksum = 0_usize;
     for curve in &cold_sequential_inputs {
         sequential_refinement_checksum ^= black_box(
-            curve
-                .insert_knot(r(1), &policy)
-                .unwrap()
-                .into_value()
-                .insert_knot(r(1), &policy)
-                .unwrap()
-                .into_value()
-                .homogeneous_controls()
-                .len(),
+            crate::support::under(&policy, || {
+                crate::support::under(&policy, || curve.insert_knot(r(1)))
+                    .unwrap()
+                    .into_value()
+                    .insert_knot(r(1))
+            })
+            .unwrap()
+            .into_value()
+            .homogeneous_controls()
+            .len(),
         );
     }
     let elapsed = started.elapsed();
@@ -457,19 +448,21 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_refinement = refinement_source();
-    retained_refinement
-        .insert_knots(vec![r(1), r(1)], &policy)
-        .unwrap();
+    crate::support::under(&policy, || {
+        retained_refinement.insert_knots(vec![r(1), r(1)])
+    })
+    .unwrap();
     let started = Instant::now();
     let mut retained_refinement_checksum = 0_usize;
     for _ in 0..iterations {
         retained_refinement_checksum ^= black_box(
-            retained_refinement
-                .insert_knots(vec![r(1), r(1)], &policy)
-                .unwrap()
-                .into_value()
-                .homogeneous_controls()
-                .len(),
+            crate::support::under(&policy, || {
+                retained_refinement.insert_knots(vec![r(1), r(1)])
+            })
+            .unwrap()
+            .into_value()
+            .homogeneous_controls()
+            .len(),
         );
     }
     let elapsed = started.elapsed();
@@ -480,10 +473,11 @@ fn main() -> CurveResult<()> {
 
     let removal_knot = q(1, 2);
     let removal_source = || {
-        refinement_source()
-            .insert_knot(removal_knot.clone(), &policy)
-            .expect("removal benchmark refinement remains exact")
-            .into_value()
+        crate::support::under(&policy, || {
+            refinement_source().insert_knot(removal_knot.clone())
+        })
+        .expect("removal benchmark refinement remains exact")
+        .into_value()
     };
     let removal_inputs = (0..refinement_iterations)
         .map(|_| removal_source())
@@ -492,8 +486,7 @@ fn main() -> CurveResult<()> {
     let mut removal_checksum = 0_usize;
     for curve in &removal_inputs {
         removal_checksum ^= black_box(
-            curve
-                .remove_knot(removal_knot.clone(), &policy)
+            crate::support::under(&policy, || curve.remove_knot(removal_knot.clone()))
                 .unwrap()
                 .into_value()
                 .expect("inserted benchmark knot is removable")
@@ -508,22 +501,24 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_removal = removal_source();
-    retained_removal
-        .remove_knot(removal_knot.clone(), &policy)
-        .unwrap()
-        .into_value()
-        .expect("inserted benchmark knot is removable");
+    crate::support::under(&policy, || {
+        retained_removal.remove_knot(removal_knot.clone())
+    })
+    .unwrap()
+    .into_value()
+    .expect("inserted benchmark knot is removable");
     let started = Instant::now();
     let mut retained_removal_checksum = 0_usize;
     for _ in 0..iterations {
         retained_removal_checksum ^= black_box(
-            retained_removal
-                .remove_knot(removal_knot.clone(), &policy)
-                .unwrap()
-                .into_value()
-                .expect("retained benchmark knot is removable")
-                .homogeneous_controls()
-                .len(),
+            crate::support::under(&policy, || {
+                retained_removal.remove_knot(removal_knot.clone())
+            })
+            .unwrap()
+            .into_value()
+            .expect("retained benchmark knot is removable")
+            .homogeneous_controls()
+            .len(),
         );
     }
     let elapsed = started.elapsed();
@@ -533,13 +528,14 @@ fn main() -> CurveResult<()> {
     );
 
     let elevation_source = || {
-        NurbsCurve2::try_new(
-            3,
-            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-            vec![r(1), r(2), r(4), r(8), r(16)],
-            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            NurbsCurve2::try_new(
+                3,
+                vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+                vec![r(1), r(2), r(4), r(8), r(16)],
+                vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            )
+        })
         .expect("degree-elevation benchmark NURBS is valid")
         .into_value()
     };
@@ -547,7 +543,9 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut elevated_curve_checksum = 0_usize;
     for curve in &elevated_curve_inputs {
-        let elevated = curve.elevated_to_degree(6, &policy).unwrap().into_value();
+        let elevated = crate::support::under(&policy, || curve.elevated_to_degree(6))
+            .unwrap()
+            .into_value();
         elevated_curve_checksum ^= black_box(
             elevated.homogeneous_controls().len() + elevated.knots().len() + elevated.degree(),
         );
@@ -560,16 +558,14 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_elevated_curve = elevation_source();
-    retained_elevated_curve
-        .elevated_to_degree(6, &policy)
-        .unwrap();
+    crate::support::under(&policy, || retained_elevated_curve.elevated_to_degree(6)).unwrap();
     let started = Instant::now();
     let mut retained_elevated_curve_checksum = 0_usize;
     for _ in 0..iterations {
-        let elevated = retained_elevated_curve
-            .elevated_to_degree(6, &policy)
-            .unwrap()
-            .into_value();
+        let elevated =
+            crate::support::under(&policy, || retained_elevated_curve.elevated_to_degree(6))
+                .unwrap()
+                .into_value();
         retained_elevated_curve_checksum ^= black_box(elevated.homogeneous_controls().len());
     }
     let elapsed = started.elapsed();
@@ -585,7 +581,7 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut interpolation_checksum = 0_usize;
     for points in interpolation_inputs {
-        let curve = NurbsCurve2::interpolate_uniform(3, points, &policy)
+        let curve = crate::support::under(&policy, || NurbsCurve2::interpolate_uniform(3, points))
             .unwrap()
             .into_value();
         interpolation_checksum ^= black_box(curve.homogeneous_controls().len());
@@ -598,11 +594,9 @@ fn main() -> CurveResult<()> {
 
     let symbolic_interpolation_points = vec![p(0, 0), p(1, 0), p(3, 0), p(6, 0)];
     let symbolic_policy = CurveContext::APPROXIMATE_512;
-    let symbolic_preflight = NurbsCurve2::interpolate_centripetal(
-        2,
-        symbolic_interpolation_points.clone(),
-        &symbolic_policy,
-    )
+    let symbolic_preflight = crate::support::under(&symbolic_policy, || {
+        NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone())
+    })
     .unwrap();
     assert_eq!(
         symbolic_preflight.certainty,
@@ -612,11 +606,9 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut symbolic_interpolation_checksum = 0_usize;
     for _ in 0..symbolic_interpolation_count {
-        let curve = NurbsCurve2::interpolate_centripetal(
-            2,
-            symbolic_interpolation_points.clone(),
-            &symbolic_policy,
-        )
+        let curve = crate::support::under(&symbolic_policy, || {
+            NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone())
+        })
         .unwrap()
         .into_value();
         symbolic_interpolation_checksum ^= black_box(curve.homogeneous_controls().len());
@@ -627,9 +619,11 @@ fn main() -> CurveResult<()> {
         elapsed / symbolic_interpolation_count
     );
 
-    let retained_interpolation = NurbsCurve2::interpolate_uniform(3, interpolation_points, &policy)
-        .unwrap()
-        .into_value();
+    let retained_interpolation = crate::support::under(&policy, || {
+        NurbsCurve2::interpolate_uniform(3, interpolation_points)
+    })
+    .unwrap()
+    .into_value();
     let started = Instant::now();
     let mut retained_interpolation_checksum = 0_usize;
     for _ in 0..iterations {

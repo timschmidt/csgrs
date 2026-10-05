@@ -50,6 +50,21 @@ impl PolynomialSplineCurve2 {
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_new_with_policy(
+            degree,
+            control_points,
+            knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_new`] under an explicit predicate policy.
+    pub(crate) fn try_new_with_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
@@ -77,6 +92,21 @@ impl PolynomialSplineCurve2 {
     /// The outcome covers periodic expansion, carrier validation, and seam
     /// certification under the selected policy.
     pub fn try_new_periodic(
+        degree: usize,
+        control_points: Vec<Point2>,
+        period_knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_new_periodic_with_policy(
+            degree,
+            control_points,
+            period_knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_new_periodic`] under an explicit predicate policy.
+    pub(crate) fn try_new_periodic_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
@@ -237,7 +267,13 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Inserts one exact knot without changing the polynomial spline image.
-    pub fn insert_knot(
+    pub fn insert_knot(&self, knot: Real) -> crate::ExactCurveResult<Self> {
+        self.insert_knot_with_policy(knot, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::insert_knot`] under an explicit predicate policy.
+    pub(crate) fn insert_knot_with_policy(
         &self,
         knot: Real,
         policy: &CurveContext,
@@ -253,7 +289,7 @@ impl PolynomialSplineCurve2 {
         let refined = self
             .as_unit_weight_nurbs(policy)
             .map_err(|error| remap_spline_family_operation(error, CurveOperation2::KnotInsertion))?
-            .insert_knots_with_policy(vec![knot], policy)
+            .insert_knots_raw(vec![knot], policy)
             .map_err(|error| {
                 remap_spline_family_operation(error, CurveOperation2::KnotInsertion)
             })?;
@@ -268,7 +304,13 @@ impl PolynomialSplineCurve2 {
     /// The returned [`CurveOutcome`] covers the unit-weight NURBS split and
     /// exact polynomial-carrier reconstruction.
     #[inline(always)]
-    pub fn split_at(
+    pub fn split_at(&self, parameter: Real) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::split_at`] under an explicit predicate policy.
+    pub(crate) fn split_at_with_policy(
         &self,
         parameter: Real,
         policy: &CurveContext,
@@ -296,7 +338,13 @@ impl PolynomialSplineCurve2 {
     /// The returned [`CurveOutcome`] records any `APPROXIMATE_512` terminal
     /// consumed throughout the complete reconstruction.
     #[inline(always)]
-    pub fn subcurve(
+    pub fn subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
+        self.subcurve_with_policy(start, end, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::subcurve`] under an explicit predicate policy.
+    pub(crate) fn subcurve_with_policy(
         &self,
         start: Real,
         end: Real,
@@ -331,7 +379,13 @@ impl PolynomialSplineCurve2 {
     /// piecewise-Bézier B-spline form over the requested source interval.
     /// The returned [`CurveOutcome`] covers the complete exact materialization.
     #[inline(always)]
-    pub fn clamped_subcurve(
+    pub fn clamped_subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
+        self.clamped_subcurve_with_policy(start, end, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::clamped_subcurve`] under an explicit predicate policy.
+    pub(crate) fn clamped_subcurve_with_policy(
         &self,
         start: Real,
         end: Real,
@@ -359,7 +413,16 @@ impl PolynomialSplineCurve2 {
     ///
     /// The control net is reversed and the knot vector is reflected through
     /// the authored domain midpoint, preserving both the domain and source.
-    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+    pub fn reversed(&self) -> crate::ExactCurveResult<Self> {
+        self.reversed_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::reversed`] under an explicit predicate policy.
+    pub(crate) fn reversed_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
     }
 
@@ -385,7 +448,13 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Applies an exact planar similarity while retaining periodicity and source.
-    pub fn transform_similarity(
+    pub fn transform_similarity(&self, transform: &Similarity2) -> crate::ExactCurveResult<Self> {
+        self.transform_similarity_with_policy(transform, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::transform_similarity`] under an explicit predicate policy.
+    pub(crate) fn transform_similarity_with_policy(
         &self,
         transform: &Similarity2,
         policy: &CurveContext,
@@ -449,12 +518,18 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Evaluates the spline at an exact source-domain parameter.
-    pub fn point_at(
+    pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.point_at_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit knot-boundary side policy.
@@ -462,14 +537,24 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Point2> {
+        self.point_at_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_side`] under an explicit predicate policy.
+    pub(crate) fn point_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.point_at_side_with_policy(parameter, side, attempt)
+            self.point_at_side_raw(parameter, side, attempt)
         })
     }
 
-    pub(crate) fn point_at_side_with_policy(
+    pub(crate) fn point_at_side_raw(
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
@@ -493,12 +578,18 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Evaluates a periodic spline at any exactly wrappable parameter.
-    pub fn point_at_wrapped(
+    pub fn point_at_wrapped(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_wrapped_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn point_at_wrapped_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.point_at_wrapped_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates a periodic spline with explicit side selection at wrapped seams.
@@ -506,14 +597,24 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Point2> {
+        self.point_at_wrapped_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn point_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.point_at_wrapped_side_with_policy(parameter, side, attempt)
+            self.point_at_wrapped_side_raw(parameter, side, attempt)
         })
     }
 
-    pub(crate) fn point_at_wrapped_side_with_policy(
+    pub(crate) fn point_at_wrapped_side_raw(
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
@@ -529,7 +630,7 @@ impl PolynomialSplineCurve2 {
             CurveFamily2::PolynomialBSpline,
             policy,
         )?;
-        self.point_at_side_with_policy(&wrapped, side, policy)
+        self.point_at_side_raw(&wrapped, side, policy)
     }
 
     fn point_at_canonical_side(
@@ -575,12 +676,18 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Evaluates the exact first derivative in the authored knot parameter.
-    pub fn derivative_at(
+    pub fn derivative_at(&self, parameter: &Real) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.derivative_at_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
@@ -588,11 +695,20 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_side`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
         resolve_certified_operation(policy, |attempt| {
-            let mut derivatives =
-                self.derivatives_at_side_with_policy(parameter, 1, side, attempt)?;
+            let mut derivatives = self.derivatives_at_side_raw(parameter, 1, side, attempt)?;
             Ok(derivatives.pop().expect("one derivative requested"))
         })
     }
@@ -601,9 +717,22 @@ impl PolynomialSplineCurve2 {
     pub fn derivative_at_wrapped(
         &self,
         parameter: &Real,
+    ) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_wrapped_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_wrapped_with_policy(
+        &self,
+        parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.derivative_at_wrapped_side_with_policy(
+            parameter,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -611,11 +740,25 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_wrapped_side_with_policy(
+            parameter,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
         resolve_certified_operation(policy, |attempt| {
             let mut derivatives =
-                self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
+                self.derivatives_at_wrapped_side_raw(parameter, 1, side, attempt)?;
             Ok(derivatives.pop().expect("one derivative requested"))
         })
     }
@@ -625,9 +768,24 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_with_policy(parameter, max_order, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
+        self.derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates exact derivatives with explicit knot-boundary side policy.
@@ -636,14 +794,30 @@ impl PolynomialSplineCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_side`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivatives_at_side_with_policy(parameter, max_order, side, attempt)
+            self.derivatives_at_side_raw(parameter, max_order, side, attempt)
         })
     }
 
-    pub(crate) fn derivatives_at_side_with_policy(
+    pub(crate) fn derivatives_at_side_raw(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -680,9 +854,23 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_wrapped_with_policy(
+            parameter,
+            max_order,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_wrapped_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.derivatives_at_wrapped_side(
+        self.derivatives_at_wrapped_side_with_policy(
             parameter,
             max_order,
             CurveParameterSide2::Automatic,
@@ -696,14 +884,30 @@ impl PolynomialSplineCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_wrapped_side_with_policy(
+            parameter,
+            max_order,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)
+            self.derivatives_at_wrapped_side_raw(parameter, max_order, side, attempt)
         })
     }
 
-    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+    pub(crate) fn derivatives_at_wrapped_side_raw(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -720,7 +924,7 @@ impl PolynomialSplineCurve2 {
             CurveFamily2::PolynomialBSpline,
             policy,
         )?;
-        self.derivatives_at_side_with_policy(&wrapped, max_order, side, policy)
+        self.derivatives_at_side_raw(&wrapped, max_order, side, policy)
     }
 
     fn derivatives_at_canonical_side(

@@ -86,15 +86,16 @@ fuzz_target!(|data: &[u8]| {
     // are the identity and every off-diagonal contact survives.
     let zero = Real::zero;
     let one = Real::one;
-    let refined = NurbsCurve2::try_new(
-        3,
-        controls,
-        vec![one(); 4],
-        vec![zero(), zero(), zero(), zero(), one(), one(), one(), one()],
-        &policy,
-    )
-    .and_then(|nurbs| nurbs.into_value().insert_knot(split.clone(), &policy))
-    .map(|nurbs| Curve2::from(nurbs.into_value()));
+    let refined = support::under(&policy, || {
+        NurbsCurve2::try_new(
+            3,
+            controls,
+            vec![one(); 4],
+            vec![zero(), zero(), zero(), zero(), one(), one(), one(), one()],
+        )
+    })
+    .and_then(|nurbs| support::under(&policy, || nurbs.insert_knot(split.clone())))
+    .map(Curve2::from);
     if let Ok(refined) = refined
         && let Some(result) =
             support::certified_under(&policy, || refined.self_intersections()).and_then(complete)

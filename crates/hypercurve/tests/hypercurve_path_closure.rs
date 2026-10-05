@@ -43,12 +43,16 @@ fn boundary_admission_rejects_disconnected_spline_spans() {
             .into_iter()
             .map(Real::from)
             .collect::<Vec<_>>();
-        let spline = PolynomialSplineCurve2::try_new(1, controls.clone(), knots.clone(), &policy)
-            .unwrap()
-            .value;
-        let nurbs = NurbsCurve2::try_new(1, controls, vec![Real::one(); 4], knots, &policy)
-            .unwrap()
-            .value;
+        let spline = crate::support::under(&policy, || {
+            PolynomialSplineCurve2::try_new(1, controls.clone(), knots.clone())
+        })
+        .unwrap()
+        .value;
+        let nurbs = crate::support::under(&policy, || {
+            NurbsCurve2::try_new(1, controls, vec![Real::one(); 4], knots)
+        })
+        .unwrap()
+        .value;
         for curve in [Curve2::from(spline), Curve2::from(nurbs)] {
             let path = CurvePath2::try_new(vec![curve]).unwrap();
             assert_same_point(&path.start(), &path.end(), &policy);
@@ -640,26 +644,31 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
         .unwrap() else {
             panic!("the elevated homogeneous semicircle must construct");
         };
-        let nurbs = hypercurve::NurbsCurve2::from_homogeneous_controls(
-            2,
-            curve.homogeneous_controls().to_vec(),
-            vec![
-                Real::zero(),
-                Real::zero(),
-                Real::zero(),
-                Real::one(),
-                Real::one(),
-                Real::one(),
-            ],
-            hypercurve::SplinePeriodicity2::NonPeriodic,
-            &policy,
-        )
+        let nurbs = crate::support::under(&policy, || {
+            hypercurve::NurbsCurve2::from_homogeneous_controls(
+                2,
+                curve.homogeneous_controls().to_vec(),
+                vec![
+                    Real::zero(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                ],
+                hypercurve::SplinePeriodicity2::NonPeriodic,
+            )
+        })
         .unwrap()
         .into_value();
         for curve in [
             Curve2::from(curve),
             Curve2::from(elevated),
-            Curve2::from(nurbs.elevated_to_degree(12, &policy).unwrap().into_value()),
+            Curve2::from(
+                crate::support::under(&policy, || nurbs.elevated_to_degree(12))
+                    .unwrap()
+                    .into_value(),
+            ),
             Curve2::from(nurbs),
         ] {
             let material = admit(

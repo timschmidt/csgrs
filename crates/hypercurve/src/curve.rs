@@ -634,7 +634,7 @@ impl Curve2 {
         knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        PolynomialSplineCurve2::try_new(degree, control_points, knots, policy)
+        PolynomialSplineCurve2::try_new_with_policy(degree, control_points, knots, policy)
             .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::PolynomialBSpline(curve))))
     }
 
@@ -663,7 +663,7 @@ impl Curve2 {
         knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        NurbsCurve2::try_new(degree, control_points, weights, knots, policy)
+        NurbsCurve2::try_new_with_policy(degree, control_points, weights, knots, policy)
             .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
     }
 
@@ -689,8 +689,13 @@ impl Curve2 {
         period_knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        PolynomialSplineCurve2::try_new_periodic(degree, control_points, period_knots, policy)
-            .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::PolynomialBSpline(curve))))
+        PolynomialSplineCurve2::try_new_periodic_with_policy(
+            degree,
+            control_points,
+            period_knots,
+            policy,
+        )
+        .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::PolynomialBSpline(curve))))
     }
 
     /// Constructs a periodic NURBS from one period under `policy`.
@@ -718,8 +723,14 @@ impl Curve2 {
         period_knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        NurbsCurve2::try_new_periodic(degree, control_points, weights, period_knots, policy)
-            .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
+        NurbsCurve2::try_new_periodic_with_policy(
+            degree,
+            control_points,
+            weights,
+            period_knots,
+            policy,
+        )
+        .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
     }
 
     /// Returns a directly stored native representation of this curve image.
@@ -1503,11 +1514,9 @@ impl Curve2 {
     ) -> ExactCurveResult<Point2> {
         match self.geometry() {
             Some(CurveGeometry2::PolynomialBSpline(curve)) => {
-                curve.point_at_side_with_policy(parameter, side, policy)
+                curve.point_at_side_raw(parameter, side, policy)
             }
-            Some(CurveGeometry2::Nurbs(curve)) => {
-                curve.point_at_side_with_policy(parameter, side, policy)
-            }
+            Some(CurveGeometry2::Nurbs(curve)) => curve.point_at_side_raw(parameter, side, policy),
             Some(geometry) => {
                 let location = validate_unit_parameter(parameter, geometry.family(), policy)?;
                 if let Some(endpoint) = retained_native_endpoint(geometry, location, policy) {
@@ -1608,10 +1617,10 @@ impl Curve2 {
     ) -> ExactCurveResult<Point2> {
         match self.geometry() {
             Some(CurveGeometry2::PolynomialBSpline(curve)) => {
-                curve.point_at_wrapped_side_with_policy(parameter, side, policy)
+                curve.point_at_wrapped_side_raw(parameter, side, policy)
             }
             Some(CurveGeometry2::Nurbs(curve)) => {
-                curve.point_at_wrapped_side_with_policy(parameter, side, policy)
+                curve.point_at_wrapped_side_raw(parameter, side, policy)
             }
             _ => Err(ExactCurveError::invalid(
                 CurveOperation2::Evaluation,
@@ -1904,10 +1913,10 @@ impl Curve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.geometry() {
             Some(CurveGeometry2::PolynomialBSpline(curve)) => {
-                return curve.derivatives_at_side_with_policy(parameter, max_order, side, policy);
+                return curve.derivatives_at_side_raw(parameter, max_order, side, policy);
             }
             Some(CurveGeometry2::Nurbs(curve)) => {
-                return curve.derivatives_at_side_with_policy(parameter, max_order, side, policy);
+                return curve.derivatives_at_side_raw(parameter, max_order, side, policy);
             }
             _ => {}
         }
@@ -2006,10 +2015,10 @@ impl Curve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.geometry() {
             Some(CurveGeometry2::PolynomialBSpline(curve)) => {
-                curve.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, policy)
+                curve.derivatives_at_wrapped_side_raw(parameter, max_order, side, policy)
             }
             Some(CurveGeometry2::Nurbs(curve)) => {
-                curve.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, policy)
+                curve.derivatives_at_wrapped_side_raw(parameter, max_order, side, policy)
             }
             _ => Err(ExactCurveError::invalid(
                 CurveOperation2::Evaluation,
@@ -3605,7 +3614,7 @@ fn promote_native_bezier_fragments(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let subcurves = match value.native_subcurves_with_policy(policy)? {
+            let subcurves = match value.native_subcurves_raw(policy)? {
                 Classification::Decided(subcurves) => subcurves,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

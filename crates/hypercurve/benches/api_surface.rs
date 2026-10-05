@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -76,13 +78,7 @@ fn main() -> CurveResult<()> {
     });
 
     measure("nurbs_global_interpolation", 10_000, || {
-        let curve = NurbsCurve2::interpolate_uniform(
-            2,
-            vec![p(0, 0), p(2, 2), p(4, 0)],
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+        let curve = NurbsCurve2::interpolate_uniform(2, vec![p(0, 0), p(2, 2), p(4, 0)]).unwrap();
         curve.homogeneous_controls().len()
     });
 

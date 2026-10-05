@@ -880,7 +880,7 @@ mod tests {
             ),
         );
         let curve = Curve2::from(
-            crate::PolynomialSplineCurve2::try_new(
+            crate::PolynomialSplineCurve2::try_new_with_policy(
                 2,
                 vec![
                     Point2::from_values(0, 0),

@@ -19,7 +19,7 @@ fn q(numerator: i32, denominator: i32) -> Real {
 }
 
 fn two_span_cubic() -> PolynomialSplineCurve2 {
-    PolynomialSplineCurve2::try_new(
+    PolynomialSplineCurve2::try_new_with_policy(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
@@ -32,7 +32,7 @@ fn two_span_cubic() -> PolynomialSplineCurve2 {
 fn terminal_polynomial_spline() -> (PolynomialSplineCurve2, Real) {
     let half = q(1, 2);
     let symbolic_half = &half + support::terminally_unresolved_zero();
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
         vec![
@@ -60,7 +60,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
     let knots = vec![r(0), r(0), symbolic_end.clone(), r(1)];
 
     assert!(matches!(
-        PolynomialSplineCurve2::try_new(
+        PolynomialSplineCurve2::try_new_with_policy(
             1,
             controls.clone(),
             knots.clone(),
@@ -71,9 +71,13 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
-    let constructed =
-        PolynomialSplineCurve2::try_new(1, controls, knots.clone(), &CurveContext::APPROXIMATE_512)
-            .expect("the terminal policy must validate the symbolic clamped knot");
+    let constructed = PolynomialSplineCurve2::try_new_with_policy(
+        1,
+        controls,
+        knots.clone(),
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("the terminal policy must validate the symbolic clamped knot");
     assert_eq!(
         constructed.certainty,
         crate::CurveCertainty::Approximate512Consumed
@@ -83,7 +87,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
 
     let half = q(1, 2);
     let symbolic_half = &half + undecidable_zero;
-    let evaluation_curve = PolynomialSplineCurve2::try_new(
+    let evaluation_curve = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
         vec![
@@ -132,13 +136,13 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
     assert_eq!(spans.value.spans().len(), 2);
 
     assert!(matches!(
-        evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
+        evaluation_curve.point_at_with_policy(&symbolic_half, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = evaluation_curve
-        .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
+        .point_at_with_policy(&symbolic_half, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must evaluate the exact symbolic knot");
     assert_eq!(
         point.certainty,
@@ -146,7 +150,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
     );
     assert_eq!(point.value, p(2, 0));
     let derivatives = evaluation_curve
-        .derivatives_at_side(
+        .derivatives_at_side_with_policy(
             &symbolic_half,
             2,
             CurveParameterSide2::Left,
@@ -186,14 +190,14 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     let parameter = r(1) + undecidable_zero;
 
     assert!(matches!(
-        curve.split_at(parameter.clone(), &CurveContext::STRICT),
+        curve.split_at_with_policy(parameter.clone(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Subdivision
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
     let split = curve
-        .split_at(parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .split_at_with_policy(parameter.clone(), &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must reach the unit-weight NURBS kernel");
     assert_eq!(
         split.certainty,
@@ -205,7 +209,7 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     assert_eq!(left.end(), right.start());
 
     let clamped = curve
-        .clamped_subcurve(parameter.clone(), r(2), &CurveContext::APPROXIMATE_512)
+        .clamped_subcurve_with_policy(parameter.clone(), r(2), &CurveContext::APPROXIMATE_512)
         .expect("terminal policy must reach clamped polynomial reconstruction");
     assert_eq!(
         clamped.certainty,
@@ -214,7 +218,7 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     assert_eq!(clamped.value.parameter_domain(), (&parameter, &r(2)));
 
     assert!(matches!(
-        curve.subcurve(parameter, r(2), &CurveContext::STRICT),
+        curve.subcurve_with_policy(parameter, r(2), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Subdivision
                 && blocker.reason() == crate::UncertaintyReason::Ordering
@@ -227,7 +231,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
     let knot = q(3, 4);
 
     let strict_insertion = curve
-        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .insert_knot_with_policy(knot.clone(), &CurveContext::STRICT)
         .unwrap_err();
     assert!(matches!(
         strict_insertion,
@@ -236,7 +240,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
                 && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
     ));
     let inserted = curve
-        .insert_knot(knot, &CurveContext::APPROXIMATE_512)
+        .insert_knot_with_policy(knot, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must refine the polynomial carrier");
     assert_eq!(
         inserted.certainty,
@@ -252,19 +256,19 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
     );
     assert_eq!(
         curve
-            .insert_knot(q(3, 4), &CurveContext::STRICT)
+            .insert_knot_with_policy(q(3, 4), &CurveContext::STRICT)
             .unwrap_err(),
         strict_insertion
     );
 
     assert!(matches!(
-        curve.reversed(&CurveContext::STRICT),
+        curve.reversed_with_policy(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Reversal
                 && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
     ));
     let reversed = curve
-        .reversed(&CurveContext::APPROXIMATE_512)
+        .reversed_with_policy(&CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must validate reflected polynomial knots");
     assert_eq!(
         reversed.certainty,
@@ -283,7 +287,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
     )
     .unwrap();
     assert!(matches!(
-        curve.transform_similarity(&transform, &CurveContext::STRICT),
+        curve.transform_similarity_with_policy(&transform, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Transformation
                 && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
@@ -304,7 +308,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
 
 #[test]
 fn linear_polynomial_spline_evaluates_elevated_spans() {
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(2, 2), p(4, 0)],
         vec![r(0), r(0), r(1), r(2), r(2)],
@@ -318,14 +322,14 @@ fn linear_polynomial_spline_evaluates_elevated_spans() {
     assert_eq!(curve.degree(), 1);
     assert_eq!(
         curve
-            .point_at(&half, &CurveContext::STRICT)
+            .point_at_with_policy(&half, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(1, 1)
     );
     assert_eq!(
         curve
-            .point_at(&three_halves, &CurveContext::STRICT)
+            .point_at_with_policy(&three_halves, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(3, 1)
@@ -371,7 +375,7 @@ fn polynomial_spline_clones_share_one_decomposition() {
 }
 #[test]
 fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         4,
         vec![p(0, 0), p(1, 4), p(2, 0), p(3, 4), p(4, 0)],
         [vec![r(0); 5], vec![r(1); 5]].concat(),
@@ -383,7 +387,7 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
     assert_eq!(curve.degree(), 4);
     assert_eq!(
         curve
-            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
+            .point_at_with_policy(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(2, 2)
@@ -402,12 +406,12 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
 
     let clone = curve.clone();
     let derivatives = clone
-        .derivatives_at(&(r(1) / r(2)).unwrap(), 4, &CurveContext::STRICT)
+        .derivatives_at_with_policy(&(r(1) / r(2)).unwrap(), 4, &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(
         curve
-            .derivatives_at(&(r(1) / r(2)).unwrap(), 4, &CurveContext::STRICT)
+            .derivatives_at_with_policy(&(r(1) / r(2)).unwrap(), 4, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         derivatives
@@ -423,7 +427,7 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
 
 #[test]
 fn unclamped_polynomial_spline_retains_exact_active_domain_endpoints() {
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         (0..=6).map(r).collect(),
@@ -437,29 +441,32 @@ fn unclamped_polynomial_spline_retains_exact_active_domain_endpoints() {
     assert_eq!(curve.end(), &Point2::new(r(5), r(2)));
     assert_eq!(
         curve
-            .point_at(&r(2), &CurveContext::STRICT)
+            .point_at_with_policy(&r(2), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve.start().clone()
     );
     assert_eq!(
         curve
-            .point_at(&r(4), &CurveContext::STRICT)
+            .point_at_with_policy(&r(4), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve.end().clone()
     );
 
-    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = curve
+        .reversed_with_policy(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
         reversed
-            .point_at(&r(3), &CurveContext::STRICT)
+            .point_at_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&r(3), &CurveContext::STRICT)
+            .point_at_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -467,7 +474,7 @@ fn unclamped_polynomial_spline_retains_exact_active_domain_endpoints() {
 
 #[test]
 fn polynomial_spline_corner_requires_explicit_derivative_side() {
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         1,
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(0), r(0), r(1), r(2), r(2)],
@@ -477,12 +484,12 @@ fn polynomial_spline_corner_requires_explicit_derivative_side() {
     .into_value();
 
     assert!(matches!(
-        curve.derivative_at(&r(1), &CurveContext::STRICT),
+        curve.derivative_at_with_policy(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     let left = curve
-        .derivative_at_side(
+        .derivative_at_side_with_policy(
             &r(1),
             crate::CurveParameterSide2::Left,
             &CurveContext::STRICT,
@@ -490,7 +497,7 @@ fn polynomial_spline_corner_requires_explicit_derivative_side() {
         .unwrap()
         .into_value();
     let right = curve
-        .derivative_at_side(
+        .derivative_at_side_with_policy(
             &r(1),
             crate::CurveParameterSide2::Right,
             &CurveContext::STRICT,
@@ -503,7 +510,7 @@ fn polynomial_spline_corner_requires_explicit_derivative_side() {
 
 #[test]
 fn discontinuous_polynomial_knot_requires_explicit_point_side() {
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)],
         vec![r(0), r(0), r(0), r(1), r(1), r(1), r(2), r(2), r(2)],
@@ -513,13 +520,13 @@ fn discontinuous_polynomial_knot_requires_explicit_point_side() {
     .into_value();
 
     assert!(matches!(
-        curve.point_at(&r(1), &CurveContext::STRICT),
+        curve.point_at_with_policy(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     assert_eq!(
         curve
-            .point_at_side(
+            .point_at_side_with_policy(
                 &r(1),
                 crate::CurveParameterSide2::Left,
                 &CurveContext::STRICT
@@ -530,7 +537,7 @@ fn discontinuous_polynomial_knot_requires_explicit_point_side() {
     );
     assert_eq!(
         curve
-            .point_at_side(
+            .point_at_side_with_policy(
                 &r(1),
                 crate::CurveParameterSide2::Right,
                 &CurveContext::STRICT
@@ -555,7 +562,7 @@ fn polynomial_spline_interior_knot_uses_retained_span_boundary() {
 
     assert_eq!(
         curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         expected
@@ -565,24 +572,27 @@ fn polynomial_spline_interior_knot_uses_retained_span_boundary() {
 #[test]
 fn polynomial_spline_reversal_preserves_domain_source_and_image() {
     let curve = two_span_cubic();
-    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = curve
+        .reversed_with_policy(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(reversed.parameter_domain(), curve.parameter_domain());
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
         reversed
-            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
+            .point_at_with_policy(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at(&(r(3) / r(2)).unwrap(), &CurveContext::STRICT)
+            .point_at_with_policy(&(r(3) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         reversed
-            .reversed(&CurveContext::STRICT)
+            .reversed_with_policy(&CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
@@ -591,7 +601,7 @@ fn polynomial_spline_reversal_preserves_domain_source_and_image() {
 
 #[test]
 fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
-    let curve = PolynomialSplineCurve2::try_new(
+    let curve = PolynomialSplineCurve2::try_new_with_policy(
         2,
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
@@ -610,14 +620,14 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
         .iter()
         .map(|parameter| {
             curve
-                .point_at(parameter, &CurveContext::STRICT)
+                .point_at_with_policy(parameter, &CurveContext::STRICT)
                 .unwrap()
                 .into_value()
         })
         .collect::<Vec<_>>();
 
     let inserted = curve
-        .insert_knot(r(1), &CurveContext::STRICT)
+        .insert_knot_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(
@@ -628,7 +638,7 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
         samples
             .iter()
             .map(|parameter| inserted
-                .point_at(parameter, &CurveContext::STRICT)
+                .point_at_with_policy(parameter, &CurveContext::STRICT)
                 .unwrap()
                 .into_value())
             .collect::<Vec<_>>(),
@@ -636,7 +646,7 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
     );
 
     let (left, right) = curve
-        .split_at(r(1), &CurveContext::STRICT)
+        .split_at_with_policy(r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
@@ -644,14 +654,14 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
     assert_eq!(
         left.end(),
         &curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(right.start(), left.end());
 
     let middle = curve
-        .subcurve(
+        .subcurve_with_policy(
             (r(1) / r(2)).unwrap(),
             (r(3) / r(2)).unwrap(),
             &CurveContext::STRICT,
@@ -661,14 +671,14 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
     assert_eq!(
         middle.start(),
         &curve
-            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
+            .point_at_with_policy(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         middle.end(),
         &curve
-            .point_at(&(r(3) / r(2)).unwrap(), &CurveContext::STRICT)
+            .point_at_with_policy(&(r(3) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -676,7 +686,7 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
 
 #[test]
 fn invalid_polynomial_spline_evidence_context_and_source() {
-    let error = PolynomialSplineCurve2::try_new(
+    let error = PolynomialSplineCurve2::try_new_with_policy(
         4,
         vec![p(0, 0), p(1, 1), p(2, 1), p(3, 1), p(4, 0)],
         vec![r(0); 10],
@@ -698,7 +708,9 @@ fn invalid_polynomial_spline_evidence_context_and_source() {
 #[test]
 fn polynomial_spline_out_of_domain_evaluation_is_contextual() {
     let curve = two_span_cubic();
-    let error = curve.point_at(&r(3), &CurveContext::STRICT).unwrap_err();
+    let error = curve
+        .point_at_with_policy(&r(3), &CurveContext::STRICT)
+        .unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
     assert_eq!(error.family(), Some(CurveFamily2::PolynomialBSpline));
@@ -713,7 +725,7 @@ fn polynomial_spline_out_of_domain_evaluation_is_contextual() {
 
 #[test]
 fn periodic_polynomial_spline_wraps_and_reuses_exact_native_evaluation() {
-    let curve = PolynomialSplineCurve2::try_new_periodic(
+    let curve = PolynomialSplineCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         (0..=4).map(r).collect(),
@@ -730,25 +742,25 @@ fn periodic_polynomial_spline_wraps_and_reuses_exact_native_evaluation() {
     assert_eq!(curve.start(), curve.end());
     assert_eq!(
         curve
-            .point_at_wrapped(&r(-1), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(-1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(0, 1)
     );
     assert_eq!(
         curve
-            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         p(2, 1)
     );
     assert_eq!(
         curve
-            .derivatives_at_wrapped(&q(11, 2), 4, &CurveContext::STRICT)
+            .derivatives_at_wrapped_with_policy(&q(11, 2), 4, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .derivatives_at(&q(3, 2), 4, &CurveContext::STRICT)
+            .derivatives_at_with_policy(&q(3, 2), 4, &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -756,7 +768,7 @@ fn periodic_polynomial_spline_wraps_and_reuses_exact_native_evaluation() {
 
 #[test]
 fn periodic_polynomial_wrapping_obeys_terminal_policy() {
-    let curve = PolynomialSplineCurve2::try_new_periodic(
+    let curve = PolynomialSplineCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         (0..=4).map(r).collect(),
@@ -768,13 +780,13 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
     let wrapped_seam = r(4) + undecidable_zero;
 
     assert!(matches!(
-        curve.point_at_wrapped(&wrapped_seam, &CurveContext::STRICT),
+        curve.point_at_wrapped_with_policy(&wrapped_seam, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = curve
-        .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
+        .point_at_wrapped_with_policy(&wrapped_seam, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must resolve an undecidable periodic seam");
     assert_eq!(
         point.certainty,
@@ -783,7 +795,7 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
     assert_eq!(point.value, curve.start().clone());
 
     let derivative = curve
-        .derivative_at_wrapped_side(
+        .derivative_at_wrapped_side_with_policy(
             &wrapped_seam,
             CurveParameterSide2::Right,
             &CurveContext::APPROXIMATE_512,
@@ -796,7 +808,11 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
     assert_eq!(
         derivative.value,
         curve
-            .derivative_at_side(&r(0), CurveParameterSide2::Right, &CurveContext::STRICT,)
+            .derivative_at_side_with_policy(
+                &r(0),
+                CurveParameterSide2::Right,
+                &CurveContext::STRICT,
+            )
             .unwrap()
             .into_value()
     );
@@ -817,7 +833,7 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
 
 #[test]
 fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
-    let curve = PolynomialSplineCurve2::try_new_periodic(
+    let curve = PolynomialSplineCurve2::try_new_periodic_with_policy(
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         (0..=4).map(r).collect(),
@@ -827,43 +843,46 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
     .into_value();
 
     let inserted = curve
-        .insert_knot(q(1, 2), &CurveContext::STRICT)
+        .insert_knot_with_policy(q(1, 2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(inserted.period(), curve.period());
     assert_eq!(
         inserted
-            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(5), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
 
-    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = curve
+        .reversed_with_policy(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(reversed.period(), curve.period());
     assert_eq!(
         reversed
-            .point_at_wrapped(&r(1), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         curve
-            .point_at_wrapped(&r(3), &CurveContext::STRICT)
+            .point_at_wrapped_with_policy(&r(3), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
 
     let (left, right) = curve
-        .split_at(r(2), &CurveContext::STRICT)
+        .split_at_with_policy(r(2), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(left.period(), None);
     assert_eq!(right.period(), None);
 
     let clamped = curve
-        .clamped_subcurve(r(0), r(1), &CurveContext::STRICT)
+        .clamped_subcurve_with_policy(r(0), r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(clamped.period(), None);
@@ -872,14 +891,14 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
     assert_eq!(
         clamped.start(),
         &curve
-            .point_at(&r(0), &CurveContext::STRICT)
+            .point_at_with_policy(&r(0), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
     assert_eq!(
         clamped.end(),
         &curve
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at_with_policy(&r(1), &CurveContext::STRICT)
             .unwrap()
             .into_value()
     );
@@ -887,7 +906,7 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
 
 #[test]
 fn periodic_polynomial_spline_evidence_layout_and_wrapping_errors() {
-    let invalid = PolynomialSplineCurve2::try_new_periodic(
+    let invalid = PolynomialSplineCurve2::try_new_periodic_with_policy(
         3,
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(0), r(1), r(2), r(3)],
@@ -904,7 +923,7 @@ fn periodic_polynomial_spline_evidence_layout_and_wrapping_errors() {
 
     let open = two_span_cubic();
     let error = open
-        .point_at_wrapped(&r(3), &CurveContext::STRICT)
+        .point_at_wrapped_with_policy(&r(3), &CurveContext::STRICT)
         .unwrap_err();
     assert!(matches!(
         error,

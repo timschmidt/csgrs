@@ -70,10 +70,8 @@ fn exact_extension_round_trips_infinite_homogeneous_controls() {
             Real::one(),
         ],
         hypercurve::SplinePeriodicity2::NonPeriodic,
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     for source in [Curve2::from(curve), Curve2::from(nurbs)] {
         let document = export_svg_document(&single_curve_geometry(source.clone())).unwrap();
         let imported = single_imported_curve(&import_svg_document(&document).unwrap());
@@ -337,23 +335,25 @@ fn exact_extension_round_trips_every_curve_family() {
             .unwrap(),
         ),
         Curve2::from(
-            PolynomialSplineCurve2::try_new(
-                2,
-                vec![point(0, 0), point(1, 2), point(3, 0)],
-                vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
-                &CurveContext::STRICT,
-            )
+            crate::support::under(&CurveContext::STRICT, || {
+                PolynomialSplineCurve2::try_new(
+                    2,
+                    vec![point(0, 0), point(1, 2), point(3, 0)],
+                    vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
+                )
+            })
             .unwrap()
             .into_value(),
         ),
         Curve2::from(
-            NurbsCurve2::try_new(
-                2,
-                vec![point(0, 0), point(1, 2), point(3, 0)],
-                vec![Real::one(), one_third, Real::one()],
-                vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
-                &CurveContext::STRICT,
-            )
+            crate::support::under(&CurveContext::STRICT, || {
+                NurbsCurve2::try_new(
+                    2,
+                    vec![point(0, 0), point(1, 2), point(3, 0)],
+                    vec![Real::one(), one_third, Real::one()],
+                    vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
+                )
+            })
             .unwrap()
             .into_value(),
         ),
