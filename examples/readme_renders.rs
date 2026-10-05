@@ -9,8 +9,8 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hypercurve::{
-    CurveContext, CurvePath2, CurveRegion2, CurveString2, FiniteProjectionOptions,
-    FiniteRegionProfile2, Point2,
+    CurvePath2, CurveRegion2, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2,
+    Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use image::{GrayImage, Luma, Rgba, RgbaImage};
@@ -515,9 +515,8 @@ fn render_curve(name: &str, region: &CurveRegion2) {
 
     for profile in &profiles {
         for triangle in profile
-            .triangulate(&CurveContext::STRICT)
+            .triangulate()
             .expect("triangulate exact CurveRegion2 profile")
-            .into_value()
         {
             let [a, b, c] = triangle.map(|point| map.point((point[0], point[1])));
             fill_triangle_2d(&mut image, a, b, c, FACE_2D);

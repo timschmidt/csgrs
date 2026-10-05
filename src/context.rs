@@ -2,7 +2,7 @@
 
 use std::cell::Cell;
 
-use hypercurve::{CurveCertainty, CurveContext, CurveOutcome};
+use hypercurve::CurveContext;
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use hypermesh::{MeshCertainty, MeshContext, MeshOutcome};
 use hypertri::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
@@ -156,13 +156,6 @@ impl GeometryDecisions {
             self.observe(GeometryCertainty::Approximate512Consumed);
         }
         provisional.into_unverified()
-    }
-
-    pub(crate) fn consume_curve<T>(&self, outcome: CurveOutcome<T>) -> T {
-        if outcome.certainty == CurveCertainty::Approximate512Consumed {
-            self.observe(GeometryCertainty::Approximate512Consumed);
-        }
-        outcome.value
     }
 
     pub(crate) fn consume_mesh<T>(&self, outcome: MeshOutcome<T>) -> T {
