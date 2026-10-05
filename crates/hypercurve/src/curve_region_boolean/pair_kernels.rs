@@ -339,7 +339,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .iter()
                     .find(|contact| contact.parameter == *parameter)
             }) && self.data.policy.bounded_exact_predicate_pass(|| {
-                arc.contains_sweep_point(&contact.point, &self.data.policy)
+                arc.contains_sweep_point_with_policy(&contact.point, &self.data.policy)
             }) == Classification::Decided(false)
             {
                 // Circle incidence is already certified. A finite-sweep
@@ -377,7 +377,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     // coordinates retain the selected point's exact field.
                     if let Classification::Decided(point) = point
                         && self.data.policy.bounded_exact_predicate_pass(|| {
-                            arc.contains_sweep_point(&point, &self.data.policy)
+                            arc.contains_sweep_point_with_policy(&point, &self.data.policy)
                         }) == Classification::Decided(false)
                     {
                         continue;
@@ -461,7 +461,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .iter()
                     .find(|contact| contact.parameter == *parameter)
             }) {
-                match arc.contains_point(&contact.point, &self.data.policy) {
+                match arc.contains_point_with_policy(&contact.point, &self.data.policy) {
                     Classification::Decided(true) => retained_parameters.push(parameter),
                     Classification::Decided(false) => {}
                     Classification::Uncertain(reason) => {
@@ -482,7 +482,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            match arc.contains_point(&point, &self.data.policy) {
+            match arc.contains_point_with_policy(&point, &self.data.policy) {
                 Classification::Decided(true) => retained_parameters.push(parameter),
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => {
@@ -811,7 +811,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Ok(None);
         };
         let relation = chord_line
-            .intersect_line(&curve_line, &self.data.policy)
+            .intersect_line_with_policy(&curve_line, &self.data.policy)
             .map_err(|cause| self.invalid(chord_index, cause))?;
         let blocker = |reason| RegionPairResult {
             contacts: Vec::new(),

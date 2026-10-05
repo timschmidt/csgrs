@@ -619,8 +619,7 @@ fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: 
 fn bench_retained_circle_corner_solvers(iterations: u32) -> CurveResult<()> {
     let policy = CurveContext::STRICT;
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true)?;
-    let conic = native_arc
-        .rational_bezier_decomposition(&policy)
+    let conic = crate::support::under(&policy, || native_arc.rational_bezier_decomposition())
         .expect("retained-circle fixture decomposition must remain exact")
         .into_value()
         .spans()[0]

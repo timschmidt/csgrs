@@ -340,15 +340,17 @@ fn main() {
 
     let nonlinear_source = CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0));
     let nonlinear_first = closed_under_cubic(
-        nonlinear_source
-            .subcurve_between_exact(&r(0), &q(3, 4), &policy)
-            .expect("benchmark cubic subcurve is exact"),
+        crate::support::under_value(&policy, || {
+            nonlinear_source.subcurve_between_exact(&r(0), &q(3, 4))
+        })
+        .expect("benchmark cubic subcurve is exact"),
         -5,
     );
     let nonlinear_second = closed_under_cubic(
-        nonlinear_source
-            .subcurve_between_exact(&q(3, 8), &q(7, 8), &policy)
-            .expect("benchmark cubic subcurve is exact"),
+        crate::support::under_value(&policy, || {
+            nonlinear_source.subcurve_between_exact(&q(3, 8), &q(7, 8))
+        })
+        .expect("benchmark cubic subcurve is exact"),
         -6,
     );
     let nonlinear_first_region = path_region(&nonlinear_first, &policy);

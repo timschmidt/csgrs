@@ -14,10 +14,8 @@ fn public_curve_query_emits_correlated_exact_path_trace() {
     let vertical = LineSeg2::try_new(p(0, -4), p(0, 4)).unwrap();
 
     hyperreal::dispatch_trace::reset();
-    let relation = hyperreal::dispatch_trace::with_recording(|| {
-        horizontal.intersect_line(&vertical, &CurveContext::STRICT)
-    })
-    .unwrap();
+    let relation =
+        hyperreal::dispatch_trace::with_recording(|| horizontal.intersect_line(&vertical)).unwrap();
     assert!(!matches!(relation, hypercurve::LineLineIntersection::None));
 
     let snapshot = hyperreal::dispatch_trace::take_trace();

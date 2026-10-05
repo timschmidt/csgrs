@@ -201,7 +201,7 @@ impl RationalBezier2 {
         // the resultant does not retain parameterization-only base factors.
         if self.degree() < other.degree()
             && matches!(
-                self.fit_exact_line_image(policy)?,
+                self.fit_exact_line_image_with_policy(policy)?,
                 Classification::Decided(BezierLineImageFitRelation::Fit(_))
             )
         {
@@ -216,7 +216,7 @@ impl RationalBezier2 {
         }
         if other.degree() < self.degree()
             && matches!(
-                other.fit_exact_line_image(policy)?,
+                other.fit_exact_line_image_with_policy(policy)?,
                 Classification::Decided(BezierLineImageFitRelation::Fit(_))
             )
         {
@@ -335,29 +335,31 @@ impl RationalBezier2 {
         ) else {
             return Ok(None);
         };
-        Ok(Some(match first.intersect_line(&second, policy)? {
-            crate::LineLineIntersection::None => {
-                Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)
-            }
-            crate::LineLineIntersection::Point {
-                point,
-                a_param,
-                b_param,
-                kind,
-            } => {
-                Classification::Decided(RationalBezierIntersectionContacts2::Contacts(Arc::from([
-                    RationalBezierIntersectionContact2 {
+        Ok(Some(
+            match first.intersect_line_with_policy(&second, policy)? {
+                crate::LineLineIntersection::None => {
+                    Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)
+                }
+                crate::LineLineIntersection::Point {
+                    point,
+                    a_param,
+                    b_param,
+                    kind,
+                } => Classification::Decided(RationalBezierIntersectionContacts2::Contacts(
+                    Arc::from([RationalBezierIntersectionContact2 {
                         first_parameter: BezierParameter2::Exact(a_param),
                         second_parameter: BezierParameter2::Exact(b_param),
                         point: CurvePoint2::from(point),
                         certified_transverse: kind == crate::IntersectionKind::Crossing,
                         tangent_cross_sign: None,
-                    },
-                ])))
-            }
-            crate::LineLineIntersection::Overlap { .. } => return Ok(None),
-            crate::LineLineIntersection::Uncertain { reason } => Classification::Uncertain(reason),
-        }))
+                    }]),
+                )),
+                crate::LineLineIntersection::Overlap { .. } => return Ok(None),
+                crate::LineLineIntersection::Uncertain { reason } => {
+                    Classification::Uncertain(reason)
+                }
+            },
+        ))
     }
 
     pub(super) fn certified_linear_image_contacts(
@@ -365,66 +367,74 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
-        let first = match self.fit_exact_line_image(policy)? {
+        let first = match self.fit_exact_line_image_with_policy(policy)? {
             Classification::Decided(BezierLineImageFitRelation::Fit(first)) => first,
             Classification::Decided(BezierLineImageFitRelation::NotLine) => return Ok(None),
             Classification::Uncertain(reason) => {
                 return Ok(Some(Classification::Uncertain(reason)));
             }
         };
-        let second = match other.fit_exact_line_image(policy)? {
+        let second = match other.fit_exact_line_image_with_policy(policy)? {
             Classification::Decided(BezierLineImageFitRelation::Fit(second)) => second,
             Classification::Decided(BezierLineImageFitRelation::NotLine) => return Ok(None),
             Classification::Uncertain(reason) => {
                 return Ok(Some(Classification::Uncertain(reason)));
             }
         };
-        Ok(match first.line().intersect_line(second.line(), policy)? {
-            crate::LineLineIntersection::None => Some(Classification::Decided(
-                RationalBezierIntersectionContacts2::NoIntersection,
-            )),
-            crate::LineLineIntersection::Point { point, kind, .. } => {
-                let unique_parameter =
-                    |curve: &Self| match unique_point_incidence_parameter(curve, &point, policy) {
+        Ok(
+            match first
+                .line()
+                .intersect_line_with_policy(second.line(), policy)?
+            {
+                crate::LineLineIntersection::None => Some(Classification::Decided(
+                    RationalBezierIntersectionContacts2::NoIntersection,
+                )),
+                crate::LineLineIntersection::Point { point, kind, .. } => {
+                    let unique_parameter = |curve: &Self| match unique_point_incidence_parameter(
+                        curve, &point, policy,
+                    ) {
                         Classification::Decided(Some(parameter)) => Ok(parameter),
                         Classification::Decided(None) => Err(UncertaintyReason::Predicate),
                         Classification::Uncertain(reason) => Err(reason),
                     };
-                let first_parameter = match unique_parameter(self) {
-                    Ok(parameter) => parameter,
-                    Err(reason) => {
-                        return Ok(Some(Classification::Uncertain(reason)));
-                    }
-                };
-                let second_parameter = match unique_parameter(other) {
-                    Ok(parameter) => parameter,
-                    Err(reason) => return Ok(Some(Classification::Uncertain(reason))),
-                };
-                Some(Classification::Decided(
-                    RationalBezierIntersectionContacts2::Contacts(Arc::from([
-                        RationalBezierIntersectionContact2 {
-                            first_parameter,
-                            second_parameter,
-                            point: CurvePoint2::from(point),
-                            certified_transverse: kind == crate::IntersectionKind::Crossing,
-                            tangent_cross_sign: None,
-                        },
-                    ])),
-                ))
-            }
-            crate::LineLineIntersection::Overlap { .. } => {
-                match self.certified_line_image_overlap(other, policy) {
-                    Classification::Decided(Some(overlap)) => Some(Classification::Decided(
-                        RationalBezierIntersectionContacts2::Overlap(overlap),
-                    )),
-                    Classification::Decided(None) => None,
-                    Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
+                    let first_parameter = match unique_parameter(self) {
+                        Ok(parameter) => parameter,
+                        Err(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    };
+                    let second_parameter = match unique_parameter(other) {
+                        Ok(parameter) => parameter,
+                        Err(reason) => return Ok(Some(Classification::Uncertain(reason))),
+                    };
+                    Some(Classification::Decided(
+                        RationalBezierIntersectionContacts2::Contacts(Arc::from([
+                            RationalBezierIntersectionContact2 {
+                                first_parameter,
+                                second_parameter,
+                                point: CurvePoint2::from(point),
+                                certified_transverse: kind == crate::IntersectionKind::Crossing,
+                                tangent_cross_sign: None,
+                            },
+                        ])),
+                    ))
                 }
-            }
-            crate::LineLineIntersection::Uncertain { reason } => {
-                Some(Classification::Uncertain(reason))
-            }
-        })
+                crate::LineLineIntersection::Overlap { .. } => {
+                    match self.certified_line_image_overlap(other, policy) {
+                        Classification::Decided(Some(overlap)) => Some(Classification::Decided(
+                            RationalBezierIntersectionContacts2::Overlap(overlap),
+                        )),
+                        Classification::Decided(None) => None,
+                        Classification::Uncertain(reason) => {
+                            Some(Classification::Uncertain(reason))
+                        }
+                    }
+                }
+                crate::LineLineIntersection::Uncertain { reason } => {
+                    Some(Classification::Uncertain(reason))
+                }
+            },
+        )
     }
 
     #[cfg(test)]
@@ -1029,13 +1039,13 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
-        let line = match other.fit_exact_line_image(policy)? {
+        let line = match other.fit_exact_line_image_with_policy(policy)? {
             Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
             Classification::Decided(BezierLineImageFitRelation::NotLine) => return Ok(None),
             Classification::Uncertain(_) => return Ok(None),
         };
         if matches!(
-            self.fit_exact_line_image(policy)?,
+            self.fit_exact_line_image_with_policy(policy)?,
             Classification::Decided(BezierLineImageFitRelation::Fit(_))
         ) {
             return Ok(None);

@@ -62,3 +62,39 @@ impl<T> IntoCertified<T> for Outcome<T> {
         self.value
     }
 }
+
+/// Runs an exact principal operation under `policy`, discarding certainty,
+/// for operations whose result never carried it.
+pub(crate) fn under_value<T, E>(
+    policy: &hypercurve::CurveContext,
+    evaluate: impl FnOnce() -> Result<T, E>,
+) -> Result<T, E> {
+    under(policy, evaluate).map(Outcome::into_value)
+}
+
+/// Runs an exact principal query under `policy`, keeping an undecided
+/// predicate as `Classification::Uncertain` and any other error as `Err`.
+pub(crate) fn under_classified_result<T>(
+    policy: &hypercurve::CurveContext,
+    evaluate: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
+) -> hypercurve::ExactCurveResult<hypercurve::Classification<T>> {
+    match under_value(policy, evaluate) {
+        Ok(value) => Ok(hypercurve::Classification::Decided(value)),
+        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
+            Ok(hypercurve::Classification::Uncertain(blocker.reason()))
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Runs an exact principal predicate under `policy` as a classification.
+///
+/// The predicate's inputs are valid by construction, so an invalid-state
+/// error is a test failure.
+pub(crate) fn under_classified<T>(
+    policy: &hypercurve::CurveContext,
+    evaluate: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
+) -> hypercurve::Classification<T> {
+    under_classified_result(policy, evaluate)
+        .unwrap_or_else(|error| panic!("exact predicate rejected its input: {error:?}"))
+}

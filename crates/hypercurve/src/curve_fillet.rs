@@ -571,7 +571,7 @@ pub(super) fn constrained_coincident_circular_fillet(
     // interior point distinguishes identical sweeps from complementary sweeps.
     // It is a domain witness only, never a selected center returned to callers.
     let interior = match match arcs[0].0 {
-        ExactCornerArc2::Native(source) => source.representative_point(policy),
+        ExactCornerArc2::Native(source) => source.representative_point_with_policy(policy),
         ExactCornerArc2::RetainedRational(source) => source.fragment.representative_point(policy),
     }
     .map_err(invalid)?

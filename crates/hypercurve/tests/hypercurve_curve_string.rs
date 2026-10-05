@@ -547,20 +547,26 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
     let start_fraction = q(1, 7);
     let end_fraction = q(5, 7);
     let midpoint_fraction = q(3, 7);
-    let Classification::Decided(expected_start) = source_arc
-        .point_at_sweep_fraction(&start_fraction, &policy)
+    let Classification::Decided(expected_start) =
+        crate::support::under_classified_result(&policy, || {
+            source_arc.point_at_sweep_fraction(&start_fraction)
+        })
         .unwrap()
     else {
         panic!("source start fraction should evaluate exactly");
     };
-    let Classification::Decided(expected_end) = source_arc
-        .point_at_sweep_fraction(&end_fraction, &policy)
+    let Classification::Decided(expected_end) =
+        crate::support::under_classified_result(&policy, || {
+            source_arc.point_at_sweep_fraction(&end_fraction)
+        })
         .unwrap()
     else {
         panic!("source end fraction should evaluate exactly");
     };
-    let Classification::Decided(expected_midpoint) = source_arc
-        .point_at_sweep_fraction(&midpoint_fraction, &policy)
+    let Classification::Decided(expected_midpoint) =
+        crate::support::under_classified_result(&policy, || {
+            source_arc.point_at_sweep_fraction(&midpoint_fraction)
+        })
         .unwrap()
     else {
         panic!("source midpoint fraction should evaluate exactly");
@@ -583,21 +589,23 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
     assert_eq!(trimmed_arc.start(), &expected_start);
     assert_eq!(trimmed_arc.end(), &expected_end);
     assert_eq!(
-        trimmed_arc.contains_point(trimmed_arc.start(), &policy),
+        crate::support::under_classified(&policy, || trimmed_arc
+            .contains_point(trimmed_arc.start())),
         Classification::Decided(true)
     );
     assert_eq!(
-        trimmed_arc.contains_point(trimmed_arc.end(), &policy),
+        crate::support::under_classified(&policy, || trimmed_arc.contains_point(trimmed_arc.end())),
         Classification::Decided(true)
     );
     assert_eq!(
-        trimmed_arc
-            .point_at_sweep_fraction(&q(1, 2), &policy)
-            .unwrap(),
+        crate::support::under_classified_result(&policy, || trimmed_arc
+            .point_at_sweep_fraction(&q(1, 2)))
+        .unwrap(),
         Classification::Decided(expected_midpoint.clone())
     );
     assert_eq!(
-        trimmed_arc.representative_point(&policy).unwrap(),
+        crate::support::under_classified_result(&policy, || trimmed_arc.representative_point())
+            .unwrap(),
         Classification::Decided(expected_midpoint.clone())
     );
 
@@ -615,12 +623,10 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
         panic!("repeated arc trim should preserve the circular-arc family");
     };
     assert!(std::ptr::eq(
-        trimmed_arc
-            .rational_bezier_decomposition(&policy)
+        crate::support::under(&policy, || trimmed_arc.rational_bezier_decomposition())
             .unwrap()
             .into_value(),
-        repeated_arc
-            .rational_bezier_decomposition(&policy)
+        crate::support::under(&policy, || repeated_arc.rational_bezier_decomposition())
             .unwrap()
             .into_value()
     ));
@@ -640,9 +646,9 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
         panic!("nested arc trim should preserve the circular-arc family");
     };
     assert_eq!(
-        nested_arc
-            .point_at_sweep_fraction(&q(1, 2), &policy)
-            .unwrap(),
+        crate::support::under_classified_result(&policy, || nested_arc
+            .point_at_sweep_fraction(&q(1, 2)))
+        .unwrap(),
         Classification::Decided(expected_midpoint)
     );
 }

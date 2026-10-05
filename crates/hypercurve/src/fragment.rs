@@ -336,7 +336,7 @@ fn split_marker_matches_source_arc(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 
-    match source_arc.contains_sweep_point(&marker.point, policy) {
+    match source_arc.contains_sweep_point_with_policy(&marker.point, policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false) if policy.is_edge_preview() => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));

@@ -453,15 +453,15 @@ impl Segment2 {
                 .map(SegmentIntersection::LineLine),
             (Self::Line(line), Self::Arc(arc)) => Ok(SegmentIntersection::LineArc {
                 order: LineArcOrder::LineThenArc,
-                result: line.intersect_arc(arc, policy)?,
+                result: line.intersect_arc_with_policy(arc, policy)?,
             }),
             (Self::Arc(arc), Self::Line(line)) => Ok(SegmentIntersection::LineArc {
                 order: LineArcOrder::ArcThenLine,
-                result: line.intersect_arc(arc, policy)?,
+                result: line.intersect_arc_with_policy(arc, policy)?,
             }),
-            (Self::Arc(a), Self::Arc(b)) => {
-                a.intersect_arc(b, policy).map(SegmentIntersection::ArcArc)
-            }
+            (Self::Arc(a), Self::Arc(b)) => a
+                .intersect_arc_with_policy(b, policy)
+                .map(SegmentIntersection::ArcArc),
         }
     }
 }
@@ -473,7 +473,19 @@ impl LineSeg2 {
     /// `p + t r = q + u s`. Parallel, collinear, point, and overlap cases stay
     /// separate because polygon clipping degeneracies need those distinctions
     /// later in the boolean pipeline.
-    pub fn intersect_line(
+    pub fn intersect_line(&self, other: &Self) -> crate::ExactCurveResult<LineLineIntersection> {
+        self.intersect_line_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Intersection,
+                    crate::CurveFamily2::Line,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_line`] under an explicit predicate policy.
+    pub(crate) fn intersect_line_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -689,6 +701,21 @@ impl LineSeg2 {
     pub fn intersect_arc(
         &self,
         arc: &CircularArc2,
+    ) -> crate::ExactCurveResult<LineArcIntersection> {
+        self.intersect_arc_with_policy(arc, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Intersection,
+                    crate::CurveFamily2::Line,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_arc`] under an explicit predicate policy.
+    pub(crate) fn intersect_arc_with_policy(
+        &self,
+        arc: &CircularArc2,
         policy: &CurveContext,
     ) -> CurveResult<LineArcIntersection> {
         if policy.is_edge_preview()
@@ -697,7 +724,7 @@ impl LineSeg2 {
             return Ok(result);
         }
 
-        match self.supporting_line_circle_relation(arc, policy)? {
+        match self.supporting_line_circle_relation_with_policy(arc, policy)? {
             LineCircleRelation::Disjoint => Ok(LineArcIntersection::None),
             LineCircleRelation::Tangent { point, line_param } => {
                 match line_arc_hit_candidate(
@@ -741,6 +768,21 @@ impl LineSeg2 {
     /// facts carried by curve query objects can later select specialized
     /// discriminant reducers here while preserving this public relation shape.
     pub fn supporting_line_circle_relation(
+        &self,
+        arc: &CircularArc2,
+    ) -> crate::ExactCurveResult<LineCircleRelation> {
+        self.supporting_line_circle_relation_with_policy(arc, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Intersection,
+                    crate::CurveFamily2::Line,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::supporting_line_circle_relation`] under an explicit predicate policy.
+    pub(crate) fn supporting_line_circle_relation_with_policy(
         &self,
         arc: &CircularArc2,
         policy: &CurveContext,
@@ -1149,7 +1191,19 @@ impl CircularArc2 {
     /// Structural-dispatch note: cached exact-rational radius and center facts
     /// can later select specialized circle-circle reducers here, while this
     /// API remains the semantic boundary seen by curve topology.
-    pub fn circle_relation(
+    pub fn circle_relation(&self, other: &Self) -> crate::ExactCurveResult<CircleCircleRelation> {
+        self.circle_relation_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Intersection,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::circle_relation`] under an explicit predicate policy.
+    pub(crate) fn circle_relation_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1169,7 +1223,19 @@ impl CircularArc2 {
     /// centers split into same-radius overlap handling and disjoint concentric
     /// circles. Keeping same-circle overlaps out of the ordinary point path is
     /// essential for the degenerate-boundary cases discussed by the degenerate-intersection clipping model.
-    pub fn intersect_arc(
+    pub fn intersect_arc(&self, other: &Self) -> crate::ExactCurveResult<ArcArcIntersection> {
+        self.intersect_arc_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Intersection,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::intersect_arc`] under an explicit predicate policy.
+    pub(crate) fn intersect_arc_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1471,7 +1537,7 @@ fn non_parallel_endpoint_intersection(
         }
     }
     for (point, a_param) in [(a.start(), Real::zero()), (a.end(), Real::one())] {
-        if b.contains_point(point, policy) == Classification::Decided(true) {
+        if b.contains_point_with_policy(point, policy) == Classification::Decided(true) {
             return Ok(Some(LineLineIntersection::Point {
                 point: point.clone(),
                 a_param,
@@ -1481,7 +1547,7 @@ fn non_parallel_endpoint_intersection(
         }
     }
     for (point, b_param) in [(b.start(), Real::zero()), (b.end(), Real::one())] {
-        if a.contains_point(point, policy) == Classification::Decided(true) {
+        if a.contains_point_with_policy(point, policy) == Classification::Decided(true) {
             return Ok(Some(LineLineIntersection::Point {
                 point: point.clone(),
                 a_param: parameter_on_line(a, point, policy)?,
@@ -1863,12 +1929,12 @@ fn insert_same_circle_candidate(
     point: &Point2,
     policy: &CurveContext,
 ) -> CurveResult<Option<UncertaintyReason>> {
-    match a.contains_sweep_point(point, policy) {
+    match a.contains_sweep_point_with_policy(point, policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false) => return Ok(None),
         Classification::Uncertain(reason) => return Ok(Some(reason)),
     }
-    match b.contains_sweep_point(point, policy) {
+    match b.contains_sweep_point_with_policy(point, policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false) => return Ok(None),
         Classification::Uncertain(reason) => return Ok(Some(reason)),
@@ -1948,13 +2014,13 @@ fn same_circle_overlap_interval(
             a.center().clone(),
             a.is_clockwise(),
         )?;
-        let representative = match segment.representative_point(policy)? {
+        let representative = match segment.representative_point_with_policy(policy)? {
             Classification::Decided(representative) => representative,
             Classification::Uncertain(reason) => {
                 return Ok(Some(ArcArcIntersection::Uncertain { reason }));
             }
         };
-        match b.contains_sweep_point(&representative, policy) {
+        match b.contains_sweep_point_with_policy(&representative, policy) {
             Classification::Decided(true) => {
                 if overlap.is_some() {
                     return Ok(Some(ArcArcIntersection::Uncertain {
@@ -2177,12 +2243,12 @@ fn arc_arc_hit_candidate(
     base_kind: IntersectionKind,
     policy: &CurveContext,
 ) -> CurveResult<ArcArcCandidate> {
-    match a.contains_sweep_point(&point, policy) {
+    match a.contains_sweep_point_with_policy(&point, policy) {
         Classification::Decided(false) => return Ok(ArcArcCandidate::Miss),
         Classification::Decided(true) => {}
         Classification::Uncertain(reason) => return Ok(ArcArcCandidate::Uncertain(reason)),
     }
-    match b.contains_sweep_point(&point, policy) {
+    match b.contains_sweep_point_with_policy(&point, policy) {
         Classification::Decided(false) => return Ok(ArcArcCandidate::Miss),
         Classification::Decided(true) => {}
         Classification::Uncertain(reason) => return Ok(ArcArcCandidate::Uncertain(reason)),
@@ -2238,7 +2304,7 @@ fn line_arc_hit_candidate(
         return Ok(LineArcCandidate::Miss);
     }
 
-    let mut in_arc_sweep = arc.contains_sweep_point(&point, &strict);
+    let mut in_arc_sweep = arc.contains_sweep_point_with_policy(&point, &strict);
     if in_arc_sweep == Classification::Decided(false) {
         return Ok(LineArcCandidate::Miss);
     }
@@ -2248,7 +2314,7 @@ fn line_arc_hit_candidate(
             return Ok(LineArcCandidate::Miss);
         }
         if matches!(in_arc_sweep, Classification::Uncertain(_)) {
-            in_arc_sweep = arc.contains_sweep_point(&point, policy);
+            in_arc_sweep = arc.contains_sweep_point_with_policy(&point, policy);
         }
     }
     match in_arc_sweep {
@@ -2386,7 +2452,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for endpoint in [arc.start(), arc.end()] {
                 assert_eq!(
-                    arc.contains_sweep_point(endpoint, &policy),
+                    arc.contains_sweep_point_with_policy(endpoint, &policy),
                     Classification::Decided(true)
                 );
             }
@@ -2422,7 +2488,7 @@ mod tests {
                 second_point: second,
                 ..
             } = support
-                .supporting_line_circle_relation(&circle, &policy)
+                .supporting_line_circle_relation_with_policy(&circle, &policy)
                 .unwrap()
             else {
                 panic!("the independent line crosses the unit circle twice");
@@ -2441,7 +2507,7 @@ mod tests {
                     let line = LineSeg2::try_new(outside.clone(), endpoint_first.clone()).unwrap();
                     let line = if reversed { line.reversed() } else { line };
                     let LineArcIntersection::Point(hit) =
-                        line.intersect_arc(&arc, &policy).unwrap()
+                        line.intersect_arc_with_policy(&arc, &policy).unwrap()
                     else {
                         panic!("the trimmed line has exactly its retained endpoint contact");
                     };
@@ -2459,7 +2525,7 @@ mod tests {
                     let LineArcIntersection::TwoPoints {
                         first: start,
                         second: end,
-                    } = line.intersect_arc(&arc, &policy).unwrap()
+                    } = line.intersect_arc_with_policy(&arc, &policy).unwrap()
                     else {
                         panic!("both certified chord endpoints must remain distinct contacts");
                     };
@@ -2474,8 +2540,9 @@ mod tests {
                         endpoint_first.translated(-endpoint_first.y(), endpoint_first.x().clone());
                     let line = LineSeg2::try_new(endpoint_first.clone(), tangent).unwrap();
                     let line = if reversed { line.reversed() } else { line };
-                    let LineCircleRelation::Tangent { point, line_param } =
-                        line.supporting_line_circle_relation(&arc, &policy).unwrap()
+                    let LineCircleRelation::Tangent { point, line_param } = line
+                        .supporting_line_circle_relation_with_policy(&arc, &policy)
+                        .unwrap()
                     else {
                         panic!("the retained endpoint tangent has one contact");
                     };
@@ -2550,7 +2617,7 @@ mod tests {
                             a_param,
                             b_param,
                             kind,
-                        } = left.intersect_line(right, &policy).unwrap()
+                        } = left.intersect_line_with_policy(right, &policy).unwrap()
                         else {
                             panic!("opposed finite rays intersect only at their shared endpoint");
                         };
@@ -2586,7 +2653,7 @@ mod tests {
             b_param,
             kind,
         } = horizontal
-            .intersect_line(&vertical, &CurveContext::STRICT)
+            .intersect_line_with_policy(&vertical, &CurveContext::STRICT)
             .unwrap()
         else {
             panic!("the certified crossing must construct");
@@ -2731,7 +2798,7 @@ mod tests {
             ));
             assert_eq!(
                 first.intersect_line_with_certified_exact_dyadic_proper_crossing(&second, &policy),
-                first.intersect_line(&second, &policy),
+                first.intersect_line_with_policy(&second, &policy),
             );
         }
     }

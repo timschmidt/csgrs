@@ -20,7 +20,7 @@ fn rational_line_derivatives_exceed_machine_binomial_orders() {
 
     for parameter in [Real::zero(), rational(1, 2), Real::one()] {
         let derivatives = curve
-            .derivatives_at(&parameter, 128, &CurveContext::STRICT)
+            .derivatives_at(&parameter, 128)
             .expect("a degree-one denominator has derivatives of every order");
         assert_eq!(derivatives.len(), 128);
         let unified = Curve2::from(curve.clone());
@@ -65,7 +65,7 @@ fn dense_denominator_derivatives_use_exact_large_binomials() {
     let curve = RationalBezier2::try_new(points, weights).unwrap();
     for parameter in [Real::zero(), rational(1, 2), Real::one()] {
         let derivatives = curve
-            .derivatives_at(&parameter, 80, &CurveContext::STRICT)
+            .derivatives_at(&parameter, 80)
             .expect("dense exact coefficients must not be limited by u64 binomials");
         let denominator = Real::one() + &parameter;
         let mut power = Real::one();
@@ -95,7 +95,7 @@ fn common_transcendental_weight_scale_preserves_high_derivatives() {
     .unwrap();
     let parameter = rational(1, 3);
     let derivatives = curve
-        .derivatives_at(&parameter, 80, &CurveContext::STRICT)
+        .derivatives_at(&parameter, 80)
         .expect("a common exact symbolic weight must cancel without approximation");
     let denominator = Real::from(2) + &parameter;
     let mut expected = (Real::from(6) / (&denominator * &denominator)).unwrap();
@@ -120,24 +120,22 @@ fn high_derivative_requests_preserve_domain_and_size_guards() {
     .unwrap();
     for parameter in [Real::from(-1), Real::from(2)] {
         assert!(matches!(
-            curve.derivatives_at(&parameter, 80, &CurveContext::STRICT),
+            crate::support::under_value(&CurveContext::STRICT, || curve.derivatives_at(&parameter, 80)),
             Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Ordering
         ));
     }
     assert!(
-        curve
-            .derivatives_at(&Real::zero(), usize::MAX, &CurveContext::STRICT)
-            .is_err()
+        crate::support::under_value(&CurveContext::STRICT, || curve
+            .derivatives_at(&Real::zero(), usize::MAX))
+        .is_err()
     );
     assert!(
-        curve
-            .derivatives_at(&Real::zero(), 0, &CurveContext::STRICT)
-            .unwrap()
-            .is_empty()
+        crate::support::under_value(&CurveContext::STRICT, || curve
+            .derivatives_at(&Real::zero(), 0))
+        .unwrap()
+        .is_empty()
     );
-    let derivatives = curve
-        .derivatives_at(&rational(1, 3), 128, &CurveContext::STRICT)
-        .unwrap();
+    let derivatives = curve.derivatives_at(&rational(1, 3), 128).unwrap();
     assert_eq!(derivatives[0].dx(), &Real::one());
     assert!(
         derivatives[1..]
@@ -153,7 +151,7 @@ fn high_derivative_requests_preserve_domain_and_size_guards() {
     )
     .unwrap();
     assert!(matches!(
-        pole.derivatives_at(&rational(1, 2), 80, &CurveContext::STRICT),
+        crate::support::under_value(&CurveContext::STRICT, || pole.derivatives_at(&rational(1, 2), 80)),
         Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Boundary
     ));
 }

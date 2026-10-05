@@ -909,15 +909,17 @@ fn retained_endpoint_side_data(
         return Classification::Decided(None);
     };
     if scope == RetainedEndpointScope::Connectivity {
-        return source_curve.point_at(parameter, policy).map(|point| {
-            Some(RetainedEndpointSideData {
-                point: Some(RetainedEndpointKey::Exact(Box::new(point))),
-                tangent: None,
-                second_derivative: None,
-                third_derivative: None,
-                derivative_source: None,
-            })
-        });
+        return source_curve
+            .point_at_with_policy(parameter, policy)
+            .map(|point| {
+                Some(RetainedEndpointSideData {
+                    point: Some(RetainedEndpointKey::Exact(Box::new(point))),
+                    tangent: None,
+                    second_derivative: None,
+                    third_derivative: None,
+                    derivative_source: None,
+                })
+            });
     }
     retained_exact_source_endpoint_side_data(source_curve, parameter, true, policy).map(Some)
 }
@@ -1486,7 +1488,8 @@ mod endpoint_adjacency_tests {
                 })
                 .collect();
             let curve = crate::tests::decided(
-                crate::RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap(),
+                crate::RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy)
+                    .unwrap(),
             );
             let source = BezierSubcurve2::Rational(curve.clone());
             let image = crate::tests::decided(

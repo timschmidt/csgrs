@@ -528,7 +528,7 @@ impl BezierAlgebraicChord2 {
                     let mut lower_sign = start_sign;
                     for _ in 0..12 {
                         let midpoint = ((&lower + &upper) / Real::from(2_i8))?;
-                        let Ok(point) = source.point_at(&midpoint, policy) else {
+                        let Ok(point) = source.point_at_with_policy(&midpoint, policy) else {
                             break;
                         };
                         let Some(midpoint_sign) = point_sign(point)? else {

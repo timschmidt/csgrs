@@ -49,10 +49,18 @@ impl CircularArc2 {
     #[inline(always)]
     pub fn rational_bezier_decomposition(
         &self,
+    ) -> crate::ExactCurveResult<&CircularArcBezierDecomposition2> {
+        self.rational_bezier_decomposition_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::rational_bezier_decomposition`] under an explicit predicate policy.
+    pub(crate) fn rational_bezier_decomposition_with_policy(
+        &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<&CircularArcBezierDecomposition2>> {
         resolve_certified_operation(policy, |attempt| {
-            match self.rational_bezier_decomposition_with_policy(attempt)? {
+            match self.rational_bezier_decomposition_raw(attempt)? {
                 Classification::Decided(decomposition) => Ok(decomposition),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::BezierDecomposition,
@@ -64,7 +72,7 @@ impl CircularArc2 {
     }
 
     #[inline]
-    pub(crate) fn rational_bezier_decomposition_with_policy(
+    pub(crate) fn rational_bezier_decomposition_raw(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<&CircularArcBezierDecomposition2>> {
@@ -122,7 +130,7 @@ pub(crate) fn decompose_circular_arc(
     arc: &CircularArc2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<CircularArcBezierDecomposition2>> {
-    arc.rational_bezier_decomposition_with_policy(policy)
+    arc.rational_bezier_decomposition_raw(policy)
         .map(|classification| classification.map(Clone::clone))
 }
 
@@ -197,7 +205,7 @@ pub(crate) fn evaluate_decomposition(
                 let width = &span.parameter_end - &span.parameter_start;
                 let local = ((parameter - &span.parameter_start) / width)
                     .map_err(|cause| arc_error(CurveOperation2::Evaluation, cause.into()))?;
-                return match span.curve.point_at(local, policy) {
+                return match span.curve.point_at_with_policy(local, policy) {
                     Classification::Decided(point) => Ok(point),
                     Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                         CurveOperation2::Evaluation,
@@ -636,7 +644,7 @@ mod tests {
 
         assert!(arc.retained_facts.sweep_kind.is_empty());
         assert!(arc.retained_facts.bezier_decomposition.is_empty());
-        arc.rational_bezier_decomposition(&CurveContext::STRICT)
+        arc.rational_bezier_decomposition_with_policy(&CurveContext::STRICT)
             .unwrap();
 
         assert!(Arc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
@@ -649,7 +657,7 @@ mod tests {
         let arc =
             CircularArc2::try_from_center(point(2, 0), point(2, 0), point(0, 0), false).unwrap();
         let decomposition = arc
-            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .rational_bezier_decomposition_with_policy(&CurveContext::STRICT)
             .unwrap()
             .into_value();
         let [first, second, third, fourth] = decomposition.spans() else {
@@ -709,7 +717,7 @@ mod tests {
             assert_eq!(arc.radius_squared_ref(), &Real::one());
             assert!(arc.is_clockwise());
             assert_eq!(
-                arc.rational_bezier_decomposition(&policy)
+                arc.rational_bezier_decomposition_with_policy(&policy)
                     .unwrap()
                     .into_value()
                     .spans()

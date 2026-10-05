@@ -715,7 +715,7 @@ impl<'a> CurveCornerChain2<'a> {
         );
         let decomposition = retained_corner_decision(
             circle
-                .rational_bezier_decomposition_with_policy(policy)
+                .rational_bezier_decomposition_raw(policy)
                 .map_err(|error| error.with_operation(operation))?,
             operation,
         )?;
@@ -1433,7 +1433,7 @@ impl<'a> CurveCornerChain2<'a> {
                 let decomposition = match deferred
                     .source
                     .support()
-                    .rational_bezier_decomposition_with_policy(policy)
+                    .rational_bezier_decomposition_raw(policy)
                     .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
                 {
                     Classification::Decided(decomposition) => decomposition,
@@ -1622,7 +1622,7 @@ impl<'a> CurveCornerChain2<'a> {
             let decomposition = match deferred
                 .source
                 .support()
-                .rational_bezier_decomposition_with_policy(policy)
+                .rational_bezier_decomposition_raw(policy)
                 .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
             {
                 Classification::Decided(decomposition) => decomposition,

@@ -2376,7 +2376,7 @@ pub(super) fn exact_offset_span_from_native_segment(
             )
         }
         Segment2::Arc(arc) => {
-            let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
+            let decomposition = match arc.rational_bezier_decomposition_raw(policy) {
                 Ok(Classification::Decided(decomposition)) => decomposition,
                 Ok(Classification::Uncertain(reason)) => {
                     return Ok(Classification::Uncertain(reason));

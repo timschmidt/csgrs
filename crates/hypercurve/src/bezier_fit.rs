@@ -343,7 +343,26 @@ impl CertifiedBezierLineOffset2 {
 
 impl QuadraticBezier2 {
     /// Fits this quadratic Bezier to one exact point when possible.
-    pub fn fit_exact_point_image(
+    pub fn fit_exact_point_image(&self) -> crate::ExactCurveResult<BezierPointImageFitRelation> {
+        self.fit_exact_point_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::QuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::QuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_point_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_point_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
@@ -351,7 +370,26 @@ impl QuadraticBezier2 {
     }
 
     /// Fits this quadratic Bezier to its exact endpoint line image when possible.
-    pub fn fit_exact_line_image(
+    pub fn fit_exact_line_image(&self) -> crate::ExactCurveResult<BezierLineImageFitRelation> {
+        self.fit_exact_line_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::QuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::QuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_line_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_line_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
@@ -370,7 +408,26 @@ impl QuadraticBezier2 {
 
 impl CubicBezier2 {
     /// Fits this cubic Bezier to one exact point when possible.
-    pub fn fit_exact_point_image(
+    pub fn fit_exact_point_image(&self) -> crate::ExactCurveResult<BezierPointImageFitRelation> {
+        self.fit_exact_point_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::CubicBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::CubicBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_point_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_point_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
@@ -378,7 +435,26 @@ impl CubicBezier2 {
     }
 
     /// Fits this cubic Bezier to its exact endpoint line image when possible.
-    pub fn fit_exact_line_image(
+    pub fn fit_exact_line_image(&self) -> crate::ExactCurveResult<BezierLineImageFitRelation> {
+        self.fit_exact_line_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::CubicBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::CubicBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_line_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_line_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
@@ -388,7 +464,26 @@ impl CubicBezier2 {
 
 impl RationalQuadraticBezier2 {
     /// Fits this rational quadratic conic to one exact affine point when possible.
-    pub fn fit_exact_point_image(
+    pub fn fit_exact_point_image(&self) -> crate::ExactCurveResult<BezierPointImageFitRelation> {
+        self.fit_exact_point_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_point_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_point_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
@@ -400,7 +495,26 @@ impl RationalQuadraticBezier2 {
     }
 
     /// Fits this rational quadratic conic to its exact endpoint line image when possible.
-    pub fn fit_exact_line_image(
+    pub fn fit_exact_line_image(&self) -> crate::ExactCurveResult<BezierLineImageFitRelation> {
+        self.fit_exact_line_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_line_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_line_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
@@ -414,7 +528,26 @@ impl RationalQuadraticBezier2 {
 
 impl RationalBezier2 {
     /// Fits this rational Bezier to its exact endpoint line image when possible.
-    pub fn fit_exact_line_image(
+    pub fn fit_exact_line_image(&self) -> crate::ExactCurveResult<BezierLineImageFitRelation> {
+        self.fit_exact_line_image_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::RationalBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::RationalBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::fit_exact_line_image`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_line_image_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {

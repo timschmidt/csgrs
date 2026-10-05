@@ -451,10 +451,14 @@ fn retained_curve_monotone_parameters(
     let mut parameters = Vec::new();
     for axis in [Axis2::X, Axis2::Y] {
         let axis_parameters = match source_curve {
-            BezierSubcurve2::Quadratic(curve) => curve.axis_monotone_parameters(axis, policy),
-            BezierSubcurve2::Cubic(curve) => curve.axis_monotone_parameters(axis, policy),
+            BezierSubcurve2::Quadratic(curve) => {
+                curve.axis_monotone_parameters_with_policy(axis, policy)
+            }
+            BezierSubcurve2::Cubic(curve) => {
+                curve.axis_monotone_parameters_with_policy(axis, policy)
+            }
             BezierSubcurve2::RationalQuadratic(curve) => {
-                curve.axis_monotone_parameters(axis, policy)
+                curve.axis_monotone_parameters_with_policy(axis, policy)
             }
             BezierSubcurve2::Rational(_) => {
                 return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -506,7 +510,7 @@ fn source_curve_point_at(
     match source_curve {
         BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
         BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at_with_policy(parameter, policy),
         BezierSubcurve2::Rational(curve) => curve.point_at_classified(&parameter, policy),
     }
 }

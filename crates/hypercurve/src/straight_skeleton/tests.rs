@@ -196,7 +196,7 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
     let arc =
         CircularArc2::try_from_center(right.clone(), top.clone(), center.clone(), false).unwrap();
     let rational_arc = arc
-        .rational_bezier_decomposition(&CurveContext::STRICT)
+        .rational_bezier_decomposition_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value()
         .spans()[0]

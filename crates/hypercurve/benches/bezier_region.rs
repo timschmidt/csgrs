@@ -225,10 +225,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let prefix_parameter = q(3, 4);
     let started = Instant::now();
     for _ in 0..moment_iterations {
-        black_box(decided(
-            black_box(&moment_curve)
-                .prefix_area_moments_contribution(prefix_parameter.clone(), &policy)?,
-        ));
+        black_box(decided(crate::support::under_classified_result(
+            &policy,
+            || black_box(&moment_curve).prefix_area_moments_contribution(prefix_parameter.clone()),
+        )?));
     }
     let elapsed = started.elapsed();
     println!(
@@ -238,9 +238,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let started = Instant::now();
     for _ in 0..moment_iterations {
-        black_box(decided(
-            black_box(&moment_curve).prefix_length_bounds(prefix_parameter.clone(), &policy)?,
-        ));
+        black_box(decided(crate::support::under_classified_result(
+            &policy,
+            || black_box(&moment_curve).prefix_length_bounds(prefix_parameter.clone()),
+        )?));
     }
     let elapsed = started.elapsed();
     println!(

@@ -2048,7 +2048,9 @@ impl BezierAlgebraicChord2 {
             self.retained_support().end(),
         ] {
             let side = match endpoint {
-                CurvePoint2(CurvePointData2::Exact(point)) => line.classify_point(point, policy),
+                CurvePoint2(CurvePointData2::Exact(point)) => {
+                    line.classify_point_with_policy(point, policy)
+                }
                 CurvePoint2(CurvePointData2::Algebraic(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))

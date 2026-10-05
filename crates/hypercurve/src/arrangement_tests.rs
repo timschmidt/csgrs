@@ -979,7 +979,7 @@ fn retained_source_tangents_order_without_coordinate_projection() {
             Real::from(4) - Real::pi(),
         ];
         let curve = decided(
-            RationalBezier2::from_homogeneous_controls(
+            RationalBezier2::from_homogeneous_controls_with_policy(
                 xs.into_iter()
                     .zip(ys)
                     .map(|(x, y)| HomogeneousControl2::new(x, y, Real::one()))
@@ -1126,7 +1126,8 @@ fn retained_source_curvature_orders_without_scalar_projection() {
                         })
                         .collect();
                     let source = BezierSubcurve2::Rational(decided(
-                        RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap(),
+                        RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy)
+                            .unwrap(),
                     ));
                     let image = decided(
                         BezierAlgebraicEndpointImage2::from_source_curve(

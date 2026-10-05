@@ -334,6 +334,31 @@ impl QuadraticBezier2 {
     pub fn blend2d_offset_left_candidate(
         &self,
         distance: Real,
+    ) -> crate::ExactCurveResult<Blend2dQuadraticOffsetCandidate2> {
+        self.blend2d_offset_left_candidate_with_policy(
+            distance,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::QuadraticBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::QuadraticBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::blend2d_offset_left_candidate`] under an explicit predicate policy.
+    pub(crate) fn blend2d_offset_left_candidate_with_policy(
+        &self,
+        distance: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Blend2dQuadraticOffsetCandidate2>> {
         if real_sign(&distance, policy) == Some(RealSign::Zero) {
@@ -431,13 +456,65 @@ impl QuadraticBezier2 {
     pub fn blend2d_offset_right_candidate(
         &self,
         distance: Real,
+    ) -> crate::ExactCurveResult<Blend2dQuadraticOffsetCandidate2> {
+        self.blend2d_offset_right_candidate_with_policy(
+            distance,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::QuadraticBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::QuadraticBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::blend2d_offset_right_candidate`] under an explicit predicate policy.
+    pub(crate) fn blend2d_offset_right_candidate_with_policy(
+        &self,
+        distance: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Blend2dQuadraticOffsetCandidate2>> {
-        self.blend2d_offset_left_candidate(-distance, policy)
+        self.blend2d_offset_left_candidate_with_policy(-distance, policy)
     }
 
     /// Adaptively constructs and certifies a connected Blend2D quadratic parallel path.
     pub fn approximate_parallel_blend2d_certified(
+        &self,
+        distance: Real,
+        options: &BezierParallelVerificationOptions,
+    ) -> crate::ExactCurveResult<CertifiedBezierParallelPath2> {
+        self.approximate_parallel_blend2d_certified_with_policy(
+            distance,
+            options,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::QuadraticBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::QuadraticBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::approximate_parallel_blend2d_certified`] under an explicit predicate policy.
+    pub(crate) fn approximate_parallel_blend2d_certified_with_policy(
         &self,
         distance: Real,
         options: &BezierParallelVerificationOptions,
@@ -523,6 +600,33 @@ impl CubicBezier2 {
 
     /// Adaptively reduces, offsets, and certifies this cubic through Blend2D quadratics.
     pub fn approximate_parallel_blend2d_certified(
+        &self,
+        distance: Real,
+        options: &BezierParallelVerificationOptions,
+    ) -> crate::ExactCurveResult<CertifiedBezierParallelPath2> {
+        self.approximate_parallel_blend2d_certified_with_policy(
+            distance,
+            options,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::CubicBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::CubicBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::approximate_parallel_blend2d_certified`] under an explicit predicate policy.
+    pub(crate) fn approximate_parallel_blend2d_certified_with_policy(
         &self,
         distance: Real,
         options: &BezierParallelVerificationOptions,
@@ -639,7 +743,7 @@ impl CurvePath2 {
                 }
                 Some(CurveGeometry2::CircularArc(arc)) => {
                     let offset = match arc
-                        .offset_left(distance.clone(), policy)
+                        .offset_left_with_policy(distance.clone(), policy)
                         .map_err(|cause| parallel_path_error(source, cause))?
                     {
                         Classification::Decided(offset) => offset,
@@ -656,7 +760,7 @@ impl CurvePath2 {
                             .parallel_left(distance.clone())
                             .map_err(|cause| parallel_path_error(source, cause))?,
                         || {
-                            curve.approximate_parallel_blend2d_certified(
+                            curve.approximate_parallel_blend2d_certified_with_policy(
                                 distance.clone(),
                                 options,
                                 policy,
@@ -681,7 +785,7 @@ impl CurvePath2 {
                             .parallel_left(distance.clone())
                             .map_err(|cause| parallel_path_error(source, cause))?,
                         || {
-                            curve.approximate_parallel_blend2d_certified(
+                            curve.approximate_parallel_blend2d_certified_with_policy(
                                 distance.clone(),
                                 options,
                                 policy,
@@ -1051,7 +1155,7 @@ pub(super) fn construct_quadratic_parallel_spans(
 ) -> CurveResult<Classification<()>> {
     trace.maximum_depth = trace.maximum_depth.max(depth);
     if let Classification::Decided(candidate) =
-        source.blend2d_offset_left_candidate(distance.clone(), policy)?
+        source.blend2d_offset_left_candidate_with_policy(distance.clone(), policy)?
     {
         let parallel = source.parallel_left(distance.clone())?;
         if let Classification::Decided(approximation) = parallel.verify_polynomial_candidate(
@@ -1184,11 +1288,12 @@ pub(super) fn construct_cubic_reduced_half(
     trace: &mut ParallelPathConstructionTrace,
 ) -> CurveResult<Classification<()>> {
     trace.maximum_depth = trace.maximum_depth.max(depth);
-    let candidate = match reduced.blend2d_offset_left_candidate(distance.clone(), policy) {
-        Ok(Classification::Decided(candidate)) => Some(candidate),
-        Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
-        Err(error) => return Err(error),
-    };
+    let candidate =
+        match reduced.blend2d_offset_left_candidate_with_policy(distance.clone(), policy) {
+            Ok(Classification::Decided(candidate)) => Some(candidate),
+            Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
+            Err(error) => return Err(error),
+        };
     if let Some(candidate) = candidate {
         let parallel = source.parallel_left(distance.clone())?;
         let approximation = match parallel.verify_polynomial_candidate(

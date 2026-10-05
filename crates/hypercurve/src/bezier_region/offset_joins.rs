@@ -938,7 +938,7 @@ pub(super) fn append_exact_round_join(
             clockwise,
             sweep_kind,
         );
-        let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
+        let decomposition = match arc.rational_bezier_decomposition_raw(policy) {
             Ok(Classification::Decided(decomposition)) => decomposition,
             Ok(Classification::Uncertain(reason)) => {
                 return Ok(Classification::Uncertain(reason));

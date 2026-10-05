@@ -30,7 +30,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let rational_curve =
         RationalBezier2::try_new(vec![p(0, 0), p(2, 2), p(4, 0)], vec![r(1), r(1), r(1)])?;
-    let rational_tail = decided(rational_curve.subcurve_between_exact(&q(1, 2), &r(1), &policy)?);
+    let rational_tail = decided(crate::support::under_classified_result(&policy, || {
+        rational_curve.subcurve_between_exact(&q(1, 2), &r(1))
+    })?);
     let curve = Curve2::from(rational_curve);
     let tail = Curve2::from(rational_tail);
 

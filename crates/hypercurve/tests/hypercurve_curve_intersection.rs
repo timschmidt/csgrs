@@ -164,9 +164,10 @@ fn top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let curve = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap();
         let middle = decided(
-            curve
-                .subcurve_between_exact(&q(1, 10), &q(9, 10), &policy)
-                .unwrap(),
+            crate::support::under_classified_result(&policy, || {
+                curve.subcurve_between_exact(&q(1, 10), &q(9, 10))
+            })
+            .unwrap(),
         );
         let result = crate::support::under(&policy, || {
             Curve2::from(curve).intersect_curve(&Curve2::from(middle))
@@ -2282,10 +2283,9 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
         RationalBezier2::try_new(vec![p(0, 0), p(2, 3), p(4, 0)], vec![r(1), r(2), r(1)]).unwrap();
     let elevated = base.elevated_to_degree(5).unwrap();
     let independent = decided(
-        RationalBezier2::from_homogeneous_controls(
-            elevated.homogeneous_controls().to_vec(),
-            &CurveContext::STRICT,
-        )
+        crate::support::under_classified_result(&CurveContext::STRICT, || {
+            RationalBezier2::from_homogeneous_controls(elevated.homogeneous_controls().to_vec())
+        })
         .unwrap(),
     );
     let first = Curve2::from(base);
@@ -2338,14 +2338,16 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
     )
     .unwrap();
     let first_curve = decided(
-        source
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
-            .unwrap(),
+        crate::support::under_classified_result(&policy, || {
+            source.subcurve_between_exact(&Real::zero(), &q(3, 4))
+        })
+        .unwrap(),
     );
     let second_curve = decided(
-        source
-            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
-            .unwrap(),
+        crate::support::under_classified_result(&policy, || {
+            source.subcurve_between_exact(&q(1, 4), &Real::one())
+        })
+        .unwrap(),
     );
     let first = Curve2::new(CurveGeometry2::RationalBezier(first_curve));
     let second = Curve2::new(CurveGeometry2::RationalBezier(second_curve));

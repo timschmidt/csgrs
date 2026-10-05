@@ -542,7 +542,7 @@ fn parallel_pair_structural_overlap_preserves_relative_orientation() {
 fn parallel_pair_certifies_partial_source_overlap_and_reparameterization() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
     let subcurve = source
-        .subcurve_between_exact(&q(1, 4), &q(3, 4), &CurveContext::STRICT)
+        .subcurve_between_exact_with_policy(&q(1, 4), &q(3, 4), &CurveContext::STRICT)
         .unwrap();
     let first = source.parallel_left(r(1)).unwrap();
     let same = subcurve.parallel_left(r(1)).unwrap();
@@ -1458,7 +1458,7 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
         assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
         let Classification::Decided(partial) = target
-            .subcurve_between_exact(&q(1, 4), &q(3, 4), &policy)
+            .subcurve_between_exact_with_policy(&q(1, 4), &q(3, 4), &policy)
             .unwrap()
         else {
             panic!("rationalized parallel subcurve was not decided");
@@ -1869,12 +1869,12 @@ fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parallel = source
-            .subcurve_between_exact(&Real::zero(), &q(7, 10), &policy)
+            .subcurve_between_exact_with_policy(&Real::zero(), &q(7, 10), &policy)
             .unwrap()
             .parallel_left(r(1))
             .unwrap();
         let Classification::Decided(target) = target
-            .subcurve_between_exact(&q(1, 10), &q(9, 10), &policy)
+            .subcurve_between_exact_with_policy(&q(1, 10), &q(9, 10), &policy)
             .unwrap()
         else {
             panic!("rationalized target subcurve was not decided");
@@ -1955,7 +1955,7 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
         panic!("canonical PH cubic did not materialize exactly");
     };
     let Classification::Decided(independently_constructed) =
-        RationalBezier2::from_homogeneous_controls(
+        RationalBezier2::from_homogeneous_controls_with_policy(
             materialized.curve().homogeneous_controls().to_vec(),
             &CurveContext::STRICT,
         )

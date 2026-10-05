@@ -527,9 +527,9 @@ fn top_level_curve_reuses_retained_native_endpoints() {
             .point_at(&(r(1) / r(2)).unwrap().into()))
         .unwrap()
         .into_value(),
-        (rational
-            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
-            .unwrap())
+        (crate::support::under_value(&CurveContext::STRICT, || rational
+            .point_at(&(r(1) / r(2)).unwrap()))
+        .unwrap())
         .into()
     );
 }
@@ -1245,7 +1245,7 @@ fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
                 };
                 assert_eq!(arc.center(), &p(1, 1));
                 assert_eq!(arc.end(), &p(2, 1));
-                arc.contains_point(&p(1, 0), &policy)
+                crate::support::under_classified(&policy, || arc.contains_point(&p(1, 0)))
             })
             .collect::<Vec<_>>();
         retained_corner_membership
@@ -1324,20 +1324,24 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
         Point2::new(q(1, 2), -half_root_three.clone()),
         Point2::new(q(1, 2), half_root_three),
     ] {
-        let contains = major_arc.contains_point(&cut, &CurveContext::STRICT);
+        let contains = crate::support::under_classified(&CurveContext::STRICT, || {
+            major_arc.contains_point(&cut)
+        });
         assert!(
             matches!(contains, Classification::Decided(true)),
             "major-arc cut incidence must be strict: {contains:?}"
         );
-        let sweep = major_arc
-            .sweep_fraction(&cut, &CurveContext::STRICT)
-            .unwrap();
+        let sweep = crate::support::under_classified_result(&CurveContext::STRICT, || {
+            major_arc.sweep_fraction(&cut)
+        })
+        .unwrap();
         let Classification::Decided(sweep) = sweep else {
             panic!("major-arc cut sweep fraction must be strict: {sweep:?}");
         };
-        let parameter = major_arc
-            .parameter_at_sweep_fraction(&sweep, &CurveContext::STRICT)
-            .unwrap();
+        let parameter = crate::support::under_classified_result(&CurveContext::STRICT, || {
+            major_arc.parameter_at_sweep_fraction(&sweep)
+        })
+        .unwrap();
         assert!(
             matches!(parameter, Classification::Decided(_)),
             "major-arc public parameter must be strict: {parameter:?}"
@@ -1616,11 +1620,7 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
 #[test]
 fn retained_circular_conics_share_the_native_corner_kernel() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
-    let conic = native_arc
-        .rational_bezier_decomposition(&CurveContext::STRICT)
-        .unwrap()
-        .into_value()
-        .spans()[0]
+    let conic = native_arc.rational_bezier_decomposition().unwrap().spans()[0]
         .curve()
         .clone();
     let elevated = RationalBezier2::from(conic.clone())
@@ -1809,11 +1809,7 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
     let previous = CircularArc2::try_from_center(p(-1, -1), p(0, 0), p(0, -1), true).unwrap();
     let next = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
     let retained = |arc: &CircularArc2, elevated: bool| {
-        let conic = arc
-            .rational_bezier_decomposition(&CurveContext::STRICT)
-            .unwrap()
-            .into_value()
-            .spans()[0]
+        let conic = arc.rational_bezier_decomposition().unwrap().spans()[0]
             .curve()
             .clone();
         if elevated {
@@ -1928,12 +1924,7 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
 #[test]
 fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
-    let conic = native_arc
-        .rational_bezier_decomposition(&CurveContext::STRICT)
-        .unwrap()
-        .into_value()
-        .spans()[0]
-        .curve();
+    let conic = native_arc.rational_bezier_decomposition().unwrap().spans()[0].curve();
     let undecidable_zero = support::terminally_unresolved_zero();
     let control = Point2::new(
         conic.control().x() + undecidable_zero,

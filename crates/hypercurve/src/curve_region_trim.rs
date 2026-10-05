@@ -2068,7 +2068,7 @@ mod tests {
             .unwrap()
             .into(),
             decided(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     vec![
                         HomogeneousControl2::new(point.x().clone(), point.y().clone(), Real::one()),
                         HomogeneousControl2::new(Real::zero(), Real::zero(), Real::zero()),
@@ -2172,7 +2172,7 @@ mod tests {
         let region = native_region(vec![rectangle(-3, -3, 3, 3)], Vec::new());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let rational = decided(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     vec![
                         HomogeneousControl2::new(Real::zero(), Real::zero(), Real::one()),
                         HomogeneousControl2::new(Real::one(), Real::zero(), Real::zero()),

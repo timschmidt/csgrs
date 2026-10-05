@@ -89,7 +89,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut flattened_total = 0_usize;
     for _ in 0..flatten_iterations {
-        let flattened = decided(cubic.flatten_certified(&flattening_options, &policy));
+        let flattened = decided(crate::support::under_classified(&policy, || {
+            cubic.flatten_certified(&flattening_options)
+        }));
         flattened_total += black_box(flattened.points().len());
     }
     let elapsed = started.elapsed();

@@ -530,7 +530,7 @@ impl CurveString2 {
         target_point: Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
-        match line.classify_point(&target_point, policy) {
+        match line.classify_point_with_policy(&target_point, policy) {
             Classification::Decided(crate::LineSide::On) => {}
             Classification::Decided(_) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -577,7 +577,7 @@ impl CurveString2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
 
-        match arc.contains_point(&target_point, policy) {
+        match arc.contains_point_with_policy(&target_point, policy) {
             Classification::Decided(false) => {}
             Classification::Decided(true) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -608,7 +608,7 @@ impl CurveString2 {
             CurveStringEndpoint2::Start => arc.start(),
             CurveStringEndpoint2::End => arc.end(),
         };
-        match extended_arc.contains_point(retained_endpoint, policy) {
+        match extended_arc.contains_point_with_policy(retained_endpoint, policy) {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -616,11 +616,11 @@ impl CurveString2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        let representative = match arc.representative_point(policy)? {
+        let representative = match arc.representative_point_with_policy(policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match extended_arc.contains_point(&representative, policy) {
+        match extended_arc.contains_point_with_policy(&representative, policy) {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -933,7 +933,7 @@ pub(crate) fn merge_adjacent_line_segments(
         return Ok(Classification::Decided(None));
     };
 
-    match current.classify_point(next.end(), policy) {
+    match current.classify_point_with_policy(next.end(), policy) {
         Classification::Decided(LineSide::On) => {}
         Classification::Decided(_) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -1029,13 +1029,13 @@ fn trim_arc_segment_by_range(
     source_range: &ParamRange,
     policy: &CurveContext,
 ) -> CurveResult<SegmentTrimMaterialization> {
-    let start = match arc.point_at_sweep_fraction(source_range.start(), policy)? {
+    let start = match arc.point_at_sweep_fraction_with_policy(source_range.start(), policy)? {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => {
             return Ok(SegmentTrimMaterialization::Unresolved(reason));
         }
     };
-    let end = match arc.point_at_sweep_fraction(source_range.end(), policy)? {
+    let end = match arc.point_at_sweep_fraction_with_policy(source_range.end(), policy)? {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => {
             return Ok(SegmentTrimMaterialization::Unresolved(reason));
@@ -1088,8 +1088,8 @@ fn trim_arc_segment_by_point_range(
     policy: &CurveContext,
 ) -> CurveResult<SegmentTrimMaterialization> {
     match (
-        source_arc.contains_point(start_point, policy),
-        source_arc.contains_point(end_point, policy),
+        source_arc.contains_point_with_policy(start_point, policy),
+        source_arc.contains_point_with_policy(end_point, policy),
     ) {
         (Classification::Decided(true), Classification::Decided(true)) => {}
         (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {

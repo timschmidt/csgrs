@@ -168,11 +168,12 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
     // W = 1-4t+2t² has a pole between these two finite restrictions.
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (start, end) in [(Real::zero(), q(1, 4)), (q(3, 4), Real::one())] {
-            let a = source.point_at(&start, &policy).unwrap();
-            let b = source.point_at(&end, &policy).unwrap();
-            let middle = source
-                .point_at(&((&start + &end) * q(1, 2)), &policy)
-                .unwrap();
+            let a = crate::support::under_value(&policy, || source.point_at(&start)).unwrap();
+            let b = crate::support::under_value(&policy, || source.point_at(&end)).unwrap();
+            let middle = crate::support::under_value(&policy, || {
+                source.point_at(&((&start + &end) * q(1, 2)))
+            })
+            .unwrap();
             let inside = Point2::new(
                 (a.x() + b.x() + Real::from(2) * middle.x()) * q(1, 4),
                 (a.y() + b.y() + Real::from(2) * middle.y()) * q(1, 4),
@@ -712,8 +713,7 @@ fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegio
     ];
     let mut curves = Vec::with_capacity(4);
     for arc in &arcs {
-        let decomposition = arc
-            .rational_bezier_decomposition(policy)
+        let decomposition = crate::support::under(policy, || arc.rational_bezier_decomposition())
             .unwrap()
             .into_value();
         for span in decomposition.spans() {

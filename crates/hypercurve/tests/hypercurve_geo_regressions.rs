@@ -92,9 +92,10 @@ fn assert_single_line_hit(
     expected: (f64, f64),
     tolerance: f64,
 ) {
-    let result = line(first.0, first.1)
-        .intersect_line(&line(second.0, second.1), &policy())
-        .unwrap();
+    let result = crate::support::under_value(&policy(), || {
+        line(first.0, first.1).intersect_line(&line(second.0, second.1))
+    })
+    .unwrap();
     let LineLineIntersection::Point { point, .. } = result else {
         panic!("expected a single line intersection point, got {result:?}");
     };
@@ -103,9 +104,9 @@ fn assert_single_line_hit(
 
 fn assert_no_line_hit(first: ((f64, f64), (f64, f64)), second: ((f64, f64), (f64, f64))) {
     assert_eq!(
-        line(first.0, first.1)
-            .intersect_line(&line(second.0, second.1), &policy())
-            .unwrap(),
+        crate::support::under_value(&policy(), || line(first.0, first.1)
+            .intersect_line(&line(second.0, second.1)))
+        .unwrap(),
         LineLineIntersection::None
     );
 }
@@ -114,9 +115,10 @@ fn assert_single_line_hit_exists(
     first: ((f64, f64), (f64, f64)),
     second: ((f64, f64), (f64, f64)),
 ) {
-    let result = line(first.0, first.1)
-        .intersect_line(&line(second.0, second.1), &policy())
-        .unwrap();
+    let result = crate::support::under_value(&policy(), || {
+        line(first.0, first.1).intersect_line(&line(second.0, second.1))
+    })
+    .unwrap();
     assert!(
         matches!(result, LineLineIntersection::Point { .. }),
         "expected a single line intersection point, got {result:?}"
@@ -169,9 +171,10 @@ fn assert_boolean_samples_match_geo(
 
 #[test]
 fn geo_line_intersection_examples_match_hypercurve_topology() {
-    let crossing = line((0.0, 0.0), (5.0, 5.0))
-        .intersect_line(&line((0.0, 5.0), (5.0, 0.0)), &policy())
-        .unwrap();
+    let crossing = crate::support::under_value(&policy(), || {
+        line((0.0, 0.0), (5.0, 5.0)).intersect_line(&line((0.0, 5.0), (5.0, 0.0)))
+    })
+    .unwrap();
     let LineLineIntersection::Point { point, kind, .. } = crossing else {
         panic!("expected crossing point, got {crossing:?}");
     };
@@ -180,18 +183,20 @@ fn geo_line_intersection_examples_match_hypercurve_topology() {
 
     assert_no_line_hit(((0.0, 0.0), (5.0, 5.0)), ((0.0, 1.0), (5.0, 6.0)));
 
-    let endpoint = line((0.0, 0.0), (5.0, 5.0))
-        .intersect_line(&line((5.0, 5.0), (5.0, 0.0)), &policy())
-        .unwrap();
+    let endpoint = crate::support::under_value(&policy(), || {
+        line((0.0, 0.0), (5.0, 5.0)).intersect_line(&line((5.0, 5.0), (5.0, 0.0)))
+    })
+    .unwrap();
     let LineLineIntersection::Point { point, kind, .. } = endpoint else {
         panic!("expected endpoint point, got {endpoint:?}");
     };
     assert_eq!(kind, IntersectionKind::Endpoint);
     assert_point_close(&point, (5.0, 5.0), 1e-12);
 
-    let overlap = line((0.0, 0.0), (5.0, 5.0))
-        .intersect_line(&line((3.0, 3.0), (6.0, 6.0)), &policy())
-        .unwrap();
+    let overlap = crate::support::under_value(&policy(), || {
+        line((0.0, 0.0), (5.0, 5.0)).intersect_line(&line((3.0, 3.0), (6.0, 6.0)))
+    })
+    .unwrap();
     let LineLineIntersection::Overlap { segment, .. } = overlap else {
         panic!("expected collinear overlap, got {overlap:?}");
     };

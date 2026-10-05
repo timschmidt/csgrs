@@ -6492,13 +6492,13 @@ fn retained_line_fragment_endpoints(
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             let relation = match fragment.parallel().source() {
                 crate::BezierParallelSource2::Quadratic(source) => {
-                    source.fit_exact_line_image(policy)?
+                    source.fit_exact_line_image_with_policy(policy)?
                 }
                 crate::BezierParallelSource2::Cubic(source) => {
-                    source.fit_exact_line_image(policy)?
+                    source.fit_exact_line_image_with_policy(policy)?
                 }
                 crate::BezierParallelSource2::Rational(source) => {
-                    source.fit_exact_line_image(policy)?
+                    source.fit_exact_line_image_with_policy(policy)?
                 }
             };
             match relation {
@@ -6587,7 +6587,7 @@ fn retained_line_fragment_endpoints(
                     }
                 }
             }
-            let line = match source.fit_exact_line_image(policy)? {
+            let line = match source.fit_exact_line_image_with_policy(policy)? {
                 Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
                 Classification::Decided(BezierLineImageFitRelation::NotLine) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -6662,10 +6662,10 @@ fn subcurve_fit_exact_line_image(
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(policy),
-        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(policy),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.fit_exact_line_image(policy),
-        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(policy),
+        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image_with_policy(policy),
+        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image_with_policy(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.fit_exact_line_image_with_policy(policy),
+        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image_with_policy(policy),
     }
 }
 

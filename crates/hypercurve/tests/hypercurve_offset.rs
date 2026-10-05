@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     CircularArc2, Classification, CurveContext, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
 };
@@ -39,7 +40,9 @@ fn native_line_and_arc_parallel_primitives_are_exact() {
     );
 
     let counter_clockwise = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
-    let Classification::Decided(inward) = counter_clockwise.offset_left(q(1, 2), &policy).unwrap()
+    let Classification::Decided(inward) =
+        crate::support::under_classified_result(&policy, || counter_clockwise.offset_left(q(1, 2)))
+            .unwrap()
     else {
         panic!("the inward arc remains nondegenerate");
     };
@@ -48,7 +51,9 @@ fn native_line_and_arc_parallel_primitives_are_exact() {
     assert_eq!(inward.radius_squared(), q(1, 4));
 
     let clockwise = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1)).unwrap();
-    let Classification::Decided(outward) = clockwise.offset_left(s(1), &policy).unwrap() else {
+    let Classification::Decided(outward) =
+        crate::support::under_classified_result(&policy, || clockwise.offset_left(s(1))).unwrap()
+    else {
         panic!("the clockwise left offset expands");
     };
     assert_eq!(outward.start(), &p(-1, 0));
@@ -61,7 +66,9 @@ fn primitive_arc_reports_radius_collapse_boundary() {
     let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
     for distance in [s(1), s(2)] {
         assert_eq!(
-            arc.offset_left(distance, &CurveContext::STRICT).unwrap(),
+            crate::support::under_classified_result(&CurveContext::STRICT, || arc
+                .offset_left(distance))
+            .unwrap(),
             Classification::Uncertain(UncertaintyReason::Unsupported)
         );
     }

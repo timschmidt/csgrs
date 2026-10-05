@@ -364,7 +364,26 @@ impl QuadraticBezier2 {
     /// prefix curve is produced by exact de Casteljau subdivision. Ambiguous
     /// parameter ordering remains explicit uncertainty, following the exactness model's EGC
     /// predicate boundary.
-    pub fn prefix_signed_area_contribution(
+    pub fn prefix_signed_area_contribution(&self, t: Real) -> crate::ExactCurveResult<Real> {
+        self.prefix_signed_area_contribution_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::QuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::QuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::prefix_signed_area_contribution`] under an explicit predicate policy.
+    pub(crate) fn prefix_signed_area_contribution_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -378,6 +397,28 @@ impl QuadraticBezier2 {
 
     /// Returns exact area and first moments over the prefix interval `[0, t]`.
     pub fn prefix_area_moments_contribution(
+        &self,
+        t: Real,
+    ) -> crate::ExactCurveResult<BezierAreaMoments2> {
+        self.prefix_area_moments_contribution_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::QuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::QuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::prefix_area_moments_contribution`] under an explicit predicate policy.
+    pub(crate) fn prefix_area_moments_contribution_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -402,7 +443,26 @@ impl CubicBezier2 {
     }
 
     /// Returns the exact signed area contribution over the prefix interval `[0, t]`.
-    pub fn prefix_signed_area_contribution(
+    pub fn prefix_signed_area_contribution(&self, t: Real) -> crate::ExactCurveResult<Real> {
+        self.prefix_signed_area_contribution_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CubicBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CubicBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::prefix_signed_area_contribution`] under an explicit predicate policy.
+    pub(crate) fn prefix_signed_area_contribution_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -416,6 +476,28 @@ impl CubicBezier2 {
 
     /// Returns exact area and first moments over the prefix interval `[0, t]`.
     pub fn prefix_area_moments_contribution(
+        &self,
+        t: Real,
+    ) -> crate::ExactCurveResult<BezierAreaMoments2> {
+        self.prefix_area_moments_contribution_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CubicBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CubicBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::prefix_area_moments_contribution`] under an explicit predicate policy.
+    pub(crate) fn prefix_area_moments_contribution_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -2474,7 +2556,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact(
+            .split_at_exact_with_policy(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
                 &CurveContext::STRICT,
             )
@@ -2648,7 +2730,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact(
+            .split_at_exact_with_policy(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
                 &CurveContext::STRICT,
             )
@@ -2701,7 +2783,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact(
+            .split_at_exact_with_policy(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
                 &CurveContext::STRICT,
             )
@@ -2907,7 +2989,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact(
+            .split_at_exact_with_policy(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
                 &CurveContext::STRICT,
             )
@@ -3038,11 +3120,13 @@ mod tests {
             Some(moments.signed_area().clone())
         );
 
-        let Classification::Decided(reconstructed) = RationalBezier2::from_homogeneous_controls(
-            elevated.homogeneous_controls().to_vec(),
-            &CurveContext::STRICT,
-        )
-        .unwrap() else {
+        let Classification::Decided(reconstructed) =
+            RationalBezier2::from_homogeneous_controls_with_policy(
+                elevated.homogeneous_controls().to_vec(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+        else {
             panic!("the reconstructed homogeneous conic has finite endpoints");
         };
         let reconstructed_moments = reconstructed

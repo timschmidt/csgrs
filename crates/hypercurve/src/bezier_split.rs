@@ -1740,11 +1740,15 @@ impl BezierSubcurve2 {
     }
 
     /// Evaluates this native subcurve at an exact local parameter.
-    pub fn point_at(&self, parameter: &Real, policy: &CurveContext) -> Classification<Point2> {
+    pub(crate) fn point_at_with_policy(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> Classification<Point2> {
         match self {
             Self::Quadratic(curve) => Classification::Decided(curve.point_at(parameter.clone())),
             Self::Cubic(curve) => Classification::Decided(curve.point_at(parameter.clone())),
-            Self::RationalQuadratic(curve) => curve.point_at(parameter.clone(), policy),
+            Self::RationalQuadratic(curve) => curve.point_at_with_policy(parameter.clone(), policy),
             Self::Rational(curve) => curve.point_at_classified(parameter, policy),
         }
     }
@@ -1794,16 +1798,16 @@ impl BezierSubcurve2 {
     ) -> CurveResult<Classification<Self>> {
         match self {
             Self::Quadratic(curve) => Ok(Classification::Decided(Self::Quadratic(
-                curve.subcurve_between_exact(start, end, policy)?,
+                curve.subcurve_between_exact_with_policy(start, end, policy)?,
             ))),
             Self::Cubic(curve) => Ok(Classification::Decided(Self::Cubic(
-                curve.subcurve_between_exact(start, end, policy)?,
+                curve.subcurve_between_exact_with_policy(start, end, policy)?,
             ))),
             Self::RationalQuadratic(curve) => {
                 curve.subcurve_between_exact_native(start, end, policy)
             }
             Self::Rational(curve) => curve
-                .subcurve_between_exact(start, end, policy)
+                .subcurve_between_exact_with_policy(start, end, policy)
                 .map(|result| result.map(Self::Rational)),
         }
     }
@@ -1981,7 +1985,7 @@ impl QuadraticBezier2 {
             true,
             |start, end| {
                 Ok(Classification::Decided(BezierSubcurve2::Quadratic(
-                    self.subcurve_between_exact(start, end, policy)?,
+                    self.subcurve_between_exact_with_policy(start, end, policy)?,
                 )))
             },
             |parameter| BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy),
@@ -1991,6 +1995,22 @@ impl QuadraticBezier2 {
 
     /// Materializes the exact subcurve over `[start, end]`.
     pub fn subcurve_between_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+    ) -> crate::ExactCurveResult<QuadraticBezier2> {
+        self.subcurve_between_exact_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::QuadraticBezier,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::subcurve_between_exact`] under an explicit predicate policy.
+    pub(crate) fn subcurve_between_exact_with_policy(
         &self,
         start: &Real,
         end: &Real,
@@ -2095,6 +2115,22 @@ impl CubicBezier2 {
         &self,
         start: &Real,
         end: &Real,
+    ) -> crate::ExactCurveResult<CubicBezier2> {
+        self.subcurve_between_exact_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::CubicBezier,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::subcurve_between_exact`] under an explicit predicate policy.
+    pub(crate) fn subcurve_between_exact_with_policy(
+        &self,
+        start: &Real,
+        end: &Real,
         policy: &CurveContext,
     ) -> CurveResult<CubicBezier2> {
         validate_exact_range(start, end, policy)?;
@@ -2194,6 +2230,29 @@ impl RationalQuadraticBezier2 {
         &self,
         start: &Real,
         end: &Real,
+    ) -> crate::ExactCurveResult<crate::CurveGeometry2> {
+        self.subcurve_between_exact_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::subcurve_between_exact`] under an explicit predicate policy.
+    pub(crate) fn subcurve_between_exact_with_policy(
+        &self,
+        start: &Real,
+        end: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::CurveGeometry2>> {
         Ok(self
@@ -2210,7 +2269,7 @@ impl RationalQuadraticBezier2 {
         let strict = policy.strict_counterpart();
         validate_exact_range(start, end, &strict)?;
         if compare_reals(start, end, &strict) == Some(Ordering::Equal) {
-            let point = match self.point_at(start.clone(), &strict) {
+            let point = match self.point_at_with_policy(start.clone(), &strict) {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
@@ -2261,6 +2320,28 @@ impl RationalQuadraticBezier2 {
     /// not have a finite affine projection. Exterior cuts do not inherit the
     /// source's unit-domain weight-sign certificate.
     pub fn split_at_exact(
+        &self,
+        t: Real,
+    ) -> crate::ExactCurveResult<(crate::CurveGeometry2, crate::CurveGeometry2)> {
+        self.split_at_exact_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalQuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::split_at_exact`] under an explicit predicate policy.
+    pub(crate) fn split_at_exact_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -2344,20 +2425,19 @@ impl RationalQuadraticBezier2 {
             }
             [Classification::Uncertain(reason), _, _]
             | [_, _, Classification::Uncertain(reason)] => Ok(Classification::Uncertain(reason)),
-            [_, Classification::Uncertain(_), _] => Ok(RationalBezier2::from_homogeneous_controls(
-                controls.into(),
-                policy,
-            )?
-            .map(|curve| {
-                let curve = match self.retained_implicit_quadratic_conic() {
-                    Some(conic) => curve.with_implicit_quadratic_conic(
-                        conic.clone(),
-                        self.retained_circular_conic().cloned(),
-                    ),
-                    None => curve,
-                };
-                BezierSubcurve2::Rational(curve)
-            })),
+            [_, Classification::Uncertain(_), _] => Ok(
+                RationalBezier2::from_homogeneous_controls_with_policy(controls.into(), policy)?
+                    .map(|curve| {
+                        let curve = match self.retained_implicit_quadratic_conic() {
+                            Some(conic) => curve.with_implicit_quadratic_conic(
+                                conic.clone(),
+                                self.retained_circular_conic().cloned(),
+                            ),
+                            None => curve,
+                        };
+                        BezierSubcurve2::Rational(curve)
+                    }),
+            ),
         }
     }
 }
@@ -2376,7 +2456,7 @@ impl RationalBezier2 {
             false,
             true,
             |start, end| {
-                self.subcurve_between_exact(start, end, policy)
+                self.subcurve_between_exact_with_policy(start, end, policy)
                     .map(|result| result.map(BezierSubcurve2::Rational))
             },
             |parameter| BezierAlgebraicEndpointImage2::rational(self, parameter, policy),
@@ -2825,7 +2905,7 @@ mod finite_conic_split_regression {
         // D(t)=(t-2)²: the positive authored weights prove only the unit domain.
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert!(matches!(
-                conic.split_at_exact(2.into(), &policy).unwrap(),
+                conic.split_at_exact_with_policy(2.into(), &policy).unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
             ));
             let (left, _) = decided(conic.split_at_exact_native(3.into(), &policy).unwrap());

@@ -94,7 +94,8 @@ fn bench_large_rational_bezier() {
         let mut cold_checksum = 0_usize;
         for _ in 0..iterations {
             let curve = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
-            let point = curve.point_at(&parameter, &policy).unwrap();
+            let point =
+                crate::support::under_value(&policy, || curve.point_at(&parameter)).unwrap();
             cold_checksum ^= black_box(point.x().to_f64_lossy().unwrap().to_bits() as usize);
         }
         let elapsed = started.elapsed();
@@ -104,11 +105,12 @@ fn bench_large_rational_bezier() {
         );
 
         let curve = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
-        curve.point_at(&parameter, &policy).unwrap();
+        crate::support::under_value(&policy, || curve.point_at(&parameter)).unwrap();
         let started = Instant::now();
         let mut cached_checksum = 0_usize;
         for _ in 0..iterations {
-            let point = curve.point_at(&parameter, &policy).unwrap();
+            let point =
+                crate::support::under_value(&policy, || curve.point_at(&parameter)).unwrap();
             cached_checksum ^= black_box(point.y().to_f64_lossy().unwrap().to_bits() as usize);
         }
         let elapsed = started.elapsed();
@@ -123,7 +125,12 @@ fn bench_large_rational_bezier() {
         let started = Instant::now();
         let mut split_checksum = 0_usize;
         for _ in 0..iterations {
-            let (left, right) = decided(curve.split_at_exact(&parameter, &policy).unwrap());
+            let (left, right) = decided(
+                crate::support::under_classified_result(&policy, || {
+                    curve.split_at_exact(&parameter)
+                })
+                .unwrap(),
+            );
             split_checksum ^=
                 black_box(left.homogeneous_controls().len() + right.homogeneous_controls().len());
         }
@@ -163,9 +170,10 @@ fn main() {
     let mut cold_monotonicity_count = 0_usize;
     for curve in &cold_monotonicity_inputs {
         cold_monotonicity_count = cold_monotonicity_count.wrapping_add(black_box(usize::from(
-            black_box(curve)
-                .axis_is_monotone(Axis2::X, black_box(&policy))
-                .expect("benchmark monotonicity is exact"),
+            crate::support::under_value(black_box(&policy), || {
+                black_box(curve).axis_is_monotone(Axis2::X)
+            })
+            .expect("benchmark monotonicity is exact"),
         )));
     }
     let elapsed = started.elapsed();
@@ -191,9 +199,10 @@ fn main() {
     for curve in &high_degree_monotonicity_inputs {
         high_degree_monotonicity_count =
             high_degree_monotonicity_count.wrapping_add(black_box(usize::from(
-                black_box(curve)
-                    .axis_is_monotone(Axis2::X, black_box(&policy))
-                    .expect("benchmark high-degree monotonicity is exact"),
+                crate::support::under_value(black_box(&policy), || {
+                    black_box(curve).axis_is_monotone(Axis2::X)
+                })
+                .expect("benchmark high-degree monotonicity is exact"),
             )));
     }
     let elapsed = started.elapsed();
@@ -205,8 +214,7 @@ fn main() {
 
     let stationary_monotone = stationary_monotone_curve();
     assert!(
-        stationary_monotone
-            .axis_is_monotone(Axis2::X, &policy)
+        crate::support::under_value(&policy, || stationary_monotone.axis_is_monotone(Axis2::X))
             .expect("benchmark monotonicity is exact")
     );
     let monotonicity_iterations = 100_000_u32;
@@ -214,9 +222,10 @@ fn main() {
     let mut monotonicity_count = 0_usize;
     for _ in 0..monotonicity_iterations {
         monotonicity_count = monotonicity_count.wrapping_add(black_box(usize::from(
-            black_box(&stationary_monotone)
-                .axis_is_monotone(Axis2::X, black_box(&policy))
-                .expect("benchmark monotonicity is exact"),
+            crate::support::under_value(black_box(&policy), || {
+                black_box(&stationary_monotone).axis_is_monotone(Axis2::X)
+            })
+            .expect("benchmark monotonicity is exact"),
         )));
     }
     let elapsed = started.elapsed();
@@ -235,8 +244,7 @@ fn main() {
     let mut reversing_count = 0_usize;
     for curve in &reversing_inputs {
         reversing_count += usize::from(
-            curve
-                .axis_is_monotone(Axis2::X, &policy)
+            crate::support::under_value(&policy, || curve.axis_is_monotone(Axis2::X))
                 .expect("benchmark reversing monotonicity is exact"),
         );
     }
@@ -267,14 +275,16 @@ fn main() {
     );
 
     let related_first = decided(
-        curve
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
-            .expect("benchmark source subdivision is exact"),
+        crate::support::under_classified_result(&policy, || {
+            curve.subcurve_between_exact(&Real::zero(), &q(3, 4))
+        })
+        .expect("benchmark source subdivision is exact"),
     );
     let related_second = decided(
-        curve
-            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
-            .expect("benchmark source subdivision is exact"),
+        crate::support::under_classified_result(&policy, || {
+            curve.subcurve_between_exact(&q(1, 4), &Real::one())
+        })
+        .expect("benchmark source subdivision is exact"),
     );
     let lineage_iterations = 5_000_u32;
     let started = Instant::now();
@@ -437,9 +447,10 @@ fn main() {
     let started = Instant::now();
     let mut exact_derivative_count = 0_usize;
     for _ in 0..exact_derivative_iterations {
-        let derivatives = curve
-            .derivatives_at(black_box(&exact_parameter), black_box(3), &policy)
-            .expect("exact benchmark derivatives are certified");
+        let derivatives = crate::support::under_value(&policy, || {
+            curve.derivatives_at(black_box(&exact_parameter), black_box(3))
+        })
+        .expect("exact benchmark derivatives are certified");
         exact_derivative_count = exact_derivative_count.wrapping_add(black_box(derivatives.len()));
     }
     let elapsed = started.elapsed();

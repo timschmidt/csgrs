@@ -796,7 +796,7 @@ pub(super) fn retained_fragment_algebraic_ray_curve(
                     && crate::classify::in_closed_unit_interval(end, policy) == Some(true)
             })
         {
-            let curve = match curve.subcurve_between_exact(start, end, policy)? {
+            let curve = match curve.subcurve_between_exact_with_policy(start, end, policy)? {
                 Classification::Decided(curve) => curve,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -3024,7 +3024,7 @@ pub(super) fn subcurve_point_at(
     match curve {
         BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
         BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at_with_policy(parameter, policy),
         // The owning fragment supplies the domain; retained endpoints and
         // interior samples may lie outside the author's unit interval.
         BezierSubcurve2::Rational(curve) => curve.point_at_affine_classified(&parameter, policy),
@@ -3037,7 +3037,7 @@ pub(super) fn subcurve_contains_point(
     policy: &CurveContext,
 ) -> Classification<bool> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.contains_point(point, policy),
+        BezierSubcurve2::Quadratic(curve) => curve.contains_point_with_policy(point, policy),
         BezierSubcurve2::Cubic(curve) => RationalBezier2::try_new(
             curve.control_points().into_iter().cloned().collect(),
             vec![Real::one(); 4],
@@ -3046,7 +3046,9 @@ pub(super) fn subcurve_contains_point(
             Classification::Uncertain(UncertaintyReason::Unsupported),
             |curve| curve.contains_point_classified(point, policy),
         ),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.contains_point(point, policy),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.contains_point_with_policy(point, policy)
+        }
         BezierSubcurve2::Rational(curve) => curve.contains_point_classified(point, policy),
     }
 }

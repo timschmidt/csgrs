@@ -743,12 +743,12 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
     let second = RationalBezier2::try_new(controls, vec![r(1), r(2) * weight, r(4)]).unwrap();
     let first = decided(
         first
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .subcurve_between_exact_with_policy(&Real::zero(), &q(3, 4), &policy)
             .unwrap(),
     );
     let second = decided(
         second
-            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
+            .subcurve_between_exact_with_policy(&q(1, 4), &Real::one(), &policy)
             .unwrap(),
     );
 
@@ -782,12 +782,12 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
     let source = curve();
     let first = decided(
         source
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .subcurve_between_exact_with_policy(&Real::zero(), &q(3, 4), &policy)
             .unwrap(),
     );
     let second = decided(
         source
-            .subcurve_between_exact(&q(3, 8), &q(7, 8), &policy)
+            .subcurve_between_exact_with_policy(&q(3, 8), &q(7, 8), &policy)
             .unwrap(),
     );
     assert_eq!(
@@ -800,12 +800,12 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
     );
     let first_overlap = decided(
         first
-            .subcurve_between_exact(&q(1, 2), &Real::one(), &policy)
+            .subcurve_between_exact_with_policy(&q(1, 2), &Real::one(), &policy)
             .unwrap(),
     );
     let second_overlap = decided(
         second
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .subcurve_between_exact_with_policy(&Real::zero(), &q(3, 4), &policy)
             .unwrap(),
     );
     assert!(matches!(
@@ -851,23 +851,23 @@ fn independently_constructed_partial_overlap_reconstructs_rational_endpoints() {
     let source = curve();
     let source_first = decided(
         source
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .subcurve_between_exact_with_policy(&Real::zero(), &q(3, 4), &policy)
             .unwrap(),
     );
     let source_second = decided(
         source
-            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
+            .subcurve_between_exact_with_policy(&q(1, 4), &Real::one(), &policy)
             .unwrap(),
     );
     let first = decided(
-        RationalBezier2::from_homogeneous_controls(
+        RationalBezier2::from_homogeneous_controls_with_policy(
             source_first.homogeneous_controls().to_vec(),
             &policy,
         )
         .unwrap(),
     );
     let second = decided(
-        RationalBezier2::from_homogeneous_controls(
+        RationalBezier2::from_homogeneous_controls_with_policy(
             source_second.homogeneous_controls().to_vec(),
             &policy,
         )

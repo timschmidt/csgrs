@@ -2975,7 +2975,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
         };
         let (lower, upper) = parameter.isolating_bounds();
         let strict = &CurveContext::STRICT;
-        let source = match source.subcurve_between_exact(lower, upper, strict)? {
+        let source = match source.subcurve_between_exact_with_policy(lower, upper, strict)? {
             Classification::Decided(source) => source,
             Classification::Uncertain(_) => return Ok(None),
         };

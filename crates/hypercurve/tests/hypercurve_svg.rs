@@ -52,8 +52,10 @@ fn exact_extension_round_trips_infinite_homogeneous_controls() {
         hypercurve::HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
     ];
     let Classification::Decided(curve) =
-        RationalBezier2::from_homogeneous_controls(controls.clone(), &CurveContext::STRICT)
-            .unwrap()
+        crate::support::under_classified_result(&CurveContext::STRICT, || {
+            RationalBezier2::from_homogeneous_controls(controls.clone())
+        })
+        .unwrap()
     else {
         panic!("the homogeneous semicircle must have finite endpoints");
     };

@@ -7136,7 +7136,8 @@ impl BezierParallel2 {
             .zip(weights)
             .map(|((x, y), weight)| crate::HomogeneousControl2::new(x, y, weight))
             .collect();
-        RationalBezier2::from_homogeneous_controls(controls, policy).map(|curve| curve.map(Some))
+        RationalBezier2::from_homogeneous_controls_with_policy(controls, policy)
+            .map(|curve| curve.map(Some))
     }
 
     /// Builds a Levien-style endpoint-tangent cubic for later verification.

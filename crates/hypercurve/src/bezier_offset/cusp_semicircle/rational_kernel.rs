@@ -3565,22 +3565,23 @@ impl BezierAlgebraicCuspSemicircle2 {
         ) {
             return Ok(Classification::Decided(None));
         }
-        let (line, affine_parameterization) =
-            if let Some(line) = other.exact_linear_parameterization_line() {
-                (line, true)
-            } else {
-                let fit = match other.fit_exact_line_image(&policy.strict_counterpart())? {
-                    Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
-                    Classification::Decided(BezierLineImageFitRelation::NotLine)
-                    | Classification::Uncertain(_) => {
-                        return Ok(Classification::Decided(None));
-                    }
-                };
-                if retain_parameter_map {
+        let (line, affine_parameterization) = if let Some(line) =
+            other.exact_linear_parameterization_line()
+        {
+            (line, true)
+        } else {
+            let fit = match other.fit_exact_line_image_with_policy(&policy.strict_counterpart())? {
+                Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
+                Classification::Decided(BezierLineImageFitRelation::NotLine)
+                | Classification::Uncertain(_) => {
                     return Ok(Classification::Decided(None));
                 }
-                (fit.line().clone(), false)
             };
+            if retain_parameter_map {
+                return Ok(Classification::Decided(None));
+            }
+            (fit.line().clone(), false)
+        };
         let chord = match BezierAlgebraicChord2::try_new(
             CurvePoint2::from(line.start().clone()),
             CurvePoint2::from(line.end().clone()),

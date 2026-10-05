@@ -1963,7 +1963,7 @@ impl Contour2 {
             .collect::<Vec<_>>();
         let mut overlap = false;
         for (index, arc) in arcs.iter().enumerate() {
-            let representative = match arc.representative_point(policy)? {
+            let representative = match arc.representative_point_with_policy(policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(_) => {
                     return Ok(Some(StraightSkeletonResult2 {
@@ -1982,7 +1982,7 @@ impl Contour2 {
                 if index == other_index {
                     continue;
                 }
-                match other.contains_point(&representative, policy) {
+                match other.contains_point_with_policy(&representative, policy) {
                     Classification::Decided(true) => overlap = true,
                     Classification::Decided(false) => {}
                     Classification::Uncertain(_) => {
@@ -2503,7 +2503,7 @@ impl CurvePath2 {
                 Some(CurveGeometry2::Line(line)) => segments.push(Segment2::Line(line.clone())),
                 Some(CurveGeometry2::CircularArc(arc)) => segments.push(Segment2::Arc(arc.clone())),
                 Some(CurveGeometry2::QuadraticBezier(curve)) => {
-                    match curve.fit_exact_line_image(policy)? {
+                    match curve.fit_exact_line_image_with_policy(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
                         }
@@ -2524,7 +2524,7 @@ impl CurvePath2 {
                     }
                 }
                 Some(CurveGeometry2::CubicBezier(curve)) => {
-                    match curve.fit_exact_line_image(policy)? {
+                    match curve.fit_exact_line_image_with_policy(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
                         }
@@ -2545,7 +2545,7 @@ impl CurvePath2 {
                     }
                 }
                 Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
-                    match curve.fit_exact_line_image(policy)? {
+                    match curve.fit_exact_line_image_with_policy(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
                         }
@@ -2587,7 +2587,7 @@ impl CurvePath2 {
                     }
                 }
                 Some(CurveGeometry2::RationalBezier(curve)) => {
-                    match curve.fit_exact_line_image(policy)? {
+                    match curve.fit_exact_line_image_with_policy(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
                         }
@@ -2765,7 +2765,7 @@ fn control_net_line_image(
         Err(_) => return Ok(Classification::Decided(None)),
     };
     for control in controls {
-        match line.contains_point(control, policy) {
+        match line.contains_point_with_policy(control, policy) {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -6635,7 +6635,7 @@ fn active_shape_preserving_edge_contains_point_at_time_impl(
                         return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
                     }
                 };
-            Ok(match arc.contains_sweep_point(point, policy) {
+            Ok(match arc.contains_sweep_point_with_policy(point, policy) {
                 Classification::Decided(contains) => Ok(contains),
                 Classification::Uncertain(_) => {
                     Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)

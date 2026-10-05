@@ -59,8 +59,7 @@ fn elevated_circle(center_x: i32, policy: &CurveContext) -> CurveRegion2 {
     ];
     let mut curves = Vec::with_capacity(4);
     for arc in &arcs {
-        for span in arc
-            .rational_bezier_decomposition(policy)
+        for span in crate::support::under(policy, || arc.rational_bezier_decomposition())
             .unwrap()
             .into_value()
             .spans()

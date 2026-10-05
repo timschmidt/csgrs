@@ -990,7 +990,7 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
             let source_parameter = start + &local * (end - start);
             assert_eq!(
                 span.curve()
-                    .point_at(&local, &CurveContext::STRICT)
+                    .point_at_with_policy(&local, &CurveContext::STRICT)
                     .unwrap(),
                 curve
                     .point_at_side_with_policy(
@@ -1176,7 +1176,10 @@ fn nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles() {
     assert_eq!(span.degree(), 2);
     assert!(span.affine_control_points().is_none());
     assert_eq!(span.weights(), &[r(1), r(0), r(-1)]);
-    assert!(span.point_at(&q(1, 2), &CurveContext::STRICT).is_err());
+    assert!(
+        span.point_at_with_policy(&q(1, 2), &CurveContext::STRICT)
+            .is_err()
+    );
     assert!(span.certified_bounds().is_err());
 }
 
@@ -1831,7 +1834,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .first()
             .unwrap()
             .curve()
-            .point_at(&Real::zero(), &CurveContext::STRICT)
+            .point_at_with_policy(&Real::zero(), &CurveContext::STRICT)
             .unwrap(),
         curve.start().clone()
     );
@@ -1841,7 +1844,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .last()
             .unwrap()
             .curve()
-            .point_at(&Real::one(), &CurveContext::STRICT)
+            .point_at_with_policy(&Real::one(), &CurveContext::STRICT)
             .unwrap(),
         curve.end().clone()
     );

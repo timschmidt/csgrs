@@ -1740,7 +1740,7 @@ pub(super) fn retained_fillet_pair_contact_rational_point_on_arc(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurvePoint2>> {
     let decomposition = match arc
-        .rational_bezier_decomposition_with_policy(policy)
+        .rational_bezier_decomposition_raw(policy)
         .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
     {
         Classification::Decided(decomposition) => decomposition,

@@ -319,9 +319,13 @@ impl BezierParallelSource2 {
                     Self::Cubic(right),
                 )))
             }
-            Self::Rational(source) => source.split_at_exact(parameter, policy).map(|split| {
-                split.map(|(left, right)| (Self::Rational(left), Self::Rational(right)))
-            }),
+            Self::Rational(source) => {
+                source
+                    .split_at_exact_with_policy(parameter, policy)
+                    .map(|split| {
+                        split.map(|(left, right)| (Self::Rational(left), Self::Rational(right)))
+                    })
+            }
         }
     }
 
@@ -333,15 +337,15 @@ impl BezierParallelSource2 {
     ) -> CurveResult<Classification<Self>> {
         match self {
             Self::Quadratic(source) => source
-                .subcurve_between_exact(start, end, policy)
+                .subcurve_between_exact_with_policy(start, end, policy)
                 .map(Self::Quadratic)
                 .map(Classification::Decided),
             Self::Cubic(source) => source
-                .subcurve_between_exact(start, end, policy)
+                .subcurve_between_exact_with_policy(start, end, policy)
                 .map(Self::Cubic)
                 .map(Classification::Decided),
             Self::Rational(source) => source
-                .subcurve_between_exact(start, end, policy)
+                .subcurve_between_exact_with_policy(start, end, policy)
                 .map(|subcurve| subcurve.map(Self::Rational)),
         }
     }
@@ -12919,7 +12923,7 @@ impl BezierAlgebraicChordSupportPredicate2 {
         let (chord, side) = match self {
             Self::Exact { chord, line } => match point {
                 CurvePoint2(CurvePointData2::Exact(point)) => {
-                    (chord, line.classify_point(point, policy))
+                    (chord, line.classify_point_with_policy(point, policy))
                 }
                 CurvePoint2(CurvePointData2::Algebraic(point)) => {
                     let point = match point.predicate_evaluator(policy)? {

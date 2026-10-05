@@ -126,6 +126,18 @@ impl QuadraticBezier2 {
     pub fn flatten_certified(
         &self,
         options: &BezierFlatteningOptions,
+    ) -> crate::ExactCurveResult<CertifiedBezierPolyline2> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Subdivision,
+            crate::CurveFamily2::QuadraticBezier,
+            self.flatten_certified_with_policy(options, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::flatten_certified`] under an explicit predicate policy.
+    pub(crate) fn flatten_certified_with_policy(
+        &self,
+        options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> Classification<CertifiedBezierPolyline2> {
         flatten_curve(self.clone(), options, policy)
@@ -135,6 +147,18 @@ impl QuadraticBezier2 {
 impl CubicBezier2 {
     /// Flattens this cubic Bezier only after exact flatness certification.
     pub fn flatten_certified(
+        &self,
+        options: &BezierFlatteningOptions,
+    ) -> crate::ExactCurveResult<CertifiedBezierPolyline2> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Subdivision,
+            crate::CurveFamily2::CubicBezier,
+            self.flatten_certified_with_policy(options, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::flatten_certified`] under an explicit predicate policy.
+    pub(crate) fn flatten_certified_with_policy(
         &self,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
@@ -148,7 +172,7 @@ impl BezierSubcurve2 {
     ///
     /// Rational spans must have a certified nonzero denominator. Subdivision
     /// establishes a finite control hull separately for each emitted chord.
-    pub fn flatten_certified(
+    pub(crate) fn flatten_certified_with_policy(
         &self,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
@@ -386,7 +410,10 @@ fn segment_curves(
         };
         source_fragment_count += fragments.len();
         for fragment in fragments {
-            let polyline = match fragment.native_curve().flatten_certified(options, policy) {
+            let polyline = match fragment
+                .native_curve()
+                .flatten_certified_with_policy(options, policy)
+            {
                 Classification::Decided(polyline) => polyline,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
@@ -559,7 +586,9 @@ mod tests {
         let options = BezierFlatteningOptions::try_new(Real::one(), 8, &policy).unwrap();
         let curve = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0));
 
-        let Classification::Decided(polyline) = curve.flatten_certified(&options, &policy) else {
+        let Classification::Decided(polyline) =
+            curve.flatten_certified_with_policy(&options, &policy)
+        else {
             panic!("flat line-image quadratic should certify without subdivision");
         };
 
@@ -581,7 +610,8 @@ mod tests {
             let elevated = curve.elevated_to_degree(3).unwrap();
             for curve in [curve, elevated] {
                 let span = BezierSubcurve2::Rational(curve);
-                let Classification::Decided(polyline) = span.flatten_certified(&options, &policy)
+                let Classification::Decided(polyline) =
+                    span.flatten_certified_with_policy(&options, &policy)
                 else {
                     panic!("a finite mixed-weight curve must admit local hulls");
                 };
@@ -598,7 +628,7 @@ mod tests {
                 .unwrap(),
             );
             assert!(matches!(
-                pole.flatten_certified(&options, &policy),
+                pole.flatten_certified_with_policy(&options, &policy),
                 Classification::Uncertain(_)
             ));
         }
@@ -614,7 +644,8 @@ mod tests {
             )
             .unwrap();
             let curve = QuadraticBezier2::new(point(0, 0), point(4, 0), point(1, 0));
-            let Classification::Decided(polyline) = curve.flatten_certified(&options, &policy)
+            let Classification::Decided(polyline) =
+                curve.flatten_certified_with_policy(&options, &policy)
             else {
                 panic!("a retracing quadratic must admit certified finite chords");
             };

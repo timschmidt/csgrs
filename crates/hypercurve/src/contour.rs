@@ -1052,7 +1052,7 @@ pub(crate) fn process_arc_winding(
         sweep_kind,
         crate::arc_bezier::ArcSweepKind::Major | crate::arc_bezier::ArcSweepKind::FullCircle
     ) {
-        let midpoint = match arc.representative_point(policy).ok()? {
+        let midpoint = match arc.representative_point_with_policy(policy).ok()? {
             Classification::Decided(midpoint) => midpoint,
             Classification::Uncertain(_) => return None,
         };

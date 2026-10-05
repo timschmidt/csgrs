@@ -191,6 +191,21 @@ impl ExactCurveError {
         }
     }
 
+    /// Converts an undecided classification about one curve family into a
+    /// blocker with operation context.
+    pub(crate) fn decided_for<T>(
+        operation: CurveOperation2,
+        family: CurveFamily2,
+        value: crate::Classification<T>,
+    ) -> ExactCurveResult<T> {
+        match value {
+            crate::Classification::Decided(value) => Ok(value),
+            crate::Classification::Uncertain(reason) => {
+                Err(Self::blocked(operation, family, reason))
+            }
+        }
+    }
+
     /// Converts a policy-scoped region- or path-level query result into the
     /// principal exact result, attributing failures to `operation`.
     pub(crate) fn principal_query<T>(

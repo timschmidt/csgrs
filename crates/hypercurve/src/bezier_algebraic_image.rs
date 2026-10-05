@@ -799,7 +799,10 @@ impl RationalBezierAlgebraicPointImage2 {
                     (parameter.interval().start(), parameter.interval().end())
                 }
             };
-            match source.curve.subcurve_between_exact(start, end, policy) {
+            match source
+                .curve
+                .subcurve_between_exact_with_policy(start, end, policy)
+            {
                 Ok(Classification::Decided(curve)) => curve.certified_bounds_classified(),
                 Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
                 Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),

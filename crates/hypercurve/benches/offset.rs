@@ -296,8 +296,9 @@ fn bench_bezier_parallel_pair_intersection_lanes() -> CurveResult<()> {
     bench_bezier_parallel_pair_general_contact()?;
 
     let shared_source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
-    let subcurve =
-        shared_source.subcurve_between_exact(&q(1, 4), &q(3, 4), &CurveContext::STRICT)?;
+    let subcurve = shared_source
+        .subcurve_between_exact(&q(1, 4), &q(3, 4))
+        .expect("benchmark fixture remains exact");
     let shared_first = shared_source.parallel_left(s(1))?;
     let shared_partial = subcurve.parallel_left(s(1))?;
     bench_bezier_parallel_pair_intersections(
@@ -556,10 +557,13 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     else {
         panic!("PH overlap benchmark source was not recognized");
     };
-    let Classification::Decided(ph_overlap_target) = RationalBezier2::from_homogeneous_controls(
-        ph_overlap.curve().homogeneous_controls().to_vec(),
-        &CurveContext::STRICT,
-    )?
+    let Classification::Decided(ph_overlap_target) =
+        crate::support::under_classified_result(&CurveContext::STRICT, || {
+            RationalBezier2::from_homogeneous_controls(
+                ph_overlap.curve().homogeneous_controls().to_vec(),
+            )
+        })
+        .expect("benchmark fixture remains exact")
     else {
         panic!("the PH overlap controls must retain finite endpoints");
     };
@@ -653,7 +657,10 @@ fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<
     let mut leaves = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(path) =
-            source.approximate_parallel_blend2d_certified(q(1, 10), &options, &policy)?
+            crate::support::under_classified_result(&policy, || {
+                source.approximate_parallel_blend2d_certified(q(1, 10), &options)
+            })
+            .expect("benchmark fixture remains exact")
         else {
             panic!("certified Bezier parallel construction became uncertain");
         };

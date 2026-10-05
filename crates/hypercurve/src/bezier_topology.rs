@@ -214,7 +214,16 @@ impl QuadraticBezier2 {
     /// corresponding derivative Bezier has a zero. This is the standard
     /// derivative-control-polygon fact used for Bezier bounds; see the Bernstein and de Casteljau curve model. Roots are retained as exact [`Real`] parameters and filtered by
     /// certified closed-unit-interval comparisons.
-    pub fn axis_monotone_parameters(
+    pub fn axis_monotone_parameters(&self, axis: Axis2) -> crate::ExactCurveResult<Vec<Real>> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::QuadraticBezier,
+            self.axis_monotone_parameters_with_policy(axis, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::axis_monotone_parameters`] under an explicit predicate policy.
+    pub(crate) fn axis_monotone_parameters_with_policy(
         &self,
         axis: Axis2,
         policy: &CurveContext,
@@ -228,8 +237,8 @@ impl QuadraticBezier2 {
         bounds_from_axis_extrema(
             [self.start(), self.end()],
             [
-                self.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT),
-                self.axis_monotone_parameters(Axis2::Y, &CurveContext::STRICT),
+                self.axis_monotone_parameters_with_policy(Axis2::X, &CurveContext::STRICT),
+                self.axis_monotone_parameters_with_policy(Axis2::Y, &CurveContext::STRICT),
             ],
             |parameter| self.point_at(parameter),
         )
@@ -331,7 +340,16 @@ impl QuadraticBezier2 {
     /// certified predicate accepts them follows exact-computation discipline. The
     /// Bernstein-to-power conversion is the standard Bezier identity described
     /// by the Bernstein and de Casteljau curve model.
-    pub fn parameters_for_point(
+    pub fn parameters_for_point(&self, point: &Point2) -> crate::ExactCurveResult<Vec<Real>> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::QuadraticBezier,
+            self.parameters_for_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::parameters_for_point`] under an explicit predicate policy.
+    pub(crate) fn parameters_for_point_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -344,8 +362,21 @@ impl QuadraticBezier2 {
     /// The result is decided only when the exact parameter solver can certify
     /// the complete finite-curve query. Use [`Self::parameters_for_point`] when
     /// the caller needs the retained exact parameters for downstream topology.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
-        self.parameters_for_point(point, policy)
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::QuadraticBezier,
+            self.contains_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
+        self.parameters_for_point_with_policy(point, policy)
             .map(|parameters| !parameters.is_empty())
     }
 }
@@ -353,7 +384,16 @@ impl QuadraticBezier2 {
 impl CubicBezier2 {
     /// Returns derivative-root parameters that split this curve into spans
     /// monotone along `axis`.
-    pub fn axis_monotone_parameters(
+    pub fn axis_monotone_parameters(&self, axis: Axis2) -> crate::ExactCurveResult<Vec<Real>> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::CubicBezier,
+            self.axis_monotone_parameters_with_policy(axis, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::axis_monotone_parameters`] under an explicit predicate policy.
+    pub(crate) fn axis_monotone_parameters_with_policy(
         &self,
         axis: Axis2,
         policy: &CurveContext,
@@ -367,8 +407,8 @@ impl CubicBezier2 {
         bounds_from_axis_extrema(
             [self.start(), self.end()],
             [
-                self.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT),
-                self.axis_monotone_parameters(Axis2::Y, &CurveContext::STRICT),
+                self.axis_monotone_parameters_with_policy(Axis2::X, &CurveContext::STRICT),
+                self.axis_monotone_parameters_with_policy(Axis2::Y, &CurveContext::STRICT),
             ],
             |parameter| self.point_at(parameter),
         )
@@ -399,6 +439,21 @@ impl CubicBezier2 {
     /// The exact de Casteljau evaluation and dyadic
     /// subdivision identities follow the Bernstein and de Casteljau curve model.
     pub fn dyadic_parameters_for_point(
+        &self,
+        point: &Point2,
+    ) -> crate::ExactCurveResult<Vec<Real>> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::CubicBezier,
+            self.dyadic_parameters_for_point_with_policy(
+                point,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::dyadic_parameters_for_point`] under an explicit predicate policy.
+    pub(crate) fn dyadic_parameters_for_point_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,

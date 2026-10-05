@@ -341,7 +341,7 @@ impl CurveSupport2 {
             Self::Bezier(BezierSubcurve2::Rational(curve)) => {
                 Ok(curve.point_at_affine_classified(parameter, policy))
             }
-            Self::Bezier(curve) => Ok(curve.point_at(parameter, policy)),
+            Self::Bezier(curve) => Ok(curve.point_at_with_policy(parameter, policy)),
             Self::Parallel(parallel) => parallel.point_at(parameter, policy),
             Self::Line(chord) => match chord.exact_line() {
                 Some(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
@@ -869,7 +869,7 @@ mod tests {
             assert!(elevated.has_certified_injective_image(&policy));
             let collapsed = decided(
                 quadratic
-                    .subcurve_between_exact(&q(1, 2), &q(1, 2), &policy)
+                    .subcurve_between_exact_with_policy(&q(1, 2), &q(1, 2), &policy)
                     .unwrap(),
             );
             assert!(collapsed.retained_circular_conic().is_some());
@@ -897,8 +897,8 @@ mod tests {
             let retraced = BezierSubcurve2::Rational(retraced);
             assert!(!retraced.has_certified_injective_image(&policy));
             assert_eq!(
-                retraced.point_at(&q(1, 4), &policy),
-                retraced.point_at(&q(3, 4), &policy)
+                retraced.point_at_with_policy(&q(1, 4), &policy),
+                retraced.point_at_with_policy(&q(3, 4), &policy)
             );
         }
     }

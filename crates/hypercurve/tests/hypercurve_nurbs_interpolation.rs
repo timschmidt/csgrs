@@ -125,11 +125,7 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
     let parameters = vec![r(0), q(1, 2), r(1)];
     let data_points = parameters
         .iter()
-        .map(|parameter| {
-            source_curve
-                .point_at(parameter, &CurveContext::STRICT)
-                .unwrap()
-        })
+        .map(|parameter| source_curve.point_at(parameter).unwrap())
         .collect::<Vec<_>>();
     let interpolation = NurbsCurve2::interpolate_with_parameters_and_knots(
         2,
@@ -190,8 +186,8 @@ proptest! {
         let data_points = parameters
             .iter()
             .map(|parameter| {
-                source_curve
-                    .point_at(parameter, &CurveContext::STRICT)
+                crate::support::under_value(&CurveContext::STRICT, || source_curve
+                    .point_at(parameter))
                     .unwrap()
             })
             .collect::<Vec<_>>();

@@ -1285,12 +1285,12 @@ impl Curve2 {
             }
             Some(CurveGeometry2::QuadraticBezier(curve)) => CurveGeometry2::QuadraticBezier(
                 curve
-                    .subcurve_between_exact(&start, &end, policy)
+                    .subcurve_between_exact_with_policy(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
             Some(CurveGeometry2::CubicBezier(curve)) => CurveGeometry2::CubicBezier(
                 curve
-                    .subcurve_between_exact(&start, &end, policy)
+                    .subcurve_between_exact_with_policy(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
             Some(CurveGeometry2::RationalQuadraticBezier(curve)) => CurveGeometry2::from_bezier(
@@ -1310,7 +1310,7 @@ impl Curve2 {
             ),
             Some(CurveGeometry2::RationalBezier(curve)) => CurveGeometry2::RationalBezier(
                 match curve
-                    .subcurve_between_exact(&start, &end, policy)
+                    .subcurve_between_exact_with_policy(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?
                 {
                     Classification::Decided(curve) => curve,
@@ -1540,7 +1540,7 @@ impl Curve2 {
                     CurveGeometry2::QuadraticBezier(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::CubicBezier(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::RationalQuadraticBezier(curve) => {
-                        match curve.point_at(parameter.clone(), policy) {
+                        match curve.point_at_with_policy(parameter.clone(), policy) {
                             Classification::Decided(point) => Ok(point),
                             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                                 CurveOperation2::Evaluation,
@@ -3149,7 +3149,7 @@ fn classify_native_arc_chord_path(
             return Ok(Classification::Decided(ContourPointLocation::Outside));
         }
         Some(RealSign::Zero) => {
-            return Ok(match arc.contains_sweep_point(point, policy) {
+            return Ok(match arc.contains_sweep_point_with_policy(point, policy) {
                 Classification::Decided(true) => {
                     Classification::Decided(ContourPointLocation::Boundary)
                 }
@@ -3167,20 +3167,22 @@ fn classify_native_arc_chord_path(
         }
     }
 
-    let point_side = match chord.classify_point(point, policy) {
+    let point_side = match chord.classify_point_with_policy(point, policy) {
         Classification::Decided(LineSide::On) => {
             return Ok(Classification::Decided(ContourPointLocation::Boundary));
         }
         Classification::Decided(side) => side,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let representative = match arc.representative_point(policy).map_err(|cause| {
-        ExactCurveError::invalid(CurveOperation2::NativeTopology, arc_curve.family(), cause)
-    })? {
+    let representative = match arc
+        .representative_point_with_policy(policy)
+        .map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::NativeTopology, arc_curve.family(), cause)
+        })? {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let arc_side = match chord.classify_point(&representative, policy) {
+    let arc_side = match chord.classify_point_with_policy(&representative, policy) {
         Classification::Decided(LineSide::On) => {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::NativeTopology,
@@ -3666,7 +3668,7 @@ fn evaluate_promoted_arc(
                         ),
                     ));
                 };
-                return match curve.point_at(local, policy) {
+                return match curve.point_at_with_policy(local, policy) {
                     Classification::Decided(point) => Ok(point),
                     Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                         CurveOperation2::Evaluation,
@@ -4598,7 +4600,7 @@ fn retained_arc_fillet_projective_cells(
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<(RationalBezier2, bool, bool, RetainedArcFilletContactCell2)>> {
     let authored = match support
-        .rational_bezier_decomposition_with_policy(policy)
+        .rational_bezier_decomposition_raw(policy)
         .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
     {
         Classification::Decided(decomposition) => decomposition,

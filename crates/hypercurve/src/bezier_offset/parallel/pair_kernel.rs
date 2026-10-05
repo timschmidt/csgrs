@@ -1752,11 +1752,13 @@ impl BezierParallel2 {
                 if let Classification::Decided(Some(first)) =
                     self.exact_rational_parallel_component(policy)?
                     && let Classification::Decided(BezierLineImageFitRelation::Fit(first)) =
-                        first.fit_exact_line_image(policy)?
+                        first.fit_exact_line_image_with_policy(policy)?
                     && let Classification::Decided(BezierLineImageFitRelation::Fit(second)) =
-                        other.fit_exact_line_image(policy)?
+                        other.fit_exact_line_image_with_policy(policy)?
                     && matches!(
-                        first.line().intersect_line(second.line(), policy)?,
+                        first
+                            .line()
+                            .intersect_line_with_policy(second.line(), policy)?,
                         crate::LineLineIntersection::None
                     )
                 {

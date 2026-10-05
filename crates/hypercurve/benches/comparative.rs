@@ -1757,15 +1757,18 @@ fn benchmark_bezier_offset(runner: &Runner) {
         .with_knot_tolerance(0.05);
 
     assert!(matches!(
-        source.approximate_parallel_blend2d_certified(distance.clone(), &verification, &policy),
+        crate::support::under_classified_result(&policy, || source
+            .approximate_parallel_blend2d_certified(distance.clone(), &verification)),
         Ok(Classification::Decided(_))
     ));
     assert!(curvo_curve.offset(curvo_options.clone()).is_ok());
 
     let name = "bezier_offset/open_cubic";
     runner.measure(name, "hypercurve_certified", || {
-        let Classification::Decided(path) = source
-            .approximate_parallel_blend2d_certified(distance.clone(), &verification, &policy)
+        let Classification::Decided(path) =
+            crate::support::under_classified_result(&policy, || {
+                source.approximate_parallel_blend2d_certified(distance.clone(), &verification)
+            })
             .expect("hypercurve certified cubic offset completes")
         else {
             panic!("hypercurve certified cubic offset became uncertain");
@@ -1847,14 +1850,18 @@ fn benchmark_rational_bezier_self_contact_case(
     let lower_cut = real(0.49);
     let upper_cut = real(0.51);
     let hypercurve_carrier = Curve2::from(hypercurve_curve.clone());
-    let Classification::Decided((hypercurve_left, _)) = hypercurve_curve
-        .split_at_exact(&lower_cut, &policy)
+    let Classification::Decided((hypercurve_left, _)) =
+        crate::support::under_classified_result(&policy, || {
+            hypercurve_curve.split_at_exact(&lower_cut)
+        })
         .expect("exact lower benchmark split completes")
     else {
         panic!("exact lower benchmark split became uncertain");
     };
-    let Classification::Decided((_, hypercurve_right)) = hypercurve_curve
-        .split_at_exact(&upper_cut, &policy)
+    let Classification::Decided((_, hypercurve_right)) =
+        crate::support::under_classified_result(&policy, || {
+            hypercurve_curve.split_at_exact(&upper_cut)
+        })
         .expect("exact upper benchmark split completes")
     else {
         panic!("exact upper benchmark split became uncertain");

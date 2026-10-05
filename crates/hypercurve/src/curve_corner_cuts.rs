@@ -1039,7 +1039,7 @@ pub(super) fn arc_corner_cut_from_incident_point(
     // that equality and can block STRICT on an otherwise exact square-root
     // representation. Only sweep membership is a new predicate here.
     let support = arc.support();
-    match support.contains_sweep_point(&point, policy) {
+    match support.contains_sweep_point_with_policy(&point, policy) {
         Classification::Decided(true) => {
             let sweep_fraction = match support
                 .sweep_fraction_for_incident_point(&point, policy)
@@ -1270,7 +1270,7 @@ pub(super) fn arc_extension_contains_corner(
         )
     };
     let retained_corner = if previous { arc.end() } else { arc.start() };
-    match extended.contains_sweep_point(retained_corner, policy) {
+    match extended.contains_sweep_point_with_policy(retained_corner, policy) {
         Classification::Decided(contains) => Ok(contains),
         Classification::Uncertain(reason) => {
             Err(ExactCurveError::blocked(operation, family, reason))

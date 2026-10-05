@@ -349,6 +349,36 @@ impl QuadraticBezier2 {
         t: Real,
         point: Point2,
         end: Point2,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::interpolate_point_at_parameter_with_policy(
+            start,
+            t,
+            point,
+            end,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::QuadraticBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::QuadraticBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::interpolate_point_at_parameter`] under an explicit predicate policy.
+    pub(crate) fn interpolate_point_at_parameter_with_policy(
+        start: Point2,
+        t: Real,
+        point: Point2,
+        end: Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if let Some(blocker) = quadratic_interpolation_parameter_blocker(&t, policy) {
@@ -381,7 +411,7 @@ impl QuadraticBezier2 {
     pub fn interpolate_midpoint(start: Point2, midpoint: Point2, end: Point2) -> CurveResult<Self> {
         let two = Real::from(2_i8);
         let half = (Real::one() / two.clone())?;
-        let Classification::Decided(curve) = Self::interpolate_point_at_parameter(
+        let Classification::Decided(curve) = Self::interpolate_point_at_parameter_with_policy(
             start,
             half,
             midpoint,
@@ -449,6 +479,23 @@ impl QuadraticBezier2 {
     /// branching. The zero test is delegated to the same policy boundary as
     /// the rest of `hypercurve`, following the exactness model's exact predicate model.
     pub fn contains_point_at_parameter(
+        &self,
+        point: &Point2,
+        t: Real,
+    ) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::QuadraticBezier,
+            self.contains_point_at_parameter_with_policy(
+                point,
+                t,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::contains_point_at_parameter`] under an explicit predicate policy.
+    pub(crate) fn contains_point_at_parameter_with_policy(
         &self,
         point: &Point2,
         t: Real,
@@ -636,6 +683,23 @@ impl CubicBezier2 {
 
     /// Classifies whether `point` equals this curve at parameter `t`.
     pub fn contains_point_at_parameter(
+        &self,
+        point: &Point2,
+        t: Real,
+    ) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::CubicBezier,
+            self.contains_point_at_parameter_with_policy(
+                point,
+                t,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::contains_point_at_parameter`] under an explicit predicate policy.
+    pub(crate) fn contains_point_at_parameter_with_policy(
         &self,
         point: &Point2,
         t: Real,

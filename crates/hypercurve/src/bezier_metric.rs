@@ -133,7 +133,26 @@ impl QuadraticBezier2 {
     /// is the exact-object prerequisite for inverse arc-length queries; as the exactness model
     /// requires, ambiguous parameter ordering is reported as
     /// uncertainty instead of becoming an approximate branch.
-    pub fn prefix_length_bounds(
+    pub fn prefix_length_bounds(&self, t: Real) -> crate::ExactCurveResult<BezierLengthBounds2> {
+        self.prefix_length_bounds_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::QuadraticBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::QuadraticBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::prefix_length_bounds`] under an explicit predicate policy.
+    pub(crate) fn prefix_length_bounds_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -151,6 +170,33 @@ impl QuadraticBezier2 {
     /// This combines exact de Casteljau prefix splitting with the same
     /// subdivision-refined interval used by [`QuadraticBezier2::refined_length_bounds`].
     pub fn refined_prefix_length_bounds(
+        &self,
+        t: Real,
+        max_depth: usize,
+    ) -> crate::ExactCurveResult<BezierLengthBounds2> {
+        self.refined_prefix_length_bounds_with_policy(
+            t,
+            max_depth,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::QuadraticBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::QuadraticBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::refined_prefix_length_bounds`] under an explicit predicate policy.
+    pub(crate) fn refined_prefix_length_bounds_with_policy(
         &self,
         t: Real,
         max_depth: usize,
@@ -176,6 +222,35 @@ impl QuadraticBezier2 {
     /// boundary: metric approximants may guide refinement, but only certified
     /// comparisons decide branches.
     pub fn inverse_length_parameter_region(
+        &self,
+        target_length: Real,
+        search_depth: usize,
+        metric_depth: usize,
+    ) -> crate::ExactCurveResult<BezierArcLengthParameterRegion2> {
+        self.inverse_length_parameter_region_with_policy(
+            target_length,
+            search_depth,
+            metric_depth,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::QuadraticBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::QuadraticBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::inverse_length_parameter_region`] under an explicit predicate policy.
+    pub(crate) fn inverse_length_parameter_region_with_policy(
         &self,
         target_length: Real,
         search_depth: usize,
@@ -221,7 +296,26 @@ impl CubicBezier2 {
     /// The prefix is constructed by exact de Casteljau subdivision at `t`;
     /// parameter validation is performed through the active exact predicate
     /// policy before any metric interval is emitted.
-    pub fn prefix_length_bounds(
+    pub fn prefix_length_bounds(&self, t: Real) -> crate::ExactCurveResult<BezierLengthBounds2> {
+        self.prefix_length_bounds_with_policy(t, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CubicBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CubicBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::prefix_length_bounds`] under an explicit predicate policy.
+    pub(crate) fn prefix_length_bounds_with_policy(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -236,6 +330,33 @@ impl CubicBezier2 {
 
     /// Returns subdivision-refined certified length bounds for `[0, t]`.
     pub fn refined_prefix_length_bounds(
+        &self,
+        t: Real,
+        max_depth: usize,
+    ) -> crate::ExactCurveResult<BezierLengthBounds2> {
+        self.refined_prefix_length_bounds_with_policy(
+            t,
+            max_depth,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::CubicBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::CubicBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::refined_prefix_length_bounds`] under an explicit predicate policy.
+    pub(crate) fn refined_prefix_length_bounds_with_policy(
         &self,
         t: Real,
         max_depth: usize,
@@ -256,6 +377,35 @@ impl CubicBezier2 {
     /// collapsed to that fast path because their arc-length parameter is not
     /// the affine Bezier parameter.
     pub fn inverse_length_parameter_region(
+        &self,
+        target_length: Real,
+        search_depth: usize,
+        metric_depth: usize,
+    ) -> crate::ExactCurveResult<BezierArcLengthParameterRegion2> {
+        self.inverse_length_parameter_region_with_policy(
+            target_length,
+            search_depth,
+            metric_depth,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::CubicBezier,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Evaluation,
+                crate::CurveFamily2::CubicBezier,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::inverse_length_parameter_region`] under an explicit predicate policy.
+    pub(crate) fn inverse_length_parameter_region_with_policy(
         &self,
         target_length: Real,
         search_depth: usize,
@@ -602,7 +752,12 @@ mod tests {
         let curve = linear_quadratic();
         let region = decided(
             curve
-                .inverse_length_parameter_region(Real::zero(), 4, 2, &CurveContext::STRICT)
+                .inverse_length_parameter_region_with_policy(
+                    Real::zero(),
+                    4,
+                    2,
+                    &CurveContext::STRICT,
+                )
                 .unwrap(),
         );
 
@@ -617,7 +772,12 @@ mod tests {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let region = decided(
             curve
-                .inverse_length_parameter_region(Real::one(), 4, 2, &CurveContext::STRICT)
+                .inverse_length_parameter_region_with_policy(
+                    Real::one(),
+                    4,
+                    2,
+                    &CurveContext::STRICT,
+                )
                 .unwrap(),
         );
 

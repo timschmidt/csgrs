@@ -196,7 +196,7 @@ fn certified_line_parameters_keep_tiny_exact_endpoint_gap() {
     .unwrap();
 
     assert_eq!(
-        left.intersect_line(&right, &policy()).unwrap(),
+        crate::support::under_value(&policy(), || left.intersect_line(&right)).unwrap(),
         LineLineIntersection::None,
         "certified parameter ordering must not collapse a tiny exact gap"
     );
@@ -215,7 +215,8 @@ fn certified_line_parameters_retain_exact_endpoint_touch() {
     )
     .unwrap();
 
-    let intersection = left.intersect_line(&right, &policy()).unwrap();
+    let intersection =
+        crate::support::under_value(&policy(), || left.intersect_line(&right)).unwrap();
     let LineLineIntersection::Point { kind, .. } = intersection else {
         panic!("expected a certified endpoint touch");
     };

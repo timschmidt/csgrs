@@ -115,7 +115,7 @@ impl Aabb2 {
         ];
 
         for candidate in &candidates {
-            match arc.contains_sweep_point(candidate, &CurveContext::STRICT) {
+            match arc.contains_sweep_point_with_policy(candidate, &CurveContext::STRICT) {
                 Classification::Decided(true) => match bbox.include_point(candidate) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(_) => {

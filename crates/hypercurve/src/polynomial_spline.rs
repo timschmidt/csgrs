@@ -1187,14 +1187,16 @@ fn evaluate_span(
     match span {
         BezierSubcurve2::Quadratic(curve) => Ok(curve.point_at(local)),
         BezierSubcurve2::Cubic(curve) => Ok(curve.point_at(local)),
-        BezierSubcurve2::RationalQuadratic(curve) => match curve.point_at(local, policy) {
-            Classification::Decided(point) => Ok(point),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Evaluation,
-                CurveFamily2::PolynomialBSpline,
-                reason,
-            )),
-        },
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            match curve.point_at_with_policy(local, policy) {
+                Classification::Decided(point) => Ok(point),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::Evaluation,
+                    CurveFamily2::PolynomialBSpline,
+                    reason,
+                )),
+            }
+        }
         BezierSubcurve2::Rational(curve) => match curve.point_at_classified(&local, policy) {
             Classification::Decided(point) => Ok(point),
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(

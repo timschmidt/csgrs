@@ -1583,7 +1583,7 @@ fn append_native_path(
                 match crate::arc_bezier::classify_sweep(arc).map_err(svg_geometry_error)? {
                     crate::arc_bezier::ArcSweepKind::FullCircle => {
                         let midpoint = match arc
-                            .representative_point(&CurveContext::STRICT)
+                            .representative_point_with_policy(&CurveContext::STRICT)
                             .map_err(svg_geometry_error)?
                         {
                             Classification::Decided(point) => point,

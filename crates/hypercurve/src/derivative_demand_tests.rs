@@ -111,7 +111,7 @@ fn derivative_demand_preserves_all_rational_quotient_orders() {
                 assert_eq!(values.len(), max_order + 1);
                 let public = curve
                     .clone()
-                    .derivatives_at(&parameter, max_order, &CurveContext::STRICT)
+                    .derivatives_at_with_policy(&parameter, max_order, &CurveContext::STRICT)
                     .unwrap();
                 assert_eq!(public.len(), max_order);
                 let mut factorial = BigInt::one();

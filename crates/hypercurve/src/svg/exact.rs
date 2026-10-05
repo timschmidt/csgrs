@@ -399,7 +399,7 @@ impl<'a> ExactReader<'a> {
             5 => {
                 let controls = self.read_homogeneous_controls()?;
                 let crate::Classification::Decided(curve) =
-                    RationalBezier2::from_homogeneous_controls(
+                    RationalBezier2::from_homogeneous_controls_with_policy(
                         controls,
                         &crate::CurveContext::STRICT,
                     )

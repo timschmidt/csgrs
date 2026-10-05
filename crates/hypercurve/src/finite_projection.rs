@@ -811,7 +811,10 @@ fn projected_subcurve_with_endpoints(
                 .expect("rational Bezier controls are nonempty");
             *last = crate::HomogeneousControl2::from_affine(&end, last.weight().clone());
             let Classification::Decided(curve) =
-                crate::RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT)?
+                crate::RationalBezier2::from_homogeneous_controls_with_policy(
+                    controls,
+                    &CurveContext::STRICT,
+                )?
             else {
                 return Err(CurveError::Topology(
                     "finite projection could not retain rational endpoints".into(),

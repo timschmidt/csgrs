@@ -1528,6 +1528,27 @@ impl RationalBezier2 {
     /// Only the two finite endpoints are projected; interior weights may be zero.
     pub fn from_homogeneous_controls(
         controls: Vec<HomogeneousControl2>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::from_homogeneous_controls_with_policy(controls, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Construction,
+                    crate::CurveFamily2::RationalBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Construction,
+                    crate::CurveFamily2::RationalBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::from_homogeneous_controls`] under an explicit predicate policy.
+    pub(crate) fn from_homogeneous_controls_with_policy(
+        controls: Vec<HomogeneousControl2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         from_homogeneous(
@@ -1711,7 +1732,16 @@ impl RationalBezier2 {
     /// The basis is constructed exactly once from the Bernstein controls. Horner
     /// evaluation then avoids allocating and mutating a de Casteljau work vector
     /// on every repeated point query.
-    pub fn point_at(&self, parameter: &Real, policy: &CurveContext) -> ExactCurveResult<Point2> {
+    pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Point2> {
         match self.point_at_classified(parameter, policy) {
             Classification::Decided(point) => Ok(point),
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
@@ -1838,7 +1868,12 @@ impl RationalBezier2 {
     }
 
     /// Evaluates the exact affine derivative with respect to the Bezier parameter.
-    pub fn derivative_at(
+    pub fn derivative_at(&self, parameter: &Real) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_with_policy(parameter, &crate::policy::principal_context())
+    }
+
+    /// [`Self::derivative_at`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -1911,6 +1946,15 @@ impl RationalBezier2 {
     /// truncated at the Bezier degree: a nonconstant denominator can produce
     /// nonzero derivatives of arbitrarily high order.
     pub fn derivatives_at(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_with_policy(parameter, max_order, &crate::policy::principal_context())
+    }
+
+    /// [`Self::derivatives_at`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_with_policy(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -2088,7 +2132,16 @@ impl RationalBezier2 {
     /// isolation: an odd-multiplicity interior derivative root proves an
     /// extremum, while endpoint roots and even-multiplicity stationary points
     /// do not change monotonicity.
-    pub fn axis_is_monotone(&self, axis: Axis2, policy: &CurveContext) -> ExactCurveResult<bool> {
+    pub fn axis_is_monotone(&self, axis: Axis2) -> crate::ExactCurveResult<bool> {
+        self.axis_is_monotone_with_policy(axis, &crate::policy::principal_context())
+    }
+
+    /// [`Self::axis_is_monotone`] under an explicit predicate policy.
+    pub(crate) fn axis_is_monotone_with_policy(
+        &self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
         match self.axis_monotonicity_classified(axis, policy) {
             Ok(Classification::Decided(monotone)) => Ok(monotone),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
@@ -2590,7 +2643,16 @@ impl RationalBezier2 {
     }
 
     /// Classifies whether `point` lies on this finite rational Bezier.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> ExactCurveResult<bool> {
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        self.contains_point_with_policy(point, &crate::policy::principal_context())
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
         self.point_incidence(point, policy)
             .map(|incidence| match incidence {
                 RationalBezierPointIncidence2::EntireCurve => true,
@@ -2614,7 +2676,26 @@ impl RationalBezier2 {
     }
 
     /// Splits this curve exactly at one represented parameter.
-    pub fn split_at_exact(
+    pub fn split_at_exact(&self, parameter: &Real) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_exact_with_policy(parameter, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::split_at_exact`] under an explicit predicate policy.
+    pub(crate) fn split_at_exact_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -2678,6 +2759,29 @@ impl RationalBezier2 {
         &self,
         start: &Real,
         end: &Real,
+    ) -> crate::ExactCurveResult<Self> {
+        self.subcurve_between_exact_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalBezier,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::RationalBezier,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::subcurve_between_exact`] under an explicit predicate policy.
+    pub(crate) fn subcurve_between_exact_with_policy(
+        &self,
+        start: &Real,
+        end: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if in_closed_unit_interval(start, policy) != Some(true)
@@ -2713,7 +2817,7 @@ impl RationalBezier2 {
         {
             return Ok(Classification::Decided(self.clone()));
         }
-        let (left, _) = match self.split_at_exact(end, policy)? {
+        let (left, _) = match self.split_at_exact_with_policy(end, policy)? {
             Classification::Decided(split) => split,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -2725,7 +2829,7 @@ impl RationalBezier2 {
             return Ok(Classification::Decided(left));
         }
         let local_start = (start / end)?;
-        match left.split_at_exact(&local_start, policy)? {
+        match left.split_at_exact_with_policy(&local_start, policy)? {
             Classification::Decided((_, middle)) => Ok(Classification::Decided(middle)),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
@@ -4225,8 +4329,8 @@ impl RationalBezier2 {
         policy: &CurveContext,
     ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
         let (first_line, second_line) = match (
-            self.fit_exact_line_image(policy),
-            other.fit_exact_line_image(policy),
+            self.fit_exact_line_image_with_policy(policy),
+            other.fit_exact_line_image_with_policy(policy),
         ) {
             (
                 Ok(Classification::Decided(BezierLineImageFitRelation::Fit(first))),
@@ -4248,7 +4352,10 @@ impl RationalBezier2 {
         {
             return Classification::Decided(None);
         }
-        let intersection = match first_line.line().intersect_line(second_line.line(), policy) {
+        let intersection = match first_line
+            .line()
+            .intersect_line_with_policy(second_line.line(), policy)
+        {
             Ok(intersection) => intersection,
             Err(CurveError::Real(_)) => {
                 return Classification::Uncertain(UncertaintyReason::RealSign);
@@ -4966,20 +5073,22 @@ impl RationalBezier2 {
         } else {
             (other_second_exact, other_first_exact)
         };
-        let first_subcurve = match self.subcurve_between_exact(first_start, first_end, policy) {
-            Ok(Classification::Decided(curve)) => curve,
-            Ok(Classification::Uncertain(reason)) => {
-                return Classification::Uncertain(reason);
-            }
-            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-        };
-        let second_subcurve = match other.subcurve_between_exact(second_start, second_end, policy) {
-            Ok(Classification::Decided(curve)) => curve,
-            Ok(Classification::Uncertain(reason)) => {
-                return Classification::Uncertain(reason);
-            }
-            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-        };
+        let first_subcurve =
+            match self.subcurve_between_exact_with_policy(first_start, first_end, policy) {
+                Ok(Classification::Decided(curve)) => curve,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Classification::Uncertain(reason);
+                }
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+        let second_subcurve =
+            match other.subcurve_between_exact_with_policy(second_start, second_end, policy) {
+                Ok(Classification::Decided(curve)) => curve,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Classification::Uncertain(reason);
+                }
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
         let reversed = first_order != second_order;
         let shares_control_net = if first_subcurve.degree() == second_subcurve.degree() {
             first_subcurve
@@ -6402,9 +6511,9 @@ mod tests {
                             (&second, contact.second_parameter()),
                         ] {
                             let point = match parameter {
-                                BezierParameter2::Exact(parameter) => {
-                                    CurvePoint2::from(source.point_at(parameter, &policy).unwrap())
-                                }
+                                BezierParameter2::Exact(parameter) => CurvePoint2::from(
+                                    source.point_at_with_policy(parameter, &policy).unwrap(),
+                                ),
                                 BezierParameter2::Algebraic(parameter) => {
                                     CurvePoint2::from(crate::tests::decided(
                                         source
@@ -7017,8 +7126,8 @@ mod tests {
             );
             for numerator in 0..=4 {
                 let parameter = (Real::from(numerator) / Real::from(4_i8)).unwrap();
-                let expected = source.point_at(&parameter, &policy).unwrap();
-                let actual = elevated.point_at(&parameter, &policy).unwrap();
+                let expected = source.point_at_with_policy(&parameter, &policy).unwrap();
+                let actual = elevated.point_at_with_policy(&parameter, &policy).unwrap();
                 assert_eq!(
                     bounds.contains_point(&actual, &policy),
                     Classification::Decided(true)
@@ -7037,7 +7146,7 @@ mod tests {
         let split = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided((left, right)) =
-                source.split_at_exact(&split, &policy).unwrap()
+                source.split_at_exact_with_policy(&split, &policy).unwrap()
             else {
                 panic!("a finite split must retain its infinite intermediate control");
             };
@@ -7050,8 +7159,8 @@ mod tests {
                     (&left, &parameter * &split),
                     (&right, &split + &parameter * (Real::one() - &split)),
                 ] {
-                    let expected = source.point_at(&original, &policy).unwrap();
-                    let actual = curve.point_at(&parameter, &policy).unwrap();
+                    let expected = source.point_at_with_policy(&original, &policy).unwrap();
+                    let actual = curve.point_at_with_policy(&parameter, &policy).unwrap();
                     assert_eq!(
                         real_sign(&actual.distance_squared(&expected), &policy),
                         Some(RealSign::Zero)
@@ -7521,7 +7630,7 @@ mod tests {
                     )
                     .unwrap();
                     let Classification::Decided(branch) = source
-                        .subcurve_between_exact(&Real::zero(), &ratio(1, 8), &policy)
+                        .subcurve_between_exact_with_policy(&Real::zero(), &ratio(1, 8), &policy)
                         .unwrap()
                     else {
                         panic!("exact branch restriction");
@@ -7591,7 +7700,7 @@ mod tests {
             .unwrap();
             let half = (Real::one() / Real::from(2)).unwrap();
             let Classification::Decided(point) = source
-                .subcurve_between_exact(&half, &half, &policy)
+                .subcurve_between_exact_with_policy(&half, &half, &policy)
                 .unwrap()
             else {
                 panic!("exact collapsed chart");
@@ -7626,12 +7735,12 @@ mod tests {
             )
             .unwrap();
             assert!(matches!(
-                curve.axis_is_monotone(axis, &CurveContext::STRICT),
+                curve.axis_is_monotone_with_policy(axis, &CurveContext::STRICT),
                 Err(ExactCurveError::Blocked(_))
             ));
             let approximate = crate::policy::resolve_certified_operation(
                 &CurveContext::APPROXIMATE_512,
-                |attempt| curve.axis_is_monotone(axis, attempt),
+                |attempt| curve.axis_is_monotone_with_policy(axis, attempt),
             )
             .unwrap();
             assert!(approximate.value);
@@ -7642,14 +7751,14 @@ mod tests {
             let clone = curve.clone();
             assert!(
                 matches!(
-                    clone.axis_is_monotone(axis, &CurveContext::STRICT),
+                    clone.axis_is_monotone_with_policy(axis, &CurveContext::STRICT),
                     Err(ExactCurveError::Blocked(_))
                 ),
                 "a cached terminal result cannot certify a strict query"
             );
             let repeated = crate::policy::resolve_certified_operation(
                 &CurveContext::APPROXIMATE_512,
-                |attempt| clone.axis_is_monotone(axis, attempt),
+                |attempt| clone.axis_is_monotone_with_policy(axis, attempt),
             )
             .unwrap();
             assert!(repeated.value);
@@ -7683,13 +7792,15 @@ mod tests {
                 ],
             ] {
                 let curve = RationalBezier2::try_new(controls.clone(), weights).unwrap();
-                let Classification::Decided((left, _)) =
-                    curve.split_at_exact(&ratio(49, 100), &policy).unwrap()
+                let Classification::Decided((left, _)) = curve
+                    .split_at_exact_with_policy(&ratio(49, 100), &policy)
+                    .unwrap()
                 else {
                     panic!("retained lower split was not decided");
                 };
-                let Classification::Decided((_, right)) =
-                    curve.split_at_exact(&ratio(51, 100), &policy).unwrap()
+                let Classification::Decided((_, right)) = curve
+                    .split_at_exact_with_policy(&ratio(51, 100), &policy)
+                    .unwrap()
                 else {
                     panic!("retained upper split was not decided");
                 };
@@ -7703,8 +7814,9 @@ mod tests {
             }
 
             let curve = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap();
-            let Classification::Decided((left, right)) =
-                curve.split_at_exact(&ratio(1, 2), &policy).unwrap()
+            let Classification::Decided((left, right)) = curve
+                .split_at_exact_with_policy(&ratio(1, 2), &policy)
+                .unwrap()
             else {
                 panic!("retained midpoint split was not decided");
             };
@@ -7716,7 +7828,7 @@ mod tests {
             assert_eq!(contacts.len(), 2, "crossing plus shared split endpoint");
 
             let Classification::Decided(middle) = curve
-                .subcurve_between_exact(&ratio(1, 10), &ratio(9, 10), &policy)
+                .subcurve_between_exact_with_policy(&ratio(1, 10), &ratio(9, 10), &policy)
                 .unwrap()
             else {
                 panic!("retained middle subrange was not decided");
@@ -7788,15 +7900,17 @@ mod tests {
         assert_eq!(reduced.start(), elevated.start());
         assert_eq!(reduced.end(), elevated.end());
 
-        let Classification::Decided(symbolic_weights) = RationalBezier2::from_homogeneous_controls(
-            elevated
-                .homogeneous_controls()
-                .iter()
-                .map(|control| control.scaled(&Real::pi()))
-                .collect(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(symbolic_weights) =
+            RationalBezier2::from_homogeneous_controls_with_policy(
+                elevated
+                    .homogeneous_controls()
+                    .iter()
+                    .map(|control| control.scaled(&Real::pi()))
+                    .collect(),
+                &policy,
+            )
+            .unwrap()
+        else {
             panic!("a positive projective gauge preserves finite endpoints");
         };
         assert!(
@@ -7826,11 +7940,13 @@ mod tests {
         )
         .unwrap();
         let elevated = source.elevated_to_degree(12).unwrap();
-        let Classification::Decided(authored) = RationalBezier2::from_homogeneous_controls(
-            elevated.homogeneous_controls().to_vec(),
-            &CurveContext::STRICT,
-        )
-        .unwrap() else {
+        let Classification::Decided(authored) =
+            RationalBezier2::from_homogeneous_controls_with_policy(
+                elevated.homogeneous_controls().to_vec(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+        else {
             panic!("the elevated homogeneous curve has finite endpoints");
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -7852,9 +7968,11 @@ mod tests {
                 Real::one(),
             ] {
                 assert_eq!(
-                    reduced.point_at(&parameter, &CurveContext::STRICT).unwrap(),
+                    reduced
+                        .point_at_with_policy(&parameter, &CurveContext::STRICT)
+                        .unwrap(),
                     authored
-                        .point_at(&parameter, &CurveContext::STRICT)
+                        .point_at_with_policy(&parameter, &CurveContext::STRICT)
                         .unwrap(),
                 );
             }
@@ -7889,7 +8007,7 @@ mod tests {
             for (case, controls) in controls.iter().enumerate() {
                 for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap(), Real::pi()] {
                     let Classification::Decided(source) =
-                        RationalBezier2::from_homogeneous_controls(
+                        RationalBezier2::from_homogeneous_controls_with_policy(
                             controls
                                 .iter()
                                 .map(|control| control.scaled(&gauge))
@@ -7901,11 +8019,11 @@ mod tests {
                         panic!("the projective source has finite endpoints")
                     };
                     if case == 2 {
-                        assert!(source.point_at(&half, &policy).is_err());
+                        assert!(source.point_at_with_policy(&half, &policy).is_err());
                     }
                     let elevated = source.elevated_to_degree(12).unwrap();
                     let Classification::Decided(authored) =
-                        RationalBezier2::from_homogeneous_controls(
+                        RationalBezier2::from_homogeneous_controls_with_policy(
                             elevated.homogeneous_controls().to_vec(),
                             &policy,
                         )
@@ -7943,8 +8061,8 @@ mod tests {
                         );
                         for parameter in [Real::zero(), half.clone(), Real::one()] {
                             assert_eq!(
-                                reduced.point_at(&parameter, &policy),
-                                expected.point_at(&parameter, &policy),
+                                reduced.point_at_with_policy(&parameter, &policy),
+                                expected.point_at_with_policy(&parameter, &policy),
                             );
                         }
                         assert!(matches!(
@@ -8238,7 +8356,7 @@ mod tests {
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_none());
         assert!(curve.data.x_axis_monotonicity.is_empty());
         assert!(matches!(
-            clone.axis_is_monotone(Axis2::X, &CurveContext::STRICT),
+            clone.axis_is_monotone_with_policy(Axis2::X, &CurveContext::STRICT),
             Ok(true)
         ));
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_some());
@@ -9135,7 +9253,7 @@ mod tests {
         );
 
         let first_trimmed = match first
-            .subcurve_between_exact(
+            .subcurve_between_exact_with_policy(
                 &Real::zero(),
                 &(Real::from(3_i8) / Real::from(4_i8)).unwrap(),
                 &policy,
@@ -9146,7 +9264,7 @@ mod tests {
             Classification::Uncertain(reason) => panic!("first trim blocked: {reason:?}"),
         };
         let second_trimmed = match second
-            .subcurve_between_exact(
+            .subcurve_between_exact_with_policy(
                 &(Real::one() / Real::from(4_i8)).unwrap(),
                 &Real::one(),
                 &policy,
@@ -9215,7 +9333,7 @@ mod tests {
         let parameter = (Real::one() / Real::from(2_u8)).unwrap();
         let policy = CurveContext::STRICT;
 
-        let point = curve.point_at(&parameter, &policy).unwrap();
+        let point = curve.point_at_with_policy(&parameter, &policy).unwrap();
         let expected_x = (Real::from(u64::try_from(degree).unwrap()) / Real::from(2_u8)).unwrap();
         assert_eq!(
             compare_reals(point.x(), &expected_x, &policy),
@@ -9330,9 +9448,8 @@ mod tests {
                 false,
             )
             .unwrap();
-            let Classification::Decided(decomposition) = arc
-                .rational_bezier_decomposition_with_policy(&policy)
-                .unwrap()
+            let Classification::Decided(decomposition) =
+                arc.rational_bezier_decomposition_raw(&policy).unwrap()
             else {
                 panic!("an exact quarter circle must decompose");
             };
@@ -9377,7 +9494,7 @@ mod tests {
         let parameter = (Real::one() / Real::from(3_u8)).unwrap();
         let policy = CurveContext::STRICT;
 
-        let actual = curve.point_at(&parameter, &policy).unwrap();
+        let actual = curve.point_at_with_policy(&parameter, &policy).unwrap();
         let expected = match curve.homogeneous_de_casteljau_value(&parameter) {
             Classification::Decided(value) => {
                 match project_homogeneous(&value.weight, || [&value.x, &value.y], &policy) {

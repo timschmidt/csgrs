@@ -93,7 +93,26 @@ impl CircularArc2 {
     /// the primitive arc no longer has a valid circular-arc image at that
     /// distance. This concentric-arc primitive is one step in a complete profile
     /// offset pipeline.
-    pub fn offset_left(
+    pub fn offset_left(&self, distance: Real) -> crate::ExactCurveResult<Self> {
+        self.offset_left_with_policy(distance, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Offset,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Offset,
+                    crate::CurveFamily2::CircularArc,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::offset_left`] under an explicit predicate policy.
+    pub(crate) fn offset_left_with_policy(
         &self,
         distance: Real,
         policy: &CurveContext,
@@ -137,7 +156,7 @@ impl Segment2 {
                 .map(Self::Line)
                 .map(Classification::Decided),
             Self::Arc(arc) => arc
-                .offset_left(distance, policy)
+                .offset_left_with_policy(distance, policy)
                 .map(|arc| arc.map(Segment2::Arc)),
         }
     }

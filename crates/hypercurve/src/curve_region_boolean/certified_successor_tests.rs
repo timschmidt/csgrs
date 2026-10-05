@@ -61,7 +61,7 @@ fn exterior_circular_split_preserves_major_arc_and_algebraic_endpoints() {
         )
         .unwrap();
         let source = BezierSubcurve2::RationalQuadratic(
-            arc.rational_bezier_decomposition(&policy)
+            arc.rational_bezier_decomposition_with_policy(&policy)
                 .unwrap()
                 .value
                 .spans()[0]
@@ -134,7 +134,7 @@ fn exterior_circular_split_preserves_major_arc_and_algebraic_endpoints() {
                 panic!("the compacted major arc retains its source Bezier");
             };
             let parameter = decided(start.strict_scalar_between(end, &policy).unwrap());
-            let representative = decided(source_curve.point_at(&parameter, &policy));
+            let representative = decided(source_curve.point_at_with_policy(&parameter, &policy));
             assert_eq!(representative, Point2::from_values(1, 0));
             assert_eq!(split.start_topology_vertex, Some(usize::from(reversed)));
             assert_eq!(split.end_topology_vertex, Some(usize::from(!reversed)));
@@ -607,7 +607,8 @@ fn boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts() {
                     (Real::from(-1_i8), vec![a.clone(), b.clone(), r.clone()]),
                     (fraction(1, 3), vec![b.clone(), r.clone()]),
                 ] {
-                    let representative = CurvePoint2::from(source.point_at(&r, &policy).unwrap());
+                    let representative =
+                        CurvePoint2::from(source.point_at_with_policy(&r, &policy).unwrap());
                     let probe = decided(
                         crate::BezierAlgebraicChord2::try_new(
                             Point2::new(start, Real::zero()).into(),
@@ -2749,7 +2750,7 @@ fn parallel_arc_contacts_use_the_requested_exterior_range() {
         let empty = CurveRegion2::empty();
         let context = CurveRegionBooleanContext::try_new_unary(&empty, &policy).unwrap();
         let curve = RationalBezier2::from(
-            arc.rational_bezier_decomposition(&policy)
+            arc.rational_bezier_decomposition_with_policy(&policy)
                 .unwrap()
                 .into_value()
                 .spans()[0]
@@ -2817,7 +2818,7 @@ fn represented_parallel_arc_tangencies_retain_certified_crossing_evidence() {
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let curve = RationalBezier2::from(
-            arc.rational_bezier_decomposition(&policy)
+            arc.rational_bezier_decomposition_with_policy(&policy)
                 .unwrap()
                 .into_value()
                 .spans()[0]
@@ -2899,7 +2900,7 @@ fn parallel_arc_contacts_retain_conic_parameters_across_elevation_and_reversal()
         let empty = CurveRegion2::empty();
         let context = CurveRegionBooleanContext::try_new_unary(&empty, &policy).unwrap();
         let conic = arc
-            .rational_bezier_decomposition(&policy)
+            .rational_bezier_decomposition_with_policy(&policy)
             .unwrap()
             .into_value()
             .spans()[0]
@@ -3051,7 +3052,7 @@ fn extended_conic_retains_certified_tangency_in_its_interior() {
             false,
         )
         .unwrap()
-        .rational_bezier_decomposition(&policy)
+        .rational_bezier_decomposition_with_policy(&policy)
         .unwrap()
         .into_value()
         .spans()[0]
@@ -3928,13 +3929,13 @@ fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {
         .expect("valid opaque retracing source");
         let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator");
         let start_q = opaque_source
-            .point_at(&three_quarters, &CurveContext::STRICT)
+            .point_at_with_policy(&three_quarters, &CurveContext::STRICT)
             .expect("exact opaque source point")
             .x()
             .clone();
         let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).expect("nonzero denominator");
         let wide_start_q = opaque_source
-            .point_at(&two_thirds, &CurveContext::STRICT)
+            .point_at_with_policy(&two_thirds, &CurveContext::STRICT)
             .expect("exact wide opaque source point")
             .x()
             .clone();

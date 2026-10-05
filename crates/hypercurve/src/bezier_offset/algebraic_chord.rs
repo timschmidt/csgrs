@@ -4070,8 +4070,8 @@ impl BezierAlgebraicChord2 {
         self.validate_policy(policy)?;
         if let Some(represented) = point.coordinates() {
             if let Some(line) = self.exact_line() {
-                if let decided @ Classification::Decided(_) =
-                    policy.strict_predicate_pass(|| line.contains_point(represented, policy))
+                if let decided @ Classification::Decided(_) = policy
+                    .strict_predicate_pass(|| line.contains_point_with_policy(represented, policy))
                 {
                     return Ok(decided);
                 }
@@ -4179,7 +4179,7 @@ impl BezierAlgebraicChord2 {
                 // curve's half-open parameter rule retain only one side of a
                 // tangential vertex pair. Let the region classifier select a
                 // different exact ray direction instead.
-                return Ok(match line.contains_point(origin, policy) {
+                return Ok(match line.contains_point_with_policy(origin, policy) {
                     Classification::Decided(true) => {
                         Classification::Uncertain(UncertaintyReason::Boundary)
                     }

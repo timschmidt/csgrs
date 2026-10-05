@@ -50,7 +50,9 @@ fn bench_arc_arc_case(
     let mut total_weight = 0_usize;
 
     for _ in 0..iterations {
-        let weight = match first.intersect_arc(second, &policy)? {
+        let weight = match crate::support::under_value(&policy, || first.intersect_arc(second))
+            .expect("benchmark fixture remains exact")
+        {
             ArcArcIntersection::None => 0,
             ArcArcIntersection::Point(_) => 1,
             ArcArcIntersection::TwoPoints { .. } => 2,
@@ -78,7 +80,11 @@ fn bench_line_circle_relation(iterations: u32) -> CurveResult<()> {
     let mut total_weight = 0_usize;
 
     for _ in 0..iterations {
-        let weight = match line.supporting_line_circle_relation(&circle, &policy)? {
+        let weight = match crate::support::under_value(&policy, || {
+            line.supporting_line_circle_relation(&circle)
+        })
+        .expect("benchmark fixture remains exact")
+        {
             LineCircleRelation::Disjoint => 0,
             LineCircleRelation::Tangent { .. } => 1,
             LineCircleRelation::Secant { .. } => 2,
@@ -105,7 +111,9 @@ fn bench_circle_circle_relation(iterations: u32) -> CurveResult<()> {
     let mut total_weight = 0_usize;
 
     for _ in 0..iterations {
-        let weight = match first.circle_relation(&second, &policy)? {
+        let weight = match crate::support::under_value(&policy, || first.circle_relation(&second))
+            .expect("benchmark fixture remains exact")
+        {
             CircleCircleRelation::Coincident => 3,
             CircleCircleRelation::Disjoint => 0,
             CircleCircleRelation::Tangent { .. } => 1,

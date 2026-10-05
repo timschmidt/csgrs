@@ -1616,15 +1616,10 @@ fn sample_rational_quadratic_vertices(
 ) -> Vec<Vertex> {
     (0..=steps)
         .filter_map(|index| {
-            match preview(|context| {
-                curve.point_at(
-                    Real::try_from(index as f64 / steps as f64).unwrap(),
-                    context,
-                )
-            }) {
-                Classification::Decided(point) => Some(vertex_from_point(point)),
-                Classification::Uncertain(_) => None,
-            }
+            curve
+                .point_at(Real::try_from(index as f64 / steps as f64).unwrap())
+                .ok()
+                .map(vertex_from_point)
         })
         .collect()
 }

@@ -1321,7 +1321,7 @@ fn conic_owned_endpoint_degree_guard_preserves_cubic_crossings() {
             })
             .collect();
             let Classification::Decided(source) =
-                RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap()
+                RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy).unwrap()
             else {
                 panic!("the pole-free cubic must construct");
             };
@@ -1400,15 +1400,17 @@ fn conic_owned_endpoint_still_requires_a_pole_free_range() {
     // X=t, Y=(t-1/4)(t-2), W=t-3/4. The pole at 3/4
     // masks an additional root from the endpoint-side argument on [0,2].
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(source) = RationalBezier2::from_homogeneous_controls(
-            vec![
-                crate::HomogeneousControl2::new(Real::zero(), q(1, 2), q(-3, 4)),
-                crate::HomogeneousControl2::new(q(1, 2), q(-5, 8), q(-1, 4)),
-                crate::HomogeneousControl2::new(Real::one(), q(-3, 4), q(1, 4)),
-            ],
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(source) =
+            RationalBezier2::from_homogeneous_controls_with_policy(
+                vec![
+                    crate::HomogeneousControl2::new(Real::zero(), q(1, 2), q(-3, 4)),
+                    crate::HomogeneousControl2::new(q(1, 2), q(-5, 8), q(-1, 4)),
+                    crate::HomogeneousControl2::new(Real::one(), q(-3, 4), q(1, 4)),
+                ],
+                &policy,
+            )
+            .unwrap()
+        else {
             panic!("finite authored endpoints may enclose a projective pole");
         };
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
@@ -3667,9 +3669,8 @@ fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
             false,
         )
         .unwrap();
-        let Classification::Decided(decomposition) = arc
-            .rational_bezier_decomposition_with_policy(&policy)
-            .unwrap()
+        let Classification::Decided(decomposition) =
+            arc.rational_bezier_decomposition_raw(&policy).unwrap()
         else {
             panic!("an exact quarter circle must decompose");
         };
@@ -3781,7 +3782,7 @@ fn nonuniform_rational_cusp_parallel_intersects_round_join_quarter() {
     )
     .unwrap();
     let Classification::Decided(decomposition) = arc
-        .rational_bezier_decomposition_with_policy(&CurveContext::STRICT)
+        .rational_bezier_decomposition_raw(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("an exact quarter circle must decompose");
@@ -6576,7 +6577,7 @@ fn nested_procedural_chord_reversals_match_exact_side_and_winding() {
                                     &policy,
                                 )
                                 .unwrap(),
-                            match line.classify_point(&query, &policy) {
+                            match line.classify_point_with_policy(&query, &policy) {
                                 Classification::Decided(side) => Some(side),
                                 Classification::Uncertain(reason) =>
                                     panic!("exact side: {reason:?}"),
@@ -22105,7 +22106,7 @@ fn clipped_circle_contact_reuses_its_interior_parameter_authority() {
         assert_eq!(
             point.same_point(
                 &target
-                    .point_at(&(Real::from(7) / Real::from(8)).unwrap(), &policy)
+                    .point_at_with_policy(&(Real::from(7) / Real::from(8)).unwrap(), &policy)
                     .unwrap()
                     .into(),
                 &policy
@@ -24491,7 +24492,7 @@ fn analytic_axis_order_replays_a_local_root_in_the_other_points_field() {
         // W(t)=t^3-sqrt(1/2) vanishes at the same selected root. A
         // homogeneous equality cannot turn that source pole into a point.
         let alpha = half.clone().sqrt().unwrap();
-        let Classification::Decided(pole) = RationalBezier2::from_homogeneous_controls(
+        let Classification::Decided(pole) = RationalBezier2::from_homogeneous_controls_with_policy(
             [
                 -alpha.clone(),
                 -alpha.clone(),
@@ -25252,7 +25253,7 @@ fn recursive_parallel_expression_signs_reject_poles_and_zero_speed() {
         let circle = independent_pair_radial_unit_circle(&policy);
         // Homogeneous (X,Y,W)=(1,t,t^4-t^2-1). All authored weights
         // are negative and finite; the retained exterior root is a pole.
-        let Classification::Decided(pole) = RationalBezier2::from_homogeneous_controls(
+        let Classification::Decided(pole) = RationalBezier2::from_homogeneous_controls_with_policy(
             [q(-1, 1), q(-1, 1), q(-7, 6), q(-3, 2), q(-1, 1)]
                 .into_iter()
                 .enumerate()
@@ -26766,7 +26767,7 @@ fn rank_independent_chord_normal_circle_partitions_folded_rational_overlap() {
 
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let Classification::Decided(partial_arc) = folded_quarter
-            .subcurve_between_exact(&Real::zero(), &quarter, &policy)
+            .subcurve_between_exact_with_policy(&Real::zero(), &quarter, &policy)
             .unwrap()
         else {
             panic!("the regular folded-quarter prefix must materialize exactly");
@@ -35854,7 +35855,10 @@ fn homogeneous_representation_avoids_ph_degree_inflation() {
                 else {
                     panic!("the analytic parallel must evaluate");
                 };
-                let actual = offset.curve().point_at(&parameter, &policy).unwrap();
+                let actual = offset
+                    .curve()
+                    .point_at_with_policy(&parameter, &policy)
+                    .unwrap();
                 assert_eq!(
                     real_sign(&actual.distance_squared(&expected), &policy),
                     Some(RealSign::Zero)
@@ -35881,7 +35885,7 @@ fn homogeneous_representation_retains_exterior_ph_branch() {
         .map(|(x, y, w)| crate::HomogeneousControl2::new(x, y, w))
         .collect();
         let Classification::Decided(source) =
-            RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap()
+            RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy).unwrap()
         else {
             panic!("the source endpoint charts must be finite");
         };
@@ -37389,7 +37393,7 @@ fn opaque_retracing_line_uses_constant_direction_rank_component() {
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
     let start_q = source
-        .point_at(&two_thirds, &CurveContext::STRICT)
+        .point_at_with_policy(&two_thirds, &CurveContext::STRICT)
         .unwrap()
         .x()
         .clone();
@@ -38142,9 +38146,8 @@ fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
     let diagonal = &quarter * half.clone().sqrt().unwrap();
     let expected = Point2::new(half - &diagonal, &quarter + &diagonal);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(decomposition) = arc
-            .rational_bezier_decomposition_with_policy(&policy)
-            .unwrap()
+        let Classification::Decided(decomposition) =
+            arc.rational_bezier_decomposition_raw(&policy).unwrap()
         else {
             panic!("the exact quarter circle must decompose")
         };
@@ -38950,7 +38953,8 @@ fn closed_parallel_turn_certificate_rejects_multiple_traversal() {
             .map(|((x, y), weight)| crate::HomogeneousControl2::new(x, y, weight))
             .collect();
         let Classification::Decided(source) =
-            RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT).unwrap()
+            RationalBezier2::from_homogeneous_controls_with_policy(controls, &CurveContext::STRICT)
+                .unwrap()
         else {
             panic!("the rational circle has finite endpoints and valid homogeneous controls");
         };
@@ -39395,8 +39399,9 @@ fn ordered_self_contact_domains_retain_axis_roles_after_restriction() {
     ];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (case, (start, end, roots, directions)) in fixtures.iter().enumerate() {
-            let Classification::Decided(curve) =
-                source.subcurve_between_exact(start, end, &policy).unwrap()
+            let Classification::Decided(curve) = source
+                .subcurve_between_exact_with_policy(start, end, &policy)
+                .unwrap()
             else {
                 panic!("the exact loop restriction in case {case} must be representable")
             };
@@ -41379,17 +41384,19 @@ fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
     let parameter = algebraic_parameter(polynomial_multiply(&first, &second));
     let x = -Real::from(2) * &fifth * Real::from(6).sqrt().unwrap();
     let expected = Point2::new(x.clone(), fifth.clone());
-    let Classification::Decided(negative_weights) = RationalBezier2::from_homogeneous_controls(
-        source
-            .homogeneous_controls()
-            .iter()
-            .map(|control| {
-                crate::HomogeneousControl2::new(-control.x(), -control.y(), -control.weight())
-            })
-            .collect(),
-        &CurveContext::STRICT,
-    )
-    .unwrap() else {
+    let Classification::Decided(negative_weights) =
+        RationalBezier2::from_homogeneous_controls_with_policy(
+            source
+                .homogeneous_controls()
+                .iter()
+                .map(|control| {
+                    crate::HomogeneousControl2::new(-control.x(), -control.y(), -control.weight())
+                })
+                .collect(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+    else {
         panic!("the negative projective gauge preserves finite endpoints");
     };
     for source in [source, negative_weights] {
@@ -42296,7 +42303,8 @@ fn parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed
             })
             .collect();
         let Classification::Decided(source) =
-            RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT).unwrap()
+            RationalBezier2::from_homogeneous_controls_with_policy(controls, &CurveContext::STRICT)
+                .unwrap()
         else {
             panic!("both rational gauges must be regular");
         };
@@ -42747,10 +42755,7 @@ fn selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter() {
             false,
         )
         .unwrap();
-        let decomposition = match support
-            .rational_bezier_decomposition_with_policy(&policy)
-            .unwrap()
-        {
+        let decomposition = match support.rational_bezier_decomposition_raw(&policy).unwrap() {
             Classification::Decided(decomposition) => decomposition,
             Classification::Uncertain(reason) => {
                 panic!("the certified circular cell must decompose: {reason:?}")
@@ -44264,17 +44269,19 @@ fn finite_circle_component_inverse_charts(
             })
             .collect();
         let scale = Real::from(weight_sign);
-        let Classification::Decided(target) = RationalBezier2::from_homogeneous_controls(
-            (0..controls[0].len())
-                .map(|index| crate::HomogeneousControl2 {
-                    x: &controls[0][index] * &scale,
-                    y: &controls[1][index] * &scale,
-                    weight: &controls[2][index] * &scale,
-                })
-                .collect(),
-            policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(target) =
+            RationalBezier2::from_homogeneous_controls_with_policy(
+                (0..controls[0].len())
+                    .map(|index| crate::HomogeneousControl2 {
+                        x: &controls[0][index] * &scale,
+                        y: &controls[1][index] * &scale,
+                        weight: &controls[2][index] * &scale,
+                    })
+                    .collect(),
+                policy,
+            )
+            .unwrap()
+        else {
             panic!("signed homogeneous controls must preserve the chart")
         };
         let (start, end) = if reverse_range {

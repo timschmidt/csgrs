@@ -619,29 +619,33 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The middle homogeneous control is at infinity; the exact upper
         // semicircle and its complete authored denominator remain finite.
-        let Classification::Decided(curve) = RationalBezier2::from_homogeneous_controls(
-            vec![
-                HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
-                HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
-                HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
-            ],
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(curve) =
+            crate::support::under_classified_result(&policy, || {
+                RationalBezier2::from_homogeneous_controls(vec![
+                    HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
+                    HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
+                    HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
+                ])
+            })
+            .unwrap()
+        else {
             panic!("the homogeneous semicircle must construct");
         };
         assert!(curve.affine_control_points().is_none());
         // Independently authored elevated controls must recover their small
         // exact source even though that source has no affine control net.
-        let Classification::Decided(elevated) = RationalBezier2::from_homogeneous_controls(
-            curve
-                .elevated_to_degree(12)
-                .unwrap()
-                .homogeneous_controls()
-                .to_vec(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(elevated) =
+            crate::support::under_classified_result(&policy, || {
+                RationalBezier2::from_homogeneous_controls(
+                    curve
+                        .elevated_to_degree(12)
+                        .unwrap()
+                        .homogeneous_controls()
+                        .to_vec(),
+                )
+            })
+            .unwrap()
+        else {
             panic!("the elevated homogeneous semicircle must construct");
         };
         let nurbs = crate::support::under(&policy, || {

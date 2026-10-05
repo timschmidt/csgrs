@@ -2474,7 +2474,7 @@ impl BezierAlgebraicChord2 {
         // infinite support.  Classify that support first and let the retained
         // parameterization and this finite chord perform the two authoritative domain
         // filters; `intersect_arc` would incorrectly clip to the witness.
-        let hits = match line.supporting_line_circle_relation(&arc, policy)? {
+        let hits = match line.supporting_line_circle_relation_with_policy(&arc, policy)? {
             LineCircleRelation::Disjoint => Vec::new(),
             LineCircleRelation::Tangent { point, .. } => vec![point],
             LineCircleRelation::Secant {
@@ -2503,7 +2503,9 @@ impl BezierAlgebraicChord2 {
                     // make that inverse undecidable.  The retained arc sweep
                     // can still reject that exact circle point before the
                     // ordinary Bernstein line-contact fallback is needed.
-                    if arc.contains_sweep_point(&hit, policy) == Classification::Decided(false) {
+                    if arc.contains_sweep_point_with_policy(&hit, policy)
+                        == Classification::Decided(false)
+                    {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
                             "hypercurve",

@@ -391,7 +391,16 @@ impl LineSeg2 {
     }
 
     /// Classifies a point relative to this oriented line segment's supporting line.
-    pub fn classify_point(
+    pub fn classify_point(&self, point: &Point2) -> crate::ExactCurveResult<LineSide> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::Line,
+            self.classify_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::classify_point`] under an explicit predicate policy.
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -402,8 +411,21 @@ impl LineSeg2 {
     }
 
     /// Classifies whether a point lies on this finite line segment.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
-        let side = match self.classify_point(point, policy) {
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::Line,
+            self.contains_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
+        let side = match self.classify_point_with_policy(point, policy) {
             Classification::Decided(side) => side,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -735,7 +757,16 @@ impl CircularArc2 {
     /// [`CircularArc2::radius_squared`].
     /// The half-plane tests are the finite-arc containment counterpart to the
     /// circle and arc primitive tests catalogued by standard geometric constructions.
-    pub fn contains_sweep_point(
+    pub fn contains_sweep_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::CircularArc,
+            self.contains_sweep_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_sweep_point`] under an explicit predicate policy.
+    pub(crate) fn contains_sweep_point_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -885,14 +916,27 @@ impl CircularArc2 {
     }
 
     /// Classifies whether a point lies on this finite circular arc.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::CircularArc,
+            self.contains_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
         if self.contains_endpoint(point, policy) == Some(true) {
             return Classification::Decided(true);
         }
         let radius_delta = point.distance_squared(self.center()) - self.radius_squared();
         match is_zero(&radius_delta, policy) {
             Some(false) => Classification::Decided(false),
-            Some(true) => self.contains_sweep_point(point, policy),
+            Some(true) => self.contains_sweep_point_with_policy(point, policy),
             None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
         }
     }
@@ -914,7 +958,26 @@ impl CircularArc2 {
     /// major, or full-circle traversal. Arc fragments retain their source
     /// angular parameterization, so repeated and nested trims evaluate this
     /// point without rebuilding nested trigonometric rotations.
-    pub fn representative_point(
+    pub fn representative_point(&self) -> crate::ExactCurveResult<Point2> {
+        self.representative_point_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::representative_point`] under an explicit predicate policy.
+    pub(crate) fn representative_point_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
@@ -932,9 +995,9 @@ impl CircularArc2 {
     ) -> CurveResult<Classification<Point2>> {
         let half = (Real::one() / Real::from(2_i8))?;
         if self.retained_facts.parameter_lineage.get().is_some() {
-            return self.point_at_sweep_fraction(&half, policy);
+            return self.point_at_sweep_fraction_with_policy(&half, policy);
         }
-        match self.rational_bezier_decomposition_with_policy(policy) {
+        match self.rational_bezier_decomposition_raw(policy) {
             Ok(Classification::Decided(decomposition)) => {
                 match decomposition.point_at_with_policy(&half, policy) {
                     Ok(point) => Ok(Classification::Decided(point)),
@@ -959,12 +1022,31 @@ impl CircularArc2 {
     /// full-circle arcs. This is an angular ordering parameter; it is not the
     /// piecewise rational-Bezier evaluation parameter returned by
     /// [`CircularArc2::rational_bezier_decomposition`].
-    pub fn sweep_fraction(
+    pub fn sweep_fraction(&self, point: &Point2) -> crate::ExactCurveResult<Real> {
+        self.sweep_fraction_with_policy(point, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::sweep_fraction`] under an explicit predicate policy.
+    pub(crate) fn sweep_fraction_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
-        match self.contains_point(point, policy) {
+        match self.contains_point_with_policy(point, policy) {
             Classification::Decided(true) => self.sweep_fraction_for_incident_point(point, policy),
             Classification::Decided(false) => Ok(Classification::Uncertain(
                 crate::UncertaintyReason::Boundary,
@@ -981,7 +1063,26 @@ impl CircularArc2 {
     /// inverse parameterization of [`CircularArc2::sweep_fraction`], not the
     /// piecewise rational-Bezier parameterization used by
     /// [`CircularArc2::rational_bezier_decomposition`].
-    pub fn point_at_sweep_fraction(
+    pub fn point_at_sweep_fraction(&self, fraction: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_sweep_fraction_with_policy(fraction, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::point_at_sweep_fraction`] under an explicit predicate policy.
+    pub(crate) fn point_at_sweep_fraction_with_policy(
         &self,
         fraction: &Real,
         policy: &CurveContext,
@@ -1059,15 +1160,37 @@ impl CircularArc2 {
     pub fn split_at_sweep_fraction(
         &self,
         fraction: &Real,
+    ) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_sweep_fraction_with_policy(fraction, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::CircularArc,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::split_at_sweep_fraction`] under an explicit predicate policy.
+    pub(crate) fn split_at_sweep_fraction_with_policy(
+        &self,
+        fraction: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(Self, Self)>> {
-        let middle = match self.point_at_sweep_fraction(fraction, policy)? {
+        let middle = match self.point_at_sweep_fraction_with_policy(fraction, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        self.split_at_retained_sweep_point(fraction, middle, policy)
+        self.split_at_retained_sweep_point_with_policy(fraction, middle, policy)
     }
 
     /// Splits this arc through an exact point with a retained sweep fraction.
@@ -1079,6 +1202,33 @@ impl CircularArc2 {
     /// trigonometric predicates. The retained point becomes the shared
     /// endpoint while the source arc's angular lineage is preserved.
     pub fn split_at_retained_sweep_point(
+        &self,
+        fraction: &Real,
+        point: Point2,
+    ) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_retained_sweep_point_with_policy(
+            fraction,
+            point,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Subdivision,
+                crate::CurveFamily2::CircularArc,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Subdivision,
+                crate::CurveFamily2::CircularArc,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::split_at_retained_sweep_point`] under an explicit predicate policy.
+    pub(crate) fn split_at_retained_sweep_point_with_policy(
         &self,
         fraction: &Real,
         point: Point2,
@@ -1136,7 +1286,26 @@ impl CircularArc2 {
     /// parameterized owner splits a native circular arc. The angular point is
     /// constructed exactly, then replayed through the retained rational
     /// quadratic decomposition's certified point-parameter solvers.
-    pub fn parameter_at_sweep_fraction(
+    pub fn parameter_at_sweep_fraction(&self, fraction: &Real) -> crate::ExactCurveResult<Real> {
+        self.parameter_at_sweep_fraction_with_policy(fraction, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::parameter_at_sweep_fraction`] under an explicit predicate policy.
+    pub(crate) fn parameter_at_sweep_fraction_with_policy(
         &self,
         fraction: &Real,
         policy: &CurveContext,
@@ -1161,7 +1330,7 @@ impl CircularArc2 {
                 ));
             }
         }
-        let point = match self.point_at_sweep_fraction(fraction, policy)? {
+        let point = match self.point_at_sweep_fraction_with_policy(fraction, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -1184,7 +1353,7 @@ impl CircularArc2 {
         if point == self.end() {
             return Ok(Classification::Decided(Real::one()));
         }
-        let decomposition = match self.rational_bezier_decomposition_with_policy(policy) {
+        let decomposition = match self.rational_bezier_decomposition_raw(policy) {
             Ok(Classification::Decided(decomposition)) => decomposition,
             Ok(Classification::Uncertain(reason)) => {
                 return Ok(Classification::Uncertain(reason));
@@ -1253,7 +1422,26 @@ impl CircularArc2 {
     /// returned [`CurveOutcome`] records whether exact angle classification
     /// consumed the `APPROXIMATE_512` terminal.
     #[inline(always)]
-    pub fn directed_sweep_angle(
+    pub fn directed_sweep_angle(&self) -> crate::ExactCurveResult<&Real> {
+        self.directed_sweep_angle_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::CircularArc,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::directed_sweep_angle`] under an explicit predicate policy.
+    pub(crate) fn directed_sweep_angle_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<&Real>>> {
@@ -1551,8 +1739,8 @@ impl Segment2 {
     /// Classifies whether a point lies on this finite segment.
     pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         match self {
-            Self::Line(line) => line.contains_point(point, policy),
-            Self::Arc(arc) => arc.contains_point(point, policy),
+            Self::Line(line) => line.contains_point_with_policy(point, policy),
+            Self::Arc(arc) => arc.contains_point_with_policy(point, policy),
         }
     }
 
@@ -1587,7 +1775,7 @@ impl Segment2 {
         }
         match self {
             Self::Line(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
-            Self::Arc(arc) => match arc.rational_bezier_decomposition_with_policy(policy) {
+            Self::Arc(arc) => match arc.rational_bezier_decomposition_raw(policy) {
                 Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
                 Ok(Classification::Decided(decomposition)) => {
                     match decomposition.point_at_with_policy(parameter, policy) {
@@ -1774,14 +1962,17 @@ mod policy_cache_tests {
                         // sweep's other side and included by the major sweep.
                         // Reversal swaps which side carries the unknown sign.
                         for result in [
-                            arc.contains_sweep_point(&opposite, &policy),
+                            arc.contains_sweep_point_with_policy(&opposite, &policy),
                             prepared.contains_sweep_point(&opposite, &policy),
                         ] {
                             assert_eq!(result, Classification::Decided(major));
                         }
                         // At the positive ray the unresolved side is essential;
                         // the same optimization must preserve that uncertainty.
-                        assert!(arc.contains_sweep_point(&boundary, &policy).is_uncertain());
+                        assert!(
+                            arc.contains_sweep_point_with_policy(&boundary, &policy)
+                                .is_uncertain()
+                        );
                         assert!(
                             prepared
                                 .contains_sweep_point(&boundary, &policy)
@@ -1812,7 +2003,7 @@ mod policy_cache_tests {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
 
         let Classification::Decided((first, _)) = arc
-            .split_at_sweep_fraction(&half, &CurveContext::APPROXIMATE_512)
+            .split_at_sweep_fraction_with_policy(&half, &CurveContext::APPROXIMATE_512)
             .unwrap()
         else {
             panic!("the authorized terminal must split the ambiguous semicircle");

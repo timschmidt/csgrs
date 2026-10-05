@@ -3098,7 +3098,7 @@ mod circle_dispatch_tests {
     fn rational_semicircle(policy: &CurveContext) -> Curve2 {
         use crate::HomogeneousControl2;
         exact(
-            RationalBezier2::from_homogeneous_controls(
+            RationalBezier2::from_homogeneous_controls_with_policy(
                 vec![
                     HomogeneousControl2::new(Real::zero(), Real::one(), Real::one()),
                     HomogeneousControl2::new(Real::from(-1), Real::zero(), Real::zero()),
@@ -3327,7 +3327,7 @@ mod circle_dispatch_tests {
             // 4(t - 1/2)^2 + 1. The retained circle is therefore the
             // ordinary radius-one left semicircle, despite the remote pole.
             let source = exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     [(-1, -1), (-1, 0), (1, 1)]
                         .into_iter()
                         .map(|(x, w)| {
@@ -3924,7 +3924,7 @@ mod analytic_dispatch_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
             let subcurve = source
-                .subcurve_between_exact(&q(1, 4), &q(3, 4), &policy)
+                .subcurve_between_exact_with_policy(&q(1, 4), &q(3, 4), &policy)
                 .unwrap();
             let first = curve(source.parallel_left(Real::one()).unwrap(), &policy);
             let second = subcurve.parallel_left(Real::one()).unwrap();
@@ -4643,7 +4643,7 @@ mod analytic_dispatch_tests {
             // A pole elsewhere in the unit chart must not constrain a retained
             // finite fragment. The point fiber still owns its entire active range.
             let rootful_point = exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     vec![
                         crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
                         crate::HomogeneousControl2::new((-1).into(), 0.into(), (-1).into()),
@@ -4670,7 +4670,7 @@ mod analytic_dispatch_tests {
             );
             // x=t/(2-t) is finite on [3,4], while [1,3] contains its pole.
             let source = exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     vec![
                         crate::HomogeneousControl2::new(0.into(), 0.into(), 2.into()),
                         crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
@@ -4849,7 +4849,7 @@ mod analytic_dispatch_tests {
     fn finite_rational_pairs_certify_poles_on_the_active_domain() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     vec![
                         crate::HomogeneousControl2::new(0.into(), 0.into(), 2.into()),
                         crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
@@ -4866,7 +4866,7 @@ mod analytic_dispatch_tests {
                 !certified(line.intersect_curve_with_policy(&pole, &policy).unwrap()).is_complete()
             );
             let rootful_point = exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     vec![
                         crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
                         crate::HomogeneousControl2::new((-1).into(), 0.into(), (-1).into()),
@@ -5146,7 +5146,7 @@ mod analytic_dispatch_tests {
                 }
             }
             let rootful = Curve2::from(exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     [-1, 0, 1]
                         .into_iter()
                         .map(|weight| {

@@ -368,7 +368,7 @@ fn selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions() {
             ),
         );
         assert!(matches!(
-            source.fit_exact_line_image(&policy).unwrap(),
+            source.fit_exact_line_image_with_policy(&policy).unwrap(),
             Classification::Decided(BezierLineImageFitRelation::Fit(_))
         ));
         assert_eq!(
@@ -11846,7 +11846,7 @@ fn nonrepresented_chord_rational_arc_corner_region(
     if major_arc {
         assert_eq!(
             recognized
-                .rational_bezier_decomposition(policy)
+                .rational_bezier_decomposition_with_policy(policy)
                 .unwrap()
                 .into_value()
                 .spans()
@@ -12598,7 +12598,7 @@ fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
                                     Real::one(),
                                 ] {
                                     let Classification::Decided(point) =
-                                        curve.point_at(parameter, &policy)
+                                        curve.point_at_with_policy(parameter, &policy)
                                     else {
                                         panic!("the exact fillet chart evaluates");
                                     };
@@ -15086,7 +15086,7 @@ fn irrational_weight_semicircle_region_recovers_exact_native_accelerator() {
     let mut curves = Vec::with_capacity(4);
     for arc in arcs {
         for span in arc
-            .rational_bezier_decomposition(&policy)
+            .rational_bezier_decomposition_with_policy(&policy)
             .unwrap()
             .into_value()
             .spans()

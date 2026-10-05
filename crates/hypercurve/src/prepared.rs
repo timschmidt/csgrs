@@ -93,7 +93,7 @@ impl<'a> PreparedLineSeg2<'a> {
             );
         }
 
-        self.line.classify_point(point, policy)
+        self.line.classify_point_with_policy(point, policy)
     }
 }
 
@@ -193,7 +193,7 @@ impl<'a> PreparedCircularArc2<'a> {
                 });
         }
 
-        self.arc.contains_sweep_point(point, policy)
+        self.arc.contains_sweep_point_with_policy(point, policy)
     }
 
     /// Classifies whether a point lies on this finite circular arc.

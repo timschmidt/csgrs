@@ -172,9 +172,8 @@ fn main() {
     for _ in 0..cached_query_iterations {
         raw_checksum = raw_checksum.wrapping_add(black_box(
             black_box(&arc)
-                .rational_bezier_decomposition(&CurveContext::STRICT)
+                .rational_bezier_decomposition()
                 .expect("arc decomposition remains exact")
-                .into_value()
                 .spans()
                 .len(),
         ));
@@ -188,13 +187,8 @@ fn main() {
     let started = Instant::now();
     let mut sweep_checksum = 0_usize;
     for _ in 0..cached_query_iterations {
-        let sweep = black_box(&arc)
-            .directed_sweep_angle(&CurveContext::STRICT)
-            .expect("arc sweep remains exact");
-        sweep_checksum = sweep_checksum.wrapping_add(black_box(usize::from(matches!(
-            sweep.value,
-            Classification::Decided(_)
-        ))));
+        let sweep = black_box(&arc).directed_sweep_angle();
+        sweep_checksum = sweep_checksum.wrapping_add(black_box(usize::from(sweep.is_ok())));
     }
     let elapsed = started.elapsed();
     println!(
@@ -203,9 +197,8 @@ fn main() {
     );
 
     let decomposition = arc
-        .rational_bezier_decomposition(&CurveContext::STRICT)
-        .expect("arc decomposition remains exact")
-        .into_value();
+        .rational_bezier_decomposition()
+        .expect("arc decomposition remains exact");
     let decomposition_parameter = q(1, 3);
     let started = Instant::now();
     let mut decomposition_point_count = 0_u32;
@@ -306,17 +299,19 @@ fn main() {
     .expect("inverse-witness benchmark arc is valid");
     let retained_clone = inverse_arc.clone();
     let witness = p(3, 0);
-    let Classification::Decided(parameter) = inverse_arc
-        .sweep_fraction(&witness, &policy)
-        .expect("inverse-witness parameterization remains exact")
+    let Classification::Decided(parameter) =
+        crate::support::under_classified_result(&policy, || inverse_arc.sweep_fraction(&witness))
+            .expect("inverse-witness parameterization remains exact")
     else {
         panic!("inverse-witness benchmark parameter must be decided");
     };
     let started = Instant::now();
     let mut witness_count = 0_u32;
     for _ in 0..iterations {
-        let Classification::Decided(point) = retained_clone
-            .point_at_sweep_fraction(black_box(&parameter), &policy)
+        let Classification::Decided(point) =
+            crate::support::under_classified_result(&policy, || {
+                retained_clone.point_at_sweep_fraction(black_box(&parameter))
+            })
             .expect("retained inverse witness remains exact")
         else {
             panic!("retained inverse witness replay must remain decided");

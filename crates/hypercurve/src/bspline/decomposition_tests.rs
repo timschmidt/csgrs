@@ -73,7 +73,10 @@ fn rational_linear_span_preserves_homogeneous_parameterization() {
     };
     assert_eq!(curve.degree(), 1);
     assert!(curve.weights() == [r(1), r(3)]);
-    assert_point_eq(&curve.point_at(&q(1, 2), &policy()).unwrap(), &p(3, 0));
+    assert_point_eq(
+        &curve.point_at_with_policy(&q(1, 2), &policy()).unwrap(),
+        &p(3, 0),
+    );
 }
 
 #[test]
@@ -95,7 +98,7 @@ fn rational_linear_span_retains_its_denominator_pole() {
     assert_eq!(curve.degree(), 1);
     assert_point_eq(curve.start(), &p(0, 0));
     assert_point_eq(curve.end(), &p(4, 0));
-    assert!(curve.point_at(&q(1, 2), &policy()).is_err());
+    assert!(curve.point_at_with_policy(&q(1, 2), &policy()).is_err());
 }
 
 #[test]

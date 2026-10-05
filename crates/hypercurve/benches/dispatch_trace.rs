@@ -69,7 +69,7 @@ fn main() {
     let horizontal = LineSeg2::try_new(p(-4, 0), p(4, 0)).expect("line is valid");
     let vertical = LineSeg2::try_new(p(0, -4), p(0, 4)).expect("line is valid");
     trace("line_line_intersection", || {
-        horizontal.intersect_line(&vertical, &policy)
+        crate::support::under_value(&policy, || horizontal.intersect_line(&vertical))
     });
 
     let first_arc =
@@ -77,7 +77,7 @@ fn main() {
     let second_arc =
         CircularArc2::try_from_center(p(8, 0), p(0, 0), p(4, 0), false).expect("arc is valid");
     trace("arc_arc_intersection", || {
-        first_arc.intersect_arc(&second_arc, &policy)
+        crate::support::under_value(&policy, || first_arc.intersect_arc(&second_arc))
     });
 
     let quadratic = QuadraticBezier2::new(p(-3, 0), p(0, 6), p(3, 0));

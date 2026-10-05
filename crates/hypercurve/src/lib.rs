@@ -343,7 +343,7 @@ mod tests {
     fn angular_arc_splits_retain_root_lineage_across_nested_edits() {
         let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
         let Classification::Decided((first, second)) = arc
-            .split_at_sweep_fraction(&q(1, 3), &topology_policy())
+            .split_at_sweep_fraction_with_policy(&q(1, 3), &topology_policy())
             .unwrap()
         else {
             panic!("exact rational sweep fraction must decide");
@@ -360,7 +360,7 @@ mod tests {
         assert_eq!(first.end(), second.start());
 
         let Classification::Decided((nested_first, nested_second)) = second
-            .split_at_sweep_fraction(&q(1, 2), &topology_policy())
+            .split_at_sweep_fraction_with_policy(&q(1, 2), &topology_policy())
             .unwrap()
         else {
             panic!("nested exact rational sweep fraction must decide");
@@ -381,13 +381,13 @@ mod tests {
         let arc = CircularArc2::try_from_center(p(2, 0), p(0, 2), p(0, 0), false).unwrap();
         let fraction = q(1, 2);
         let Classification::Decided(parameter) = arc
-            .parameter_at_sweep_fraction(&fraction, &topology_policy())
+            .parameter_at_sweep_fraction_with_policy(&fraction, &topology_policy())
             .unwrap()
         else {
             panic!("an exact interior angular fraction must map exactly");
         };
         let Classification::Decided(angular_point) = arc
-            .point_at_sweep_fraction(&fraction, &topology_policy())
+            .point_at_sweep_fraction_with_policy(&fraction, &topology_policy())
             .unwrap()
         else {
             panic!("an exact interior angular fraction must evaluate exactly");
@@ -586,15 +586,15 @@ mod tests {
     fn line_side_classifies_left_right_and_on() {
         let line = LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap();
         assert_eq!(
-            line.classify_point(&p(1, 1), &topology_policy()),
+            line.classify_point_with_policy(&p(1, 1), &topology_policy()),
             Classification::Decided(LineSide::Left)
         );
         assert_eq!(
-            line.classify_point(&p(1, -1), &topology_policy()),
+            line.classify_point_with_policy(&p(1, -1), &topology_policy()),
             Classification::Decided(LineSide::Right)
         );
         assert_eq!(
-            line.classify_point(&p(1, 0), &topology_policy()),
+            line.classify_point_with_policy(&p(1, 0), &topology_policy()),
             Classification::Decided(LineSide::On)
         );
     }
@@ -603,7 +603,9 @@ mod tests {
     fn line_line_intersection_crosses_at_point() {
         let a = LineSeg2::try_new(p(0, 0), p(2, 2)).unwrap();
         let b = LineSeg2::try_new(p(0, 2), p(2, 0)).unwrap();
-        let intersection = a.intersect_line(&b, &topology_policy()).unwrap();
+        let intersection = a
+            .intersect_line_with_policy(&b, &topology_policy())
+            .unwrap();
 
         let LineLineIntersection::Point {
             point,
@@ -626,7 +628,9 @@ mod tests {
     fn line_line_intersection_detects_endpoint_touch() {
         let a = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
         let b = LineSeg2::try_new(p(1, 0), p(1, 1)).unwrap();
-        let intersection = a.intersect_line(&b, &topology_policy()).unwrap();
+        let intersection = a
+            .intersect_line_with_policy(&b, &topology_policy())
+            .unwrap();
 
         let LineLineIntersection::Point { point, kind, .. } = intersection else {
             panic!("expected endpoint point intersection");
@@ -648,7 +652,9 @@ mod tests {
             a_param,
             b_param,
             kind,
-        } = a.intersect_line(&b, &topology_policy()).unwrap()
+        } = a
+            .intersect_line_with_policy(&b, &topology_policy())
+            .unwrap()
         else {
             panic!("expected symbolic endpoint point intersection");
         };
@@ -663,7 +669,9 @@ mod tests {
     fn line_line_intersection_detects_collinear_overlap() {
         let a = LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap();
         let b = LineSeg2::try_new(p(2, 0), p(6, 0)).unwrap();
-        let intersection = a.intersect_line(&b, &topology_policy()).unwrap();
+        let intersection = a
+            .intersect_line_with_policy(&b, &topology_policy())
+            .unwrap();
 
         let LineLineIntersection::Overlap {
             segment,
@@ -687,7 +695,8 @@ mod tests {
         let a = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
         let b = LineSeg2::try_new(p(0, 1), p(1, 1)).unwrap();
         assert_eq!(
-            a.intersect_line(&b, &topology_policy()).unwrap(),
+            a.intersect_line_with_policy(&b, &topology_policy())
+                .unwrap(),
             LineLineIntersection::None
         );
     }
@@ -707,7 +716,8 @@ mod tests {
         let right = source.offset_left(-Real::one()).unwrap();
 
         assert_eq!(
-            left.intersect_line(&right, &topology_policy()).unwrap(),
+            left.intersect_line_with_policy(&right, &topology_policy())
+                .unwrap(),
             LineLineIntersection::None
         );
     }
@@ -716,15 +726,15 @@ mod tests {
     fn arc_sweep_classifies_positive_bulge_semicircle() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
         assert_eq!(
-            arc.contains_sweep_point(&p(1, -1), &topology_policy()),
+            arc.contains_sweep_point_with_policy(&p(1, -1), &topology_policy()),
             Classification::Decided(true)
         );
         assert_eq!(
-            arc.contains_sweep_point(&p(1, 1), &topology_policy()),
+            arc.contains_sweep_point_with_policy(&p(1, 1), &topology_policy()),
             Classification::Decided(false)
         );
         assert_eq!(
-            arc.contains_sweep_point(&p(0, 0), &topology_policy()),
+            arc.contains_sweep_point_with_policy(&p(0, 0), &topology_policy()),
             Classification::Decided(true)
         );
     }
@@ -733,15 +743,15 @@ mod tests {
     fn arc_sweep_classifies_negative_bulge_semicircle() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1)).unwrap();
         assert_eq!(
-            arc.contains_sweep_point(&p(1, 1), &topology_policy()),
+            arc.contains_sweep_point_with_policy(&p(1, 1), &topology_policy()),
             Classification::Decided(true)
         );
         assert_eq!(
-            arc.contains_sweep_point(&p(1, -1), &topology_policy()),
+            arc.contains_sweep_point_with_policy(&p(1, -1), &topology_policy()),
             Classification::Decided(false)
         );
         assert_eq!(
-            arc.contains_sweep_point(&p(2, 0), &topology_policy()),
+            arc.contains_sweep_point_with_policy(&p(2, 0), &topology_policy()),
             Classification::Decided(true)
         );
     }
@@ -750,7 +760,9 @@ mod tests {
     fn line_arc_intersection_keeps_only_points_inside_sweep() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
         let line = LineSeg2::try_new(p(1, -2), p(1, 2)).unwrap();
-        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+        let intersection = line
+            .intersect_arc_with_policy(&arc, &topology_policy())
+            .unwrap();
 
         let LineArcIntersection::Point(hit) = intersection else {
             panic!("expected one line-arc hit");
@@ -766,7 +778,9 @@ mod tests {
     fn line_arc_intersection_keeps_clockwise_sweep() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1)).unwrap();
         let line = LineSeg2::try_new(p(1, -2), p(1, 2)).unwrap();
-        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+        let intersection = line
+            .intersect_arc_with_policy(&arc, &topology_policy())
+            .unwrap();
 
         let LineArcIntersection::Point(hit) = intersection else {
             panic!("expected one line-arc hit");
@@ -782,7 +796,9 @@ mod tests {
     fn line_arc_intersection_detects_tangent() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
         let line = LineSeg2::try_new(p(0, -1), p(2, -1)).unwrap();
-        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+        let intersection = line
+            .intersect_arc_with_policy(&arc, &topology_policy())
+            .unwrap();
 
         let LineArcIntersection::Point(hit) = intersection else {
             panic!("expected tangent hit");
@@ -799,7 +815,8 @@ mod tests {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
         let line = LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap();
         assert_eq!(
-            line.intersect_arc(&arc, &topology_policy()).unwrap(),
+            line.intersect_arc_with_policy(&arc, &topology_policy())
+                .unwrap(),
             LineArcIntersection::None
         );
     }
@@ -808,7 +825,9 @@ mod tests {
     fn line_arc_intersection_detects_two_endpoint_hits() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
         let line = LineSeg2::try_new(p(-1, 0), p(3, 0)).unwrap();
-        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+        let intersection = line
+            .intersect_arc_with_policy(&arc, &topology_policy())
+            .unwrap();
 
         let LineArcIntersection::TwoPoints { first, second } = intersection else {
             panic!("expected two endpoint hits");
@@ -827,7 +846,7 @@ mod tests {
         let a = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(3, 0), p(13, 0), p(8, 0), true).unwrap();
 
-        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let intersection = a.intersect_arc_with_policy(&b, &topology_policy()).unwrap();
         let ArcArcIntersection::Point(hit) = intersection else {
             panic!("expected one filtered arc-arc hit");
         };
@@ -844,7 +863,7 @@ mod tests {
         let a = CircularArc2::try_from_center(p(0, -5), p(0, 5), p(0, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(10, 5), p(10, -5), p(10, 0), false).unwrap();
 
-        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let intersection = a.intersect_arc_with_policy(&b, &topology_policy()).unwrap();
         let ArcArcIntersection::Point(hit) = intersection else {
             panic!("expected tangent arc-arc hit");
         };
@@ -860,7 +879,7 @@ mod tests {
         let a = CircularArc2::try_from_center(p(4, 3), p(4, -3), p(0, 0), true).unwrap();
         let b = CircularArc2::try_from_center(p(4, -3), p(4, 3), p(8, 0), true).unwrap();
 
-        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let intersection = a.intersect_arc_with_policy(&b, &topology_policy()).unwrap();
         let ArcArcIntersection::TwoPoints { first, second } = intersection else {
             panic!("expected two endpoint arc-arc hits");
         };
@@ -881,7 +900,7 @@ mod tests {
         let b = CircularArc2::try_from_center(p(17, 0), p(7, 0), p(12, 0), false).unwrap();
 
         assert_eq!(
-            a.intersect_arc(&b, &topology_policy()).unwrap(),
+            a.intersect_arc_with_policy(&b, &topology_policy()).unwrap(),
             ArcArcIntersection::None
         );
     }
@@ -891,7 +910,7 @@ mod tests {
         let a = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(0, 5), p(0, -5), p(0, 0), false).unwrap();
 
-        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let intersection = a.intersect_arc_with_policy(&b, &topology_policy()).unwrap();
         let ArcArcIntersection::Overlap {
             segment,
             a_range,
@@ -914,7 +933,7 @@ mod tests {
         let a = CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(2, 0), p(0, 0), p(1, 0), true).unwrap();
 
-        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let intersection = a.intersect_arc_with_policy(&b, &topology_policy()).unwrap();
         let ArcArcIntersection::Overlap {
             segment,
             a_range,
@@ -937,7 +956,7 @@ mod tests {
         let a = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), true).unwrap();
 
-        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let intersection = a.intersect_arc_with_policy(&b, &topology_policy()).unwrap();
         let ArcArcIntersection::TwoPoints { first, second } = intersection else {
             panic!("expected same-circle endpoint-only pair");
         };

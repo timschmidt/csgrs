@@ -262,7 +262,8 @@ fn rational_point_image_transforms_exact_real_linear_root() {
         .expect("a linear exact-Real polynomial has an exact point witness");
     assert_eq!(exact_parameter, &(Real::one() / Real::pi()).unwrap());
     assert!(exact_parameter.exact_rational_ref().is_none());
-    let Classification::Decided(exact_point) = conic.point_at(exact_parameter.clone(), &policy())
+    let Classification::Decided(exact_point) =
+        conic.point_at_with_policy(exact_parameter.clone(), &policy())
     else {
         panic!("the exact parameter must evaluate to an affine conic point");
     };
@@ -351,8 +352,8 @@ fn conic_point_images_reuse_exact_evaluation_across_weight_charts() {
                             );
                             assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
                             for point in [
-                                decided(conic.point_at(t.clone(), &policy)),
-                                promoted.point_at(&t, &policy).unwrap(),
+                                decided(conic.point_at_with_policy(t.clone(), &policy)),
+                                promoted.point_at_with_policy(&t, &policy).unwrap(),
                             ] {
                                 for (coordinate, value) in [
                                     (image.x().unwrap(), point.x()),
@@ -446,7 +447,7 @@ proptest! {
 
         let point = decided(conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
         let tangent = decided(conic.derivatives_at_algebraic_parameter(&parameter, 1, &policy()).unwrap().map(|mut images| images.remove(0)));
-        let exact_point = match conic.point_at(q(1, 2), &policy()) {
+        let exact_point = match conic.point_at_with_policy(q(1, 2), &policy()) {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => panic!("midpoint unexpectedly uncertain: {reason:?}"),
         };
@@ -534,8 +535,9 @@ fn high_order_derivative_images_preserve_selected_source_domains() {
                     HomogeneousControl2::new(x, y, weight)
                 })
                 .collect();
-            let curve =
-                decided(RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap());
+            let curve = decided(
+                RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy).unwrap(),
+            );
             // For the pole case, P=(2t^2-1)(3t^2-1). The denominator is not
             // invertible modulo all of P, but it is nonzero at the selected root.
             let source = if has_pole {
@@ -602,8 +604,9 @@ fn selected_derivative_jets_preserve_high_order_rational_tails() {
                     )
                 })
                 .collect();
-            let curve =
-                decided(RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap());
+            let curve = decided(
+                RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy).unwrap(),
+            );
             let parameter = isolate(polynomial(vec![r(0), r(1)]), interval(r(-1), r(1)));
             let images = decided(
                 curve

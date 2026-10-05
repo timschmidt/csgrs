@@ -360,7 +360,7 @@ impl BezierParallel2 {
             )));
         }
         let Ok(Classification::Decided(decomposition)) =
-            support.rational_bezier_decomposition_with_policy(policy)
+            support.rational_bezier_decomposition_raw(policy)
         else {
             return Ok(no_fast_path());
         };

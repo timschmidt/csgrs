@@ -4289,12 +4289,18 @@ fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
 
 fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
     let fit = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT),
-        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT),
-        BezierSubcurve2::RationalQuadratic(curve) => {
-            curve.fit_exact_line_image(&CurveContext::STRICT)
+        BezierSubcurve2::Quadratic(curve) => {
+            curve.fit_exact_line_image_with_policy(&CurveContext::STRICT)
         }
-        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurveContext::STRICT),
+        BezierSubcurve2::Cubic(curve) => {
+            curve.fit_exact_line_image_with_policy(&CurveContext::STRICT)
+        }
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.fit_exact_line_image_with_policy(&CurveContext::STRICT)
+        }
+        BezierSubcurve2::Rational(curve) => {
+            curve.fit_exact_line_image_with_policy(&CurveContext::STRICT)
+        }
     };
     matches!(
         fit,
@@ -7486,7 +7492,7 @@ fn contacts_decided_same_from_circular_carriers(
             else {
                 continue;
             };
-            let relation = match existing_arc.intersect_arc(&current_arc, policy) {
+            let relation = match existing_arc.intersect_arc_with_policy(&current_arc, policy) {
                 Ok(relation) => relation,
                 Err(_) => {
                     uncertainty.get_or_insert(UncertaintyReason::Unsupported);
@@ -7577,11 +7583,11 @@ fn exact_point_decided_outside_carrier(
     };
     match segment {
         Segment2::Line(line) => {
-            line.contains_point(point, policy) == Classification::Decided(false)
+            line.contains_point_with_policy(point, policy) == Classification::Decided(false)
         }
         Segment2::Arc(arc) => {
-            arc.contains_sweep_point(point, policy) == Classification::Decided(false)
-                || arc.contains_point(point, policy) == Classification::Decided(false)
+            arc.contains_sweep_point_with_policy(point, policy) == Classification::Decided(false)
+                || arc.contains_point_with_policy(point, policy) == Classification::Decided(false)
         }
     }
 }

@@ -1612,11 +1612,12 @@ fn unified_region_native_fillet_retains_certified_arc_contacts() {
 #[test]
 fn unified_region_corners_preserve_circular_geometry_across_representations() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
-    let conic = native_arc
-        .rational_bezier_decomposition(&CurveContext::STRICT)
-        .map(certified)
-        .unwrap()
-        .spans()[0]
+    let conic = crate::support::under(&CurveContext::STRICT, || {
+        native_arc.rational_bezier_decomposition()
+    })
+    .map(certified)
+    .unwrap()
+    .spans()[0]
         .curve()
         .clone();
     let elevated = RationalBezier2::from(conic.clone())
@@ -1716,11 +1717,12 @@ fn unified_region_corners_preserve_circular_geometry_across_representations() {
 #[test]
 fn retained_circular_regions_chamfer_over_the_full_support() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
-    let conic = native_arc
-        .rational_bezier_decomposition(&CurveContext::STRICT)
-        .map(certified)
-        .unwrap()
-        .spans()[0]
+    let conic = crate::support::under(&CurveContext::STRICT, || {
+        native_arc.rational_bezier_decomposition()
+    })
+    .map(certified)
+    .unwrap()
+    .spans()[0]
         .curve()
         .clone();
     let elevated = RationalBezier2::from(conic.clone())

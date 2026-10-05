@@ -69,10 +69,16 @@ fn general_rational_cubic_evaluates_exactly() {
     let policy = CurveContext::STRICT;
     let half = q(1, 2);
 
-    assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
-    assert_eq!(curve.point_at(&r(1), &policy).unwrap(), p(4, 0));
     assert_eq!(
-        curve.point_at(&half, &policy).unwrap(),
+        crate::support::under_value(&policy, || curve.point_at(&r(0))).unwrap(),
+        p(0, 0)
+    );
+    assert_eq!(
+        crate::support::under_value(&policy, || curve.point_at(&r(1))).unwrap(),
+        p(4, 0)
+    );
+    assert_eq!(
+        crate::support::under_value(&policy, || curve.point_at(&half)).unwrap(),
         Point2::new(q(49, 20), q(9, 4))
     );
 }
@@ -83,7 +89,10 @@ fn rational_quadratic_rational_parameter_uses_exact_power_quotient() {
         RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
 
     assert_eq!(
-        decided(curve.point_at(q(1, 2), &CurveContext::STRICT)),
+        decided(crate::support::under_classified(
+            &CurveContext::STRICT,
+            || curve.point_at(q(1, 2))
+        )),
         Point2::new(q(13, 4), r(2))
     );
 }
@@ -105,11 +114,17 @@ fn rational_quadratic_exact_transcendental_pole_stays_projective() {
     let pole = (r(1) / Real::pi()).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
-            curve.point_at(pole.clone(), &policy),
+            crate::support::under_classified(&policy, || curve.point_at(pole.clone())),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary),
         );
-        assert_eq!(decided(curve.point_at(r(0), &policy)), p(0, 0));
-        assert_eq!(decided(curve.point_at(r(1), &policy)), p(6, 0));
+        assert_eq!(
+            decided(crate::support::under_classified(&policy, || curve.point_at(r(0)))),
+            p(0, 0)
+        );
+        assert_eq!(
+            decided(crate::support::under_classified(&policy, || curve.point_at(r(1)))),
+            p(6, 0)
+        );
     }
 }
 
@@ -126,7 +141,10 @@ fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative
     .unwrap();
 
     assert_eq!(
-        decided(curve.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT)),
+        decided(crate::support::under_classified(
+            &CurveContext::STRICT,
+            || curve.axis_monotone_parameters(Axis2::X)
+        )),
         vec![q(1, 2)]
     );
 }
@@ -148,7 +166,10 @@ fn rational_quadratic_monotone_root_retains_exact_transcendental_endpoint() {
     .unwrap();
 
     assert_eq!(
-        decided(curve.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT)),
+        decided(crate::support::under_classified(
+            &CurveContext::STRICT,
+            || curve.axis_monotone_parameters(Axis2::X)
+        )),
         vec![Real::one()]
     );
 }
@@ -159,10 +180,14 @@ fn general_rational_derivative_is_exact_and_reuses_power_basis() {
     let clone = curve.clone();
     let policy = CurveContext::STRICT;
 
-    let derivative = curve.derivative_at(&q(1, 2), &policy).unwrap();
+    let derivative =
+        crate::support::under_value(&policy, || curve.derivative_at(&q(1, 2))).unwrap();
     assert_eq!(derivative.dx(), &r(3));
     assert_eq!(derivative.dy(), &r(0));
-    assert_eq!(clone.derivative_at(&q(1, 2), &policy).unwrap(), derivative);
+    assert_eq!(
+        crate::support::under_value(&policy, || clone.derivative_at(&q(1, 2))).unwrap(),
+        derivative
+    );
 }
 
 #[test]
@@ -170,7 +195,8 @@ fn general_rational_derivatives_are_not_truncated_at_bezier_degree() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
     let policy = CurveContext::STRICT;
 
-    let derivatives = curve.derivatives_at(&q(1, 2), 3, &policy).unwrap();
+    let derivatives =
+        crate::support::under_value(&policy, || curve.derivatives_at(&q(1, 2), 3)).unwrap();
 
     assert_eq!(derivatives.len(), 3);
     assert_eq!((derivatives[0].dx(), derivatives[0].dy()), (&r(3), &r(0)));
@@ -184,8 +210,8 @@ fn rational_bezier_clones_evaluate_identically() {
     let clone = curve.clone();
     let policy = CurveContext::STRICT;
     assert_eq!(
-        clone.point_at(&q(1, 2), &policy).unwrap(),
-        curve.point_at(&q(1, 2), &policy).unwrap()
+        crate::support::under_value(&policy, || clone.point_at(&q(1, 2))).unwrap(),
+        crate::support::under_value(&policy, || curve.point_at(&q(1, 2))).unwrap()
     );
 }
 
@@ -195,10 +221,10 @@ fn rational_bezier_clones_have_identical_point_incidence() {
     let clone = curve.clone();
     let policy = CurveContext::STRICT;
     let point = Point2::new(q(49, 20), q(9, 4));
-    assert!(clone.contains_point(&point, &policy).unwrap());
+    assert!(crate::support::under_value(&policy, || clone.contains_point(&point)).unwrap());
     assert_eq!(
-        clone.contains_point(&point, &policy).unwrap(),
-        curve.contains_point(&point, &policy).unwrap()
+        crate::support::under_value(&policy, || clone.contains_point(&point)).unwrap(),
+        crate::support::under_value(&policy, || curve.contains_point(&point)).unwrap()
     );
 }
 
@@ -207,15 +233,23 @@ fn general_rational_split_preserves_join_and_degree() {
     let curve = curve();
     let policy = CurveContext::STRICT;
     let half = q(1, 2);
-    let expected_join = curve.point_at(&half, &policy).unwrap();
-    let (left, right) = decided(curve.split_at_exact(&half, &policy).unwrap());
+    let expected_join = crate::support::under_value(&policy, || curve.point_at(&half)).unwrap();
+    let (left, right) = decided(
+        crate::support::under_classified_result(&policy, || curve.split_at_exact(&half)).unwrap(),
+    );
 
     assert_eq!(left.degree(), 3);
     assert_eq!(right.degree(), 3);
     assert_eq!(left.end(), &expected_join);
     assert_eq!(right.start(), &expected_join);
-    assert_eq!(left.point_at(&r(1), &policy).unwrap(), expected_join);
-    assert_eq!(right.point_at(&r(0), &policy).unwrap(), expected_join);
+    assert_eq!(
+        crate::support::under_value(&policy, || left.point_at(&r(1))).unwrap(),
+        expected_join
+    );
+    assert_eq!(
+        crate::support::under_value(&policy, || right.point_at(&r(0))).unwrap(),
+        expected_join
+    );
 }
 
 #[test]
@@ -223,8 +257,8 @@ fn general_rational_cubic_certifies_obvious_axis_monotonicity() {
     let curve = curve();
     let policy = CurveContext::STRICT;
 
-    assert!(curve.axis_is_monotone(Axis2::X, &policy).unwrap());
-    assert!(!curve.axis_is_monotone(Axis2::Y, &policy).unwrap());
+    assert!(crate::support::under_value(&policy, || curve.axis_is_monotone(Axis2::X)).unwrap());
+    assert!(!crate::support::under_value(&policy, || curve.axis_is_monotone(Axis2::Y)).unwrap());
 }
 
 #[test]
@@ -238,15 +272,16 @@ fn mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity() {
         RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(1, 0), p(0, 0)], vec![r(1); 4]).unwrap();
 
     assert!(
-        stationary_monotone
-            .axis_is_monotone(Axis2::X, &policy)
+        crate::support::under_value(&policy, || stationary_monotone.axis_is_monotone(Axis2::X))
             .unwrap()
     );
-    assert!(!two_extrema.axis_is_monotone(Axis2::X, &policy).unwrap());
     assert!(
-        !endpoint_sign_reversal
-            .axis_is_monotone(Axis2::X, &policy)
-            .unwrap()
+        !crate::support::under_value(&policy, || two_extrema.axis_is_monotone(Axis2::X)).unwrap()
+    );
+    assert!(
+        !crate::support::under_value(&policy, || endpoint_sign_reversal
+            .axis_is_monotone(Axis2::X))
+        .unwrap()
     );
 }
 
@@ -261,8 +296,7 @@ fn high_degree_nonuniform_rational_weights_preserve_axis_monotonicity() {
     .unwrap();
 
     assert!(
-        curve
-            .axis_is_monotone(Axis2::X, &CurveContext::STRICT)
+        crate::support::under_value(&CurveContext::STRICT, || curve.axis_is_monotone(Axis2::X))
             .unwrap()
     );
 }
@@ -276,8 +310,7 @@ fn degree_40_rational_monotonicity_does_not_depend_on_u64_binomials() {
     .unwrap();
 
     assert!(
-        curve
-            .axis_is_monotone(Axis2::X, &CurveContext::STRICT)
+        crate::support::under_value(&CurveContext::STRICT, || curve.axis_is_monotone(Axis2::X))
             .unwrap()
     );
 }
@@ -288,8 +321,7 @@ fn shared_cancellation_resolves_rational_weight_monotonicity_blocker() {
         .unwrap();
 
     assert!(
-        curve
-            .axis_is_monotone(Axis2::X, &CurveContext::STRICT)
+        crate::support::under_value(&CurveContext::STRICT, || curve.axis_is_monotone(Axis2::X))
             .unwrap()
     );
 }
@@ -300,9 +332,12 @@ fn shared_cancellation_resolves_rational_evaluation_and_bounds_blockers() {
         .unwrap();
     let policy = CurveContext::STRICT;
 
-    assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
-    assert!(curve.derivative_at(&r(0), &policy).is_ok());
-    assert!(curve.derivatives_at(&r(0), 3, &policy).is_ok());
+    assert_eq!(
+        crate::support::under_value(&policy, || curve.point_at(&r(0))).unwrap(),
+        p(0, 0)
+    );
+    assert!(crate::support::under_value(&policy, || curve.derivative_at(&r(0))).is_ok());
+    assert!(crate::support::under_value(&policy, || curve.derivatives_at(&r(0), 3)).is_ok());
     assert!(curve.certified_bounds().is_ok());
 }
 
@@ -329,9 +364,9 @@ fn general_rational_point_incidence_rechecks_full_homogeneous_image() {
         point_parameters(&curve, &midpoint, &policy),
         Some(vec![Some(q(1, 2))])
     );
-    assert!(curve.contains_point(&midpoint, &policy).unwrap());
-    assert!(!curve.contains_point(&p(5, 1), &policy).unwrap());
-    assert!(!curve.contains_point(&p(2, 1), &policy).unwrap());
+    assert!(crate::support::under_value(&policy, || curve.contains_point(&midpoint)).unwrap());
+    assert!(!crate::support::under_value(&policy, || curve.contains_point(&p(5, 1))).unwrap());
+    assert!(!crate::support::under_value(&policy, || curve.contains_point(&p(2, 1))).unwrap());
 }
 
 #[test]
@@ -349,7 +384,7 @@ fn general_rational_point_incidence_retains_nonlinear_algebraic_parameter() {
         parameters[0].is_none(),
         "the root stays a selected algebraic parameter"
     );
-    assert!(curve.contains_point(&query, &policy).unwrap());
+    assert!(crate::support::under_value(&policy, || curve.contains_point(&query)).unwrap());
 }
 
 #[test]
@@ -369,7 +404,7 @@ fn general_rational_point_incidence_retains_endpoint_and_entire_curve_cases() {
     let constant =
         RationalBezier2::try_new(vec![p(2, 3), p(2, 3), p(2, 3)], vec![r(1), r(2), r(3)]).unwrap();
     assert_eq!(point_parameters(&constant, &p(2, 3), &policy), None);
-    assert!(!constant.contains_point(&p(3, 2), &policy).unwrap());
+    assert!(!crate::support::under_value(&policy, || constant.contains_point(&p(3, 2))).unwrap());
 }
 
 #[test]
@@ -385,8 +420,8 @@ fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_line
     );
     for parameter in [r(0), q(1, 4), q(1, 2), q(3, 4), r(1)] {
         assert_eq!(
-            elevated.point_at(&parameter, &CurveContext::STRICT),
-            curve.point_at(&parameter, &CurveContext::STRICT)
+            crate::support::under_value(&CurveContext::STRICT, || elevated.point_at(&parameter)),
+            crate::support::under_value(&CurveContext::STRICT, || curve.point_at(&parameter))
         );
     }
     assert_eq!(clone.elevated_to_degree(5).unwrap(), elevated);
@@ -410,6 +445,8 @@ fn rational_bezier_degree_elevation_preserves_projective_controls_and_poles() {
     assert_eq!(first.weights(), &[r(1), r(0), r(-1)]);
     assert_eq!(singular.elevated_to_degree(2).unwrap(), first);
     // Representing a zero intermediate weight does not certify a finite curve.
-    assert!(first.point_at(&q(1, 2), &CurveContext::STRICT).is_err());
+    assert!(
+        crate::support::under_value(&CurveContext::STRICT, || first.point_at(&q(1, 2))).is_err()
+    );
     assert!(first.certified_bounds().is_err());
 }

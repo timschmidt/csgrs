@@ -248,7 +248,20 @@ impl RationalQuadraticBezier2 {
     /// rational and arbitrary exact parameters. A zero denominator is a
     /// projective boundary, so this API returns explicit uncertainty instead
     /// of inventing an affine point.
-    pub fn point_at(&self, t: Real, policy: &CurveContext) -> Classification<Point2> {
+    pub fn point_at(&self, t: Real) -> crate::ExactCurveResult<Point2> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Evaluation,
+            crate::CurveFamily2::RationalQuadraticBezier,
+            self.point_at_with_policy(t, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
+        &self,
+        t: Real,
+        policy: &CurveContext,
+    ) -> Classification<Point2> {
         let endpoint = match t.exact_rational_ref() {
             Some(t) if t.is_zero() => Some((&self.start, &self.start_weight)),
             Some(t) if t.is_one() => Some((&self.end, &self.end_weight)),
@@ -338,9 +351,26 @@ impl RationalQuadraticBezier2 {
         &self,
         point: &Point2,
         t: Real,
+    ) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::RationalQuadraticBezier,
+            self.contains_point_at_parameter_with_policy(
+                point,
+                t,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::contains_point_at_parameter`] under an explicit predicate policy.
+    pub(crate) fn contains_point_at_parameter_with_policy(
+        &self,
+        point: &Point2,
+        t: Real,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        let curve_point = match self.point_at(t, policy) {
+        let curve_point = match self.point_at_with_policy(t, policy) {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -358,7 +388,16 @@ impl RationalQuadraticBezier2 {
     /// re-evaluating the conic. That follows the exactness model's requirement to keep exact
     /// geometric objects explicit until a predicate boundary. The weighted Bernstein numerator/denominator identities follow
     /// the rational Bezier treatment in the Bernstein and de Casteljau curve model.
-    pub fn parameters_for_point(
+    pub fn parameters_for_point(&self, point: &Point2) -> crate::ExactCurveResult<Vec<Real>> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::RationalQuadraticBezier,
+            self.parameters_for_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::parameters_for_point`] under an explicit predicate policy.
+    pub(crate) fn parameters_for_point_with_policy(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -371,8 +410,21 @@ impl RationalQuadraticBezier2 {
     /// Denominator boundaries are reported as uncertainty instead of being
     /// projected into affine space. Use [`Self::parameters_for_point`] when the
     /// certified parameters themselves are needed by downstream topology.
-    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
-        self.parameters_for_point(point, policy)
+    pub fn contains_point(&self, point: &Point2) -> crate::ExactCurveResult<bool> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::RationalQuadraticBezier,
+            self.contains_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
+        self.parameters_for_point_with_policy(point, policy)
             .map(|parameters| !parameters.is_empty())
     }
 
@@ -446,7 +498,16 @@ impl RationalQuadraticBezier2 {
     /// the homogeneous numerator/denominator visible as recommended by the exactness model
     ///, and follows the rational Bezier derivative identity in the Bernstein curve model
     ///.
-    pub fn axis_monotone_parameters(
+    pub fn axis_monotone_parameters(&self, axis: Axis2) -> crate::ExactCurveResult<Vec<Real>> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Classification,
+            crate::CurveFamily2::RationalQuadraticBezier,
+            self.axis_monotone_parameters_with_policy(axis, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::axis_monotone_parameters`] under an explicit predicate policy.
+    pub(crate) fn axis_monotone_parameters_with_policy(
         &self,
         axis: Axis2,
         policy: &CurveContext,
@@ -519,7 +580,19 @@ impl RationalQuadraticBezier2 {
     }
 
     /// Classifies the represented conic family from the homogeneous weights.
-    pub fn conic_kind(&self, policy: &CurveContext) -> Classification<RationalQuadraticConicKind> {
+    pub fn conic_kind(&self) -> crate::ExactCurveResult<RationalQuadraticConicKind> {
+        crate::ExactCurveError::decided_for(
+            crate::CurveOperation2::Evaluation,
+            crate::CurveFamily2::RationalQuadraticBezier,
+            self.conic_kind_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::conic_kind`] under an explicit predicate policy.
+    pub(crate) fn conic_kind_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<RationalQuadraticConicKind> {
         let discriminant =
             (&self.control_weight * &self.control_weight) - (&self.start_weight * &self.end_weight);
         match real_sign(&discriminant, policy) {
@@ -706,7 +779,7 @@ fn rational_point_parameters_from_root_sets(
 
     let mut parameters = Vec::new();
     for candidate in candidates {
-        match curve.point_at(candidate.clone(), policy) {
+        match curve.point_at_with_policy(candidate.clone(), policy) {
             Classification::Decided(curve_point) => {
                 match point_equal(&curve_point, point, policy) {
                     Some(true) => parameters.push(candidate),

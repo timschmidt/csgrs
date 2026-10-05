@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     ArcArcIntersection, CircleCircleRelation, CircularArc2, CurveContext, LineArcIntersection,
     LineCircleRelation, LineSeg2, Point2, Real,
@@ -25,17 +26,18 @@ fn supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases(
 
     let disjoint = LineSeg2::try_new(p(-10, 6), p(10, 6)).unwrap();
     assert!(
-        disjoint
-            .supporting_line_circle_relation(&circle, &policy())
-            .unwrap()
-            .is_disjoint(),
+        crate::support::under_value(&policy(), || disjoint
+            .supporting_line_circle_relation(&circle))
+        .unwrap()
+        .is_disjoint(),
         "line above the radius-5 circle must be disjoint"
     );
 
     let tangent = LineSeg2::try_new(p(-10, 5), p(10, 5)).unwrap();
-    match tangent
-        .supporting_line_circle_relation(&circle, &policy())
-        .unwrap()
+    match crate::support::under_value(&policy(), || {
+        tangent.supporting_line_circle_relation(&circle)
+    })
+    .unwrap()
     {
         LineCircleRelation::Tangent { point, line_param } => {
             assert_eq!(point, p(0, 5));
@@ -45,9 +47,10 @@ fn supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases(
     }
 
     let secant = LineSeg2::try_new(p(-10, 0), p(10, 0)).unwrap();
-    match secant
-        .supporting_line_circle_relation(&circle, &policy())
-        .unwrap()
+    match crate::support::under_value(&policy(), || {
+        secant.supporting_line_circle_relation(&circle)
+    })
+    .unwrap()
     {
         LineCircleRelation::Secant {
             first_point,
@@ -68,9 +71,9 @@ fn supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases(
 fn line_arc_intersection_reuses_supporting_circle_relation_roots() {
     let arc = circle_arc();
     let line = LineSeg2::try_new(p(-10, 0), p(10, 0)).unwrap();
-    let relation = line
-        .supporting_line_circle_relation(&arc, &policy())
-        .unwrap();
+    let relation =
+        crate::support::under_value(&policy(), || line.supporting_line_circle_relation(&arc))
+            .unwrap();
     let LineCircleRelation::Secant {
         first_param,
         second_param,
@@ -80,7 +83,7 @@ fn line_arc_intersection_reuses_supporting_circle_relation_roots() {
         panic!("expected line support to meet circle at arc endpoints");
     };
 
-    match line.intersect_arc(&arc, &policy()).unwrap() {
+    match crate::support::under_value(&policy(), || line.intersect_arc(&arc)).unwrap() {
         LineArcIntersection::TwoPoints { first, second } => {
             assert_eq!(first.line_param, first_param);
             assert_eq!(first.point, p(-5, 0));
@@ -96,7 +99,7 @@ fn circle_circle_relation_classifies_coincident_disjoint_tangent_and_secant_case
     let base = circle_arc();
     let same = CircularArc2::try_from_center(p(0, 5), p(0, -5), p(0, 0), false).unwrap();
     assert!(
-        base.circle_relation(&same, &policy())
+        crate::support::under_value(&policy(), || base.circle_relation(&same))
             .unwrap()
             .is_coincident(),
         "arcs on the same center and radius must expose coincident full circles"
@@ -104,20 +107,20 @@ fn circle_circle_relation_classifies_coincident_disjoint_tangent_and_secant_case
 
     let disjoint = CircularArc2::try_from_center(p(17, 0), p(7, 0), p(12, 0), false).unwrap();
     assert!(
-        base.circle_relation(&disjoint, &policy())
+        crate::support::under_value(&policy(), || base.circle_relation(&disjoint))
             .unwrap()
             .is_disjoint(),
         "radius-5 circles twelve units apart must be disjoint"
     );
 
     let tangent = CircularArc2::try_from_center(p(15, 0), p(5, 0), p(10, 0), false).unwrap();
-    match base.circle_relation(&tangent, &policy()).unwrap() {
+    match crate::support::under_value(&policy(), || base.circle_relation(&tangent)).unwrap() {
         CircleCircleRelation::Tangent { point } => assert_eq!(point, p(5, 0)),
         other => panic!("expected tangent full-circle relation, got {other:?}"),
     }
 
     let secant = CircularArc2::try_from_center(p(4, -3), p(4, 3), p(8, 0), true).unwrap();
-    match base.circle_relation(&secant, &policy()).unwrap() {
+    match crate::support::under_value(&policy(), || base.circle_relation(&secant)).unwrap() {
         CircleCircleRelation::Secant {
             first_point,
             second_point,
@@ -133,7 +136,8 @@ fn circle_circle_relation_classifies_coincident_disjoint_tangent_and_secant_case
 fn arc_arc_intersection_reuses_circle_relation_witnesses_before_sweep_filtering() {
     let first = CircularArc2::try_from_center(p(4, 3), p(4, -3), p(0, 0), true).unwrap();
     let second = CircularArc2::try_from_center(p(4, -3), p(4, 3), p(8, 0), true).unwrap();
-    let relation = first.circle_relation(&second, &policy()).unwrap();
+    let relation =
+        crate::support::under_value(&policy(), || first.circle_relation(&second)).unwrap();
     let CircleCircleRelation::Secant {
         first_point,
         second_point,
@@ -142,7 +146,7 @@ fn arc_arc_intersection_reuses_circle_relation_witnesses_before_sweep_filtering(
         panic!("expected secant circle relation for crossing arcs");
     };
 
-    match first.intersect_arc(&second, &policy()).unwrap() {
+    match crate::support::under_value(&policy(), || first.intersect_arc(&second)).unwrap() {
         ArcArcIntersection::TwoPoints { first, second } => {
             assert_eq!(first.point, first_point);
             assert_eq!(second.point, second_point);

@@ -85,7 +85,8 @@ fn assert_real_eq(left: &Real, right: &Real) {
 fn quadratic_line_image_fit_offsets_as_exact_line() {
     let bezier = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
 
-    let fit = bezier.fit_exact_line_image(&policy()).unwrap();
+    let fit = crate::support::under_classified_result(&policy(), || bezier.fit_exact_line_image())
+        .unwrap();
     let Classification::Decided(BezierLineImageFitRelation::Fit(fit)) = fit else {
         panic!("collinear quadratic should be a certified line image");
     };
@@ -102,7 +103,8 @@ fn rational_quadratic_conic_line_image_fit_offsets_as_exact_line() {
     let conic =
         RationalQuadraticBezier2::try_new(p(0, 0), p(1, 0), p(2, 0), r(1), r(2), r(1)).unwrap();
 
-    let fit = conic.fit_exact_line_image(&policy()).unwrap();
+    let fit = crate::support::under_classified_result(&policy(), || conic.fit_exact_line_image())
+        .unwrap();
     let Classification::Decided(BezierLineImageFitRelation::Fit(fit)) = fit else {
         panic!("same-sign collinear rational quadratic should be a certified line image");
     };
@@ -627,7 +629,8 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
                 panic!("analytic PH evaluation was uncertain: {reason:?}")
             }
         };
-        let rational = exact.curve().point_at(&parameter, &policy()).unwrap();
+        let rational =
+            crate::support::under_value(&policy(), || exact.curve().point_at(&parameter)).unwrap();
         assert_eq!(rational, analytic);
     }
 }
@@ -676,7 +679,8 @@ fn nonuniform_rational_line_parallel_materializes_exactly() {
                 panic!("rational analytic parallel was uncertain: {reason:?}")
             }
         };
-        let materialized = exact.curve().point_at(&parameter, &policy()).unwrap();
+        let materialized =
+            crate::support::under_value(&policy(), || exact.curve().point_at(&parameter)).unwrap();
         assert_eq!(analytic, materialized);
         assert_eq!(analytic.y(), &r(2));
     }
@@ -713,7 +717,7 @@ fn rational_quarter_circle_parallel_materializes_concentric_exact_curve() {
             }
         };
         assert_eq!(
-            exact.curve().point_at(&parameter, &policy()).unwrap(),
+            crate::support::under_value(&policy(), || exact.curve().point_at(&parameter)).unwrap(),
             analytic
         );
         assert_eq!(
@@ -772,7 +776,7 @@ fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly()
     };
     assert_eq!(analytic_point, Point2::new(q(227, 600), q(31, 100)));
     assert_eq!(
-        exact.curve().point_at(&midpoint, &policy()).unwrap(),
+        crate::support::under_value(&policy(), || exact.curve().point_at(&midpoint)).unwrap(),
         analytic_point
     );
 
@@ -785,7 +789,7 @@ fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly()
     assert_eq!(analytic_derivative.dx(), &q(327, 500));
     assert_eq!(analytic_derivative.dy(), &q(109, 125));
     assert_eq!(
-        exact.curve().derivative_at(&midpoint, &policy()).unwrap(),
+        crate::support::under_value(&policy(), || exact.curve().derivative_at(&midpoint)).unwrap(),
         analytic_derivative
     );
 }
@@ -823,7 +827,8 @@ fn exact_ph_materialization_retains_natural_degree_with_mixed_weights() {
                 }
             };
             assert_eq!(
-                exact.curve().point_at(&parameter, &policy).unwrap(),
+                crate::support::under_value(&policy, || exact.curve().point_at(&parameter))
+                    .unwrap(),
                 analytic
             );
         }
@@ -863,11 +868,11 @@ fn symmetric_algebraic_quarter_circle_parallel_is_exact_under_both_policies() {
             &[r(1), (r(2).sqrt().unwrap() / r(2)).unwrap(), r(1)]
         );
         assert_eq!(
-            exact.curve().point_at(&r(0), &policy).unwrap(),
+            crate::support::under_value(&policy, || exact.curve().point_at(&r(0))).unwrap(),
             Point2::new(q(1, 2), r(0))
         );
         assert_eq!(
-            exact.curve().point_at(&r(1), &policy).unwrap(),
+            crate::support::under_value(&policy, || exact.curve().point_at(&r(1))).unwrap(),
             Point2::new(r(0), q(1, 2))
         );
     }
@@ -1118,9 +1123,10 @@ fn exact_parallel_promotes_ph_cubic_without_fitting() {
 #[test]
 fn blend2d_quadratic_candidate_matches_exact_parallel_endpoints() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 2), p(3, 1));
-    let candidate = match source
-        .blend2d_offset_left_candidate(r(2), &policy())
-        .unwrap()
+    let candidate = match crate::support::under_classified_result(&policy(), || {
+        source.blend2d_offset_left_candidate(r(2))
+    })
+    .unwrap()
     {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("candidate was uncertain: {reason:?}"),
@@ -1144,9 +1150,10 @@ fn blend2d_quadratic_candidate_matches_exact_parallel_endpoints() {
 #[test]
 fn blend2d_straight_quadratic_candidate_has_zero_radial_error() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
-    let candidate = match source
-        .blend2d_offset_left_candidate(r(3), &policy())
-        .unwrap()
+    let candidate = match crate::support::under_classified_result(&policy(), || {
+        source.blend2d_offset_left_candidate(r(3))
+    })
+    .unwrap()
     {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("line candidate was uncertain: {reason:?}"),
@@ -1161,9 +1168,9 @@ fn blend2d_straight_quadratic_candidate_has_zero_radial_error() {
 fn blend2d_candidate_rejects_opposed_endpoint_tangents() {
     let source = QuadraticBezier2::new(p(-1, 0), p(0, 0), p(-1, 0));
     assert!(matches!(
-        source
-            .blend2d_offset_left_candidate(r(1), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || source
+            .blend2d_offset_left_candidate(r(1)))
+        .unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
     ));
 }
@@ -1194,9 +1201,10 @@ fn blend2d_cubic_reduction_has_exact_join_and_bound() {
 fn verifier_certifies_exact_straight_parallel_without_subdivision() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
     let parallel = source.parallel_left(r(3)).unwrap();
-    let candidate = match source
-        .blend2d_offset_left_candidate(r(3), &policy())
-        .unwrap()
+    let candidate = match crate::support::under_classified_result(&policy(), || {
+        source.blend2d_offset_left_candidate(r(3))
+    })
+    .unwrap()
     {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("line candidate was uncertain: {reason:?}"),
@@ -1219,9 +1227,10 @@ fn verifier_certifies_exact_straight_parallel_without_subdivision() {
 fn verifier_certifies_curved_blend2d_candidate_by_exact_subdivision() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
     let parallel = source.parallel_left(q(1, 4)).unwrap();
-    let candidate = match source
-        .blend2d_offset_left_candidate(q(1, 4), &policy())
-        .unwrap()
+    let candidate = match crate::support::under_classified_result(&policy(), || {
+        source.blend2d_offset_left_candidate(q(1, 4))
+    })
+    .unwrap()
     {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("curved candidate was uncertain: {reason:?}"),
@@ -1280,9 +1289,10 @@ fn verifier_refuses_source_with_undefined_normal() {
 fn adaptive_quadratic_construction_subdivides_until_certified() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
     let options = BezierParallelVerificationOptions::try_new(q(1, 100), 16, &policy()).unwrap();
-    let path = match source
-        .approximate_parallel_blend2d_certified(q(1, 4), &options, &policy())
-        .unwrap()
+    let path = match crate::support::under_classified_result(&policy(), || {
+        source.approximate_parallel_blend2d_certified(q(1, 4), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(path) => path,
         Classification::Uncertain(reason) => {
@@ -1310,9 +1320,10 @@ fn adaptive_quadratic_construction_subdivides_until_certified() {
 fn adaptive_cubic_construction_emits_connected_certified_curves() {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -1), p(4, 0));
     let options = BezierParallelVerificationOptions::try_new(q(1, 20), 14, &policy()).unwrap();
-    let path = match source
-        .approximate_parallel_blend2d_certified(q(1, 10), &options, &policy())
-        .unwrap()
+    let path = match crate::support::under_classified_result(&policy(), || {
+        source.approximate_parallel_blend2d_certified(q(1, 10), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(path) => path,
         Classification::Uncertain(reason) => {
@@ -1378,9 +1389,10 @@ fn levien_candidate_matches_parallel_endpoints_tangents_and_midpoint() {
             .unwrap(),
         Classification::Decided(_)
     ));
-    let fitted = match source
-        .approximate_parallel_blend2d_certified(q(1, 10), &options, &policy())
-        .unwrap()
+    let fitted = match crate::support::under_classified_result(&policy(), || {
+        source.approximate_parallel_blend2d_certified(q(1, 10), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(fitted) => fitted,
         Classification::Uncertain(reason) => panic!("adaptive Levien fit failed: {reason:?}"),
@@ -1737,8 +1749,8 @@ proptest! {
             Point2::new(&tx + &run, &ty + rise),
             Point2::new(&tx + &run * r(2), ty),
         );
-        let candidate = match source
-            .blend2d_offset_left_candidate(distance.clone(), &policy())
+        let candidate = match crate::support::under_classified_result(&policy(), || source
+            .blend2d_offset_left_candidate(distance.clone()))
             .unwrap()
         {
             Classification::Decided(candidate) => candidate,

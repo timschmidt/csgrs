@@ -1078,7 +1078,7 @@ fn native_line_intersection(
         return Ok(None);
     };
     first_line
-        .intersect_line(second_line, policy)
+        .intersect_line_with_policy(second_line, policy)
         .map(Some)
         .map_err(|cause| {
             ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
@@ -1122,7 +1122,7 @@ fn native_line_arc_intersection(
     if let Some(relation) = retained_tangent_line_arc_contact(arc_curve, line, &arc) {
         return Ok(Some((order, arc, relation)));
     }
-    line.intersect_arc(&arc, policy)
+    line.intersect_arc_with_policy(&arc, policy)
         .map(|relation| Some((order, arc, relation)))
         .map_err(|cause| {
             ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
@@ -1464,7 +1464,7 @@ fn native_arc_intersection(
     {
         Some(relation) => relation,
         None => first_arc
-            .circle_relation(&second_arc, policy)
+            .circle_relation_with_policy(&second_arc, policy)
             .map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
             })?,
@@ -1496,8 +1496,8 @@ fn native_arc_intersection(
     let mut points = Vec::with_capacity(candidates.len());
     for point in candidates {
         match (
-            first_arc.contains_sweep_point(&point, policy),
-            second_arc.contains_sweep_point(&point, policy),
+            first_arc.contains_sweep_point_with_policy(&point, policy),
+            second_arc.contains_sweep_point_with_policy(&point, policy),
         ) {
             (Classification::Decided(true), Classification::Decided(true)) => points.push(point),
             (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {}
@@ -1671,7 +1671,7 @@ fn build_native_coincident_arc_evidence(
                 )
             };
             let relation = first_span
-                .intersect_arc(&second_span, policy)
+                .intersect_arc_with_policy(&second_span, policy)
                 .map_err(|cause| native_arc_parameter_error(first, cause))?;
             match relation {
                 ArcArcIntersection::None => {}
@@ -1945,7 +1945,7 @@ fn arc_span_indices_for_point(
             arc.is_clockwise(),
             None,
         );
-        match span.contains_sweep_point(point, policy) {
+        match span.contains_sweep_point_with_policy(point, policy) {
             Classification::Decided(true) => indices.push(span_index),
             Classification::Decided(false) => {}
             Classification::Uncertain(reason) => {
@@ -3376,11 +3376,11 @@ mod native_dispatch_tests {
         let second =
             CircularArc2::try_from_center(point(3, 0), point(3, 0), point(1, 0), false).unwrap();
         let first = first
-            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .rational_bezier_decomposition_with_policy(&CurveContext::STRICT)
             .unwrap()
             .into_value();
         let second = second
-            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .rational_bezier_decomposition_with_policy(&CurveContext::STRICT)
             .unwrap()
             .into_value();
         let mut cache = CurveIntersectionBatchCache::default();
@@ -3618,7 +3618,7 @@ mod point_component_dispatch_tests {
     fn native_point_components_preserve_homogeneous_pole_domains() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = exact(
-                RationalBezier2::from_homogeneous_controls(
+                RationalBezier2::from_homogeneous_controls_with_policy(
                     [-1, 0, 1]
                         .into_iter()
                         .map(|weight| {

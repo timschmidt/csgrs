@@ -1143,7 +1143,7 @@ fn extract_refined_rational_spans(
             }
         }
         let start = knot_index - refined.degree;
-        let curve = match RationalBezier2::from_homogeneous_controls(
+        let curve = match RationalBezier2::from_homogeneous_controls_with_policy(
             refined.controls[start..=knot_index].to_vec(),
             policy,
         )? {

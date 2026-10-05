@@ -182,7 +182,7 @@ fn exact_quadratic_split_materializes_native_subcurves() {
 fn exact_cubic_subcurve_matches_original_endpoints_at_range_bounds() {
     let curve = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
     let subcurve = curve
-        .subcurve_between_exact(&q(1, 4), &q(3, 4), &policy())
+        .subcurve_between_exact_with_policy(&q(1, 4), &q(3, 4), &policy())
         .unwrap();
 
     assert_eq!(subcurve.start(), &curve.point_at(q(1, 4)));
@@ -194,12 +194,12 @@ fn exact_rational_quadratic_split_preserves_conic_endpoint_evaluation() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), q(1, 2)).unwrap();
     let Classification::Decided(subcurve) = curve
-        .subcurve_between_exact(&r(0), &q(1, 2), &policy())
+        .subcurve_between_exact_with_policy(&r(0), &q(1, 2), &policy())
         .unwrap()
     else {
         panic!("finite conic cut must be decided");
     };
-    let expected_midpoint = match curve.point_at(q(1, 2), &policy()) {
+    let expected_midpoint = match curve.point_at_with_policy(q(1, 2), &policy()) {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => {
             panic!("conic midpoint unexpectedly uncertain: {reason:?}")
@@ -498,7 +498,7 @@ proptest! {
         let end = q(end_n, 16);
         let curve = QuadraticBezier2::new(p(-3, 1), p(5, 9), p(11, -7));
         let subcurve = curve
-            .subcurve_between_exact(&start, &end, &policy())
+            .subcurve_between_exact_with_policy(&start, &end, &policy())
             .map_err(|error| TestCaseError::fail(format!("split failed: {error:?}")))?;
 
         prop_assert_eq!(subcurve.start(), &curve.point_at(start));
