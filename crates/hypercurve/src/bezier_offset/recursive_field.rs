@@ -4469,7 +4469,7 @@ impl BezierRecursiveProjectiveParameter2 {
     /// value whose enclosure lies strictly inside that interval, the
     /// polynomial's sign then decides the order without promoting either
     /// value to a global algebraic parameter. `None` means the preconditions
-    /// or the strict sign are unavailable.
+    /// or a bounded sign are unavailable.
     fn order_by_simple_root_sign(
         &self,
         root: &BezierAlgebraicParameter2,
@@ -4493,8 +4493,11 @@ impl BezierRecursiveProjectiveParameter2 {
         {
             return Ok(None);
         }
-        let Classification::Decided(sign) = policy
-            .strict_predicate_pass(|| self.polynomial_sign(polynomial.coefficients(), policy))?
+        // This only competes with global promotion: a bounded pass keeps an
+        // expensive complete tower sign from replacing a cheaper promotion.
+        let Classification::Decided(sign) = policy.bounded_exact_predicate_pass(|| {
+            self.polynomial_sign(polynomial.coefficients(), policy)
+        })?
         else {
             return Ok(None);
         };
