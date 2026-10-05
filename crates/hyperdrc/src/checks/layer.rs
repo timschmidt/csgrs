@@ -4148,12 +4148,7 @@ fn exact_region_components(region: &PcbRegion) -> Option<Vec<ExactRegionComponen
 }
 
 fn exact_region_components_or_whole(region: &PcbRegion) -> Option<Vec<ExactRegionComponent>> {
-    if matches!(
-        region
-            .loop_role_counts(&hypercurve::CurveContext::STRICT)
-            .map(hypercurve::CurveOutcome::into_value),
-        Ok(hypercurve::Classification::Decided((1, 0)))
-    ) {
+    if matches!(region.loop_role_counts(), Ok((1, 0))) {
         return Some(vec![ExactRegionComponent {
             region: region.clone(),
             conservative_finite_bounds: conservative_exact_region_bounds(region)?,

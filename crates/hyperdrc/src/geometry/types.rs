@@ -9,7 +9,7 @@
 
 use std::sync::{Arc, OnceLock};
 
-use hypercurve::{Classification, Contour2, CurveContext, CurveRegion2};
+use hypercurve::{Contour2, CurveRegion2};
 use hyperlimit::{Sign, classify_real_sign};
 use hyperreal::Real;
 
@@ -265,20 +265,11 @@ impl Rect<f64> {
 }
 
 pub(crate) fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
-    match region.filled_area(&CurveContext::STRICT).ok()?.value {
-        Classification::Decided(Some(area)) => Some(area),
-        Classification::Decided(None) | Classification::Uncertain(_) => None,
-    }
+    region.filled_area().ok()?
 }
 
 fn exact_region_bounds(region: &CurveRegion2) -> Option<[Real; 4]> {
-    if region.is_empty() {
-        return None;
-    }
-    let bounds = match region.bounds(&CurveContext::STRICT).ok()?.value {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(_) => return None,
-    };
+    let bounds = region.bounds().ok()??;
     Some([
         bounds.min_x().clone(),
         bounds.min_y().clone(),
@@ -335,8 +326,7 @@ fn region_from_rings(
         .iter()
         .map(|ring| ring_to_contour(ring, true))
         .collect::<Result<Vec<_>, _>>()?;
-    CurveRegion2::try_from_native_contours(vec![material], holes, &CurveContext::STRICT)
-        .map(hypercurve::CurveOutcome::into_value)
+    CurveRegion2::try_from_native_contours(vec![material], holes)
         .map_err(|error| format!("exact polygon region construction failed: {error}"))
 }
 
@@ -407,8 +397,6 @@ pub(crate) fn transform_exact_region(
             &cosine,
             &translate_x,
             &translate_y,
-            &CurveContext::STRICT,
         )
-        .map(hypercurve::CurveOutcome::into_value)
         .map_err(|error| format!("exact affine region transformation failed: {error}"))
 }

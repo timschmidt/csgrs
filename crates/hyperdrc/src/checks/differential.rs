@@ -796,13 +796,9 @@ fn ordered_pair_names(left: &str, right: &str) -> (String, String) {
 }
 
 fn estimated_segment_length(feature: &CopperFeature) -> Scalar {
-    let region = match feature
-        .region
-        .native_contours_fast_path(&hypercurve::CurveContext::STRICT)
-        .map(hypercurve::CurveOutcome::into_value)
-    {
-        Ok(hypercurve::Classification::Decided(region)) => region,
-        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => {
+    let region = match feature.region.native_contours_fast_path() {
+        Ok(Some(region)) => region,
+        Ok(None) | Err(_) => {
             return maximum_bounding_dimension(&feature.region);
         }
     };
