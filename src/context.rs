@@ -2,7 +2,6 @@
 
 use std::cell::Cell;
 
-use hypercurve::CurveContext;
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use hypermesh::{MeshCertainty, MeshContext, MeshOutcome};
 use hypertri::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
@@ -31,15 +30,6 @@ impl GeometryContext {
     /// Return the selected predicate policy.
     pub const fn predicate_policy(self) -> PredicatePolicy {
         self.predicates
-    }
-
-    /// Derive the matching Hypercurve policy.
-    pub fn curve_policy(self) -> CurveContext {
-        if self.predicates == PredicatePolicy::APPROXIMATE_512 {
-            CurveContext::APPROXIMATE_512
-        } else {
-            CurveContext::STRICT
-        }
     }
 
     /// Derive the matching Hypermesh context.
@@ -101,24 +91,18 @@ impl<T> GeometryOutcome<T> {
 #[allow(dead_code)]
 pub(crate) struct GeometryDecisions {
     context: GeometryContext,
-    curve_policy: CurveContext,
     mesh_context: MeshContext,
     certainty: Cell<GeometryCertainty>,
 }
 
 #[allow(dead_code)]
 impl GeometryDecisions {
-    pub(crate) fn new(context: &GeometryContext) -> Self {
+    pub(crate) const fn new(context: &GeometryContext) -> Self {
         Self {
             context: *context,
-            curve_policy: context.curve_policy(),
             mesh_context: context.mesh_context(),
             certainty: Cell::new(GeometryCertainty::Certified),
         }
-    }
-
-    pub(crate) const fn curve_policy(&self) -> &CurveContext {
-        &self.curve_policy
     }
 
     pub(crate) const fn predicate_policy(&self) -> PredicatePolicy {
@@ -143,15 +127,11 @@ impl GeometryDecisions {
         }
     }
 
-    /// Runs principal exact Hypercurve operations under this context's curve
-    /// policy: directly under STRICT, and otherwise inside
-    /// [`hypercurve::provisional`], recording any approximate terminal they
-    /// consumed.
+    /// Runs principal exact Hypercurve operations under this context's
+    /// predicate policy through [`hypercurve::evaluate_under`], recording any
+    /// approximate terminal they consumed.
     pub(crate) fn exact_curve<T>(&self, operation: impl FnOnce() -> T) -> T {
-        if self.curve_policy == CurveContext::STRICT {
-            return operation();
-        }
-        let provisional = hypercurve::provisional(operation);
+        let provisional = hypercurve::evaluate_under(self.predicate_policy(), operation);
         if !provisional.is_certified() {
             self.observe(GeometryCertainty::Approximate512Consumed);
         }
@@ -244,11 +224,6 @@ mod tests {
 
     #[test]
     fn one_context_derives_matching_kernel_policies() {
-        assert_eq!(GeometryContext::STRICT.curve_policy(), CurveContext::STRICT);
-        assert_eq!(
-            GeometryContext::APPROXIMATE_512.curve_policy(),
-            CurveContext::APPROXIMATE_512
-        );
         assert_eq!(
             GeometryContext::STRICT.mesh_context().predicate_policy(),
             PredicatePolicy::STRICT
