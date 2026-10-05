@@ -3455,15 +3455,10 @@ fn curve_location_is(
     expected: &hypercurve::CurveParameter2,
 ) -> Result<bool, ConstructionError> {
     let parameter = resolve_planar_classification(
-        location
-            .parameter(&CurveContext::STRICT)
-            .map_err(GeometryError::from)?,
+        crate::error::classified(location.parameter()).map_err(GeometryError::from)?,
     )?;
     Ok(resolve_planar_classification(
-        parameter
-            .compare(expected, &CurveContext::STRICT)
-            .map_err(GeometryError::from)?
-            .into_value(),
+        crate::error::classified(parameter.compare(expected)).map_err(GeometryError::from)?,
     )?
     .is_eq())
 }
@@ -3472,12 +3467,12 @@ fn required_curve_path_signed_area(
     path: &CurvePath2,
     unsupported: ConstructionError,
 ) -> Result<Real, ConstructionError> {
-    match path
-        .boundary_loop()
-        .map_err(GeometryError::from)?
-        .signed_area(&CurveContext::STRICT)
-        .map_err(GeometryError::from)?
-        .into_value()
+    match crate::error::classified(
+        path.boundary_loop()
+            .map_err(GeometryError::from)?
+            .signed_area(),
+    )
+    .map_err(GeometryError::from)?
     {
         Classification::Decided(Some(area)) => Ok(area),
         Classification::Decided(None) => Err(unsupported),
@@ -3835,7 +3830,6 @@ fn validate_simple_curve_path(
     profile: &CurvePath2,
     unsupported: ConstructionError,
 ) -> Result<(), ConstructionError> {
-    let policy = CurveContext::STRICT;
     let fragments = profile
         .native_bezier_fragments()
         .map_err(GeometryError::from)?;
@@ -3844,7 +3838,7 @@ fn validate_simple_curve_path(
     }
     for fragment in fragments {
         if !fragment
-            .has_certified_injective_axis(&policy)
+            .has_certified_injective_axis()
             .map_err(GeometryError::from)?
         {
             return Err(unsupported.clone());

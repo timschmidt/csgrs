@@ -1473,13 +1473,14 @@ impl CertifiedRevolutionBoundary {
     fn signed_x_first_moment(&self) -> Result<Option<Real>, GeometryError> {
         match self {
             Self::Native(contour) => contour.signed_x_first_moment().map_err(GeometryError::from),
-            Self::Curved(path) => path
-                .boundary_loop()
-                .map_err(GeometryError::from)?
-                .area_moments(&CurveContext::STRICT)
-                .map_err(GeometryError::from)
-                .and_then(|outcome| resolve_planar_classification(outcome.into_value()))
-                .map(|moments| moments.map(|moments| moments.x_moment().clone())),
+            Self::Curved(path) => crate::error::classified(
+                path.boundary_loop()
+                    .map_err(GeometryError::from)?
+                    .area_moments(),
+            )
+            .map_err(GeometryError::from)
+            .and_then(resolve_planar_classification)
+            .map(|moments| moments.map(|moments| moments.x_moment().clone())),
         }
     }
 
@@ -2686,12 +2687,13 @@ impl Model {
         let materialized_loop = pcurve.materialize()?;
         let loop_path = CurvePath2::try_new(vec![materialized_loop.curve().clone()])
             .map_err(GeometryError::from)?;
-        let loop_area = loop_path
-            .boundary_loop()
-            .map_err(GeometryError::from)?
-            .signed_area(&CurveContext::STRICT)
-            .map_err(GeometryError::from)?
-            .into_value();
+        let loop_area = crate::error::classified(
+            loop_path
+                .boundary_loop()
+                .map_err(GeometryError::from)?
+                .signed_area(),
+        )
+        .map_err(GeometryError::from)?;
         let loop_area = resolve_planar_classification(loop_area)?
             .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let area_order = decided_model_order(compare_reals(
@@ -3024,15 +3026,11 @@ impl Model {
                 }
                 for contact in relation.contacts() {
                     let first_parameter = resolve_planar_classification(
-                        contact
-                            .first()
-                            .parameter(&CurveContext::STRICT)
+                        crate::error::classified(contact.first().parameter())
                             .map_err(GeometryError::from)?,
                     )?;
                     let second_parameter = resolve_planar_classification(
-                        contact
-                            .second()
-                            .parameter(&CurveContext::STRICT)
+                        crate::error::classified(contact.second().parameter())
                             .map_err(GeometryError::from)?,
                     )?;
                     let first_parameter = first_parameter
@@ -5653,13 +5651,13 @@ impl Model {
         match self.signed_wire_double_area(wire) {
             Ok(area) => Ok(area),
             Err(GeometryError::UnsupportedPcurveContour) => {
-                let area = self
-                    .build_model_wire_curve_path(wire)?
-                    .boundary_loop()
-                    .map_err(GeometryError::from)?
-                    .signed_area(&CurveContext::STRICT)
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                let area = crate::error::classified(
+                    self.build_model_wire_curve_path(wire)?
+                        .boundary_loop()
+                        .map_err(GeometryError::from)?
+                        .signed_area(),
+                )
+                .map_err(GeometryError::from)?;
                 let area = resolve_planar_classification(area)?
                     .ok_or(GeometryError::UnsupportedMeasurement)?;
                 Ok(Real::from(2) * area)
@@ -10466,12 +10464,12 @@ impl ModelBuilder {
             ))?,
             Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
                 let path = self.build_wire_curve_path(wire)?;
-                let area = path
-                    .boundary_loop()
-                    .map_err(GeometryError::from)?
-                    .signed_area(&CurveContext::STRICT)
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                let area = crate::error::classified(
+                    path.boundary_loop()
+                        .map_err(GeometryError::from)?
+                        .signed_area(),
+                )
+                .map_err(GeometryError::from)?;
                 let area = resolve_planar_classification(area)?;
                 match area {
                     Some(area) => decided_model_order(compare_reals(
@@ -10890,14 +10888,13 @@ impl ModelBuilder {
             return Ok(None);
         }
 
-        let policy = CurveContext::STRICT;
         for curve in path.curves() {
             let fragments = curve
                 .native_bezier_fragments()
                 .map_err(GeometryError::from)?;
             if fragments.len() != 1
                 || !fragments[0]
-                    .has_certified_injective_axis(&policy)
+                    .has_certified_injective_axis()
                     .map_err(GeometryError::from)?
             {
                 return Ok(None);
@@ -11355,7 +11352,6 @@ impl ModelBuilder {
     fn validate_curve_path_simplicity(&self, wire: WireId) -> Result<(), BuildError> {
         let path = self.build_wire_curve_path(wire)?;
         let curves = path.curves();
-        let policy = CurveContext::STRICT;
         if curves.len() == 2 {
             let relation = curves[0]
                 .intersect_curve(&curves[1])
@@ -11379,32 +11375,24 @@ impl ModelBuilder {
             let mut matched = [false; 2];
             for contact in relation.contacts() {
                 let first_parameter = resolve_planar_classification(
-                    contact
-                        .first()
-                        .parameter(&CurveContext::STRICT)
+                    crate::error::classified(contact.first().parameter())
                         .map_err(GeometryError::from)?,
                 )?;
                 let second_parameter = resolve_planar_classification(
-                    contact
-                        .second()
-                        .parameter(&CurveContext::STRICT)
+                    crate::error::classified(contact.second().parameter())
                         .map_err(GeometryError::from)?,
                 )?;
                 let mut found = None;
                 for (index, (expected_first, expected_second)) in expected.iter().enumerate() {
                     if !matched[index]
                         && resolve_planar_classification(
-                            first_parameter
-                                .compare(expected_first, &policy)
-                                .map_err(GeometryError::from)?
-                                .into_value(),
+                            crate::error::classified(first_parameter.compare(expected_first))
+                                .map_err(GeometryError::from)?,
                         )?
                         .is_eq()
                         && resolve_planar_classification(
-                            second_parameter
-                                .compare(expected_second, &policy)
-                                .map_err(GeometryError::from)?
-                                .into_value(),
+                            crate::error::classified(second_parameter.compare(expected_second))
+                                .map_err(GeometryError::from)?,
                         )?
                         .is_eq()
                     {
@@ -11458,29 +11446,21 @@ impl ModelBuilder {
                 }
                 let contact = &relation.contacts()[0];
                 let first_parameter = resolve_planar_classification(
-                    contact
-                        .first()
-                        .parameter(&CurveContext::STRICT)
+                    crate::error::classified(contact.first().parameter())
                         .map_err(GeometryError::from)?,
                 )?;
                 let second_parameter = resolve_planar_classification(
-                    contact
-                        .second()
-                        .parameter(&CurveContext::STRICT)
+                    crate::error::classified(contact.second().parameter())
                         .map_err(GeometryError::from)?,
                 )?;
                 if !resolve_planar_classification(
-                    first_parameter
-                        .compare(expected_first, &policy)
-                        .map_err(GeometryError::from)?
-                        .into_value(),
+                    crate::error::classified(first_parameter.compare(expected_first))
+                        .map_err(GeometryError::from)?,
                 )?
                 .is_eq()
                     || !resolve_planar_classification(
-                        second_parameter
-                            .compare(expected_second, &policy)
-                            .map_err(GeometryError::from)?
-                            .into_value(),
+                        crate::error::classified(second_parameter.compare(expected_second))
+                            .map_err(GeometryError::from)?,
                     )?
                     .is_eq()
                 {
@@ -17169,12 +17149,12 @@ impl ModelBuilder {
             CertifiedRevolutionBoundary::Native(contour)
         } else {
             let path = CurvePath2::try_new(ordered).map_err(GeometryError::from)?;
-            let area = path
-                .boundary_loop()
-                .map_err(GeometryError::from)?
-                .signed_area(&CurveContext::STRICT)
-                .map_err(GeometryError::from)?
-                .into_value();
+            let area = crate::error::classified(
+                path.boundary_loop()
+                    .map_err(GeometryError::from)?
+                    .signed_area(),
+            )
+            .map_err(GeometryError::from)?;
             let area = resolve_planar_classification(area)?
                 .ok_or(BuildError::DegenerateShellVolume(shell))?;
             if decided_model_order(compare_reals(
@@ -20509,10 +20489,7 @@ fn update_max(current: &mut Real, candidate: &Real) -> Result<(), GeometryError>
 }
 
 fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, GeometryError> {
-    let area = path
-        .boundary_loop()?
-        .signed_area(&CurveContext::STRICT)?
-        .into_value();
+    let area = crate::error::classified(path.boundary_loop()?.signed_area())?;
     resolve_planar_classification(area)?.ok_or(GeometryError::UnsupportedMeasurement)
 }
 

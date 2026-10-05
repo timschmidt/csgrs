@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
-    CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveFamily2, CurveGeometry2,
+    CircularArc2, Classification, Contour2, Curve2, CurveFamily2, CurveGeometry2,
     CurvePointLocations2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
@@ -6531,9 +6531,9 @@ fn intersect_coaxial_revolutions(
     let mut locations = Vec::<(Real, Real)>::with_capacity(intersections.contacts().len());
     for contact in intersections.contacts() {
         let first_parameter =
-            resolve_planar_classification(contact.first().parameter(&CurveContext::STRICT)?)?;
+            resolve_planar_classification(crate::error::classified(contact.first().parameter())?)?;
         let second_parameter =
-            resolve_planar_classification(contact.second().parameter(&CurveContext::STRICT)?)?;
+            resolve_planar_classification(crate::error::classified(contact.second().parameter())?)?;
         // Spatial isoparametric pcurves currently require scalar parameters.
         let first_parameter = first_parameter
             .scalar()
@@ -12296,12 +12296,7 @@ mod tests {
         let loop_path =
             hypercurve::CurvePath2::try_new(vec![materialized.curve().clone()]).unwrap();
         assert!(matches!(
-            loop_path
-                .boundary_loop()
-                .unwrap()
-                .signed_area(&CurveContext::STRICT)
-                .unwrap()
-                .into_value(),
+            crate::error::classified(loop_path.boundary_loop().unwrap().signed_area()).unwrap(),
             Classification::Decided(Some(_))
         ));
         let original_area = model.face_area(face).unwrap();
