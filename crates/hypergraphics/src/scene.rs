@@ -1,8 +1,8 @@
 //! Exact scene construction helpers.
 
 use hypercurve::{
-    BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedCurvePolyline2, Classification,
-    Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedCurvePolyline2, Curve2,
+    CurveCertainty, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
 };
 use hyperlattice::{Point3, Real};
 use hypermesh::TriangleMesh;
@@ -158,12 +158,7 @@ pub fn curve_line_mesh(
     z: Real,
     color: Color3,
 ) -> Result<CertifiedCurveLineMesh> {
-    let polyline = match curve.segment_certified(options, policy)? {
-        Classification::Decided(polyline) => polyline,
-        Classification::Uncertain(reason) => {
-            return Err(Error::CurveSegmentationUncertain { reason });
-        }
-    };
+    let polyline = segmentation(policy, || curve.segment_certified(options))?;
     certified_curve_polyline_mesh(polyline, z, color)
 }
 
@@ -175,13 +170,30 @@ pub fn curve_path_line_mesh(
     z: Real,
     color: Color3,
 ) -> Result<CertifiedCurveLineMesh> {
-    let polyline = match path.segment_certified(options, policy)? {
-        Classification::Decided(polyline) => polyline,
-        Classification::Uncertain(reason) => {
-            return Err(Error::CurveSegmentationUncertain { reason });
-        }
-    };
+    let polyline = segmentation(policy, || path.segment_certified(options))?;
     certified_curve_polyline_mesh(polyline, z, color)
+}
+
+/// Runs an exact segmentation under `policy`, reporting an undecided
+/// predicate as [`Error::CurveSegmentationUncertain`].
+fn segmentation(
+    policy: &CurveContext,
+    segment: impl FnOnce() -> hypercurve::ExactCurveResult<CertifiedCurvePolyline2>,
+) -> Result<CertifiedCurvePolyline2> {
+    let result = if *policy == CurveContext::STRICT {
+        segment()
+    } else {
+        hypercurve::provisional(segment).into_unverified()
+    };
+    match result {
+        Ok(polyline) => Ok(polyline),
+        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
+            Err(Error::CurveSegmentationUncertain {
+                reason: blocker.reason(),
+            })
+        }
+        Err(error) => Err(error.into()),
+    }
 }
 
 /// Runs one exact region query under `policy`: directly under STRICT, and
@@ -231,12 +243,7 @@ pub fn curve_region_line_mesh(
             CurveRegionLoopRole::Material => material_color,
             CurveRegionLoopRole::Hole => hole_color,
         };
-        let polyline = match path.segment_certified(options, policy)? {
-            Classification::Decided(polyline) => polyline,
-            Classification::Uncertain(reason) => {
-                return Err(Error::CurveSegmentationUncertain { reason });
-            }
-        };
+        let polyline = segmentation(policy, || path.segment_certified(options))?;
         let certified = certified_curve_polyline_mesh(polyline, z.clone(), color)?;
         let first_vertex = mesh.vertex_count();
         let vertex_count = certified.mesh.vertex_count();
