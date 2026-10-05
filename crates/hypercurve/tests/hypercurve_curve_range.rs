@@ -44,11 +44,12 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
     let expected: CurvePoint2 = Point2::new(q(1, 2).sqrt().unwrap(), q(1, 2)).into();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let whole = certified(
-            Curve2::try_from_bezier_range(
-                source.clone(),
-                range(Real::from(2).into(), Real::from(3).into(), &policy),
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                Curve2::try_from_bezier_range(
+                    source.clone(),
+                    range(Real::from(2).into(), Real::from(3).into(), &policy),
+                )
+            })
             .unwrap(),
         );
         let horizontal = Curve2::from(
@@ -58,7 +59,9 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
             )
             .unwrap(),
         );
-        let intersections = certified(whole.intersect_curve(&horizontal, &policy).unwrap());
+        let intersections = certified(
+            crate::support::under(&policy, || whole.intersect_curve(&horizontal)).unwrap(),
+        );
         assert!(
             intersections.is_complete(),
             "{:?}",
@@ -85,17 +88,20 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
                 (Real::from(2).into(), selected.clone())
             };
             let mut curve = certified(
-                Curve2::try_from_bezier_range(
-                    source.clone(),
-                    range(endpoints.0, endpoints.1, &policy),
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    Curve2::try_from_bezier_range(
+                        source.clone(),
+                        range(endpoints.0, endpoints.1, &policy),
+                    )
+                })
                 .unwrap(),
             );
             for cut in 1..=16 {
                 assert_eq!(curve.parameter_domain().end(), &selected);
                 same(
-                    &certified(curve.point_at(&selected, &policy).unwrap()),
+                    &certified(
+                        crate::support::under(&policy, || curve.point_at(&selected)).unwrap(),
+                    ),
                     &expected,
                     &policy,
                 );
@@ -106,9 +112,10 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
                 );
                 let lower = Real::from(2) + q(cut, 32);
                 curve = certified(
-                    curve
-                        .subcurve(lower.clone().into(), selected.clone(), &policy)
-                        .unwrap(),
+                    crate::support::under(&policy, || {
+                        curve.subcurve(lower.clone().into(), selected.clone())
+                    })
+                    .unwrap(),
                 );
                 let offset = &lower - Real::from(2);
                 let lower_point: CurvePoint2 =
@@ -119,7 +126,7 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
                     &policy,
                 );
             }
-            let reversed = certified(curve.reversed(&policy).unwrap());
+            let reversed = certified(crate::support::under(&policy, || curve.reversed()).unwrap());
             assert_eq!(reversed.parameter_domain(), curve.parameter_domain());
             same(&reversed.start(), &curve.end(), &policy);
             same(&reversed.end(), &curve.start(), &policy);
@@ -148,11 +155,12 @@ fn rational_range_admission_checks_only_the_retained_interval() {
                     (start.clone(), end.clone())
                 };
                 let curve = certified(
-                    Curve2::try_from_bezier_range(
-                        CurveGeometry2::RationalBezier(source.clone()),
-                        range(endpoints.0.into(), endpoints.1.into(), &policy),
-                        &policy,
-                    )
+                    crate::support::under(&policy, || {
+                        Curve2::try_from_bezier_range(
+                            CurveGeometry2::RationalBezier(source.clone()),
+                            range(endpoints.0.into(), endpoints.1.into(), &policy),
+                        )
+                    })
                     .unwrap(),
                 );
                 assert_eq!(
@@ -166,7 +174,9 @@ fn rational_range_admission_checks_only_the_retained_interval() {
                         (-Real::from(2) * &t * (Real::one() - &t) / &weight).unwrap(),
                     );
                     same(
-                        &certified(curve.point_at(&t.into(), &policy).unwrap()),
+                        &certified(
+                            crate::support::under(&policy, || curve.point_at(&t.into())).unwrap(),
+                        ),
                         &expected.into(),
                         &policy,
                     );
@@ -175,11 +185,12 @@ fn rational_range_admission_checks_only_the_retained_interval() {
         }
         // A finite endpoint pair is insufficient when the interval crosses a pole.
         for (start, end) in [(0, 1), (1, 2), (2, 0)] {
-            let error = Curve2::try_from_bezier_range(
-                CurveGeometry2::RationalBezier(source.clone()),
-                range(Real::from(start).into(), Real::from(end).into(), &policy),
-                &policy,
-            )
+            let error = crate::support::under(&policy, || {
+                Curve2::try_from_bezier_range(
+                    CurveGeometry2::RationalBezier(source.clone()),
+                    range(Real::from(start).into(), Real::from(end).into(), &policy),
+                )
+            })
             .unwrap_err();
             assert_eq!(error.operation(), CurveOperation2::Construction);
             assert!(
@@ -208,22 +219,21 @@ fn bezier_range_construction_reuses_selected_fiber_parameters() {
         ])
         .unwrap();
         let CurveCornerSolutions2::Unique(path) = certified(
-            path.chamfer_vertex_by_setbacks(
-                1,
-                Real::one(),
-                Real::one(),
-                CurveCornerMode2::TrimOnly,
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                path.chamfer_vertex_by_setbacks(
+                    1,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
             .unwrap(),
         ) else {
             panic!("one selected chamfer")
         };
         let crossing = Curve2::from(source.clone());
         let intersections = certified(
-            path.curves()[1]
-                .intersect_curve(&crossing, &policy)
-                .unwrap(),
+            crate::support::under(&policy, || path.curves()[1].intersect_curve(&crossing)).unwrap(),
         );
         assert!(
             intersections.is_complete(),
@@ -246,16 +256,17 @@ fn bezier_range_construction_reuses_selected_fiber_parameters() {
                 (Real::zero().into(), selected.clone())
             };
             let curve = certified(
-                Curve2::try_from_bezier_range(
-                    source.clone(),
-                    range(endpoints.0, endpoints.1, &policy),
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    Curve2::try_from_bezier_range(
+                        source.clone(),
+                        range(endpoints.0, endpoints.1, &policy),
+                    )
+                })
                 .unwrap(),
             );
             assert_eq!(curve.parameter_domain().end(), &selected);
             same(
-                &certified(curve.point_at(&selected, &policy).unwrap()),
+                &certified(crate::support::under(&policy, || curve.point_at(&selected)).unwrap()),
                 &expected,
                 &policy,
             );
@@ -264,7 +275,9 @@ fn bezier_range_construction_reuses_selected_fiber_parameters() {
                 &expected,
                 &policy,
             );
-            let split = certified(curve.split_at(q(1, 4).into(), &policy).unwrap());
+            let split = certified(
+                crate::support::under(&policy, || curve.split_at(q(1, 4).into())).unwrap(),
+            );
             same(&split.0.end(), &split.1.start(), &policy);
             same(&split.0.start(), &curve.start(), &policy);
             same(&split.1.end(), &curve.end(), &policy);

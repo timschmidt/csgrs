@@ -168,6 +168,15 @@ impl Curve2 {
     pub fn try_from_bezier_range(
         source: CurveGeometry2,
         range: CurveParameterRange2,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_from_bezier_range_with_policy(source, range, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_from_bezier_range`] under an explicit predicate policy.
+    pub(crate) fn try_from_bezier_range_with_policy(
+        source: CurveGeometry2,
+        range: CurveParameterRange2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         let family = source.family();
@@ -397,7 +406,7 @@ impl Curve2 {
             && let (Some(BezierParameter2::Exact(start)), Some(BezierParameter2::Exact(end))) =
                 (start.as_bezier_parameter(), end.as_bezier_parameter())
         {
-            return self.subcurve_with_policy(start.clone(), end.clone(), policy);
+            return self.subcurve_raw(start.clone(), end.clone(), policy);
         }
         let Some(fragment) = self.retained_fragment() else {
             return self.restrict_authored_source(start, end, policy);
@@ -816,7 +825,7 @@ mod tests {
                     let parameter =
                         |unit: Real| domain.start() + (domain.end() - domain.start()) * unit;
                     let source = original
-                        .subcurve(
+                        .subcurve_with_policy(
                             parameter(q(1, 8)).into(),
                             parameter(q(7, 8)).into(),
                             &policy,
@@ -824,13 +833,13 @@ mod tests {
                         .unwrap()
                         .value;
                     let source = if reversed {
-                        source.reversed(&policy).unwrap().value
+                        source.reversed_with_policy(&policy).unwrap().value
                     } else {
                         source
                     };
                     let owner = Arc::downgrade(&source.data);
                     let source_lineage = source.data.lineage.as_ref().unwrap();
-                    let spans = source.native_bezier_fragments(&policy).unwrap();
+                    let spans = source.native_bezier_fragments_with_policy(&policy).unwrap();
                     assert_eq!(spans.certainty, CurveCertainty::Certified);
                     let prepared = source
                         .source_spans(&policy, CurveOperation2::Subdivision)
@@ -865,13 +874,19 @@ mod tests {
                                 source.lineage_parameter_at(&parameter).unwrap()
                             );
                             assert_same(
-                                &curve.point_at(&unit.into(), &policy).unwrap().value,
-                                &source.point_at(&parameter.into(), &policy).unwrap().value,
+                                &curve
+                                    .point_at_with_policy(&unit.into(), &policy)
+                                    .unwrap()
+                                    .value,
+                                &source
+                                    .point_at_with_policy(&parameter.into(), &policy)
+                                    .unwrap()
+                                    .value,
                                 &policy,
                             );
                         }
                         let middle = curve
-                            .subcurve(q(1, 4).into(), q(3, 4).into(), &policy)
+                            .subcurve_with_policy(q(1, 4).into(), q(3, 4).into(), &policy)
                             .unwrap()
                             .value;
                         assert!(Arc::ptr_eq(
@@ -879,8 +894,14 @@ mod tests {
                             &source_lineage.root
                         ));
                         assert_same(
-                            &middle.point_at(&q(1, 2).into(), &policy).unwrap().value,
-                            &curve.point_at(&q(1, 2).into(), &policy).unwrap().value,
+                            &middle
+                                .point_at_with_policy(&q(1, 2).into(), &policy)
+                                .unwrap()
+                                .value,
+                            &curve
+                                .point_at_with_policy(&q(1, 2).into(), &policy)
+                                .unwrap()
+                                .value,
                             &policy,
                         );
                         published.push(curve);
@@ -901,7 +922,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0)));
             let restricted = source
-                .subcurve(q(1, 8).into(), q(7, 8).into(), &policy)
+                .subcurve_with_policy(q(1, 8).into(), q(7, 8).into(), &policy)
                 .unwrap()
                 .value;
             let translation = Similarity2::try_from_real_affine(
@@ -914,12 +935,14 @@ mod tests {
             )
             .unwrap();
             let translated = restricted
-                .transform_similarity(&translation, &policy)
+                .transform_similarity_with_policy(&translation, &policy)
                 .unwrap()
                 .value;
             // Both are graphs over the same x interval, separated everywhere
             // by exactly 1/10. Their bounding boxes overlap.
-            let intersections = restricted.intersect_curve(&translated, &policy).unwrap();
+            let intersections = restricted
+                .intersect_curve_with_policy(&translated, &policy)
+                .unwrap();
             assert_eq!(intersections.certainty, CurveCertainty::Certified);
             assert!(intersections.value.blockers().is_empty());
             assert!(intersections.value.contacts().is_empty());
@@ -938,10 +961,10 @@ mod tests {
             )
             .unwrap();
             let composed = restricted
-                .transform_similarity(&half_translation, &policy)
+                .transform_similarity_with_policy(&half_translation, &policy)
                 .unwrap()
                 .value
-                .transform_similarity(&half_translation, &policy)
+                .transform_similarity_with_policy(&half_translation, &policy)
                 .unwrap()
                 .value;
             let rotation = Similarity2::try_from_real_affine(
@@ -954,26 +977,29 @@ mod tests {
             )
             .unwrap();
             let rotated = translated
-                .transform_similarity(&rotation, &policy)
+                .transform_similarity_with_policy(&rotation, &policy)
                 .unwrap()
                 .value;
             let direct = restricted
-                .transform_similarity(&translation.then(&rotation), &policy)
+                .transform_similarity_with_policy(&translation.then(&rotation), &policy)
                 .unwrap()
                 .value;
             for (first, second) in [(&translated, &composed), (&rotated, &direct)] {
                 assert!(first.shares_certified_parameter_lineage(second));
-                let span = first.native_bezier_fragments(&policy).unwrap().value[0]
+                let span = first
+                    .native_bezier_fragments_with_policy(&policy)
+                    .unwrap()
+                    .value[0]
                     .clone()
                     .into_curve();
                 assert!(span.shares_certified_parameter_lineage(second));
                 for reversed in [false, true] {
                     let other = if reversed {
-                        second.reversed(&policy).unwrap().value
+                        second.reversed_with_policy(&policy).unwrap().value
                     } else {
                         second.clone()
                     };
-                    let overlap = span.intersect_curve(&other, &policy).unwrap();
+                    let overlap = span.intersect_curve_with_policy(&other, &policy).unwrap();
                     assert_eq!(overlap.certainty, CurveCertainty::Certified);
                     assert!(overlap.value.blockers().is_empty());
                     assert_eq!(overlap.value.overlaps().len(), 1);
@@ -1057,7 +1083,7 @@ mod tests {
                     .unwrap()
                 });
                 let restricted = source
-                    .subcurve(start.clone(), end.clone(), &policy)
+                    .subcurve_with_policy(start.clone(), end.clone(), &policy)
                     .unwrap();
                 assert_eq!(restricted.certainty, CurveCertainty::Certified);
                 let restricted = restricted.value;
@@ -1068,20 +1094,25 @@ mod tests {
                     &restricted.source_range().unwrap().source.data,
                     &source.data
                 ));
-                let expected = source.point_at(&probe, &policy).unwrap().value;
+                let expected = source.point_at_with_policy(&probe, &policy).unwrap().value;
                 for reversed in [false, true] {
                     let restricted = if reversed {
-                        restricted.reversed(&policy).unwrap().value
+                        restricted.reversed_with_policy(&policy).unwrap().value
                     } else {
                         restricted.clone()
                     };
                     assert_same(
-                        &restricted.point_at(&probe, &policy).unwrap().value,
+                        &restricted
+                            .point_at_with_policy(&probe, &policy)
+                            .unwrap()
+                            .value,
                         &expected,
                         &policy,
                     );
-                    let (first, second) =
-                        restricted.split_at(probe.clone(), &policy).unwrap().value;
+                    let (first, second) = restricted
+                        .split_at_with_policy(probe.clone(), &policy)
+                        .unwrap()
+                        .value;
                     assert_same(&first.start(), &restricted.start(), &policy);
                     assert_same(&first.end(), &expected, &policy);
                     assert_same(&second.start(), &expected, &policy);
@@ -1094,7 +1125,7 @@ mod tests {
                         assert!(part.source_range().unwrap().source.source_range().is_none());
                     }
                     let repeated = restricted
-                        .subcurve(start.clone(), probe.clone(), &policy)
+                        .subcurve_with_policy(start.clone(), probe.clone(), &policy)
                         .unwrap()
                         .value;
                     assert!(
@@ -1133,8 +1164,14 @@ mod tests {
                         )
                         .unwrap();
                         let authored = &span.source_scale * &local + &span.source_offset;
-                        let actual = curve.point_at(&local.into(), &policy).unwrap().value;
-                        let expected = source.point_at(&authored.into(), &policy).unwrap().value;
+                        let actual = curve
+                            .point_at_with_policy(&local.into(), &policy)
+                            .unwrap()
+                            .value;
+                        let expected = source
+                            .point_at_with_policy(&authored.into(), &policy)
+                            .unwrap()
+                            .value;
                         assert_same(&actual, &expected, &policy);
                         if let BezierSplitFragment2::SelectedFiber(fragment) = &span.fragment {
                             let root = Curve2::from(fragment.rational_curve().unwrap().clone());
@@ -1149,7 +1186,7 @@ mod tests {
                                     .zip(points)
                             {
                                 assert_same(
-                                    &root.point_at(parameter, &policy).unwrap().value,
+                                    &root.point_at_with_policy(parameter, &policy).unwrap().value,
                                     point,
                                     &policy,
                                 );
@@ -1167,7 +1204,7 @@ mod tests {
                     )
                     .unwrap();
                     let transformed = restricted
-                        .transform_similarity(&transform, &policy)
+                        .transform_similarity_with_policy(&transform, &policy)
                         .unwrap()
                         .value;
                     assert_eq!(
@@ -1181,12 +1218,15 @@ mod tests {
                         &policy,
                     ));
                     assert_same(
-                        &transformed.point_at(&probe, &policy).unwrap().value,
+                        &transformed
+                            .point_at_with_policy(&probe, &policy)
+                            .unwrap()
+                            .value,
                         &expected,
                         &policy,
                     );
                     let translated = transformed
-                        .transform_similarity(
+                        .transform_similarity_with_policy(
                             &Similarity2::try_from_real_affine(
                                 Real::one(),
                                 Real::zero(),
@@ -1202,7 +1242,7 @@ mod tests {
                         .value;
                     assert_eq!(
                         translated
-                            .point_at(&probe, &policy)
+                            .point_at_with_policy(&probe, &policy)
                             .unwrap()
                             .value
                             .coincides_with(&expected, &policy)
@@ -1243,11 +1283,14 @@ mod tests {
                     }),
                 );
                 let restricted = source
-                    .subcurve(start.clone(), end.clone(), &policy)
+                    .subcurve_with_policy(start.clone(), end.clone(), &policy)
                     .unwrap()
                     .value;
-                let expected = source.point_at(&probe, &policy).unwrap().value;
-                let (first, second) = restricted.split_at(probe.clone(), &policy).unwrap().value;
+                let expected = source.point_at_with_policy(&probe, &policy).unwrap().value;
+                let (first, second) = restricted
+                    .split_at_with_policy(probe.clone(), &policy)
+                    .unwrap()
+                    .value;
                 assert_same(&first.end(), &expected, &policy);
                 assert_same(&second.start(), &expected, &policy);
                 for part in [first, second] {
@@ -1294,15 +1337,23 @@ mod tests {
             });
             for source in [Curve2::from(polynomial), Curve2::from(rational)] {
                 let restricted = source
-                    .subcurve(start.clone(), end.clone(), &policy)
+                    .subcurve_with_policy(start.clone(), end.clone(), &policy)
                     .unwrap()
                     .value;
                 let left = source
-                    .point_at_side(&Real::one().into(), CurveParameterSide2::Left, &policy)
+                    .point_at_side_with_policy(
+                        &Real::one().into(),
+                        CurveParameterSide2::Left,
+                        &policy,
+                    )
                     .unwrap()
                     .value;
                 let right = source
-                    .point_at_side(&Real::one().into(), CurveParameterSide2::Right, &policy)
+                    .point_at_side_with_policy(
+                        &Real::one().into(),
+                        CurveParameterSide2::Right,
+                        &policy,
+                    )
                     .unwrap()
                     .value;
                 assert_eq!(
@@ -1311,14 +1362,16 @@ mod tests {
                 );
                 for reversed in [false, true] {
                     let restricted = if reversed {
-                        restricted.reversed(&policy).unwrap().value
+                        restricted.reversed_with_policy(&policy).unwrap().value
                     } else {
                         restricted.clone()
                     };
-                    assert!(matches!(restricted.point_at(&Real::one().into(), &policy),
-                        Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Boundary));
+                    assert!(
+                        matches!(restricted.point_at_with_policy(&Real::one().into(), &policy),
+                        Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Boundary)
+                    );
                     let (first, second) = restricted
-                        .split_at(Real::one().into(), &policy)
+                        .split_at_with_policy(Real::one().into(), &policy)
                         .unwrap()
                         .value;
                     assert_same(&first.end(), if reversed { &right } else { &left }, &policy);
@@ -1356,7 +1409,7 @@ mod tests {
                     ])
                     .unwrap();
                     assert!(matches!(
-                        path.boundary_loop(&policy),
+                        path.boundary_loop_with_policy(&policy),
                         Err(ExactCurveError::Invalid {
                             cause: CurveError::DisconnectedCurvePath,
                             ..
@@ -1372,22 +1425,22 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let [start, _, end] = selected_parameters(&policy);
             let previous = Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap())
-                .subcurve(start, Real::one().into(), &policy)
+                .subcurve_with_policy(start, Real::one().into(), &policy)
                 .unwrap()
                 .value;
             let next = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)))
-                .subcurve(Real::zero().into(), end, &policy)
+                .subcurve_with_policy(Real::zero().into(), end, &policy)
                 .unwrap()
                 .value;
             let path = CurvePath2::try_new(vec![previous, next]).unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 let chamfer = path
-                    .chamfer_vertex_by_setbacks(
+                    .chamfer_vertex_by_setbacks_with_policy(
                         1,
                         Real::one(),
                         Real::one(),
@@ -1396,7 +1449,7 @@ mod tests {
                     )
                     .unwrap();
                 let fillet = path
-                    .fillet_vertex(
+                    .fillet_vertex_with_policy(
                         1,
                         &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
@@ -1417,7 +1470,7 @@ mod tests {
                         assert_same(&pair[0].end(), &pair[1].start(), &policy);
                     }
                     let again = edited
-                        .chamfer_vertex_by_setbacks(
+                        .chamfer_vertex_by_setbacks_with_policy(
                             1,
                             q(1, 64),
                             q(1, 64),
@@ -1458,7 +1511,7 @@ mod tests {
                 )
                 .unwrap(),
             )
-            .subcurve(Real::zero().into(), end, &policy)
+            .subcurve_with_policy(Real::zero().into(), end, &policy)
             .unwrap()
             .value;
             let path = CurvePath2::try_new(vec![
@@ -1468,14 +1521,14 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 for setback in [1, 2] {
                     let setbacks = if reversed { [setback, 1] } else { [1, setback] };
                     let outcome = path
-                        .chamfer_vertex_by_setbacks(
+                        .chamfer_vertex_by_setbacks_with_policy(
                             1,
                             Real::from(setbacks[0]),
                             Real::from(setbacks[1]),
@@ -1541,7 +1594,7 @@ mod tests {
             )
             .unwrap();
             let selected = source
-                .subcurve(Real::zero().into(), end, &policy)
+                .subcurve_with_policy(Real::zero().into(), end, &policy)
                 .unwrap()
                 .value;
             for reversed in [false, true] {
@@ -1552,12 +1605,12 @@ mod tests {
                     ])
                     .unwrap();
                     let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                        path.reversed_with_policy(&policy).unwrap().value
                     } else {
                         path
                     };
                     let outcome = path
-                        .chamfer_vertex_by_setbacks(
+                        .chamfer_vertex_by_setbacks_with_policy(
                             1,
                             Real::one(),
                             Real::one(),
@@ -1659,7 +1712,7 @@ mod tests {
             )
             .unwrap();
             let selected_source = source
-                .subcurve(Real::zero().into(), end, &policy)
+                .subcurve_with_policy(Real::zero().into(), end, &policy)
                 .unwrap()
                 .value;
             for selected in [false, true] {
@@ -1674,7 +1727,7 @@ mod tests {
                     ])
                     .unwrap();
                     let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                        path.reversed_with_policy(&policy).unwrap().value
                     } else {
                         path
                     };
@@ -1690,7 +1743,7 @@ mod tests {
                             [Real::one(), arc_setback]
                         };
                         let [first_setback, second_setback] = setbacks;
-                        let outcome = path.chamfer_vertex_by_setbacks(
+                        let outcome = path.chamfer_vertex_by_setbacks_with_policy(
                             1, first_setback, second_setback, CurveCornerMode2::TrimOrExtend, &policy,
                         ).unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, endpoint_contact={endpoint_contact}: {error:?}"));
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
@@ -1771,7 +1824,7 @@ mod tests {
                 .unwrap(),
             );
             let weight = q(1, 2).sqrt().unwrap();
-            let spline = Curve2::try_nurbs(
+            let spline = Curve2::try_nurbs_with_policy(
                 2,
                 vec![
                     p(1, 0),
@@ -1813,7 +1866,7 @@ mod tests {
                 )
                 .unwrap();
                 let selected_source = source
-                    .subcurve(Real::zero().into(), end, &policy)
+                    .subcurve_with_policy(Real::zero().into(), end, &policy)
                     .unwrap()
                     .value;
                 for selected in [false, true] {
@@ -1829,12 +1882,12 @@ mod tests {
                     .unwrap();
                     for reversed in [false, true] {
                         let path = if reversed {
-                            path.reversed(&policy).unwrap().value
+                            path.reversed_with_policy(&policy).unwrap().value
                         } else {
                             path.clone()
                         };
                         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                            let result = path.fillet_vertex(1, &crate::CurveFillet2::new(q(1, 4)), mode, &policy)
+                            let result = path.fillet_vertex_with_policy(1, &crate::CurveFillet2::new(q(1, 4)), mode, &policy)
                         .unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"));
                             assert_eq!(result.certainty, CurveCertainty::Certified);
                             let candidates = {
@@ -1937,7 +1990,7 @@ mod tests {
                 ],
             ]
             .map(|weights| {
-                Curve2::try_nurbs(
+                Curve2::try_nurbs_with_policy(
                     2,
                     vec![p(1, 0), p(1, 1), p(0, 1), p(-1, 1), p(-1, 0)],
                     weights,
@@ -1962,13 +2015,13 @@ mod tests {
                 .unwrap();
                 for reversed in [false, true] {
                     let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                        path.reversed_with_policy(&policy).unwrap().value
                     } else {
                         path.clone()
                     };
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let result = path
-                            .fillet_vertex(1, &crate::CurveFillet2::new(q(12, 25)), mode, &policy)
+                            .fillet_vertex_with_policy(1, &crate::CurveFillet2::new(q(12, 25)), mode, &policy)
                             .unwrap_or_else(|error| panic!("family={family:?}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"));
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         let candidates = {
@@ -2044,7 +2097,7 @@ mod tests {
             .unwrap();
             let circle = if selected {
                 circle
-                    .subcurve(domain.start().clone(), end, policy)
+                    .subcurve_with_policy(domain.start().clone(), end, policy)
                     .unwrap()
                     .value
             } else {
@@ -2057,13 +2110,13 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(policy).unwrap().value
+                    path.reversed_with_policy(policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let result = path
-                    .fillet_vertex(1, &crate::CurveFillet2::new(q(12, 25)), mode, policy)
+                    .fillet_vertex_with_policy(1, &crate::CurveFillet2::new(q(12, 25)), mode, policy)
                     .unwrap_or_else(|error| {
                         panic!(
                             "clockwise={clockwise}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"
@@ -2246,12 +2299,12 @@ mod tests {
                 let path = CurvePath2::try_new(vec![fragment(-1, 0), fragment(0, 1)]).unwrap();
                 for reversed in [false, true] {
                     let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                        path.reversed_with_policy(&policy).unwrap().value
                     } else {
                         path.clone()
                     };
                     let result = path
-                        .fillet_vertex(
+                        .fillet_vertex_with_policy(
                             1,
                             &crate::CurveFillet2::new(q(5, 8)),
                             CurveCornerMode2::TrimOnly,
@@ -2378,7 +2431,7 @@ mod tests {
             )
             .unwrap();
             let source = source
-                .subcurve(Real::zero().into(), end, &policy)
+                .subcurve_with_policy(Real::zero().into(), end, &policy)
                 .unwrap()
                 .value;
             let path = CurvePath2::try_new(vec![
@@ -2388,7 +2441,7 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -2396,7 +2449,7 @@ mod tests {
                 // strictly outside the actual selected interval. It belongs
                 // to the circular extension even though the parent owns it.
                 let result = path
-                    .fillet_vertex(
+                    .fillet_vertex_with_policy(
                         1,
                         &crate::CurveFillet2::new(q(1, 2)),
                         CurveCornerMode2::TrimOrExtend,
@@ -2450,7 +2503,7 @@ mod tests {
                 circular_parallel_chart(weights, -1, 2),
             ] {
                 let source = source
-                    .subcurve(
+                    .subcurve_with_policy(
                         selected_parameters(&policy)[0].clone(),
                         Real::one().into(),
                         &policy,
@@ -2481,7 +2534,7 @@ mod tests {
                 .unwrap();
                 for reversed in [false, true] {
                     let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                        path.reversed_with_policy(&policy).unwrap().value
                     } else {
                         path.clone()
                     };
@@ -2511,7 +2564,7 @@ mod tests {
                                 [Real::zero(), setback.clone()]
                             };
                             let result = path
-                                .chamfer_vertex_by_setbacks(
+                                .chamfer_vertex_by_setbacks_with_policy(
                                     1,
                                     setbacks[0].clone(),
                                     setbacks[1].clone(),
@@ -2558,7 +2611,7 @@ mod tests {
     fn source_domain_nonlinear_fillet_crosses_circular_chart_infinity() {
         let expected = Point2::new(-q(35, 37), -q(12, 37));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let spline = Curve2::try_nurbs(
+            let spline = Curve2::try_nurbs_with_policy(
                 2,
                 vec![p(1, 0), p(1, 1), p(0, 1), p(-1, 1), p(-1, 0)],
                 [2, 1, 1, 1, 2].into_iter().map(Real::from).collect(),
@@ -2584,12 +2637,12 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 let result = path
-                    .fillet_vertex(
+                    .fillet_vertex_with_policy(
                         1,
                         &crate::CurveFillet2::new(q(12, 25)),
                         CurveCornerMode2::TrimOrExtend,
@@ -2622,7 +2675,7 @@ mod tests {
                     })
                     .unwrap_or_else(|| panic!("reversed={reversed}, policy={policy:?}"));
                 let chamfer = selected
-                    .chamfer_vertex_by_setbacks(
+                    .chamfer_vertex_by_setbacks_with_policy(
                         vertex,
                         q(1, 256),
                         q(1, 256),
@@ -2680,9 +2733,9 @@ mod tests {
                         .map(|index| Real::from(1 + (index % 3) as i32))
                         .collect();
                     let source = if rational {
-                        Curve2::try_nurbs(1, controls, weights, knots, &policy)
+                        Curve2::try_nurbs_with_policy(1, controls, weights, knots, &policy)
                     } else {
-                        Curve2::try_polynomial_bspline(1, controls, knots, &policy)
+                        Curve2::try_polynomial_bspline_with_policy(1, controls, knots, &policy)
                     }
                     .unwrap()
                     .value;
@@ -2700,7 +2753,7 @@ mod tests {
                             )
                             .unwrap();
                             source
-                                .subcurve(Real::from(3).into(), end, &policy)
+                                .subcurve_with_policy(Real::from(3).into(), end, &policy)
                                 .unwrap()
                                 .value
                         } else {
@@ -2713,11 +2766,11 @@ mod tests {
                         .unwrap();
                         for reversed in [false, true] {
                             let path = if reversed {
-                                path.reversed(&policy).unwrap().value
+                                path.reversed_with_policy(&policy).unwrap().value
                             } else {
                                 path.clone()
                             };
-                            let outcome = path.fillet_vertex(1, &crate::CurveFillet2::new(Real::one()), CurveCornerMode2::TrimOnly, &policy)
+                            let outcome = path.fillet_vertex_with_policy(1, &crate::CurveFillet2::new(Real::one()), CurveCornerMode2::TrimOnly, &policy)
                                 .unwrap_or_else(|error| panic!("rational={rational}, selected={selected}, sharp={sharp_knot}, reversed={reversed}, policy={policy:?}: {error:?}"));
                             assert_eq!(outcome.certainty, CurveCertainty::Certified);
                             let candidates = {
@@ -2754,7 +2807,7 @@ mod tests {
                                     assert_same(&pair[0].end(), &pair[1].start(), &policy);
                                 }
                                 let edited = candidate
-                                    .chamfer_vertex_by_setbacks(
+                                    .chamfer_vertex_by_setbacks_with_policy(
                                         1,
                                         q(1, 64),
                                         q(1, 64),
@@ -2786,21 +2839,21 @@ mod tests {
                 let controls = vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4), p(0, 0)];
                 let knots = [3, 3, 4, 5, 6, 7, 7].into_iter().map(Real::from).collect();
                 let source = if rational {
-                    Curve2::try_nurbs(1, controls, vec![Real::one(); 5], knots, &policy)
+                    Curve2::try_nurbs_with_policy(1, controls, vec![Real::one(); 5], knots, &policy)
                 } else {
-                    Curve2::try_polynomial_bspline(1, controls, knots, &policy)
+                    Curve2::try_polynomial_bspline_with_policy(1, controls, knots, &policy)
                 }
                 .unwrap()
                 .value;
                 let path = CurvePath2::try_new(vec![source]).unwrap();
                 for reversed in [false, true] {
                     let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                        path.reversed_with_policy(&policy).unwrap().value
                     } else {
                         path.clone()
                     };
                     let result = path
-                        .fillet_vertex(
+                        .fillet_vertex_with_policy(
                             0,
                             &crate::CurveFillet2::new(Real::one()),
                             CurveCornerMode2::TrimOnly,
@@ -2847,7 +2900,7 @@ mod tests {
             )
             .unwrap();
             let arc = arc
-                .subcurve(Real::zero().into(), end, &policy)
+                .subcurve_with_policy(Real::zero().into(), end, &policy)
                 .unwrap()
                 .value;
             // No line-construction witness: these ordinary Bezier controls
@@ -2859,12 +2912,12 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 let outcome = path
-                    .fillet_vertex(
+                    .fillet_vertex_with_policy(
                         1,
                         &crate::CurveFillet2::new(q(1, 4)),
                         CurveCornerMode2::TrimOnly,
@@ -2910,10 +2963,10 @@ mod tests {
             )
             .unwrap();
             let arc = arc
-                .subcurve(Real::zero().into(), end, &policy)
+                .subcurve_with_policy(Real::zero().into(), end, &policy)
                 .unwrap()
                 .value;
-            let line = Curve2::try_polynomial_bspline(
+            let line = Curve2::try_polynomial_bspline_with_policy(
                 1,
                 vec![p(-4, 0), p(-3, 0), p(1, 0)],
                 [3, 3, 4, 5, 5].into_iter().map(Real::from).collect(),
@@ -2924,12 +2977,12 @@ mod tests {
             let path = CurvePath2::try_new(vec![line, arc]).unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 let outcome = path
-                    .fillet_vertex(
+                    .fillet_vertex_with_policy(
                         1,
                         &crate::CurveFillet2::new(q(1, 4)),
                         CurveCornerMode2::TrimOnly,
@@ -2965,7 +3018,7 @@ mod tests {
                 let controls = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2), p(0, 0)];
                 let knots = [3, 3, 4, 5, 6, 7, 7].into_iter().map(Real::from).collect();
                 let source = if rational {
-                    Curve2::try_nurbs(
+                    Curve2::try_nurbs_with_policy(
                         1,
                         controls,
                         vec![
@@ -2979,7 +3032,7 @@ mod tests {
                         &policy,
                     )
                 } else {
-                    Curve2::try_polynomial_bspline(1, controls, knots, &policy)
+                    Curve2::try_polynomial_bspline_with_policy(1, controls, knots, &policy)
                 }
                 .unwrap()
                 .value;
@@ -2993,7 +3046,7 @@ mod tests {
                         )
                         .unwrap();
                         source
-                            .subcurve(Real::from(3).into(), end, &policy)
+                            .subcurve_with_policy(Real::from(3).into(), end, &policy)
                             .unwrap()
                             .value
                     } else {
@@ -3006,14 +3059,14 @@ mod tests {
                     .unwrap();
                     for reversed in [false, true] {
                         let path = if reversed {
-                            path.reversed(&policy).unwrap().value
+                            path.reversed_with_policy(&policy).unwrap().value
                         } else {
                             path.clone()
                         };
                         for setback in [1, 2] {
                             let setbacks = if reversed { [setback, 1] } else { [1, setback] };
                             let result = path
-                                .chamfer_vertex_by_setbacks(
+                                .chamfer_vertex_by_setbacks_with_policy(
                                     1,
                                     Real::from(setbacks[0]),
                                     Real::from(setbacks[1]),
@@ -3049,7 +3102,7 @@ mod tests {
             }
             // The same Cartesian contact at three distinct source locations
             // represents three different surviving path suffixes.
-            let source = Curve2::try_polynomial_bspline(
+            let source = Curve2::try_polynomial_bspline_with_policy(
                 1,
                 vec![p(0, 0), p(2, 0), p(0, 0), p(2, 0)],
                 [0, 0, 1, 2, 3, 3].into_iter().map(Real::from).collect(),
@@ -3063,7 +3116,7 @@ mod tests {
             ])
             .unwrap();
             let result = path
-                .chamfer_vertex_by_setbacks(
+                .chamfer_vertex_by_setbacks_with_policy(
                     1,
                     Real::one(),
                     Real::one(),
@@ -3165,7 +3218,7 @@ mod tests {
     #[test]
     fn source_domain_chamfers_reenter_paths_with_a_selected_spline_corner() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let source = Curve2::try_polynomial_bspline(
+            let source = Curve2::try_polynomial_bspline_with_policy(
                 1,
                 vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2), p(0, 0)],
                 [3, 3, 4, 5, 6, 7, 7].into_iter().map(Real::from).collect(),
@@ -3181,7 +3234,7 @@ mod tests {
             )
             .unwrap();
             let source = source
-                .subcurve(start, Real::from(7).into(), &policy)
+                .subcurve_with_policy(start, Real::from(7).into(), &policy)
                 .unwrap()
                 .value;
             let chord = decided(
@@ -3197,7 +3250,7 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -3208,7 +3261,7 @@ mod tests {
                         [Real::zero(), setback]
                     };
                     let result = path
-                        .chamfer_vertex_by_setbacks(
+                        .chamfer_vertex_by_setbacks_with_policy(
                             1,
                             setbacks[0].clone(),
                             setbacks[1].clone(),
@@ -3299,7 +3352,10 @@ mod tests {
                 let source = Curve2::from_retained_fragment(
                     BezierSplitFragment2::AlgebraicCuspSemicircle(original.clone()),
                 );
-                let (first, second) = source.split_at(q(1, 2).into(), &policy).unwrap().value;
+                let (first, second) = source
+                    .split_at_with_policy(q(1, 2).into(), &policy)
+                    .unwrap()
+                    .value;
                 let expected =
                     decided(circle.point_evidence_at(&q(1, 2), &policy).unwrap(), family).unwrap();
                 assert_same(&first.end(), &expected, &policy);
@@ -3320,11 +3376,14 @@ mod tests {
                     );
                 }
                 let middle = source
-                    .subcurve(q(1, 4).into(), q(3, 4).into(), &policy)
+                    .subcurve_with_policy(q(1, 4).into(), q(3, 4).into(), &policy)
                     .unwrap()
                     .value;
                 assert_same(
-                    &middle.point_at(&q(1, 2).into(), &policy).unwrap().value,
+                    &middle
+                        .point_at_with_policy(&q(1, 2).into(), &policy)
+                        .unwrap()
+                        .value,
                     &expected,
                     &policy,
                 );
@@ -3366,23 +3425,32 @@ mod tests {
                     chord.clone(),
                 ));
                 let [start, probe, end] = selected_parameters(&policy).map(|parameter| {
-                    let point = line.point_at(&parameter, &policy).unwrap().value;
+                    let point = line
+                        .point_at_with_policy(&parameter, &policy)
+                        .unwrap()
+                        .value;
                     CurveParameter2::from_algebraic_chord(
                         chord.parameter_at_certified_interior_point(point),
                     )
                 });
                 let (start, end) = if reversed { (end, start) } else { (start, end) };
                 let restricted = source
-                    .subcurve(start.clone(), end.clone(), &policy)
+                    .subcurve_with_policy(start.clone(), end.clone(), &policy)
                     .unwrap()
                     .value;
-                let expected = source.point_at(&probe, &policy).unwrap().value;
-                let (first, second) = restricted.split_at(probe.clone(), &policy).unwrap().value;
+                let expected = source.point_at_with_policy(&probe, &policy).unwrap().value;
+                let (first, second) = restricted
+                    .split_at_with_policy(probe.clone(), &policy)
+                    .unwrap()
+                    .value;
                 assert_same(&first.start(), &restricted.start(), &policy);
                 assert_same(&first.end(), &expected, &policy);
                 assert_same(&second.start(), &expected, &policy);
                 assert_same(&second.end(), &restricted.end(), &policy);
-                let repeated = restricted.subcurve(start, probe, &policy).unwrap().value;
+                let repeated = restricted
+                    .subcurve_with_policy(start, probe, &policy)
+                    .unwrap()
+                    .value;
                 assert_same(&repeated.start(), &restricted.start(), &policy);
                 assert_same(&repeated.end(), &expected, &policy);
             }
@@ -3432,7 +3500,7 @@ mod tests {
             )
             .unwrap();
             let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0)))
-                .subcurve(start, end, &policy)
+                .subcurve_with_policy(start, end, &policy)
                 .unwrap()
                 .value;
             assert!(source.source_range().is_some());

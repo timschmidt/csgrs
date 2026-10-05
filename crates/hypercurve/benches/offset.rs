@@ -33,11 +33,8 @@ fn unit_parallel_curve(parallel: &hypercurve::BezierParallel2) -> CurveResult<Cu
     else {
         panic!("the unit benchmark range must be decided");
     };
-    let Classification::Decided(curve) =
-        Curve2::try_analytic_parallel(parallel.clone(), range, &CurveContext::STRICT)?
-    else {
-        panic!("the benchmark parallel must be decided");
-    };
+    let curve = Curve2::try_analytic_parallel(parallel.clone(), range)
+        .expect("the benchmark parallel must be exact");
     Ok(curve)
 }
 
@@ -234,10 +231,11 @@ fn bench_bezier_parallel_intersections(
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
-        let contacts = parallel_curve
-            .intersect_curve(black_box(&other_curve), black_box(&policy))
-            .expect("the benchmark contact replay must remain exact")
-            .value;
+        let contacts = crate::support::under(black_box(&policy), || {
+            parallel_curve.intersect_curve(black_box(&other_curve))
+        })
+        .expect("the benchmark contact replay must remain exact")
+        .value;
         contact_count += black_box(
             contacts.contacts().len()
                 + contacts.overlaps().len()
@@ -264,10 +262,11 @@ fn bench_bezier_parallel_pair_intersections(
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
-        let contacts = first_curve
-            .intersect_curve(black_box(&second_curve), black_box(&policy))
-            .expect("the benchmark contact replay must remain exact")
-            .value;
+        let contacts = crate::support::under(black_box(&policy), || {
+            first_curve.intersect_curve(black_box(&second_curve))
+        })
+        .expect("the benchmark contact replay must remain exact")
+        .value;
         contact_count += black_box(
             contacts.contacts().len()
                 + contacts.overlaps().len()
@@ -447,10 +446,11 @@ fn bench_bezier_parallel_boundary_parameter_fiber(iterations: u32) -> CurveResul
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
-        let contacts = parallel_curve
-            .intersect_curve(black_box(&constant_curve), black_box(&policy))
-            .expect("the boundary parameter-fiber replay must remain exact")
-            .value;
+        let contacts = crate::support::under(black_box(&policy), || {
+            parallel_curve.intersect_curve(black_box(&constant_curve))
+        })
+        .expect("the boundary parameter-fiber replay must remain exact")
+        .value;
         contact_count += black_box(
             contacts.contacts().len()
                 + contacts.overlaps().len()
@@ -624,13 +624,12 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let mut cold_checksum = 0_usize;
     for _ in 0..cold_iterations {
         let cold_parallel = ph_overlap_source.clone().parallel_left(s(1))?;
-        let contacts = unit_parallel_curve(&cold_parallel)?
-            .intersect_curve(
-                black_box(&Curve2::from(ph_overlap_target.clone())),
-                &CurveContext::STRICT,
-            )
-            .expect("the cold PH overlap replay must remain exact")
-            .value;
+        let cold_curve = unit_parallel_curve(&cold_parallel)?;
+        let contacts = crate::support::under(&CurveContext::STRICT, || {
+            cold_curve.intersect_curve(black_box(&Curve2::from(ph_overlap_target.clone())))
+        })
+        .expect("the cold PH overlap replay must remain exact")
+        .value;
         cold_checksum += black_box(
             (contacts.is_complete()
                 && contacts.contacts().is_empty()
@@ -798,11 +797,11 @@ fn curve_region_algebraic_partition_fixture(
                 else {
                     panic!("the benchmark partition range must be decided");
                 };
-                let Classification::Decided(fragment) =
-                    Curve2::try_analytic_parallel(parallel.clone(), range, &policy)?
-                else {
-                    panic!("the benchmark parallel fragment must be decided");
-                };
+                let fragment = crate::support::under(&policy, || {
+                    Curve2::try_analytic_parallel(parallel.clone(), range)
+                })
+                .expect("the benchmark partition parallel must be admitted")
+                .into_value();
                 Ok(fragment)
             })
             .collect::<CurveResult<Vec<_>>>()?
@@ -811,11 +810,9 @@ fn curve_region_algebraic_partition_fixture(
         else {
             panic!("the benchmark full parameter range must be decided");
         };
-        let Classification::Decided(fragment) =
-            Curve2::try_analytic_parallel(parallel, range, &policy)?
-        else {
-            panic!("the benchmark full parallel fragment must be decided");
-        };
+        let fragment =
+            crate::support::under(&policy, || Curve2::try_analytic_parallel(parallel, range))?
+                .into_value();
         vec![fragment]
     };
     curves.push(QuadraticBezier2::new(p(2, 0), p(1, 0), p(0, 0)).into());

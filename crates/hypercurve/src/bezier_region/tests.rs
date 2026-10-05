@@ -310,7 +310,7 @@ fn selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions() {
             panic!("unique exact scalar root");
         };
         let curve = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)))
-            .subcurve(
+            .subcurve_with_policy(
                 Real::zero().into(),
                 BezierParameter2::Algebraic(parameter).into(),
                 &policy,
@@ -642,7 +642,10 @@ fn boundary_side_rays_preserve_winding_through_reversed_source_charts() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let arc =
             Curve2::from(CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap());
-        let spans = arc.native_bezier_fragments(&policy).unwrap().value;
+        let spans = arc
+            .native_bezier_fragments_with_policy(&policy)
+            .unwrap()
+            .value;
         let source = RationalBezier2::try_from_subcurve(spans[0].native_curve()).unwrap();
         let parameter = q(1, 4);
         let Classification::Decided(point) = source.point_at_classified(&parameter, &policy) else {
@@ -1039,7 +1042,9 @@ fn analytic_corner_restrictions_keep_common_scalar_cuts_and_one_source() {
                     Classification::Uncertain(_)
                 ));
                 let parameter = CurveParameter2::from_selected_fiber(root.clone());
-                let point = source_curve.point_at(&parameter, &policy).unwrap();
+                let point = source_curve
+                    .point_at_with_policy(&parameter, &policy)
+                    .unwrap();
                 assert_eq!(point.certainty, CurveCertainty::Certified);
                 fragment = retained_corner_fragment_trim(
                     &fragment,
@@ -1071,7 +1076,7 @@ fn analytic_corner_restrictions_keep_common_scalar_cuts_and_one_source() {
                     retained_outer = Some(outer.clone());
                 }
                 let replay = Curve2::from_retained_fragment(fragment.clone())
-                    .point_at(&parameter, &policy)
+                    .point_at_with_policy(&parameter, &policy)
                     .unwrap();
                 let equality = replay.value.coincides_with(&point.value, &policy);
                 assert_eq!(equality.certainty, CurveCertainty::Certified);
@@ -1152,7 +1157,9 @@ fn native_corner_intervals_retain_general_cuts_and_replay_after_trimming() {
                     [q(1, 4).into(), q(1, 2).into(), sqrt_half.clone().into()],
                 ] {
                     let cut = |parameter: CurveParameter2| {
-                        let point = source_curve.point_at(&parameter, &policy).unwrap();
+                        let point = source_curve
+                            .point_at_with_policy(&parameter, &policy)
+                            .unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
                         CornerTrimCut2 {
                             parameter,
@@ -1189,9 +1196,9 @@ fn native_corner_intervals_retain_general_cuts_and_replay_after_trimming() {
                     assert_eq!(selected.range().end(), &previous.parameter);
                     assert!(selected.start_point().shares_storage(&next.point));
                     assert!(selected.end_point().shares_storage(&previous.point));
-                    let expected = source_curve.point_at(&probe, &policy).unwrap();
+                    let expected = source_curve.point_at_with_policy(&probe, &policy).unwrap();
                     let actual = Curve2::from_retained_fragment(retained.clone())
-                        .point_at(&probe, &policy)
+                        .point_at_with_policy(&probe, &policy)
                         .unwrap();
                     let equality = actual.value.coincides_with(&expected.value, &policy);
                     assert_eq!(actual.certainty, CurveCertainty::Certified);
@@ -1263,7 +1270,7 @@ fn corner_trims_drop_consumed_ranges_without_dropping_closed_traces() {
                         } else {
                             Real::one()
                         });
-                    let point = source.point_at(&boundary, &policy).unwrap();
+                    let point = source.point_at_with_policy(&boundary, &policy).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     assert!(
                         retained_corner_fragment_trim(
@@ -1297,7 +1304,7 @@ fn corner_trims_drop_consumed_ranges_without_dropping_closed_traces() {
                     assert_eq!(equality.value, Classification::Decided(true));
                 }
                 let probe = CurveParameter2::from(if retained { q(1, 4) } else { q(1, 2) });
-                let actual = closed.point_at(&probe, &policy).unwrap();
+                let actual = closed.point_at_with_policy(&probe, &policy).unwrap();
                 let expected = Point2::new(q(21, 32), q(27, 32)).into();
                 let equality = actual.value.coincides_with(&expected, &policy);
                 assert_eq!(actual.certainty, CurveCertainty::Certified);
@@ -1334,7 +1341,7 @@ fn repeated_circle_corner_restrictions_preserve_only_outer_tangency() {
                     let parameter = CurveParameter2::from_algebraic_cusp(
                         BezierAlgebraicCuspSemicircleParameter2::Exact(value),
                     );
-                    let point = original.point_at(&parameter, &policy).unwrap();
+                    let point = original.point_at_with_policy(&parameter, &policy).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     fragment = retained_corner_fragment_trim(
                         &fragment,
@@ -5432,7 +5439,7 @@ fn nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts() 
         ));
         for reversed in [false, true] {
             let source_path = if reversed {
-                path.reversed(&policy)
+                path.reversed_with_policy(&policy)
                     .expect("the nonlinear circle boundary reverses")
                     .into_value()
             } else {

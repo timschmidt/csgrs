@@ -22,15 +22,13 @@ fn selected_point(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> CurvePoint2 {
-    Curve2::from(curve.clone())
-        .point_at(
-            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
-                parameter.clone(),
-            )),
-            policy,
-        )
-        .expect("the selected benchmark endpoint must remain exact")
-        .into_value()
+    crate::support::under(policy, || {
+        Curve2::from(curve.clone()).point_at(&hypercurve::CurveParameter2::from(
+            hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+        ))
+    })
+    .expect("the selected benchmark endpoint must remain exact")
+    .into_value()
 }
 
 fn s(value: i32) -> Real {
@@ -235,8 +233,7 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let mut total_outputs = 0_usize;
 
     for _ in 0..iterations {
-        let trimmed = curve
-            .trim_inside_region(&region, &policy)
+        let trimmed = crate::support::under(&policy, || curve.trim_inside_region(&region))
             .expect("region trim benchmark must remain exact")
             .into_value();
         total_outputs += black_box(trimmed.len());
@@ -264,17 +261,16 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = black_box(&path)
-                .chamfer_vertex_by_setbacks(
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                black_box(&path).chamfer_vertex_by_setbacks(
                     1,
                     design_value.clone(),
                     design_value.clone(),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("design-parameter chamfer benchmark must remain exact")
-                .into_value()
-            else {
+            })
+            .expect("design-parameter chamfer benchmark must remain exact")
+            .into_value() else {
                 panic!("line design-parameter chamfer benchmark must be unique");
             };
             curves += black_box(chamfered).curves().len();
@@ -290,15 +286,15 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(&path)
-                .fillet_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(&path).fillet_vertex(
                     1,
                     &hypercurve::CurveFillet2::new(design_value.clone()),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("design-parameter fillet benchmark must remain exact")
-                .into_value();
+            })
+            .expect("design-parameter fillet benchmark must remain exact")
+            .into_value();
             let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
@@ -325,11 +321,16 @@ fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = black_box(&line_arc_path)
-                .chamfer_vertex_by_setbacks(1, q(1, 2), s(1), CurveCornerMode2::TrimOnly, &policy)
-                .expect("line-arc design chamfer must remain exact")
-                .into_value()
-            else {
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                black_box(&line_arc_path).chamfer_vertex_by_setbacks(
+                    1,
+                    q(1, 2),
+                    s(1),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("line-arc design chamfer must remain exact")
+            .into_value() else {
                 panic!("line-arc design chamfer must remain unique");
             };
             curves += black_box(chamfered).curves().len();
@@ -352,11 +353,16 @@ fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = black_box(&arc_arc_path)
-                .chamfer_vertex_by_setbacks(1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
-                .expect("arc-arc design chamfer must remain exact")
-                .into_value()
-            else {
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                black_box(&arc_arc_path).chamfer_vertex_by_setbacks(
+                    1,
+                    s(1),
+                    s(1),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("arc-arc design chamfer must remain exact")
+            .into_value() else {
                 panic!("arc-arc design chamfer must remain unique");
             };
             curves += black_box(chamfered).curves().len();
@@ -424,15 +430,15 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(&line_arc_path)
-                .fillet_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(&line_arc_path).fillet_vertex(
                     1,
                     &hypercurve::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("line-arc design fillet must remain exact")
-                .into_value();
+            })
+            .expect("line-arc design fillet must remain exact")
+            .into_value();
             let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
@@ -456,15 +462,15 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(&arc_arc_path)
-                .fillet_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(&arc_arc_path).fillet_vertex(
                     1,
                     &hypercurve::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("arc-arc design fillet must remain exact")
-                .into_value();
+            })
+            .expect("arc-arc design fillet must remain exact")
+            .into_value();
             let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
@@ -562,17 +568,16 @@ fn bench_retained_circle_chamfer_lane(name: &str, path: &CurvePath2, iterations:
     let started = Instant::now();
     let mut curves = 0_usize;
     for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(chamfered) = black_box(path)
-            .chamfer_vertex_by_setbacks(
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            black_box(path).chamfer_vertex_by_setbacks(
                 1,
                 setback.clone(),
                 setback.clone(),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .expect("retained circular chamfer must remain exact")
-            .into_value()
-        else {
+        })
+        .expect("retained circular chamfer must remain exact")
+        .into_value() else {
             panic!("retained circular chamfer must remain unique");
         };
         curves += black_box(chamfered).curves().len();
@@ -590,15 +595,15 @@ fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: 
     let started = Instant::now();
     let mut curves = 0_usize;
     for _ in 0..iterations {
-        let solutions = black_box(path)
-            .fillet_vertex(
+        let solutions = crate::support::under(&policy, || {
+            black_box(path).fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(radius.clone()),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .expect("retained circular fillet must remain exact")
-            .into_value();
+        })
+        .expect("retained circular fillet must remain exact")
+        .into_value();
         let [filleted] = solutions.solutions() else {
             panic!("expected one isolated fillet");
         };
@@ -682,16 +687,16 @@ fn bench_represented_bezier_chamfer_lane(
     let started = Instant::now();
     let mut candidates = 0_usize;
     for _ in 0..iterations {
-        let solutions = black_box(path)
-            .chamfer_vertex_by_setbacks(
+        let solutions = crate::support::under(&policy, || {
+            black_box(path).chamfer_vertex_by_setbacks(
                 1,
                 previous_setback.clone(),
                 next_setback.clone(),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .expect("represented Bezier chamfer must remain exact")
-            .into_value();
+        })
+        .expect("represented Bezier chamfer must remain exact")
+        .into_value();
         candidates += black_box(solutions).candidate_count();
     }
     assert_ne!(candidates, 0);
@@ -715,15 +720,15 @@ fn bench_represented_bezier_fillet_lane(
     let started = Instant::now();
     let mut candidates = 0_usize;
     for _ in 0..iterations {
-        let solutions = black_box(path)
-            .fillet_vertex(
+        let solutions = crate::support::under(&policy, || {
+            black_box(path).fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(radius.clone()),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .expect("represented Bezier fillet must remain exact")
-            .into_value();
+        })
+        .expect("represented Bezier fillet must remain exact")
+        .into_value();
         candidates += black_box(solutions.solutions()).len();
     }
     assert_ne!(candidates, 0);
@@ -786,13 +791,14 @@ fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::
         controls[3].clone(),
     );
     let parameter = BezierParameter2::Algebraic(positive_reciprocal_sqrt_parameter(2, &policy)?);
-    let source_curve = Curve2::from(source)
-        .subcurve(Real::zero().into(), parameter.into(), &policy)?
-        .into_value();
-    let chord = expect_decided(
-        Curve2::try_line(source_curve.end(), p(0, 0).into(), &policy)?,
-        "source-related algebraic chord must remain exact",
-    );
+    let source_curve = crate::support::under(&policy, || {
+        Curve2::from(source).subcurve(Real::zero().into(), parameter.into())
+    })?
+    .into_value();
+    let chord = crate::support::under(&policy, || {
+        Curve2::try_line(source_curve.end(), p(0, 0).into())
+    })?
+    .into_value();
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
     let path = CurvePath2::try_new(vec![source_curve, chord, closure.into()])?;
     Ok(crate::support::under(&policy, || {
@@ -814,18 +820,21 @@ fn independent_field_algebraic_chord_regions()
     let second_split_parameter = BezierParameter2::Algebraic(second_parameter.clone());
     let x_axis = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
     let y_axis = QuadraticBezier2::from_line_segment(line(0, 0, 0, 1));
-    let x_curve = Curve2::from(x_axis)
-        .subcurve(Real::zero().into(), first_split_parameter.into(), &policy)?
-        .into_value();
-    let y_curve = Curve2::from(y_axis)
-        .subcurve(Real::zero().into(), second_split_parameter.into(), &policy)?
+    let x_curve = crate::support::under(&policy, || {
+        Curve2::from(x_axis).subcurve(Real::zero().into(), first_split_parameter.into())
+    })?
+    .into_value();
+    let y_curve = crate::support::under(&policy, || {
+        crate::support::under(&policy, || {
+            Curve2::from(y_axis).subcurve(Real::zero().into(), second_split_parameter.into())
+        })?
         .into_value()
-        .reversed(&policy)?
-        .into_value();
-    let chord = expect_decided(
-        Curve2::try_line(x_curve.end(), y_curve.start(), &policy)?,
-        "independent-field chord must remain exact",
-    );
+        .reversed()
+    })?
+    .into_value();
+    let chord =
+        crate::support::under(&policy, || Curve2::try_line(x_curve.end(), y_curve.start()))?
+            .into_value();
     let chord_path = CurvePath2::try_new(vec![chord, y_curve, x_curve])?;
     let chord_region = crate::support::under(&policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -859,12 +868,14 @@ fn noninjective_collinear_algebraic_chord_paths()
     let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
     let first_endpoint = selected_point(&horizontal, &first_parameter, &policy);
     let second_endpoint = selected_point(&horizontal, &second_parameter, &policy);
-    let chord = expect_decided(
-        Curve2::try_line(first_endpoint, second_endpoint, &policy)?,
-        "independent-field benchmark chord must remain exact",
-    );
-    let chord_path =
-        CurvePath2::try_new(vec![chord.clone(), chord.reversed(&policy)?.into_value()])?;
+    let chord = crate::support::under(&policy, || {
+        Curve2::try_line(first_endpoint, second_endpoint)
+    })?
+    .into_value();
+    let chord_path = CurvePath2::try_new(vec![
+        chord.clone(),
+        crate::support::under(&policy, || chord.reversed())?.into_value(),
+    ])?;
     let source_path = CurvePath2::try_new(vec![
         QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)).into(),
     ])?;
@@ -891,8 +902,8 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
     let second_start = endpoint(&vertical, 2, 5)?;
     let second_end = endpoint(&vertical, 1, 5)?;
     let chord = |start, end| {
-        Curve2::try_line(start, end, &policy)
-            .map(|chord| expect_decided(chord, "benchmark chord must remain exact"))
+        crate::support::under(&policy, || Curve2::try_line(start, end))
+            .map(crate::support::Outcome::into_value)
     };
     let first = chord(first_start.clone(), first_end.clone())?;
     let second = chord(second_start.clone(), second_end.clone())?;
@@ -938,18 +949,17 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
-        Curve2::try_line(start, end, &policy)
-            .map(|chord| expect_decided(chord, "axis-aligned benchmark chord must remain exact"))
+        crate::support::under(&policy, || Curve2::try_line(start, end))
+            .map(crate::support::Outcome::into_value)
     };
-    let path = CurvePath2::try_new_with_policy(
-        vec![
+    let path = crate::support::under(&policy, || {
+        CurvePath2::try_new(vec![
             chord(bottom_left.clone(), bottom_right.clone())?,
             chord(bottom_right, top_right.clone())?,
             chord(top_right, top_left.clone())?,
             chord(top_left, bottom_left)?,
-        ],
-        &policy,
-    )?;
+        ])
+    })?;
     Ok(crate::support::under(&policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[path.into_value()],
@@ -991,14 +1001,15 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
     ];
     let mut fragments = Vec::with_capacity(points.len());
     for index in 0..points.len() {
-        fragments.push(expect_decided(
-            Curve2::try_line(
-                points[index].clone(),
-                points[(index + 1) % points.len()].clone(),
-                &policy,
-            )?,
-            "axis-aligned dumbbell chord must remain exact",
-        ));
+        fragments.push(
+            crate::support::under(&policy, || {
+                Curve2::try_line(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+            })?
+            .into_value(),
+        );
     }
     Ok(crate::support::under(&policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -1161,10 +1172,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut evidence_count = 0_usize;
         for _ in 0..iterations {
-            let evidence = black_box(&chord_path)
-                .intersect_path(black_box(&source_path), &policy)
-                .expect("noninjective collinear chord intersection must remain exact")
-                .into_value();
+            let evidence = crate::support::under(&policy, || {
+                black_box(&chord_path).intersect_path(black_box(&source_path))
+            })
+            .expect("noninjective collinear chord intersection must remain exact")
+            .into_value();
             assert!(evidence.is_complete(), "{evidence:?}");
             evidence_count += evidence.contacts().len() + evidence.overlaps().len();
         }
@@ -1442,25 +1454,23 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     .expect("line/rational benchmark path must remain exact");
     let line_polynomial_spline = CurvePath2::try_new(vec![
         Curve2::from(line(-4, 0, 0, 0)),
-        Curve2::try_polynomial_bspline(
-            2,
-            quadratic_controls.clone(),
-            quadratic_knots.clone(),
-            &CurveContext::STRICT,
-        )
+        crate::support::under(&CurveContext::STRICT, || {
+            Curve2::try_polynomial_bspline(2, quadratic_controls.clone(), quadratic_knots.clone())
+        })
         .expect("polynomial spline benchmark carrier must remain exact")
         .into_value(),
     ])
     .expect("line/polynomial-spline benchmark path must remain exact");
     let line_nurbs = CurvePath2::try_new(vec![
         Curve2::from(line(-4, 0, 0, 0)),
-        Curve2::try_nurbs(
-            2,
-            quadratic_controls,
-            vec![s(1), s(1), s(1)],
-            quadratic_knots,
-            &CurveContext::STRICT,
-        )
+        crate::support::under(&CurveContext::STRICT, || {
+            Curve2::try_nurbs(
+                2,
+                quadratic_controls,
+                vec![s(1), s(1), s(1)],
+                quadratic_knots,
+            )
+        })
         .expect("NURBS benchmark carrier must remain exact")
         .into_value(),
     ])
@@ -1481,31 +1491,33 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     ])
     .expect("exact PH cubic benchmark path must remain exact");
     let spline_ph_pair = CurvePath2::try_new(vec![
-        Curve2::try_polynomial_bspline(
-            3,
-            vec![
-                p(-4, 0),
-                Point2::new(-q(8, 3), s(0)),
-                Point2::new(-q(4, 3), s(0)),
-                p(0, 0),
-            ],
-            vec![s(2), s(2), s(2), s(2), s(5), s(5), s(5), s(5)],
-            &CurveContext::STRICT,
-        )
+        crate::support::under(&CurveContext::STRICT, || {
+            Curve2::try_polynomial_bspline(
+                3,
+                vec![
+                    p(-4, 0),
+                    Point2::new(-q(8, 3), s(0)),
+                    Point2::new(-q(4, 3), s(0)),
+                    p(0, 0),
+                ],
+                vec![s(2), s(2), s(2), s(2), s(5), s(5), s(5), s(5)],
+            )
+        })
         .expect("polynomial PH spline benchmark carrier must remain exact")
         .into_value(),
-        Curve2::try_nurbs(
-            3,
-            vec![
-                p(0, 0),
-                Point2::new(s(0), q(4, 3)),
-                Point2::new(s(0), q(8, 3)),
-                p(0, 4),
-            ],
-            vec![s(1), s(1), s(1), s(1)],
-            vec![s(7), s(7), s(7), s(7), s(11), s(11), s(11), s(11)],
-            &CurveContext::STRICT,
-        )
+        crate::support::under(&CurveContext::STRICT, || {
+            Curve2::try_nurbs(
+                3,
+                vec![
+                    p(0, 0),
+                    Point2::new(s(0), q(4, 3)),
+                    Point2::new(s(0), q(8, 3)),
+                    p(0, 4),
+                ],
+                vec![s(1), s(1), s(1), s(1)],
+                vec![s(7), s(7), s(7), s(7), s(11), s(11), s(11), s(11)],
+            )
+        })
         .expect("NURBS PH spline benchmark carrier must remain exact")
         .into_value(),
     ])

@@ -9,8 +9,8 @@
 use std::env;
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2, CurveContext, CurveFamily2,
-    CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2, CurveFamily2, CurvePath2,
+    CurveRegion2, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
     RationalQuadraticBezier2, Real, Similarity2,
 };
 use num::bigint::{BigInt, BigUint};
@@ -307,9 +307,8 @@ pub fn build_native_cell(index: usize) -> NativeCell {
     let source_path = all_family_path(origin_x, origin_y, &representations);
     let transform = cell_rotation(origin_x, origin_y);
     let rotated_path = source_path
-        .transform_similarity(&transform, &CurveContext::STRICT)
-        .expect("pathological rotation remains exact")
-        .into_value();
+        .transform_similarity(&transform)
+        .expect("pathological rotation remains exact");
     let source = CurveRegion2::try_from_boundary_paths(
         std::slice::from_ref(&source_path),
         hypercurve::FillRule::EvenOdd,
@@ -337,9 +336,8 @@ pub fn rotated_region(path: &CurvePath2, index: usize) -> CurveRegion2 {
     let origin_x = i64::try_from(index % 1024).expect("cell column fits i64") * 96;
     let origin_y = i64::try_from(index / 1024).expect("cell row fits i64") * 48;
     let rotated = path
-        .transform_similarity(&cell_rotation(origin_x, origin_y), &CurveContext::STRICT)
-        .expect("pathological rotation remains exact")
-        .into_value();
+        .transform_similarity(&cell_rotation(origin_x, origin_y))
+        .expect("pathological rotation remains exact");
     CurveRegion2::try_from_boundary_paths(&[rotated], hypercurve::FillRule::EvenOdd)
         .expect("pathological rotated region is valid")
 }
@@ -450,19 +448,15 @@ fn family_curve(
             3,
             vec![start, control1, control2, end],
             clamped_cubic_knots(),
-            &CurveContext::STRICT,
         )
-        .expect("clamped polynomial spline is valid")
-        .into_value(),
+        .expect("clamped polynomial spline is valid"),
         CurveFamily2::Nurbs => Curve2::try_nurbs(
             3,
             vec![start, linear_control1, linear_control2, end],
             vec![Real::one(); 4],
             clamped_cubic_knots(),
-            &CurveContext::STRICT,
         )
-        .expect("clamped NURBS is valid")
-        .into_value(),
+        .expect("clamped NURBS is valid"),
     }
 }
 
@@ -541,9 +535,8 @@ fn flatten_path(path: &CurvePath2) -> Vec<[f64; 2]> {
             let t = fraction(sample as i64, (CURVE_SAMPLES - 1) as i64);
             let parameter = domain_start + &(&span * t);
             let point = curve
-                .point_at(&parameter.into(), &CurveContext::STRICT)
-                .expect("benchmark curve evaluates at a rational parameter")
-                .into_value();
+                .point_at(&parameter.into())
+                .expect("benchmark curve evaluates at a rational parameter");
             let point = point.coordinates().expect("native fixture coordinates");
             points.push([
                 point.x().to_f64_lossy().expect("finite x coordinate"),

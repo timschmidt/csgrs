@@ -79,7 +79,9 @@ mod contacts {
         };
         let path = CurvePath2::try_new(vec![line, source(kind)]).unwrap();
         let path = if reversed {
-            path.reversed(&policy).unwrap().into_value()
+            crate::support::under(&policy, || path.reversed())
+                .unwrap()
+                .into_value()
         } else {
             path
         };
@@ -88,7 +90,8 @@ mod contacts {
         } else {
             (contact0, contact1)
         };
-        let outcome = match path.fillet_vertex(1, &request, mode, &policy) {
+        let outcome = match crate::support::under(&policy, || path.fillet_vertex(1, &request, mode))
+        {
             Ok(outcome) => outcome,
             Err(ExactCurveError::Blocked(blocker)) => {
                 eprintln!("blocked {:?}", blocker.reason());
@@ -223,11 +226,14 @@ mod contacts {
             _ => unreachable!(),
         };
         let path = if reversed {
-            path.reversed(&policy).unwrap().into_value()
+            crate::support::under(&policy, || path.reversed())
+                .unwrap()
+                .into_value()
         } else {
             path
         };
-        let outcome = match path.fillet_vertex(1, &request, mode, &policy) {
+        let outcome = match crate::support::under(&policy, || path.fillet_vertex(1, &request, mode))
+        {
             Ok(outcome) => outcome,
             Err(ExactCurveError::Blocked(blocker)) => {
                 eprintln!("blocked {:?}", blocker.reason());
@@ -313,7 +319,9 @@ mod contacts {
         };
         let path = CurvePath2::try_new(vec![curve.into(), line]).unwrap();
         let path = if reversed {
-            path.reversed(&policy).unwrap().into_value()
+            crate::support::under(&policy, || path.reversed())
+                .unwrap()
+                .into_value()
         } else {
             path
         };
@@ -322,8 +330,7 @@ mod contacts {
         request.contacts[usize::from(reversed)] = Some(CurveFilletContact2::Parameter(
             if reversed { q(2, 3) } else { q(1, 3) }.into(),
         ));
-        let outcome = path
-            .fillet_vertex(1, &request, mode, &policy)
+        let outcome = crate::support::under(&policy, || path.fillet_vertex(1, &request, mode))
             .unwrap_or_else(|_| panic!("opposite one-sided normal must be decidable"));
         assert!(outcome.certainty == CurveCertainty::Certified);
         assert_eq!(outcome.into_value().candidate_count(), 0);
@@ -432,9 +439,10 @@ mod composition {
         let mut request = CurveFillet2::new(Real::one());
         request.center = Some(p(0, -1).into());
         request.contacts[0] = Some(CurveFilletContact2::Parameter(q(1, 2).into()));
-        let outcome = path
-            .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
-            .unwrap_or_else(|_| panic!("stationary fillet must close"));
+        let outcome = crate::support::under(&policy, || {
+            path.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly)
+        })
+        .unwrap_or_else(|_| panic!("stationary fillet must close"));
         assert!(outcome.certainty == CurveCertainty::Certified);
         let solution = outcome.into_value().into_solutions().pop().unwrap();
         let mut curves = solution.curves().to_vec();
@@ -535,7 +543,9 @@ mod exact_scalars {
                 .unwrap();
                 let path = CurvePath2::try_new(vec![source.into(), line.into()]).unwrap();
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || path.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     path
                 };
@@ -543,11 +553,11 @@ mod exact_scalars {
                 request.center = Some(point(Real::zero(), -Real::one()).into());
                 request.contacts[usize::from(reversed)] =
                     Some(CurveFilletContact2::Parameter(q(1, 2).into()));
-                let outcome = path
-                    .fillet_vertex(1, &request, mode, &policy)
-                    .unwrap_or_else(|_| {
-                        panic!("one-sided exact frames must not require rational coefficients")
-                    });
+                let outcome =
+                    crate::support::under(&policy, || path.fillet_vertex(1, &request, mode))
+                        .unwrap_or_else(|_| {
+                            panic!("one-sided exact frames must not require rational coefficients")
+                        });
                 assert!(outcome.certainty == CurveCertainty::Certified);
                 let solutions = outcome.into_value();
                 assert_eq!(solutions.candidate_count(), 1);
@@ -623,19 +633,23 @@ mod retained_domains {
             )
             .unwrap(),
         );
-        let fragment = decided(Curve2::try_analytic_parallel(parallel, range, &policy).unwrap());
+        let fragment =
+            crate::support::under(&policy, || Curve2::try_analytic_parallel(parallel, range))
+                .unwrap()
+                .into_value();
         let line =
             LineSeg2::try_new(Point2::new(start.x().clone(), Real::from(-2)), start).unwrap();
         let path = CurvePath2::try_new(vec![line.into(), fragment]).unwrap();
         let path = if reversed {
-            path.reversed(&policy).unwrap().into_value()
+            crate::support::under(&policy, || path.reversed())
+                .unwrap()
+                .into_value()
         } else {
             path
         };
         let mut request = CurveFillet2::new(radius);
         request.center = Some(center.into());
-        let result = path
-            .fillet_vertex(1, &request, mode, &policy)
+        let result = crate::support::under(&policy, || path.fillet_vertex(1, &request, mode))
             .unwrap_or_else(|_| {
                 panic!(
                     "stationarity outside the retained source range cannot reject its exact fillet"

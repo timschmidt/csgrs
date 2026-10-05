@@ -771,8 +771,7 @@ fn curve_path_trim_inside_region_splits_disconnected_inside_windows() {
     .unwrap()
     .into_value();
 
-    let trimmed = curve
-        .trim_inside_region(&region, &policy())
+    let trimmed = crate::support::under(&policy(), || curve.trim_inside_region(&region))
         .unwrap()
         .into_value();
 
@@ -794,8 +793,7 @@ fn curve_path_trim_inside_region_respects_holes() {
     let curve =
         CurvePath2::try_new(vec![LineSeg2::try_new(p(1, 2), p(9, 2)).unwrap().into()]).unwrap();
 
-    let trimmed = curve
-        .trim_inside_region(&region, &policy())
+    let trimmed = crate::support::under(&policy(), || curve.trim_inside_region(&region))
         .unwrap()
         .into_value();
 
@@ -809,8 +807,7 @@ fn curve_path_trim_inside_region_retains_boundary_overlap() {
     let curve =
         CurvePath2::try_new(vec![LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap().into()]).unwrap();
 
-    let trimmed = curve
-        .trim_inside_region(&region, &policy())
+    let trimmed = crate::support::under(&policy(), || curve.trim_inside_region(&region))
         .unwrap()
         .into_value();
     let [path] = trimmed.as_slice() else {

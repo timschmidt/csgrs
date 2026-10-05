@@ -132,6 +132,15 @@ impl CurvePath2 {
     pub fn intersect_path(
         &self,
         other: &Self,
+    ) -> crate::ExactCurveResult<CurvePathIntersectionResult2> {
+        self.intersect_path_with_policy(other, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::intersect_path`] under an explicit predicate policy.
+    pub(crate) fn intersect_path_with_policy(
+        &self,
+        other: &Self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurvePathIntersectionResult2>> {
         resolve_certified_operation(policy, |attempt| self.intersect_path_raw(other, attempt))
@@ -148,6 +157,15 @@ impl CurvePath2 {
     /// Computes exact split topology against another path immediately and
     /// reports any consumed terminal decision once.
     pub fn intersection_topology(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<CurvePathIntersectionTopology2> {
+        self.intersection_topology_with_policy(other, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::intersection_topology`] under an explicit predicate policy.
+    pub(crate) fn intersection_topology_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,

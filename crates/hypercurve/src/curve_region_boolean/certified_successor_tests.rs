@@ -1646,7 +1646,7 @@ fn assert_trim_endpoint_replay(
             Classification::Decided(true)
         );
         let evaluated = source
-            .point_at(parameter, policy)
+            .point_at_with_policy(parameter, policy)
             .expect("the trim parameter must reenter source evaluation");
         assert_eq!(evaluated.certainty, crate::CurveCertainty::Certified);
         assert_eq!(
@@ -1670,7 +1670,7 @@ fn curve_trim_retains_selected_field_algebraic_chord_boundaries() {
         );
 
         let trimmed = source
-            .trim_inside_region_with_parameters(&region, &policy)
+            .trim_inside_region_with_parameters_with_policy(&region, &policy)
             .expect("a rational line must trim against selected-field chords");
         assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
         let [trimmed] = trimmed.value.as_slice() else {
@@ -1733,7 +1733,7 @@ fn curve_trim_retains_selected_field_algebraic_chord_overlaps() {
             );
 
             let trimmed = source
-                .trim_inside_region_with_parameters(&region, &policy)
+                .trim_inside_region_with_parameters_with_policy(&region, &policy)
                 .expect("selected-field boundary overlap must trim exactly");
             assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
             let [trimmed] = trimmed.value.as_slice() else {
@@ -2574,13 +2574,13 @@ fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
             let a = published
                 .first()
                 .curve()
-                .point_at(a, &policy)
+                .point_at_with_policy(a, &policy)
                 .unwrap()
                 .into_value();
             let b = published
                 .second()
                 .curve()
-                .point_at(b, &policy)
+                .point_at_with_policy(b, &policy)
                 .unwrap()
                 .into_value();
             assert_eq!(
@@ -3373,7 +3373,7 @@ fn evidence_carrier_point(
         (overlap.first(), overlap.second())
     };
     let curve = if first { a.curve() } else { b.curve() };
-    let point = curve.point_at(parameter, policy).unwrap();
+    let point = curve.point_at_with_policy(parameter, policy).unwrap();
     assert_eq!(point.certainty, crate::CurveCertainty::Certified);
     point.value
 }
@@ -3466,7 +3466,7 @@ fn algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges() {
                         (overlap.first().curve(), overlap.second().curve())
                     };
                     for (a, b) in [(first, second), (second, first)] {
-                        let common = a.intersect_curve(b, &policy).unwrap();
+                        let common = a.intersect_curve_with_policy(b, &policy).unwrap();
                         assert_eq!(common.certainty, crate::CurveCertainty::Certified);
                         assert!(common.value.is_complete(), "{common:?}");
                         assert_eq!(common.value.contacts().len(), evidence.contacts().len());
@@ -3474,7 +3474,8 @@ fn algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges() {
                         for contact in common.value.contacts() {
                             for (curve, location) in [(a, contact.first()), (b, contact.second())] {
                                 let parameter = decided(location.parameter(&policy).unwrap());
-                                let point = curve.point_at(&parameter, &policy).unwrap();
+                                let point =
+                                    curve.point_at_with_policy(&parameter, &policy).unwrap();
                                 assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                                 assert_eq!(
                                     point.value.same_point(contact.point(), &policy),
@@ -4560,7 +4561,7 @@ fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {
         for fragment in chord_region.boundary_loops()[0].fragments() {
             let boundary_curve = Curve2::from_retained_fragment(fragment.clone());
             let curve_intersections = boundary_curve
-                .intersect_curve(&retraced_curve, &policy)
+                .intersect_curve_with_policy(&retraced_curve, &policy)
                 .unwrap();
             assert_eq!(
                 curve_intersections.certainty,
@@ -4579,7 +4580,7 @@ fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {
                     (&retraced_curve, contact.second()),
                 ] {
                     let parameter = decided(location.parameter(&policy).unwrap());
-                    let point = curve.point_at(&parameter, &policy).unwrap();
+                    let point = curve.point_at_with_policy(&parameter, &policy).unwrap();
                     assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(
                         point.value.same_point(contact.point(), &policy),
@@ -4595,8 +4596,10 @@ fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {
                     ),
                     (overlap.first_range().end(), overlap.second_range().end()),
                 ] {
-                    let first = boundary_curve.point_at(first, &policy).unwrap();
-                    let second = retraced_curve.point_at(second, &policy).unwrap();
+                    let first = boundary_curve.point_at_with_policy(first, &policy).unwrap();
+                    let second = retraced_curve
+                        .point_at_with_policy(second, &policy)
+                        .unwrap();
                     assert_eq!(first.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(second.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(
@@ -4762,7 +4765,7 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                         curves = curves
                             .into_iter()
                             .rev()
-                            .map(|c| certified(c.reversed(&policy).unwrap()))
+                            .map(|c| certified(c.reversed_with_policy(&policy).unwrap()))
                             .collect();
                     }
                     let path = CurvePath2::try_new(curves).unwrap();
@@ -4810,8 +4813,8 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                         for (path, &left) in paths.iter().zip(sides) {
                             for curve in path.curves() {
                                 for parameter in [Real::zero(), q(1, 2)] {
-                                    let Ok(point) =
-                                        curve.point_at(&parameter.clone().into(), &policy)
+                                    let Ok(point) = curve
+                                        .point_at_with_policy(&parameter.clone().into(), &policy)
                                     else {
                                         continue;
                                     };
@@ -4824,7 +4827,10 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                                     checked += 1;
                                     let tangent = certified(
                                         curve
-                                            .derivative_at(&parameter.clone().into(), &policy)
+                                            .derivative_at_with_policy(
+                                                &parameter.clone().into(),
+                                                &policy,
+                                            )
                                             .unwrap(),
                                     );
                                     for sample_left in [false, true] {
@@ -5082,7 +5088,7 @@ fn curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes(
                             curves = curves
                                 .into_iter()
                                 .rev()
-                                .map(|curve| curve.reversed(&policy).unwrap().value)
+                                .map(|curve| curve.reversed_with_policy(&policy).unwrap().value)
                                 .collect();
                         }
                         CurvePath2::try_new(curves).unwrap()

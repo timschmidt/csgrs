@@ -75,8 +75,7 @@ fn main() {
     let policy = CurveContext::STRICT;
 
     measure("curve_path_rational_projection", iterations, || {
-        rational
-            .project_to_finite_polyline(&options, &policy)
+        crate::support::under(&policy, || rational.project_to_finite_polyline(&options))
             .unwrap()
             .into_value()
             .points()

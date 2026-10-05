@@ -2680,12 +2680,13 @@ mod finite_conic_split_regression {
                 ] {
                     for reversed in [false, true] {
                         let source = if reversed {
-                            source.reversed(&policy).unwrap().value
+                            source.reversed_with_policy(&policy).unwrap().value
                         } else {
                             source.clone()
                         };
                         let cut = if reversed { q(1, 3) } else { q(2, 3) };
-                        let Ok(split) = source.split_at(cut.clone().into(), &policy) else {
+                        let Ok(split) = source.split_at_with_policy(cut.clone().into(), &policy)
+                        else {
                             panic!(
                                 "finite conic cut failed: general={general}, reversed={reversed}, scale={scale}"
                             );
@@ -2706,7 +2707,7 @@ mod finite_conic_split_regression {
                         );
                         for part in [&left, &right] {
                             assert!(
-                                part.split_at(q(1, 2).into(), &policy).is_ok(),
+                                part.split_at_with_policy(q(1, 2).into(), &policy).is_ok(),
                                 "the exact result must admit a subsequent cut"
                             );
                         }
@@ -2716,10 +2717,14 @@ mod finite_conic_split_regression {
                                 (&left, &local * &cut),
                                 (&right, &cut + &local * (Real::one() - &cut)),
                             ] {
-                                let actual =
-                                    part.point_at(&local.clone().into(), &policy).unwrap().value;
-                                let expected =
-                                    source.point_at(&original.into(), &policy).unwrap().value;
+                                let actual = part
+                                    .point_at_with_policy(&local.clone().into(), &policy)
+                                    .unwrap()
+                                    .value;
+                                let expected = source
+                                    .point_at_with_policy(&original.into(), &policy)
+                                    .unwrap()
+                                    .value;
                                 assert!(matches!(
                                     actual.coincides_with(&expected, &policy).value,
                                     Classification::Decided(true)

@@ -150,7 +150,7 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
             )
             .unwrap(),
         ),
-        Curve2::try_polynomial_bspline(
+        Curve2::try_polynomial_bspline_with_policy(
             2,
             line_controls.clone(),
             vec![r(0), r(0), r(0), r(1), r(1), r(1)],
@@ -158,7 +158,7 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
         )
         .unwrap()
         .into_value(),
-        Curve2::try_nurbs(
+        Curve2::try_nurbs_with_policy(
             2,
             line_controls,
             vec![r(1), r(2), r(1)],
@@ -216,7 +216,7 @@ fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
         RationalBezier2::try_new(rational_arc_controls.clone(), rational_arc_weights.clone())
             .unwrap();
     let elevated_rational_arc = general_rational_arc.elevated_to_degree(4).unwrap();
-    let nurbs_arc = Curve2::try_nurbs(
+    let nurbs_arc = Curve2::try_nurbs_with_policy(
         2,
         rational_arc_controls.clone(),
         rational_arc_weights.clone(),

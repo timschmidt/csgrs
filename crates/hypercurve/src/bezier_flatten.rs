@@ -162,6 +162,17 @@ impl Curve2 {
     pub fn segment_certified(
         &self,
         options: &BezierFlatteningOptions,
+    ) -> crate::ExactCurveResult<CertifiedCurvePolyline2> {
+        self.segment_certified_with_policy(options, &crate::policy::principal_context())
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+            })
+    }
+
+    /// [`Self::segment_certified`] under an explicit predicate policy.
+    pub(crate) fn segment_certified_with_policy(
+        &self,
+        options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
         segment_curves(std::slice::from_ref(self), options, policy)
@@ -171,6 +182,17 @@ impl Curve2 {
 impl CurvePath2 {
     /// Segments every retained span in this path without converting coordinates to `f64`.
     pub fn segment_certified(
+        &self,
+        options: &BezierFlatteningOptions,
+    ) -> crate::ExactCurveResult<CertifiedCurvePolyline2> {
+        self.segment_certified_with_policy(options, &crate::policy::principal_context())
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Subdivision, value)
+            })
+    }
+
+    /// [`Self::segment_certified`] under an explicit predicate policy.
+    pub(crate) fn segment_certified_with_policy(
         &self,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
@@ -358,7 +380,7 @@ fn segment_curves(
                 continue;
             }
         }
-        let fragments = match curve.native_bezier_fragments_with_policy(policy)? {
+        let fragments = match curve.native_bezier_fragments_raw(policy)? {
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };

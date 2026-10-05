@@ -585,10 +585,8 @@ fn rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies() {
         vec![p(0, 0), p(2, 3), p(4, 0)],
         vec![s(1), s(2), s(1)],
         vec![s(0), s(0), s(0), s(1), s(1), s(1)],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let path = CurvePath2::try_new(vec![curve]).unwrap();
     let run = |policy| {
         crate::support::under(policy, || {
@@ -623,12 +621,16 @@ fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
         ),
     ];
     assert!(matches!(
-        CurvePath2::try_new_with_policy(curves.clone(), &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || CurvePath2::try_new(
+            curves.clone()
+        )),
         Err(ExactCurveError::Blocked(_))
     ));
-    let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512)
-        .unwrap()
-        .into_value();
+    let path = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        CurvePath2::try_new(curves)
+    })
+    .unwrap()
+    .into_value();
     assert!(matches!(
         crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
             &path,

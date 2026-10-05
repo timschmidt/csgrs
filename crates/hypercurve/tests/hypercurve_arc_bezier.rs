@@ -84,9 +84,8 @@ fn rationally_trimmed_semicircle_redecomposes_exactly() {
     let quarter = (r(1) / r(4)).unwrap();
     let three_quarters = (r(3) / r(4)).unwrap();
     let trimmed = source
-        .subcurve(quarter.into(), three_quarters.into(), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+        .subcurve(quarter.into(), three_quarters.into())
+        .unwrap();
     let Some(CurveGeometry2::CircularArc(arc)) = trimmed.geometry() else {
         panic!("trimmed arc changed family");
     };
@@ -241,10 +240,11 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
     else {
         panic!("minor-arc rational parameter was not certified");
     };
-    let minor_replayed = Curve2::from(minor.clone())
-        .point_at(&minor_parameter.clone().into(), &policy)
-        .unwrap()
-        .into_value();
+    let minor_replayed = crate::support::under(&policy, || {
+        Curve2::from(minor.clone()).point_at(&minor_parameter.clone().into())
+    })
+    .unwrap()
+    .into_value();
     assert_replayed_containment(
         minor.contains_point(
             minor_replayed
@@ -262,10 +262,10 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         panic!("strict major-arc rational parameter was not certified");
     };
     assert_eq!(
-        Curve2::from(major.clone())
-            .point_at(&strict_major_parameter.clone().into(), &policy)
-            .unwrap()
-            .into_value(),
+        crate::support::under(&policy, || Curve2::from(major.clone())
+            .point_at(&strict_major_parameter.clone().into()))
+        .unwrap()
+        .into_value(),
         p(0, -1).into()
     );
     for (fraction, expected) in [(q(1, 3), p(0, -1)), (q(2, 3), p(-1, 0))] {
@@ -283,10 +283,11 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         else {
             panic!("major-arc rational parameter was not certified");
         };
-        let replayed = Curve2::from(major.clone())
-            .point_at(&parameter.clone().into(), &policy)
-            .unwrap()
-            .into_value();
+        let replayed = crate::support::under(&policy, || {
+            Curve2::from(major.clone()).point_at(&parameter.clone().into())
+        })
+        .unwrap()
+        .into_value();
         assert_replayed_containment(
             major.contains_point(
                 replayed
@@ -427,16 +428,12 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
         CircularArc2::try_from_center(p(-1, 0), p(1, 0), p(0, 0), false).unwrap(),
     ));
     let clone = arc.clone();
-    let fragments = arc
-        .native_bezier_fragments(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let fragments = arc.native_bezier_fragments().unwrap();
 
     assert_eq!(fragments.len(), 2);
     assert!(std::ptr::eq(
         fragments,
-        clone
-            .native_bezier_fragments(&CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || clone.native_bezier_fragments())
             .unwrap()
             .into_value()
     ));
@@ -446,7 +443,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
             .all(|fragment| matches!(fragment.curve(), CurveGeometry2::RationalQuadraticBezier(_)))
     );
     assert_eq!(
-        arc.point_at(&half().into(), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || arc.point_at(&half().into()))
             .unwrap()
             .into_value(),
         p(0, -1).into()
@@ -454,10 +451,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
 
     let closing = Curve2::from(LineSeg2::try_new(p(1, 0), p(-1, 0)).unwrap());
     let path = CurvePath2::try_new(vec![arc, closing]).unwrap();
-    let boundary = path
-        .boundary_loop(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let boundary = path.boundary_loop().unwrap();
     assert_eq!(boundary.len(), 3);
     assert_eq!(boundary.len(), 3);
 }
@@ -502,9 +496,10 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
     ));
 
     let curve = Curve2::from(arc.clone());
-    let approximate_curve_fragments = curve
-        .native_bezier_fragments(&CurveContext::APPROXIMATE_512)
-        .unwrap();
+    let approximate_curve_fragments = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        curve.native_bezier_fragments()
+    })
+    .unwrap();
     assert_eq!(
         approximate_curve_fragments.certainty,
         CurveCertainty::Approximate512Consumed
@@ -514,30 +509,32 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
         matches!(fragment.curve(), CurveGeometry2::RationalQuadraticBezier(_))
     }));
     assert!(matches!(
-        curve.native_bezier_fragments(&CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || curve.native_bezier_fragments()),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::NativeTopology
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
     let path = CurvePath2::try_new(vec![curve]).unwrap();
-    let approximate_path_fragments = path
-        .native_bezier_fragments(&CurveContext::APPROXIMATE_512)
-        .unwrap();
+    let approximate_path_fragments = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        path.native_bezier_fragments()
+    })
+    .unwrap();
     assert_eq!(
         approximate_path_fragments.certainty,
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(approximate_path_fragments.value.len(), 2);
     assert!(matches!(
-        path.native_bezier_fragments(&CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || path.native_bezier_fragments()),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::NativeTopology
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
-    let repeated = path
-        .native_bezier_fragments(&CurveContext::APPROXIMATE_512)
-        .unwrap();
+    let repeated = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        path.native_bezier_fragments()
+    })
+    .unwrap();
     assert_eq!(repeated.certainty, CurveCertainty::Approximate512Consumed);
 
     let exact_semicircle =

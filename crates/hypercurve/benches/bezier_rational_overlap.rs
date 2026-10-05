@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -36,7 +38,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let topology = curve.intersection_topology(&tail, &policy)?.into_value();
+        let topology =
+            crate::support::under(&policy, || curve.intersection_topology(&tail))?.into_value();
         assert_eq!(topology.result().overlaps().len(), 1);
         checksum ^= black_box(
             topology.first().len() + topology.second().len() + topology.result().overlaps().len(),

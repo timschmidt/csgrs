@@ -130,10 +130,7 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
         .unwrap(),
     ));
 
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 1);
     assert!(evidence.is_complete());
@@ -171,10 +168,11 @@ fn top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts() {
                 .subcurve_between_exact(&q(1, 10), &q(9, 10), &policy)
                 .unwrap(),
         );
-        let result = Curve2::from(curve)
-            .intersect_curve(&Curve2::from(middle), &policy)
-            .unwrap()
-            .into_value();
+        let result = crate::support::under(&policy, || {
+            Curve2::from(curve).intersect_curve(&Curve2::from(middle))
+        })
+        .unwrap()
+        .into_value();
         assert!(result.is_complete(), "{:#?}", result.blockers());
         assert_eq!(result.contacts().len(), 2);
         assert_eq!(result.overlaps().len(), 1);
@@ -205,10 +203,7 @@ fn top_level_intersection_retains_implicit_conic_transversality() {
         .unwrap(),
     );
 
-    let result = conic
-        .intersect_curve(&cubic_line, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let result = conic.intersect_curve(&cubic_line).unwrap();
     assert_eq!(result.contacts().len(), 1);
     assert!(result.contacts()[0].is_certified_transverse());
 }
@@ -220,16 +215,11 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
         vec![p(0, 0), p(1, 1), p(2, 0)],
         vec![r(1), r(1), r(1)],
         vec![r(0), r(0), r(1), r(2), r(2)],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let line = Curve2::from(LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap());
 
-    let topology = spline
-        .intersection_topology(&line, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = spline.intersection_topology(&line).unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 2);
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -268,17 +258,23 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
         let curves = [
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))),
             Curve2::from(rational.elevated_to_degree(5).unwrap()),
-            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .into_value(),
-            Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots, &policy)
-                .unwrap()
-                .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone())
+            })
+            .unwrap()
+            .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots)
+            })
+            .unwrap()
+            .into_value(),
         ];
         for (index, original) in curves.into_iter().enumerate() {
             for reversed in [false, true] {
                 let curve = if reversed {
-                    original.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || original.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     original.clone()
                 };
@@ -298,7 +294,8 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                     } else {
                         (&curve, &crossing)
                     };
-                    let outcome = first.intersect_curve(second, &policy).unwrap();
+                    let outcome =
+                        crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     let result = outcome.value;
                     assert!(result.is_complete(), "{:?}", result.blockers());
@@ -306,7 +303,9 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                     assert_eq!(result.contacts().len(), 1);
                     let first_path = CurvePath2::try_new(vec![first.clone()]).unwrap();
                     let second_path = CurvePath2::try_new(vec![second.clone()]).unwrap();
-                    let path_outcome = first_path.intersect_path(&second_path, &policy).unwrap();
+                    let path_outcome =
+                        crate::support::under(&policy, || first_path.intersect_path(&second_path))
+                            .unwrap();
                     assert_eq!(path_outcome.certainty, CurveCertainty::Certified);
                     let path_result = path_outcome.value;
                     assert!(path_result.is_complete(), "{:?}", path_result.blockers());
@@ -332,7 +331,8 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                         if index < 2 {
                             assert_eq!(&parameter, location.local_parameter());
                         }
-                        let evaluated = curve.point_at(&parameter, &policy).unwrap();
+                        let evaluated =
+                            crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                         assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                         assert_eq!(
                             evaluated
@@ -341,7 +341,8 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                                 .value,
                             Classification::Decided(true),
                         );
-                        let split = curve.split_at(parameter, &policy).unwrap();
+                        let split =
+                            crate::support::under(&policy, || curve.split_at(parameter)).unwrap();
                         assert_eq!(split.certainty, CurveCertainty::Certified);
                         for endpoint in [split.value.0.end(), split.value.1.start()] {
                             assert_eq!(
@@ -380,15 +381,20 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                     .elevated_to_degree(5)
                     .unwrap(),
             ),
-            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .into_value(),
-            Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots, &policy)
-                .unwrap()
-                .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone())
+            })
+            .unwrap()
+            .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots)
+            })
+            .unwrap()
+            .into_value(),
         ];
         for (index, source) in sources.into_iter().enumerate() {
-            let selection = source.intersect_curve(&selecting, &policy).unwrap();
+            let selection =
+                crate::support::under(&policy, || source.intersect_curve(&selecting)).unwrap();
             assert_eq!(selection.certainty, CurveCertainty::Certified);
             assert!(selection.value.is_complete());
             assert_eq!(selection.value.contacts().len(), 1);
@@ -399,14 +405,15 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                     .unwrap(),
             );
             assert!(cut.scalar().is_none());
-            let tail = source
-                .split_at(cut.clone(), &policy)
+            let tail = crate::support::under(&policy, || source.split_at(cut.clone()))
                 .unwrap()
                 .into_value()
                 .1;
             for reversed in [false, true] {
                 let curve = if reversed {
-                    tail.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || tail.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     tail.clone()
                 };
@@ -454,7 +461,9 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                         } else {
                             (&curve, &other)
                         };
-                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersect_curve(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         let result = outcome.value;
                         assert!(
@@ -464,13 +473,12 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                         );
                         assert!(result.overlaps().is_empty());
                         assert_eq!(result.contacts().len(), usize::from(expected.is_some()));
-                        let paths = CurvePath2::try_new(vec![first.clone()])
-                            .unwrap()
-                            .intersect_path(
-                                &CurvePath2::try_new(vec![second.clone()]).unwrap(),
-                                &policy,
-                            )
-                            .unwrap();
+                        let paths = crate::support::under(&policy, || {
+                            CurvePath2::try_new(vec![first.clone()])
+                                .unwrap()
+                                .intersect_path(&CurvePath2::try_new(vec![second.clone()]).unwrap())
+                        })
+                        .unwrap();
                         assert_eq!(paths.certainty, CurveCertainty::Certified);
                         assert!(paths.value.is_complete(), "{:?}", paths.value.blockers());
                         assert_eq!(paths.value.contacts().len(), result.contacts().len());
@@ -502,7 +510,9 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                                 compared.value,
                                 Classification::Decided(std::cmp::Ordering::Equal)
                             );
-                            let evaluated = curve.point_at(&parameter, &policy).unwrap();
+                            let evaluated =
+                                crate::support::under(&policy, || curve.point_at(&parameter))
+                                    .unwrap();
                             assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 evaluated
@@ -511,7 +521,9 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                                     .value
                             ));
                             if *interior {
-                                let split = curve.split_at(parameter, &policy).unwrap();
+                                let split =
+                                    crate::support::under(&policy, || curve.split_at(parameter))
+                                        .unwrap();
                                 assert_eq!(split.certainty, CurveCertainty::Certified);
                                 for endpoint in [split.value.0.end(), split.value.1.start()] {
                                     assert!(decided(
@@ -544,15 +556,18 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
         LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap(),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let selection = source
-            .intersect_curve(&selecting, &policy)
+        let selection = crate::support::under(&policy, || source.intersect_curve(&selecting))
             .unwrap()
             .into_value();
         let cut = decided(selection.contacts()[0].first().parameter(&policy).unwrap());
-        let (prefix, tail) = source.split_at(cut, &policy).unwrap().into_value();
+        let (prefix, tail) = crate::support::under(&policy, || source.split_at(cut))
+            .unwrap()
+            .into_value();
         for reversed in [false, true] {
             let tail = if reversed {
-                tail.reversed(&policy).unwrap().into_value()
+                crate::support::under(&policy, || tail.reversed())
+                    .unwrap()
+                    .into_value()
             } else {
                 tail.clone()
             };
@@ -581,7 +596,8 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                     } else {
                         (&tail, &other)
                     };
-                    let outcome = first.intersect_curve(second, &policy).unwrap();
+                    let outcome =
+                        crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     let result = outcome.value;
                     assert!(
@@ -608,8 +624,12 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                             (second, overlap.second_range()),
                         ] {
                             let points = [
-                                curve.point_at(range.start(), &policy).unwrap().into_value(),
-                                curve.point_at(range.end(), &policy).unwrap().into_value(),
+                                crate::support::under(&policy, || curve.point_at(range.start()))
+                                    .unwrap()
+                                    .into_value(),
+                                crate::support::under(&policy, || curve.point_at(range.end()))
+                                    .unwrap()
+                                    .into_value(),
                             ];
                             for point in &points {
                                 assert!(expected.iter().any(|expected| {
@@ -667,15 +687,10 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
         ])
         .unwrap();
-        let chamfer = path
-            .chamfer_vertex_by_setbacks(
-                1,
-                Real::one(),
-                Real::one(),
-                CurveCornerMode2::TrimOnly,
-                &policy,
-            )
-            .unwrap();
+        let chamfer = crate::support::under(&policy, || {
+            path.chamfer_vertex_by_setbacks(1, Real::one(), Real::one(), CurveCornerMode2::TrimOnly)
+        })
+        .unwrap();
         assert_eq!(chamfer.certainty, CurveCertainty::Certified);
         let CurveCornerSolutions2::Unique(chamfer) = chamfer.value else {
             panic!("one unit setback on each incident curve");
@@ -684,7 +699,9 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
         assert!(tail.geometry().is_none());
         for reversed in [false, true] {
             let tail = if reversed {
-                tail.reversed(&policy).unwrap().into_value()
+                crate::support::under(&policy, || tail.reversed())
+                    .unwrap()
+                    .into_value()
             } else {
                 tail.clone()
             };
@@ -694,7 +711,8 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
                 } else {
                     (&tail, &independent)
                 };
-                let outcome = first.intersect_curve(second, &policy).unwrap();
+                let outcome =
+                    crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 assert!(
                     outcome.value.is_complete(),
@@ -718,7 +736,8 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
                     (second, overlap.second_range()),
                 ] {
                     for parameter in [range.start(), range.end()] {
-                        let point = curve.point_at(parameter, &policy).unwrap();
+                        let point =
+                            crate::support::under(&policy, || curve.point_at(parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
                         assert!(
                             [independent.start(), independent.end()]
@@ -745,15 +764,15 @@ fn generated_parabola_chord(policy: &CurveContext) -> Curve2 {
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
     ])
     .unwrap();
-    let outcome = path
-        .chamfer_vertex_by_setbacks(
+    let outcome = crate::support::under(policy, || {
+        path.chamfer_vertex_by_setbacks(
             1,
             Real::one(),
             Real::one(),
             hypercurve::CurveCornerMode2::TrimOnly,
-            policy,
         )
-        .unwrap();
+    })
+    .unwrap();
     assert_eq!(outcome.certainty, CurveCertainty::Certified);
     let hypercurve::CurveCornerSolutions2::Unique(path) = outcome.value else {
         panic!("one chamfer");
@@ -786,7 +805,7 @@ fn assert_single_contact_curve_pieces(
     for piece in pieces {
         let domain = piece.parameter_domain();
         for parameter in [domain.start(), domain.end()] {
-            let point = piece.point_at(parameter, policy).unwrap();
+            let point = crate::support::under(policy, || piece.point_at(parameter)).unwrap();
             assert_eq!(point.certainty, CurveCertainty::Certified);
             assert!([piece.start(), piece.end()].iter().any(|endpoint| {
                 decided(
@@ -814,13 +833,17 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
         let original = generated_parabola_chord(&policy);
         for reverse_first in [false, true] {
             let chord = if reverse_first {
-                original.reversed(&policy).unwrap().into_value()
+                crate::support::under(&policy, || original.reversed())
+                    .unwrap()
+                    .into_value()
             } else {
                 original.clone()
             };
             for reverse_second in [false, true] {
                 let crossing = if reverse_second {
-                    crossing.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || crossing.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     crossing.clone()
                 };
@@ -830,7 +853,9 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                     } else {
                         (&chord, &crossing)
                     };
-                    let outcome = first.intersection_topology(second, &policy).unwrap();
+                    let outcome =
+                        crate::support::under(&policy, || first.intersection_topology(second))
+                            .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     let topology = outcome.value;
                     assert_eq!(topology.result().contacts().len(), 1);
@@ -842,7 +867,9 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                     ] {
                         assert_single_contact_curve_pieces(source, pieces, &point, &policy);
                         for piece in pieces {
-                            let replay = piece.intersect_curve(other, &policy).unwrap();
+                            let replay =
+                                crate::support::under(&policy, || piece.intersect_curve(other))
+                                    .unwrap();
                             assert_eq!(replay.certainty, CurveCertainty::Certified);
                             assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
                             assert_eq!(replay.value.contacts().len(), 1);
@@ -859,7 +886,10 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                         CurvePath2::try_new(vec![first.clone()]).unwrap(),
                         CurvePath2::try_new(vec![second.clone()]).unwrap(),
                     ];
-                    let outcome = paths[0].intersection_topology(&paths[1], &policy).unwrap();
+                    let outcome = crate::support::under(&policy, || {
+                        paths[0].intersection_topology(&paths[1])
+                    })
+                    .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert_eq!(path_piece_count(&outcome.value), 4);
                     assert_single_contact_curve_pieces(
@@ -901,15 +931,20 @@ fn selected_tail_topology_keeps_reversed_and_nonunit_source_charts() {
                     .elevated_to_degree(5)
                     .unwrap(),
             ),
-            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .into_value(),
-            Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots, &policy)
-                .unwrap()
-                .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone())
+            })
+            .unwrap()
+            .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots)
+            })
+            .unwrap()
+            .into_value(),
         ];
         for original in curves {
-            let selected = original.intersect_curve(&selecting, &policy).unwrap();
+            let selected =
+                crate::support::under(&policy, || original.intersect_curve(&selecting)).unwrap();
             assert_eq!(selected.certainty, CurveCertainty::Certified);
             let parameter = decided(
                 selected.value.contacts()[0]
@@ -917,14 +952,15 @@ fn selected_tail_topology_keeps_reversed_and_nonunit_source_charts() {
                     .parameter(&policy)
                     .unwrap(),
             );
-            let tail = original
-                .split_at(parameter, &policy)
+            let tail = crate::support::under(&policy, || original.split_at(parameter))
                 .unwrap()
                 .into_value()
                 .1;
             for reversed in [false, true] {
                 let tail = if reversed {
-                    tail.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || tail.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     tail.clone()
                 };
@@ -934,7 +970,9 @@ fn selected_tail_topology_keeps_reversed_and_nonunit_source_charts() {
                     } else {
                         (&tail, &crossing)
                     };
-                    let outcome = first.intersection_topology(second, &policy).unwrap();
+                    let outcome =
+                        crate::support::under(&policy, || first.intersection_topology(second))
+                            .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     let topology = outcome.value;
                     assert_eq!(topology.result().contacts().len(), 1);
@@ -944,7 +982,10 @@ fn selected_tail_topology_keeps_reversed_and_nonunit_source_charts() {
                         CurvePath2::try_new(vec![first.clone()]).unwrap(),
                         CurvePath2::try_new(vec![second.clone()]).unwrap(),
                     ];
-                    let outcome = paths[0].intersection_topology(&paths[1], &policy).unwrap();
+                    let outcome = crate::support::under(&policy, || {
+                        paths[0].intersection_topology(&paths[1])
+                    })
+                    .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert_single_contact_curve_pieces(
                         first,
@@ -991,7 +1032,9 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
         for curve in [Curve2::from(polynomial), Curve2::from(rational)] {
             for reversed in [false, true] {
                 let source = if reversed {
-                    curve.reversed(&policy).unwrap().value
+                    crate::support::under(&policy, || curve.reversed())
+                        .unwrap()
+                        .value
                 } else {
                     curve.clone()
                 };
@@ -1001,7 +1044,9 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                     } else {
                         (&source, &crossing)
                     };
-                    let outcome = first.intersection_topology(second, &policy).unwrap();
+                    let outcome =
+                        crate::support::under(&policy, || first.intersection_topology(second))
+                            .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     let topology = outcome.value;
                     assert!(topology.result().is_complete());
@@ -1036,7 +1081,9 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                         ));
                     }
                     for (piece, expected) in pieces.iter().zip(&sides) {
-                        let replay = piece.intersect_curve(&crossing, &policy).unwrap();
+                        let replay =
+                            crate::support::under(&policy, || piece.intersect_curve(&crossing))
+                                .unwrap();
                         assert_eq!(replay.certainty, CurveCertainty::Certified);
                         assert!(replay.value.is_complete());
                         assert_eq!(replay.value.contacts().len(), 1);
@@ -1070,7 +1117,9 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
         let original = generated_parabola_chord(&policy);
         for reverse_chord in [false, true] {
             let chord = if reverse_chord {
-                original.reversed(&policy).unwrap().into_value()
+                crate::support::under(&policy, || original.reversed())
+                    .unwrap()
+                    .into_value()
             } else {
                 original.clone()
             };
@@ -1086,7 +1135,9 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
             ] {
                 for reverse_other in [false, true] {
                     let other = if reverse_other {
-                        other.reversed(&policy).unwrap().into_value()
+                        crate::support::under(&policy, || other.reversed())
+                            .unwrap()
+                            .into_value()
                     } else {
                         other.clone()
                     };
@@ -1096,7 +1147,9 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                         } else {
                             (&chord, &other)
                         };
-                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersect_curve(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         let result = outcome.value;
                         assert!(
@@ -1106,13 +1159,12 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                         );
                         assert!(result.overlaps().is_empty());
                         assert_eq!(result.contacts().len(), usize::from(expected.is_some()));
-                        let paths = CurvePath2::try_new(vec![first.clone()])
-                            .unwrap()
-                            .intersect_path(
-                                &CurvePath2::try_new(vec![second.clone()]).unwrap(),
-                                &policy,
-                            )
-                            .unwrap();
+                        let paths = crate::support::under(&policy, || {
+                            CurvePath2::try_new(vec![first.clone()])
+                                .unwrap()
+                                .intersect_path(&CurvePath2::try_new(vec![second.clone()]).unwrap())
+                        })
+                        .unwrap();
                         assert_eq!(paths.certainty, CurveCertainty::Certified);
                         assert!(paths.value.is_complete(), "{:?}", paths.value.blockers());
                         assert_eq!(paths.value.contacts().len(), result.contacts().len());
@@ -1133,7 +1185,9 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                                 [(first, contact.first()), (second, contact.second())]
                             {
                                 let parameter = decided(location.parameter(&policy).unwrap());
-                                let evaluated = curve.point_at(&parameter, &policy).unwrap();
+                                let evaluated =
+                                    crate::support::under(&policy, || curve.point_at(&parameter))
+                                        .unwrap();
                                 assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                                 assert!(decided(
                                     evaluated
@@ -1145,7 +1199,10 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                                         .value
                                 ));
                                 if interior {
-                                    let split = curve.split_at(parameter, &policy).unwrap();
+                                    let split = crate::support::under(&policy, || {
+                                        curve.split_at(parameter)
+                                    })
+                                    .unwrap();
                                     assert_eq!(split.certainty, CurveCertainty::Certified);
                                     for endpoint in [split.value.0.end(), split.value.1.start()] {
                                         assert!(decided(
@@ -1184,12 +1241,15 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let original = generated_parabola_chord(&policy);
         let independent = Curve2::from(LineSeg2::try_new(p(-1, 0), end.clone()).unwrap());
-        let selected = selecting
-            .intersect_curve(&selecting_line, &policy)
-            .unwrap()
-            .into_value();
+        let selected =
+            crate::support::under(&policy, || selecting.intersect_curve(&selecting_line))
+                .unwrap()
+                .into_value();
         let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
-        let tail = independent.split_at(cut, &policy).unwrap().into_value().1;
+        let tail = crate::support::under(&policy, || independent.split_at(cut))
+            .unwrap()
+            .into_value()
+            .1;
         for (case, (other, expected)) in [
             (independent, [p(-1, 0), end.clone()]),
             (generated_parabola_chord(&policy), [p(-1, 0), end.clone()]),
@@ -1200,13 +1260,17 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
         {
             for reverse_chord in [false, true] {
                 let chord = if reverse_chord {
-                    original.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || original.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     original.clone()
                 };
                 for reverse_other in [false, true] {
                     let other = if reverse_other {
-                        other.reversed(&policy).unwrap().into_value()
+                        crate::support::under(&policy, || other.reversed())
+                            .unwrap()
+                            .into_value()
                     } else {
                         other.clone()
                     };
@@ -1216,7 +1280,9 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                         } else {
                             (&chord, &other)
                         };
-                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersect_curve(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert!(
                             outcome.value.is_complete(),
@@ -1242,8 +1308,13 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                             ),
                             (overlap.first_range().end(), overlap.second_range().end()),
                         ] {
-                            let first_point = first.point_at(first_parameter, &policy).unwrap();
-                            let second_point = second.point_at(second_parameter, &policy).unwrap();
+                            let first_point =
+                                crate::support::under(&policy, || first.point_at(first_parameter))
+                                    .unwrap();
+                            let second_point = crate::support::under(&policy, || {
+                                second.point_at(second_parameter)
+                            })
+                            .unwrap();
                             assert_eq!(first_point.certainty, CurveCertainty::Certified);
                             assert_eq!(second_point.certainty, CurveCertainty::Certified);
                             assert!(decided(
@@ -1258,8 +1329,12 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                             (second, overlap.second_range()),
                         ] {
                             let points = [
-                                curve.point_at(range.start(), &policy).unwrap().into_value(),
-                                curve.point_at(range.end(), &policy).unwrap().into_value(),
+                                crate::support::under(&policy, || curve.point_at(range.start()))
+                                    .unwrap()
+                                    .into_value(),
+                                crate::support::under(&policy, || curve.point_at(range.end()))
+                                    .unwrap()
+                                    .into_value(),
                             ];
                             for (boundary, point) in points.iter().enumerate() {
                                 assert!(
@@ -1315,7 +1390,9 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                                 }
                             }
                         };
-                        let outcome = first.intersection_topology(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersection_topology(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert_pieces(outcome.value.first(), outcome.value.second());
                         assert_eq!(
@@ -1326,7 +1403,10 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                             CurvePath2::try_new(vec![first.clone()]).unwrap(),
                             CurvePath2::try_new(vec![second.clone()]).unwrap(),
                         ];
-                        let outcome = paths[0].intersection_topology(&paths[1], &policy).unwrap();
+                        let outcome = crate::support::under(&policy, || {
+                            paths[0].intersection_topology(&paths[1])
+                        })
+                        .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert_pieces(
                             outcome.value.first()[0].curves(),
@@ -1351,7 +1431,8 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let original = generated_parabola_chord(&policy);
         let independent = Curve2::from(LineSeg2::try_new(p(-1, 0), end.clone()).unwrap());
-        let selected = original.intersect_curve(&selecting, &policy).unwrap();
+        let selected =
+            crate::support::under(&policy, || original.intersect_curve(&selecting)).unwrap();
         assert_eq!(selected.certainty, CurveCertainty::Certified);
         assert!(selected.value.is_complete());
         assert_eq!(selected.value.contacts().len(), 1);
@@ -1361,11 +1442,12 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                 .parameter(&policy)
                 .unwrap(),
         );
-        let split = original.split_at(cut, &policy).unwrap();
+        let split = crate::support::under(&policy, || original.split_at(cut)).unwrap();
         assert_eq!(split.certainty, CurveCertainty::Certified);
         let (left, right) = split.value;
 
-        let overlap = left.intersect_curve(&independent, &policy).unwrap();
+        let overlap =
+            crate::support::under(&policy, || left.intersect_curve(&independent)).unwrap();
         assert_eq!(overlap.certainty, CurveCertainty::Certified);
         assert!(
             overlap.value.is_complete(),
@@ -1375,7 +1457,7 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
         assert!(overlap.value.contacts().is_empty());
         assert_eq!(overlap.value.overlaps().len(), 1);
         let cut = overlap.value.overlaps()[0].second_range().end().clone();
-        let split = independent.split_at(cut, &policy).unwrap();
+        let split = crate::support::under(&policy, || independent.split_at(cut)).unwrap();
         assert_eq!(split.certainty, CurveCertainty::Certified);
         let (prefix, tail) = split.value;
 
@@ -1385,13 +1467,17 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
         {
             for reverse_first in [false, true] {
                 let first = if reverse_first {
-                    first.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || first.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     first.clone()
                 };
                 for reverse_second in [false, true] {
                     let second = if reverse_second {
-                        second.reversed(&policy).unwrap().into_value()
+                        crate::support::under(&policy, || second.reversed())
+                            .unwrap()
+                            .into_value()
                     } else {
                         second.clone()
                     };
@@ -1401,7 +1487,9 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                         } else {
                             (&first, &second)
                         };
-                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersect_curve(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         let result = outcome.value;
                         assert!(
@@ -1417,7 +1505,9 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                             contact.tangent_cross_sign(),
                             Some(hyperreal::RealSign::Zero)
                         );
-                        let topology = first.intersection_topology(second, &policy).unwrap();
+                        let topology =
+                            crate::support::under(&policy, || first.intersection_topology(second))
+                                .unwrap();
                         assert_eq!(topology.certainty, CurveCertainty::Certified);
                         assert_eq!(
                             topology.value.first().len() + topology.value.second().len(),
@@ -1462,7 +1552,9 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                             [(first, contact.first()), (second, contact.second())]
                         {
                             let parameter = decided(location.parameter(&policy).unwrap());
-                            let point = curve.point_at(&parameter, &policy).unwrap();
+                            let point =
+                                crate::support::under(&policy, || curve.point_at(&parameter))
+                                    .unwrap();
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 point
@@ -1487,33 +1579,31 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
     let controls = vec![p(0, 0), p(1, 1), p(2, 0), p(3, 1)];
     let knots = vec![r(0), r(0), r(1), r(2), r(3), r(3)];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let selection = selecting
-            .intersect_curve(&crossing, &policy)
+        let selection = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
         let cut = decided(selection.contacts()[0].first().parameter(&policy).unwrap());
         for source in [
-            Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .into_value(),
-            Curve2::try_nurbs(
-                1,
-                controls.clone(),
-                vec![Real::one(); 4],
-                knots.clone(),
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone())
+            })
+            .unwrap()
+            .into_value(),
+            crate::support::under(&policy, || {
+                Curve2::try_nurbs(1, controls.clone(), vec![Real::one(); 4], knots.clone())
+            })
             .unwrap()
             .into_value(),
         ] {
-            let tail = source
-                .split_at(cut.clone(), &policy)
+            let tail = crate::support::under(&policy, || source.split_at(cut.clone()))
                 .unwrap()
                 .into_value()
                 .1;
             for reversed in [false, true] {
                 let curve = if reversed {
-                    tail.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || tail.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     tail.clone()
                 };
@@ -1531,7 +1621,9 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                         } else {
                             (&curve, &crossing)
                         };
-                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersect_curve(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert!(
                             outcome.value.is_complete(),
@@ -1571,7 +1663,8 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                                     .value,
                                 Classification::Decided(std::cmp::Ordering::Equal)
                             );
-                            let evaluated = curve.point_at(&mapped, &policy).unwrap();
+                            let evaluated =
+                                crate::support::under(&policy, || curve.point_at(&mapped)).unwrap();
                             assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 evaluated
@@ -1597,8 +1690,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
         LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let selected = selecting
-            .intersect_curve(&crossing, &policy)
+        let selected = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
         let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
@@ -1612,23 +1704,26 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
             } else {
                 source.clone()
             };
-            let prefix = source
-                .subcurve(r(0).into(), cut.clone(), &policy)
-                .unwrap()
-                .into_value();
-            let tail = other
-                .subcurve(cut.clone(), r(1).into(), &policy)
+            let prefix =
+                crate::support::under(&policy, || source.subcurve(r(0).into(), cut.clone()))
+                    .unwrap()
+                    .into_value();
+            let tail = crate::support::under(&policy, || other.subcurve(cut.clone(), r(1).into()))
                 .unwrap()
                 .into_value();
             for reverse_first in [false, true] {
                 let prefix = if reverse_first {
-                    prefix.reversed(&policy).unwrap().into_value()
+                    crate::support::under(&policy, || prefix.reversed())
+                        .unwrap()
+                        .into_value()
                 } else {
                     prefix.clone()
                 };
                 for reverse_second in [false, true] {
                     let tail = if reverse_second {
-                        tail.reversed(&policy).unwrap().into_value()
+                        crate::support::under(&policy, || tail.reversed())
+                            .unwrap()
+                            .into_value()
                     } else {
                         tail.clone()
                     };
@@ -1638,7 +1733,9 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                         } else {
                             (&prefix, &tail)
                         };
-                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        let outcome =
+                            crate::support::under(&policy, || first.intersect_curve(second))
+                                .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         let result = outcome.value;
                         assert!(result.is_complete(), "{:?}", result.blockers());
@@ -1685,7 +1782,9 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                                     .value,
                                 Classification::Decided(std::cmp::Ordering::Equal)
                             );
-                            let point = curve.point_at(&parameter, &policy).unwrap();
+                            let point =
+                                crate::support::under(&policy, || curve.point_at(&parameter))
+                                    .unwrap();
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 point
@@ -1710,15 +1809,15 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
         ])
         .unwrap();
         let path = {
-            let solutions = path
-                .fillet_vertex(
+            let solutions = crate::support::under(&policy, || {
+                path.fillet_vertex(
                     1,
                     &hypercurve::CurveFillet2::new(q(1, 4)),
                     hypercurve::CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .unwrap()
-                .into_value();
+            })
+            .unwrap()
+            .into_value();
             let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
@@ -1732,7 +1831,8 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
             Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
         ] {
             for (first, second) in [(circle, &line), (&line, circle)] {
-                let outcome = first.intersect_curve(second, &policy).unwrap();
+                let outcome =
+                    crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 assert!(
                     outcome.value.is_complete(),
@@ -1752,7 +1852,8 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
                 ));
                 for (curve, location) in [(first, contact.first()), (second, contact.second())] {
                     let parameter = decided(location.parameter(&policy).unwrap());
-                    let point = curve.point_at(&parameter, &policy).unwrap();
+                    let point =
+                        crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         point.value.coincides_with(contact.point(), &policy).value,
@@ -1761,7 +1862,8 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
                         curve.family(),
                     );
                 }
-                let topology = first.intersection_topology(second, &policy).unwrap();
+                let topology =
+                    crate::support::under(&policy, || first.intersection_topology(second)).unwrap();
                 assert_eq!(topology.certainty, CurveCertainty::Certified);
                 assert!(topology.value.result().is_complete());
             }
@@ -1778,15 +1880,15 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
         ])
         .unwrap();
         let path = {
-            let solutions = path
-                .fillet_vertex(
+            let solutions = crate::support::under(&policy, || {
+                path.fillet_vertex(
                     1,
                     &hypercurve::CurveFillet2::new(q(1, 4)),
                     hypercurve::CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .unwrap()
-                .into_value();
+            })
+            .unwrap()
+            .into_value();
             let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
@@ -1799,12 +1901,15 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
         ));
         for reverse in [false, true] {
             let circle = if reverse {
-                circle.reversed(&policy).unwrap().value
+                crate::support::under(&policy, || circle.reversed())
+                    .unwrap()
+                    .value
             } else {
                 circle.clone()
             };
             for (first, second) in [(&circle, &parabola), (&parabola, &circle)] {
-                let outcome = first.intersect_curve(second, &policy).unwrap();
+                let outcome =
+                    crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 assert!(
                     outcome.value.is_complete(),
@@ -1817,7 +1922,8 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                 assert!(contact.is_certified_transverse());
                 for (curve, location) in [(first, contact.first()), (second, contact.second())] {
                     let parameter = decided(location.parameter(&policy).unwrap());
-                    let point = curve.point_at(&parameter, &policy).unwrap();
+                    let point =
+                        crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     for (point, contact) in [
                         (&point.value, contact.point()),
@@ -1835,7 +1941,8 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                             );
                         }
                     }
-                    let split = curve.split_at(parameter, &policy).unwrap();
+                    let split =
+                        crate::support::under(&policy, || curve.split_at(parameter)).unwrap();
                     assert_eq!(split.certainty, CurveCertainty::Certified);
                     let (prefix, tail) = split.value;
                     for endpoint in [prefix.end(), tail.start()] {
@@ -1849,14 +1956,17 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                         first
                     };
                     for piece in [prefix, tail] {
-                        let result = piece.intersect_curve(other, &policy).unwrap();
+                        let result =
+                            crate::support::under(&policy, || piece.intersect_curve(other))
+                                .unwrap();
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         assert!(result.value.is_complete(), "{:?}", result.value.blockers());
                         let [child] = result.value.contacts() else {
                             panic!("one split contact")
                         };
                         let parameter = decided(child.first().parameter(&policy).unwrap());
-                        let point = piece.point_at(&parameter, &policy).unwrap();
+                        let point =
+                            crate::support::under(&policy, || piece.point_at(&parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
                         let equal = point.value.coincides_with(contact.point(), &policy);
                         assert_eq!(equal.certainty, CurveCertainty::Certified);
@@ -1866,7 +1976,8 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                 let unequal = contact.point().coincides_with(&parabola.start(), &policy);
                 assert_eq!(unequal.certainty, CurveCertainty::Certified);
                 assert_eq!(unequal.value, Classification::Decided(false));
-                let topology = first.intersection_topology(second, &policy).unwrap();
+                let topology =
+                    crate::support::under(&policy, || first.intersection_topology(second)).unwrap();
                 assert_eq!(topology.certainty, CurveCertainty::Certified);
                 assert!(topology.value.result().is_complete());
             }
@@ -1889,7 +2000,7 @@ fn native_retraced_overlaps_survive_independent_restriction() {
             (&source, &independent),
             (&independent, &source),
         ] {
-            let result = first.intersect_curve(second, &policy).unwrap();
+            let result = crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert!(result.value.is_complete(), "{:?}", result.value.blockers());
             assert!(result.value.contacts().is_empty());
@@ -1933,20 +2044,24 @@ fn native_retraced_overlaps_survive_independent_restriction() {
                     ),
                     (overlap.first_range().end(), overlap.second_range().end()),
                 ] {
-                    let a = first.point_at(a, &policy).unwrap().into_value();
-                    let b = second.point_at(b, &policy).unwrap().into_value();
+                    let a = crate::support::under(&policy, || first.point_at(a))
+                        .unwrap()
+                        .into_value();
+                    let b = crate::support::under(&policy, || second.point_at(b))
+                        .unwrap()
+                        .into_value();
                     assert!(decided(a.coincides_with(&b, &policy).value));
                 }
             }
-            let a = first
-                .subcurve(q(1, 8).into(), q(1, 4).into(), &policy)
-                .unwrap()
-                .into_value();
-            let b = second
-                .subcurve(q(3, 4).into(), q(7, 8).into(), &policy)
-                .unwrap()
-                .into_value();
-            let fresh = a.intersect_curve(&b, &policy).unwrap();
+            let a =
+                crate::support::under(&policy, || first.subcurve(q(1, 8).into(), q(1, 4).into()))
+                    .unwrap()
+                    .into_value();
+            let b =
+                crate::support::under(&policy, || second.subcurve(q(3, 4).into(), q(7, 8).into()))
+                    .unwrap()
+                    .into_value();
+            let fresh = crate::support::under(&policy, || a.intersect_curve(&b)).unwrap();
             assert_eq!(fresh.certainty, CurveCertainty::Certified);
             assert!(fresh.value.is_complete(), "{:?}", fresh.value.blockers());
             assert_eq!(fresh.value.overlaps().len(), 1);
@@ -1968,11 +2083,14 @@ fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
         ));
         for reversed in [false, true] {
             let second = if reversed {
-                source.reversed(&policy).unwrap().into_value()
+                crate::support::under(&policy, || source.reversed())
+                    .unwrap()
+                    .into_value()
             } else {
                 source.clone()
             };
-            let result = source.intersect_curve(&second, &policy).unwrap();
+            let result =
+                crate::support::under(&policy, || source.intersect_curve(&second)).unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert!(result.value.is_complete(), "{:?}", result.value.blockers());
             assert_eq!(result.value.contacts().len(), 2);
@@ -2006,13 +2124,15 @@ fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
                         .value
                 ));
             }
-            let topology = source.intersection_topology(&second, &policy).unwrap();
+            let topology =
+                crate::support::under(&policy, || source.intersection_topology(&second)).unwrap();
             assert_eq!(topology.certainty, CurveCertainty::Certified);
             assert!(topology.value.result().is_complete());
             assert_eq!(topology.value.first().len(), 3);
             assert_eq!(topology.value.second().len(), 3);
             for piece in topology.value.first() {
-                let replay = piece.intersect_curve(&second, &policy).unwrap();
+                let replay =
+                    crate::support::under(&policy, || piece.intersect_curve(&second)).unwrap();
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
             }
@@ -2025,15 +2145,18 @@ fn native_nodal_spline_contacts_retain_authored_charts() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let controls = vec![p(12, -9), p(-4, 13), p(-4, -13), p(12, 9)];
         let knots = [2, 2, 2, 2, 6, 6, 6, 6].map(r).to_vec();
-        let polynomial =
-            Curve2::try_polynomial_bspline(3, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .into_value();
-        let rational = Curve2::try_nurbs(3, controls, vec![r(1); 4], knots, &policy)
-            .unwrap()
-            .into_value();
+        let polynomial = crate::support::under(&policy, || {
+            Curve2::try_polynomial_bspline(3, controls.clone(), knots.clone())
+        })
+        .unwrap()
+        .into_value();
+        let rational = crate::support::under(&policy, || {
+            Curve2::try_nurbs(3, controls, vec![r(1); 4], knots)
+        })
+        .unwrap()
+        .into_value();
         for (a, b) in [(&polynomial, &rational), (&rational, &polynomial)] {
-            let result = a.intersect_curve(b, &policy).unwrap();
+            let result = crate::support::under(&policy, || a.intersect_curve(b)).unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert!(result.value.is_complete(), "{:?}", result.value.blockers());
             assert_eq!(result.value.contacts().len(), 2);
@@ -2060,7 +2183,8 @@ fn native_nodal_spline_contacts_retain_authored_charts() {
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
                 for (curve, parameter) in [(a, first), (b, second)] {
-                    let point = curve.point_at(&parameter, &policy).unwrap();
+                    let point =
+                        crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
                     assert!(decided(
                         point.value.coincides_with(contact.point(), &policy).value
@@ -2078,15 +2202,15 @@ fn retained_retraced_domains_retain_every_parameter_component() {
         LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let selected = selecting
-            .intersect_curve(&crossing, &policy)
+        let selected = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
         let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
         let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)));
-        let (first, second) = source.split_at(cut, &policy).unwrap().into_value();
-        let result = first
-            .intersect_curve(&second, &policy)
+        let (first, second) = crate::support::under(&policy, || source.split_at(cut))
+            .unwrap()
+            .into_value();
+        let result = crate::support::under(&policy, || first.intersect_curve(&second))
             .unwrap()
             .into_value();
         // Both domains contain the segment from zero to 4s(1-s). The
@@ -2103,8 +2227,8 @@ fn retained_retraced_domains_retain_every_parameter_component() {
                 ),
                 (overlap.first_range().end(), overlap.second_range().end()),
             ] {
-                let a = first.point_at(a, &policy).unwrap();
-                let b = second.point_at(b, &policy).unwrap();
+                let a = crate::support::under(&policy, || first.point_at(a)).unwrap();
+                let b = crate::support::under(&policy, || second.point_at(b)).unwrap();
                 assert_eq!(a.certainty, CurveCertainty::Certified);
                 assert_eq!(b.certainty, CurveCertainty::Certified);
                 assert_eq!(
@@ -2114,11 +2238,11 @@ fn retained_retraced_domains_retain_every_parameter_component() {
             }
         }
         for (a, b) in [(&first, &second), (&second, &first)] {
-            let topology = a.intersection_topology(b, &policy).unwrap();
+            let topology = crate::support::under(&policy, || a.intersection_topology(b)).unwrap();
             assert_eq!(topology.certainty, CurveCertainty::Certified);
             assert!(topology.value.result().is_complete());
             for piece in topology.value.first() {
-                let replay = piece.intersect_curve(b, &policy).unwrap();
+                let replay = crate::support::under(&policy, || piece.intersect_curve(b)).unwrap();
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
             }
@@ -2130,10 +2254,7 @@ fn retained_retraced_domains_retain_every_parameter_component() {
 fn top_level_shared_component_retains_certified_overlap() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let second = first.clone();
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
 
     assert!(evidence.is_complete());
@@ -2168,10 +2289,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
     let first = Curve2::from(base);
     let second = Curve2::from(independent);
 
-    let evidence = first
-        .intersect_curve(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_curve(&second).unwrap();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -2230,8 +2348,7 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
     let first = Curve2::new(CurveGeometry2::RationalBezier(first_curve));
     let second = Curve2::new(CurveGeometry2::RationalBezier(second_curve));
 
-    let topology = first
-        .intersection_topology(&second, &policy)
+    let topology = crate::support::under(&policy, || first.intersection_topology(&second))
         .unwrap()
         .into_value();
     let evidence = topology.result();
@@ -2268,10 +2385,7 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
             .unwrap(),
     ));
 
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -2295,10 +2409,7 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 
     let first_path = CurvePath2::try_new(vec![first]).unwrap();
     let second_path = CurvePath2::try_new(vec![second]).unwrap();
-    let path_topology = first_path
-        .intersection_topology(&second_path, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let path_topology = first_path.intersection_topology(&second_path).unwrap();
     assert_eq!(path_topology.first()[0].curves().len(), 2);
     assert_eq!(path_topology.second()[0].curves().len(), 1);
 }
@@ -2329,10 +2440,7 @@ fn promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary() {
     ])
     .unwrap();
 
-    let evidence = first
-        .intersect_path(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_path(&second).unwrap();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
@@ -2387,10 +2495,7 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
     ])
     .unwrap();
 
-    let evidence = first
-        .intersect_path(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_path(&second).unwrap();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
@@ -2453,18 +2558,11 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
         p(4, 0),
     )));
     let first = source
-        .subcurve(Real::zero().into(), q(3, 4).into(), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
-    let second = source
-        .subcurve(q(1, 4).into(), Real::one().into(), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+        .subcurve(Real::zero().into(), q(3, 4).into())
+        .unwrap();
+    let second = source.subcurve(q(1, 4).into(), Real::one().into()).unwrap();
 
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -2499,11 +2597,8 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 2);
 
-    let reversed = second.reversed(&CurveContext::STRICT).unwrap().into_value();
-    let reversed_evidence = first
-        .intersect_curve(&reversed, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let reversed = second.reversed().unwrap();
+    let reversed_evidence = first.intersect_curve(&reversed).unwrap();
     assert!(reversed_evidence.is_complete());
     assert_eq!(reversed_evidence.overlaps().len(), 1);
     assert_eq!(
@@ -2522,10 +2617,7 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
 fn top_level_disjoint_curves_produce_a_complete_empty_evidence() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
     let second = Curve2::from(LineSeg2::try_new(p(0, 2), p(1, 2)).unwrap());
-    let evidence = first
-        .intersect_curve(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_curve(&second).unwrap();
 
     assert!(evidence.is_complete());
     assert!(evidence.is_disjoint());
@@ -2539,10 +2631,7 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let second =
         Curve2::from(CircularArc2::try_from_center(p(3, 0), p(13, 0), p(8, 0), true).unwrap());
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 4);
 
@@ -2569,9 +2658,10 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     );
     let line = Curve2::from(LineSeg2::try_new(p(2, 1), p(5, 1)).unwrap());
 
-    let approximate = arc
-        .intersect_curve(&line, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal must resolve the ambiguous semicircle");
+    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        arc.intersect_curve(&line)
+    })
+    .expect("the authorized terminal must resolve the ambiguous semicircle");
     assert_eq!(
         approximate.certainty,
         CurveCertainty::Approximate512Consumed
@@ -2584,9 +2674,8 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
             .is_some()
     );
 
-    let strict = arc
-        .intersect_curve(&line, &CurveContext::STRICT)
-        .unwrap_err();
+    let strict =
+        crate::support::under(&CurveContext::STRICT, || arc.intersect_curve(&line)).unwrap_err();
     assert!(matches!(
         strict,
         ExactCurveError::Blocked(blocker)
@@ -2594,18 +2683,20 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
-    let topology = arc
-        .intersection_topology(&line, &CurveContext::APPROXIMATE_512)
-        .expect("topology must replay the authorized terminal from retained arc facts");
+    let topology = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        arc.intersection_topology(&line)
+    })
+    .expect("topology must replay the authorized terminal from retained arc facts");
     assert_eq!(topology.certainty, CurveCertainty::Approximate512Consumed);
     assert!(topology.value.result().is_complete());
     assert_eq!(topology.value.result().contacts().len(), 1);
 
     let arc_path = CurvePath2::try_new(vec![arc]).unwrap();
     let line_path = CurvePath2::try_new(vec![line]).unwrap();
-    let path_result = arc_path
-        .intersect_path(&line_path, &CurveContext::APPROXIMATE_512)
-        .expect("path intersection must preserve terminal certainty");
+    let path_result = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        arc_path.intersect_path(&line_path)
+    })
+    .expect("path intersection must preserve terminal certainty");
     assert_eq!(
         path_result.certainty,
         CurveCertainty::Approximate512Consumed
@@ -2613,9 +2704,10 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     assert!(path_result.value.is_complete());
     assert_eq!(path_result.value.contacts().len(), 1);
 
-    let strict_path = arc_path
-        .intersection_topology(&line_path, &CurveContext::STRICT)
-        .unwrap_err();
+    let strict_path = crate::support::under(&CurveContext::STRICT, || {
+        arc_path.intersection_topology(&line_path)
+    })
+    .unwrap_err();
     assert!(matches!(
         strict_path,
         ExactCurveError::Blocked(blocker)
@@ -2631,8 +2723,7 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let policy = CurveContext::STRICT;
 
-    let topology = line
-        .intersection_topology(&arc, &policy)
+    let topology = crate::support::under(&policy, || line.intersection_topology(&arc))
         .unwrap()
         .into_value();
     let evidence = topology.result();
@@ -2663,7 +2754,9 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 2);
 
-    let reversed_evidence = arc.intersect_curve(&line, &policy).unwrap().into_value();
+    let reversed_evidence = crate::support::under(&policy, || arc.intersect_curve(&line))
+        .unwrap()
+        .into_value();
     assert_eq!(reversed_evidence.contacts().len(), 1);
     assert!(
         reversed_evidence.contacts()[0]
@@ -2692,8 +2785,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
     let second =
         Curve2::from(CircularArc2::try_from_center(p(4, 3), p(0, 5), p(0, 0), false).unwrap());
     let policy = CurveContext::STRICT;
-    let topology = first
-        .intersection_topology(&second, &policy)
+    let topology = crate::support::under(&policy, || first.intersection_topology(&second))
         .unwrap()
         .into_value();
     let evidence = topology.result();
@@ -2719,8 +2811,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
 
     let reversed =
         Curve2::from(CircularArc2::try_from_center(p(0, 5), p(4, 3), p(0, 0), true).unwrap());
-    let reversed_evidence = first
-        .intersect_curve(&reversed, &policy)
+    let reversed_evidence = crate::support::under(&policy, || first.intersect_curve(&reversed))
         .unwrap()
         .into_value();
     assert_eq!(reversed_evidence.overlaps().len(), 1);
@@ -2752,25 +2843,20 @@ fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
     ])
     .unwrap();
     let first_area = first
-        .boundary_loop(&CurveContext::STRICT)
+        .boundary_loop()
         .unwrap()
-        .into_value()
         .signed_area(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     let first_area = decided(first_area).unwrap();
     let second_area = second
-        .boundary_loop(&CurveContext::STRICT)
+        .boundary_loop()
         .unwrap()
-        .into_value()
         .signed_area(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     let second_area = decided(second_area).unwrap();
-    let evidence = first
-        .intersect_path(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_path(&second).unwrap();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
 
@@ -2852,16 +2938,14 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
         p(4, 0),
     )));
     let first_curve = source
-        .subcurve(Real::zero().into(), q(3, 4).into(), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
-    let second_curve = source
-        .subcurve(q(1, 4).into(), Real::one().into(), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+        .subcurve(Real::zero().into(), q(3, 4).into())
+        .unwrap();
+    let second_curve = source.subcurve(q(1, 4).into(), Real::one().into()).unwrap();
     let first = closed_under_curve(first_curve, -5);
     let second = closed_under_curve(second_curve, -6);
-    let evidence = first.intersect_path(&second, &policy).unwrap().into_value();
+    let evidence = crate::support::under(&policy, || first.intersect_path(&second))
+        .unwrap()
+        .into_value();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert_eq!(
@@ -2910,10 +2994,7 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
 fn path_pair_immediate_topology_splits_each_authored_curve_once() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.authored_curve_pair_count(), 16);
     assert_eq!(evidence.candidate_curve_pair_count(), 2);
@@ -2946,11 +3027,12 @@ fn path_pair_immediate_topology_splits_each_authored_curve_once() {
 fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
     let first = rectangle(0, 0, 2, 2);
     let same = first.clone();
-    let reversed = first.reversed(&CurveContext::STRICT).unwrap().into_value();
+    let reversed = first.reversed().unwrap();
     let policy = CurveContext::STRICT;
-    let same_evidence = first.intersect_path(&same, &policy).unwrap().into_value();
-    let reversed_evidence = first
-        .intersect_path(&reversed, &policy)
+    let same_evidence = crate::support::under(&policy, || first.intersect_path(&same))
+        .unwrap()
+        .into_value();
+    let reversed_evidence = crate::support::under(&policy, || first.intersect_path(&reversed))
         .unwrap()
         .into_value();
 
@@ -2993,10 +3075,7 @@ fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
 fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap());
     let second = Curve2::from(LineSeg2::try_new(p(2, 0), p(6, 0)).unwrap());
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -3013,10 +3092,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     assert_eq!(topology.second().len(), 2);
 
     let reversed = Curve2::from(LineSeg2::try_new(p(6, 0), p(2, 0)).unwrap());
-    let reversed_evidence = first
-        .intersect_curve(&reversed, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let reversed_evidence = first.intersect_curve(&reversed).unwrap();
     let reversed_overlap = &reversed_evidence.overlaps()[0];
     assert_eq!(
         reversed_overlap.second_range().start().scalar().unwrap(),
@@ -3036,10 +3112,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
 fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
     let first = rectangle(0, 0, 2, 4);
     let second = rectangle(2, 1, 4, 3);
-    let evidence = first
-        .intersect_path(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_path(&second).unwrap();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     let overlap = evidence.overlaps()[0].overlap();
@@ -3107,10 +3180,7 @@ fn promoted_region_boolean_materializes_exact_regularized_operation_matrix() {
 fn promoted_region_boolean_consumes_complete_shared_boundaries() {
     let first = rectangle(0, 0, 2, 2);
     let second = first.clone();
-    let evidence = first
-        .intersect_path(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_path(&second).unwrap();
     assert_eq!(evidence.overlaps().len(), 4);
     let cases = [
         (BooleanOp::Union, r(4)),
@@ -3174,10 +3244,7 @@ fn promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_spli
     };
     let first = circle(0);
     let second = circle(1);
-    let evidence = first
-        .intersect_path(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let evidence = first.intersect_path(&second).unwrap();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
     assert!(evidence.contacts().iter().all(|contact| {
@@ -3210,10 +3277,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     ])
     .unwrap();
     let second = rectangle(-3, 2, 3, 5);
-    let topology = first
-        .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let topology = first.intersection_topology(&second).unwrap();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
@@ -3325,24 +3389,26 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
         ),
         (
             CurveFamily2::PolynomialBSpline,
-            Curve2::try_polynomial_bspline(
-                2,
-                controls.to_vec(),
-                vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-                &CurveContext::STRICT,
-            )
+            crate::support::under(&CurveContext::STRICT, || {
+                Curve2::try_polynomial_bspline(
+                    2,
+                    controls.to_vec(),
+                    vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                )
+            })
             .unwrap()
             .into_value(),
         ),
         (
             CurveFamily2::Nurbs,
-            Curve2::try_nurbs(
-                2,
-                controls.to_vec(),
-                vec![r(1); 3],
-                vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-                &CurveContext::STRICT,
-            )
+            crate::support::under(&CurveContext::STRICT, || {
+                Curve2::try_nurbs(
+                    2,
+                    controls.to_vec(),
+                    vec![r(1); 3],
+                    vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                )
+            })
             .unwrap()
             .into_value(),
         ),
@@ -3359,8 +3425,7 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
             Curve2::from(LineSeg2::try_new(p(2, 4), p(-2, 4)).unwrap()),
         ])
         .unwrap();
-        let evidence = source
-            .intersect_path(&cutter, &policy)
+        let evidence = crate::support::under(&policy, || source.intersect_path(&cutter))
             .unwrap()
             .into_value();
         assert!(
@@ -3390,14 +3455,14 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
         ])
         .unwrap();
-        let fillet = source
-            .fillet_vertex(
+        let fillet = crate::support::under(&policy, || {
+            source.fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(q(1, 4)),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .unwrap();
+        })
+        .unwrap();
         assert_eq!(fillet.certainty, CurveCertainty::Certified);
         let path = {
             let solutions = fillet.value;
@@ -3423,28 +3488,30 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
             })
             .collect::<Vec<_>>();
         assert!(interior.len() >= 2);
-        let restricted = circle
-            .subcurve(
-                interior[0].clone(),
-                interior.last().unwrap().clone(),
-                &policy,
-            )
-            .unwrap();
+        let restricted = crate::support::under(&policy, || {
+            circle.subcurve(interior[0].clone(), interior.last().unwrap().clone())
+        })
+        .unwrap();
         assert_eq!(restricted.certainty, CurveCertainty::Certified);
         for source in [circle.clone(), restricted.value] {
             for first_reversed in [false, true] {
                 for second_reversed in [false, true] {
                     let first = if first_reversed {
-                        source.reversed(&policy).unwrap().value
+                        crate::support::under(&policy, || source.reversed())
+                            .unwrap()
+                            .value
                     } else {
                         source.clone()
                     };
                     let second = if second_reversed {
-                        source.reversed(&policy).unwrap().value
+                        crate::support::under(&policy, || source.reversed())
+                            .unwrap()
+                            .value
                     } else {
                         source.clone()
                     };
-                    let result = first.intersect_curve(&second, &policy).unwrap();
+                    let result =
+                        crate::support::under(&policy, || first.intersect_curve(&second)).unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert!(result.value.is_complete(), "{:?}", result.value.blockers());
                     assert!(result.value.contacts().is_empty());
@@ -3465,8 +3532,8 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
                         ),
                         (overlap.first_range().end(), overlap.second_range().end()),
                     ] {
-                        let a = first.point_at(a, &policy).unwrap();
-                        let b = second.point_at(b, &policy).unwrap();
+                        let a = crate::support::under(&policy, || first.point_at(a)).unwrap();
+                        let b = crate::support::under(&policy, || second.point_at(b)).unwrap();
                         assert_eq!(a.certainty, CurveCertainty::Certified);
                         assert_eq!(b.certainty, CurveCertainty::Certified);
                         let same = a.value.coincides_with(&b.value, &policy);
@@ -3488,14 +3555,14 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
         ])
         .unwrap();
-        let result = path
-            .fillet_vertex(
+        let result = crate::support::under(&policy, || {
+            path.fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(q(1, 4)),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .unwrap();
+        })
+        .unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
         let path = {
             let solutions = result.value;
@@ -3508,12 +3575,16 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
                 [(false, false), (false, true), (true, false), (true, true)]
             {
                 let circle = if reversed {
-                    path.curves()[1].reversed(&policy).unwrap().value
+                    crate::support::under(&policy, || path.curves()[1].reversed())
+                        .unwrap()
+                        .value
                 } else {
                     path.curves()[1].clone()
                 };
                 let other = if other_reversed {
-                    path.curves()[index].reversed(&policy).unwrap().value
+                    crate::support::under(&policy, || path.curves()[index].reversed())
+                        .unwrap()
+                        .value
                 } else {
                     path.curves()[index].clone()
                 };
@@ -3524,7 +3595,8 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
                     } else {
                         (&circle, other)
                     };
-                    let result = first.intersect_curve(second, &policy).unwrap();
+                    let result =
+                        crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert!(
                         result.value.is_complete(),
@@ -3541,7 +3613,8 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
                     for (curve, location) in [(first, contact.first()), (second, contact.second())]
                     {
                         let parameter = decided(location.parameter(&policy).unwrap());
-                        let point = curve.point_at(&parameter, &policy).unwrap();
+                        let point =
+                            crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
                         let same = point.value.coincides_with(contact.point(), &policy);
                         assert_eq!(same.certainty, CurveCertainty::Certified);
@@ -3573,9 +3646,8 @@ mod finite_selected_circle_domains {
             Classification::Uncertain(reason) => panic!("{reason:?}"),
         }
     }
-    fn certified<T>(value: CurveOutcome<T>) -> T {
-        assert_eq!(value.certainty, CurveCertainty::Certified);
-        value.value
+    fn certified<T>(value: impl crate::support::IntoCertified<T>) -> T {
+        value.into_certified()
     }
     fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         assert_eq!(
@@ -3591,12 +3663,13 @@ mod finite_selected_circle_domains {
         .unwrap();
         let path = {
             let solutions = certified(
-                path.fillet_vertex(
-                    1,
-                    &hypercurve::CurveFillet2::new(q(1, 4)),
-                    CurveCornerMode2::TrimOnly,
-                    policy,
-                )
+                crate::support::under(policy, || {
+                    path.fillet_vertex(
+                        1,
+                        &hypercurve::CurveFillet2::new(q(1, 4)),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
                 .unwrap(),
             );
             let mut candidates = solutions.into_solutions();
@@ -3683,11 +3756,13 @@ mod finite_selected_circle_domains {
             )
             .unwrap(),
         );
-        exact(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
+        crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
+            .unwrap()
+            .into_value()
     }
     fn oriented(curve: &Curve2, reverse: bool, policy: &CurveContext) -> Curve2 {
         if reverse {
-            certified(curve.reversed(policy).unwrap())
+            certified(crate::support::under(policy, || curve.reversed()).unwrap())
         } else {
             curve.clone()
         }
@@ -3718,7 +3793,7 @@ mod finite_selected_circle_domains {
                             let label = format!(
                                 "chart={chart} reverse_circle={reverse_circle} reverse_cap={reverse_cap} swapped={swapped} policy={policy:?}"
                             );
-                            match first.intersect_curve(second, &policy) {
+                            match crate::support::under(&policy, || first.intersect_curve(second)) {
                                 Ok(outcome)
                                     if outcome.certainty == CurveCertainty::Certified
                                         && outcome.value.is_complete()
@@ -3746,7 +3821,10 @@ mod finite_selected_circle_domains {
                                         let parameter = exact(location.parameter(&policy).unwrap());
                                         same(
                                             &certified(
-                                                source.point_at(&parameter, &policy).unwrap(),
+                                                crate::support::under(&policy, || {
+                                                    source.point_at(&parameter)
+                                                })
+                                                .unwrap(),
                                             ),
                                             contact.point(),
                                             &policy,
@@ -3786,7 +3864,7 @@ fn path_piece_count(topology: &hypercurve::CurvePathIntersectionTopology2) -> us
 }
 
 fn assert_pieces_share_one_overlap(first: &Curve2, second: &Curve2, policy: &CurveContext) {
-    let replay = first.intersect_curve(second, policy).unwrap();
+    let replay = crate::support::under(policy, || first.intersect_curve(second)).unwrap();
     assert_eq!(replay.certainty, CurveCertainty::Certified);
     assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
     assert!(replay.value.contacts().is_empty());
@@ -3802,9 +3880,9 @@ mod point_locations {
     };
 
     fn locations(curve: &Curve2, point: Point2, policy: &CurveContext) -> Vec<CurveParameter2> {
-        let outcome = curve
-            .point_locations(&CurvePoint2::from(point), policy)
-            .unwrap();
+        let outcome =
+            crate::support::under(policy, || curve.point_locations(&CurvePoint2::from(point)))
+                .unwrap();
         let CurvePointLocations2::Locations(locations) = outcome.value else {
             panic!("a nonconstant curve has finitely many locations");
         };
@@ -3858,12 +3936,13 @@ mod point_locations {
     fn point_locations_report_continuous_spline_seams_once() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // Linear spline (1,0) -> (0,0) -> (1,0) with knots 0, 1, 2.
-            let zigzag = Curve2::try_polynomial_bspline(
-                1,
-                vec![p(1, 0), p(0, 0), p(1, 0)],
-                [0, 0, 1, 2, 2].map(Real::from).to_vec(),
-                &policy,
-            )
+            let zigzag = crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(
+                    1,
+                    vec![p(1, 0), p(0, 0), p(1, 0)],
+                    [0, 0, 1, 2, 2].map(Real::from).to_vec(),
+                )
+            })
             .unwrap()
             .into_value();
             assert_eq!(scalars(&locations(&zigzag, p(0, 0), &policy)), [r(1)]);
@@ -3876,10 +3955,10 @@ mod point_locations {
         let policy = CurveContext::STRICT;
         let constant = Curve2::from(QuadraticBezier2::new(p(1, 1), p(1, 1), p(1, 1)));
         assert_eq!(
-            constant
-                .point_locations(&CurvePoint2::from(p(1, 1)), &policy)
-                .unwrap()
-                .value,
+            crate::support::under(&policy, || constant
+                .point_locations(&CurvePoint2::from(p(1, 1))))
+            .unwrap()
+            .value,
             CurvePointLocations2::EntireCurve
         );
         // The crossing of y = x^2 with y = 1/2 retains an algebraic point.
@@ -3893,15 +3972,16 @@ mod point_locations {
             vec![r(1); 2],
         )
         .unwrap();
-        let crossing = Curve2::from(parabola.clone())
-            .intersect_curve(&Curve2::from(horizontal), &policy)
-            .unwrap()
-            .value;
+        let crossing = crate::support::under(&policy, || {
+            Curve2::from(parabola.clone()).intersect_curve(&Curve2::from(horizontal))
+        })
+        .unwrap()
+        .value;
         assert!(crossing.is_complete() && crossing.contacts().len() == 1);
         let point = crossing.contacts()[0].point();
         assert!(point.coordinates().is_none());
         assert!(matches!(
-            Curve2::from(parabola).point_locations(point, &policy),
+            crate::support::under(&policy, || Curve2::from(parabola).point_locations(point)),
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.reason() == UncertaintyReason::Unsupported
         ));
@@ -3928,23 +4008,18 @@ mod point_locations {
                 Classification::Decided(range) => range,
                 Classification::Uncertain(reason) => panic!("{reason:?}"),
             };
-            let analytic = match Curve2::try_analytic_parallel(parallel, range, &policy).unwrap() {
-                Classification::Decided(curve) => curve,
-                Classification::Uncertain(reason) => panic!("{reason:?}"),
-            };
+            let analytic =
+                crate::support::under(&policy, || Curve2::try_analytic_parallel(parallel, range))
+                    .unwrap()
+                    .into_value();
             assert_eq!(scalars(&locations(&analytic, p(1, 1), &policy)), [q(1, 2)]);
             assert!(locations(&analytic, p(1, -1), &policy).is_empty());
 
-            let chord = match Curve2::try_line(
-                CurvePoint2::from(p(0, 0)),
-                CurvePoint2::from(p(4, 2)),
-                &policy,
-            )
+            let chord = crate::support::under(&policy, || {
+                Curve2::try_line(CurvePoint2::from(p(0, 0)), CurvePoint2::from(p(4, 2)))
+            })
             .unwrap()
-            {
-                Classification::Decided(curve) => curve,
-                Classification::Uncertain(reason) => panic!("{reason:?}"),
-            };
+            .into_value();
             assert_eq!(locations(&chord, p(2, 1), &policy).len(), 1);
             assert!(locations(&chord, p(6, 3), &policy).is_empty());
             assert!(locations(&chord, p(2, 2), &policy).is_empty());
@@ -3972,7 +4047,8 @@ mod point_locations {
                     if start.coordinates().is_none() {
                         continue;
                     }
-                    let outcome = curve.point_locations(&start, &policy).unwrap();
+                    let outcome =
+                        crate::support::under(&policy, || curve.point_locations(&start)).unwrap();
                     match outcome.value {
                         CurvePointLocations2::Locations(found) => assert!(!found.is_empty()),
                         CurvePointLocations2::EntireCurve => {
@@ -3995,7 +4071,7 @@ mod self_intersections {
     };
 
     fn self_contacts(curve: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
-        let outcome = curve.self_intersections(policy).unwrap();
+        let outcome = crate::support::under(policy, || curve.self_intersections()).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         assert!(outcome.value.is_complete(), "{:?}", outcome.value);
         assert!(outcome.value.overlaps().is_empty());
@@ -4096,12 +4172,11 @@ mod self_intersections {
         let policy = CurveContext::STRICT;
         let [a, b, c, d] = loop_controls();
         let curve = Curve2::from(CubicBezier2::new(a, b, c, d));
-        let (left, right) = curve
-            .split_at(q(1, 2).into(), &policy)
+        let (left, right) = crate::support::under(&policy, || curve.split_at(q(1, 2).into()))
             .unwrap()
             .into_value();
         for (first, second) in [(&left, &right), (&right, &left)] {
-            let result = first.intersect_curve(second, &policy).unwrap();
+            let result = crate::support::under(&policy, || first.intersect_curve(second)).unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             let result = result.value;
             assert!(result.is_complete() && result.overlaps().is_empty());
@@ -4117,23 +4192,21 @@ mod self_intersections {
         }
 
         // Overlapping arcs keep both the shared piece and the node crossing.
-        let (early, _) = curve
-            .split_at(q(11, 20).into(), &policy)
+        let (early, _) = crate::support::under(&policy, || curve.split_at(q(11, 20).into()))
             .unwrap()
             .into_value();
-        let (_, early) = early
-            .split_at(q(3, 11).into(), &policy)
+        let (_, early) = crate::support::under(&policy, || early.split_at(q(3, 11).into()))
             .unwrap()
             .into_value();
-        let (_, late) = curve
-            .split_at(q(9, 20).into(), &policy)
+        let (_, late) = crate::support::under(&policy, || curve.split_at(q(9, 20).into()))
             .unwrap()
             .into_value();
-        let (late, _) = late
-            .split_at(q(8, 11).into(), &policy)
+        let (late, _) = crate::support::under(&policy, || late.split_at(q(8, 11).into()))
             .unwrap()
             .into_value();
-        let result = early.intersect_curve(&late, &policy).unwrap().value;
+        let result = crate::support::under(&policy, || early.intersect_curve(&late))
+            .unwrap()
+            .value;
         assert!(result.is_complete(), "{result:?}");
         assert_eq!(result.overlaps().len(), 1, "{result:?}");
         assert_eq!(

@@ -118,11 +118,11 @@ fn algebraic_polynomial_parameter(
 }
 
 fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveResult<Curve2> {
-    Ok(decided(Curve2::try_line(
-        CurvePoint2::from(start),
-        CurvePoint2::from(end),
-        policy,
-    )?))
+    Ok(crate::support::under(policy, || {
+        Curve2::try_line(CurvePoint2::from(start), CurvePoint2::from(end))
+    })
+    .expect("the benchmark chord must be admitted")
+    .into_value())
 }
 
 fn benchmark_measurements(
@@ -447,9 +447,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let algebraic_cut =
         algebraic_polynomial_parameter(vec![r(-1), r(0), r(2)], q(2, 3), q(3, 4), &policy)?;
-    let (head, tail) = Curve2::from(upper.clone())
-        .split_at(algebraic_cut.into(), &policy)?
-        .into_value();
+    let (head, tail) = crate::support::under(&policy, || {
+        Curve2::from(upper.clone()).split_at(algebraic_cut.into())
+    })?
+    .into_value();
     let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
     let algebraic_region = even_odd_region(&[algebraic_path], &policy)?;
     let algebraic_region_query = hypercurve::CurvePoint2::from(p(2, 0));
@@ -580,9 +581,9 @@ fn halved_loop(
 ) -> Result<CurvePath2, Box<dyn std::error::Error>> {
     let mut halves = Vec::with_capacity(4);
     for curve in curves {
-        let (first, second) = curve
-            .split_at(parameter.clone().into(), policy)?
-            .into_value();
+        let (first, second) =
+            crate::support::under(policy, || curve.split_at(parameter.clone().into()))?
+                .into_value();
         halves.extend([first, second]);
     }
     Ok(CurvePath2::try_new(halves)?)

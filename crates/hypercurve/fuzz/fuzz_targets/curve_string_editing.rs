@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     BulgeVertex2, Classification, Curve2, CurveContext, CurveCornerMode2, CurvePath2, CurveRegion2,
     CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, Point2, Real, Segment2,
@@ -111,21 +113,18 @@ fuzz_target!(|data: &[u8]| {
         .collect();
     if let Ok(path) = CurvePath2::try_new(curves) {
         if let Some(region) = rectangle_region(points[0].clone(), data[12], data[13]) {
-            let _ = path.trim_inside_region(&region, &policy);
+            let _ = support::under(&policy, || path.trim_inside_region(&region));
         }
-        let _ = path.chamfer_vertex_by_setbacks(
-            1,
-            q(data[14]),
-            q(data[15]),
-            CurveCornerMode2::TrimOnly,
-            &policy,
-        );
-        let _ = path.fillet_vertex(
-            1,
-            &hypercurve::CurveFillet2::new(q(data[14])),
-            CurveCornerMode2::TrimOnly,
-            &policy,
-        );
+        let _ = support::under(&policy, || {
+            path.chamfer_vertex_by_setbacks(1, q(data[14]), q(data[15]), CurveCornerMode2::TrimOnly)
+        });
+        let _ = support::under(&policy, || {
+            path.fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(q(data[14])),
+                CurveCornerMode2::TrimOnly,
+            )
+        });
     }
 
     if let Ok(Classification::Decided(linked)) =

@@ -1,9 +1,9 @@
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotPoint, Text};
 use hypercurve::{
-    CircularArc2, CubicBezier2, Curve2, CurveContext, CurveFamily2, CurveGeometry2,
-    CurveParameterSide2, CurvePath2, CurveRegion2, FiniteProjectionOptions, LineSeg2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RealSign,
+    CircularArc2, CubicBezier2, Curve2, CurveFamily2, CurveGeometry2, CurveParameterSide2,
+    CurvePath2, CurveRegion2, FiniteProjectionOptions, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, RealSign,
 };
 
 use crate::geometry::{Polyline, Shape};
@@ -406,8 +406,7 @@ fn edit_all_corners(
                 |witness| witness.previous_parameter.clone(),
             );
             curve
-                .subcurve(start.into(), end.into(), &CurveContext::STRICT)
-                .map(|outcome| outcome.into_value())
+                .subcurve(start.into(), end.into())
                 .map_err(|error| format!("curve {curve_index}: {error}"))
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -509,13 +508,8 @@ fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), Stri
         (end, CurveParameterSide2::Left)
     };
     let tangent = curve
-        .derivative_at_side(
-            &hypercurve::CurveParameter2::from(parameter.clone()),
-            side,
-            &CurveContext::STRICT,
-        )
-        .map_err(string_error)?
-        .into_value();
+        .derivative_at_side(&hypercurve::CurveParameter2::from(parameter.clone()), side)
+        .map_err(string_error)?;
     let (dx, dy) = tangent
         .represented_coordinates()
         .ok_or("fixture tangents need represented coordinates")?;
@@ -744,23 +738,17 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
             )
             .map_err(string_error)?,
         ),
-        CurveFamily2::PolynomialBSpline => Curve2::try_polynomial_bspline(
-            1,
-            vec![start, end],
-            linear_spline_knots(),
-            &CurveContext::STRICT,
-        )
-        .map_err(string_error)?
-        .into_value(),
+        CurveFamily2::PolynomialBSpline => {
+            Curve2::try_polynomial_bspline(1, vec![start, end], linear_spline_knots())
+                .map_err(string_error)?
+        }
         CurveFamily2::Nurbs => Curve2::try_nurbs(
             1,
             vec![start, end],
             vec![Real::one(), Real::one()],
             linear_spline_knots(),
-            &CurveContext::STRICT,
         )
-        .map_err(string_error)?
-        .into_value(),
+        .map_err(string_error)?,
         CurveFamily2::CircularArc => {
             return Err("a circular arc cannot carry an affine line image".into());
         }
@@ -795,9 +783,8 @@ fn display_region(paths: &[CurvePath2]) -> Result<Shape, String> {
 fn sample_path(path: &CurvePath2) -> Result<Polyline, String> {
     let options = FiniteProjectionOptions::try_new(DISPLAY_CHORD_ERROR).map_err(string_error)?;
     let projection = path
-        .project_to_finite_polyline(&options, &CurveContext::STRICT)
-        .map_err(string_error)?
-        .into_value();
+        .project_to_finite_polyline(&options)
+        .map_err(string_error)?;
     let mut display = Polyline::new();
     for &[x, y] in projection.points() {
         display.add(x, y, 0.0);

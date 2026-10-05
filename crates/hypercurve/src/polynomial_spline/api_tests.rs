@@ -161,7 +161,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
 
     let top_level = Curve2::from(evaluation_curve);
     let top_level_point = top_level
-        .point_at(
+        .point_at_with_policy(
             &symbolic_half.clone().into(),
             &CurveContext::APPROXIMATE_512,
         )
@@ -172,7 +172,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
     );
     assert_eq!(top_level_point.value, p(2, 0).into());
     assert!(matches!(
-        top_level.point_at(&symbolic_half.clone().into(), &CurveContext::STRICT),
+        top_level.point_at_with_policy(&symbolic_half.clone().into(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == crate::UncertaintyReason::Ordering
@@ -289,14 +289,14 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
                 && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
     ));
     let transformed = Curve2::from(curve.clone())
-        .transform_similarity(&transform, &CurveContext::APPROXIMATE_512)
+        .transform_similarity_with_policy(&transform, &CurveContext::APPROXIMATE_512)
         .expect("Curve2 must propagate the policy through polynomial reconstruction");
     assert_eq!(
         transformed.certainty,
         crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
-        Curve2::from(curve).reversed(&CurveContext::STRICT),
+        Curve2::from(curve).reversed_with_policy(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Reversal
     ));
@@ -803,7 +803,7 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
 
     let top_level = Curve2::from(curve);
     let top_level_point = top_level
-        .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
+        .point_at_wrapped_with_policy(&wrapped_seam, &CurveContext::APPROXIMATE_512)
         .expect("Curve2 must preserve wrapped terminal certainty");
     assert_eq!(
         top_level_point.certainty,

@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -20,9 +22,8 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 /// Counts the exact Bezier spans of a spline through the unified curve API.
 fn fragment_count(curve: impl Into<Curve2>, policy: &CurveContext) -> usize {
-    curve
-        .into()
-        .native_bezier_fragments(policy)
+    let curve = curve.into();
+    crate::support::under(policy, || curve.native_bezier_fragments())
         .expect("benchmark spline decomposition remains exact")
         .into_value()
         .len()
@@ -172,9 +173,8 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         promotion_checksum ^= black_box(
             promoted_polynomial
-                .native_bezier_fragments(&CurveContext::STRICT)
+                .native_bezier_fragments()
                 .expect("polynomial promotion remains exact")
-                .into_value()
                 .len(),
         );
     }

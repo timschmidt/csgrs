@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -82,15 +82,13 @@ fn main() {
 
     let promotion_iterations = 20_000_u32;
     let promotion_cache_iterations = 2_000_000_u32;
-    first
-        .native_bezier_fragments(&policy)
+    crate::support::under(&policy, || first.native_bezier_fragments())
         .expect("path promotion is exact");
     let started = Instant::now();
     let mut promotion_checksum = 0_usize;
     for _ in 0..promotion_cache_iterations {
         promotion_checksum = promotion_checksum.wrapping_add(black_box(
-            black_box(&first)
-                .native_bezier_fragments(&policy)
+            crate::support::under(&policy, || black_box(&first).native_bezier_fragments())
                 .expect("cached path promotion remains exact")
                 .into_value()
                 .len(),
@@ -102,16 +100,14 @@ fn main() {
         elapsed / promotion_cache_iterations
     );
 
-    first
-        .boundary_loop(&policy)
+    crate::support::under(&policy, || first.boundary_loop())
         .expect("benchmark boundary materialization is exact");
     let boundary_cache_iterations = 2_000_000_u32;
     let started = Instant::now();
     let mut boundary_checksum = 0_usize;
     for _ in 0..boundary_cache_iterations {
         boundary_checksum ^= black_box(
-            first
-                .boundary_loop(&policy)
+            crate::support::under(&policy, || first.boundary_loop())
                 .expect("cached path boundary remains exact")
                 .into_value()
                 .len(),
@@ -131,7 +127,7 @@ fn main() {
         let path = CurvePath2::try_new(rectangle_curves.clone())
             .expect("fresh benchmark path is connected");
         boundary_build_checksum ^= black_box(
-            path.boundary_loop(&policy)
+            crate::support::under(&policy, || path.boundary_loop())
                 .expect("fresh benchmark boundary is exact")
                 .into_value()
                 .len(),
@@ -148,13 +144,9 @@ fn main() {
     let started = Instant::now();
     let mut classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        let classification = first
-            .classify_point(black_box(&query), &policy)
+        let location = crate::support::under(&policy, || first.classify_point(black_box(&query)))
             .expect("benchmark path classification is exact")
             .into_value();
-        let Classification::Decided(location) = classification else {
-            panic!("benchmark path classification became uncertain");
-        };
         classification_checksum ^= black_box(location as usize);
     }
     let elapsed = started.elapsed();
@@ -164,19 +156,16 @@ fn main() {
     );
 
     let native = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0)));
-    native
-        .native_bezier_fragments(&policy)
+    crate::support::under(&policy, || native.native_bezier_fragments())
         .expect("benchmark native curve promotes exactly");
     let started = Instant::now();
     let mut full_trim_checksum = 0_usize;
     for _ in 0..promotion_iterations {
-        let trimmed = native
-            .subcurve(r(0).into(), r(1).into(), &policy)
+        let trimmed = crate::support::under(&policy, || native.subcurve(r(0).into(), r(1).into()))
             .expect("full-domain trim is exact")
             .into_value();
         full_trim_checksum ^= black_box(
-            trimmed
-                .native_bezier_fragments(&policy)
+            crate::support::under(&policy, || trimmed.native_bezier_fragments())
                 .unwrap()
                 .into_value()
                 .len(),
@@ -192,8 +181,7 @@ fn main() {
     let started = Instant::now();
     let mut native_split_checksum = 0_usize;
     for _ in 0..native_split_iterations {
-        let (left, right) = native
-            .split_at(q(1, 2).into(), &policy)
+        let (left, right) = crate::support::under(&policy, || native.split_at(q(1, 2).into()))
             .expect("native benchmark split is exact")
             .into_value();
         native_split_checksum ^= black_box(left.family() as usize ^ right.family() as usize);
@@ -204,30 +192,29 @@ fn main() {
         elapsed / native_split_iterations
     );
 
-    let spline = Curve2::try_nurbs(
-        2,
-        vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
-        vec![r(1), r(2), r(3), r(4)],
-        vec![r(0), r(1), r(2), r(3), r(4), r(5), r(6)],
-        &policy,
-    )
+    let spline = crate::support::under(&policy, || {
+        Curve2::try_nurbs(
+            2,
+            vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+            vec![r(1), r(2), r(3), r(4)],
+            vec![r(0), r(1), r(2), r(3), r(4), r(5), r(6)],
+        )
+    })
     .expect("benchmark NURBS is valid")
     .into_value();
     let spline_split_iterations = 1_000_u32;
     let started = Instant::now();
     let mut spline_split_checksum = 0_usize;
     for _ in 0..spline_split_iterations {
-        let (left, right) = spline
-            .split_at(r(3).into(), &policy)
+        let (left, right) = crate::support::under(&policy, || spline.split_at(r(3).into()))
             .expect("spline benchmark split is exact")
             .into_value();
         spline_split_checksum ^= black_box(
-            left.native_bezier_fragments(&policy)
+            crate::support::under(&policy, || left.native_bezier_fragments())
                 .unwrap()
                 .into_value()
                 .len()
-                + right
-                    .native_bezier_fragments(&policy)
+                + crate::support::under(&policy, || right.native_bezier_fragments())
                     .unwrap()
                     .into_value()
                     .len(),
@@ -243,8 +230,7 @@ fn main() {
     let started = Instant::now();
     let mut evidence_checksum = 0_usize;
     for _ in 0..immediate_iterations {
-        let evidence = first
-            .intersect_path(&second, &policy)
+        let evidence = crate::support::under(&policy, || first.intersect_path(&second))
             .expect("benchmark path evidence is complete")
             .into_value();
         evidence_checksum ^= black_box(
@@ -263,8 +249,7 @@ fn main() {
     let started = Instant::now();
     let mut topology_checksum = 0_usize;
     for _ in 0..immediate_iterations {
-        let topology = first
-            .intersection_topology(&second, &policy)
+        let topology = crate::support::under(&policy, || first.intersection_topology(&second))
             .expect("benchmark path topology is complete")
             .into_value();
         topology_checksum ^= black_box(topology.first().len() + topology.second().len());
@@ -385,21 +370,22 @@ fn main() {
     );
 
     let lineage_source = Curve2::from(CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0)));
-    let lineage_first = lineage_source
-        .subcurve(r(0).into(), q(3, 4).into(), &policy)
-        .expect("benchmark source trim is exact")
-        .into_value();
-    let lineage_second = lineage_source
-        .subcurve(q(1, 4).into(), r(1).into(), &policy)
-        .expect("benchmark source trim is exact")
-        .into_value();
+    let lineage_first = crate::support::under(&policy, || {
+        lineage_source.subcurve(r(0).into(), q(3, 4).into())
+    })
+    .expect("benchmark source trim is exact")
+    .into_value();
+    let lineage_second = crate::support::under(&policy, || {
+        lineage_source.subcurve(q(1, 4).into(), r(1).into())
+    })
+    .expect("benchmark source trim is exact")
+    .into_value();
     let lineage_iterations = 5_000_u32;
     let started = Instant::now();
     let mut lineage_checksum = 0_usize;
     for _ in 0..lineage_iterations {
         lineage_checksum ^= black_box(
-            lineage_first
-                .intersect_curve(&lineage_second, &policy)
+            crate::support::under(&policy, || lineage_first.intersect_curve(&lineage_second))
                 .expect("lineage evidence is exact")
                 .into_value()
                 .overlaps()
@@ -418,10 +404,10 @@ fn main() {
     let started = Instant::now();
     let mut native_checksum = 0_usize;
     for _ in 0..native_iterations {
-        let evidence = first_circle
-            .intersect_curve(&second_circle, &policy)
-            .expect("native circle evidence is complete")
-            .into_value();
+        let evidence =
+            crate::support::under(&policy, || first_circle.intersect_curve(&second_circle))
+                .expect("native circle evidence is complete")
+                .into_value();
         native_checksum ^= black_box(evidence.contacts().len() + evidence.span_pair_count());
     }
     let elapsed = started.elapsed();

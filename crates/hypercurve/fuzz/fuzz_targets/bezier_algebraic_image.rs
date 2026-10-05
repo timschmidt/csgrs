@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, Curve2, CurveContext, CurveError, CurveParameter2,
@@ -85,25 +87,21 @@ fuzz_target!(|data: &[u8]| {
 
     let selected = CurveParameter2::from(BezierParameter2::Algebraic(parameter));
     let general = Curve2::from(curve.clone());
-    let point = general
-        .point_at(&selected, &policy)
-        .expect("a finite polynomial point at a selected parameter must complete")
-        .into_value();
-    let tangent = general
-        .derivative_at(&selected, &policy)
-        .expect("a finite polynomial tangent at a selected parameter must complete")
-        .into_value();
+    let point = support::under(&policy, || general.point_at(&selected))
+        .expect("a finite polynomial point at a selected parameter must complete");
+    let tangent = support::under(&policy, || general.derivative_at(&selected))
+        .expect("a finite polynomial tangent at a selected parameter must complete");
 
     if mode == 0 {
         // 2t - 1 selects t = 1/2 exactly: the selected point and tangent must
         // agree with the represented evaluation.
         let half = CurveParameter2::from(q(1, 2));
-        let represented = general.point_at(&half, &policy).unwrap().into_value();
+        let represented = support::under(&policy, || general.point_at(&half)).unwrap();
         assert_eq!(
             point.coincides_with(&represented, &policy).value,
             Classification::Decided(true)
         );
-        let represented_tangent = general.derivative_at(&half, &policy).unwrap().into_value();
+        let represented_tangent = support::under(&policy, || general.derivative_at(&half)).unwrap();
         for axis in [Axis2::X, Axis2::Y] {
             assert_eq!(
                 tangent.coordinate_sign(axis, &policy).unwrap(),
@@ -129,18 +127,16 @@ fuzz_target!(|data: &[u8]| {
 
     if let Some(conic) = conic {
         let general = Curve2::from(conic.clone());
-        let rational_point = general.point_at(&selected, &policy);
+        let rational_point = support::under(&policy, || general.point_at(&selected));
         if mode == 2 {
             // Weights (1, -1, 1) put a projective pole at t = 1/2.
             assert!(rational_point.is_err());
         } else if mode == 0 {
-            let rational_point = rational_point
-                .expect("a finite rational point must complete")
-                .into_value();
-            let represented = general
-                .point_at(&CurveParameter2::from(q(1, 2)), &policy)
-                .unwrap()
-                .into_value();
+            let rational_point = rational_point.expect("a finite rational point must complete");
+            let represented = support::under(&policy, || {
+                general.point_at(&CurveParameter2::from(q(1, 2)))
+            })
+            .unwrap();
             assert_eq!(
                 rational_point.coincides_with(&represented, &policy).value,
                 Classification::Decided(true)

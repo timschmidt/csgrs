@@ -88,7 +88,7 @@ fn bench_large_arcs() {
     for _ in 0..iterations {
         let path = large_arc_chain(arc_count, 0);
         cold_checksum ^= black_box(
-            path.native_bezier_fragments(&policy)
+            crate::support::under(&policy, || path.native_bezier_fragments())
                 .unwrap()
                 .into_value()
                 .len(),
@@ -100,13 +100,12 @@ fn bench_large_arcs() {
         elapsed / iterations
     );
 
-    first.native_bezier_fragments(&policy).unwrap();
+    crate::support::under(&policy, || first.native_bezier_fragments()).unwrap();
     let started = Instant::now();
     let mut cached_checksum = 0_usize;
     for _ in 0..iterations {
         cached_checksum ^= black_box(
-            first
-                .native_bezier_fragments(&policy)
+            crate::support::under(&policy, || first.native_bezier_fragments())
                 .unwrap()
                 .into_value()
                 .len(),
@@ -121,7 +120,9 @@ fn bench_large_arcs() {
     let started = Instant::now();
     let mut intersection_checksum = 0_usize;
     for _ in 0..iterations {
-        let evidence = first.intersect_path(&second, &policy).unwrap().into_value();
+        let evidence = crate::support::under(&policy, || first.intersect_path(&second))
+            .unwrap()
+            .into_value();
         intersection_checksum ^= black_box(
             evidence.candidate_curve_pair_count()
                 + evidence.contacts().len()
@@ -262,15 +263,13 @@ fn main() {
     );
 
     let retained = Curve2::new(CurveGeometry2::CircularArc(arc));
-    retained
-        .native_bezier_fragments(&policy)
+    crate::support::under(&policy, || retained.native_bezier_fragments())
         .expect("initial arc promotion remains exact");
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
     for _ in 0..cached_query_iterations {
         retained_checksum = retained_checksum.wrapping_add(black_box(
-            black_box(&retained)
-                .native_bezier_fragments(&policy)
+            crate::support::under(&policy, || black_box(&retained).native_bezier_fragments())
                 .expect("retained arc promotion remains exact")
                 .into_value()
                 .len(),
@@ -287,9 +286,8 @@ fn main() {
     let mut evaluation_count = 0_u32;
     for _ in 0..iterations {
         let point = retained
-            .point_at(&parameter.clone().into(), &CurveContext::STRICT)
-            .expect("retained arc evaluation remains exact")
-            .into_value();
+            .point_at(&parameter.clone().into())
+            .expect("retained arc evaluation remains exact");
         black_box(point);
         evaluation_count += 1;
     }

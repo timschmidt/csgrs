@@ -1285,7 +1285,7 @@ mod regular_parallel_contact_tests {
                     for swapped in [false, true] {
                         let (a, b) = if swapped { (&b, &a) } else { (&a, &b) };
                         let result = a
-                            .intersect_curve(b, &policy)
+                            .intersect_curve_with_policy(b, &policy)
                             .expect("retained native overlap must publish exact clipping");
                         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
                         let result = result.value;

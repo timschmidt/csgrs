@@ -192,7 +192,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
 
     let evaluation_top_level = Curve2::from(evaluation_curve.clone());
     let top_level_point = evaluation_top_level
-        .point_at(
+        .point_at_with_policy(
             &symbolic_half.clone().into(),
             &CurveContext::APPROXIMATE_512,
         )
@@ -203,7 +203,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     );
     assert_eq!(top_level_point.value, p(2, 0).into());
     assert!(matches!(
-        evaluation_top_level.point_at(&symbolic_half.clone().into(), &CurveContext::STRICT),
+        evaluation_top_level.point_at_with_policy(&symbolic_half.clone().into(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == crate::UncertaintyReason::Ordering
@@ -222,7 +222,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
                 && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
-    let top_level = Curve2::try_nurbs(
+    let top_level = Curve2::try_nurbs_with_policy(
         1,
         controls,
         weights,
@@ -278,7 +278,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
 
     let top_level = Curve2::from(curve.clone());
     let top_level_split = top_level
-        .split_at(parameter.clone().into(), &CurveContext::APPROXIMATE_512)
+        .split_at_with_policy(parameter.clone().into(), &CurveContext::APPROXIMATE_512)
         .expect("Curve2 must propagate the selected policy into its NURBS carrier");
     assert_eq!(
         top_level_split.certainty,
@@ -465,14 +465,14 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     )
     .unwrap();
     let transformed = Curve2::from(curve.clone())
-        .transform_similarity(&transform, &CurveContext::APPROXIMATE_512)
+        .transform_similarity_with_policy(&transform, &CurveContext::APPROXIMATE_512)
         .expect("Curve2 transformation must preserve the terminal policy");
     assert_eq!(
         transformed.certainty,
         crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
-        Curve2::from(curve).transform_similarity(&transform, &CurveContext::STRICT),
+        Curve2::from(curve).transform_similarity_with_policy(&transform, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Transformation
     ));
@@ -530,7 +530,7 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
 
     let top_level = Curve2::from(curve);
     let fragments = top_level
-        .native_bezier_fragments(&CurveContext::STRICT)
+        .native_bezier_fragments_with_policy(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(fragments.len(), 1);
@@ -632,12 +632,12 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
     let top_level = Curve2::from(curve);
     assert!(
         top_level
-            .derivative_at(&r(1).into(), &CurveContext::STRICT)
+            .derivative_at_with_policy(&r(1).into(), &CurveContext::STRICT)
             .is_err()
     );
     assert_eq!(
         top_level
-            .derivative_at_side(
+            .derivative_at_side_with_policy(
                 &r(1).into(),
                 CurveParameterSide2::Right,
                 &CurveContext::STRICT
@@ -692,7 +692,7 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     let top_level = Curve2::from(curve);
     assert_eq!(
         top_level
-            .point_at_side(
+            .point_at_side_with_policy(
                 &r(1).into(),
                 CurveParameterSide2::Right,
                 &CurveContext::STRICT
@@ -1745,7 +1745,7 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
 
     let top_level = Curve2::from(curve);
     let top_level_point = top_level
-        .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
+        .point_at_wrapped_with_policy(&wrapped_seam, &CurveContext::APPROXIMATE_512)
         .expect("Curve2 must preserve wrapped NURBS certainty");
     assert_eq!(
         top_level_point.certainty,
@@ -2121,14 +2121,16 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
             for i in 0..SPANS {
                 let width = r(2 * i + 1);
                 let parameter = r(i * i) + &width * q(1, 4);
-                let point = curve.point_at(&parameter.clone().into(), &policy).unwrap();
+                let point = curve
+                    .point_at_with_policy(&parameter.clone().into(), &policy)
+                    .unwrap();
                 assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
                     point.value.coordinates(),
                     Some(&Point2::new(r(2 * i) + &local_x, r(0)))
                 );
                 let derivative = curve
-                    .derivative_at(&parameter.clone().into(), &policy)
+                    .derivative_at_with_policy(&parameter.clone().into(), &policy)
                     .unwrap();
                 assert_eq!(derivative.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
@@ -2160,19 +2162,21 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
                         if i == SPANS { 2 * i - 1 } else { 2 * i },
                     ),
                 ] {
-                    let point = curve.point_at_side(&parameter, side, &policy).unwrap();
+                    let point = curve
+                        .point_at_side_with_policy(&parameter, side, &policy)
+                        .unwrap();
                     assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(point.value.coordinates(), Some(&p(expected_x, 0)));
                 }
                 if i > 0 && i < SPANS {
                     assert!(
-                        matches!(curve.point_at(&parameter, &policy), Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == crate::UncertaintyReason::Boundary)
+                        matches!(curve.point_at_with_policy(&parameter, &policy), Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == crate::UncertaintyReason::Boundary)
                     );
                 }
             }
             for parameter in [r(-1), r(SPANS * SPANS + 1)] {
                 assert!(matches!(
-                    curve.point_at(&parameter.into(), &policy),
+                    curve.point_at_with_policy(&parameter.into(), &policy),
                     Err(ExactCurveError::Invalid {
                         cause: CurveError::InvalidCurveParameter,
                         ..

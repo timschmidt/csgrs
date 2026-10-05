@@ -53,7 +53,7 @@ fn boundary_admission_rejects_disconnected_spline_spans() {
             let path = CurvePath2::try_new(vec![curve]).unwrap();
             assert_same_point(&path.start(), &path.end(), &policy);
             for error in [
-                path.boundary_loop(&policy).unwrap_err(),
+                crate::support::under(&policy, || path.boundary_loop()).unwrap_err(),
                 crate::support::under(&policy, || {
                     CurveRegion2::try_from_boundary_paths(
                         std::slice::from_ref(&path),
@@ -84,15 +84,10 @@ fn selected_open_chamfers_reenter_the_public_path_api() {
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), end.clone())),
         ])
         .unwrap();
-        let first = path
-            .chamfer_vertex_by_setbacks(
-                1,
-                Real::one(),
-                Real::one(),
-                CurveCornerMode2::TrimOnly,
-                &policy,
-            )
-            .unwrap();
+        let first = crate::support::under(&policy, || {
+            path.chamfer_vertex_by_setbacks(1, Real::one(), Real::one(), CurveCornerMode2::TrimOnly)
+        })
+        .unwrap();
         assert_eq!(first.certainty, CurveCertainty::Certified);
         let CurveCornerSolutions2::Unique(mut edited) = first.value else {
             panic!("the exact setback has one solution")
@@ -105,15 +100,15 @@ fn selected_open_chamfers_reenter_the_public_path_api() {
         );
         assert_open_path(&edited, &start, &end, &policy);
         for denominator in [4, 16, 64] {
-            let next = edited
-                .chamfer_vertex_by_setbacks(
+            let next = crate::support::under(&policy, || {
+                edited.chamfer_vertex_by_setbacks(
                     1,
                     q(1, denominator),
                     q(1, denominator),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .unwrap();
+            })
+            .unwrap();
             assert_eq!(next.certainty, CurveCertainty::Certified);
             let CurveCornerSolutions2::Unique(next) = next.value else {
                 panic!("a selected open path accepts another exact setback")
@@ -133,12 +128,16 @@ fn selected_spline_chamfers_keep_every_untrimmed_span() {
             .map(Real::from)
             .collect::<Vec<_>>();
         let sources = [
-            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .value,
-            Curve2::try_nurbs(2, controls, vec![Real::one(); 4], knots, &policy)
-                .unwrap()
-                .value,
+            crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone())
+            })
+            .unwrap()
+            .value,
+            crate::support::under(&policy, || {
+                Curve2::try_nurbs(2, controls, vec![Real::one(); 4], knots)
+            })
+            .unwrap()
+            .value,
         ];
         for source in sources {
             let path = CurvePath2::try_new(vec![
@@ -148,19 +147,21 @@ fn selected_spline_chamfers_keep_every_untrimmed_span() {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    crate::support::under(&policy, || path.reversed())
+                        .unwrap()
+                        .value
                 } else {
                     path.clone()
                 };
-                let outcome = path
-                    .chamfer_vertex_by_setbacks(
+                let outcome = crate::support::under(&policy, || {
+                    path.chamfer_vertex_by_setbacks(
                         1,
                         Real::one(),
                         Real::one(),
                         CurveCornerMode2::TrimOnly,
-                        &policy,
                     )
-                    .unwrap();
+                })
+                .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let CurveCornerSolutions2::Unique(edited) = outcome.value else {
                     panic!("the incident spline span has one selected setback")
@@ -176,10 +177,13 @@ fn selected_spline_chamfers_keep_every_untrimmed_span() {
                 } else {
                     edited.curves().len() - 1
                 };
-                let midpoint = edited.curves()[untouched_index]
-                    .point_at(&q(1, 2).into(), &policy)
-                    .unwrap();
-                let authored = source.point_at(&Real::from(6).into(), &policy).unwrap();
+                let midpoint = crate::support::under(&policy, || {
+                    edited.curves()[untouched_index].point_at(&q(1, 2).into())
+                })
+                .unwrap();
+                let authored =
+                    crate::support::under(&policy, || source.point_at(&Real::from(6).into()))
+                        .unwrap();
                 assert_same_point(&midpoint.value, &authored.value, &policy);
             }
         }
@@ -198,15 +202,15 @@ fn selected_chamfers_preserve_all_major_arc_contacts() {
         ])
         .unwrap();
         for setback in [1, 2] {
-            let outcome = path
-                .chamfer_vertex_by_setbacks(
+            let outcome = crate::support::under(&policy, || {
+                path.chamfer_vertex_by_setbacks(
                     1,
                     Real::one(),
                     Real::from(setback),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .unwrap();
+            })
+            .unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let candidates = match outcome.value {
                 CurveCornerSolutions2::Unique(candidate) => vec![candidate],
@@ -254,15 +258,15 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
             } else {
                 path.clone()
             };
-            let edited = path
-                .chamfer_vertex_by_setbacks(
+            let edited = crate::support::under(&policy, || {
+                path.chamfer_vertex_by_setbacks(
                     vertex,
                     Real::one(),
                     Real::one(),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .unwrap();
+            })
+            .unwrap();
             assert_eq!(edited.certainty, CurveCertainty::Certified);
             let CurveCornerSolutions2::Unique(edited) = edited.value else {
                 panic!("the closed path has one selected chamfer")
@@ -343,14 +347,14 @@ fn selected_open_fillets_accept_a_subsequent_chamfer() {
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), end.clone())),
         ])
         .unwrap();
-        let filleted = path
-            .fillet_vertex(
+        let filleted = crate::support::under(&policy, || {
+            path.fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(Real::one()),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .unwrap();
+        })
+        .unwrap();
         assert_eq!(filleted.certainty, CurveCertainty::Certified);
         let filleted = {
             let solutions = filleted.value;
@@ -362,9 +366,10 @@ fn selected_open_fillets_accept_a_subsequent_chamfer() {
         assert!(filleted.curves().iter().any(|curve| {
             curve.family() == CurveFamily2::CircularArc && curve.geometry().is_none()
         }));
-        let chamfered = filleted
-            .chamfer_vertex_by_setbacks(1, q(1, 16), q(1, 16), CurveCornerMode2::TrimOnly, &policy)
-            .unwrap();
+        let chamfered = crate::support::under(&policy, || {
+            filleted.chamfer_vertex_by_setbacks(1, q(1, 16), q(1, 16), CurveCornerMode2::TrimOnly)
+        })
+        .unwrap();
         assert_eq!(chamfered.certainty, CurveCertainty::Certified);
         let CurveCornerSolutions2::Unique(chamfered) = chamfered.value else {
             panic!("the selected fillet accepts an exact setback")
@@ -382,12 +387,16 @@ fn selected_spline_fillets_preserve_knot_charts_and_other_spans() {
             .map(Real::from)
             .collect::<Vec<_>>();
         let sources = [
-            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), &policy)
-                .unwrap()
-                .value,
-            Curve2::try_nurbs(2, controls, vec![Real::one(); 4], knots, &policy)
-                .unwrap()
-                .value,
+            crate::support::under(&policy, || {
+                Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone())
+            })
+            .unwrap()
+            .value,
+            crate::support::under(&policy, || {
+                Curve2::try_nurbs(2, controls, vec![Real::one(); 4], knots)
+            })
+            .unwrap()
+            .value,
         ];
         for source in sources {
             let path = CurvePath2::try_new(vec![
@@ -397,18 +406,20 @@ fn selected_spline_fillets_preserve_knot_charts_and_other_spans() {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    crate::support::under(&policy, || path.reversed())
+                        .unwrap()
+                        .value
                 } else {
                     path.clone()
                 };
-                let outcome = path
-                    .fillet_vertex(
+                let outcome = crate::support::under(&policy, || {
+                    path.fillet_vertex(
                         1,
                         &hypercurve::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
-                        &policy,
                     )
-                    .unwrap();
+                })
+                .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let edited = {
                     let solutions = outcome.value;
@@ -427,10 +438,13 @@ fn selected_spline_fillets_preserve_knot_charts_and_other_spans() {
                 } else {
                     edited.curves().len() - 1
                 };
-                let midpoint = edited.curves()[untouched_index]
-                    .point_at(&q(1, 2).into(), &policy)
-                    .unwrap();
-                let authored = source.point_at(&Real::from(6).into(), &policy).unwrap();
+                let midpoint = crate::support::under(&policy, || {
+                    edited.curves()[untouched_index].point_at(&q(1, 2).into())
+                })
+                .unwrap();
+                let authored =
+                    crate::support::under(&policy, || source.point_at(&Real::from(6).into()))
+                        .unwrap();
                 assert_same_point(&midpoint.value, &authored.value, &policy);
             }
         }
@@ -470,12 +484,16 @@ fn check_major_arc_fillet(clockwise: bool) {
         .unwrap();
         for reversed in [false, true] {
             let path = if reversed {
-                path.reversed(&policy).unwrap().value
+                crate::support::under(&policy, || path.reversed())
+                    .unwrap()
+                    .value
             } else {
                 path.clone()
             };
             let source = &path.curves()[usize::from(!reversed)];
-            let spans = source.native_bezier_fragments(&policy).unwrap().value;
+            let spans = crate::support::under(&policy, || source.native_bezier_fragments())
+                .unwrap()
+                .value;
             assert!(spans.len() > 1, "the fixture crosses projective charts");
             let preserved = if !clockwise {
                 0..spans.len()
@@ -487,23 +505,24 @@ fn check_major_arc_fillet(clockwise: bool) {
             let untouched = spans[preserved]
                 .iter()
                 .map(|span| {
-                    Curve2::from(span.curve().clone())
-                        .point_at(&q(1, 2).into(), &policy)
-                        .unwrap()
-                        .value
-                        .coordinates()
-                        .expect("a native chart sample has exact coordinates")
-                        .clone()
+                    crate::support::under(&policy, || {
+                        Curve2::from(span.curve().clone()).point_at(&q(1, 2).into())
+                    })
+                    .unwrap()
+                    .value
+                    .coordinates()
+                    .expect("a native chart sample has exact coordinates")
+                    .clone()
                 })
                 .collect::<Vec<_>>();
-            let outcome = path
-                .fillet_vertex(
+            let outcome = crate::support::under(&policy, || {
+                path.fillet_vertex(
                     1,
                     &hypercurve::CurveFillet2::new(q(1, 2)),
                     CurveCornerMode2::TrimOrExtend,
-                    &policy,
                 )
-                .unwrap();
+            })
+            .unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let candidates = {
                 let solutions = outcome.value;
@@ -541,19 +560,19 @@ fn check_major_arc_fillet(clockwise: bool) {
                 .find_map(|candidate| {
                     let mut curves = candidate.curves().to_vec();
                     curves.push(closing.clone());
-                    let closed = CurvePath2::try_new_with_policy(curves, &policy).unwrap();
+                    let closed =
+                        crate::support::under(&policy, || CurvePath2::try_new(curves)).unwrap();
                     assert_eq!(closed.certainty, CurveCertainty::Certified);
                     untouched
                         .iter()
                         .all(|point| {
-                            let location = closed
-                                .value
-                                .classify_point(&point.clone().into(), &policy)
-                                .unwrap();
+                            let location = crate::support::under(&policy, || {
+                                closed.value.classify_point(&point.clone().into())
+                            })
+                            .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
 
-                            location.value
-                                == Classification::Decided(ContourPointLocation::Boundary)
+                            location.value == ContourPointLocation::Boundary
                         })
                         .then_some(closed.value)
                 });
@@ -776,9 +795,8 @@ mod finite_fixed_distance_domains {
             Classification::Uncertain(reason) => panic!("{reason:?}"),
         }
     }
-    fn certified<T>(value: CurveOutcome<T>) -> T {
-        assert_eq!(value.certainty, CurveCertainty::Certified);
-        value.value
+    fn certified<T>(value: impl crate::support::IntoCertified<T>) -> T {
+        value.into_certified()
     }
     fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         assert_eq!(
@@ -856,7 +874,9 @@ mod finite_fixed_distance_domains {
             )
             .unwrap(),
         );
-        exact(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
+        crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
+            .unwrap()
+            .into_value()
     }
     fn run(chart: usize, repeat: bool) {
         let (mut cases, mut successes, mut replays, mut failures) = (0, 0, 0, 0);
@@ -873,22 +893,23 @@ mod finite_fixed_distance_domains {
             for reversed in [false, true] {
                 cases += 1;
                 let path = if reversed {
-                    certified(original.reversed(&policy).unwrap())
+                    certified(crate::support::under(&policy, || original.reversed()).unwrap())
                 } else {
                     original.clone()
                 };
                 println!(
                     "begin chart={chart} reversed={reversed} repeat={repeat} policy={policy:?}"
                 );
-                let result = path.chamfer_vertex_by_setbacks(
-                    1,
-                    q(1, 128),
-                    q(1, 128),
-                    CurveCornerMode2::TrimOnly,
-                    &policy,
-                );
+                let result = crate::support::under(&policy, || {
+                    path.chamfer_vertex_by_setbacks(
+                        1,
+                        q(1, 128),
+                        q(1, 128),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                });
                 let modified = match result {
-                    Ok(CurveOutcome {
+                    Ok(crate::support::Outcome {
                         certainty: CurveCertainty::Certified,
                         value: CurveCornerSolutions2::Unique(path),
                     }) => path,
@@ -919,11 +940,16 @@ mod finite_fixed_distance_domains {
                     survivor.parameter_domain().start(),
                     survivor.parameter_domain().end(),
                 ] {
-                    let first = certified(survivor.point_at(endpoint, &policy).unwrap());
+                    let first = certified(
+                        crate::support::under(&policy, || survivor.point_at(endpoint)).unwrap(),
+                    );
                     let original_curve = &path.curves()[if reversed { 0 } else { 1 }];
                     same(
                         &first,
-                        &certified(original_curve.point_at(endpoint, &policy).unwrap()),
+                        &certified(
+                            crate::support::under(&policy, || original_curve.point_at(endpoint))
+                                .unwrap(),
+                        ),
                         &policy,
                     );
                     replays += 1;
@@ -931,14 +957,15 @@ mod finite_fixed_distance_domains {
                 if repeat {
                     println!("begin repeated chamfer");
                     let index = if reversed { 1 } else { 2 };
-                    match modified.chamfer_vertex_by_setbacks(
-                        index,
-                        q(1, 256),
-                        q(1, 256),
-                        CurveCornerMode2::TrimOnly,
-                        &policy,
-                    ) {
-                        Ok(CurveOutcome {
+                    match crate::support::under(&policy, || {
+                        modified.chamfer_vertex_by_setbacks(
+                            index,
+                            q(1, 256),
+                            q(1, 256),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    }) {
+                        Ok(crate::support::Outcome {
                             certainty: CurveCertainty::Certified,
                             value: CurveCornerSolutions2::Unique(next),
                         }) => {
@@ -994,9 +1021,8 @@ mod finite_selected_point_domains {
             Classification::Uncertain(reason) => panic!("{reason:?}"),
         }
     }
-    fn certified<T>(value: CurveOutcome<T>) -> T {
-        assert_eq!(value.certainty, CurveCertainty::Certified);
-        value.value
+    fn certified<T>(value: impl crate::support::IntoCertified<T>) -> T {
+        value.into_certified()
     }
     fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         assert_eq!(
@@ -1074,7 +1100,9 @@ mod finite_selected_point_domains {
             )
             .unwrap(),
         );
-        exact(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
+        crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
+            .unwrap()
+            .into_value()
     }
     fn run(chart: usize) {
         let (mut cases, mut successes, mut replays, mut failures) = (0, 0, 0, 0);
@@ -1093,18 +1121,19 @@ mod finite_selected_point_domains {
             for reversed in [false, true] {
                 cases += 1;
                 let path = if reversed {
-                    certified(original.reversed(&policy).unwrap())
+                    certified(crate::support::under(&policy, || original.reversed()).unwrap())
                 } else {
                     original.clone()
                 };
                 println!("begin chart={chart} reversed={reversed} policy={policy:?}");
-                let edited = match path.fillet_vertex(
-                    1,
-                    &hypercurve::CurveFillet2::new(q(1, 32)),
-                    CurveCornerMode2::TrimOnly,
-                    &policy,
-                ) {
-                    Ok(CurveOutcome {
+                let edited = match crate::support::under(&policy, || {
+                    path.fillet_vertex(
+                        1,
+                        &hypercurve::CurveFillet2::new(q(1, 32)),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                }) {
+                    Ok(crate::support::Outcome {
                         certainty: CurveCertainty::Certified,
                         value,
                     }) if value.solutions().len() == 1 => value.into_solutions().pop().unwrap(),
@@ -1131,8 +1160,12 @@ mod finite_selected_point_domains {
                     retained.parameter_domain().end(),
                 ] {
                     same(
-                        &certified(retained.point_at(endpoint, &policy).unwrap()),
-                        &certified(source.point_at(endpoint, &policy).unwrap()),
+                        &certified(
+                            crate::support::under(&policy, || retained.point_at(endpoint)).unwrap(),
+                        ),
+                        &certified(
+                            crate::support::under(&policy, || source.point_at(endpoint)).unwrap(),
+                        ),
                         &policy,
                     );
                     replays += 1;

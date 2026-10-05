@@ -438,7 +438,7 @@ pub(super) fn exact_path_endpoint_unit_tangent(
         Some(CurveGeometry2::Nurbs(curve)) => curve.degree(),
     };
     let derivatives = curve
-        .derivatives_at_side_with_policy(
+        .derivatives_at_side_raw(
             parameter,
             max_order,
             if at_start {

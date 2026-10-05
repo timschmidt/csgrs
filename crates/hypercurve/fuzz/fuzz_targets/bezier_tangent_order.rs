@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, QuadraticBezier2,
     Real, RegionPointLocation,
@@ -39,10 +41,8 @@ fuzz_target!(|data: &[u8]| {
         CurveContext::APPROXIMATE_512
     };
     let lower = Curve2::from(parabola(&a));
-    let upper = Curve2::from(parabola(&b))
-        .reversed(&policy)
-        .expect("reversal is exact")
-        .into_value();
+    let upper = support::under(&policy, || Curve2::from(parabola(&b)).reversed())
+        .expect("reversal is exact");
     let closing = LineSeg2::try_new(
         Point2::new(Real::one(), a.clone()),
         Point2::new(Real::one(), b.clone()),
@@ -50,7 +50,7 @@ fuzz_target!(|data: &[u8]| {
     .expect("distinct curvatures give a nonzero closing segment");
     let path = CurvePath2::try_new(vec![lower, closing.into(), upper])
         .expect("the lens boundary is connected");
-    let region = under(&policy, || {
+    let region = support::under(&policy, || {
         CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd)
     })
     .expect("a simple tangent lens must be admitted");
@@ -63,18 +63,8 @@ fuzz_target!(|data: &[u8]| {
         (inside, RegionPointLocation::Inside),
         (outside, RegionPointLocation::Outside),
     ] {
-        let location = under(&policy, || region.classify_point(&point.into()))
+        let location = support::under(&policy, || region.classify_point(&point.into()))
             .expect("classification completes");
         assert_eq!(location, expected);
     }
 });
-
-/// Runs a principal exact operation under `policy`: directly under STRICT,
-/// and otherwise inside `hypercurve::provisional`.
-fn under<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
-    if *policy == CurveContext::STRICT {
-        operation()
-    } else {
-        hypercurve::provisional(operation).into_unverified()
-    }
-}

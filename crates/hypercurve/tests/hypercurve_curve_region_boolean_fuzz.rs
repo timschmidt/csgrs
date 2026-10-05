@@ -185,19 +185,15 @@ fn generated_boundary_curve(
             3,
             vec![start, first_control, second_control, end],
             clamped_cubic_knots(),
-            &CurveContext::STRICT,
         )
-        .expect("generated clamped polynomial spline is valid")
-        .into_value(),
+        .expect("generated clamped polynomial spline is valid"),
         _ => Curve2::try_nurbs(
             3,
             vec![start, first_control, second_control, end],
             vec![Real::one(), weight.clone(), weight.clone(), Real::one()],
             clamped_cubic_knots(),
-            &CurveContext::STRICT,
         )
-        .expect("generated clamped NURBS is valid")
-        .into_value(),
+        .expect("generated clamped NURBS is valid"),
     }
 }
 
@@ -814,9 +810,8 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
     if reversed {
         curves = CurvePath2::try_new(curves)
             .unwrap()
-            .reversed(&CurveContext::STRICT)
+            .reversed()
             .unwrap()
-            .into_value()
             .curves()
             .to_vec();
     }
@@ -1121,10 +1116,7 @@ fn authored_loop_semantics_support_reversed_nonuniform_rational_regions() {
         &[FillRule::NonZero],
     )
     .unwrap();
-    let reversed_path = forward_path
-        .reversed(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let reversed_path = forward_path.reversed().unwrap();
     let reversed = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[reversed_path],
         &[CurveRegionLoopRole::Material],
@@ -1294,14 +1286,8 @@ fn tangent_family_curve(family: u8, side: i16) -> Curve2 {
                     controls[3].clone(),
                 ))
             } else {
-                Curve2::try_polynomial_bspline(
-                    3,
-                    controls,
-                    clamped_cubic_knots(),
-                    &CurveContext::STRICT,
-                )
-                .expect("the tangent polynomial spline is valid")
-                .into_value()
+                Curve2::try_polynomial_bspline(3, controls, clamped_cubic_knots())
+                    .expect("the tangent polynomial spline is valid")
             }
         }
         4 => Curve2::from(
@@ -1329,15 +1315,8 @@ fn tangent_family_curve(family: u8, side: i16) -> Curve2 {
                         .expect("the tangent rational Bezier has positive weights"),
                 )
             } else {
-                Curve2::try_nurbs(
-                    3,
-                    controls,
-                    weights,
-                    clamped_cubic_knots(),
-                    &CurveContext::STRICT,
-                )
-                .expect("the tangent NURBS is valid")
-                .into_value()
+                Curve2::try_nurbs(3, controls, weights, clamped_cubic_knots())
+                    .expect("the tangent NURBS is valid")
             }
         }
         _ => unreachable!("the deterministic matrix has exactly eight curve families"),
@@ -1362,8 +1341,7 @@ fn tangent_family_region(family: u8, material_above: bool, outer_y: i16) -> Curv
         ]
     } else {
         vec![
-            tangent
-                .reversed(&CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || tangent.reversed())
                 .expect("the tangent carrier reverses exactly")
                 .into_value(),
             Curve2::from(LineSeg2::try_new(point(-4, endpoint_y), point(-4, outer_y)).unwrap()),

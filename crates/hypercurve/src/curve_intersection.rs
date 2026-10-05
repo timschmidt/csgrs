@@ -2040,6 +2040,15 @@ impl Curve2 {
     pub fn intersect_curve(
         &self,
         other: &Self,
+    ) -> crate::ExactCurveResult<CurveIntersectionResult2> {
+        self.intersect_curve_with_policy(other, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::intersect_curve`] under an explicit predicate policy.
+    pub(crate) fn intersect_curve_with_policy(
+        &self,
+        other: &Self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveIntersectionResult2>> {
         resolve_certified_operation(policy, |attempt| self.intersect_curve_raw(other, attempt))
@@ -2052,7 +2061,13 @@ impl Curve2 {
     /// and retracing component is reported once; shared span joints are the
     /// identity, not contacts, while a closed seam joins distinct parameters
     /// and is reported.
-    pub fn self_intersections(
+    pub fn self_intersections(&self) -> crate::ExactCurveResult<CurveIntersectionResult2> {
+        self.self_intersections_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::self_intersections`] under an explicit predicate policy.
+    pub(crate) fn self_intersections_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveIntersectionResult2>> {
@@ -2077,6 +2092,15 @@ impl Curve2 {
     /// Computes exact split topology against another curve immediately and
     /// reports any consumed terminal decision once.
     pub fn intersection_topology(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<CurveIntersectionTopology2> {
+        self.intersection_topology_with_policy(other, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::intersection_topology`] under an explicit predicate policy.
+    pub(crate) fn intersection_topology_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -2603,6 +2627,15 @@ impl Curve2 {
     /// point or a generated carrier without a rational span evaluator reports
     /// an unsupported blocker rather than an empty result.
     pub fn point_locations(
+        &self,
+        point: &CurvePoint2,
+    ) -> crate::ExactCurveResult<CurvePointLocations2> {
+        self.point_locations_with_policy(point, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_locations`] under an explicit predicate policy.
+    pub(crate) fn point_locations_with_policy(
         &self,
         point: &CurvePoint2,
         policy: &CurveContext,
@@ -3390,7 +3423,7 @@ mod point_component_dispatch_tests {
         value.value
     }
     fn query(first: &Curve2, second: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
-        let result = certified(first.intersect_curve(second, policy).unwrap());
+        let result = certified(first.intersect_curve_with_policy(second, policy).unwrap());
         assert!(result.is_complete(), "{:?}", result.blockers());
         result
     }
@@ -3412,7 +3445,7 @@ mod point_component_dispatch_tests {
                 .unwrap()
                 .into(),
             certified(
-                Curve2::try_polynomial_bspline(
+                Curve2::try_polynomial_bspline_with_policy(
                     1,
                     vec![p(0, 0); 3],
                     [2, 2, 3, 4, 4].into_iter().map(Real::from).collect(),
@@ -3421,7 +3454,7 @@ mod point_component_dispatch_tests {
                 .unwrap(),
             ),
             certified(
-                Curve2::try_nurbs(
+                Curve2::try_nurbs_with_policy(
                     1,
                     vec![p(0, 0); 3],
                     vec![1.into(), 2.into(), 3.into()],
@@ -3440,10 +3473,15 @@ mod point_component_dispatch_tests {
             let ending = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
             let excluded = Curve2::from(LineSeg2::try_new(p(-1, 1), p(1, 1)).unwrap());
             for constant in constants(&policy) {
-                let count = certified(constant.native_bezier_fragments(&policy).unwrap()).len();
+                let count = certified(
+                    constant
+                        .native_bezier_fragments_with_policy(&policy)
+                        .unwrap(),
+                )
+                .len();
                 for constant in [
                     constant.clone(),
-                    certified(constant.reversed(&policy).unwrap()),
+                    certified(constant.reversed_with_policy(&policy).unwrap()),
                 ] {
                     for (other, parameter) in [
                         (&crossing, (Real::one() / Real::from(2)).unwrap()),
@@ -3504,7 +3542,10 @@ mod point_component_dispatch_tests {
                     );
                     let path = CurvePath2::try_new(vec![crossing.clone()]).unwrap();
                     let cutter = CurvePath2::try_new(vec![constant.clone()]).unwrap();
-                    let topology = certified(path.intersection_topology(&cutter, &policy).unwrap());
+                    let topology = certified(
+                        path.intersection_topology_with_policy(&cutter, &policy)
+                            .unwrap(),
+                    );
                     assert_eq!(topology.result().parameter_components().len(), count);
                     assert_eq!(topology.first()[0].curves().len(), 2);
                 }
@@ -3523,7 +3564,7 @@ mod point_component_dispatch_tests {
                 ),
                 (
                     certified(
-                        Curve2::try_polynomial_bspline(
+                        Curve2::try_polynomial_bspline_with_policy(
                             1,
                             vec![p(0, 0), p(1, 0), p(0, 0)],
                             [0, 0, 1, 2, 2].into_iter().map(Real::from).collect(),
@@ -3594,12 +3635,12 @@ mod point_component_dispatch_tests {
             );
             let source = Curve2::from(source);
             let line = Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap());
-            let result = certified(source.intersect_curve(&line, &policy).unwrap());
+            let result = certified(source.intersect_curve_with_policy(&line, &policy).unwrap());
             assert!(!result.is_complete());
             assert!(result.parameter_components().is_empty());
             let finite = certified(
                 source
-                    .subcurve(
+                    .subcurve_with_policy(
                         Real::zero().into(),
                         (Real::one() / Real::from(4)).unwrap().into(),
                         &policy,
@@ -3623,8 +3664,10 @@ mod point_component_dispatch_tests {
                     .chain(std::iter::once(count - 1))
                     .map(Real::from)
                     .collect();
-                let source =
-                    certified(Curve2::try_polynomial_bspline(1, controls, knots, &policy).unwrap());
+                let source = certified(
+                    Curve2::try_polynomial_bspline_with_policy(1, controls, knots, &policy)
+                        .unwrap(),
+                );
                 for swapped in [false, true] {
                     let (a, b) = if swapped {
                         (&line, &source)
@@ -3672,13 +3715,19 @@ mod overlap_restriction_tests {
     }
 
     fn check_native_restriction(first: &Curve2, second: &Curve2, policy: &CurveContext) {
-        let result = first.intersect_curve(second, policy).unwrap();
+        let result = first.intersect_curve_with_policy(second, policy).unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
         let result = result.value;
         assert!(result.is_complete());
         assert!(!result.overlaps().is_empty());
-        let first_spans = first.native_bezier_fragments(policy).unwrap().into_value();
-        let second_spans = second.native_bezier_fragments(policy).unwrap().into_value();
+        let first_spans = first
+            .native_bezier_fragments_with_policy(policy)
+            .unwrap()
+            .into_value();
+        let second_spans = second
+            .native_bezier_fragments_with_policy(policy)
+            .unwrap()
+            .into_value();
         for overlap in result.overlaps() {
             let mid = match overlap
                 .first_range()
@@ -3725,8 +3774,14 @@ mod overlap_restriction_tests {
                 ),
                 (clipped.first_range().end(), clipped.second_range().end()),
             ] {
-                let a = a.point_at(a_parameter, policy).unwrap().into_value();
-                let b = b.point_at(b_parameter, policy).unwrap().into_value();
+                let a = a
+                    .point_at_with_policy(a_parameter, policy)
+                    .unwrap()
+                    .into_value();
+                let b = b
+                    .point_at_with_policy(b_parameter, policy)
+                    .unwrap()
+                    .into_value();
                 assert!(exact(a.coincides_with(&b, policy)));
             }
             for _ in 0..8 {
@@ -3815,7 +3870,7 @@ mod overlap_restriction_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for second in [
                 second.clone(),
-                second.reversed(&policy).unwrap().into_value(),
+                second.reversed_with_policy(&policy).unwrap().into_value(),
             ] {
                 for (a, b) in [(&first, &second), (&second, &first)] {
                     check_native_restriction(a, b, &policy);
@@ -3850,7 +3905,7 @@ mod overlap_restriction_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for second in [
                 second.clone(),
-                second.reversed(&policy).unwrap().into_value(),
+                second.reversed_with_policy(&policy).unwrap().into_value(),
             ] {
                 for (a, b) in [(&first, &second), (&second, &first)] {
                     check_native_restriction(a, b, &policy);

@@ -96,19 +96,15 @@ fn family_edge(family: u8, start: Point2, end: Point2, outward: i16, weight: &Re
             3,
             vec![start, first, second, end],
             clamped_cubic_knots(),
-            &STRICT,
         )
-        .unwrap()
-        .into_value(),
+        .unwrap(),
         _ => Curve2::try_nurbs(
             3,
             vec![start, first, second, end],
             vec![Real::one(), weight.clone(), weight.clone(), Real::one()],
             clamped_cubic_knots(),
-            &STRICT,
         )
-        .unwrap()
-        .into_value(),
+        .unwrap(),
     }
 }
 

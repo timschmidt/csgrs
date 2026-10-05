@@ -551,7 +551,21 @@ impl Curve2 {
     /// selected intersection and corner locations; neither is rounded nor
     /// projected into a common field. Coincidence that `policy` cannot decide
     /// is returned as uncertainty, and coincident endpoints are invalid.
-    pub fn try_line(
+    pub fn try_line(start: CurvePoint2, end: CurvePoint2) -> crate::ExactCurveResult<Self> {
+        Self::try_line_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+            })
+    }
+
+    /// [`Self::try_line`] under an explicit predicate policy.
+    pub(crate) fn try_line_with_policy(
         start: CurvePoint2,
         end: CurvePoint2,
         policy: &CurveContext,
@@ -572,6 +586,27 @@ impl Curve2 {
     pub fn try_analytic_parallel(
         parallel: crate::BezierParallel2,
         range: crate::BezierParameterRange2,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_analytic_parallel_with_policy(
+            parallel,
+            range,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Construction,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+        })
+    }
+
+    /// [`Self::try_analytic_parallel`] under an explicit predicate policy.
+    pub(crate) fn try_analytic_parallel_with_policy(
+        parallel: crate::BezierParallel2,
+        range: crate::BezierParameterRange2,
         policy: &CurveContext,
     ) -> crate::CurveResult<Classification<Self>> {
         Ok(crate::BezierParallelFragment2::try_new(parallel, range, policy)?.map(Self::from))
@@ -579,6 +614,21 @@ impl Curve2 {
 
     /// Constructs an exact polynomial B-spline carrier under `policy`.
     pub fn try_polynomial_bspline(
+        degree: usize,
+        control_points: Vec<Point2>,
+        knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_polynomial_bspline_with_policy(
+            degree,
+            control_points,
+            knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_polynomial_bspline`] under an explicit predicate policy.
+    pub(crate) fn try_polynomial_bspline_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
@@ -594,6 +644,23 @@ impl Curve2 {
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_nurbs_with_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_nurbs`] under an explicit predicate policy.
+    pub(crate) fn try_nurbs_with_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         NurbsCurve2::try_new(degree, control_points, weights, knots, policy)
@@ -605,6 +672,21 @@ impl Curve2 {
         degree: usize,
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_periodic_polynomial_bspline_with_policy(
+            degree,
+            control_points,
+            period_knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_periodic_polynomial_bspline`] under an explicit predicate policy.
+    pub(crate) fn try_periodic_polynomial_bspline_with_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        period_knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         PolynomialSplineCurve2::try_new_periodic(degree, control_points, period_knots, policy)
@@ -613,6 +695,23 @@ impl Curve2 {
 
     /// Constructs a periodic NURBS from one period under `policy`.
     pub fn try_periodic_nurbs(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        period_knots: Vec<Real>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_periodic_nurbs_with_policy(
+            degree,
+            control_points,
+            weights,
+            period_knots,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_periodic_nurbs`] under an explicit predicate policy.
+    pub(crate) fn try_periodic_nurbs_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
@@ -814,7 +913,16 @@ impl Curve2 {
     /// Authored native curves reflect their public parameter mapping as
     /// `u -> start + end - u`. Retained source restrictions keep their source
     /// chart and reverse traversal independently of parameter order.
-    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+    pub fn reversed(&self) -> crate::ExactCurveResult<Self> {
+        self.reversed_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::reversed`] under an explicit predicate policy.
+    pub(crate) fn reversed_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
     }
 
@@ -898,7 +1006,13 @@ impl Curve2 {
     }
 
     /// Applies an exact planar similarity while preserving curve family and source.
-    pub fn transform_similarity(
+    pub fn transform_similarity(&self, transform: &Similarity2) -> crate::ExactCurveResult<Self> {
+        self.transform_similarity_with_policy(transform, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::transform_similarity`] under an explicit predicate policy.
+    pub(crate) fn transform_similarity_with_policy(
         &self,
         transform: &Similarity2,
         policy: &CurveContext,
@@ -999,7 +1113,13 @@ impl Curve2 {
     /// At a discontinuous spline knot, each piece keeps its own one-sided
     /// endpoint. The returned [`CurveOutcome`] covers the complete split.
     #[inline(always)]
-    pub fn split_at(
+    pub fn split_at(&self, parameter: CurveParameter2) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::split_at`] under an explicit predicate policy.
+    pub(crate) fn split_at_with_policy(
         &self,
         parameter: CurveParameter2,
         policy: &CurveContext,
@@ -1048,8 +1168,8 @@ impl Curve2 {
                 ))
             }
             _ => Ok((
-                self.subcurve_with_policy(domain.start().clone(), parameter.clone(), policy)?,
-                self.subcurve_with_policy(parameter, domain.end().clone(), policy)?,
+                self.subcurve_raw(domain.start().clone(), parameter.clone(), policy)?,
+                self.subcurve_raw(parameter, domain.end().clone(), policy)?,
             )),
         }
     }
@@ -1068,6 +1188,16 @@ impl Curve2 {
         &self,
         start: CurveParameter2,
         end: CurveParameter2,
+    ) -> crate::ExactCurveResult<Self> {
+        self.subcurve_with_policy(start, end, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::subcurve`] under an explicit predicate policy.
+    pub(crate) fn subcurve_with_policy(
+        &self,
+        start: CurveParameter2,
+        end: CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         let domain = self.parameter_domain();
@@ -1082,7 +1212,7 @@ impl Curve2 {
         })
     }
 
-    pub(crate) fn subcurve_with_policy(
+    pub(crate) fn subcurve_raw(
         &self,
         start: Real,
         end: Real,
@@ -1123,10 +1253,10 @@ impl Curve2 {
             ),
             Some(CurveGeometry2::CircularArc(curve)) => {
                 let sub_start = self
-                    .point_at_side_with_policy(&start, CurveParameterSide2::Automatic, policy)
+                    .point_at_side_raw(&start, CurveParameterSide2::Automatic, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?;
                 let sub_end = self
-                    .point_at_side_with_policy(&end, CurveParameterSide2::Automatic, policy)
+                    .point_at_side_raw(&end, CurveParameterSide2::Automatic, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?;
                 let constructor = if curve.endpoints_on_stored_circle_are_certified() {
                     CircularArc2::new_with_certified_radius
@@ -1329,16 +1459,32 @@ impl Curve2 {
     /// retained source chart, including selected parameters; reversing such a
     /// curve changes traversal without changing that chart. The returned point
     /// retains its exact evidence even when it has no scalar coordinate view.
-    pub fn point_at(
+    pub fn point_at(&self, parameter: &CurveParameter2) -> crate::ExactCurveResult<CurvePoint2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
         &self,
         parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurvePoint2>> {
-        self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.point_at_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit spline-knot side policy.
     pub fn point_at_side(
+        &self,
+        parameter: &CurveParameter2,
+        side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurvePoint2> {
+        self.point_at_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_side`] under an explicit predicate policy.
+    pub(crate) fn point_at_side_with_policy(
         &self,
         parameter: &CurveParameter2,
         side: CurveParameterSide2,
@@ -1349,7 +1495,7 @@ impl Curve2 {
         })
     }
 
-    pub(crate) fn point_at_side_with_policy(
+    pub(crate) fn point_at_side_raw(
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
@@ -1370,7 +1516,7 @@ impl Curve2 {
                 match geometry {
                     CurveGeometry2::Line(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::CircularArc(_) => {
-                        let fragments = match self.native_bezier_fragments_with_policy(policy)? {
+                        let fragments = match self.native_bezier_fragments_raw(policy)? {
                             Classification::Decided(fragments) => fragments,
                             Classification::Uncertain(reason) => {
                                 return Err(ExactCurveError::blocked(
@@ -1418,12 +1564,18 @@ impl Curve2 {
     }
 
     /// Evaluates an explicitly periodic spline at any exactly wrappable parameter.
-    pub fn point_at_wrapped(
+    pub fn point_at_wrapped(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_wrapped_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn point_at_wrapped_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.point_at_wrapped_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates a periodic spline with explicit side selection at wrapped seams.
@@ -1431,14 +1583,24 @@ impl Curve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Point2> {
+        self.point_at_wrapped_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn point_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Point2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.point_at_wrapped_side_with_policy(parameter, side, attempt)
+            self.point_at_wrapped_side_raw(parameter, side, attempt)
         })
     }
 
-    pub(crate) fn point_at_wrapped_side_with_policy(
+    pub(crate) fn point_at_wrapped_side_raw(
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
@@ -1470,13 +1632,32 @@ impl Curve2 {
     pub fn derivative_at(
         &self,
         parameter: &CurveParameter2,
+    ) -> crate::ExactCurveResult<CurveVector2> {
+        self.derivative_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_with_policy(
+        &self,
+        parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
-        self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.derivative_at_side_with_policy(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
     pub fn derivative_at_side(
+        &self,
+        parameter: &CurveParameter2,
+        side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurveVector2> {
+        self.derivative_at_side_with_policy(parameter, side, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_side`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_side_with_policy(
         &self,
         parameter: &CurveParameter2,
         side: CurveParameterSide2,
@@ -1489,12 +1670,22 @@ impl Curve2 {
     }
 
     /// Evaluates the first periodic derivative at any wrappable parameter.
-    pub fn derivative_at_wrapped(
+    pub fn derivative_at_wrapped(&self, parameter: &Real) -> crate::ExactCurveResult<CurveVector2> {
+        self.derivative_at_wrapped_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_wrapped_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
-        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
+        self.derivative_at_wrapped_side_with_policy(
+            parameter,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -1502,11 +1693,25 @@ impl Curve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<CurveVector2> {
+        self.derivative_at_wrapped_side_with_policy(
+            parameter,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivative_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
         resolve_certified_operation(policy, |attempt| {
             let mut derivatives =
-                self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
+                self.derivatives_at_wrapped_side_raw(parameter, 1, side, attempt)?;
             Ok(CurveVector2::represented(
                 derivatives.pop().expect("one derivative requested"),
             ))
@@ -1521,13 +1726,44 @@ impl Curve2 {
         &self,
         parameter: &CurveParameter2,
         max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveVector2>> {
+        self.derivatives_at_with_policy(parameter, max_order, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_with_policy(
+        &self,
+        parameter: &CurveParameter2,
+        max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
-        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
+        self.derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates exact derivatives with explicit retained-fragment side policy.
     pub fn derivatives_at_side(
+        &self,
+        parameter: &CurveParameter2,
+        max_order: usize,
+        side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Vec<CurveVector2>> {
+        self.derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_side`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_side_with_policy(
         &self,
         parameter: &CurveParameter2,
         max_order: usize,
@@ -1556,7 +1792,7 @@ impl Curve2 {
         }
         if let Some(scalar) = parameter.scalar() {
             return Ok(self
-                .derivatives_at_side_with_policy(scalar, max_order, side, policy)?
+                .derivatives_at_side_raw(scalar, max_order, side, policy)?
                 .into_iter()
                 .map(CurveVector2::represented)
                 .collect());
@@ -1659,7 +1895,7 @@ impl Curve2 {
         Err(invalid(CurveError::InvalidBezierParameter))
     }
 
-    pub(crate) fn derivatives_at_side_with_policy(
+    pub(crate) fn derivatives_at_side_raw(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -1675,7 +1911,7 @@ impl Curve2 {
             }
             _ => {}
         }
-        let fragments = match self.native_bezier_fragments_with_policy(policy)? {
+        let fragments = match self.native_bezier_fragments_raw(policy)? {
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
@@ -1704,9 +1940,23 @@ impl Curve2 {
         &self,
         parameter: &Real,
         max_order: usize,
+    ) -> crate::ExactCurveResult<Vec<CurveVector2>> {
+        self.derivatives_at_wrapped_with_policy(
+            parameter,
+            max_order,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_wrapped`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_wrapped_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
-        self.derivatives_at_wrapped_side(
+        self.derivatives_at_wrapped_side_with_policy(
             parameter,
             max_order,
             CurveParameterSide2::Automatic,
@@ -1720,18 +1970,34 @@ impl Curve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+    ) -> crate::ExactCurveResult<Vec<CurveVector2>> {
+        self.derivatives_at_wrapped_side_with_policy(
+            parameter,
+            max_order,
+            side,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::derivatives_at_wrapped_side`] under an explicit predicate policy.
+    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
         resolve_certified_operation(policy, |attempt| {
             Ok(self
-                .derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)?
+                .derivatives_at_wrapped_side_raw(parameter, max_order, side, attempt)?
                 .into_iter()
                 .map(CurveVector2::represented)
                 .collect())
         })
     }
 
-    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+    pub(crate) fn derivatives_at_wrapped_side_raw(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -1760,7 +2026,7 @@ impl Curve2 {
         max_order: usize,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        let fragments = match self.native_bezier_fragments_with_policy(policy)? {
+        let fragments = match self.native_bezier_fragments_raw(policy)? {
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
@@ -1830,7 +2096,13 @@ impl Curve2 {
     /// exact parameter interval. The returned [`CurveOutcome`] records whether
     /// promotion consumed the `APPROXIMATE_512` terminal.
     #[inline(always)]
-    pub fn native_bezier_fragments(
+    pub fn native_bezier_fragments(&self) -> crate::ExactCurveResult<&[NativeBezierFragment2]> {
+        self.native_bezier_fragments_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::native_bezier_fragments`] under an explicit predicate policy.
+    pub(crate) fn native_bezier_fragments_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<&[NativeBezierFragment2]>> {
@@ -1840,7 +2112,7 @@ impl Curve2 {
     }
 
     #[inline]
-    pub(crate) fn native_bezier_fragments_with_policy(
+    pub(crate) fn native_bezier_fragments_raw(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<&[NativeBezierFragment2]>> {
@@ -1863,7 +2135,7 @@ impl Curve2 {
         operation: CurveOperation2,
     ) -> ExactCurveResult<&[NativeBezierFragment2]> {
         match self
-            .native_bezier_fragments_with_policy(policy)
+            .native_bezier_fragments_raw(policy)
             .map_err(|error| error.with_operation(operation))?
         {
             Classification::Decided(fragments) => Ok(fragments),
@@ -1879,7 +2151,7 @@ impl Curve2 {
     ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
         Ok(
             match resolve_cached_evaluation(&self.data.rational_evaluators, policy, |attempt| {
-                let fragments = match self.native_bezier_fragments_with_policy(attempt)? {
+                let fragments = match self.native_bezier_fragments_raw(attempt)? {
                     Classification::Decided(fragments) => fragments,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -1963,14 +2235,15 @@ impl CurvePath2 {
 
     /// Constructs a nonempty ordered path with exactly connected endpoints.
     pub fn try_new(curves: Vec<Curve2>) -> ExactCurveResult<Self> {
-        Self::try_new_raw(curves, &CurveContext::STRICT)
+        Self::try_new_with_policy(curves, &crate::policy::principal_context())
+            .map(CurveOutcome::into_value)
     }
 
-    /// Constructs a nonempty ordered path under the selected endpoint policy.
+    /// [`Self::try_new`] under an explicit endpoint policy.
     ///
     /// The outcome reports when connectivity consumed the authorized 512-bit
     /// terminal. No approximate coordinate replacement is performed.
-    pub fn try_new_with_policy(
+    pub(crate) fn try_new_with_policy(
         curves: Vec<Curve2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
@@ -2048,7 +2321,16 @@ impl CurvePath2 {
     }
 
     /// Returns the same connected path with traversal direction reversed.
-    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+    pub fn reversed(&self) -> crate::ExactCurveResult<Self> {
+        self.reversed_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::reversed`] under an explicit predicate policy.
+    pub(crate) fn reversed_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
     }
 
@@ -2067,7 +2349,13 @@ impl CurvePath2 {
     }
 
     /// Applies an exact planar similarity to every curve in the connected path.
-    pub fn transform_similarity(
+    pub fn transform_similarity(&self, transform: &Similarity2) -> crate::ExactCurveResult<Self> {
+        self.transform_similarity_with_policy(transform, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::transform_similarity`] under an explicit predicate policy.
+    pub(crate) fn transform_similarity_with_policy(
         &self,
         transform: &Similarity2,
         policy: &CurveContext,
@@ -2114,6 +2402,24 @@ impl CurvePath2 {
     /// machinery used by regions, with a native scalar specialization where
     /// its coordinates and parameters are already available.
     pub fn chamfer_vertex_by_setbacks(
+        &self,
+        vertex_index: usize,
+        previous_setback: Real,
+        next_setback: Real,
+        mode: CurveCornerMode2,
+    ) -> crate::ExactCurveResult<CurveCornerSolutions2<Self>> {
+        self.chamfer_vertex_by_setbacks_with_policy(
+            vertex_index,
+            previous_setback,
+            next_setback,
+            mode,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::chamfer_vertex_by_setbacks`] under an explicit predicate policy.
+    pub(crate) fn chamfer_vertex_by_setbacks_with_policy(
         &self,
         vertex_index: usize,
         previous_setback: Real,
@@ -2317,6 +2623,22 @@ impl CurvePath2 {
         vertex_index: usize,
         request: &CurveFillet2,
         mode: CurveCornerMode2,
+    ) -> crate::ExactCurveResult<CurveCornerSolutions2<Self>> {
+        self.fillet_vertex_with_policy(
+            vertex_index,
+            request,
+            mode,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::fillet_vertex`] under an explicit predicate policy.
+    pub(crate) fn fillet_vertex_with_policy(
+        &self,
+        vertex_index: usize,
+        request: &CurveFillet2,
+        mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
         resolve_certified_operation(policy, |attempt| {
@@ -2506,6 +2828,20 @@ impl CurvePath2 {
     pub fn classify_point(
         &self,
         point: &CurvePoint2,
+    ) -> crate::ExactCurveResult<ContourPointLocation> {
+        self.classify_point_with_policy(point, &crate::policy::principal_context())
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Classification,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::classify_point`] under an explicit predicate policy.
+    pub(crate) fn classify_point_with_policy(
+        &self,
+        point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<ContourPointLocation>>> {
         resolve_certified_operation(policy, |attempt| {
@@ -2573,7 +2909,7 @@ impl CurvePath2 {
         }
 
         let boundary = match self
-            .boundary_loop_with_policy(policy)
+            .boundary_loop_raw(policy)
             .map_err(|error| remap_operation(error, CurveOperation2::Classification))?
         {
             Classification::Decided(boundary) => boundary,
@@ -2595,12 +2931,18 @@ impl CurvePath2 {
     /// The returned [`CurveOutcome`] records whether promotion consumed the
     /// `APPROXIMATE_512` terminal.
     #[inline(always)]
-    pub fn native_bezier_fragments(
+    pub fn native_bezier_fragments(&self) -> crate::ExactCurveResult<&[NativeBezierFragment2]> {
+        self.native_bezier_fragments_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::native_bezier_fragments`] under an explicit predicate policy.
+    pub(crate) fn native_bezier_fragments_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<&[NativeBezierFragment2]>> {
         resolve_certified_operation(policy, |attempt| {
-            match self.native_bezier_fragments_with_policy(attempt)? {
+            match self.native_bezier_fragments_raw(attempt)? {
                 Classification::Decided(fragments) => Ok(fragments),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::NativeTopology,
@@ -2612,7 +2954,7 @@ impl CurvePath2 {
     }
 
     #[inline]
-    pub(crate) fn native_bezier_fragments_with_policy(
+    pub(crate) fn native_bezier_fragments_raw(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<&[NativeBezierFragment2]>> {
@@ -2623,7 +2965,7 @@ impl CurvePath2 {
                 |attempt| {
                     let mut capacity = 0_usize;
                     for curve in &self.data.curves {
-                        let native = match curve.native_bezier_fragments_with_policy(attempt)? {
+                        let native = match curve.native_bezier_fragments_raw(attempt)? {
                             Classification::Decided(native) => native,
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
@@ -2634,7 +2976,7 @@ impl CurvePath2 {
                     let mut fragments = Vec::with_capacity(capacity);
                     for curve in &self.data.curves {
                         let Classification::Decided(native) =
-                            curve.native_bezier_fragments_with_policy(attempt)?
+                            curve.native_bezier_fragments_raw(attempt)?
                         else {
                             unreachable!("the capacity pass decided every shared curve promotion");
                         };
@@ -2654,23 +2996,27 @@ impl CurvePath2 {
     /// Authored spans and generated selected curves retain their exact support,
     /// parameter and endpoint evidence. The outcome records any consumption of
     /// the `APPROXIMATE_512` terminal while validating the closed chain.
-    pub fn boundary_loop(
+    pub fn boundary_loop(&self) -> crate::ExactCurveResult<&CurveRegionBoundaryLoop2> {
+        self.boundary_loop_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::boundary_loop`] under an explicit predicate policy.
+    pub(crate) fn boundary_loop_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<&CurveRegionBoundaryLoop2>> {
-        resolve_certified_operation(policy, |attempt| {
-            match self.boundary_loop_with_policy(attempt)? {
-                Classification::Decided(boundary) => Ok(boundary),
-                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                    CurveOperation2::Arrangement,
-                    self.data.curves[0].family(),
-                    reason,
-                )),
-            }
+        resolve_certified_operation(policy, |attempt| match self.boundary_loop_raw(attempt)? {
+            Classification::Decided(boundary) => Ok(boundary),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Arrangement,
+                self.data.curves[0].family(),
+                reason,
+            )),
         })
     }
 
-    pub(crate) fn boundary_loop_with_policy(
+    pub(crate) fn boundary_loop_raw(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<&CurveRegionBoundaryLoop2>> {
@@ -4584,7 +4930,7 @@ pub(crate) fn exact_corner_carrier<'a>(
         }
         Some(CurveGeometry2::PolynomialBSpline(_)) | Some(CurveGeometry2::Nurbs(_)) => {
             let fragments = match curve
-                .native_bezier_fragments_with_policy(policy)
+                .native_bezier_fragments_raw(policy)
                 .map_err(|error| error.with_operation(operation))?
             {
                 Classification::Decided(fragments) => fragments,
@@ -5640,10 +5986,10 @@ mod tests {
             .map(Real::from)
             .collect::<Vec<_>>();
         [
-            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), policy)
+            Curve2::try_polynomial_bspline_with_policy(2, controls.clone(), knots.clone(), policy)
                 .unwrap()
                 .value,
-            Curve2::try_nurbs(2, controls, vec![Real::one(); 3], knots, policy)
+            Curve2::try_nurbs_with_policy(2, controls, vec![Real::one(); 3], knots, policy)
                 .unwrap()
                 .value,
         ]
@@ -5663,7 +6009,7 @@ mod tests {
             "the fixture must exercise selected transport"
         );
         let point = curve
-            .point_at(parameter, policy)
+            .point_at_with_policy(parameter, policy)
             .expect("selected cut lies in the authored knot domain");
         assert_eq!(point.certainty, crate::CurveCertainty::Certified);
         let equal = point.value.coincides_with(&cut.point, policy);
@@ -7079,7 +7425,7 @@ mod tests {
         let path = constructed.value;
 
         let boundary = path
-            .boundary_loop(&CurveContext::APPROXIMATE_512)
+            .boundary_loop_with_policy(&CurveContext::APPROXIMATE_512)
             .expect("the terminal policy must validate every path join");
         assert_eq!(
             boundary.certainty,
@@ -7087,7 +7433,9 @@ mod tests {
         );
         assert_eq!(boundary.value.len(), 4);
 
-        let strict_boundary = path.boundary_loop(&CurveContext::STRICT).unwrap_err();
+        let strict_boundary = path
+            .boundary_loop_with_policy(&CurveContext::STRICT)
+            .unwrap_err();
         assert!(matches!(
             strict_boundary,
             ExactCurveError::Blocked(blocker)
@@ -7134,7 +7482,7 @@ mod tests {
         assert!(endpoint.coordinates().is_none());
         for point in [coordinates.into(), endpoint] {
             let approximate = path
-                .classify_point(&point, &CurveContext::APPROXIMATE_512)
+                .classify_point_with_policy(&point, &CurveContext::APPROXIMATE_512)
                 .expect("the terminal policy must classify through the retained boundary");
             assert_eq!(
                 approximate.certainty,
@@ -7146,7 +7494,7 @@ mod tests {
             );
 
             let strict = path
-                .classify_point(&point, &CurveContext::STRICT)
+                .classify_point_with_policy(&point, &CurveContext::STRICT)
                 .expect("strict classification preserves uncertainty as query evidence");
             assert_eq!(strict.certainty, crate::CurveCertainty::Certified);
             assert_eq!(

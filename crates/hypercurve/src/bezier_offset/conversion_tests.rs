@@ -105,7 +105,7 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
         );
         assert!(chord.exact_line().is_none());
         assert!(chord.strict_provenance_support_line(&policy).is_none());
-        let spline = Curve2::try_nurbs(
+        let spline = Curve2::try_nurbs_with_policy(
             2,
             vec![p(0, 0), p(0, 1), p(0, 2), p(-1, 2), p(-3, 2)],
             vec![Real::one(); 5],
@@ -127,13 +127,18 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
             let source = CurvePath2::try_new(vec![first, spline.clone()]).unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
                 let spline_axis = usize::from(!reversed);
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                    match path.fillet_vertex(1, &CurveFillet2::new(radius.clone()), mode, &policy) {
+                    match path.fillet_vertex_with_policy(
+                        1,
+                        &CurveFillet2::new(radius.clone()),
+                        mode,
+                        &policy,
+                    ) {
                         Err(crate::ExactCurveError::Invalid {
                             cause: CurveError::FilletConstraintRequired,
                             ..
@@ -186,7 +191,7 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
                                     Some(CurveFilletContact2::Parameter(parameter));
                             }
                         }
-                        let selected = path.fillet_vertex(1, &request, mode, &policy)
+                        let selected = path.fillet_vertex_with_policy(1, &request, mode, &policy)
                             .unwrap_or_else(|error| panic!(
                                 "oblique constrained fillet: {error}; retained={retained}, reversed={reversed}, mode={mode:?}, selection={selection}"
                             ));
@@ -4125,7 +4130,7 @@ fn rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs() {
         endpoint.translated(Real::from(3_i8), Real::from(2_i8)),
     )
     .unwrap();
-    let Classification::Decided(parallel) = crate::Curve2::try_analytic_parallel(
+    let Classification::Decided(parallel) = crate::Curve2::try_analytic_parallel_with_policy(
         parallel,
         BezierParameterRange2::from_exact(Real::zero(), Real::one()),
         &policy,
@@ -4134,7 +4139,7 @@ fn rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs() {
         panic!("the regular parallel is admitted");
     };
     let evidence = parallel
-        .intersect_curve(&crate::Curve2::from(normal_line), &policy)
+        .intersect_curve_with_policy(&crate::Curve2::from(normal_line), &policy)
         .unwrap()
         .value;
     assert!(evidence.is_complete());
@@ -14482,8 +14487,12 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
                         overlap.overlap().second_range().end(),
                     ),
                 ] {
-                    let first_point = first.point_at(first_parameter, &policy).unwrap();
-                    let second_point = second.point_at(second_parameter, &policy).unwrap();
+                    let first_point = first
+                        .point_at_with_policy(first_parameter, &policy)
+                        .unwrap();
+                    let second_point = second
+                        .point_at_with_policy(second_parameter, &policy)
+                        .unwrap();
                     assert_eq!(first_point.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(second_point.certainty, crate::CurveCertainty::Certified);
                     let first_point = first_point.value;
@@ -21658,7 +21667,9 @@ fn assert_mixed_circle_intersections(
         } else {
             (&circle, &target)
         };
-        let topology = first.intersection_topology(second, policy).unwrap();
+        let topology = first
+            .intersection_topology_with_policy(second, policy)
+            .unwrap();
         assert_eq!(topology.certainty, CurveCertainty::Certified);
         let result = topology.value.result();
         assert!(result.is_complete(), "{result:?}");
@@ -21687,7 +21698,7 @@ fn assert_mixed_circle_intersections(
         assert_eq!(source_pieces.len(), 3);
         let mut replayed = Vec::new();
         for piece in source_pieces {
-            let replay = piece.intersect_curve(&circle, policy).unwrap();
+            let replay = piece.intersect_curve_with_policy(&circle, policy).unwrap();
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert!(replay.value.is_complete(), "{replay:?}");
             replayed.push((replay.value.contacts().len(), replay.value.overlaps().len()));
@@ -22539,7 +22550,7 @@ fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
             .unwrap(),
         );
         let trimmed = source
-            .trim_inside_region_with_parameters(&region, &policy)
+            .trim_inside_region_with_parameters_with_policy(&region, &policy)
             .expect("a rational line must trim against the retained algebraic circle");
         assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
         let [trimmed] = trimmed.value.as_slice() else {
@@ -22574,7 +22585,7 @@ fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
                 .expect("valid rational carrier on the selected semicircle"),
             );
             let trimmed = source
-                .trim_inside_region_with_parameters(&region, &policy)
+                .trim_inside_region_with_parameters_with_policy(&region, &policy)
                 .expect("a coincident rational arc must retain the selected circle boundary");
             assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
             assert!(!trimmed.value.is_empty());

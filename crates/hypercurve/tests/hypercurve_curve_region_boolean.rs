@@ -89,19 +89,20 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         CurveParameterRange2::try_new(start.into(), end.into(), &policy).unwrap(),
                     );
                     let curve = certified(
-                        Curve2::try_from_bezier_range(source.clone(), range, &policy).unwrap(),
-                    );
-                    let curve_bounds = curve.bounds().unwrap().clone();
-                    let chord = decided(
-                        Curve2::try_line(
-                            endpoints[0].clone().into(),
-                            endpoints[1].clone().into(),
-                            &policy,
-                        )
+                        crate::support::under(&policy, || {
+                            Curve2::try_from_bezier_range(source.clone(), range)
+                        })
                         .unwrap(),
                     );
+                    let curve_bounds = curve.bounds().unwrap().clone();
+                    let chord = crate::support::under(&policy, || {
+                        Curve2::try_line(endpoints[0].clone().into(), endpoints[1].clone().into())
+                    })
+                    .unwrap()
+                    .into_value();
                     let path = certified(
-                        CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap(),
+                        crate::support::under(&policy, || CurvePath2::try_new(vec![curve, chord]))
+                            .unwrap(),
                     );
                     let region = certified(
                         crate::support::under(&policy, || {
@@ -176,23 +177,25 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 (a.x() + b.x() + Real::from(2) * middle.x()) * q(1, 4),
                 (a.y() + b.y() + Real::from(2) * middle.y()) * q(1, 4),
             );
-            let Classification::Decided(chord) =
-                Curve2::try_line(b.clone().into(), a.clone().into(), &policy).unwrap()
-            else {
-                panic!("represented chord");
-            };
+            let chord = crate::support::under(&policy, || {
+                Curve2::try_line(b.clone().into(), a.clone().into())
+            })
+            .unwrap()
+            .into_value();
             let range =
                 decided(CurveParameterRange2::try_new(start.into(), end.into(), &policy).unwrap());
             let curve = certified(
-                Curve2::try_from_bezier_range(
-                    CurveGeometry2::RationalBezier(source.clone()),
-                    range,
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    Curve2::try_from_bezier_range(
+                        CurveGeometry2::RationalBezier(source.clone()),
+                        range,
+                    )
+                })
                 .unwrap(),
             );
-            let path =
-                certified(CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap());
+            let path = certified(
+                crate::support::under(&policy, || CurvePath2::try_new(vec![curve, chord])).unwrap(),
+            );
             let region = certified(
                 crate::support::under(&policy, || {
                     CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -293,7 +296,7 @@ fn replay_carrier(
     parameter: &hypercurve::CurveParameter2,
     policy: &CurveContext,
 ) -> hypercurve::CurvePoint2 {
-    let point = carrier.curve().point_at(parameter, policy).unwrap();
+    let point = crate::support::under(policy, || carrier.curve().point_at(parameter)).unwrap();
     assert_eq!(point.certainty, CurveCertainty::Certified);
     point.value
 }
@@ -363,7 +366,8 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
                 let first_path = square_path(0, 0, 4, 4);
                 let second_path = square_path(2, if shared_edge { 0 } else { -1 }, 6, 3);
                 let second_path = if reversed {
-                    let reversed = second_path.reversed(&policy).unwrap();
+                    let reversed =
+                        crate::support::under(&policy, || second_path.reversed()).unwrap();
                     assert_eq!(reversed.certainty, CurveCertainty::Certified);
                     reversed.value
                 } else {
@@ -411,11 +415,13 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
                     &replay_carrier(contact.second(), contact.second_parameter(), &policy),
                     &policy,
                 );
-                let repeated = contact
-                    .first()
-                    .curve()
-                    .intersect_curve(contact.second().curve(), &policy)
-                    .unwrap();
+                let repeated = crate::support::under(&policy, || {
+                    contact
+                        .first()
+                        .curve()
+                        .intersect_curve(contact.second().curve())
+                })
+                .unwrap();
                 assert_eq!(repeated.certainty, CurveCertainty::Certified);
                 assert!(repeated.value.is_complete());
                 assert!(
@@ -479,14 +485,14 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
             LineSeg2::try_new(point(1, 2), point(-4, 0)).unwrap().into(),
         ])
         .unwrap();
-        let fillet = path
-            .fillet_vertex(
+        let fillet = crate::support::under(&policy, || {
+            path.fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(ratio(1, 4)),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .unwrap();
+        })
+        .unwrap();
         assert_eq!(fillet.certainty, CurveCertainty::Certified);
         let path = {
             let solutions = fillet.value;
@@ -515,20 +521,19 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
                 .unwrap(),
             );
             let curve = certified(
-                Curve2::try_from_bezier_range(
-                    CurveGeometry2::QuadraticBezier(source),
-                    range,
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    Curve2::try_from_bezier_range(CurveGeometry2::QuadraticBezier(source), range)
+                })
                 .unwrap(),
             );
-            let Classification::Decided(chord) =
-                Curve2::try_line(point(-1, 1).into(), point(0, 0).into(), &policy).unwrap()
-            else {
-                panic!("exact chord");
-            };
-            let cap_path =
-                certified(CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap());
+            let chord = crate::support::under(&policy, || {
+                Curve2::try_line(point(-1, 1).into(), point(0, 0).into())
+            })
+            .unwrap()
+            .into_value();
+            let cap_path = certified(
+                crate::support::under(&policy, || CurvePath2::try_new(vec![curve, chord])).unwrap(),
+            );
             let cap = certified(
                 crate::support::under(&policy, || {
                     CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -720,9 +725,11 @@ fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegio
     }
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[CurvePath2::try_new_with_policy(curves, policy)
-                .unwrap()
-                .into_value()],
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(curves))
+                    .unwrap()
+                    .into_value(),
+            ],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
         )
@@ -1440,8 +1447,16 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         Curve2::from(QuadraticBezier2::new(point(1, 1), point(1, 2), point(0, 1))),
         Curve2::from(LineSeg2::try_new(point(0, 1), point(0, 0)).unwrap()),
     ];
-    assert!(CurvePath2::try_new_with_policy(curves.clone(), &CurveContext::STRICT).is_err());
-    let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512).unwrap();
+    assert!(
+        crate::support::under(&CurveContext::STRICT, || CurvePath2::try_new(
+            curves.clone()
+        ))
+        .is_err()
+    );
+    let path = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        CurvePath2::try_new(curves)
+    })
+    .unwrap();
     assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
     let authored = path_region(&path.value, &CurveContext::APPROXIMATE_512);
     let normalized = crate::support::under(&CurveContext::APPROXIMATE_512, || {
@@ -1606,11 +1621,15 @@ fn curve_path_construction_obeys_the_approximate_512_terminal() {
     ];
 
     assert!(matches!(
-        CurvePath2::try_new_with_policy(curves.clone(), &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || CurvePath2::try_new(
+            curves.clone()
+        )),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal should certify symbolic path connectivity");
+    let path = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        CurvePath2::try_new(curves)
+    })
+    .expect("the authorized terminal should certify symbolic path connectivity");
     assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(path.value.curves().len(), 2);
 }
@@ -2083,13 +2102,12 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         ],
     )
     .unwrap();
-    let shared = Curve2::from(polynomial_rational.clone())
-        .intersect_curve(
-            &Curve2::from(projective_rational.clone()),
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .value;
+    let shared = crate::support::under(&CurveContext::STRICT, || {
+        Curve2::from(polynomial_rational.clone())
+            .intersect_curve(&Curve2::from(projective_rational.clone()))
+    })
+    .unwrap()
+    .value;
     assert!(shared.is_complete() && shared.contacts().is_empty());
     assert_eq!(shared.overlaps().len(), 1);
 
@@ -2210,10 +2228,10 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let narrow_clip = square_path(-1, -1, 2, 5);
-        let narrow_topology = first
-            .intersection_topology(&narrow_clip, &policy)
-            .unwrap()
-            .into_value();
+        let narrow_topology =
+            crate::support::under(&policy, || first.intersection_topology(&narrow_clip))
+                .unwrap()
+                .into_value();
         let pieces = narrow_topology.first()[0].curves();
         assert_eq!(pieces.len(), 2);
         assert_eq!(
@@ -2235,10 +2253,10 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
         );
         for wide_path in [&second, &second_reversed] {
             let wide_clip = square_path(-1, -1, 3, 5);
-            let wide_topology = wide_path
-                .intersection_topology(&wide_clip, &policy)
-                .unwrap()
-                .into_value();
+            let wide_topology =
+                crate::support::under(&policy, || wide_path.intersection_topology(&wide_clip))
+                    .unwrap()
+                    .into_value();
             let pieces = wide_topology.first()[0].curves();
             assert_eq!(pieces.len(), 2);
             assert_eq!(
@@ -2325,7 +2343,9 @@ fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
             let cut = BezierParameter2::Algebraic(decided(
                 BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
             ));
-            let (head, tail) = curve.split_at(cut.into(), &policy).unwrap().into_value();
+            let (head, tail) = crate::support::under(&policy, || curve.split_at(cut.into()))
+                .unwrap()
+                .into_value();
             let closing = LineSeg2::try_new(end.clone(), start.clone()).unwrap();
             let path = CurvePath2::try_new(vec![head, tail, closing.into()]).unwrap();
             let region = crate::support::under(&policy, || {

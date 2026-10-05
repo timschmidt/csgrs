@@ -1,8 +1,10 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
-    Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveIntersectionResult2,
-    CurveLocation2, NurbsCurve2, Point2, Real,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveIntersectionResult2, CurveLocation2,
+    NurbsCurve2, Point2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -12,14 +14,11 @@ fn coordinate(byte: u8) -> Real {
 
 /// Isolated contact sets only; retracing and constant-image components are
 /// not additive under splitting.
-fn complete(
-    outcome: hypercurve::CurveOutcome<CurveIntersectionResult2>,
-) -> Option<CurveIntersectionResult2> {
-    (outcome.certainty == CurveCertainty::Certified
-        && outcome.value.is_complete()
-        && outcome.value.overlaps().is_empty()
-        && outcome.value.parameter_components().is_empty())
-    .then_some(outcome.value)
+fn complete(result: CurveIntersectionResult2) -> Option<CurveIntersectionResult2> {
+    (result.is_complete()
+        && result.overlaps().is_empty()
+        && result.parameter_components().is_empty())
+    .then_some(result)
 }
 
 fn parameter(location: &CurveLocation2, policy: &CurveContext) -> hypercurve::CurveParameter2 {
@@ -41,14 +40,14 @@ fn assert_contacts_coincide(
     policy: &CurveContext,
 ) {
     for contact in result.contacts() {
-        let first = curve
-            .point_at(&parameter(contact.first(), policy), policy)
-            .unwrap()
-            .value;
-        let second = curve
-            .point_at(&parameter(contact.second(), policy), policy)
-            .unwrap()
-            .value;
+        let first = support::under(policy, || {
+            curve.point_at(&parameter(contact.first(), policy))
+        })
+        .unwrap();
+        let second = support::under(policy, || {
+            curve.point_at(&parameter(contact.second(), policy))
+        })
+        .unwrap();
         assert_eq!(
             first.coincides_with(&second, policy).value,
             Classification::Decided(true)
@@ -76,10 +75,9 @@ fuzz_target!(|data: &[u8]| {
         controls[2].clone(),
         controls[3].clone(),
     ));
-    let Ok(outcome) = curve.self_intersections(&policy) else {
-        return;
-    };
-    let Some(whole) = complete(outcome) else {
+    let Some(whole) =
+        support::certified_under(&policy, || curve.self_intersections()).and_then(complete)
+    else {
         return;
     };
     assert_contacts_coincide(&curve, &whole, &policy);
@@ -98,8 +96,8 @@ fuzz_target!(|data: &[u8]| {
     .and_then(|nurbs| nurbs.into_value().insert_knot(split.clone(), &policy))
     .map(|nurbs| Curve2::from(nurbs.into_value()));
     if let Ok(refined) = refined
-        && let Ok(outcome) = refined.self_intersections(&policy)
-        && let Some(result) = complete(outcome)
+        && let Some(result) =
+            support::certified_under(&policy, || refined.self_intersections()).and_then(complete)
     {
         assert_eq!(result.contacts().len(), whole.contacts().len());
         assert_contacts_coincide(&refined, &result, &policy);
@@ -107,20 +105,15 @@ fuzz_target!(|data: &[u8]| {
 
     // The same off-diagonal contacts split between both pieces' own
     // incidence and their pair, whose shared joint is not a contact.
-    let Ok(pieces) = curve.split_at(split.into(), &policy) else {
+    let Ok(pieces) = support::under(&policy, || curve.split_at(split.into())) else {
         return;
     };
-    let (left, right) = pieces.into_value();
-    let (Ok(left_self), Ok(right_self), Ok(pair)) = (
-        left.self_intersections(&policy),
-        right.self_intersections(&policy),
-        left.intersect_curve(&right, &policy),
+    let (left, right) = pieces;
+    let (Some(left_self), Some(right_self), Some(pair)) = (
+        support::certified_under(&policy, || left.self_intersections()).and_then(complete),
+        support::certified_under(&policy, || right.self_intersections()).and_then(complete),
+        support::certified_under(&policy, || left.intersect_curve(&right)).and_then(complete),
     ) else {
-        return;
-    };
-    let (Some(left_self), Some(right_self), Some(pair)) =
-        (complete(left_self), complete(right_self), complete(pair))
-    else {
         return;
     };
     let joint = pair

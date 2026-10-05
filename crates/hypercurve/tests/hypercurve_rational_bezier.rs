@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     Axis2, Classification, Curve2, CurveContext, CurveFamily2, CurveOperation2, CurvePoint2,
     Point2, RationalBezier2, RationalQuadraticBezier2, Real,
@@ -38,10 +39,11 @@ fn point_parameters(
     point: &Point2,
     policy: &CurveContext,
 ) -> Option<Vec<Option<Real>>> {
-    match Curve2::from(curve.clone())
-        .point_locations(&CurvePoint2::from(point.clone()), policy)
-        .unwrap()
-        .value
+    match crate::support::under(policy, || {
+        Curve2::from(curve.clone()).point_locations(&CurvePoint2::from(point.clone()))
+    })
+    .unwrap()
+    .value
     {
         hypercurve::CurvePointLocations2::EntireCurve => None,
         hypercurve::CurvePointLocations2::Locations(locations) => Some(
@@ -309,10 +311,7 @@ fn top_level_general_rational_curve_preserves_family_and_native_geometry() {
     let top_level = Curve2::from(curve());
 
     assert_eq!(top_level.family(), CurveFamily2::RationalBezier);
-    let fragments = top_level
-        .native_bezier_fragments(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let fragments = top_level.native_bezier_fragments().unwrap();
     assert_eq!(fragments.len(), 1);
     assert!(matches!(
         fragments[0].curve(),

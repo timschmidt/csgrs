@@ -886,7 +886,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                 ));
             };
             return curve
-                .transform_similarity(&similarity, &CurveContext::STRICT)
+                .transform_similarity_with_policy(&similarity, &CurveContext::STRICT)
                 .map(|curve| vec![curve.into_value()])
                 .map_err(svg_geometry_error);
         }
@@ -901,12 +901,12 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
         Some(CurveGeometry2::CircularArc(_)) => {
             if let Some(similarity) = transform.similarity() {
                 return curve
-                    .transform_similarity(&similarity, &CurveContext::STRICT)
+                    .transform_similarity_with_policy(&similarity, &CurveContext::STRICT)
                     .map(|curve| vec![curve.into_value()])
                     .map_err(svg_geometry_error);
             }
             curve
-                .native_bezier_fragments(&CurveContext::STRICT)
+                .native_bezier_fragments_with_policy(&CurveContext::STRICT)
                 .map_err(svg_geometry_error)?
                 .into_value()
                 .iter()
@@ -1539,7 +1539,7 @@ fn append_native_path(
 ) -> SvgResult<()> {
     if path.curves().iter().any(|curve| curve.geometry().is_none()) {
         let projected = path
-            .project_to_finite_polyline(projection, &CurveContext::STRICT)
+            .project_to_finite_polyline_with_policy(projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
             .into_value();
         for (index, point) in projected.points().iter().enumerate() {
@@ -1639,7 +1639,7 @@ fn append_native_path(
                 let one_curve =
                     CurvePath2::try_new(vec![curve.clone()]).map_err(svg_geometry_error)?;
                 let polyline = one_curve
-                    .project_to_finite_polyline(projection, &CurveContext::STRICT)
+                    .project_to_finite_polyline_with_policy(projection, &CurveContext::STRICT)
                     .map_err(svg_geometry_error)?
                     .into_value();
                 if polyline.points().len() < 2 {

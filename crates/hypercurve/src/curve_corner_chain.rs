@@ -4078,12 +4078,12 @@ mod tests {
             for reversed in [false, true] {
                 let source = nonph_extended_fillet_path(false);
                 let source = if reversed {
-                    source.reversed(&policy).unwrap().into_value()
+                    source.reversed_with_policy(&policy).unwrap().into_value()
                 } else {
                     source
                 };
                 let outcome = source
-                    .fillet_vertex(
+                    .fillet_vertex_with_policy(
                         1,
                         &crate::CurveFillet2::new(q(2, 5)),
                         CurveCornerMode2::TrimOrExtend,
@@ -4134,7 +4134,7 @@ mod tests {
                             curve.parameter_domain().start(),
                             curve.parameter_domain().end(),
                         ] {
-                            let point = curve.point_at(parameter, &policy).unwrap();
+                            let point = curve.point_at_with_policy(parameter, &policy).unwrap();
                             assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                             let order = point
                                 .value
@@ -4166,7 +4166,7 @@ mod tests {
             for reversed in [false, true] {
                 let source = nonph_extended_fillet_path(true);
                 let source = if reversed {
-                    source.reversed(&policy).unwrap().into_value()
+                    source.reversed_with_policy(&policy).unwrap().into_value()
                 } else {
                     source
                 };

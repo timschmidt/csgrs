@@ -603,7 +603,7 @@ impl Pair<'_> {
             None => Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
                 circle.clone(),
             ))
-            .point_at(&circle_parameter, self.policy)?
+            .point_at_with_policy(&circle_parameter, self.policy)?
             .into_value(),
         };
         let cross = cross.map(|sign| {
@@ -1357,7 +1357,7 @@ impl Pair<'_> {
                     continue;
                 }
                 let point = Curve2::from(first.clone())
-                    .point_at(&first_parameter, self.policy)?
+                    .point_at_with_policy(&first_parameter, self.policy)?
                     .into_value();
                 self.append_contact(
                     result,
@@ -2451,7 +2451,7 @@ mod circle_dispatch_tests {
     }
     pub(super) fn oriented(curve: &Curve2, reversed: bool, policy: &CurveContext) -> Curve2 {
         if reversed {
-            let out = curve.reversed(policy).unwrap();
+            let out = curve.reversed_with_policy(policy).unwrap();
             assert_eq!(out.certainty, CurveCertainty::Certified);
             out.value
         } else {
@@ -2472,7 +2472,7 @@ mod circle_dispatch_tests {
         for contact in result.contacts() {
             for (curve, location) in [(first, contact.first()), (second, contact.second())] {
                 let parameter = exact(location.parameter(policy).unwrap());
-                let point = curve.point_at(&parameter, policy).unwrap();
+                let point = curve.point_at_with_policy(&parameter, policy).unwrap();
                 assert_eq!(point.certainty, CurveCertainty::Certified);
                 same(&point.value, contact.point(), policy);
             }
@@ -2505,8 +2505,12 @@ mod circle_dispatch_tests {
                     .parameter(policy)
                     .unwrap(),
                 );
-                let a = first.point_at(&first_parameter, policy).unwrap();
-                let b = second.point_at(&second_parameter, policy).unwrap();
+                let a = first
+                    .point_at_with_policy(&first_parameter, policy)
+                    .unwrap();
+                let b = second
+                    .point_at_with_policy(&second_parameter, policy)
+                    .unwrap();
                 assert_eq!(a.certainty, CurveCertainty::Certified);
                 assert_eq!(b.certainty, CurveCertainty::Certified);
                 same(&a.value, &b.value, policy);
@@ -2519,7 +2523,7 @@ mod circle_dispatch_tests {
         second: &Curve2,
         policy: &CurveContext,
     ) -> CurveIntersectionResult2 {
-        let result = first.intersect_curve(second, policy).unwrap();
+        let result = first.intersect_curve_with_policy(second, policy).unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
         assert!(result.value.is_complete(), "{:?}", result.value.blockers());
         replay(first, second, &result.value, policy);
@@ -2745,7 +2749,8 @@ mod circle_dispatch_tests {
                             for (swapped, (first, second)) in
                                 [(&circle, &line), (&line, &circle)].into_iter().enumerate()
                             {
-                                let outcome = first.intersect_curve(second, &policy).unwrap();
+                                let outcome =
+                                    first.intersect_curve_with_policy(second, &policy).unwrap();
                                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                                 assert!(
                                     outcome.value.is_complete(),
@@ -2833,7 +2838,10 @@ mod circle_dispatch_tests {
                             };
                             assert!(contact.is_certified_transverse());
                             let point = line
-                                .point_at(&CurveParameter2::from(boundary.clone()), &policy)
+                                .point_at_with_policy(
+                                    &CurveParameter2::from(boundary.clone()),
+                                    &policy,
+                                )
                                 .unwrap();
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             same(&point.value, contact.point(), &policy);
@@ -2917,7 +2925,7 @@ mod circle_dispatch_tests {
                 .unwrap();
                 let path = {
                     let solutions = path
-                        .fillet_vertex(
+                        .fillet_vertex_with_policy(
                             1,
                             &crate::CurveFillet2::new(scale * q(1, 4)),
                             crate::CurveCornerMode2::TrimOnly,
@@ -2967,7 +2975,8 @@ mod circle_dispatch_tests {
                     for reverse_line in [false, true] {
                         let line = oriented(&line, reverse_line, &policy);
                         for (first, second) in [(circle, &line), (&line, circle)] {
-                            let outcome = first.intersect_curve(second, &policy).unwrap();
+                            let outcome =
+                                first.intersect_curve_with_policy(second, &policy).unwrap();
                             assert_eq!(outcome.certainty, CurveCertainty::Certified);
                             assert!(
                                 outcome.value.is_complete(),
@@ -2983,7 +2992,9 @@ mod circle_dispatch_tests {
                             );
                             same(contact.point(), &circle.start(), &policy);
                             replay(first, second, &outcome.value, &policy);
-                            let topology = first.intersection_topology(second, &policy).unwrap();
+                            let topology = first
+                                .intersection_topology_with_policy(second, &policy)
+                                .unwrap();
                             assert_eq!(topology.certainty, CurveCertainty::Certified);
                             assert!(topology.value.result().is_complete());
                         }
@@ -3010,7 +3021,7 @@ mod circle_dispatch_tests {
                     false,
                 ),
                 (
-                    Curve2::try_polynomial_bspline(
+                    Curve2::try_polynomial_bspline_with_policy(
                         1,
                         vec![p(-2, 0), p(0, 0), p(2, 0)],
                         vec![
@@ -3028,7 +3039,7 @@ mod circle_dispatch_tests {
                     false,
                 ),
                 (
-                    Curve2::try_nurbs(
+                    Curve2::try_nurbs_with_policy(
                         1,
                         vec![p(-2, 0), p(0, 0), p(2, 0)],
                         vec![Real::one(), Real::from(2), Real::one()],
@@ -3189,11 +3200,11 @@ mod circle_dispatch_tests {
                     ((q(0, 1), q(1, 4)), (q(3, 4), q(1, 1)), 0, 0),
                 ] {
                     let first = source
-                        .subcurve(first_range.0.into(), first_range.1.into(), &policy)
+                        .subcurve_with_policy(first_range.0.into(), first_range.1.into(), &policy)
                         .unwrap()
                         .value;
                     let second = other
-                        .subcurve(second_range.0.into(), second_range.1.into(), &policy)
+                        .subcurve_with_policy(second_range.0.into(), second_range.1.into(), &policy)
                         .unwrap()
                         .value;
                     for a in [false, true] {
@@ -3422,7 +3433,9 @@ mod circle_dispatch_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = circle(0, 2, &policy);
             let line = Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap());
-            let topology = source.intersection_topology(&line, &policy).unwrap();
+            let topology = source
+                .intersection_topology_with_policy(&line, &policy)
+                .unwrap();
             assert_eq!(topology.certainty, CurveCertainty::Certified);
             assert_eq!(topology.value.first().len(), 2);
             assert_eq!(topology.value.second().len(), 2);
@@ -3482,7 +3495,11 @@ mod analytic_dispatch_tests {
         )
     }
     fn trim(curve: &Curve2, start: Real, end: Real, policy: &CurveContext) -> Curve2 {
-        certified(curve.subcurve(start.into(), end.into(), policy).unwrap())
+        certified(
+            curve
+                .subcurve_with_policy(start.into(), end.into(), policy)
+                .unwrap(),
+        )
     }
 
     fn finite_parallel(
@@ -3659,7 +3676,7 @@ mod analytic_dispatch_tests {
                             {
                                 let point = certified(
                                     curve
-                                        .point_at(
+                                        .point_at_with_policy(
                                             &exact(location.parameter(&policy).unwrap()),
                                             &policy,
                                         )
@@ -4007,14 +4024,17 @@ mod analytic_dispatch_tests {
                 ));
                 let first_path = CurvePath2::try_new(vec![a.clone()]).unwrap();
                 let second_path = CurvePath2::try_new(vec![b.clone()]).unwrap();
-                let path_result =
-                    certified(first_path.intersect_path(&second_path, &policy).unwrap());
+                let path_result = certified(
+                    first_path
+                        .intersect_path_with_policy(&second_path, &policy)
+                        .unwrap(),
+                );
                 assert!(path_result.is_complete() && !path_result.is_disjoint());
                 assert_eq!(path_result.parameter_components().len(), 1);
                 assert_eq!(path_result.parameter_components()[0].component(), component);
                 let topology = certified(
                     first_path
-                        .intersection_topology(&second_path, &policy)
+                        .intersection_topology_with_policy(&second_path, &policy)
                         .unwrap(),
                 );
                 assert_eq!(topology.result().parameter_components().len(), 1);
@@ -4024,7 +4044,8 @@ mod analytic_dispatch_tests {
                     topology.first()
                 };
                 assert_eq!(pieces[0].curves().len(), 2);
-                let curve_topology = certified(a.intersection_topology(b, &policy).unwrap());
+                let curve_topology =
+                    certified(a.intersection_topology_with_policy(b, &policy).unwrap());
                 assert_eq!(curve_topology.result().parameter_components().len(), 1);
             }
             let excluded = trim(&line, Real::zero(), q(1, 4), &policy);
@@ -4203,7 +4224,10 @@ mod analytic_dispatch_tests {
                 for location in [contact.first(), contact.second()] {
                     let point = certified(
                         curve
-                            .point_at(&exact(location.parameter(&policy).unwrap()), &policy)
+                            .point_at_with_policy(
+                                &exact(location.parameter(&policy).unwrap()),
+                                &policy,
+                            )
                             .unwrap(),
                     );
                     same(&point, contact.point(), &policy);
@@ -4272,7 +4296,11 @@ mod analytic_dispatch_tests {
                                 for location in [contact.first(), contact.second()] {
                                     let parameter = exact(location.parameter(&policy).unwrap());
                                     same(
-                                        &certified(curve.point_at(&parameter, &policy).unwrap()),
+                                        &certified(
+                                            curve
+                                                .point_at_with_policy(&parameter, &policy)
+                                                .unwrap(),
+                                        ),
                                         contact.point(),
                                         &policy,
                                     );
@@ -4420,8 +4448,8 @@ mod analytic_dispatch_tests {
                     Classification::Decided(true)
                 );
                 same(
-                    &certified(curve.point_at(&parameter, &policy).unwrap()),
-                    &certified(curve.point_at(&mapped, &policy).unwrap()),
+                    &certified(curve.point_at_with_policy(&parameter, &policy).unwrap()),
+                    &certified(curve.point_at_with_policy(&mapped, &policy).unwrap()),
                     &policy,
                 );
             }
@@ -4632,7 +4660,14 @@ mod analytic_dispatch_tests {
                 }
             }
             let undefined = Curve2::from(rootful_point);
-            assert!(!certified(chord.intersect_curve(&undefined, &policy).unwrap()).is_complete());
+            assert!(
+                !certified(
+                    chord
+                        .intersect_curve_with_policy(&undefined, &policy)
+                        .unwrap()
+                )
+                .is_complete()
+            );
             // x=t/(2-t) is finite on [3,4], while [1,3] contains its pole.
             let source = exact(
                 RationalBezier2::from_homogeneous_controls(
@@ -4648,7 +4683,7 @@ mod analytic_dispatch_tests {
             let finite = finite_rational(source.clone(), [3.into(), 4.into()], false, &policy);
             assert_eq!(query(&chord, &finite, &policy).overlaps().len(), 1);
             let pole = finite_rational(source, [1.into(), 3.into()], false, &policy);
-            let result = certified(chord.intersect_curve(&pole, &policy).unwrap());
+            let result = certified(chord.intersect_curve_with_policy(&pole, &policy).unwrap());
             assert!(!result.is_complete());
             assert!(result.contacts().is_empty());
             assert!(result.overlaps().is_empty());
@@ -4738,8 +4773,8 @@ mod analytic_dispatch_tests {
                             Classification::Decided(true)
                         );
                         same(
-                            &certified(a.point_at(&parameter, &policy).unwrap()),
-                            &certified(b.point_at(&mapped, &policy).unwrap()),
+                            &certified(a.point_at_with_policy(&parameter, &policy).unwrap()),
+                            &certified(b.point_at_with_policy(&mapped, &policy).unwrap()),
                             &policy,
                         );
                     }
@@ -4827,7 +4862,9 @@ mod analytic_dispatch_tests {
             let finite = finite_rational(source.clone(), [3.into(), 4.into()], true, &policy);
             assert_eq!(query(&line, &finite, &policy).overlaps().len(), 1);
             let pole = finite_rational(source, [1.into(), 3.into()], false, &policy);
-            assert!(!certified(line.intersect_curve(&pole, &policy).unwrap()).is_complete());
+            assert!(
+                !certified(line.intersect_curve_with_policy(&pole, &policy).unwrap()).is_complete()
+            );
             let rootful_point = exact(
                 RationalBezier2::from_homogeneous_controls(
                     vec![
@@ -4919,14 +4956,14 @@ mod analytic_dispatch_tests {
             let start = selected(q(5, 28), &policy);
             let end = selected(q(13, 20), &policy);
             assert!(start.as_bezier_parameter().is_none());
-            let parallel = certified(parallel.subcurve(start, end, &policy).unwrap());
+            let parallel = certified(parallel.subcurve_with_policy(start, end, &policy).unwrap());
             for other in [
                 Curve2::from(rational.clone()),
                 curve(rational.parallel_left(Real::zero()).unwrap(), &policy),
             ] {
                 let other = certified(
                     other
-                        .subcurve(
+                        .subcurve_with_policy(
                             selected(q(1, 4), &policy),
                             selected(q(3, 4), &policy),
                             &policy,
@@ -5000,8 +5037,8 @@ mod analytic_dispatch_tests {
                         (clipped.0.end(), clipped.1.end()),
                     ] {
                         same(
-                            &certified(a.point_at(x, &policy).unwrap()),
-                            &certified(b.point_at(y, &policy).unwrap()),
+                            &certified(a.point_at_with_policy(x, &policy).unwrap()),
+                            &certified(b.point_at_with_policy(y, &policy).unwrap()),
                             &policy,
                         );
                     }
@@ -5103,7 +5140,8 @@ mod analytic_dispatch_tests {
                 for (a, b) in [(&chord, &point), (&point, &chord)] {
                     let result = query(a, b, &policy);
                     assert_eq!(result.parameter_components().len(), 1);
-                    let topology = certified(a.intersection_topology(b, &policy).unwrap());
+                    let topology =
+                        certified(a.intersection_topology_with_policy(b, &policy).unwrap());
                     assert_eq!(topology.result().parameter_components().len(), 1);
                 }
             }
@@ -5141,7 +5179,8 @@ mod analytic_dispatch_tests {
                 .unwrap(),
             );
             for rootful in [rootful, quadratic] {
-                let result = certified(line.intersect_curve(&rootful, &policy).unwrap());
+                let result =
+                    certified(line.intersect_curve_with_policy(&rootful, &policy).unwrap());
                 assert!(!result.is_complete());
                 assert!(result.parameter_components().is_empty());
                 let finite = trim(&rootful, Real::zero(), q(1, 4), &policy);

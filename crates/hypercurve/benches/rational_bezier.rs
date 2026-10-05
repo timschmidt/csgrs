@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -31,9 +33,10 @@ fn contacts(
     second: &RationalBezier2,
     policy: &CurveContext,
 ) -> CurveIntersectionResult2 {
-    let evidence = Curve2::from(first.clone())
-        .intersect_curve(&Curve2::from(second.clone()), policy)
-        .expect("benchmark contacts are exact");
+    let evidence = crate::support::under(policy, || {
+        Curve2::from(first.clone()).intersect_curve(&Curve2::from(second.clone()))
+    })
+    .expect("benchmark contacts are exact");
     assert_eq!(evidence.certainty, CurveCertainty::Certified);
     let evidence = evidence.value;
     assert!(evidence.is_complete(), "benchmark contacts are complete");
@@ -146,8 +149,7 @@ fn main() {
     .expect("benchmark curve is valid");
     let general = hypercurve::Curve2::from(curve.clone());
     let start = hypercurve::CurvePoint2::from(curve.start().clone());
-    general
-        .point_locations(&start, &policy)
+    crate::support::under(&policy, || general.point_locations(&start))
         .expect("benchmark point incidence is exact");
 
     let stationary_monotone_curve = || {
@@ -249,10 +251,10 @@ fn main() {
     let started = Instant::now();
     let mut incidence_count = 0_usize;
     for _ in 0..iterations {
-        let incidence = general
-            .point_locations(black_box(&start), &policy)
-            .expect("benchmark point incidence is exact")
-            .value;
+        let incidence =
+            crate::support::under(&policy, || general.point_locations(black_box(&start)))
+                .expect("benchmark point incidence is exact")
+                .value;
         incidence_count = incidence_count.wrapping_add(black_box(match incidence {
             hypercurve::CurvePointLocations2::EntireCurve => 1,
             hypercurve::CurvePointLocations2::Locations(locations) => locations.len(),
@@ -417,10 +419,11 @@ fn main() {
     let started = Instant::now();
     let mut derivative_count = 0_usize;
     for _ in 0..derivative_iterations {
-        let derivatives = general_parabola
-            .derivatives_at(black_box(&selected_parameter), black_box(3), &policy)
-            .expect("algebraic derivatives remain exact")
-            .into_value();
+        let derivatives = crate::support::under(&policy, || {
+            general_parabola.derivatives_at(black_box(&selected_parameter), black_box(3))
+        })
+        .expect("algebraic derivatives remain exact")
+        .into_value();
         derivative_count = derivative_count.wrapping_add(black_box(derivatives.len()));
     }
     let elapsed = started.elapsed();
@@ -490,10 +493,11 @@ fn main() {
     let started = Instant::now();
     let mut topology_count = 0_usize;
     for _ in 0..immediate_iterations {
-        let topology = black_box(&parabola_curve)
-            .intersection_topology(black_box(&horizontal_curve), black_box(&policy))
-            .unwrap()
-            .into_value();
+        let topology = crate::support::under(black_box(&policy), || {
+            black_box(&parabola_curve).intersection_topology(black_box(&horizontal_curve))
+        })
+        .unwrap()
+        .into_value();
         topology_count = topology_count
             .wrapping_add(black_box(topology.first().len() + topology.second().len()));
     }

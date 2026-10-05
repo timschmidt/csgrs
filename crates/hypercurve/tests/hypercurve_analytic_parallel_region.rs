@@ -23,13 +23,10 @@ fn line_contacts(
     .unwrap() else {
         panic!("the unit range is exact");
     };
-    let Classification::Decided(parallel) =
-        Curve2::try_analytic_parallel(parallel, range, policy).unwrap()
-    else {
-        panic!("the regular parallel is admitted");
-    };
-    let evidence = parallel
-        .intersect_curve(&Curve2::from(line), policy)
+    let parallel = crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
+        .unwrap()
+        .into_value();
+    let evidence = crate::support::under(policy, || parallel.intersect_curve(&Curve2::from(line)))
         .unwrap()
         .value;
     assert!(evidence.is_complete());
@@ -65,18 +62,11 @@ fn line_parallel_fragment(
     let parallel = QuadraticBezier2::new(start, midpoint, end)
         .parallel_left(Real::from(distance))
         .unwrap();
-    match Curve2::try_analytic_parallel(
-        parallel,
-        range(start_parameter, end_parameter, policy),
-        policy,
-    )
+    crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel, range(start_parameter, end_parameter, policy))
+    })
     .unwrap()
-    {
-        Classification::Decided(fragment) => fragment,
-        Classification::Uncertain(reason) => {
-            panic!("unexpected analytic-parallel uncertainty: {reason:?}")
-        }
-    }
+    .into_value()
 }
 
 fn assert_real_equal(left: &Real, right: &Real) {
@@ -112,9 +102,11 @@ fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion
         .collect();
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[CurvePath2::try_new_with_policy(fragments, policy)
-                .unwrap()
-                .into_value()],
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(fragments))
+                    .unwrap()
+                    .into_value(),
+            ],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
         )
@@ -131,7 +123,7 @@ fn boundary_curves_reenter_boolean_without_native_conversion() {
     assert!(curves.iter().any(|curve| {
         curve.family() == CurveFamily2::AnalyticParallel && curve.geometry().is_none()
     }));
-    let path = CurvePath2::try_new_with_policy(curves.to_vec(), &policy)
+    let path = crate::support::under(&policy, || CurvePath2::try_new(curves.to_vec()))
         .expect("generated analytic boundary curves remain one exact path")
         .into_value();
     let replay = crate::support::under(&policy, || {
@@ -170,22 +162,21 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
     };
-    let analytic =
-        match Curve2::try_analytic_parallel(parallel, range(1, 0, policy), policy).unwrap() {
-            Classification::Decided(fragment) => fragment,
-            Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
-        };
+    let analytic = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel, range(1, 0, policy))
+    })
+    .unwrap()
+    .into_value();
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
-    let boundary = CurvePath2::try_new_with_policy(
-        vec![
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![
             analytic,
             quadratic_line(left, lower_left.clone()),
             quadratic_line(lower_left, lower_right.clone()),
             quadratic_line(lower_right, right),
-        ],
-        policy,
-    )
+        ])
+    })
     .unwrap();
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -206,11 +197,11 @@ fn analytic_rational_arc_corner_region(
     let analytic = QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 1))
         .parallel_left(Real::zero())
         .unwrap();
-    let analytic =
-        match Curve2::try_analytic_parallel(analytic, range(0, 1, policy), policy).unwrap() {
-            Classification::Decided(fragment) => fragment,
-            Classification::Uncertain(reason) => panic!("analytic arc fixture: {reason:?}"),
-        };
+    let analytic = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(analytic, range(0, 1, policy))
+    })
+    .unwrap()
+    .into_value();
     let arc = if unit_end_weights {
         let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
         RationalQuadraticBezier2::try_unit_end_weights(
@@ -243,10 +234,14 @@ fn analytic_rational_arc_corner_region(
         fragments = fragments
             .into_iter()
             .rev()
-            .map(|curve| curve.reversed(policy).unwrap().into_value())
+            .map(|curve| {
+                crate::support::under(policy, || curve.reversed())
+                    .unwrap()
+                    .into_value()
+            })
             .collect();
     }
-    let boundary = CurvePath2::try_new_with_policy(fragments, policy).unwrap();
+    let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments)).unwrap();
     let region = crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary.into_value()],
@@ -402,22 +397,21 @@ fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
     };
-    let analytic =
-        match Curve2::try_analytic_parallel(parallel, range(1, 0, policy), policy).unwrap() {
-            Classification::Decided(fragment) => fragment,
-            Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
-        };
+    let analytic = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel, range(1, 0, policy))
+    })
+    .unwrap()
+    .into_value();
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
-    let boundary = CurvePath2::try_new_with_policy(
-        vec![
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![
             analytic,
             quadratic_line(left, lower_left.clone()),
             quadratic_line(lower_left, lower_right.clone()),
             quadratic_line(lower_right, right),
-        ],
-        policy,
-    )
+        ])
+    })
     .unwrap();
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -584,26 +578,16 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
             Classification::Decided(range) => range,
             Classification::Uncertain(reason) => panic!("cusp range: {reason:?}"),
         };
-    let first = match Curve2::try_analytic_parallel(
-        parallel.clone(),
-        make_range(zero, cusp.clone()),
-        policy,
-    )
+    let first = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel.clone(), make_range(zero, cusp.clone()))
+    })
     .unwrap()
-    {
-        Classification::Decided(fragment) => fragment,
-        Classification::Uncertain(reason) => panic!("first cusp span: {reason:?}"),
-    };
-    let second = match Curve2::try_analytic_parallel(
-        parallel.clone(),
-        make_range(cusp.clone(), one),
-        policy,
-    )
+    .into_value();
+    let second = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel.clone(), make_range(cusp.clone(), one))
+    })
     .unwrap()
-    {
-        Classification::Decided(fragment) => fragment,
-        Classification::Uncertain(reason) => panic!("second cusp span: {reason:?}"),
-    };
+    .into_value();
     let start = match parallel.point_at(&Real::zero(), policy).unwrap() {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
@@ -613,9 +597,10 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
         Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
     };
 
-    let boundary =
-        CurvePath2::try_new_with_policy(vec![first, second, quadratic_line(end, start)], policy)
-            .expect("the shared analytic carrier and cusp parameter certify connectivity");
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![first, second, quadratic_line(end, start)])
+    })
+    .expect("the shared analytic carrier and cusp parameter certify connectivity");
     assert_eq!(boundary.value.curves().len(), 3);
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -659,12 +644,11 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
                     Classification::Decided(range) => range,
                     Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
                 };
-            match Curve2::try_analytic_parallel(parallel.clone(), range, policy).unwrap() {
-                Classification::Decided(fragment) => fragment,
-                Classification::Uncertain(reason) => {
-                    panic!("analytic parallel span: {reason:?}")
-                }
-            }
+            crate::support::under(policy, || {
+                Curve2::try_analytic_parallel(parallel.clone(), range)
+            })
+            .unwrap()
+            .into_value()
         })
         .collect::<Vec<_>>();
     let start = match parallel.point_at(&Real::zero(), policy).unwrap() {
@@ -678,9 +662,11 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
     fragments.push(quadratic_line(end, start));
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[CurvePath2::try_new_with_policy(fragments, policy)
-                .unwrap()
-                .into_value()],
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(fragments))
+                    .unwrap()
+                    .into_value(),
+            ],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
         )
@@ -920,7 +906,8 @@ fn curve_trim_intersects_analytic_parallel_region_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = analytic_square(0, 4, &policy);
         let source = Curve2::from(LineSeg2::try_new(point(-1, 2), point(5, 2)).unwrap());
-        let outcome = source.trim_inside_region(&region, &policy).unwrap();
+        let outcome =
+            crate::support::under(&policy, || source.trim_inside_region(&region)).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let [curve] = outcome.value.as_slice() else {
             panic!("analytic-square trim must retain one exact line");
@@ -935,7 +922,8 @@ fn curve_trim_retains_an_analytic_parallel_boundary_overlap() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = analytic_square(0, 4, &policy);
         let source = Curve2::from(LineSeg2::try_new(point(-1, 0), point(5, 0)).unwrap());
-        let outcome = source.trim_inside_region(&region, &policy).unwrap();
+        let outcome =
+            crate::support::under(&policy, || source.trim_inside_region(&region)).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let [curve] = outcome.value.as_slice() else {
             panic!("analytic boundary overlap must retain one exact line");
@@ -1028,7 +1016,7 @@ fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
         );
         assert!(analytic.geometry().is_none());
         assert!(analytic.start().coordinates().is_none());
-        let reversed = analytic.reversed(&policy).unwrap();
+        let reversed = crate::support::under(&policy, || analytic.reversed()).unwrap();
         assert_eq!(reversed.certainty, CurveCertainty::Certified);
         assert_eq!(
             analytic
@@ -1045,7 +1033,7 @@ fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
             Classification::Decided(true),
         );
         assert!(analytic.bounds().is_ok());
-        let reversed_path = paths[0].reversed(&policy).unwrap();
+        let reversed_path = crate::support::under(&policy, || paths[0].reversed()).unwrap();
         assert_eq!(reversed_path.certainty, CurveCertainty::Certified);
         let restored = crate::support::under(&policy, || {
             CurveRegion2::try_from_boundary_paths(

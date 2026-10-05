@@ -35,7 +35,7 @@ impl Curve2 {
         if self.geometry().is_some() {
             if let Some(BezierParameter2::Exact(parameter)) = parameter.as_bezier_parameter() {
                 return self
-                    .point_at_side_with_policy(parameter, side, policy)
+                    .point_at_side_raw(parameter, side, policy)
                     .map(CurvePoint2::from);
             }
             return self.point_at_selected_native_parameter(parameter, side, policy);
@@ -284,7 +284,7 @@ impl Curve2 {
                     end
                 };
                 return self
-                    .point_at_side_with_policy(knot, side, policy)
+                    .point_at_side_raw(knot, side, policy)
                     .map(CurvePoint2::from);
             }
             if start_order != Ordering::Greater || end_order != Ordering::Less {
@@ -600,9 +600,15 @@ mod tests {
                     end_point,
                 ),
             ));
-            for curve in [curve.clone(), curve.reversed(&policy).unwrap().value] {
+            for curve in [
+                curve.clone(),
+                curve.reversed_with_policy(&policy).unwrap().value,
+            ] {
                 let point = curve
-                    .point_at(&(Real::from(-7) / Real::from(4)).unwrap().into(), &policy)
+                    .point_at_with_policy(
+                        &(Real::from(-7) / Real::from(4)).unwrap().into(),
+                        &policy,
+                    )
                     .unwrap();
                 let coordinate = (Real::from(14) / Real::from(3)).unwrap();
                 assert_point(
@@ -611,7 +617,7 @@ mod tests {
                     &policy,
                 );
                 assert!(matches!(
-                    curve.point_at(&Real::from(-3).into(), &policy),
+                    curve.point_at_with_policy(&Real::from(-3).into(), &policy),
                     Err(ExactCurveError::Invalid {
                         cause: CurveError::InvalidCurveParameter,
                         ..
@@ -641,7 +647,7 @@ mod tests {
             .unwrap(),
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let point = source.point_at(&parameter, &policy).unwrap();
+            let point = source.point_at_with_policy(&parameter, &policy).unwrap();
             assert_eq!(point.certainty, CurveCertainty::Certified);
             assert_point(
                 &point.value,
@@ -652,7 +658,7 @@ mod tests {
                 &policy,
             );
             assert!(matches!(
-                pole.point_at(&parameter, &policy),
+                pole.point_at_with_policy(&parameter, &policy),
                 Err(ExactCurveError::Invalid {
                     cause: CurveError::InvalidCurveParameter,
                     ..
@@ -678,7 +684,7 @@ mod tests {
             .unwrap(),
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let point = arc.point_at(&parameter, &policy).unwrap();
+            let point = arc.point_at_with_policy(&parameter, &policy).unwrap();
             assert_eq!(point.certainty, CurveCertainty::Certified);
             let spans = arc
                 .native_bezier_fragments_for_operation(&policy, CurveOperation2::Evaluation)
@@ -720,7 +726,9 @@ mod tests {
             // Rational chart partitioning also permits exact replay against
             // independently expanded scalar coordinates. The previous
             // square-root chart partition returned Unsupported here.
-            let expanded = arc.point_at(&represented.clone().into(), &policy).unwrap();
+            let expanded = arc
+                .point_at_with_policy(&represented.clone().into(), &policy)
+                .unwrap();
             assert_eq!(expanded.certainty, CurveCertainty::Certified);
             let equality = point.value.coincides_with(&expanded.value, &policy);
             assert_eq!(equality.certainty, CurveCertainty::Certified);
@@ -760,13 +768,13 @@ mod tests {
                 Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(fragment));
             let expected = Point2::new(Real::zero(), quarter.clone());
             let point = curve
-                .point_at(curve.parameter_domain().start(), &policy)
+                .point_at_with_policy(curve.parameter_domain().start(), &policy)
                 .unwrap();
             assert_eq!(point.certainty, CurveCertainty::Certified);
             assert_point(&point.value, expected.clone(), &policy);
-            let reversed = curve.reversed(&policy).unwrap().value;
+            let reversed = curve.reversed_with_policy(&policy).unwrap().value;
             let point = reversed
-                .point_at(curve.parameter_domain().start(), &policy)
+                .point_at_with_policy(curve.parameter_domain().start(), &policy)
                 .unwrap();
             assert_point(&point.value, expected, &policy);
             assert!(point.value.shares_storage(&reversed.end()));
@@ -791,7 +799,7 @@ mod tests {
         let foreign = chord(1);
         let curve = Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(chord(0)));
         let parameter = CurveParameter2::from_algebraic_chord(foreign.start_parameter());
-        assert!(curve.point_at(&parameter, &policy).is_err());
+        assert!(curve.point_at_with_policy(&parameter, &policy).is_err());
     }
 
     #[test]
@@ -815,7 +823,10 @@ mod tests {
                 .unwrap(),
         );
         for _ in 0..16 {
-            let point = source.point_at(&parameter, &policy).unwrap().value;
+            let point = source
+                .point_at_with_policy(&parameter, &policy)
+                .unwrap()
+                .value;
             let image = point.as_algebraic().unwrap().resolved(&policy).unwrap();
             assert!(image.shares_storage(&cached));
         }
@@ -834,7 +845,7 @@ mod tests {
             LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let point = curve.point_at(&parameter, &policy).unwrap();
+            let point = curve.point_at_with_policy(&parameter, &policy).unwrap();
             assert_eq!(point.certainty, CurveCertainty::Certified);
             for (bound, expected) in [(0, Ordering::Greater), (1, Ordering::Less)] {
                 let order = point
@@ -889,13 +900,15 @@ mod tests {
             .value,
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert!(matches!(curve.point_at(&parameter, &policy),
+            assert!(matches!(curve.point_at_with_policy(&parameter, &policy),
                 Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Boundary));
             for (side, x) in [
                 (CurveParameterSide2::Left, 2),
                 (CurveParameterSide2::Right, 10),
             ] {
-                let point = curve.point_at_side(&parameter, side, &policy).unwrap();
+                let point = curve
+                    .point_at_side_with_policy(&parameter, side, &policy)
+                    .unwrap();
                 assert_eq!(point.certainty, CurveCertainty::Certified);
                 assert_point(&point.value, Point2::from_values(x, 0), &policy);
             }

@@ -323,6 +323,21 @@ impl CurvePath2 {
     pub fn project_to_finite_polyline(
         &self,
         options: &FiniteProjectionOptions,
+    ) -> crate::ExactCurveResult<FinitePolyline2> {
+        self.project_to_finite_polyline_with_policy(options, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::project_to_finite_polyline`] under an explicit predicate policy.
+    pub(crate) fn project_to_finite_polyline_with_policy(
+        &self,
+        options: &FiniteProjectionOptions,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<FinitePolyline2>> {
         crate::policy::resolve_certified_operation(policy, |attempt| {
@@ -1729,7 +1744,7 @@ mod tests {
     fn projects_higher_order_path_without_demoting_source() {
         let path = cubic_cap();
         let projection = path
-            .project_to_finite_polyline(
+            .project_to_finite_polyline_with_policy(
                 &FiniteProjectionOptions::try_new(1.0e-3).unwrap(),
                 &CurveContext::STRICT,
             )
@@ -1758,12 +1773,12 @@ mod tests {
         let options = FiniteProjectionOptions::try_new(10.0).unwrap();
 
         assert!(matches!(
-            path.project_to_finite_polyline(&options, &CurveContext::STRICT),
+            path.project_to_finite_polyline_with_policy(&options, &CurveContext::STRICT),
             Err(CurveError::Topology(message))
                 if message.starts_with("finite path projection could not decide")
         ));
         let approximate = path
-            .project_to_finite_polyline(&options, &CurveContext::APPROXIMATE_512)
+            .project_to_finite_polyline_with_policy(&options, &CurveContext::APPROXIMATE_512)
             .unwrap();
         assert_eq!(
             approximate.certainty,

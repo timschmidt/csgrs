@@ -43,7 +43,7 @@ fn point_parameters(
     policy: &CurveContext,
 ) -> Option<Vec<Option<Real>>> {
     match Curve2::from(curve.clone())
-        .point_locations(&CurvePoint2::from(point.clone()), policy)
+        .point_locations_with_policy(&CurvePoint2::from(point.clone()), policy)
         .unwrap()
         .value
     {
@@ -462,7 +462,7 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
     assert_eq!(approximate.len(), 1);
     for policy in [policy, CurveContext::APPROXIMATE_512] {
         let pieces = Curve2::from(conic.clone())
-            .intersection_topology(&Curve2::from(cubic_line.clone()), &policy)
+            .intersection_topology_with_policy(&Curve2::from(cubic_line.clone()), &policy)
             .expect("the pi-weight conic topology should remain exact")
             .into_value();
         assert_eq!(pieces.first().len() + pieces.second().len(), 4);

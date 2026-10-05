@@ -221,6 +221,15 @@ impl Curve2 {
     pub fn trim_inside_region(
         &self,
         region: &CurveRegion2,
+    ) -> crate::ExactCurveResult<Vec<Curve2>> {
+        self.trim_inside_region_with_policy(region, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::trim_inside_region`] under an explicit predicate policy.
+    pub(crate) fn trim_inside_region_with_policy(
+        &self,
+        region: &CurveRegion2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<Curve2>>> {
         resolve_certified_operation(policy, |attempt| {
@@ -243,6 +252,18 @@ impl Curve2 {
     /// [`CurveRegionTrimFragment2::represented_parameter_range`] succeeds only
     /// when both boundaries already have a [`Real`] payload.
     pub fn trim_inside_region_with_parameters(
+        &self,
+        region: &CurveRegion2,
+    ) -> crate::ExactCurveResult<Vec<CurveRegionTrimFragment2>> {
+        self.trim_inside_region_with_parameters_with_policy(
+            region,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::trim_inside_region_with_parameters`] under an explicit predicate policy.
+    pub(crate) fn trim_inside_region_with_parameters_with_policy(
         &self,
         region: &CurveRegion2,
         policy: &CurveContext,
@@ -480,7 +501,7 @@ impl<'a> PreparedTrimSource<'a> {
                         boundary_parameter: boundary_parameter.clone(),
                         point: Some(
                             source_curve
-                                .point_at(source_parameter, policy)?
+                                .point_at_with_policy(source_parameter, policy)?
                                 .into_value(),
                         ),
                     },
@@ -579,6 +600,15 @@ impl CurvePath2 {
     /// Constant spans contribute no piece but preserve connectivity between
     /// incident retained pieces. Excluded positive-length excursions break it.
     pub fn trim_inside_region(
+        &self,
+        region: &CurveRegion2,
+    ) -> crate::ExactCurveResult<Vec<CurvePathRegionTrim2>> {
+        self.trim_inside_region_with_policy(region, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::trim_inside_region`] under an explicit predicate policy.
+    pub(crate) fn trim_inside_region_with_policy(
         &self,
         region: &CurveRegion2,
         policy: &CurveContext,
@@ -1012,7 +1042,7 @@ mod tests {
             panic!("fixture must have a certified interior parameter");
         };
         curve
-            .point_at(&parameter.into(), &CurveContext::STRICT)
+            .point_at_with_policy(&parameter.into(), &CurveContext::STRICT)
             .unwrap()
             .value
             .coordinates()
@@ -1046,7 +1076,7 @@ mod tests {
         let line = Curve2::from(LineSeg2::try_new(p(2, -1), p(2, 6)).unwrap());
 
         let outcome = line
-            .trim_inside_region_with_parameters(&region, &CurveContext::APPROXIMATE_512)
+            .trim_inside_region_with_parameters_with_policy(&region, &CurveContext::APPROXIMATE_512)
             .unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         assert_eq!(outcome.value.len(), 1);
@@ -1074,7 +1104,7 @@ mod tests {
         .unwrap();
 
         let retained = path
-            .trim_inside_region(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
         assert_eq!(retained.len(), 1);
@@ -1095,7 +1125,7 @@ mod tests {
         .unwrap();
 
         let retained = path
-            .trim_inside_region(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
         assert_eq!(retained.len(), 1);
@@ -1117,7 +1147,7 @@ mod tests {
         let path = CurvePath2::try_new(vec![circle]).unwrap();
 
         let retained = path
-            .trim_inside_region(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
         assert_eq!(retained.len(), 1);
@@ -1152,7 +1182,7 @@ mod tests {
         .unwrap();
 
         let outcome = source
-            .trim_inside_region(&region, &CurveContext::APPROXIMATE_512)
+            .trim_inside_region_with_policy(&region, &CurveContext::APPROXIMATE_512)
             .unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         assert_eq!(outcome.value.len(), 1);
@@ -1173,7 +1203,7 @@ mod tests {
         );
         assert_eq!(
             curve
-                .trim_inside_region(&region, &CurveContext::STRICT)
+                .trim_inside_region_with_policy(&region, &CurveContext::STRICT)
                 .unwrap()
                 .value
                 .len(),
@@ -1186,7 +1216,7 @@ mod tests {
         let region = native_region(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
-            .trim_inside_region(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
         assert_eq!(fragments.len(), 2);
@@ -1200,7 +1230,7 @@ mod tests {
             let region = native_region(vec![rectangle(0, 0, 4, 4)], Vec::new());
             let source = Curve2::from(LineSeg2::try_new(p(-1, 0), p(5, 0)).unwrap());
             let trimmed = source
-                .trim_inside_region_with_parameters(&region, &policy)
+                .trim_inside_region_with_parameters_with_policy(&region, &policy)
                 .expect("a shared finite boundary must have exact closed-set trim semantics");
             assert_eq!(trimmed.certainty, CurveCertainty::Certified);
             let [trimmed] = trimmed.value.as_slice() else {
@@ -1232,7 +1262,7 @@ mod tests {
             )])
             .unwrap();
             let trimmed = source
-                .trim_inside_region(&region, &policy)
+                .trim_inside_region_with_policy(&region, &policy)
                 .expect("the closed face includes its hole boundary");
             assert_eq!(trimmed.certainty, CurveCertainty::Certified);
             let [path] = trimmed.value.as_slice() else {
@@ -1247,7 +1277,7 @@ mod tests {
         let region = native_region(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
-            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_parameters_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
 
@@ -1273,7 +1303,7 @@ mod tests {
             let replay = contact
                 .carrier()
                 .curve()
-                .point_at(contact.boundary_parameter(), &CurveContext::STRICT)
+                .point_at_with_policy(contact.boundary_parameter(), &CurveContext::STRICT)
                 .unwrap();
             assert_eq!(replay.certainty, crate::CurveCertainty::Certified);
             assert_eq!(
@@ -1291,7 +1321,7 @@ mod tests {
         let circle =
             Curve2::from(CircularArc2::try_from_center(p(2, 0), p(2, 0), p(0, 0), false).unwrap());
         let fragments = circle
-            .trim_inside_region(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
         assert_eq!(fragments.len(), 2);
@@ -1310,7 +1340,7 @@ mod tests {
     #[test]
     fn parameter_retaining_trim_maps_nurbs_spans_to_the_public_domain() {
         let region = native_region(vec![rectangle(0, 0, 4, 4)], Vec::new());
-        let curve = Curve2::try_nurbs(
+        let curve = Curve2::try_nurbs_with_policy(
             1,
             vec![p(-1, 2), p(7, 2)],
             vec![Real::one(), Real::one()],
@@ -1320,7 +1350,7 @@ mod tests {
         .unwrap()
         .into_value();
         let fragments = curve
-            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
+            .trim_inside_region_with_parameters_with_policy(&region, &CurveContext::STRICT)
             .unwrap()
             .into_value();
         assert_eq!(fragments.len(), 1);
@@ -1353,18 +1383,18 @@ mod tests {
             let parameter = CurveParameter2::from_selected_fiber(selected);
             let original = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 4)));
             let source = original
-                .subcurve(parameter.clone(), Real::one().into(), &policy)
+                .subcurve_with_policy(parameter.clone(), Real::one().into(), &policy)
                 .unwrap();
             assert_eq!(source.certainty, CurveCertainty::Certified);
             let region = native_region(vec![rectangle(-1, -1, 3, 5)], Vec::new());
             for reversed in [false, true] {
                 let source = if reversed {
-                    source.value.reversed(&policy).unwrap().value
+                    source.value.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.value.clone()
                 };
                 let result = source
-                    .trim_inside_region_with_parameters(&region, &policy)
+                    .trim_inside_region_with_parameters_with_policy(&region, &policy)
                     .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let [piece] = result.value.as_slice() else {
@@ -1388,7 +1418,7 @@ mod tests {
                         actual.cmp_by_refinement(&expected, &policy).unwrap(),
                         Classification::Decided(std::cmp::Ordering::Equal)
                     );
-                    let replayed = source.point_at(actual, &policy).unwrap();
+                    let replayed = source.point_at_with_policy(actual, &policy).unwrap();
                     assert_eq!(replayed.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         replayed.value.same_point(&endpoint, &policy),
@@ -1402,11 +1432,17 @@ mod tests {
                     )
                     .unwrap(),
                 );
-                let contacts = piece.curve().intersect_curve(&cutter, &policy).unwrap();
+                let contacts = piece
+                    .curve()
+                    .intersect_curve_with_policy(&cutter, &policy)
+                    .unwrap();
                 assert_eq!(contacts.certainty, CurveCertainty::Certified);
                 assert!(contacts.value.blockers().is_empty());
                 assert_eq!(contacts.value.contacts().len(), 1);
-                let split = piece.curve().split_at(q(5, 8).into(), &policy).unwrap();
+                let split = piece
+                    .curve()
+                    .split_at_with_policy(q(5, 8).into(), &policy)
+                    .unwrap();
                 assert_eq!(split.certainty, CurveCertainty::Certified);
                 assert_eq!(
                     split
@@ -1417,7 +1453,10 @@ mod tests {
                     Classification::Decided(true)
                 );
                 let smaller = native_region(vec![rectangle(-1, -1, 2, 5)], Vec::new());
-                let again = piece.curve().trim_inside_region(&smaller, &policy).unwrap();
+                let again = piece
+                    .curve()
+                    .trim_inside_region_with_policy(&smaller, &policy)
+                    .unwrap();
                 assert_eq!(again.certainty, CurveCertainty::Certified);
                 let [again] = again.value.as_slice() else {
                     panic!("one repeatedly trimmed interval");
@@ -1439,11 +1478,15 @@ mod tests {
                 .into_iter()
                 .map(Real::from)
                 .collect::<Vec<_>>();
-            let polynomial =
-                Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone(), &policy)
-                    .unwrap()
-                    .value;
-            let rational = Curve2::try_nurbs(
+            let polynomial = Curve2::try_polynomial_bspline_with_policy(
+                1,
+                controls.clone(),
+                knots.clone(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let rational = Curve2::try_nurbs_with_policy(
                 1,
                 controls,
                 vec![Real::one(), Real::from(2), Real::from(3), Real::one()],
@@ -1456,12 +1499,14 @@ mod tests {
             for source in [polynomial, rational] {
                 for reversed in [false, true] {
                     let source = if reversed {
-                        source.reversed(&policy).unwrap().value
+                        source.reversed_with_policy(&policy).unwrap().value
                     } else {
                         source.clone()
                     };
                     let path = CurvePath2::try_new(vec![source]).unwrap();
-                    let result = path.trim_inside_region(&region, &policy).unwrap();
+                    let result = path
+                        .trim_inside_region_with_policy(&region, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(result.value.len(), 2, "a knot jump is not a connected path");
                     let pieces = result
@@ -1520,7 +1565,9 @@ mod tests {
                 vec![rectangle(-2, 0, -1, 1), rectangle(1, 0, 2, 1)],
                 Vec::new(),
             );
-            let result = path.trim_inside_region(&region, &policy).unwrap();
+            let result = path
+                .trim_inside_region_with_policy(&region, &policy)
+                .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert_eq!(result.value.len(), 2);
             for retained in result.value {
@@ -1572,7 +1619,7 @@ mod tests {
             (range.start(), piece.curve().start()),
             (range.end(), piece.curve().end()),
         ] {
-            let replayed = source.point_at(parameter, policy).unwrap();
+            let replayed = source.point_at_with_policy(parameter, policy).unwrap();
             assert_eq!(replayed.certainty, CurveCertainty::Certified);
             assert_eq!(
                 replayed.value.same_point(&endpoint, policy),
@@ -1666,12 +1713,14 @@ mod tests {
                                 for reverse_source in [false, true] {
                                     let source = Curve2::from(source.clone());
                                     let source = if reverse_source {
-                                        source.reversed(&policy).unwrap().value
+                                        source.reversed_with_policy(&policy).unwrap().value
                                     } else {
                                         source
                                     };
                                     let result = source
-                                        .trim_inside_region_with_parameters(region, &policy)
+                                        .trim_inside_region_with_parameters_with_policy(
+                                            region, &policy,
+                                        )
                                         .unwrap();
                                     assert_eq!(result.certainty, CurveCertainty::Certified);
                                     let [piece] = result.value.as_slice() else {
@@ -1696,7 +1745,10 @@ mod tests {
                                         let replay = contact
                                             .carrier()
                                             .curve()
-                                            .point_at(contact.boundary_parameter(), &policy)
+                                            .point_at_with_policy(
+                                                contact.boundary_parameter(),
+                                                &policy,
+                                            )
                                             .unwrap();
                                         assert_eq!(replay.certainty, CurveCertainty::Certified);
                                         assert_eq!(
@@ -1710,8 +1762,10 @@ mod tests {
                                             );
                                         }
                                     }
-                                    let repeated =
-                                        piece.curve().trim_inside_region(region, &policy).unwrap();
+                                    let repeated = piece
+                                        .curve()
+                                        .trim_inside_region_with_policy(region, &policy)
+                                        .unwrap();
                                     assert_eq!(repeated.certainty, CurveCertainty::Certified);
                                     assert_eq!(repeated.value.len(), 1);
                                     assert_eq!(
@@ -1756,12 +1810,12 @@ mod tests {
                 native_region(vec![rectangle(-2, -2, 2, 2)], vec![rectangle(-1, -1, 1, 1)]);
             for reversed in [false, true] {
                 let source = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
                 let result = source
-                    .trim_inside_region_with_parameters(&region, &policy)
+                    .trim_inside_region_with_parameters_with_policy(&region, &policy)
                     .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(result.value.len(), 2);
@@ -1783,7 +1837,10 @@ mod tests {
                         Classification::Decided(true)
                     );
                     assert_trim_replay(&source, piece, &policy);
-                    let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
+                    let again = piece
+                        .curve()
+                        .trim_inside_region_with_policy(&region, &policy)
+                        .unwrap();
                     assert_eq!(again.certainty, CurveCertainty::Certified);
                     assert_eq!(again.value.len(), 1);
                 }
@@ -1820,12 +1877,12 @@ mod tests {
             let region = native_region(vec![rectangle(-2, 0, 1, 2)], Vec::new());
             for reversed in [false, true] {
                 let source = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
                 let result = source
-                    .trim_inside_region_with_parameters(&region, &policy)
+                    .trim_inside_region_with_parameters_with_policy(&region, &policy)
                     .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let [piece] = result.value.as_slice() else {
@@ -1845,10 +1902,16 @@ mod tests {
                     Classification::Decided(true)
                 );
                 assert_trim_replay(&source, piece, &policy);
-                let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
+                let again = piece
+                    .curve()
+                    .trim_inside_region_with_policy(&region, &policy)
+                    .unwrap();
                 assert_eq!(again.certainty, CurveCertainty::Certified);
                 assert_eq!(again.value.len(), 1);
-                let split = piece.curve().split_at(q(1, 4).into(), &policy).unwrap();
+                let split = piece
+                    .curve()
+                    .split_at_with_policy(q(1, 4).into(), &policy)
+                    .unwrap();
                 assert_eq!(split.certainty, CurveCertainty::Certified);
                 assert_eq!(
                     split
@@ -1885,12 +1948,12 @@ mod tests {
             let region = native_region(vec![rectangle(-1, -1, 1, 3)], Vec::new());
             for reversed in [false, true] {
                 let source = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
                 let result = source
-                    .trim_inside_region_with_parameters(&region, &policy)
+                    .trim_inside_region_with_parameters_with_policy(&region, &policy)
                     .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let [piece] = result.value.as_slice() else {
@@ -1908,10 +1971,16 @@ mod tests {
                 };
                 assert_eq!(contacts.len(), 1);
                 assert_eq!(contacts[0].carrier().fragment_index(), 1);
-                let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
+                let again = piece
+                    .curve()
+                    .trim_inside_region_with_policy(&region, &policy)
+                    .unwrap();
                 assert_eq!(again.certainty, CurveCertainty::Certified);
                 assert_eq!(again.value.len(), 1);
-                let split = piece.curve().split_at(q(1, 4).into(), &policy).unwrap();
+                let split = piece
+                    .curve()
+                    .split_at_with_policy(q(1, 4).into(), &policy)
+                    .unwrap();
                 assert_eq!(split.certainty, CurveCertainty::Certified);
                 assert_eq!(
                     split
@@ -1930,7 +1999,9 @@ mod tests {
         let source = Curve2::from(QuadraticBezier2::new(p(-1, 1), p(0, -1), p(1, 1)));
         let region = native_region(vec![rectangle(-2, -2, 2, 0)], Vec::new());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let trimmed = source.trim_inside_region(&region, &policy).unwrap();
+            let trimmed = source
+                .trim_inside_region_with_policy(&region, &policy)
+                .unwrap();
             assert_eq!(trimmed.certainty, CurveCertainty::Certified);
             assert!(trimmed.value.is_empty());
         }
@@ -1948,7 +2019,9 @@ mod tests {
         );
         let source = Curve2::from(LineSeg2::try_new(p(-6, 0), p(6, 0)).unwrap());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let trimmed = source.trim_inside_region(&region, &policy).unwrap();
+            let trimmed = source
+                .trim_inside_region_with_policy(&region, &policy)
+                .unwrap();
             assert_eq!(trimmed.certainty, CurveCertainty::Certified);
             assert_eq!(trimmed.value.len(), 5);
             for (piece, (start, end)) in
@@ -2006,10 +2079,15 @@ mod tests {
                 .unwrap(),
             )
             .into(),
-            Curve2::try_polynomial_bspline(1, vec![point.clone(); 4], knots.clone(), policy)
-                .unwrap()
-                .value,
-            Curve2::try_nurbs(
+            Curve2::try_polynomial_bspline_with_policy(
+                1,
+                vec![point.clone(); 4],
+                knots.clone(),
+                policy,
+            )
+            .unwrap()
+            .value,
+            Curve2::try_nurbs_with_policy(
                 1,
                 vec![point; 4],
                 [1, 2, 3, 1].into_iter().map(Real::from).collect(),
@@ -2029,12 +2107,12 @@ mod tests {
                 for source in constant_curves(point, &policy) {
                     for reversed in [false, true] {
                         let source = if reversed {
-                            source.reversed(&policy).unwrap().value
+                            source.reversed_with_policy(&policy).unwrap().value
                         } else {
                             source.clone()
                         };
                         let result = source
-                            .trim_inside_region_with_parameters(&region, &policy)
+                            .trim_inside_region_with_parameters_with_policy(&region, &policy)
                             .unwrap();
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         assert!(
@@ -2042,7 +2120,9 @@ mod tests {
                             "a constant image has no positive-length fragment"
                         );
                         let path = CurvePath2::try_new(vec![source]).unwrap();
-                        let result = path.trim_inside_region(&region, &policy).unwrap();
+                        let result = path
+                            .trim_inside_region_with_policy(&region, &policy)
+                            .unwrap();
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         assert!(result.value.is_empty());
                     }
@@ -2069,11 +2149,16 @@ mod tests {
                 let original =
                     Curve2::from(QuadraticBezier2::new(point.clone(), point.clone(), point));
                 let source = original
-                    .subcurve(parameter.clone(), Real::one().into(), &policy)
+                    .subcurve_with_policy(parameter.clone(), Real::one().into(), &policy)
                     .unwrap()
                     .value;
-                for source in [source.clone(), source.reversed(&policy).unwrap().value] {
-                    let result = source.trim_inside_region(&region, &policy).unwrap();
+                for source in [
+                    source.clone(),
+                    source.reversed_with_policy(&policy).unwrap().value,
+                ] {
+                    let result = source
+                        .trim_inside_region_with_policy(&region, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert!(result.value.is_empty());
                 }
@@ -2102,20 +2187,25 @@ mod tests {
                 Curve2::from(CubicBezier2::new(p(0, 0), p(2, 0), p(0, 2), p(0, 0))),
                 Curve2::from(rational),
             ] {
-                for source in [source.clone(), source.reversed(&policy).unwrap().value] {
-                    let result = source.trim_inside_region(&region, &policy).unwrap();
+                for source in [
+                    source.clone(),
+                    source.reversed_with_policy(&policy).unwrap().value,
+                ] {
+                    let result = source
+                        .trim_inside_region_with_policy(&region, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(result.value.len(), 1);
                     assert_eq!(
                         result.value[0]
-                            .point_at(&q(1, 2).into(), &policy)
+                            .point_at_with_policy(&q(1, 2).into(), &policy)
                             .unwrap()
                             .value
                             .same_point(&source.start(), &policy),
                         Classification::Decided(false)
                     );
                     let again = result.value[0]
-                        .trim_inside_region(&region, &policy)
+                        .trim_inside_region_with_policy(&region, &policy)
                         .unwrap();
                     assert_eq!(again.certainty, CurveCertainty::Certified);
                     assert_eq!(again.value.len(), 1);
@@ -2135,7 +2225,9 @@ mod tests {
                     LineSeg2::try_new(p(0, 0), p(3, 0)).unwrap().into(),
                 ])
                 .unwrap();
-                let result = path.trim_inside_region(&region, &policy).unwrap();
+                let result = path
+                    .trim_inside_region_with_policy(&region, &policy)
+                    .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(result.value.len(), 1);
                 assert_eq!(
@@ -2154,7 +2246,7 @@ mod tests {
                         .collect(),
                 )
                 .unwrap()
-                .trim_inside_region(&region, &policy)
+                .trim_inside_region_with_policy(&region, &policy)
                 .unwrap();
                 assert_eq!(again.certainty, CurveCertainty::Certified);
                 assert_eq!(again.value.len(), 1);
@@ -2173,7 +2265,9 @@ mod tests {
         ])
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let result = path.trim_inside_region(&region, &policy).unwrap();
+            let result = path
+                .trim_inside_region_with_policy(&region, &policy)
+                .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert_eq!(result.value.len(), 2);
             assert_eq!(result.value[0].fragments()[0].source_curve_index(), 0);
@@ -2191,10 +2285,15 @@ mod tests {
                 .map(Real::from)
                 .collect::<Vec<_>>();
             for source in [
-                Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone(), &policy)
-                    .unwrap()
-                    .value,
-                Curve2::try_nurbs(
+                Curve2::try_polynomial_bspline_with_policy(
+                    1,
+                    controls.clone(),
+                    knots.clone(),
+                    &policy,
+                )
+                .unwrap()
+                .value,
+                Curve2::try_nurbs_with_policy(
                     1,
                     controls,
                     [1, 2, 3, 4, 5, 6].into_iter().map(Real::from).collect(),
@@ -2205,17 +2304,19 @@ mod tests {
                 .value,
             ] {
                 let restricted = source
-                    .subcurve(q(5, 2).into(), q(13, 2).into(), &policy)
+                    .subcurve_with_policy(q(5, 2).into(), q(13, 2).into(), &policy)
                     .unwrap()
                     .value;
                 for source in [
                     source.clone(),
-                    source.reversed(&policy).unwrap().value,
+                    source.reversed_with_policy(&policy).unwrap().value,
                     restricted.clone(),
-                    restricted.reversed(&policy).unwrap().value,
+                    restricted.reversed_with_policy(&policy).unwrap().value,
                 ] {
                     let path = CurvePath2::try_new(vec![source.clone()]).unwrap();
-                    let result = path.trim_inside_region(&region, &policy).unwrap();
+                    let result = path
+                        .trim_inside_region_with_policy(&region, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(result.value.len(), 1);
                     let pieces = result.value[0].fragments();
@@ -2253,17 +2354,25 @@ mod tests {
                 .map(Real::from)
                 .collect::<Vec<_>>();
             for source in [
-                Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone(), &policy)
-                    .unwrap()
-                    .value,
-                Curve2::try_nurbs(1, controls, vec![Real::one(); 6], knots, &policy)
+                Curve2::try_polynomial_bspline_with_policy(
+                    1,
+                    controls.clone(),
+                    knots.clone(),
+                    &policy,
+                )
+                .unwrap()
+                .value,
+                Curve2::try_nurbs_with_policy(1, controls, vec![Real::one(); 6], knots, &policy)
                     .unwrap()
                     .value,
             ] {
-                for source in [source.clone(), source.reversed(&policy).unwrap().value] {
+                for source in [
+                    source.clone(),
+                    source.reversed_with_policy(&policy).unwrap().value,
+                ] {
                     let result = CurvePath2::try_new(vec![source])
                         .unwrap()
-                        .trim_inside_region(&region, &policy)
+                        .trim_inside_region_with_policy(&region, &policy)
                         .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(result.value.len(), 2);
@@ -2301,7 +2410,9 @@ mod tests {
         ])
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let result = path.trim_inside_region(&region, &policy).unwrap();
+            let result = path
+                .trim_inside_region_with_policy(&region, &policy)
+                .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert_eq!(result.value.len(), 1);
             assert_eq!(
@@ -2363,8 +2474,13 @@ mod tests {
                     native_region(vec![rectangle(-2, -2, 0, 2)], Vec::new()),
                     native_region(vec![rectangle(1, 1, 2, 2)], Vec::new()),
                 ] {
-                    for source in [source.clone(), source.reversed(&policy).unwrap().value] {
-                        let result = source.trim_inside_region(&region, &policy).unwrap();
+                    for source in [
+                        source.clone(),
+                        source.reversed_with_policy(&policy).unwrap().value,
+                    ] {
+                        let result = source
+                            .trim_inside_region_with_policy(&region, &policy)
+                            .unwrap();
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         assert!(result.value.is_empty());
                     }

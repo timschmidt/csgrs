@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, Curve2, CurveContext, CurvePath2, CurvePoint2,
@@ -70,12 +72,10 @@ fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
 }
 
 fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> Option<Curve2> {
-    Some(Curve2::from(
-        match Curve2::try_line(CurvePoint2::from(start), CurvePoint2::from(end), policy).ok()? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(_) => return None,
-        },
-    ))
+    support::under(policy, || {
+        Curve2::try_line(CurvePoint2::from(start), CurvePoint2::from(end))
+    })
+    .ok()
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -101,10 +101,10 @@ fuzz_target!(|data: &[u8]| {
         cuts.extend(algebraic_sqrt_half(&policy));
         cuts.extend(algebraic_sqrt_eighth(&policy));
         for cut in cuts {
-            let Ok(outcome) = curve.split_at(cut.into(), &policy) else {
+            let Ok(outcome) = support::under(&policy, || curve.split_at(cut.into())) else {
                 continue;
             };
-            let (head, tail) = outcome.into_value();
+            let (head, tail) = outcome;
             let Ok(closing) = LineSeg2::try_new(end.clone(), start.clone()) else {
                 continue;
             };

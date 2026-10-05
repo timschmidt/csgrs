@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::cmp::Ordering;
 use std::hint::black_box;
 use std::time::Instant;
@@ -247,14 +249,13 @@ fn main() -> CurveResult<()> {
     let selected = hypercurve::CurveParameter2::from(BezierParameter2::Algebraic(midpoint.clone()));
     let general = hypercurve::Curve2::from(curve.clone());
     for _ in 0..iterations {
-        let point = general
-            .point_at(black_box(&selected), &policy)
+        let point = crate::support::under(&policy, || general.point_at(black_box(&selected)))
             .expect("the selected point remains exact")
             .into_value();
-        let tangent = general
-            .derivative_at(black_box(&selected), &policy)
-            .expect("the selected tangent remains exact")
-            .into_value();
+        let tangent =
+            crate::support::under(&policy, || general.derivative_at(black_box(&selected)))
+                .expect("the selected tangent remains exact")
+                .into_value();
         transformed += black_box(
             point.coordinates().is_none() as usize
                 + tangent.represented_coordinates().is_none() as usize,
@@ -278,14 +279,14 @@ fn main() -> CurveResult<()> {
     let mut rational_transformed = 0_usize;
     let general_conic = hypercurve::Curve2::from(conic.clone());
     for _ in 0..iterations {
-        let point = general_conic
-            .point_at(black_box(&selected), &policy)
+        let point = crate::support::under(&policy, || general_conic.point_at(black_box(&selected)))
             .expect("the selected conic point remains exact")
             .into_value();
-        let tangent = general_conic
-            .derivative_at(black_box(&selected), &policy)
-            .expect("the selected conic tangent remains exact")
-            .into_value();
+        let tangent = crate::support::under(&policy, || {
+            general_conic.derivative_at(black_box(&selected))
+        })
+        .expect("the selected conic tangent remains exact")
+        .into_value();
         rational_transformed += black_box(
             point.coordinates().is_none() as usize
                 + tangent.represented_coordinates().is_none() as usize,

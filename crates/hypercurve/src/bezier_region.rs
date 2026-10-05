@@ -938,7 +938,7 @@ pub(crate) fn path_retained_fragments(
             }
             fragments.extend(spans.iter().map(|span| span.fragment.clone()));
         } else {
-            let native = match curve.native_bezier_fragments_with_policy(policy)? {
+            let native = match curve.native_bezier_fragments_raw(policy)? {
                 Classification::Decided(native) => native,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -2465,7 +2465,7 @@ impl CurveRegion2 {
         let mut next_arrangement_fragment_index = 0;
         for path in paths {
             let mut boundary_loop = match path
-                .boundary_loop_with_policy(policy)
+                .boundary_loop_raw(policy)
                 .map_err(|error| error.with_operation(CurveOperation2::Construction))?
             {
                 Classification::Decided(boundary) => boundary.clone(),
@@ -4118,7 +4118,7 @@ impl CurveRegion2 {
         let mut holes = Vec::new();
         let mut loop_evidence = Vec::with_capacity(paths.len());
         for ((path, role), fill_rule) in paths.iter().zip(roles).zip(fill_rules) {
-            let segmented = match path.segment_certified(options, policy)? {
+            let segmented = match path.segment_certified_with_policy(options, policy)? {
                 Classification::Decided(segmented) => segmented,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -7323,7 +7323,7 @@ mod retained_point_classification_tests {
                         kind,
                         &policy,
                     );
-                    let result = path.classify_point(&point, &policy).unwrap();
+                    let result = path.classify_point_with_policy(&point, &policy).unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(result.value, Classification::Decided(expected));
                 }

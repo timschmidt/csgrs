@@ -42,7 +42,7 @@ batches accept `&[CurvePoint2]` and share query preparation across scalar and
 generated points. Closed paths retain their trace and even-odd interior; filled
 regions classify their regularized boundary, including holes and nested islands.
 
-`CurveRegion2::try_from_boundary_paths(paths, fill_rule, policy)` applies one
+`CurveRegion2::try_from_boundary_paths(paths, fill_rule)` applies one
 fill rule to the total signed winding of all closed paths, then publishes the
 regularized set. `NonZero` preserves equally oriented overlaps and cancels
 opposite winding; `EvenOdd` selects odd winding. SVG compound fills use this
@@ -210,7 +210,7 @@ exact signatures.
   elevated_to_degree, split_at, subcurve, clamped_subcurve, reversed,
   transform_similarity, native_subcurves}`.
 - Exact Bézier spans of any spline come from the unified curve:
-  `Curve2::from(spline).native_bezier_fragments(policy)` returns each span as
+  `Curve2::from(spline).native_bezier_fragments()` returns each span as
   `CurveGeometry2`, the same authored-family vocabulary used by `Curve2::new`,
   with its exact source parameter interval.
 - NURBS and rational Bézier spans share `HomogeneousControl2` coefficients.
@@ -377,8 +377,8 @@ Hypercurve separates exact values from decisions about them:
 
 - Coordinates are `Real` values, not an implicit `f64` tolerance model.
 - Checked constructors reject malformed or structurally invalid input.
-- `CurveRegion2` operations are exact: they take no policy argument and
-  return `ExactCurveResult<T>`. A decision that exact predicates cannot settle
+- `CurveRegion2`, `CurvePath2` and `Curve2` operations are exact: they take
+  no policy argument and return `ExactCurveResult<T>`. A decision that exact predicates cannot settle
   is reported as an `ExactCurveError::Blocked` with its operation and reason,
   never guessed. Optional results are `Option`s: the empty region has no
   bounds, and a region without a line/arc boundary has no native view.

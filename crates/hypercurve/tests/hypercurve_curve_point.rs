@@ -47,15 +47,13 @@ fn selected_point(reversed: bool) -> CurvePoint2 {
         controls.reverse();
     }
     let curve = RationalBezier2::try_new(controls, vec![Real::one(); 2]).unwrap();
-    hypercurve::Curve2::from(curve)
-        .point_at(
-            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
-                parameter.clone(),
-            )),
-            &policy,
-        )
-        .unwrap()
-        .into_value()
+    crate::support::under(&policy, || {
+        hypercurve::Curve2::from(curve).point_at(&hypercurve::CurveParameter2::from(
+            hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+        ))
+    })
+    .unwrap()
+    .into_value()
 }
 
 #[test]
@@ -188,21 +186,20 @@ mod generated_derivatives {
             )
             .unwrap(),
         );
-        let generated = decided(
-            Curve2::try_analytic_parallel(
-                arch().parallel_left(Real::zero()).unwrap(),
-                unit,
-                &policy,
-            )
-            .unwrap(),
-        );
+        let generated = crate::support::under(&policy, || {
+            Curve2::try_analytic_parallel(arch().parallel_left(Real::zero()).unwrap(), unit)
+        })
+        .unwrap()
+        .into_value();
         assert!(generated.geometry().is_none());
         let parameter = CurveParameter2::from(q(1, 3));
-        let expected = Curve2::from(arch())
-            .derivative_at(&parameter, &policy)
+        let expected =
+            crate::support::under(&policy, || Curve2::from(arch()).derivative_at(&parameter))
+                .unwrap()
+                .value;
+        let actual = crate::support::under(&policy, || generated.derivative_at(&parameter))
             .unwrap()
             .value;
-        let actual = generated.derivative_at(&parameter, &policy).unwrap().value;
         assert_eq!(
             actual.represented_coordinates(),
             expected.represented_coordinates()
@@ -215,13 +212,19 @@ mod generated_derivatives {
         let curve = Curve2::from(arch());
         // Split at 1/sqrt(2); the left piece keeps the source chart [0, 1/sqrt(2)].
         let cut = inverse_root(2, q(1, 2), q(3, 4), &policy);
-        let (left, _) = curve.split_at(cut, &policy).unwrap().into_value();
+        let (left, _) = crate::support::under(&policy, || curve.split_at(cut))
+            .unwrap()
+            .into_value();
         assert!(left.geometry().is_none());
         // 1/sqrt(3) lies inside the left piece; y' = 4 - 8t < 0 there, x' = 2.
         let inside = inverse_root(3, q(1, 2), q(2, 3), &policy);
         for derivative in [
-            left.derivative_at(&inside, &policy).unwrap().value,
-            curve.derivative_at(&inside, &policy).unwrap().value,
+            crate::support::under(&policy, || left.derivative_at(&inside))
+                .unwrap()
+                .value,
+            crate::support::under(&policy, || curve.derivative_at(&inside))
+                .unwrap()
+                .value,
         ] {
             assert!(derivative.represented_coordinates().is_none());
             assert_eq!(
@@ -242,10 +245,11 @@ mod generated_derivatives {
         policy: &CurveContext,
     ) -> Curve2 {
         let range = decided(BezierParameterRange2::try_new(start, end, policy).unwrap());
-        decided(
-            Curve2::try_analytic_parallel(arch().parallel_left(distance).unwrap(), range, policy)
-                .unwrap(),
-        )
+        crate::support::under(policy, || {
+            Curve2::try_analytic_parallel(arch().parallel_left(distance).unwrap(), range)
+        })
+        .unwrap()
+        .into_value()
     }
 
     fn signs(
@@ -280,11 +284,17 @@ mod generated_derivatives {
                     BezierParameter2::Exact(q(2, 3)),
                     &policy,
                 );
-                let derivative = parallel.derivative_at(&selected, &policy).unwrap().value;
+                let derivative =
+                    crate::support::under(&policy, || parallel.derivative_at(&selected))
+                        .unwrap()
+                        .value;
                 assert!(derivative.represented_coordinates().is_none());
                 assert_eq!(signs(&derivative, &policy), expected);
                 // An independent represented evaluation nearby agrees.
-                let represented = parallel.derivative_at(&nearby, &policy).unwrap().value;
+                let represented =
+                    crate::support::under(&policy, || parallel.derivative_at(&nearby))
+                        .unwrap()
+                        .value;
                 assert!(represented.represented_coordinates().is_some());
                 assert_eq!(signs(&represented, &policy), expected);
             }
@@ -312,10 +322,12 @@ mod generated_derivatives {
         let distance =
             Real::zero() - (Real::from(3) * Real::from(6).sqrt().unwrap() / Real::from(8)).unwrap();
         // The parallel may end at its cusp, but not contain it.
-        let derivative = arch_parallel(distance, cusp, BezierParameter2::Exact(q(1, 2)), &policy)
-            .derivative_at(&selected, &policy)
-            .unwrap()
-            .value;
+        let derivative = crate::support::under(&policy, || {
+            arch_parallel(distance, cusp, BezierParameter2::Exact(q(1, 2)), &policy)
+                .derivative_at(&selected)
+        })
+        .unwrap()
+        .value;
         let zero = Real::zero();
         assert_eq!(derivative.represented_coordinates(), Some((&zero, &zero)));
     }
@@ -325,13 +337,13 @@ mod generated_derivatives {
         let policy = CurveContext::STRICT;
         let selected = inverse_root(3, q(1, 2), q(2, 3), &policy);
         assert!(matches!(
-            arch_parallel(
+            crate::support::under(&policy, || arch_parallel(
                 Real::one(),
                 BezierParameter2::Exact(Real::zero()),
                 BezierParameter2::Exact(Real::one()),
                 &policy
             )
-            .derivatives_at(&selected, 2, &policy),
+            .derivatives_at(&selected, 2)),
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.reason() == UncertaintyReason::Unsupported
         ));

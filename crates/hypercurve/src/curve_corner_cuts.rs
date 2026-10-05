@@ -1502,7 +1502,7 @@ pub(super) fn materialize_single_curve_corner_body(
         (parameter(next)?, parameter(previous)?)
     };
     curve
-        .subcurve_with_policy(start, end, policy)
+        .subcurve_raw(start, end, policy)
         .map_err(|error| remap_operation(error, operation))
         .map(MaterializedCornerBody2::One)
 }
@@ -1714,7 +1714,7 @@ pub(super) fn materialize_corner_cut(
                     (parameter.clone(), domain.end().clone())
                 };
                 curve
-                    .subcurve_with_policy(start, end, policy)
+                    .subcurve_raw(start, end, policy)
                     .map_err(|error| remap_operation(error, operation))
             }
         }

@@ -1041,8 +1041,8 @@ mod tests {
                         q(7, 8)
                     };
                     for parameter in [range.start().clone(), midpoint.into(), range.end().clone()] {
-                        let actual = curve.point_at(&parameter, &policy).unwrap();
-                        let expected = source.point_at(&parameter, &policy).unwrap();
+                        let actual = curve.point_at_with_policy(&parameter, &policy).unwrap();
+                        let expected = source.point_at_with_policy(&parameter, &policy).unwrap();
                         assert_eq!(actual.certainty, CurveCertainty::Certified);
                         assert_eq!(expected.certainty, CurveCertainty::Certified);
                         assert_eq!(
@@ -1058,7 +1058,10 @@ mod tests {
                     for (point, parameter) in [(curve.start(), start), (curve.end(), end)] {
                         assert_eq!(
                             point.same_point(
-                                &source.point_at(parameter, &policy).unwrap().value,
+                                &source
+                                    .point_at_with_policy(parameter, &policy)
+                                    .unwrap()
+                                    .value,
                                 &policy
                             ),
                             Classification::Decided(true)

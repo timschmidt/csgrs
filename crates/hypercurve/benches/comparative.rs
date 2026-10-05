@@ -22,8 +22,8 @@ use hypercurve::{
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveContext, CurveIntersectionResult2, CurveOutcome, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2,
+    CubicBezier2, Curve2, CurveContext, CurveIntersectionResult2, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2,
     RationalBezier2, Real,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
@@ -611,36 +611,31 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         .expect("valid benchmark line image")
     };
     let selected = |curve: RationalBezier2| {
-        Curve2::from(curve)
-            .point_at(
-                &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
-                    parameter.clone(),
-                )),
-                &policy,
-            )
-            .expect("selected benchmark endpoint")
-            .into_value()
+        crate::support::under(&policy, || {
+            Curve2::from(curve).point_at(&hypercurve::CurveParameter2::from(
+                hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+            ))
+        })
+        .expect("selected benchmark endpoint")
+        .into_value()
     };
     let bottom_right = selected(horizontal(Real::zero()));
     let top_right = selected(horizontal(Real::one()));
     let bottom_left = CurvePoint2::from(Point2::new(Real::zero(), Real::zero()));
     let top_left = CurvePoint2::from(Point2::new(Real::zero(), Real::one()));
     let chord = |start, end| {
-        let chord = Curve2::try_line(start, end, &policy).expect("valid benchmark chord");
-        match chord {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => panic!("benchmark chord: {reason:?}"),
-        }
+        crate::support::under(&policy, || Curve2::try_line(start, end))
+            .expect("valid benchmark chord")
+            .into_value()
     };
-    let boundary = CurvePath2::try_new_with_policy(
-        vec![
+    let boundary = crate::support::under(&policy, || {
+        CurvePath2::try_new(vec![
             chord(bottom_left.clone(), bottom_right.clone()),
             chord(bottom_right, top_right.clone()),
             chord(top_right, top_left.clone()),
             chord(top_left, bottom_left),
-        ],
-        &policy,
-    )
+        ])
+    })
     .expect("closed benchmark boundary")
     .into_value();
     let hypercurve = crate::support::under(&policy, || {
@@ -1787,7 +1782,7 @@ fn benchmark_bezier_offset(runner: &Runner) {
     });
 }
 
-fn exact_curve_contact_count(result: CurveOutcome<CurveIntersectionResult2>) -> usize {
+fn exact_curve_contact_count(result: crate::support::Outcome<CurveIntersectionResult2>) -> usize {
     let result = result.value;
     assert!(
         result.is_complete() && result.overlaps().is_empty(),
@@ -1877,17 +1872,16 @@ fn benchmark_rational_bezier_self_contact_case(
 
     assert_eq!(
         exact_curve_contact_count(
-            hypercurve_carrier
-                .self_intersections(&policy)
+            crate::support::under(&policy, || hypercurve_carrier.self_intersections())
                 .expect("exact whole-carrier self contact completes"),
         ),
         1,
     );
     assert_eq!(
         exact_curve_contact_count(
-            hypercurve_left
-                .intersect_curve(&hypercurve_right, &policy)
-                .expect("exact disjoint-pair contact completes"),
+            crate::support::under(&policy, || hypercurve_left
+                .intersect_curve(&hypercurve_right))
+            .expect("exact disjoint-pair contact completes"),
         ),
         1,
     );
@@ -1909,16 +1903,18 @@ fn benchmark_rational_bezier_self_contact_case(
 
     runner.measure(name, "hypercurve_exact_self", || {
         exact_curve_contact_count(
-            hypercurve_carrier
-                .self_intersections(black_box(&policy))
-                .expect("exact whole-carrier self contact replays"),
+            crate::support::under(black_box(&policy), || {
+                hypercurve_carrier.self_intersections()
+            })
+            .expect("exact whole-carrier self contact replays"),
         )
     });
     runner.measure(name, "hypercurve_exact_pair", || {
         exact_curve_contact_count(
-            hypercurve_left
-                .intersect_curve(black_box(&hypercurve_right), black_box(&policy))
-                .expect("exact disjoint-pair contact replays"),
+            crate::support::under(black_box(&policy), || {
+                hypercurve_left.intersect_curve(black_box(&hypercurve_right))
+            })
+            .expect("exact disjoint-pair contact replays"),
         )
     });
     runner.measure(name, "hypercurve_exact_region", || {

@@ -1,6 +1,7 @@
+mod support;
 use hypercurve::{
-    BezierFlatteningOptions, Classification, CubicBezier2, Curve2, CurveContext, Point2,
-    QuadraticBezier2, RationalBezier2, Real,
+    BezierFlatteningOptions, CubicBezier2, Curve2, CurveContext, Point2, QuadraticBezier2,
+    RationalBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -103,22 +104,21 @@ fn certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs() {
         )
         .unwrap(),
     );
-    let nurbs = Curve2::try_nurbs(
-        2,
-        vec![p(0, 0), p(2, 4), p(4, 0)],
-        vec![r(1), r(2), r(1)],
-        vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-        &policy,
-    )
+    let nurbs = crate::support::under(&policy, || {
+        Curve2::try_nurbs(
+            2,
+            vec![p(0, 0), p(2, 4), p(4, 0)],
+            vec![r(1), r(2), r(1)],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+        )
+    })
     .unwrap()
     .into_value();
 
     for curve in [rational, nurbs] {
-        let Classification::Decided(segmented) =
-            curve.segment_certified(&options, &policy).unwrap()
-        else {
-            panic!("same-sign rational carrier should segment with a control-hull certificate");
-        };
+        let segmented = crate::support::under(&policy, || curve.segment_certified(&options))
+            .unwrap()
+            .into_value();
         assert_eq!(segmented.points().first(), curve.start().coordinates());
         assert_eq!(segmented.points().last(), curve.end().coordinates());
         assert!(segmented.certificate().segment_count() > 1);

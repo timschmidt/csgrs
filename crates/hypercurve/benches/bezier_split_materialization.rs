@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -37,7 +39,8 @@ fn time_cuts(
     let started = Instant::now();
     let mut total = 0_usize;
     for _ in 0..iterations {
-        let (first, second) = curve.split_at(parameter.clone(), policy)?.into_value();
+        let (first, second) =
+            crate::support::under(policy, || curve.split_at(parameter.clone()))?.into_value();
         total += black_box(usize::from(first.family() == second.family()) + 1);
     }
     let elapsed = started.elapsed();

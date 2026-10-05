@@ -697,7 +697,7 @@ mod finite_parameter_interval_contract {
                     Classification::Decided(Ordering::Equal)
                 );
                 assert!(matches!(
-                    native.point_at(&CurveParameter2::from(parameter), &policy),
+                    native.point_at_with_policy(&CurveParameter2::from(parameter), &policy),
                     Err(ExactCurveError::Invalid {
                         cause: CurveError::InvalidCurveParameter,
                         ..
@@ -834,7 +834,7 @@ mod rational_resultant_projection {
         assert!((contacts[0].point()).coordinates().is_none());
 
         let topology = Curve2::from(parabola)
-            .intersection_topology(&Curve2::from(horizontal), &policy)
+            .intersection_topology_with_policy(&Curve2::from(horizontal), &policy)
             .unwrap()
             .into_value();
         assert_eq!(topology.result().contacts().len(), 1);

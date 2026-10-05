@@ -74,9 +74,11 @@ fn elevated_circle(center_x: i32, policy: &CurveContext) -> CurveRegion2 {
     }
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths(
-            &[CurvePath2::try_new_with_policy(curves, policy)
-                .unwrap()
-                .into_value()],
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(curves))
+                    .unwrap()
+                    .into_value(),
+            ],
             hypercurve::FillRule::EvenOdd,
         )
     })
@@ -127,7 +129,9 @@ fn analytic_parallel_curve(
     let parallel = QuadraticBezier2::new(start, midpoint, end)
         .parallel_left(Real::from(distance))
         .unwrap();
-    decided(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
+    crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
+        .unwrap()
+        .into_value()
 }
 
 fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion2 {
@@ -146,9 +150,11 @@ fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion
         .collect();
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[CurvePath2::try_new_with_policy(fragments, policy)
-                .unwrap()
-                .into_value()],
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(fragments))
+                    .unwrap()
+                    .into_value(),
+            ],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
         )
@@ -170,15 +176,14 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     let left = decided(parallel.point_at(&Real::zero(), policy).unwrap());
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
-    let boundary = CurvePath2::try_new_with_policy(
-        vec![
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![
             analytic_parallel_curve(point(0, 0), point(2, 2), point(4, 0), 1, true, policy),
             quadratic_line(left, lower_left.clone()),
             quadratic_line(lower_left, lower_right.clone()),
             quadratic_line(lower_right, right),
-        ],
-        policy,
-    )
+        ])
+    })
     .unwrap();
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(

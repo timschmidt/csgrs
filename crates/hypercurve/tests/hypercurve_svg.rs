@@ -83,14 +83,8 @@ fn exact_extension_round_trips_infinite_homogeneous_controls() {
         let transformed =
             single_imported_curve(&import_svg_document(&transformed_document).unwrap());
         for parameter in [Real::zero(), rational(1, 2), Real::one()] {
-            let original = source
-                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value();
-            let point = transformed
-                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value();
+            let original = source.point_at(&parameter.clone().into()).unwrap();
+            let point = transformed.point_at(&parameter.clone().into()).unwrap();
             let original = original.coordinates().unwrap();
             let point = point.coordinates().unwrap();
             assert_eq!(point.x(), &(Real::from(2) * original.x() + Real::from(4)));
@@ -386,23 +380,15 @@ fn exact_extension_retains_periodic_spline_semantics() {
         .map(Real::from)
         .collect::<Vec<_>>();
     let curves = [
-        Curve2::try_periodic_polynomial_bspline(
-            2,
-            control_points.clone(),
-            period_knots.clone(),
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value(),
+        Curve2::try_periodic_polynomial_bspline(2, control_points.clone(), period_knots.clone())
+            .unwrap(),
         Curve2::try_periodic_nurbs(
             2,
             control_points,
             vec![Real::one(), rational(2, 3), Real::from(2), Real::one()],
             period_knots,
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value(),
+        .unwrap(),
     ];
 
     for source in curves {
@@ -470,10 +456,7 @@ fn exact_extension_obeys_svg_transforms_without_family_demotion() {
         Real::from(4),
     )
     .unwrap();
-    let expected = source
-        .transform_similarity(&transform, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let expected = source.transform_similarity(&transform).unwrap();
 
     let imported = import_svg_document(&document).unwrap();
     let imported_curve = single_imported_curve(&imported);

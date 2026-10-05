@@ -7533,7 +7533,7 @@ mod tests {
                     };
                     if query_native_span {
                         let curve = crate::Curve2::from(branch.clone());
-                        let spans = curve.native_bezier_fragments(&policy).unwrap();
+                        let spans = curve.native_bezier_fragments_with_policy(&policy).unwrap();
                         assert!(
                             spans.value[0]
                                 .has_certified_injective_axis(&policy)

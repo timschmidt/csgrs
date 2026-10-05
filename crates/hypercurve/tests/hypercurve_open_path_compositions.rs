@@ -81,19 +81,15 @@ fn family_edge(family: u8, start: Point2, end: Point2, outward: i16, weight: &Re
             3,
             vec![start, first, second, end],
             clamped_cubic_knots(),
-            &STRICT,
         )
-        .unwrap()
-        .into_value(),
+        .unwrap(),
         _ => Curve2::try_nurbs(
             3,
             vec![start, first, second, end],
             vec![Real::one(), weight.clone(), weight.clone(), Real::one()],
             clamped_cubic_knots(),
-            &STRICT,
         )
-        .unwrap()
-        .into_value(),
+        .unwrap(),
     }
 }
 
@@ -247,12 +243,13 @@ fn run_sequence(seed: &Seed, steps: &[Step]) -> Result<(), TestCaseError> {
                 }
                 let solutions = required(
                     &label,
-                    path.fillet_vertex(
-                        vertex,
-                        &CurveFillet2::new(fraction(radius, 4)),
-                        CurveCornerMode2::TrimOnly,
-                        &STRICT,
-                    ),
+                    crate::support::under(&STRICT, || {
+                        path.fillet_vertex(
+                            vertex,
+                            &CurveFillet2::new(fraction(radius, 4)),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    }),
                 )?
                 .into_value();
                 if let Some(filleted) = solutions.into_solutions().into_iter().next() {
@@ -269,13 +266,14 @@ fn run_sequence(seed: &Seed, steps: &[Step]) -> Result<(), TestCaseError> {
                 let setback = fraction(setback, 4);
                 let solutions = required(
                     &label,
-                    path.chamfer_vertex_by_setbacks(
-                        vertex,
-                        setback.clone(),
-                        setback,
-                        CurveCornerMode2::TrimOnly,
-                        &STRICT,
-                    ),
+                    crate::support::under(&STRICT, || {
+                        path.chamfer_vertex_by_setbacks(
+                            vertex,
+                            setback.clone(),
+                            setback,
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    }),
                 )?
                 .into_value();
                 if let Some(chamfered) = solutions.into_solutions().into_iter().next() {
@@ -285,10 +283,16 @@ fn run_sequence(seed: &Seed, steps: &[Step]) -> Result<(), TestCaseError> {
                 }
             }
             Step::Reverse => {
-                let reversed = required(&label, path.reversed(&STRICT))?.into_value();
+                let reversed =
+                    required(&label, crate::support::under(&STRICT, || path.reversed()))?
+                        .into_value();
                 same_point(&label, &reversed.start(), &end)?;
                 same_point(&label, &reversed.end(), &start)?;
-                let restored = required(&label, reversed.reversed(&STRICT))?.into_value();
+                let restored = required(
+                    &label,
+                    crate::support::under(&STRICT, || reversed.reversed()),
+                )?
+                .into_value();
                 same_point(&label, &restored.start(), &start)?;
                 path = reversed;
             }
@@ -303,9 +307,11 @@ fn run_sequence(seed: &Seed, steps: &[Step]) -> Result<(), TestCaseError> {
                     dy.clone(),
                 )
                 .unwrap();
-                let translated =
-                    required(&label, path.transform_similarity(&translation, &STRICT))?
-                        .into_value();
+                let translated = required(
+                    &label,
+                    crate::support::under(&STRICT, || path.transform_similarity(&translation)),
+                )?
+                .into_value();
                 for (before, after) in [(&start, translated.start()), (&end, translated.end())] {
                     let Some(before) = before.coordinates() else {
                         continue;
@@ -317,8 +323,11 @@ fn run_sequence(seed: &Seed, steps: &[Step]) -> Result<(), TestCaseError> {
             }
             Step::Trim(x, y, width, height) => {
                 let region = trim_region(x, y, width, height);
-                let trims =
-                    required(&label, path.trim_inside_region(&region, &STRICT))?.into_value();
+                let trims = required(
+                    &label,
+                    crate::support::under(&STRICT, || path.trim_inside_region(&region)),
+                )?
+                .into_value();
                 for trim in &trims {
                     for fragment in trim.fragments() {
                         let curve = fragment.trim_fragment().curve();
@@ -876,10 +885,8 @@ fn bevel_stroke_contains_an_algebraic_chamfer_vertex() {
             fraction(1, 4),
             fraction(1, 4),
             CurveCornerMode2::TrimOnly,
-            &STRICT,
         )
         .unwrap()
-        .into_value()
         .into_solutions()
         .into_iter()
         .next()

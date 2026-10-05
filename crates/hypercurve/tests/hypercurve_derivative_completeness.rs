@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     Curve2, CurveContext, ExactCurveError, Point2, RationalBezier2, Real, UncertaintyReason,
 };
@@ -24,10 +25,10 @@ fn rational_line_derivatives_exceed_machine_binomial_orders() {
         assert_eq!(derivatives.len(), 128);
         let unified = Curve2::from(curve.clone());
         assert_eq!(
-            unified
-                .derivatives_at(&parameter.clone().into(), 128, &CurveContext::STRICT)
-                .expect("the top-level curve must preserve high derivative completeness")
-                .into_value(),
+            crate::support::under(&CurveContext::STRICT, || unified
+                .derivatives_at(&parameter.clone().into(), 128))
+            .expect("the top-level curve must preserve high derivative completeness")
+            .into_value(),
             derivatives
                 .iter()
                 .cloned()

@@ -192,7 +192,7 @@ impl FilletConstraintBinding2<'_> {
                 .map_err(|error| error.with_operation(CurveOperation2::Fillet));
         }
         input
-            .point_at(parameter, policy)
+            .point_at_with_policy(parameter, policy)
             .map(|outcome| outcome.value)
             .map_err(|error| error.with_operation(CurveOperation2::Fillet))
     }
@@ -2938,7 +2938,7 @@ mod tests {
                     remote.clone(),
                 ]
             };
-            let spline = Curve2::try_nurbs(
+            let spline = Curve2::try_nurbs_with_policy(
                 2,
                 control,
                 vec![
@@ -3015,7 +3015,7 @@ mod tests {
                 let retained_center = retained(&center);
                 for reversed in [false, true] {
                     let path = if reversed {
-                        source.reversed(&policy).unwrap().value
+                        source.reversed_with_policy(&policy).unwrap().value
                     } else {
                         source.clone()
                     };
@@ -3023,7 +3023,7 @@ mod tests {
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let mut request =
                             CurveFillet2::new(if past_center { q(3, 2) } else { q(1, 2) });
-                        match path.fillet_vertex(1, &request, mode, &policy) {
+                        match path.fillet_vertex_with_policy(1, &request, mode, &policy) {
                             Err(ExactCurveError::Invalid {
                                 cause: CurveError::FilletConstraintRequired,
                                 ..
@@ -3064,7 +3064,7 @@ mod tests {
                             } else {
                                 [inner.clone().into(), outer.clone().into()]
                             };
-                            let selected = path.fillet_vertex(1, &request, mode, &policy).unwrap_or_else(|error| panic!("circular constraint failed: constraint={constraint}, reversed={reversed}, mode={mode:?}, past_center={past_center}, error={error}"));
+                            let selected = path.fillet_vertex_with_policy(1, &request, mode, &policy).unwrap_or_else(|error| panic!("circular constraint failed: constraint={constraint}, reversed={reversed}, mode={mode:?}, past_center={past_center}, error={error}"));
                             assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                             assert_eq!(
                                 selected.value.candidate_count(),
@@ -3122,7 +3122,7 @@ mod tests {
                         request.contacts = [None, None];
                         request.center = Some(p(0, 0).into());
                         assert!(
-                            path.fillet_vertex(1, &request, mode, &policy)
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy)
                                 .unwrap()
                                 .value
                                 .solutions()
@@ -3132,7 +3132,7 @@ mod tests {
                         request.contacts[spline_axis] =
                             Some(CurveFilletContact2::Point(remote.clone().into()));
                         assert!(
-                            path.fillet_vertex(1, &request, mode, &policy)
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy)
                                 .unwrap()
                                 .value
                                 .solutions()
@@ -3360,7 +3360,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for radius in [Real::one(), Real::from(2).sqrt().unwrap()] {
                 let p = |x, y| Point2::new(Real::from(x) * &radius, Real::from(y) * &radius);
-                let spline = Curve2::try_nurbs(
+                let spline = Curve2::try_nurbs_with_policy(
                     1,
                     vec![p(0, 0), p(0, 2), p(-3, 2)],
                     vec![Real::one(); 3],
@@ -3384,7 +3384,7 @@ mod tests {
                 .unwrap();
                 for reversed in [false, true] {
                     let path = if reversed {
-                        source.reversed(&policy).unwrap().value
+                        source.reversed_with_policy(&policy).unwrap().value
                     } else {
                         source.clone()
                     };
@@ -3392,7 +3392,7 @@ mod tests {
                     let spline_axis = 1 - line_axis;
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let mut request = CurveFillet2::new(radius.clone());
-                        match path.fillet_vertex(1, &request, mode, &policy) {
+                        match path.fillet_vertex_with_policy(1, &request, mode, &policy) {
                             Err(ExactCurveError::Invalid {
                                 cause: CurveError::FilletConstraintRequired,
                                 ..
@@ -3413,7 +3413,9 @@ mod tests {
                         // One center fixes both the isolated quarter circle and
                         // the semicircle on the later, opposing source chart.
                         request.center = Some(p(-1, 1).into());
-                        let centered = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                        let centered = path
+                            .fillet_vertex_with_policy(1, &request, mode, &policy)
+                            .unwrap();
                         assert_eq!(centered.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(centered.value.candidate_count(), 2);
                         request.center = None;
@@ -3421,7 +3423,7 @@ mod tests {
                             (if reversed { q(1, 3) } else { q(2, 3) }).into(),
                         ));
                         assert_eq!(
-                            path.fillet_vertex(1, &request, mode, &policy)
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy)
                                 .unwrap()
                                 .value
                                 .candidate_count(),
@@ -3435,7 +3437,9 @@ mod tests {
                             ),
                         ] {
                             request.contacts[spline_axis] = Some(contact);
-                            let selected = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                            let selected = path
+                                .fillet_vertex_with_policy(1, &request, mode, &policy)
+                                .unwrap();
                             assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                             assert_eq!(selected.value.candidate_count(), 1);
                             let edited = &selected.value.solutions()[0];
@@ -3456,7 +3460,10 @@ mod tests {
                                 same(&pair[0].end(), &pair[1].start(), &policy);
                             }
                             assert_eq!(
-                                edited.reversed(&CurveContext::STRICT).unwrap().certainty,
+                                edited
+                                    .reversed_with_policy(&CurveContext::STRICT)
+                                    .unwrap()
+                                    .certainty,
                                 crate::CurveCertainty::Certified
                             );
                             let difference = closed_region(edited, &policy)
@@ -3472,7 +3479,7 @@ mod tests {
                             Point2::new(-&radius * q(1, 2), Real::zero()).into(),
                         ));
                         assert!(
-                            path.fillet_vertex(1, &request, mode, &policy)
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy)
                                 .unwrap()
                                 .value
                                 .solutions()
@@ -3494,7 +3501,7 @@ mod tests {
                     Point2::from_values(x, y)
                 }
             };
-            let spline = Curve2::try_nurbs(
+            let spline = Curve2::try_nurbs_with_policy(
                 2,
                 vec![p(0, 0), p(0, 1), p(0, 2), p(-1, 2), p(-3, 2)],
                 vec![Real::one(); 5],
@@ -3541,14 +3548,14 @@ mod tests {
                     let source = CurvePath2::try_new(vec![first, spline.clone()]).unwrap();
                     for reversed in [false, true] {
                         let path = if reversed {
-                            source.reversed(&policy).unwrap().value
+                            source.reversed_with_policy(&policy).unwrap().value
                         } else {
                             source.clone()
                         };
                         let spline_axis = usize::from(!reversed);
                         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                             assert!(matches!(
-                                path.fillet_vertex(
+                                path.fillet_vertex_with_policy(
                                     1,
                                     &CurveFillet2::new(Real::one()),
                                     mode,
@@ -3605,7 +3612,7 @@ mod tests {
                                             Some(CurveFilletContact2::Parameter(parameter));
                                     }
                                 }
-                                let selected = path.fillet_vertex(1, &request, mode, &policy)
+                                let selected = path.fillet_vertex_with_policy(1, &request, mode, &policy)
                             .unwrap_or_else(|error| panic!("nonlinear line fillet: {error}; rotated={rotated}, representation={representation}, reversed={reversed}, mode={mode:?}, selection={selection}"));
                                 assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                                 assert_eq!(
@@ -4046,7 +4053,7 @@ mod tests {
                     .value;
                 for reversed in [false, true] {
                     let path = if reversed {
-                        source.reversed(&policy).unwrap().value
+                        source.reversed_with_policy(&policy).unwrap().value
                     } else {
                         source.clone()
                     };
@@ -4056,7 +4063,7 @@ mod tests {
                         let mut request = CurveFillet2::new(radius.clone());
                         request.center = Some(center.clone().into());
                         assert!(matches!(
-                            path.fillet_vertex(1, &request, mode, &policy),
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy),
                             Err(ExactCurveError::Invalid {
                                 cause: CurveError::FilletConstraintRequired,
                                 ..
@@ -4070,7 +4077,9 @@ mod tests {
                             Some(CurveFilletContact2::Point(parallel_contact.clone().into())),
                         ] {
                             request.contacts[parallel_axis] = contact;
-                            let selected = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                            let selected = path
+                                .fillet_vertex_with_policy(1, &request, mode, &policy)
+                                .unwrap();
                             assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                             assert_eq!(selected.value.candidate_count(), 1);
                             let edited = &selected.value.solutions()[0];
@@ -4092,12 +4101,15 @@ mod tests {
                             for pair in edited.curves().windows(2) {
                                 same(&pair[0].end(), &pair[1].start(), &policy);
                             }
-                            let replay = edited.reversed(&CurveContext::STRICT).unwrap();
+                            let replay =
+                                edited.reversed_with_policy(&CurveContext::STRICT).unwrap();
                             assert_eq!(replay.certainty, crate::CurveCertainty::Certified);
                         }
                         request.contacts[parallel_axis] =
                             Some(CurveFilletContact2::Parameter(q(1, 3).into()));
-                        let excluded = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                        let excluded = path
+                            .fillet_vertex_with_policy(1, &request, mode, &policy)
+                            .unwrap();
                         assert_eq!(excluded.certainty, crate::CurveCertainty::Certified);
                         assert!(excluded.value.solutions().is_empty());
                     }
@@ -4145,7 +4157,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let path = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
@@ -4162,7 +4174,7 @@ mod tests {
                 ] {
                     request.contacts[curve_axis] = contact;
                     let selected = path
-                        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                         .unwrap();
                     assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(selected.value.candidate_count(), 2);
@@ -4171,12 +4183,12 @@ mod tests {
                     request.contacts[curve_axis] =
                         Some(CurveFilletContact2::Parameter(parameter.into()));
                     let selected = path
-                        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                         .unwrap();
                     assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(selected.value.candidate_count(), 1);
                     let crossings = selected.value.solutions()[0]
-                        .intersect_path(&cutter, &policy)
+                        .intersect_path_with_policy(&cutter, &policy)
                         .unwrap();
                     assert_eq!(crossings.certainty, crate::CurveCertainty::Certified);
                     assert!(crossings.value.blockers().is_empty());
@@ -4187,7 +4199,7 @@ mod tests {
                 }
                 request.contacts[curve_axis] = Some(CurveFilletContact2::Parameter(q(1, 2).into()));
                 let reversed_normal = path
-                    .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                     .unwrap();
                 assert_eq!(reversed_normal.certainty, crate::CurveCertainty::Certified);
                 assert!(reversed_normal.value.solutions().is_empty());
@@ -4203,7 +4215,7 @@ mod tests {
         ])
         .unwrap();
         let generated = source
-            .fillet_vertex(
+            .fillet_vertex_with_policy(
                 1,
                 &CurveFillet2::new(Real::one()),
                 CurveCornerMode2::TrimOnly,
@@ -4225,10 +4237,13 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let circle = generated_selected_fillet_circle(&policy);
             let arc = circle
-                .subcurve(q(1, 16).into(), q(3, 16).into(), &policy)
+                .subcurve_with_policy(q(1, 16).into(), q(3, 16).into(), &policy)
                 .unwrap()
                 .value;
-            let (first, second) = arc.split_at(q(1, 8).into(), &policy).unwrap().value;
+            let (first, second) = arc
+                .split_at_with_policy(q(1, 8).into(), &policy)
+                .unwrap()
+                .value;
             let path = CurvePath2::try_new(vec![first, second]).unwrap();
             let region = |path: &CurvePath2| {
                 let Classification::Decided(closing) =
@@ -4263,7 +4278,12 @@ mod tests {
                 .curves()
                 .iter()
                 .zip(&parameters)
-                .map(|(curve, parameter)| curve.point_at(parameter, &policy).unwrap().value)
+                .map(|(curve, parameter)| {
+                    curve
+                        .point_at_with_policy(parameter, &policy)
+                        .unwrap()
+                        .value
+                })
                 .collect();
             for (curve, contact) in path.curves().iter().zip(&contacts) {
                 assert!(curve.geometry().is_none());
@@ -4279,7 +4299,7 @@ mod tests {
             }
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -4297,7 +4317,7 @@ mod tests {
                                 Some(CurveFilletContact2::Point(contacts[0].clone()));
                         }
                         assert!(matches!(
-                            path.fillet_vertex(1, &request, mode, &policy),
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy),
                             Err(ExactCurveError::Invalid {
                                 cause: CurveError::FilletConstraintRequired,
                                 ..
@@ -4317,7 +4337,7 @@ mod tests {
                                 .clone()
                                 .map(|point| Some(CurveFilletContact2::Point(point)))
                         };
-                        let result = path.fillet_vertex(1, &request, mode, &policy).unwrap_or_else(|error| {
+                        let result = path.fillet_vertex_with_policy(1, &request, mode, &policy).unwrap_or_else(|error| {
                             panic!("selected circle: policy={policy:?}, reversed={reversed}, mode={mode:?}, parameter={by_parameter}: {error}")
                         });
                         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
@@ -4385,13 +4405,19 @@ mod tests {
             let expected = region(&source);
             for reversed in [false, true] {
                 let path = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
                 let mut contacts = [
-                    halves[0].point_at(&q(1, 4).into(), &policy).unwrap().value,
-                    halves[1].point_at(&q(3, 4).into(), &policy).unwrap().value,
+                    halves[0]
+                        .point_at_with_policy(&q(1, 4).into(), &policy)
+                        .unwrap()
+                        .value,
+                    halves[1]
+                        .point_at_with_policy(&q(3, 4).into(), &policy)
+                        .unwrap()
+                        .value,
                 ];
                 if reversed {
                     contacts.reverse();
@@ -4403,7 +4429,7 @@ mod tests {
                     let mut request = CurveFillet2::new(Real::one());
                     request.center = Some(center.clone());
                     assert!(matches!(
-                        path.fillet_vertex(1, &request, mode, &policy),
+                        path.fillet_vertex_with_policy(1, &request, mode, &policy),
                         Err(ExactCurveError::Invalid {
                             cause: CurveError::FilletConstraintRequired,
                             ..
@@ -4412,7 +4438,9 @@ mod tests {
                     request.contacts = contacts
                         .clone()
                         .map(|point| Some(CurveFilletContact2::Point(point)));
-                    let result = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                    let result = path
+                        .fillet_vertex_with_policy(1, &request, mode, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(result.value.candidate_count(), 1);
                     let edited = &result.value.solutions()[0];
@@ -4425,11 +4453,15 @@ mod tests {
                     // A remote endpoint is never an incident extension. This
                     // remains true when its evidence uses the opposite half.
                     request.contacts[0] = Some(CurveFilletContact2::Point(path.start()));
-                    let excluded = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                    let excluded = path
+                        .fillet_vertex_with_policy(1, &request, mode, &policy)
+                        .unwrap();
                     assert_eq!(excluded.certainty, crate::CurveCertainty::Certified);
                     assert!(excluded.value.solutions().is_empty());
                     request.contacts = [None, Some(CurveFilletContact2::Point(center.clone()))];
-                    let excluded = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                    let excluded = path
+                        .fillet_vertex_with_policy(1, &request, mode, &policy)
+                        .unwrap();
                     assert_eq!(excluded.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(
                         excluded.value.no_solution_reason(),
@@ -4438,7 +4470,13 @@ mod tests {
                     if mode == CurveCornerMode2::TrimOnly {
                         eprintln!("selected-circle seam: chamfer");
                         let chamfered = edited
-                            .chamfer_vertex_by_setbacks(1, q(1, 16), q(1, 16), mode, &policy)
+                            .chamfer_vertex_by_setbacks_with_policy(
+                                1,
+                                q(1, 16),
+                                q(1, 16),
+                                mode,
+                                &policy,
+                            )
                             .unwrap();
                         assert_eq!(chamfered.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(chamfered.value.candidate_count(), 1);
@@ -4512,7 +4550,7 @@ mod tests {
                 .unwrap()
                 .into();
                 let point = source
-                    .point_at(&roots[0].clone().into(), &policy)
+                    .point_at_with_policy(&roots[0].clone().into(), &policy)
                     .unwrap()
                     .value;
                 assert!(point.coordinates().is_none());
@@ -4552,7 +4590,7 @@ mod tests {
                 };
                 for reversed in [false, true] {
                     let path = if reversed {
-                        source.reversed(&policy).unwrap().value
+                        source.reversed_with_policy(&policy).unwrap().value
                     } else {
                         source.clone()
                     };
@@ -4570,7 +4608,7 @@ mod tests {
                         .map(|point| Some(CurveFilletContact2::Point(point)));
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let result = path
-                            .fillet_vertex(usize::from(matches!(shape, 0 | 1 | 3)), &request, mode, &policy)
+                            .fillet_vertex_with_policy(usize::from(matches!(shape, 0 | 1 | 3)), &request, mode, &policy)
                             .unwrap_or_else(|error| {
                                 panic!("circle shape={shape}, reversed={reversed}, mode={mode:?}: {error}")
                             });
@@ -4594,7 +4632,10 @@ mod tests {
                             }));
                         }
                         assert_eq!(
-                            edited.reversed(&CurveContext::STRICT).unwrap().certainty,
+                            edited
+                                .reversed_with_policy(&CurveContext::STRICT)
+                                .unwrap()
+                                .certainty,
                             crate::CurveCertainty::Certified
                         );
                         let region = |path: &CurvePath2, label| {
@@ -4671,7 +4712,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -4693,7 +4734,7 @@ mod tests {
                                 Some(CurveFilletContact2::Point(contacts[0].clone()));
                         }
                         assert!(matches!(
-                            path.fillet_vertex(1, &request, mode, &policy),
+                            path.fillet_vertex_with_policy(1, &request, mode, &policy),
                             Err(ExactCurveError::Invalid {
                                 cause: CurveError::FilletConstraintRequired,
                                 ..
@@ -4701,7 +4742,9 @@ mod tests {
                         ));
                     }
                     request.contacts[1] = Some(CurveFilletContact2::Point(contacts[1].clone()));
-                    let result = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                    let result = path
+                        .fillet_vertex_with_policy(1, &request, mode, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(result.value.candidate_count(), 1);
                     let edited = &result.value.solutions()[0];
@@ -4747,7 +4790,9 @@ mod tests {
                     assert!(difference.value.xor().is_empty());
 
                     request.center = Some(Point2::from_values(1, 0).into());
-                    let excluded = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                    let excluded = path
+                        .fillet_vertex_with_policy(1, &request, mode, &policy)
+                        .unwrap();
                     assert_eq!(
                         excluded.value.no_solution_reason(),
                         Some(CurveCornerNoSolution2::UnsatisfiedConstraints)
@@ -4758,7 +4803,9 @@ mod tests {
                         Some(CurveFilletContact2::Point(Point2::from_values(0, 0).into())),
                     ];
                     // Contradiction is decided before demanding the free axis.
-                    let excluded = path.fillet_vertex(1, &request, mode, &policy).unwrap();
+                    let excluded = path
+                        .fillet_vertex_with_policy(1, &request, mode, &policy)
+                        .unwrap();
                     assert_eq!(
                         excluded.value.no_solution_reason(),
                         Some(CurveCornerNoSolution2::UnsatisfiedConstraints)
@@ -4773,7 +4820,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let half_root_two = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
             let quarter = |points: [(i32, i32); 3], start: i32, end: i32| {
-                Curve2::try_nurbs(
+                Curve2::try_nurbs_with_policy(
                     2,
                     points
                         .into_iter()
@@ -4800,7 +4847,7 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -4823,7 +4870,7 @@ mod tests {
                         })
                     });
                     let selected = path
-                        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                         .unwrap();
                     assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(selected.value.candidate_count(), 1);
@@ -4865,13 +4912,13 @@ mod tests {
                 Some(CurveFilletContact2::Point(Point2::from_values(2, 1).into())),
             ];
             let selected = path
-                .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                 .unwrap();
             assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
             assert_eq!(selected.value.candidate_count(), 1);
             request.contacts[0] = Some(CurveFilletContact2::Parameter(q(1, 4).into()));
             let excluded = path
-                .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                 .unwrap();
             assert_eq!(excluded.certainty, crate::CurveCertainty::Certified);
             assert_eq!(
@@ -4881,7 +4928,7 @@ mod tests {
             request.contacts = [None, None];
             request.center = Some(Point2::from_values(1, 2).into());
             let excluded = path
-                .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                 .unwrap();
             assert_eq!(
                 excluded.value.no_solution_reason(),
@@ -4893,7 +4940,7 @@ mod tests {
     #[test]
     fn fillet_contacts_use_authored_spline_knots_across_multiple_charts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let spline = Curve2::try_nurbs(
+            let spline = Curve2::try_nurbs_with_policy(
                 1,
                 vec![
                     Point2::from_values(0, 0),
@@ -4915,7 +4962,7 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let source = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -4928,7 +4975,7 @@ mod tests {
                 request.contacts =
                     parameters.map(|p| Some(CurveFilletContact2::Parameter(p.into())));
                 let selected = source
-                    .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                     .unwrap();
                 assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(selected.value.candidate_count(), 1);
@@ -4982,7 +5029,7 @@ mod tests {
                 knots.extend([Real::from(i), Real::from(i)]);
             }
             knots.extend([Real::from(8), Real::from(8), Real::from(8)]);
-            let circle = Curve2::try_nurbs(2, points, weights, knots, &policy)
+            let circle = Curve2::try_nurbs_with_policy(2, points, weights, knots, &policy)
                 .unwrap()
                 .value;
             let path = CurvePath2::try_new(vec![
@@ -4994,7 +5041,7 @@ mod tests {
             .unwrap();
             for reversed in [false, true] {
                 let source = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -5004,7 +5051,7 @@ mod tests {
                     Point2::new(q(3, 5), -q(4, 5)).into(),
                 ));
                 let at_point = source
-                    .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                     .unwrap();
                 assert_eq!(at_point.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
@@ -5030,7 +5077,7 @@ mod tests {
                     request.contacts[axis] =
                         Some(CurveFilletContact2::Parameter(parameter.clone()));
                     let selected = source
-                        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                         .unwrap();
                     assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(
@@ -5042,7 +5089,7 @@ mod tests {
                     // Count passages through the upper right quadrant. The
                     // longer result keeps one additional exact circle traversal,
                     // regardless of its reconstructed chart partition.
-                    let crossings = edited.intersect_path(&cutter, &policy).unwrap();
+                    let crossings = edited.intersect_path_with_policy(&cutter, &policy).unwrap();
                     assert_eq!(crossings.certainty, crate::CurveCertainty::Certified);
                     assert!(crossings.value.blockers().is_empty());
                     assert_eq!(crossings.value.contacts().len(), visit + 1);
@@ -5083,7 +5130,7 @@ mod tests {
             let mut request = CurveFillet2::new(Real::from(3));
             request.contacts[0] = Some(CurveFilletContact2::Parameter(q(1, 2).into()));
             let selected = path
-                .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                 .unwrap();
             assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
             assert_eq!(selected.value.candidate_count(), 1);
@@ -5094,7 +5141,7 @@ mod tests {
             );
             request.contacts[0] = Some(CurveFilletContact2::Parameter(q(3, 4).into()));
             let excluded = path
-                .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                 .unwrap();
             assert!(excluded.value.solutions().is_empty());
         }
@@ -5111,13 +5158,17 @@ mod tests {
             let source = joined_parallel_path(&policy, false);
             for reversed in [false, true] {
                 let source = if reversed {
-                    source.reversed(&policy).unwrap().value
+                    source.reversed_with_policy(&policy).unwrap().value
                 } else {
                     source.clone()
                 };
                 let request = CurveFillet2::new(q(1, 128));
-                let unconstrained =
-                    source.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy);
+                let unconstrained = source.fillet_vertex_with_policy(
+                    1,
+                    &request,
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                );
                 assert!(
                     matches!(
                         unconstrained,
@@ -5137,7 +5188,7 @@ mod tests {
                     let mut request = request.clone();
                     request.contacts[0] = Some(CurveFilletContact2::Parameter(excluded.into()));
                     let result = source
-                        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                         .unwrap();
                     assert_eq!(result.certainty, crate::CurveCertainty::Certified);
                     assert!(result.value.solutions().is_empty());
@@ -5148,7 +5199,12 @@ mod tests {
                     Some(CurveFilletContact2::Parameter(q(1, 2).into())),
                 ];
                 let excluded = source
-                    .fillet_vertex(1, &contradictory, CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex_with_policy(
+                        1,
+                        &contradictory,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(excluded.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
@@ -5158,7 +5214,12 @@ mod tests {
                 contradictory.contacts[1] = None;
                 contradictory.center = Some(Point2::from_values(0, 0).into());
                 let excluded = source
-                    .fillet_vertex(1, &contradictory, CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex_with_policy(
+                        1,
+                        &contradictory,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(excluded.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
@@ -5189,7 +5250,7 @@ mod tests {
                 requests.push(paired);
                 for request in requests {
                     let result = source
-                        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                         .unwrap();
                     assert_eq!(result.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(
@@ -5240,7 +5301,7 @@ mod tests {
                             &policy,
                         );
                         let replay = source
-                            .fillet_vertex(
+                            .fillet_vertex_with_policy(
                                 1,
                                 &request,
                                 CurveCornerMode2::TrimOnly,
@@ -5264,13 +5325,18 @@ mod tests {
             let contacts = path
                 .curves()
                 .iter()
-                .map(|curve| curve.point_at(&parameter, &policy).unwrap().value)
+                .map(|curve| {
+                    curve
+                        .point_at_with_policy(&parameter, &policy)
+                        .unwrap()
+                        .value
+                })
                 .collect::<Vec<_>>();
             for axis in 0..2 {
                 let mut request = CurveFillet2::new(q(1, 128));
                 request.contacts[axis] = Some(CurveFilletContact2::Parameter(parameter.clone()));
                 let selected = path
-                    .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex_with_policy(1, &request, CurveCornerMode2::TrimOnly, &policy)
                     .unwrap();
                 assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(selected.value.candidate_count(), 1);
@@ -5503,13 +5569,17 @@ mod stationary_continuous_family_regression {
                 .value;
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 let request = CurveFillet2::new(q(1, 128));
-                let unconstrained =
-                    path.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy);
+                let unconstrained = path.fillet_vertex_with_policy(
+                    1,
+                    &request,
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                );
                 assert!(
                     matches!(
                         unconstrained,
@@ -5539,7 +5609,12 @@ mod stationary_continuous_family_regression {
                 }
                 for selected in requests {
                     let outcome = path
-                        .fillet_vertex(1, &selected, CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex_with_policy(
+                            1,
+                            &selected,
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
                         .unwrap();
                     assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(outcome.value.candidate_count(), 1);
@@ -5702,13 +5777,13 @@ mod algebraic_bridge_fillet_regression {
             ];
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
                 let mut request = CurveFillet2::new(radius.clone());
                 request.center = Some(center.clone().into());
-                let result = match path.fillet_vertex(
+                let result = match path.fillet_vertex_with_policy(
                     1,
                     &request,
                     CurveCornerMode2::TrimOrExtend,
@@ -6005,7 +6080,7 @@ mod stationary_retained_point_constraint_regression {
         let parameter = CurveParameter2::from(BezierParameter2::Algebraic(decided(
             crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
         )));
-        let result = source.point_at(&parameter, policy).unwrap();
+        let result = source.point_at_with_policy(&parameter, policy).unwrap();
         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
         assert!(result.value.coordinates().is_none());
         let same = result
@@ -6068,7 +6143,7 @@ mod stationary_retained_point_constraint_regression {
                 .map(|point| retained_point(point, &policy));
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -6082,7 +6157,7 @@ mod stationary_retained_point_constraint_regression {
                             retained_contacts[if reversed { 1 - axis } else { axis }].clone(),
                         ));
                     }
-                    let result = match path.fillet_vertex(
+                    let result = match path.fillet_vertex_with_policy(
                         1,
                         &request,
                         CurveCornerMode2::TrimOnly,
@@ -6214,7 +6289,7 @@ mod stationary_recursive_point_constraint_regression {
                 .map(|point| retained_point(point, &policy));
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -6228,7 +6303,7 @@ mod stationary_recursive_point_constraint_regression {
                             retained_contacts[if reversed { 1 - axis } else { axis }].clone(),
                         ));
                     }
-                    let result = match path.fillet_vertex(
+                    let result = match path.fillet_vertex_with_policy(
                         1,
                         &request,
                         CurveCornerMode2::TrimOnly,
@@ -6362,7 +6437,7 @@ mod incident_parallel_cusp_fillet_regression {
                 .value;
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -6380,7 +6455,7 @@ mod incident_parallel_cusp_fillet_regression {
                         }
                         _ => unreachable!(),
                     }
-                    let result = match path.fillet_vertex(
+                    let result = match path.fillet_vertex_with_policy(
                         1,
                         &request,
                         CurveCornerMode2::TrimOrExtend,
@@ -6545,7 +6620,7 @@ mod incident_parallel_cusp_nonlinear_regression {
                 .value;
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -6566,7 +6641,7 @@ mod incident_parallel_cusp_nonlinear_regression {
                     eprintln!(
                         "nonlinear cusp: policy={policy_index}, reversed={reversed}, constraint={constraint}"
                     );
-                    let result = match path.fillet_vertex(
+                    let result = match path.fillet_vertex_with_policy(
                         1,
                         &request,
                         CurveCornerMode2::TrimOrExtend,
@@ -6658,7 +6733,7 @@ mod constrained_regular_loop_fillet_regression {
             .value;
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().value
+                    path.reversed_with_policy(&policy).unwrap().value
                 } else {
                     path.clone()
                 };
@@ -6667,7 +6742,7 @@ mod constrained_regular_loop_fillet_regression {
                     let mut request = CurveFillet2::new(radius.clone());
                     request.contacts[axis] = Some(CurveFilletContact2::Point(origin.clone()));
                     let solve = |request: &CurveFillet2| {
-                        path.fillet_vertex(1, request, mode, &policy).unwrap_or_else(|error| {
+                        path.fillet_vertex_with_policy(1, request, mode, &policy).unwrap_or_else(|error| {
                             match error {
                                 ExactCurveError::Blocked(blocker) => panic!(
                                     "regular loop: policy={policy_index}, reversed={reversed}, mode={mode:?}, reason={:?}", blocker.reason()),

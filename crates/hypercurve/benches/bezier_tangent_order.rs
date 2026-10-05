@@ -24,8 +24,7 @@ fn parabola(k: i32) -> QuadraticBezier2 {
 /// A lens whose two sides share the origin with one horizontal tangent, so
 /// admission orders the branch vertex by curvature.
 fn tangent_lens(a: i32, b: i32, policy: &CurveContext) -> CurvePath2 {
-    let upper = Curve2::from(parabola(b))
-        .reversed(policy)
+    let upper = crate::support::under(policy, || Curve2::from(parabola(b)).reversed())
         .expect("reversal is exact")
         .into_value();
     let closing = LineSeg2::try_new(

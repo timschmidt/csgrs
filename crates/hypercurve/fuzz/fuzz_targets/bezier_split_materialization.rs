@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, Curve2, CurveContext, CurvePoint2, Point2,
@@ -80,10 +82,8 @@ fuzz_target!(|data: &[u8]| {
     for parameter in parameters {
         // Exact and selected interior cuts of an authored quadratic always
         // complete; each piece keeps exact, connected endpoint evidence.
-        let (first, second) = curve
-            .split_at(parameter.into(), &policy)
-            .expect("an interior quadratic cut must complete")
-            .into_value();
+        let (first, second) = support::under(&policy, || curve.split_at(parameter.into()))
+            .expect("an interior quadratic cut must complete");
         coincide(&first.start(), &curve.start());
         coincide(&first.end(), &second.start());
         coincide(&second.end(), &curve.end());

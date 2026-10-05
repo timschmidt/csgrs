@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     Curve2, CurveContext, HomogeneousControl2, NurbsCurve2, Point2, PolynomialSplineCurve2, Real,
     SplinePeriodicity2,
@@ -16,8 +18,8 @@ fn point(x: u8, y: u8) -> Point2 {
 
 /// Exercises the unified exact Bezier decomposition of one spline curve.
 fn touch_native_fragments(curve: Curve2, policy: &CurveContext) {
-    if let Ok(fragments) = curve.native_bezier_fragments(policy) {
-        for fragment in fragments.into_value() {
+    if let Ok(fragments) = support::under(policy, || curve.native_bezier_fragments()) {
+        for fragment in fragments {
             let _ = fragment.parameter_range();
             let _ = fragment.curve();
         }

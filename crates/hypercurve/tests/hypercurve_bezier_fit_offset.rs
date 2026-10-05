@@ -1487,7 +1487,9 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
         for reversed in [false, true] {
             let mut path = stationary_ph_boundary_path();
             if reversed {
-                path = path.reversed(&policy).unwrap().into_value();
+                path = crate::support::under(&policy, || path.reversed())
+                    .unwrap()
+                    .into_value();
             }
             let original = crate::support::under(&policy, || {
                 CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -1583,7 +1585,9 @@ fn stationary_ph_inward_offsets_preserve_sets_through_boundary_paths() {
         for reversed in [false, true] {
             let mut path = stationary_ph_boundary_path();
             if reversed {
-                path = path.reversed(&policy).unwrap().into_value();
+                path = crate::support::under(&policy, || path.reversed())
+                    .unwrap()
+                    .into_value();
             }
             let original = crate::support::under(&policy, || {
                 CurveRegion2::try_from_boundary_paths_with_loop_semantics(

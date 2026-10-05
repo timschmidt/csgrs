@@ -170,7 +170,7 @@ fn algebraic_endpoint_line(start: Point2, end: Point2) -> Curve2 {
         end.y() + (end.y() - start.y()),
     );
     Curve2::from(QuadraticBezier2::new(start, end, far))
-        .subcurve(
+        .subcurve_with_policy(
             Real::zero().into(),
             BezierParameter2::Algebraic(algebraic_midpoint_parameter()).into(),
             &policy(),
@@ -697,7 +697,7 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     let policy = policy();
     let upper = Curve2::from(QuadraticBezier2::new(p(-1, 0), p(0, 2), p(1, 0)));
     let parameter = BezierParameter2::Algebraic(algebraic_sqrt_half_parameter()).into();
-    let split = upper.split_at(parameter, &policy).unwrap();
+    let split = upper.split_at_with_policy(parameter, &policy).unwrap();
     assert_eq!(split.certainty, CurveCertainty::Certified);
     let (first, second) = split.into_value();
     assert!(first.end().coordinates().is_none());
@@ -1141,7 +1141,7 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
         let reversed = paths
             .iter()
             .map(|path| {
-                let outcome = path.reversed(&policy).unwrap();
+                let outcome = path.reversed_with_policy(&policy).unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 outcome.into_value()
             })

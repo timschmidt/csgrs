@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     Classification, Curve2, CurveContext, CurvePoint2, Point2, QuadraticBezier2, Real,
 };
@@ -48,8 +50,8 @@ fuzz_target!(|data: &[u8]| {
     let first = curve(&data[0..6]);
     let second = curve(&data[6..12]);
 
-    if let Ok(outcome) = first.intersection_topology(&second, &policy) {
-        let topology = outcome.into_value();
+    if let Ok(outcome) = support::under(&policy, || first.intersection_topology(&second)) {
+        let topology = outcome;
         if topology.result().is_complete() {
             assert_reassembles(&first, topology.first(), &policy);
             assert_reassembles(&second, topology.second(), &policy);
