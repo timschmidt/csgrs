@@ -9,10 +9,10 @@ use crate::errors::{CurveBooleanError, ValidationError};
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
-    BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2,
-    CurveString2, ExactCurveResult, FinitePolyline2, FiniteProjectionOptions,
-    FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2,
-    RationalBezier2, RegionPointLocation,
+    BooleanOp, Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveString2,
+    ExactCurveResult, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
+    LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
+    RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -1757,17 +1757,16 @@ pub fn bezier_region_with_context(
     let decisions = GeometryDecisions::new(context);
     let path =
         bezier_path(control, display_segments).ok_or(ValidationError::InvalidArguments)?;
-    match decisions.consume_curve(
-        path.start()
-            .coincides_with(&path.end(), decisions.curve_policy()),
-    ) {
-        Classification::Decided(true) => {},
-        Classification::Decided(false) => return Err(ValidationError::InvalidArguments),
-        Classification::Uncertain(reason) => {
+    match decisions.exact_curve(|| path.start().coincides_with(&path.end())) {
+        Ok(true) => {},
+        Ok(false) => return Err(ValidationError::InvalidArguments),
+        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
             return Err(ValidationError::Geometry(format!(
-                "Bezier boundary closure is undecided: {reason:?}"
+                "Bezier boundary closure is undecided: {:?}",
+                blocker.reason()
             )));
         },
+        Err(error) => return Err(ValidationError::Geometry(error.to_string())),
     }
     let region = decisions
         .exact_curve(|| {
@@ -1974,11 +1973,9 @@ fn try_triangulate_with(
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     for profile in try_finite_profiles_with(input, decisions)? {
-        let faces = decisions.consume_curve(
-            profile
-                .triangulate(decisions.curve_policy())
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-        );
+        let faces = decisions
+            .exact_curve(|| profile.triangulate())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
         for face in faces {
             let Some(points) = face
                 .into_iter()
@@ -2079,10 +2076,9 @@ fn try_extrude_vector_with(
     };
 
     for profile in try_finite_profiles_with(region, decisions)? {
-        let cap_faces =
-            decisions.consume_curve(profile.triangulate(decisions.curve_policy()).map_err(
-                |error| ValidationError::Geometry(format!("extrusion cap: {error}")),
-            )?);
+        let cap_faces = decisions
+            .exact_curve(|| profile.triangulate())
+            .map_err(|error| ValidationError::Geometry(format!("extrusion cap: {error}")))?;
         for face in cap_faces {
             let [Some(a), Some(b), Some(c)] = face.map(point) else {
                 return Err(ValidationError::Geometry(
@@ -2397,13 +2393,12 @@ pub fn revolve(
             }
         }
         if !full {
-            let cap_faces = decisions.consume_curve(
-                profile
-                    .triangulate(decisions.curve_policy())
+            let cap_faces =
+                decisions
+                    .exact_curve(|| profile.triangulate())
                     .map_err(|error| {
                         ValidationError::Geometry(format!("revolution cap: {error}"))
-                    })?,
-            );
+                    })?;
             for face in cap_faces {
                 let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, &samples[0]))
                 else {
@@ -2570,13 +2565,9 @@ pub fn try_sweep(
             }
         }
         if !closed {
-            let cap_faces = decisions.consume_curve(
-                profile
-                    .triangulate(decisions.curve_policy())
-                    .map_err(|error| {
-                        ValidationError::Geometry(format!("sweep cap: {error}"))
-                    })?,
-            );
+            let cap_faces = decisions
+                .exact_curve(|| profile.triangulate())
+                .map_err(|error| ValidationError::Geometry(format!("sweep cap: {error}")))?;
             for face in cap_faces {
                 for (frame, reverse) in [
                     (&frames[0], true),
@@ -2699,10 +2690,11 @@ pub fn extrude_twisted(
                 }
             }
         }
-        let cap_faces =
-            decisions.consume_curve(profile.triangulate(decisions.curve_policy()).map_err(
-                |error| ValidationError::Geometry(format!("twisted-extrusion cap: {error}")),
-            )?);
+        let cap_faces = decisions
+            .exact_curve(|| profile.triangulate())
+            .map_err(|error| {
+                ValidationError::Geometry(format!("twisted-extrusion cap: {error}"))
+            })?;
         for face in cap_faces {
             for (parameter, reverse) in [
                 (&parameters[0], !reverse_sides),
@@ -3460,16 +3452,14 @@ mod tests {
             curves
                 .iter()
                 .filter(|curve| {
-                    curve
+                    match curve
                         .start()
-                        .compare_coordinate(
-                            &witness,
-                            hypercurve::Axis2::Y,
-                            &hypercurve::CurveContext::STRICT,
-                        )
-                        .expect("finite rack coordinate order")
-                        .into_value()
-                        == Classification::Decided(Ordering::Equal)
+                        .compare_coordinate(&witness, hypercurve::Axis2::Y)
+                    {
+                        Ok(order) => order == Ordering::Equal,
+                        Err(hypercurve::ExactCurveError::Blocked(_)) => false,
+                        Err(error) => panic!("finite rack coordinate order: {error:?}"),
+                    }
                 })
                 .count()
         };
