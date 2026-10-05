@@ -8707,7 +8707,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
             });
             #[cfg(not(feature = "dispatch-trace"))]
             let offset_result =
-                clipped.offset(offset_distance, &OffsetCornerStyle2::Bevel, &policy);
+                clipped.offset_with_policy(offset_distance, &OffsetCornerStyle2::Bevel, &policy);
             #[cfg(feature = "dispatch-trace")]
             if let Err(error) = &offset_result {
                 panic!(
