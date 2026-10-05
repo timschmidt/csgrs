@@ -863,16 +863,19 @@ fn point_arc_distance_squared(
         arc.center().x() + (point.x() - arc.center().x()) * &scale,
         arc.center().y() + (point.y() - arc.center().y()) * scale,
     );
-    match arc.contains_sweep_point(&candidate, policy) {
-        Classification::Decided(true) => {
+    match under_policy(policy, || arc.contains_sweep_point(&candidate)) {
+        Ok(true) => {
             let delta = radial_length - radius;
             Ok(Classification::Decided(delta.clone() * delta))
         }
-        Classification::Decided(false) => classified_minimum(
+        Ok(false) => classified_minimum(
             point.distance_squared(arc.start()),
             point.distance_squared(arc.end()),
         ),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        Err(ExactCurveError::Blocked(blocker)) => Ok(Classification::Uncertain(blocker.reason())),
+        Err(error) => Err(BoardBoundaryGeometryError::new(format!(
+            "arc sweep containment failed: {error:?}"
+        ))),
     }
 }
 
