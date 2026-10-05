@@ -9,9 +9,10 @@
 use std::{cmp::Ordering, collections::BTreeMap, fmt};
 
 use hypercurve::{
-    Contour2, ContourPointLocation, CurveContext, CurveError, ExactCurveError, Point2, Segment2,
+    Contour2, ContourPointLocation, CurveError, ExactCurveError, Point2, Segment2,
     TranslationObstacle2, TranslationObstacleBlocker2, translation_obstacle_convex,
 };
+use hyperlimit::PredicatePolicy;
 use hyperreal::{Real, RealSign};
 
 use crate::{FeasibilityStatus, ItemId, PackError, SheetBin2};
@@ -26,6 +27,9 @@ pub enum IrregularPackError2 {
     Pack(PackError),
     /// Exact curve construction or evaluation failed.
     Curve(CurveError),
+    /// An exact curve operation reported invalid input or an undecided
+    /// predicate with its operation context.
+    ExactCurve(ExactCurveError),
 }
 
 impl fmt::Display for IrregularPackError2 {
@@ -33,6 +37,7 @@ impl fmt::Display for IrregularPackError2 {
         match self {
             Self::Pack(error) => write!(formatter, "packing validation failed: {error:?}"),
             Self::Curve(error) => write!(formatter, "curve operation failed: {error}"),
+            Self::ExactCurve(error) => write!(formatter, "exact curve operation failed: {error}"),
         }
     }
 }
@@ -42,6 +47,7 @@ impl std::error::Error for IrregularPackError2 {
         match self {
             Self::Pack(_) => None,
             Self::Curve(error) => Some(error),
+            Self::ExactCurve(error) => Some(error),
         }
     }
 }
@@ -55,6 +61,12 @@ impl From<PackError> for IrregularPackError2 {
 impl From<CurveError> for IrregularPackError2 {
     fn from(error: CurveError) -> Self {
         Self::Curve(error)
+    }
+}
+
+impl From<ExactCurveError> for IrregularPackError2 {
+    fn from(error: ExactCurveError) -> Self {
+        Self::ExactCurve(error)
     }
 }
 
@@ -208,7 +220,7 @@ impl IrregularPacking2 {
             return Err(PackError::DuplicateItem.into());
         }
 
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let ids = item_map.keys().cloned().collect::<Vec<_>>();
         let mut pairs = BTreeMap::new();
         let mut ready_pair_count = 0;
@@ -217,11 +229,13 @@ impl IrregularPacking2 {
             for moving_index in (fixed_index + 1)..ids.len() {
                 let fixed_id = ids[fixed_index].clone();
                 let moving_id = ids[moving_index].clone();
-                let report = translation_obstacle_convex(
-                    &item_map[&fixed_id].shape,
-                    &item_map[&moving_id].shape,
-                    &policy,
-                )?;
+                let report = hypercurve::evaluate_under(policy, || {
+                    translation_obstacle_convex(
+                        &item_map[&fixed_id].shape,
+                        &item_map[&moving_id].shape,
+                    )
+                })
+                .into_unverified()?;
                 let obstacle = report.obstacle().cloned();
                 let blocker = report.blocker().cloned();
                 if obstacle.is_some() {
@@ -343,7 +357,7 @@ impl IrregularPacking2 {
         bin: &SheetBin2,
         placements: &[IrregularSheetPlacement2],
     ) -> IrregularPackResult2<IrregularSheetVerification2> {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let mut status = FeasibilityStatus::Feasible;
         let mut containment_checks = 0;
         let mut no_overlap_checks = 0;
@@ -382,7 +396,7 @@ impl IrregularPacking2 {
                         continue;
                     }
                     no_overlap_checks += 1;
-                    match classify_pair(self, left, right, &policy)? {
+                    match classify_pair(self, left, right, policy)? {
                         PairStatus::SeparatedOrTouching => {}
                         PairStatus::Overlapping => {
                             status = FeasibilityStatus::Infeasible;
@@ -491,7 +505,7 @@ fn classify_pair(
     packing: &IrregularPacking2,
     left: &IrregularSheetPlacement2,
     right: &IrregularSheetPlacement2,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
 ) -> IrregularPackResult2<PairStatus> {
     let (fixed, moving) = if left.item < right.item {
         (left, right)
@@ -503,11 +517,9 @@ fn classify_pair(
         return Ok(PairStatus::Unknown);
     };
     let translation = Point2::new(&moving.x - &fixed.x, &moving.y - &fixed.y);
-    let location = if *policy == CurveContext::STRICT {
-        obstacle.classify_translation(&translation)
-    } else {
-        hypercurve::provisional(|| obstacle.classify_translation(&translation)).into_unverified()
-    };
+    let location =
+        hypercurve::evaluate_under(policy, || obstacle.classify_translation(&translation))
+            .into_unverified();
     Ok(match location {
         Ok(ContourPointLocation::Inside) => PairStatus::Overlapping,
         Ok(ContourPointLocation::Boundary | ContourPointLocation::Outside) => {
