@@ -204,7 +204,7 @@ impl ParameterCorrespondence {
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
                 let point = pcurve.point_at(pcurve_parameter)?;
                 let point = CurvePoint2::new(point.x, point.y);
-                let fraction = match arc.sweep_fraction(&point, &CurveContext::STRICT)? {
+                let fraction = match crate::error::classified(arc.sweep_fraction(&point))? {
                     Classification::Decided(fraction) => fraction,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
@@ -259,7 +259,7 @@ impl ParameterCorrespondence {
                 let fraction = ((edge_parameter - directed_start)
                     / (directed_end - directed_start))
                     .map_err(|_| GeometryError::ProjectiveDivision)?;
-                match arc.parameter_at_sweep_fraction(&fraction, &CurveContext::STRICT)? {
+                match crate::error::classified(arc.parameter_at_sweep_fraction(&fraction))? {
                     Classification::Decided(parameter) => Ok(parameter),
                     Classification::Uncertain(reason) => {
                         Err(GeometryError::PlanarClassificationUnresolved(reason))
@@ -1823,13 +1823,10 @@ impl Model {
                         };
                         let fraction = ((&parameter - start) / (end - start))
                             .map_err(|_| GeometryError::ProjectiveDivision)?;
-                        let (first, second) = match arc
-                            .split_at_retained_sweep_point(
-                                &fraction,
-                                retained_point.clone(),
-                                &CurveContext::STRICT,
-                            )
-                            .map_err(GeometryError::from)?
+                        let (first, second) = match crate::error::classified(
+                            arc.split_at_retained_sweep_point(&fraction, retained_point.clone()),
+                        )
+                        .map_err(GeometryError::from)?
                         {
                             Classification::Decided(fragments) => fragments,
                             Classification::Uncertain(reason) => {
@@ -1852,17 +1849,18 @@ impl Model {
                         };
                         let fraction = ((&parameter - start) / (end - start))
                             .map_err(|_| GeometryError::ProjectiveDivision)?;
-                        let (first, second) = match arc
-                            .split_at_sweep_fraction(&fraction, &CurveContext::STRICT)
-                            .map_err(GeometryError::from)?
-                        {
-                            Classification::Decided(fragments) => fragments,
-                            Classification::Uncertain(reason) => {
-                                return Err(
-                                    GeometryError::PlanarClassificationUnresolved(reason).into()
-                                );
-                            }
-                        };
+                        let (first, second) =
+                            match crate::error::classified(arc.split_at_sweep_fraction(&fraction))
+                                .map_err(GeometryError::from)?
+                            {
+                                Classification::Decided(fragments) => fragments,
+                                Classification::Uncertain(reason) => {
+                                    return Err(GeometryError::PlanarClassificationUnresolved(
+                                        reason,
+                                    )
+                                    .into());
+                                }
+                            };
                         (
                             Pcurve::new(Curve2::from(first)),
                             Pcurve::new(Curve2::from(second)),
@@ -11129,10 +11127,8 @@ impl ModelBuilder {
             {
                 return Ok(Some(false));
             }
-            let sweep = match arc
-                .directed_sweep_angle(&CurveContext::STRICT)
+            let sweep = match crate::error::classified(arc.directed_sweep_angle())
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(sweep) => sweep,
                 Classification::Uncertain(_) => return Ok(None),
@@ -11173,7 +11169,9 @@ impl ModelBuilder {
                     continue;
                 }
                 for point in [start, end] {
-                    let on_sweep = match arc.contains_point(point, &CurveContext::STRICT) {
+                    let on_sweep = match crate::error::classified(arc.contains_point(point))
+                        .map_err(GeometryError::from)?
+                    {
                         Classification::Decided(value) => value,
                         Classification::Uncertain(_) => return Ok(None),
                     };
@@ -11209,7 +11207,7 @@ impl ModelBuilder {
                 let (first_index, first_chord) = chords[first];
                 let (second_index, second_chord) = chords[second];
                 match first_chord
-                    .intersect_line(second_chord, &CurveContext::STRICT)
+                    .intersect_line(second_chord)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -12218,7 +12216,7 @@ impl ModelBuilder {
                 )
                 .map_err(GeometryError::from)?;
                 match first_segment
-                    .intersect_line(&second_segment, &CurveContext::STRICT)
+                    .intersect_line(&second_segment)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -12379,7 +12377,7 @@ impl ModelBuilder {
                     });
                 };
                 match source
-                    .intersect_line(boundary, &CurveContext::STRICT)
+                    .intersect_line(boundary)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -17066,10 +17064,8 @@ impl ModelBuilder {
                     };
                     let arc = CircularArc2::try_from_center(start, end, center, clockwise)
                         .map_err(GeometryError::from)?;
-                    let sweep = match arc
-                        .directed_sweep_angle(&CurveContext::STRICT)
+                    let sweep = match crate::error::classified(arc.directed_sweep_angle())
                         .map_err(GeometryError::from)?
-                        .into_value()
                     {
                         Classification::Decided(sweep) => sweep,
                         Classification::Uncertain(reason) => {
@@ -19653,7 +19649,7 @@ fn normalize_single_span_nurbs_pcurve(
         })
         .collect::<Result<Vec<_>, BuildError>>()?;
     let Classification::Decided(curve) =
-        RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT)
+        crate::error::classified(RationalBezier2::from_homogeneous_controls(controls))
             .map_err(GeometryError::from)?
     else {
         return Err(BuildError::EdgeUseSupportMismatch);
@@ -20751,13 +20747,9 @@ fn arranged_face_split_segments(
     planar: &LineSeg2,
     prior_lines: &[(usize, LineSeg2)],
 ) -> Result<Vec<Curve3>, TopologyEditError> {
-    let policy = CurveContext::STRICT;
     let mut cuts = Vec::new();
     for (prior_source, prior) in prior_lines {
-        match planar
-            .intersect_line(prior, &policy)
-            .map_err(GeometryError::from)?
-        {
+        match planar.intersect_line(prior).map_err(GeometryError::from)? {
             LineLineIntersection::None => {}
             LineLineIntersection::Point { a_param, .. } => {
                 insert_face_split_cut(&mut cuts, a_param)?;

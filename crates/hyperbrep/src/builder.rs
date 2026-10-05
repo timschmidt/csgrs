@@ -2297,10 +2297,8 @@ fn spatial_segment_curve(
                 (tangent_y / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
                 Real::zero(),
             );
-            let sweep = match arc
-                .directed_sweep_angle(&CurveContext::STRICT)
+            let sweep = match crate::error::classified(arc.directed_sweep_angle())
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(sweep) => (*sweep).clone(),
                 Classification::Uncertain(reason) => {
@@ -4118,10 +4116,8 @@ fn spatial_revolution_segment(
                 * ((tangent_radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?)
                 + Vector3::z()
                     * ((tangent_axial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?);
-            let sweep = match arc
-                .directed_sweep_angle(&CurveContext::STRICT)
+            let sweep = match crate::error::classified(arc.directed_sweep_angle())
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(sweep) => (*sweep).clone(),
                 Classification::Uncertain(reason) => {

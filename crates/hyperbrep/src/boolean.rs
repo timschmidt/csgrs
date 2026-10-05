@@ -3603,14 +3603,16 @@ fn lift_planar_line_image(
 ) -> Result<Option<Curve3>, GeometryError> {
     let relation = match curve {
         CurveGeometry2::QuadraticBezier(curve) => {
-            curve.fit_exact_line_image(&CurveContext::STRICT)?
+            crate::error::classified(curve.fit_exact_line_image())?
         }
-        CurveGeometry2::CubicBezier(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
+        CurveGeometry2::CubicBezier(curve) => {
+            crate::error::classified(curve.fit_exact_line_image())?
+        }
         CurveGeometry2::RationalQuadraticBezier(curve) => {
-            curve.fit_exact_line_image(&CurveContext::STRICT)?
+            crate::error::classified(curve.fit_exact_line_image())?
         }
         CurveGeometry2::RationalBezier(curve) => {
-            curve.fit_exact_line_image(&CurveContext::STRICT)?
+            crate::error::classified(curve.fit_exact_line_image())?
         }
         _ => return Ok(None),
     };
@@ -4924,7 +4926,6 @@ fn trim_segment_to_planar_face(
     let start = project_to_plane(surface, start)?;
     let end = project_to_plane(surface, end)?;
     let source = LineSeg2::try_new(start, end)?;
-    let policy = CurveContext::STRICT;
     let mut cuts = vec![Real::zero(), Real::one()];
     for segment in model
         .face_contours(face)?
@@ -4932,7 +4933,7 @@ fn trim_segment_to_planar_face(
         .flat_map(|contour| contour.segments())
     {
         match segment {
-            Segment2::Line(line) => match source.intersect_line(line, &policy)? {
+            Segment2::Line(line) => match source.intersect_line(line)? {
                 LineLineIntersection::None => {}
                 LineLineIntersection::Point { a_param, .. } => {
                     insert_sorted_parameter(&mut cuts, a_param)?;
@@ -4945,7 +4946,7 @@ fn trim_segment_to_planar_face(
                     return Ok(Classification::Uncertain(reason));
                 }
             },
-            Segment2::Arc(arc) => match source.intersect_arc(arc, &policy)? {
+            Segment2::Arc(arc) => match source.intersect_arc(arc)? {
                 LineArcIntersection::None => {}
                 LineArcIntersection::Point(point) => {
                     insert_sorted_parameter(&mut cuts, point.line_param)?;

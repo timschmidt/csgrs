@@ -226,7 +226,7 @@ impl Pcurve {
                 (numerator / (&dx * &dx + &dy * &dy)).map_err(|_| GeometryError::ProjectiveDivision)
             }
             Some(CurveGeometry2::CircularArc(arc)) => {
-                match arc.sweep_fraction(&point, &CurveContext::STRICT)? {
+                match crate::error::classified(arc.sweep_fraction(&point))? {
                     Classification::Decided(parameter) => Ok(parameter),
                     Classification::Uncertain(reason) => {
                         Err(GeometryError::PlanarClassificationUnresolved(reason))
@@ -2497,7 +2497,7 @@ impl MaterializedSurfacePcurve {
                 let point = point
                     .coordinates()
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let fraction = match arc.sweep_fraction(point, &CurveContext::STRICT)? {
+                let fraction = match crate::error::classified(arc.sweep_fraction(point))? {
                     Classification::Decided(fraction) => fraction,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
@@ -6768,7 +6768,7 @@ fn remap_unit_tensor_pcurve(
                 })
                 .collect();
             let Classification::Decided(curve) =
-                RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT)?
+                crate::error::classified(RationalBezier2::from_homogeneous_controls(controls))?
             else {
                 return Err(GeometryError::UnsupportedIntersection);
             };

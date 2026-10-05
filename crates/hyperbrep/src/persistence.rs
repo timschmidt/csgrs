@@ -144,14 +144,14 @@ impl RawModel {
                 RawPcurve::RationalBezier {
                     homogeneous_controls,
                 } => {
-                    let curve = RationalBezier2::from_homogeneous_controls(
-                        homogeneous_controls
-                            .into_iter()
-                            .map(|[x, y, w]| hypercurve::HomogeneousControl2::new(x, y, w))
-                            .collect(),
-                        &hypercurve::CurveContext::STRICT,
-                    )
-                    .map_err(GeometryError::from)?;
+                    let curve =
+                        crate::error::classified(RationalBezier2::from_homogeneous_controls(
+                            homogeneous_controls
+                                .into_iter()
+                                .map(|[x, y, w]| hypercurve::HomogeneousControl2::new(x, y, w))
+                                .collect(),
+                        ))
+                        .map_err(GeometryError::from)?;
                     let hypercurve::Classification::Decided(curve) = curve else {
                         return Err(GeometryError::UnsupportedPcurveContour.into());
                     };
@@ -1292,8 +1292,7 @@ mod tests {
             hypercurve::HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
         ];
         let hypercurve::Classification::Decided(curve) =
-            RationalBezier2::from_homogeneous_controls(controls, &hypercurve::CurveContext::STRICT)
-                .unwrap()
+            crate::error::classified(RationalBezier2::from_homogeneous_controls(controls)).unwrap()
         else {
             panic!("the semicircle endpoints must be finite");
         };
