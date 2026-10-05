@@ -1865,7 +1865,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 {
                     continue;
                 }
-                let interval = match BezierParameterInterval::try_new(
+                let interval = match BezierParameterInterval::try_new_with_policy(
                     lower.clone(),
                     upper.clone(),
                     &CurveContext::STRICT,
@@ -1908,8 +1908,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         let upper = BezierParameter2::Exact(parameter.data.upper.clone());
         let mut retained = Vec::new();
         for candidate in candidates {
-            let after_lower = candidate.cmp_by_refinement(&lower, &strict)?;
-            let before_upper = candidate.cmp_by_refinement(&upper, &strict)?;
+            let after_lower = candidate.cmp_by_refinement_with_policy(&lower, &strict)?;
+            let before_upper = candidate.cmp_by_refinement_with_policy(&upper, &strict)?;
             match (after_lower, before_upper) {
                 (Classification::Decided(std::cmp::Ordering::Less), _)
                 | (_, Classification::Decided(std::cmp::Ordering::Greater)) => {}
@@ -2760,8 +2760,8 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
             let mut bracketed = Vec::new();
             let mut strictly_inside = 0_usize;
             for candidate in candidates {
-                let after_lower = candidate.cmp_by_refinement(&lower, strict)?;
-                let before_upper = candidate.cmp_by_refinement(&upper, strict)?;
+                let after_lower = candidate.cmp_by_refinement_with_policy(&lower, strict)?;
+                let before_upper = candidate.cmp_by_refinement_with_policy(&upper, strict)?;
                 match (after_lower, before_upper) {
                     (
                         Classification::Decided(
@@ -4073,8 +4073,9 @@ impl BezierRecursiveProjectiveParameter2 {
         }
         if let Some(native) = self.data.projection.parameter.get() {
             if let Some(other_native) = other.data.representations.bezier.get()
-                && let Classification::Decided(order) = policy
-                    .strict_predicate_pass(|| native.cmp_by_refinement(other_native, policy))?
+                && let Classification::Decided(order) = policy.strict_predicate_pass(|| {
+                    native.cmp_by_refinement_with_policy(other_native, policy)
+                })?
             {
                 return Ok(Classification::Decided(order));
             }
@@ -4126,7 +4127,7 @@ impl BezierRecursiveProjectiveParameter2 {
             match other.promoted_bezier_parameter_complete(policy)? {
                 Classification::Decided(other_native) => match projected {
                     Classification::Decided(native) => {
-                        native.cmp_by_refinement(&other_native, policy)
+                        native.cmp_by_refinement_with_policy(&other_native, policy)
                     }
                     Classification::Uncertain(_) => {
                         self.cmp_bezier_parameter(&other_native, policy)
@@ -4344,7 +4345,7 @@ impl BezierRecursiveProjectiveParameter2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))
+        policy.strict_predicate_pass(|| first.cmp_by_refinement_with_policy(&second, policy))
     }
 
     /// Orders this singleton against an existing coefficient-field root.
@@ -4549,7 +4550,7 @@ impl BezierRecursiveProjectiveParameter2 {
                 let exact = policy.strict_predicate_pass(|| {
                     match selected.promoted_bezier_parameter_complete(policy)? {
                         Classification::Decided(parameter) => {
-                            parameter.cmp_by_refinement(refined_native, policy)
+                            parameter.cmp_by_refinement_with_policy(refined_native, policy)
                         }
                         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     }

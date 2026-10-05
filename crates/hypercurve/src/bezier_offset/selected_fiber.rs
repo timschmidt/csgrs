@@ -575,7 +575,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             CurveParameter2::from(BezierParameter2::Exact(self.data.root.upper.clone())),
         );
         let retained = &self.data.authority.data.retained_parameter;
-        let represented = match retained.represented_exact_point(policy)? {
+        let represented = match retained.represented_exact_point_with_policy(policy)? {
             Classification::Decided(value) => value,
             Classification::Uncertain(_) => None,
         };
@@ -1113,7 +1113,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         let mut reason = UncertaintyReason::Unsupported;
         if let (Classification::Decided(first), Classification::Decided(second)) = (&first, &second)
         {
-            match policy.strict_predicate_pass(|| first.cmp_by_refinement(second, policy))? {
+            match policy
+                .strict_predicate_pass(|| first.cmp_by_refinement_with_policy(second, policy))?
+            {
                 Classification::Decided(order) => {
                     return Ok(Classification::Decided(order));
                 }
@@ -1141,7 +1143,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         self.validate_policy(policy)?;
         if let Some(parameter) = self.data.representations.bezier.get() {
-            return parameter.cmp_by_refinement(other, policy);
+            return parameter.cmp_by_refinement_with_policy(other, policy);
         }
         let outcome = crate::policy::resolve_certified_value(policy, |attempt| {
             self.cmp_bezier_parameter_uncached(other, attempt)

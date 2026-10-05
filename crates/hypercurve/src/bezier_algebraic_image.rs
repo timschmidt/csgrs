@@ -302,15 +302,18 @@ mod policy_tests {
         use crate::{BezierParameter2, BezierParameterPolynomial, Point2, RationalBezier2};
 
         let strict = CurveContext::STRICT;
-        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
-            vec![Real::from(-1), Real::zero(), Real::from(2)],
-            &strict,
-        )
-        .unwrap() else {
+        let Classification::Decided(polynomial) =
+            BezierParameterPolynomial::try_new_power_basis_with_policy(
+                vec![Real::from(-1), Real::zero(), Real::from(2)],
+                &strict,
+            )
+            .unwrap()
+        else {
             panic!("exact quadratic");
         };
-        let Classification::Decided(roots) =
-            polynomial.isolate_unit_interval_roots(&strict).unwrap()
+        let Classification::Decided(roots) = polynomial
+            .isolate_unit_interval_roots_with_policy(&strict)
+            .unwrap()
         else {
             panic!("certified positive quadratic root");
         };
@@ -318,7 +321,9 @@ mod policy_tests {
             panic!("the irrational parameter stays selected");
         };
         assert_eq!(
-            parameter.represented_exact_point(&strict).unwrap(),
+            parameter
+                .represented_exact_point_with_policy(&strict)
+                .unwrap(),
             Classification::Decided(None),
         );
         let retained = |x, y, weight| {
@@ -1201,7 +1206,7 @@ impl RationalBezierAlgebraicPointImage2 {
             self.retained_parameter(),
             self.retained_coordinate_polynomials(),
         ) && let Ok(Classification::Decided(Some(parameter))) =
-            parameter.represented_exact_point(policy)
+            parameter.represented_exact_point_with_policy(policy)
         {
             let denominator = Real::eval_poly(denominator, &parameter);
             if let (Ok(x), Ok(y)) = (
@@ -1246,7 +1251,7 @@ impl RationalBezierAlgebraicPointImage2 {
                 return Some(coordinate);
             }
             if let Ok(Classification::Decided(Some(parameter))) =
-                parameter.represented_exact_point(policy)
+                parameter.represented_exact_point_with_policy(policy)
             {
                 let denominator = Real::eval_poly(denominator, &parameter);
                 let numerator = Real::eval_poly(numerator, &parameter);
@@ -1870,8 +1875,9 @@ impl RationalBezierAlgebraicTangentImage2 {
     /// by Hypersolve are accepted.
     pub(crate) fn exact_vector(&self, policy: &CurveContext) -> Option<(Real, Real)> {
         if let Some(expression) = self.retained_expression()
-            && let Ok(Classification::Decided(Some(parameter))) =
-                expression.parameter.represented_exact_point(policy)
+            && let Ok(Classification::Decided(Some(parameter))) = expression
+                .parameter
+                .represented_exact_point_with_policy(policy)
         {
             let denominator = Real::eval_poly(&expression.denominator, &parameter);
             if let (Ok(dx), Ok(dy)) = (
@@ -2148,7 +2154,9 @@ pub(crate) fn rational_point_image_from_power_basis(
     let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, &strict)?;
     let y_numerator = reduce_algebraic_image_polynomial(parameter, y_numerator, &strict)?;
     let denominator = reduce_algebraic_image_polynomial(parameter, denominator, &strict)?;
-    if let Classification::Decided(Some(exact_root)) = parameter.represented_exact_point(&strict)? {
+    if let Classification::Decided(Some(exact_root)) =
+        parameter.represented_exact_point_with_policy(&strict)?
+    {
         parameter_root.interval = IsolatedRootInterval {
             lower: exact_root.clone(),
             upper: exact_root.clone(),
@@ -2449,7 +2457,7 @@ pub(crate) fn certified_parameter_representation(
         if parameter.polynomial().degree() != 1 {
             return None;
         }
-        match parameter.represented_exact_point(&policy.strict_counterpart()) {
+        match parameter.represented_exact_point_with_policy(&policy.strict_counterpart()) {
             Ok(Classification::Decided(root)) => root,
             Ok(Classification::Uncertain(_)) | Err(_) => None,
         }

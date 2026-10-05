@@ -30,14 +30,14 @@ fn carrier_range(range: &BezierParameterRange2) -> CurveParameterRange2 {
 
 fn sqrt_half_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        crate::BezierParameterPolynomial::try_new_power_basis(
+        crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![(-1).into(), 0.into(), 2.into()],
             policy,
         )
         .expect("valid parameter polynomial"),
     );
     let interval = decided(
-        crate::BezierParameterInterval::try_new(
+        crate::BezierParameterInterval::try_new_with_policy(
             (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
             Real::one(),
             policy,
@@ -45,7 +45,7 @@ fn sqrt_half_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
         .expect("valid parameter interval"),
     );
     decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
             .expect("isolated parameter"),
     )
 }
@@ -494,14 +494,14 @@ fn selected_general_overlap_clips_through_exact_projection() {
 
 fn sqrt_third_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        crate::BezierParameterPolynomial::try_new_power_basis(
+        crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![(-1).into(), 0.into(), 3.into()],
             policy,
         )
         .expect("valid parameter polynomial"),
     );
     let interval = decided(
-        crate::BezierParameterInterval::try_new(
+        crate::BezierParameterInterval::try_new_with_policy(
             (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
             Real::one(),
             policy,
@@ -509,21 +509,21 @@ fn sqrt_third_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
         .expect("valid parameter interval"),
     );
     decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
             .expect("isolated parameter"),
     )
 }
 
 fn sqrt_reciprocal_parameter(denominator: i8, policy: &CurveContext) -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        crate::BezierParameterPolynomial::try_new_power_basis(
+        crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![(-1).into(), 0.into(), denominator.into()],
             policy,
         )
         .expect("valid reciprocal-square-root parameter polynomial"),
     );
     let interval = decided(
-        crate::BezierParameterInterval::try_new(
+        crate::BezierParameterInterval::try_new_with_policy(
             (Real::one() / Real::from(4_i8)).expect("nonzero denominator"),
             (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
             policy,
@@ -531,7 +531,7 @@ fn sqrt_reciprocal_parameter(denominator: i8, policy: &CurveContext) -> BezierAl
         .expect("valid reciprocal-square-root parameter interval"),
     );
     decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
             .expect("isolated reciprocal-square-root parameter"),
     )
 }
@@ -1633,7 +1633,8 @@ fn assert_trim_endpoint_replay(
     policy: &CurveContext,
 ) {
     let curve = trimmed.curve();
-    let Classification::Decided(range) = trimmed.parameter_range(policy).unwrap() else {
+    let Classification::Decided(range) = trimmed.parameter_range_with_policy(policy).unwrap()
+    else {
         panic!("trim parameters must replay exactly");
     };
     for ((endpoint, parameter), expected) in
@@ -2336,7 +2337,10 @@ fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
                 .start()
                 .as_bezier_parameter()
                 .expect("Bezier source range")
-                .cmp_by_refinement(&BezierParameter2::Exact(source_high.clone()), &policy,)
+                .cmp_by_refinement_with_policy(
+                    &BezierParameter2::Exact(source_high.clone()),
+                    &policy,
+                )
                 .expect("exact source-range order"),
             Classification::Decided(Ordering::Equal)
         );
@@ -2345,7 +2349,10 @@ fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
                 .end()
                 .as_bezier_parameter()
                 .expect("Bezier source range")
-                .cmp_by_refinement(&BezierParameter2::Exact(source_low.clone()), &policy)
+                .cmp_by_refinement_with_policy(
+                    &BezierParameter2::Exact(source_low.clone()),
+                    &policy
+                )
                 .expect("exact source-range order"),
             Classification::Decided(Ordering::Equal)
         );
@@ -2554,7 +2561,7 @@ fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
         );
         let clipped = published
             .overlap()
-            .restrict(
+            .restrict_with_policy(
                 [limit.start().clone(), limit.end().clone()],
                 [
                     published.overlap().second_range().start().clone(),
@@ -2593,7 +2600,7 @@ fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
             assert_eq!(
                 decided(
                     clipped
-                        .restrict(
+                        .restrict_with_policy(
                             [
                                 published.overlap().first_range().start().clone(),
                                 published.overlap().first_range().end().clone()
@@ -3474,7 +3481,8 @@ fn algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges() {
                         assert_eq!(common.value.overlaps().len(), evidence.overlaps().len());
                         for contact in common.value.contacts() {
                             for (curve, location) in [(a, contact.first()), (b, contact.second())] {
-                                let parameter = decided(location.parameter(&policy).unwrap());
+                                let parameter =
+                                    decided(location.parameter_with_policy(&policy).unwrap());
                                 let point =
                                     curve.point_at_with_policy(&parameter, &policy).unwrap();
                                 assert_eq!(point.certainty, crate::CurveCertainty::Certified);
@@ -3559,18 +3567,18 @@ fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {
         // chord/parallel kernel result without a second Boolean fallback.
         let selected_parameter = |lower: Real, upper: Real| {
             let polynomial = decided(
-                crate::BezierParameterPolynomial::try_new_power_basis(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)],
                     &policy,
                 )
                 .expect("valid independent endpoint polynomial"),
             );
             let interval = decided(
-                crate::BezierParameterInterval::try_new(lower, upper, &policy)
+                crate::BezierParameterInterval::try_new_with_policy(lower, upper, &policy)
                     .expect("valid independent endpoint interval"),
             );
             BezierParameter2::Algebraic(decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
                     .expect("isolated independent endpoint"),
             ))
         };
@@ -3804,7 +3812,7 @@ fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {
             let three_quarters =
                 (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator");
             let contact_point =
-                match regularized_ph.point_at(&three_quarters, &CurveContext::STRICT) {
+                match regularized_ph.point_at_with_policy(&three_quarters, &CurveContext::STRICT) {
                     Ok(Classification::Decided(point)) => point,
                     result => panic!("the PH contact point must evaluate exactly: {result:?}"),
                 };
@@ -4150,7 +4158,7 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
         };
         let sqrt_parameter = |numerator: i8, denominator: i8| {
             let polynomial = decided(
-                crate::BezierParameterPolynomial::try_new_power_basis(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![
                         Real::from(-numerator),
                         Real::zero(),
@@ -4161,11 +4169,15 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
                 .expect("valid square-root polynomial"),
             );
             let interval = decided(
-                crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)
-                    .expect("valid unit interval"),
+                crate::BezierParameterInterval::try_new_with_policy(
+                    Real::zero(),
+                    Real::one(),
+                    &policy,
+                )
+                .expect("valid unit interval"),
             );
             BezierParameter2::Algebraic(decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
                     .expect("isolated square-root parameter"),
             ))
         };
@@ -4580,7 +4592,7 @@ fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {
                     (&boundary_curve, contact.first()),
                     (&retraced_curve, contact.second()),
                 ] {
-                    let parameter = decided(location.parameter(&policy).unwrap());
+                    let parameter = decided(location.parameter_with_policy(&policy).unwrap());
                     let point = curve.point_at_with_policy(&parameter, &policy).unwrap();
                     assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(
@@ -4897,17 +4909,20 @@ fn regularization_orders_all_branches_at_a_pinched_algebraic_corner() {
         // the interior of B at the same vertex. Its four rays belong
         // to three carriers, so no single pair owns their cyclic order.
         let polynomial = decided(
-            crate::BezierParameterPolynomial::try_new_power_basis(
+            crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                 [1, -6, 7, -4, 1].into_iter().map(Real::from).collect(),
                 &policy,
             )
             .unwrap(),
         );
         let interval = decided(
-            crate::BezierParameterInterval::try_new(q(7, 4), Real::from(2), &policy).unwrap(),
+            crate::BezierParameterInterval::try_new_with_policy(q(7, 4), Real::from(2), &policy)
+                .unwrap(),
         );
-        let cut_root =
-            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
+        let cut_root = decided(
+            BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                .unwrap(),
+        );
         let chord_midpoint = RationalBezierAlgebraicPointImage2::from_retained_expression(
             cut_root.clone(),
             crate::bezier_algebraic_image::parameter_representation(&cut_root, &policy),
@@ -5415,7 +5430,7 @@ fn adjacent_general_chord_fallback_excludes_the_authored_endpoint() {
 fn shifted_sqrt_half_parameter(shift: Real, policy: &CurveContext) -> BezierParameter2 {
     let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
     let polynomial = decided(
-        crate::BezierParameterPolynomial::try_new_power_basis(
+        crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![
                 &shift * &shift - half,
                 Real::zero() - &shift * Real::from(2_i8),
@@ -5426,7 +5441,7 @@ fn shifted_sqrt_half_parameter(shift: Real, policy: &CurveContext) -> BezierPara
         .expect("valid shifted quadratic"),
     );
     let interval = decided(
-        crate::BezierParameterInterval::try_new(
+        crate::BezierParameterInterval::try_new_with_policy(
             (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
             Real::one(),
             policy,
@@ -5434,7 +5449,7 @@ fn shifted_sqrt_half_parameter(shift: Real, policy: &CurveContext) -> BezierPara
         .expect("valid positive-root interval"),
     );
     BezierParameter2::Algebraic(decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
             .expect("isolated shifted positive root"),
     ))
 }
@@ -5443,7 +5458,7 @@ fn shifted_nested_radical_parameter(shift: Real, policy: &CurveContext) -> Bezie
     let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
     let alpha = half.sqrt().expect("positive square root");
     let polynomial = decided(
-        crate::BezierParameterPolynomial::try_new_power_basis(
+        crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![
                 &shift * &shift - &shift - alpha,
                 Real::one() - &shift * Real::from(2_i8),
@@ -5454,11 +5469,11 @@ fn shifted_nested_radical_parameter(shift: Real, policy: &CurveContext) -> Bezie
         .expect("valid translated nested-radical quadratic"),
     );
     let interval = decided(
-        crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), policy)
+        crate::BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), policy)
             .expect("valid unit parameter interval"),
     );
     BezierParameter2::Algebraic(decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
             .expect("isolated translated nested-radical root"),
     ))
 }
@@ -5522,7 +5537,7 @@ fn cusp_test_semicircle(policy: &CurveContext) -> BezierAlgebraicCuspSemicircle2
     .expect("valid analytic parallel");
     let analysis = decided(
         parallel
-            .singularity_analysis(&CurveParameterRange2::unit(), policy)
+            .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)
             .expect("certified singularity analysis"),
     );
     let BezierParameter2::Algebraic(parameter) = &analysis.parallel_cusps()[0] else {
@@ -5637,7 +5652,7 @@ fn boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier() {
         let semicircle = cusp_test_semicircle(&policy);
         let source_parameter = BezierParameter2::Algebraic(semicircle.cusp_parameter().clone());
         let regular_span = |parallel: &BezierParallel2| {
-            let range = match BezierParameterRange2::try_new(
+            let range = match BezierParameterRange2::try_new_with_policy(
                 BezierParameter2::Exact(local_start.clone()),
                 source_parameter.clone(),
                 &policy,
@@ -5663,7 +5678,9 @@ fn boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier() {
         let start_fragment = regular_span(&start_parallel);
         let end_fragment = regular_span(&end_parallel);
         let local_point = |parallel: &BezierParallel2| {
-            let Classification::Decided(point) = parallel.point_at(&local_start, &policy).unwrap()
+            let Classification::Decided(point) = parallel
+                .point_at_with_policy(&local_start, &policy)
+                .unwrap()
             else {
                 panic!("a rational local parameter must have an exact parallel image");
             };
@@ -6038,7 +6055,9 @@ fn injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases
     let first = shifted_nested_radical_parameter(Real::zero(), &policy);
     let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &policy);
     assert_eq!(
-        first.cmp_by_refinement(&second, &policy).unwrap(),
+        first
+            .cmp_by_refinement_with_policy(&second, &policy)
+            .unwrap(),
         Classification::Uncertain(UncertaintyReason::Ordering),
     );
 
@@ -6104,7 +6123,9 @@ fn parameter_order_uses_exact_translation_before_approximate_512_terminal() {
     let first = shifted_sqrt_half_parameter(Real::zero(), &strict);
     let second = shifted_sqrt_half_parameter(dyadic_epsilon(600), &strict);
     assert_eq!(
-        first.cmp_by_refinement(&second, &strict).unwrap(),
+        first
+            .cmp_by_refinement_with_policy(&second, &strict)
+            .unwrap(),
         Classification::Decided(Ordering::Less),
     );
 
@@ -6112,7 +6133,7 @@ fn parameter_order_uses_exact_translation_before_approximate_512_terminal() {
     let first = shifted_sqrt_half_parameter(Real::zero(), &approximate);
     let second = shifted_sqrt_half_parameter(dyadic_epsilon(600), &approximate);
     let outcome = crate::policy::resolve_certified_operation(&approximate, |attempt| {
-        first.cmp_by_refinement(&second, attempt)
+        first.cmp_by_refinement_with_policy(&second, attempt)
     })
     .unwrap();
     assert_eq!(outcome.value, Classification::Decided(Ordering::Less));
@@ -6125,7 +6146,9 @@ fn unsupported_parameter_order_obeys_strict_and_approximate_512_policies() {
     let first = shifted_nested_radical_parameter(Real::zero(), &strict);
     let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &strict);
     assert_eq!(
-        first.cmp_by_refinement(&second, &strict).unwrap(),
+        first
+            .cmp_by_refinement_with_policy(&second, &strict)
+            .unwrap(),
         Classification::Uncertain(UncertaintyReason::Ordering),
     );
 
@@ -6133,7 +6156,7 @@ fn unsupported_parameter_order_obeys_strict_and_approximate_512_policies() {
     let first = shifted_nested_radical_parameter(Real::zero(), &approximate);
     let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &approximate);
     let outcome = crate::policy::resolve_certified_operation(&approximate, |attempt| {
-        first.cmp_by_refinement(&second, attempt)
+        first.cmp_by_refinement_with_policy(&second, attempt)
     })
     .unwrap();
     assert_eq!(outcome.value, Classification::Decided(Ordering::Equal));
@@ -6378,11 +6401,17 @@ fn selected_parallel_arrangement_splits_interior_cusps() {
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let range = CurveParameterRange2::unit();
-        let analysis = decided(parallel.singularity_analysis(&range, &policy).unwrap());
+        let analysis = decided(
+            parallel
+                .singularity_analysis_with_policy(&range, &policy)
+                .unwrap(),
+        );
         assert!(analysis.source_is_regular());
         assert_eq!(analysis.parallel_cusps().len(), 2);
         let points = [Real::zero(), Real::one()].map(|parameter| {
-            CurvePoint2::from(decided(parallel.point_at(&parameter, &policy).unwrap()))
+            CurvePoint2::from(decided(
+                parallel.point_at_with_policy(&parameter, &policy).unwrap(),
+            ))
         });
         let fragment = CurveSupport2::Parallel(parallel.clone())
             .restrict_certified(range, Some(points.clone()), false, &policy)
@@ -6421,7 +6450,11 @@ fn selected_parallel_arrangement_splits_interior_cusps() {
                     continue;
                 };
                 let range = piece.fragment.curve_region_parameter_range();
-                let analysis = decided(source.singularity_analysis(&range, &policy).unwrap());
+                let analysis = decided(
+                    source
+                        .singularity_analysis_with_policy(&range, &policy)
+                        .unwrap(),
+                );
                 for cusp in analysis.parallel_cusps() {
                     let cusp = CurveParameter2::from(cusp.clone());
                     assert!(
@@ -6495,7 +6528,7 @@ fn cusp_separated_parallel_contacts_are_not_declared_distinct() {
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for parameter in [&left, &right] {
-            let point = decided(parallel.point_at(parameter, &policy).unwrap());
+            let point = decided(parallel.point_at_with_policy(parameter, &policy).unwrap());
             assert_eq!(
                 CurvePoint2::from(point).same_point(&node, &policy),
                 Classification::Decided(true)
@@ -6521,7 +6554,7 @@ fn cusp_separated_parallel_contacts_are_not_declared_distinct() {
         for carrier in &carriers[..2] {
             let analysis = decided(
                 parallel
-                    .singularity_analysis(&carrier.range(), &policy)
+                    .singularity_analysis_with_policy(&carrier.range(), &policy)
                     .unwrap(),
             );
             assert!(analysis.source_is_regular() && analysis.parallel_is_cusp_free());

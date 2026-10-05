@@ -4707,7 +4707,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             while cursor > 0 {
                 let order = match boundaries[cursor]
                     .parameter
-                    .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
+                    .cmp_by_refinement_with_policy(&boundaries[cursor - 1].parameter, policy)?
                 {
                     Classification::Decided(order) => order,
                     Classification::Uncertain(reason) => {
@@ -4727,7 +4727,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             if let Some(previous) = distinct.last_mut() {
                 let order = match previous
                     .parameter
-                    .cmp_by_refinement(&boundary.parameter, policy)?
+                    .cmp_by_refinement_with_policy(&boundary.parameter, policy)?
                 {
                     Classification::Decided(order) => order,
                     Classification::Uncertain(reason) => {

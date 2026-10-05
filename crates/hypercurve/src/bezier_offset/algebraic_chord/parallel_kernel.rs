@@ -199,7 +199,7 @@ impl BezierAlgebraicChord2 {
                 }
                 Ok(identity.or(tangent.then_some(RealSign::Zero)))
             };
-            let singularities = match parallel.singularity_analysis(range, strict)? {
+            let singularities = match parallel.singularity_analysis_with_policy(range, strict)? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

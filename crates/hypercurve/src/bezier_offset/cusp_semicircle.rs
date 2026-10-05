@@ -848,7 +848,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         let tangent_distance = -(&tangent_scale / denominator)?;
         if let Some(center_parameter) = frame.center_parameter.scalar() {
             let parallel = frame.center_support.with_distance(normal_distance.clone());
-            if let Classification::Decided(point) = parallel.point_at(center_parameter, policy)? {
+            if let Classification::Decided(point) =
+                parallel.point_at_with_policy(center_parameter, policy)?
+            {
                 let tangent = match parallel.source_tangent_at(center_parameter, policy)? {
                     Classification::Decided(tangent) => tangent,
                     Classification::Uncertain(reason) => {
@@ -988,7 +990,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             return match frame.center_parameter.as_bezier_parameter() {
                 Some(BezierParameter2::Exact(parameter)) => Ok(
                     match policy.strict_predicate_pass(|| {
-                        frame.center_support.point_at(parameter, policy)
+                        frame.center_support.point_at_with_policy(parameter, policy)
                     })? {
                         Classification::Decided(center) => Some(center),
                         Classification::Uncertain(_) => None,
@@ -4276,7 +4278,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                             BezierParameter2::Exact(parameter) => parameter.clone(),
                             BezierParameter2::Algebraic(parameter) => {
                                 match policy.strict_predicate_pass(|| {
-                                    parameter.represented_exact_point(policy)
+                                    parameter.represented_exact_point_with_policy(policy)
                                 })? {
                                     Classification::Decided(Some(parameter)) => parameter,
                                     Classification::Decided(None)
@@ -4300,7 +4302,9 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
             Self::Rational { curve, .. } => Ok(curve
                 .point_at_affine_classified(&parameter, policy)
                 .map(Some)),
-            Self::Parallel { parallel, .. } => Ok(parallel.point_at(&parameter, policy)?.map(Some)),
+            Self::Parallel { parallel, .. } => {
+                Ok(parallel.point_at_with_policy(&parameter, policy)?.map(Some))
+            }
         }
     }
 
@@ -5176,7 +5180,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         Ok(
-            match BezierParameterInterval::try_new(start, end, policy)? {
+            match BezierParameterInterval::try_new_with_policy(start, end, policy)? {
                 Classification::Decided(interval) => Classification::Decided(
                     BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
                 ),

@@ -118,11 +118,12 @@ fn analytic_parallel_curve(
 ) -> Curve2 {
     let (start_parameter, end_parameter) = if reversed { (1, 0) } else { (0, 1) };
     let range = decided(
-        BezierParameterRange2::try_new(
-            BezierParameter2::Exact(Real::from(start_parameter)),
-            BezierParameter2::Exact(Real::from(end_parameter)),
-            policy,
-        )
+        crate::support::under_classified_result(policy, || {
+            BezierParameterRange2::try_new(
+                BezierParameter2::Exact(Real::from(start_parameter)),
+                BezierParameter2::Exact(Real::from(end_parameter)),
+            )
+        })
         .unwrap(),
     );
     let parallel = QuadraticBezier2::new(start, midpoint, end)
@@ -171,8 +172,14 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
         .parallel_left(Real::one())
         .unwrap();
-    let right = decided(parallel.point_at(&Real::one(), policy).unwrap());
-    let left = decided(parallel.point_at(&Real::zero(), policy).unwrap());
+    let right = decided(
+        crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap(),
+    );
+    let left = decided(
+        crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap(),
+    );
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
     let boundary = crate::support::under(policy, || {

@@ -192,13 +192,13 @@ fn exact_parallel_point_incidence_rejects_the_opposite_normal_branch() {
         );
         assert_eq!(
             parallel
-                .contains_point(&p(1, 1), &CurveParameterRange2::unit(), &policy)
+                .contains_point_with_policy(&p(1, 1), &CurveParameterRange2::unit(), &policy)
                 .unwrap(),
             Classification::Decided(true)
         );
         assert_eq!(
             parallel
-                .contains_point(&p(1, -1), &CurveParameterRange2::unit(), &policy)
+                .contains_point_with_policy(&p(1, -1), &CurveParameterRange2::unit(), &policy)
                 .unwrap(),
             Classification::Decided(false)
         );
@@ -254,7 +254,7 @@ fn finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let endpoints = if reversed { [3, 2] } else { [2, 3] };
-            let Classification::Decided(range) = CurveParameterRange2::try_new(
+            let Classification::Decided(range) = CurveParameterRange2::try_new_with_policy(
                 r(endpoints[0]).into(),
                 r(endpoints[1]).into(),
                 &policy,
@@ -274,14 +274,16 @@ fn finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets() {
                 assert_eq!(parameters.len(), 1);
                 assert_eq!(
                     parameters[0]
-                        .cmp_by_refinement(&BezierParameter2::Exact(r(2)), &policy)
+                        .cmp_by_refinement_with_policy(&BezierParameter2::Exact(r(2)), &policy)
                         .unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
                 if distance != Real::zero() {
                     let opposite = Point2::new(q(2, 3) - &shift, q(2, 3) + &shift);
                     assert_eq!(
-                        parallel.contains_point(&opposite, &range, &policy).unwrap(),
+                        parallel
+                            .contains_point_with_policy(&opposite, &range, &policy)
+                            .unwrap(),
                         Classification::Decided(false)
                     );
                 }
@@ -291,7 +293,11 @@ fn finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets() {
                 .unwrap();
             assert_eq!(
                 stationary
-                    .contains_point(&Point2::new(q(25, 4), Real::one()), &range, &policy)
+                    .contains_point_with_policy(
+                        &Point2::new(q(25, 4), Real::one()),
+                        &range,
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true)
             );
@@ -299,7 +305,7 @@ fn finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets() {
                 source
                     .parallel_left(Real::zero())
                     .unwrap()
-                    .contains_point(&p(0, 0), &range, &policy)
+                    .contains_point_with_policy(&p(0, 0), &range, &policy)
                     .unwrap(),
                 Classification::Decided(false)
             );
@@ -593,7 +599,7 @@ fn parallel_pair_overlap_retains_off_correspondence_contacts() {
     let second = first.clone();
     assert!(matches!(
         first
-            .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
+            .exact_pythagorean_hodograph_offset_with_policy(&CurveContext::STRICT)
             .unwrap(),
         Classification::Decided(None)
     ));
@@ -717,11 +723,15 @@ fn parallel_pair_replays_a_non_source_speed_component_residual() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
-            first.exact_pythagorean_hodograph_offset(&policy).unwrap(),
+            first
+                .exact_pythagorean_hodograph_offset_with_policy(&policy)
+                .unwrap(),
             Classification::Decided(None)
         ));
         assert!(matches!(
-            second.exact_pythagorean_hodograph_offset(&policy).unwrap(),
+            second
+                .exact_pythagorean_hodograph_offset_with_policy(&policy)
+                .unwrap(),
             Classification::Decided(None)
         ));
         let intersections =
@@ -1436,7 +1446,7 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
             parallel
-                .exact_pythagorean_hodograph_offset(&policy)
+                .exact_pythagorean_hodograph_offset_with_policy(&policy)
                 .unwrap(),
             Classification::Decided(None)
         ));
@@ -1501,7 +1511,7 @@ fn parallel_rational_contacts_transport_an_implicit_parameter_component() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
             parallel
-                .exact_pythagorean_hodograph_offset(&policy)
+                .exact_pythagorean_hodograph_offset_with_policy(&policy)
                 .unwrap(),
             Classification::Decided(None)
         ));
@@ -1898,7 +1908,7 @@ fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
             overlap
                 .second_range()
                 .end()
-                .cmp_by_refinement(&BezierParameter2::Exact(q(4, 5)), &policy)
+                .cmp_by_refinement_with_policy(&BezierParameter2::Exact(q(4, 5)), &policy)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Greater)
         );
@@ -1906,7 +1916,7 @@ fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
             overlap
                 .second_range()
                 .end()
-                .cmp_by_refinement(&BezierParameter2::Exact(q(9, 10)), &policy)
+                .cmp_by_refinement_with_policy(&BezierParameter2::Exact(q(9, 10)), &policy)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Less)
         );
@@ -1949,7 +1959,7 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
     );
     let parallel = source.parallel_left(Real::one()).unwrap();
     let Classification::Decided(Some(materialized)) = parallel
-        .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
+        .exact_pythagorean_hodograph_offset_with_policy(&CurveContext::STRICT)
         .unwrap()
     else {
         panic!("canonical PH cubic did not materialize exactly");
@@ -2129,7 +2139,10 @@ fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
                     ] {
                         assert_eq!(
                             parameter
-                                .cmp_by_refinement(&BezierParameter2::Exact(expected), &policy)
+                                .cmp_by_refinement_with_policy(
+                                    &BezierParameter2::Exact(expected),
+                                    &policy
+                                )
                                 .unwrap(),
                             Classification::Decided(std::cmp::Ordering::Equal)
                         );

@@ -342,7 +342,7 @@ impl CurveSupport2 {
                 Ok(curve.point_at_affine_classified(parameter, policy))
             }
             Self::Bezier(curve) => Ok(curve.point_at_with_policy(parameter, policy)),
-            Self::Parallel(parallel) => parallel.point_at(parameter, policy),
+            Self::Parallel(parallel) => parallel.point_at_with_policy(parameter, policy),
             Self::Line(chord) => match chord.exact_line() {
                 Some(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
                 None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
@@ -367,7 +367,7 @@ impl CurveSupport2 {
         match self {
             Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
                 .map(|curve| curve.derivative_at_affine_classified(parameter, policy)),
-            Self::Parallel(parallel) => parallel.derivative_at(parameter, policy),
+            Self::Parallel(parallel) => parallel.derivative_at_with_policy(parameter, policy),
             Self::Line(chord) => match chord.exact_line() {
                 Some(line) => Ok(Classification::Decided(CurveDerivative2::new(
                     line.end().x() - line.start().x(),
@@ -631,7 +631,7 @@ mod tests {
                     parallel
                 };
                 for parameter in &parameters {
-                    let point = decided(parallel.point_at(parameter, &policy).unwrap());
+                    let point = decided(parallel.point_at_with_policy(parameter, &policy).unwrap());
                     assert_eq!(
                         CurvePoint2::from(point).same_point(&expected, &policy),
                         Classification::Decided(true),
@@ -670,7 +670,11 @@ mod tests {
         let range = CurveParameterRange2::new_validated(Real::one().into(), Real::from(3).into());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let parallel = source.parallel_left(Real::one()).unwrap();
-            let analysis = decided(parallel.singularity_analysis(&range, &policy).unwrap());
+            let analysis = decided(
+                parallel
+                    .singularity_analysis_with_policy(&range, &policy)
+                    .unwrap(),
+            );
             assert!(analysis.source_is_regular());
             assert_eq!(analysis.parallel_cusps().len(), 2);
             let delta = ((Real::from(4).root_n(3).unwrap() - Real::one())
@@ -991,16 +995,19 @@ mod tests {
             let source = Curve2::from(source);
             let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
             let polynomial = decided(
-                BezierParameterPolynomial::try_new_power_basis(
+                BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![(-1).into(), 0.into(), 2.into()],
                     &policy,
                 )
                 .unwrap(),
             );
-            let interval =
-                decided(BezierParameterInterval::try_new(q(1, 2), Real::one(), &policy).unwrap());
+            let interval = decided(
+                BezierParameterInterval::try_new_with_policy(q(1, 2), Real::one(), &policy)
+                    .unwrap(),
+            );
             let root = decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
             );
             for range in [
                 CurveParameterRange2::unit(),

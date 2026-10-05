@@ -48,7 +48,7 @@ pub(super) fn bezier_corner_parameter_placement(
     let one = BezierParameter2::Exact(Real::one());
     let compare = |boundary: &BezierParameter2| {
         parameter
-            .cmp_by_refinement(boundary, policy)
+            .cmp_by_refinement_with_policy(boundary, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
             .and_then(|result| match result {
                 Classification::Decided(order) => Ok(order),
@@ -118,7 +118,7 @@ pub(super) fn decided_parallel_point(
         parallel.source_point_at(parameter, policy)
     } else {
         parallel
-            .point_at(parameter, policy)
+            .point_at_with_policy(parameter, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     };
     match point {

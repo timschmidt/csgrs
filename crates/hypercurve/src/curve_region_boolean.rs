@@ -2129,7 +2129,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             let analysis = match parallel
-                .singularity_analysis(&carrier.range(), &self.data.policy)
+                .singularity_analysis_with_policy(&carrier.range(), &self.data.policy)
                 .map_err(|cause| self.invalid(carrier_index, cause))?
             {
                 Classification::Decided(analysis) => analysis,
@@ -4754,7 +4754,7 @@ fn selected_fiber_event_point(
         }
         BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
             if let Some(parameter) = parameter.scalar() {
-                return match parallel.point_at(parameter, policy)? {
+                return match parallel.point_at_with_policy(parameter, policy)? {
                     Classification::Decided(point) => Ok(CurvePoint2::from(point)),
                     Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
                         "selected-fiber analytic endpoint evaluation remained uncertain: {reason:?}"
@@ -5323,7 +5323,7 @@ fn split_analytic_carrier(
                 "algebraic cusp cut reached an analytic carrier".into(),
             ));
         };
-        match start.cmp_by_refinement(&end, policy)? {
+        match start.cmp_by_refinement_with_policy(&end, policy)? {
             Classification::Decided(Ordering::Less) => {}
             Classification::Decided(Ordering::Equal) => continue,
             Classification::Decided(Ordering::Greater) => {
@@ -8101,7 +8101,7 @@ impl BooleanParameterOrder for BezierParameter2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
-        self.cmp_by_refinement(other, policy)
+        self.cmp_by_refinement_with_policy(other, policy)
     }
 }
 

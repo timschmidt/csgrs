@@ -1,8 +1,10 @@
 #![no_main]
 
+mod support;
+
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurveContext, CurveError, Real,
+    CurveContext, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -20,17 +22,15 @@ fuzz_target!(|data: &[u8]| {
     }
 
     let policy = CurveContext::STRICT;
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        vec![
+    let polynomial = match support::under_classified_result(&policy, || {
+        BezierParameterPolynomial::try_new_power_basis(vec![
             real_from_byte(data[0]),
             real_from_byte(data[1]),
             real_from_byte(data[2]),
-        ],
-        &policy,
-    ) {
+        ])
+    }) {
         Ok(Classification::Decided(polynomial)) => polynomial,
-        Ok(Classification::Uncertain(_)) | Err(CurveError::InvalidBezierPolynomial) => return,
-        Err(_) => return,
+        Ok(Classification::Uncertain(_)) | Err(_) => return,
     };
 
     let mut start = unit_from_byte(data[3]);
@@ -39,11 +39,16 @@ fuzz_target!(|data: &[u8]| {
         std::mem::swap(&mut start, &mut end);
     }
 
-    let interval = match BezierParameterInterval::try_new(start, end, &policy) {
+    let interval = match support::under_classified_result(&policy, || {
+        BezierParameterInterval::try_new(start, end)
+    }) {
         Ok(Classification::Decided(interval)) => interval,
         Ok(Classification::Uncertain(_)) | Err(_) => return,
     };
 
-    let _ = polynomial.root_count_in_interval(&interval, &policy);
-    let _ = BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy);
+    let _ =
+        support::under_classified_result(&policy, || polynomial.root_count_in_interval(&interval));
+    let _ = support::under_classified_result(&policy, || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    });
 });

@@ -26,7 +26,22 @@ pub struct BezierFlatteningOptions {
 
 impl BezierFlatteningOptions {
     /// Constructs flattening options after certifying a positive error budget.
-    pub fn try_new(max_error: Real, max_depth: usize, policy: &CurveContext) -> CurveResult<Self> {
+    pub fn try_new(max_error: Real, max_depth: usize) -> crate::ExactCurveResult<Self> {
+        Self::try_new_with_policy(max_error, max_depth, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::try_new`] under an explicit predicate policy.
+    pub(crate) fn try_new_with_policy(
+        max_error: Real,
+        max_depth: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
         if max_depth == 0 {
             return Err(CurveError::InvalidFlatteningOptions);
         }
@@ -583,7 +598,8 @@ mod tests {
     #[test]
     fn flatten_certificate_evidence_actual_depth_used() {
         let policy = CurveContext::STRICT;
-        let options = BezierFlatteningOptions::try_new(Real::one(), 8, &policy).unwrap();
+        let options =
+            BezierFlatteningOptions::try_new_with_policy(Real::one(), 8, &policy).unwrap();
         let curve = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0));
 
         let Classification::Decided(polyline) =
@@ -601,7 +617,8 @@ mod tests {
     fn homogeneous_representation_flattens_finite_mixed_controls() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let half = (Real::one() / Real::from(2)).unwrap();
-            let options = BezierFlatteningOptions::try_new(half.clone(), 12, &policy).unwrap();
+            let options =
+                BezierFlatteningOptions::try_new_with_policy(half.clone(), 12, &policy).unwrap();
             let curve = crate::RationalBezier2::try_new(
                 vec![point(0, 0), point(1, 1), point(2, 0)],
                 vec![Real::one(), -half, Real::one()],
@@ -637,7 +654,7 @@ mod tests {
     #[test]
     fn flatness_certificate_covers_collinear_overshoot() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let options = BezierFlatteningOptions::try_new(
+            let options = BezierFlatteningOptions::try_new_with_policy(
                 (Real::one() / Real::from(16)).unwrap(),
                 12,
                 &policy,

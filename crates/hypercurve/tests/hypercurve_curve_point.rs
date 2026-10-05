@@ -29,16 +29,25 @@ fn selected_point(reversed: bool) -> CurvePoint2 {
         &[-1, 1, 0, 0, 0, 1]
     };
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(
-            coefficients.iter().copied().map(Real::from).collect(),
-            &policy,
-        )
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterPolynomial::try_new_power_basis(
+                coefficients.iter().copied().map(Real::from).collect(),
+            )
+        })
         .unwrap(),
     );
-    let interval =
-        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
-    let parameter =
-        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
+    let interval = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
     let mut controls = vec![
         Point2::new(Real::zero(), Real::pi()),
         Point2::new(Real::one(), Real::pi()),
@@ -155,15 +164,26 @@ mod generated_derivatives {
     /// The root of `a t^2 - 1` in `[lower, upper]`.
     fn inverse_root(a: i32, lower: Real, upper: Real, policy: &CurveContext) -> CurveParameter2 {
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
-                vec![Real::from(-1), Real::zero(), Real::from(a)],
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    Real::from(-1),
+                    Real::zero(),
+                    Real::from(a),
+                ])
+            })
             .unwrap(),
         );
-        let interval = decided(BezierParameterInterval::try_new(lower, upper, policy).unwrap());
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(lower, upper)
+            })
+            .unwrap(),
+        );
         CurveParameter2::from(BezierParameter2::Algebraic(decided(
-            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
         )))
     }
 
@@ -179,11 +199,12 @@ mod generated_derivatives {
     fn zero_distance_generated_parallel_matches_its_source_derivative() {
         let policy = CurveContext::STRICT;
         let unit = decided(
-            BezierParameterRange2::try_new(
-                BezierParameter2::Exact(Real::zero()),
-                BezierParameter2::Exact(Real::one()),
-                &policy,
-            )
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                )
+            })
             .unwrap(),
         );
         let generated = crate::support::under(&policy, || {
@@ -228,11 +249,15 @@ mod generated_derivatives {
         ] {
             assert!(derivative.represented_coordinates().is_none());
             assert_eq!(
-                derivative.coordinate_sign(Axis2::X, &policy).unwrap(),
+                crate::support::under_classified_result(&policy, || derivative
+                    .coordinate_sign(Axis2::X))
+                .unwrap(),
                 Classification::Decided(hyperreal::RealSign::Positive)
             );
             assert_eq!(
-                derivative.coordinate_sign(Axis2::Y, &policy).unwrap(),
+                crate::support::under_classified_result(&policy, || derivative
+                    .coordinate_sign(Axis2::Y))
+                .unwrap(),
                 Classification::Decided(hyperreal::RealSign::Negative)
             );
         }
@@ -244,7 +269,12 @@ mod generated_derivatives {
         end: BezierParameter2,
         policy: &CurveContext,
     ) -> Curve2 {
-        let range = decided(BezierParameterRange2::try_new(start, end, policy).unwrap());
+        let range = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterRange2::try_new(start, end)
+            })
+            .unwrap(),
+        );
         crate::support::under(policy, || {
             Curve2::try_analytic_parallel(arch().parallel_left(distance).unwrap(), range)
         })
@@ -257,8 +287,18 @@ mod generated_derivatives {
         policy: &CurveContext,
     ) -> (hyperreal::RealSign, hyperreal::RealSign) {
         (
-            decided(derivative.coordinate_sign(Axis2::X, policy).unwrap()),
-            decided(derivative.coordinate_sign(Axis2::Y, policy).unwrap()),
+            decided(
+                crate::support::under_classified_result(policy, || {
+                    derivative.coordinate_sign(Axis2::X)
+                })
+                .unwrap(),
+            ),
+            decided(
+                crate::support::under_classified_result(policy, || {
+                    derivative.coordinate_sign(Axis2::Y)
+                })
+                .unwrap(),
+            ),
         )
     }
 
@@ -307,16 +347,26 @@ mod generated_derivatives {
         // 64 t^2 - 64 t + 14 = 0 gives (4 - 8t)^2 = 2 and |v|^2 = 6, so the
         // speed ratio 1 + 16 d / 6^(3/2) vanishes at d = -3 sqrt(6) / 8.
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
-                vec![Real::from(14), Real::from(-64), Real::from(64)],
-                &policy,
-            )
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    Real::from(14),
+                    Real::from(-64),
+                    Real::from(64),
+                ])
+            })
             .unwrap(),
         );
-        let interval =
-            decided(BezierParameterInterval::try_new(q(3, 10), q(7, 20), &policy).unwrap());
+        let interval = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterInterval::try_new(q(3, 10), q(7, 20))
+            })
+            .unwrap(),
+        );
         let cusp = BezierParameter2::Algebraic(decided(
-            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
         ));
         let selected = CurveParameter2::from(cusp.clone());
         let distance =

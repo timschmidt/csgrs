@@ -1497,7 +1497,7 @@ pub(super) fn retained_corner_fragment_between_cuts(
         let zero = BezierParameter2::Exact(Real::zero());
         let one = BezierParameter2::Exact(Real::one());
         let next_order = match next_parameter
-            .cmp_by_refinement(&zero, policy)
+            .cmp_by_refinement_with_policy(&zero, policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(order) => order,
@@ -1510,7 +1510,7 @@ pub(super) fn retained_corner_fragment_between_cuts(
             }
         };
         let previous_order = match previous_parameter
-            .cmp_by_refinement(&one, policy)
+            .cmp_by_refinement_with_policy(&one, policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(order) => order,

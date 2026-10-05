@@ -4,8 +4,8 @@ mod support;
 
 use hypercurve::{
     Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurveError, CurveParameter2,
-    CurvePoint2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurveParameter2, CurvePoint2,
+    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -64,20 +64,24 @@ fuzz_target!(|data: &[u8]| {
     } else {
         (vec![r(-1), r(0), r(2)], q(1, 2), r(1))
     };
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis(polynomial_coefficients, &policy) {
-            Ok(Classification::Decided(polynomial)) => polynomial,
-            Ok(Classification::Uncertain(_)) | Err(CurveError::InvalidBezierPolynomial) => return,
-            Err(_) => return,
-        };
-    let interval = match BezierParameterInterval::try_new(start, end, &policy) {
+    let polynomial = match support::under_classified_result(&policy, || {
+        BezierParameterPolynomial::try_new_power_basis(polynomial_coefficients)
+    }) {
+        Ok(Classification::Decided(polynomial)) => polynomial,
+        Ok(Classification::Uncertain(_)) | Err(_) => return,
+    };
+    let interval = match support::under_classified_result(&policy, || {
+        BezierParameterInterval::try_new(start, end)
+    }) {
         Ok(classification) => match decided(classification) {
             Some(interval) => interval,
             None => return,
         },
         Err(_) => return,
     };
-    let parameter = match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy) {
+    let parameter = match support::under_classified_result(&policy, || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    }) {
         Ok(classification) => match decided(classification) {
             Some(parameter) => parameter,
             None => return,
@@ -104,8 +108,11 @@ fuzz_target!(|data: &[u8]| {
         let represented_tangent = support::under(&policy, || general.derivative_at(&half)).unwrap();
         for axis in [Axis2::X, Axis2::Y] {
             assert_eq!(
-                tangent.coordinate_sign(axis, &policy).unwrap(),
-                represented_tangent.coordinate_sign(axis, &policy).unwrap()
+                support::under_classified_result(&policy, || tangent.coordinate_sign(axis))
+                    .unwrap(),
+                support::under_classified_result(&policy, || represented_tangent
+                    .coordinate_sign(axis))
+                .unwrap()
             );
         }
     } else if mode == 1 {

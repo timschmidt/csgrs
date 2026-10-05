@@ -1349,7 +1349,9 @@ impl BezierAnalyticParallelPoint2 {
                     return Ok(Some(Classification::Uncertain(reason)));
                 }
             };
-            return Ok(Some(polynomial.isolate_unit_interval_roots(policy)?));
+            return Ok(Some(
+                polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+            ));
         }
         let projection = selected_parameter_fiber_parameters(
             &equation,

@@ -1050,7 +1050,24 @@ impl CurveRegionBoundaryLoop2 {
 
     /// Returns exact area and first moments when every fragment has an
     /// implemented native symbolic integral; otherwise returns `Decided(None)`.
-    pub fn area_moments(
+    pub fn area_moments(&self) -> crate::ExactCurveResult<Option<BezierAreaMoments2>> {
+        self.area_moments_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Evaluation,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::area_moments`] under an explicit predicate policy.
+    pub(crate) fn area_moments_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
@@ -1221,7 +1238,24 @@ impl CurveRegionBoundaryLoop2 {
 
     /// Returns exact signed area for implemented native integrals and certified
     /// exact line-image fragments.
-    pub fn signed_area(
+    pub fn signed_area(&self) -> crate::ExactCurveResult<Option<Real>> {
+        self.signed_area_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Evaluation,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::signed_area`] under an explicit predicate policy.
+    pub(crate) fn signed_area_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
@@ -1371,7 +1405,7 @@ fn validate_retained_fragment_parameter_order(
     end: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<()> {
-    match start.cmp_by_refinement(end, policy)? {
+    match start.cmp_by_refinement_with_policy(end, policy)? {
         Classification::Decided(std::cmp::Ordering::Less) => Ok(()),
         Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
             Err(CurveError::Topology(
@@ -6041,8 +6075,8 @@ fn curve_path_contact_is_ordinary_adjacent_endpoint(
         return Classification::Decided(false);
     }
     let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) = (
-        contact.contact().first().parameter(policy),
-        contact.contact().second().parameter(policy),
+        contact.contact().first().parameter_with_policy(policy),
+        contact.contact().second().parameter_with_policy(policy),
     ) else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
@@ -6513,13 +6547,19 @@ fn retained_line_fragment_endpoints(
             let Some((start_parameter, end_parameter)) = fragment.range().scalar_endpoints() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             };
-            let start = match fragment.parallel().point_at(start_parameter, policy)? {
+            let start = match fragment
+                .parallel()
+                .point_at_with_policy(start_parameter, policy)?
+            {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let end = match fragment.parallel().point_at(end_parameter, policy)? {
+            let end = match fragment
+                .parallel()
+                .point_at_with_policy(end_parameter, policy)?
+            {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

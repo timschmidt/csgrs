@@ -1599,11 +1599,13 @@ pub(super) fn retained_fragment_contains_point(
                     RationalBezierPointIncidence2::Parameters(parameters) => !parameters.is_empty(),
                 }))
         }
-        BezierSplitFragment2::AnalyticParallel(fragment) => fragment.parallel().contains_point(
-            point,
-            &CurveParameterRange2::from_bezier_range(fragment.range().clone()),
-            policy,
-        ),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            fragment.parallel().contains_point_with_policy(
+                point,
+                &CurveParameterRange2::from_bezier_range(fragment.range().clone()),
+                policy,
+            )
+        }
         BezierSplitFragment2::SelectedFiber(fragment) => {
             if let Some(curve) = fragment.rational_curve() {
                 Ok(curve
@@ -1618,7 +1620,7 @@ pub(super) fn retained_fragment_contains_point(
                 fragment
                     .analytic_parallel()
                     .expect("a selected-fiber source is rational or analytic")
-                    .contains_point(point, fragment.range(), policy)
+                    .contains_point_with_policy(point, fragment.range(), policy)
             }
         }
         BezierSplitFragment2::AlgebraicChord(chord) => {
@@ -2426,7 +2428,7 @@ pub(super) fn retained_parameters_equal(
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     first
-        .cmp_by_refinement(second, policy)
+        .cmp_by_refinement_with_policy(second, policy)
         .map(|order| order.map(|order| order == std::cmp::Ordering::Equal))
 }
 

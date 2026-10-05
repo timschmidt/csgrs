@@ -384,12 +384,13 @@ pub(super) fn selected_dense_last_axis_univariate(
         Some(coefficients) => (coefficients, true),
         None => (coefficients, false),
     };
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     Ok(Classification::Decided(
         BezierSelectedDenseLastAxisUnivariate2::Polynomial {
             polynomial,
@@ -772,12 +773,15 @@ pub(super) fn selected_dense_guided_quadratic_parameters(
             if singleton != Some(true) {
                 continue;
             }
-            let interval =
-                match BezierParameterInterval::try_new(lower, upper, &CurveContext::STRICT) {
-                    Ok(Classification::Decided(interval)) => interval,
-                    Ok(Classification::Uncertain(_)) => continue,
-                    Err(error) => return Err(error),
-                };
+            let interval = match BezierParameterInterval::try_new_with_policy(
+                lower,
+                upper,
+                &CurveContext::STRICT,
+            ) {
+                Ok(Classification::Decided(interval)) => interval,
+                Ok(Classification::Uncertain(_)) => continue,
+                Err(error) => return Err(error),
+            };
             parameter = BezierAlgebraicParameter2::from_certified_simple_power_basis(
                 coefficients.clone(),
                 interval,

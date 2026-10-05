@@ -25,7 +25,12 @@ fn range(
     end: CurveParameter2,
     policy: &CurveContext,
 ) -> CurveParameterRange2 {
-    decided(CurveParameterRange2::try_new(start, end, policy).unwrap())
+    decided(
+        crate::support::under_classified_result(policy, || {
+            CurveParameterRange2::try_new(start, end)
+        })
+        .unwrap(),
+    )
 }
 
 fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
@@ -69,15 +74,17 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
         );
         assert_eq!(intersections.contacts().len(), 1);
         let selected = decided(
-            intersections.contacts()[0]
-                .first()
-                .parameter(&policy)
-                .unwrap(),
+            crate::support::under_classified_result(&policy, || {
+                intersections.contacts()[0].first().parameter()
+            })
+            .unwrap(),
         );
         assert!(selected.scalar().is_none());
         assert_eq!(
             decided(certified(
-                selected.compare(&root.clone().into(), &policy).unwrap()
+                crate::support::under_outcome_classified(&policy, || selected
+                    .compare(&root.clone().into()))
+                .unwrap()
             )),
             std::cmp::Ordering::Equal
         );
@@ -242,10 +249,10 @@ fn bezier_range_construction_reuses_selected_fiber_parameters() {
         );
         assert_eq!(intersections.contacts().len(), 1);
         let selected = decided(
-            intersections.contacts()[0]
-                .second()
-                .parameter(&policy)
-                .unwrap(),
+            crate::support::under_classified_result(&policy, || {
+                intersections.contacts()[0].second().parameter()
+            })
+            .unwrap(),
         );
         assert!(selected.as_bezier_parameter().is_none());
         same(intersections.contacts()[0].point(), &expected, &policy);

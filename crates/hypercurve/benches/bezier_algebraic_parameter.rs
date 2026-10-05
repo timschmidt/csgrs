@@ -42,7 +42,12 @@ fn main() -> CurveResult<()> {
     for reuse in [false, true] {
         let retained = normal_form_zero();
         assert_eq!(
-            decided(retained.cmp_by_interval(&zero, &policy)?),
+            decided(
+                crate::support::under_classified_result(&policy, || {
+                    retained.cmp_by_interval(&zero)
+                })
+                .expect("benchmark fixture remains exact")
+            ),
             Ordering::Equal
         );
         let started = Instant::now();
@@ -53,8 +58,12 @@ fn main() -> CurveResult<()> {
             } else {
                 normal_form_zero()
             };
-            equal += (black_box(decided(parameter.cmp_by_interval(&zero, &policy)?))
-                == Ordering::Equal) as u32;
+            equal += (black_box(decided(
+                crate::support::under_classified_result(&policy, || {
+                    parameter.cmp_by_interval(&zero)
+                })
+                .expect("benchmark fixture remains exact"),
+            )) == Ordering::Equal) as u32;
         }
         let elapsed = started.elapsed();
         assert_eq!(equal, sign_iterations);
@@ -70,10 +79,14 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut converted_degree = 0_usize;
     for _ in 0..conversion_iterations {
-        let polynomial = decided(BezierParameterPolynomial::try_new_bernstein_basis(
-            black_box(bernstein_coefficients.clone()),
-            &policy,
-        )?);
+        let polynomial = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterPolynomial::try_new_bernstein_basis(black_box(
+                    bernstein_coefficients.clone(),
+                ))
+            })
+            .expect("benchmark fixture remains exact"),
+        );
         converted_degree += black_box(polynomial.degree());
     }
     let elapsed = started.elapsed();
@@ -82,28 +95,42 @@ fn main() -> CurveResult<()> {
         elapsed / conversion_iterations
     );
 
-    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![q(1, 16), r(-1), r(1)],
-        &policy,
-    )?);
-    let left = decided(BezierParameterInterval::try_new(r(0), q(1, 4), &policy)?);
-    let right = decided(BezierParameterInterval::try_new(q(3, 4), r(1), &policy)?);
+    let polynomial = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![q(1, 16), r(-1), r(1)])
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let left = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterInterval::try_new(r(0), q(1, 4))
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let right = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterInterval::try_new(q(3, 4), r(1))
+        })
+        .expect("benchmark fixture remains exact"),
+    );
 
     let iterations = 20_000_u32;
     let started = Instant::now();
     let mut total = 0_usize;
 
     for _ in 0..iterations {
-        let first = decided(BezierAlgebraicParameter2::try_isolate(
-            polynomial.clone(),
-            left.clone(),
-            &policy,
-        )?);
-        let second = decided(BezierAlgebraicParameter2::try_isolate(
-            polynomial.clone(),
-            right.clone(),
-            &policy,
-        )?);
+        let first = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial.clone(), left.clone())
+            })
+            .expect("benchmark fixture remains exact"),
+        );
+        let second = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial.clone(), right.clone())
+            })
+            .expect("benchmark fixture remains exact"),
+        );
         total += black_box(first.root_count() + second.root_count());
     }
 
@@ -122,23 +149,34 @@ fn main() -> CurveResult<()> {
             vec![r(1), r(0), r(-4), r(0), r(4)],
         ),
     ] {
-        let irrational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-            coefficients,
-            &policy,
-        )?);
-        let irrational_interval =
-            decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
-        let irrational =
-            BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
-                irrational_polynomial,
-                irrational_interval,
-                &policy,
-            )?));
+        let irrational_polynomial = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterPolynomial::try_new_power_basis(coefficients)
+            })
+            .expect("benchmark fixture remains exact"),
+        );
+        let irrational_interval = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterInterval::try_new(q(2, 3), q(3, 4))
+            })
+            .expect("benchmark fixture remains exact"),
+        );
+        let irrational = BezierParameter2::Algebraic(decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(irrational_polynomial, irrational_interval)
+            })
+            .expect("benchmark fixture remains exact"),
+        ));
         let started = Instant::now();
         let mut ordered = 0_usize;
         for _ in 0..refinement_iterations {
             ordered += black_box(
-                decided(close_rational.cmp_by_refinement(&irrational, &policy)?) == Ordering::Less,
+                decided(
+                    crate::support::under_classified_result(&policy, || {
+                        close_rational.cmp_by_refinement(&irrational)
+                    })
+                    .expect("benchmark fixture remains exact"),
+                ) == Ordering::Less,
             ) as usize;
         }
         let elapsed = started.elapsed();
@@ -153,16 +191,38 @@ fn main() -> CurveResult<()> {
     // stationary-distance quintic for point-to-cubic distance minimization.
     // It has five irrational roots inside (0,1), so every possible stationary
     // distance candidate is exercised without an exact-midpoint shortcut.
-    let quintic = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-36), r(1368), r(-11034), r(31728), r(-38280), r(16620)],
-        &policy,
-    )?);
-    let quintic_trace = decided(quintic.isolate_unit_interval_roots_with_trace(&policy)?);
+    let quintic = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                r(-36),
+                r(1368),
+                r(-11034),
+                r(31728),
+                r(-38280),
+                r(16620),
+            ])
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let quintic_trace = decided(
+        crate::support::under_classified_result(&policy, || {
+            quintic.isolate_unit_interval_roots_with_trace()
+        })
+        .expect("benchmark fixture remains exact"),
+    );
     let isolation_iterations = 2_000_u32;
     let started = Instant::now();
     let mut isolated = 0_usize;
     for _ in 0..isolation_iterations {
-        isolated += black_box(decided(quintic.isolate_unit_interval_roots(&policy)?).len());
+        isolated += black_box(
+            decided(
+                crate::support::under_classified_result(&policy, || {
+                    quintic.isolate_unit_interval_roots()
+                })
+                .expect("benchmark fixture remains exact"),
+            )
+            .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -179,11 +239,18 @@ fn main() -> CurveResult<()> {
         num::BigInt::from(3_u8) << 128_usize,
     ));
     let boundary_root = (Real::one() / &boundary_scale)?;
-    let boundary = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![-Real::one(), boundary_scale],
-        &policy,
-    )?);
-    let boundary_trace = decided(boundary.isolate_unit_interval_roots_with_trace(&policy)?);
+    let boundary = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![-Real::one(), boundary_scale])
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let boundary_trace = decided(
+        crate::support::under_classified_result(&policy, || {
+            boundary.isolate_unit_interval_roots_with_trace()
+        })
+        .expect("benchmark fixture remains exact"),
+    );
     assert_eq!(
         boundary_trace.roots(),
         &[BezierParameter2::Exact(boundary_root)]
@@ -192,8 +259,15 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut boundary_isolated = 0_usize;
     for _ in 0..boundary_iterations {
-        boundary_isolated +=
-            black_box(decided(boundary.isolate_unit_interval_roots(&policy)?).len());
+        boundary_isolated += black_box(
+            decided(
+                crate::support::under_classified_result(&policy, || {
+                    boundary.isolate_unit_interval_roots()
+                })
+                .expect("benchmark fixture remains exact"),
+            )
+            .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -204,22 +278,36 @@ fn main() -> CurveResult<()> {
         boundary_trace.trace().maximum_depth(),
     );
 
-    let rational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(3), r(-1), r(3)],
-        &policy,
-    )?);
-    let rational_interval = decided(BezierParameterInterval::try_new(q(1, 4), q(1, 2), &policy)?);
-    let rational_parameter = decided(BezierAlgebraicParameter2::try_isolate(
-        rational_polynomial,
-        rational_interval,
-        &policy,
-    )?);
+    let rational_polynomial = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(3), r(-1), r(3)])
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let rational_interval = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterInterval::try_new(q(1, 4), q(1, 2))
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let rational_parameter = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierAlgebraicParameter2::try_isolate(rational_polynomial, rational_interval)
+        })
+        .expect("benchmark fixture remains exact"),
+    );
     let reconstruction_iterations = 500_000_u32;
     let started = Instant::now();
     let mut reconstructed = 0_usize;
     for _ in 0..reconstruction_iterations {
         reconstructed += black_box(
-            decided(rational_parameter.represented_exact_point(&policy)?).is_some() as usize,
+            decided(
+                crate::support::under_classified_result(&policy, || {
+                    rational_parameter.represented_exact_point()
+                })
+                .expect("benchmark fixture remains exact"),
+            )
+            .is_some() as usize,
         );
     }
     let elapsed = started.elapsed();
@@ -228,16 +316,24 @@ fn main() -> CurveResult<()> {
         elapsed / reconstruction_iterations
     );
 
-    let midpoint_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(2)],
-        &policy,
-    )?);
-    let midpoint_interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
-    let midpoint = decided(BezierAlgebraicParameter2::try_isolate(
-        midpoint_polynomial,
-        midpoint_interval,
-        &policy,
-    )?);
+    let midpoint_polynomial = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)])
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let midpoint_interval = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierParameterInterval::try_new(q(2, 5), q(3, 5))
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let midpoint = decided(
+        crate::support::under_classified_result(&policy, || {
+            BezierAlgebraicParameter2::try_isolate(midpoint_polynomial, midpoint_interval)
+        })
+        .expect("benchmark fixture remains exact"),
+    );
     let curve = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::from_values(1, 3),

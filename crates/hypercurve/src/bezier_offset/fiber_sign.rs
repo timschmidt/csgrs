@@ -489,12 +489,13 @@ pub(super) fn algebraic_selected_fiber_parameters_with_incident_ray(
     let coefficients =
         hypersolve::square_free_part(coefficients.clone(), hypersolve::PredicatePolicy::STRICT)
             .unwrap_or(coefficients);
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     let candidates = match selected_axis_parameters_in_domain(domain, policy, |axis| {
         Ok(axis
             .isolate(&polynomial, policy)?
@@ -1062,7 +1063,7 @@ pub(super) fn isolate_polynomial_roots_in_range_envelope(
     // when the finite envelope is the unit interval. General Sturm replay
     // alone need not recognize the same correlated coefficient identities.
     if lower == &Real::zero() && upper == &Real::one() {
-        return polynomial.isolate_unit_interval_roots(policy);
+        return polynomial.isolate_unit_interval_roots_with_policy(policy);
     }
     polynomial.isolate_interval_roots(lower, upper, policy)
 }
@@ -1119,12 +1120,13 @@ pub(super) fn algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
         hypersolve::PredicatePolicy::STRICT,
     )
     .unwrap_or(report.coefficients);
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     if polynomial.degree() > MAX_DIRECT_SELECTED_NORM_ISOLATION_DEGREE {
         return algebraic_selected_parameters_from_norm(
             incidence, cusp_root, polynomial, range, policy,
@@ -1237,7 +1239,7 @@ pub(super) fn algebraic_selected_parameters_from_norm(
                 }
                 None => None,
             };
-            let parameter_interval = match BezierParameterInterval::try_new(
+            let parameter_interval = match BezierParameterInterval::try_new_with_policy(
                 interval.lower,
                 interval.upper,
                 &CurveContext::STRICT,
@@ -1261,7 +1263,7 @@ pub(super) fn algebraic_selected_parameters_from_norm(
                 }
             };
             if singleton != Some(true) {
-                match polynomial.root_count_in_interval(&parameter_interval, policy)? {
+                match polynomial.root_count_in_interval_with_policy(&parameter_interval, policy)? {
                     Classification::Decided(0) => {
                         return Err(CurveError::Topology(
                             "a selected fiber root was absent from its quotient norm".into(),
@@ -1639,7 +1641,7 @@ pub(super) fn selected_fiber_parameter_at_exact_retained(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let interval = match BezierParameterInterval::try_new(
+    let interval = match BezierParameterInterval::try_new_with_policy(
         root.lower.clone(),
         root.upper.clone(),
         &CurveContext::STRICT,
@@ -1649,10 +1651,12 @@ pub(super) fn selected_fiber_parameter_at_exact_retained(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    Ok(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, &CurveContext::STRICT)?
-            .map(BezierParameter2::Algebraic),
-    )
+    Ok(BezierAlgebraicParameter2::try_isolate_with_policy(
+        polynomial,
+        interval,
+        &CurveContext::STRICT,
+    )?
+    .map(BezierParameter2::Algebraic))
 }
 
 pub(super) fn algebraic_selected_fiber_root_interval_refined(
@@ -1844,14 +1848,14 @@ pub(super) fn algebraic_selected_fiber_root_predicate_sign(
                 })
         })
         && matches!(
-            retained_parameter.cmp_by_refinement(
+            retained_parameter.cmp_by_refinement_with_policy(
                 &BezierParameter2::Exact(root.lower.clone()),
                 &CurveContext::STRICT,
             )?,
             Classification::Decided(std::cmp::Ordering::Greater)
         )
         && matches!(
-            retained_parameter.cmp_by_refinement(
+            retained_parameter.cmp_by_refinement_with_policy(
                 &BezierParameter2::Exact(root.upper.clone()),
                 &CurveContext::STRICT,
             )?,

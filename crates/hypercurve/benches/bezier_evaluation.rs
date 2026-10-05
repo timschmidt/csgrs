@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -82,8 +84,10 @@ fn main() {
             .certified_rational_interval(-160)
             .unwrap();
         let Classification::Decided(polynomial) =
-            BezierParameterPolynomial::try_new_power_basis(coefficients, &CurveContext::STRICT)
-                .unwrap()
+            crate::support::under_classified_result(&CurveContext::STRICT, || {
+                BezierParameterPolynomial::try_new_power_basis(coefficients)
+            })
+            .unwrap()
         else {
             panic!("benchmark polynomial degree is uncertified");
         };

@@ -143,7 +143,7 @@ fn independent_quadratic_tail_overlap_retains_one_exact_interval() {
                         {
                             assert_eq!(
                                 actual
-                                    .cmp_by_refinement(
+                                    .cmp_by_refinement_with_policy(
                                         &BezierParameter2::Exact(expected.clone()),
                                         &CurveContext::STRICT
                                     )
@@ -470,7 +470,7 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
     assert_eq!(
         approximate[0]
             .first_parameter()
-            .cmp_by_refinement(
+            .cmp_by_refinement_with_policy(
                 topology[0].first_parameter(),
                 &CurveContext::APPROXIMATE_512,
             )
@@ -480,7 +480,7 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
     assert_eq!(
         approximate[0]
             .second_parameter()
-            .cmp_by_refinement(
+            .cmp_by_refinement_with_policy(
                 topology[0].second_parameter(),
                 &CurveContext::APPROXIMATE_512,
             )
@@ -760,7 +760,7 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
     let (first_start, first_end) = overlap.first_range().scalar_endpoints().unwrap();
     assert!(matches!(
         BezierParameter2::Exact(first_start.clone())
-            .cmp_by_interval(&BezierParameter2::Exact(Real::zero()), &policy)
+            .cmp_by_interval_with_policy(&BezierParameter2::Exact(Real::zero()), &policy)
             .unwrap(),
         Classification::Decided(std::cmp::Ordering::Greater)
     ));
@@ -769,7 +769,7 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
     assert_eq!(second_start, &Real::zero());
     assert!(matches!(
         BezierParameter2::Exact(second_end.clone())
-            .cmp_by_interval(&BezierParameter2::Exact(Real::one()), &policy)
+            .cmp_by_interval_with_policy(&BezierParameter2::Exact(Real::one()), &policy)
             .unwrap(),
         Classification::Decided(std::cmp::Ordering::Less)
     ));

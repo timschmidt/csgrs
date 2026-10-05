@@ -1721,7 +1721,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(parameter) = frame.center_parameter.scalar() else {
             return Ok(Classification::Decided(None));
         };
-        let center = match frame.center_support.point_at(parameter, policy)? {
+        let center = match frame
+            .center_support
+            .point_at_with_policy(parameter, policy)?
+        {
             Classification::Decided(center) => center,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -4275,7 +4278,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                             derivative_sign,
                             Some(RealSign::Negative | RealSign::Positive)
                         ) {
-                            let interval = match BezierParameterInterval::try_new(
+                            let interval = match BezierParameterInterval::try_new_with_policy(
                                 lower.clone(),
                                 upper.clone(),
                                 &CurveContext::STRICT,
@@ -6116,7 +6119,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(center_parameter) = frame.center_parameter.scalar() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let center = match frame.center_support.point_at(center_parameter, policy)? {
+        let center = match frame
+            .center_support
+            .point_at_with_policy(center_parameter, policy)?
+        {
             Classification::Decided(center) => center,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -7086,12 +7092,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             };
             let chord_location = if clip_to_finite_chord {
-                match candidate.cmp_by_refinement(&zero, policy)? {
+                match candidate.cmp_by_refinement_with_policy(&zero, policy)? {
                     Classification::Decided(std::cmp::Ordering::Equal) => {
                         BezierAlgebraicCuspSemicircleContactLocation2::Start
                     }
                     Classification::Decided(std::cmp::Ordering::Greater) => {
-                        match candidate.cmp_by_refinement(&one, policy)? {
+                        match candidate.cmp_by_refinement_with_policy(&one, policy)? {
                             Classification::Decided(std::cmp::Ordering::Equal) => {
                                 BezierAlgebraicCuspSemicircleContactLocation2::End
                             }

@@ -57,14 +57,16 @@ fn algebraic(
     upper: Real,
     policy: &CurveContext,
 ) -> Result<CurveParameter2, Box<dyn std::error::Error>> {
-    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        coefficients,
-        policy,
-    )?);
-    let interval = decided(BezierParameterInterval::try_new(lower, upper, policy)?);
+    let polynomial = decided(crate::support::under_classified_result(policy, || {
+        BezierParameterPolynomial::try_new_power_basis(coefficients)
+    })?);
+    let interval = decided(crate::support::under_classified_result(policy, || {
+        BezierParameterInterval::try_new(lower, upper)
+    })?);
     Ok(
-        BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
-            polynomial, interval, policy,
+        BezierParameter2::Algebraic(decided(crate::support::under_classified_result(
+            policy,
+            || BezierAlgebraicParameter2::try_isolate(polynomial, interval),
         )?))
         .into(),
     )
@@ -84,7 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &policy,
     )?;
 
-    let flattening_options = BezierFlatteningOptions::try_new(q(1, 10), 16, &policy)?;
+    let flattening_options =
+        crate::support::under_value(&policy, || BezierFlatteningOptions::try_new(q(1, 10), 16))?;
     let flatten_iterations = 10_000_u32;
     let started = Instant::now();
     let mut flattened_total = 0_usize;

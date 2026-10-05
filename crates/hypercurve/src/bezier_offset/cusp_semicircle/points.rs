@@ -320,7 +320,7 @@ impl BezierAlgebraicCuspChordPoint2 {
             }
             let order = match first_map
                 .chord_normal_projective_parameter(first_contact)?
-                .cmp_by_refinement(
+                .cmp_by_refinement_with_policy(
                     second_map.chord_normal_projective_parameter(second_contact)?,
                     policy,
                 )? {

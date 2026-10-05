@@ -1723,7 +1723,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let isolator_touches =
             |parameter: &BezierParameter2, boundary: &Real, use_interval_start: bool| {
-                match parameter.known_interval(&self.data.policy) {
+                match parameter.known_interval_with_policy(&self.data.policy) {
                     Ok(Classification::Decided(interval)) => {
                         compare_reals(
                             if use_interval_start {

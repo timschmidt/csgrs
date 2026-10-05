@@ -1310,7 +1310,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let center_parameter = match frame_parameter {
             BezierParameter2::Algebraic(parameter) => parameter,
             BezierParameter2::Exact(parameter) => {
-                let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![-&parameter, Real::one()],
                     &CurveContext::STRICT,
                 )? {
@@ -1319,7 +1319,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let interval = match BezierParameterInterval::try_new(
+                let interval = match BezierParameterInterval::try_new_with_policy(
                     &parameter - Real::one(),
                     &parameter + Real::one(),
                     &CurveContext::STRICT,
@@ -1329,7 +1329,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                match BezierAlgebraicParameter2::try_isolate(
+                match BezierAlgebraicParameter2::try_isolate_with_policy(
                     polynomial,
                     interval,
                     &CurveContext::STRICT,
@@ -4017,24 +4017,26 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ));
             };
             for parameter in parameters {
-                let after_start = match parameter.cmp_by_refinement(range.start(), policy)? {
-                    Classification::Decided(std::cmp::Ordering::Less) => false,
-                    Classification::Decided(
-                        std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                    ) => true,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let before_end = match parameter.cmp_by_refinement(range.end(), policy)? {
-                    Classification::Decided(std::cmp::Ordering::Greater) => false,
-                    Classification::Decided(
-                        std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
-                    ) => true,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let after_start =
+                    match parameter.cmp_by_refinement_with_policy(range.start(), policy)? {
+                        Classification::Decided(std::cmp::Ordering::Less) => false,
+                        Classification::Decided(
+                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                        ) => true,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                let before_end =
+                    match parameter.cmp_by_refinement_with_policy(range.end(), policy)? {
+                        Classification::Decided(std::cmp::Ordering::Greater) => false,
+                        Classification::Decided(
+                            std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
+                        ) => true,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
                 if after_start && before_end {
                     circle_zeros.push(parameter);
                 }
@@ -4058,7 +4060,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let mut left = range.start();
             let mut sample = None;
             for zero in &circle_zeros {
-                match left.cmp_by_refinement(zero, policy)? {
+                match left.cmp_by_refinement_with_policy(zero, policy)? {
                     Classification::Decided(std::cmp::Ordering::Less) => {
                         sample = Some(match left.strict_scalar_between_ordered(zero, policy)? {
                             Classification::Decided(sample) => BezierParameter2::Exact(sample),
@@ -4080,7 +4082,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             }
             if sample.is_none() {
-                sample = match left.cmp_by_refinement(range.end(), policy)? {
+                sample = match left.cmp_by_refinement_with_policy(range.end(), policy)? {
                     Classification::Decided(std::cmp::Ordering::Less) => Some(
                         match left.strict_scalar_between_ordered(range.end(), policy)? {
                             Classification::Decided(sample) => BezierParameter2::Exact(sample),
@@ -4199,13 +4201,14 @@ impl BezierAlgebraicCuspSemicircle2 {
             if selected_sign != RealSign::Zero {
                 continue;
             }
-            let start_order = match parameter.cmp_by_refinement(range.start(), policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let end_order = match parameter.cmp_by_refinement(range.end(), policy)? {
+            let start_order =
+                match parameter.cmp_by_refinement_with_policy(range.start(), policy)? {
+                    Classification::Decided(order) => order,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let end_order = match parameter.cmp_by_refinement_with_policy(range.end(), policy)? {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

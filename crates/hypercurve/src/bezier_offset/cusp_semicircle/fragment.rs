@@ -455,7 +455,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 let tangent_distance = -(&support_tangent_scale / denominator)?;
                 if let Some(center_parameter) = frame.center_parameter.scalar() {
                     let parallel = frame.center_support.with_distance(normal_distance.clone());
-                    let point = match parallel.point_at(center_parameter, policy)? {
+                    let point = match parallel.point_at_with_policy(center_parameter, policy)? {
                         Classification::Decided(point) => point,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -4063,11 +4063,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let Some(BezierParameter2::Algebraic(parameter)) = parameter.as_bezier_parameter() else {
             return Ok(None);
         };
-        let parameter = match parameter.represented_exact_point(policy)? {
+        let parameter = match parameter.represented_exact_point_with_policy(policy)? {
             Classification::Decided(Some(parameter)) => parameter,
             Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
         };
-        Ok(match parallel.point_at(&parameter, policy)? {
+        Ok(match parallel.point_at_with_policy(&parameter, policy)? {
             Classification::Decided(point) => Some(point),
             Classification::Uncertain(_) => None,
         })

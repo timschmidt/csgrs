@@ -780,17 +780,23 @@ fn analytic_parallel_endpoint_data(
     let Some((source_start, source_end)) = fragment.range().scalar_endpoints() else {
         return Classification::Uncertain(UncertaintyReason::Boundary);
     };
-    let source_start_point = match fragment.parallel().point_at(source_start, policy) {
+    let source_start_point = match fragment
+        .parallel()
+        .point_at_with_policy(source_start, policy)
+    {
         Ok(Classification::Decided(point)) => point,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let source_end_point = match fragment.parallel().point_at(source_end, policy) {
+    let source_end_point = match fragment.parallel().point_at_with_policy(source_end, policy) {
         Ok(Classification::Decided(point)) => point,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let source_start_tangent = match fragment.parallel().derivative_at(source_start, policy) {
+    let source_start_tangent = match fragment
+        .parallel()
+        .derivative_at_with_policy(source_start, policy)
+    {
         Ok(Classification::Decided(tangent)) => TangentVector {
             dx: tangent.dx().clone(),
             dy: tangent.dy().clone(),
@@ -798,7 +804,10 @@ fn analytic_parallel_endpoint_data(
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let source_end_tangent = match fragment.parallel().derivative_at(source_end, policy) {
+    let source_end_tangent = match fragment
+        .parallel()
+        .derivative_at_with_policy(source_end, policy)
+    {
         Ok(Classification::Decided(tangent)) => TangentVector {
             dx: tangent.dx().clone(),
             dy: tangent.dy().clone(),
@@ -1415,7 +1424,7 @@ mod endpoint_adjacency_tests {
     }
 
     fn sqrt_half_parameter() -> crate::BezierAlgebraicParameter2 {
-        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
+        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![Real::from(-1), Real::zero(), Real::from(2)],
             &CurveContext::STRICT,
         )
@@ -1426,7 +1435,7 @@ mod endpoint_adjacency_tests {
                 panic!("parameter polynomial unexpectedly uncertain: {reason:?}")
             }
         };
-        let interval = match crate::BezierParameterInterval::try_new(
+        let interval = match crate::BezierParameterInterval::try_new_with_policy(
             Real::from(Rational::fraction(2, 3).expect("nonzero denominator")),
             Real::from(Rational::fraction(3, 4).expect("nonzero denominator")),
             &CurveContext::STRICT,
@@ -1438,7 +1447,7 @@ mod endpoint_adjacency_tests {
                 panic!("parameter interval unexpectedly uncertain: {reason:?}")
             }
         };
-        match crate::BezierAlgebraicParameter2::try_isolate(
+        match crate::BezierAlgebraicParameter2::try_isolate_with_policy(
             polynomial,
             interval,
             &CurveContext::STRICT,
@@ -1456,19 +1465,25 @@ mod endpoint_adjacency_tests {
     fn optional_unprojected_derivatives_do_not_block_endpoint_setup() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let polynomial = crate::tests::decided(
-                crate::BezierParameterPolynomial::try_new_power_basis(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
                     &policy,
                 )
                 .unwrap(),
             );
             let interval = crate::tests::decided(
-                crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)
-                    .unwrap(),
+                crate::BezierParameterInterval::try_new_with_policy(
+                    Real::zero(),
+                    Real::one(),
+                    &policy,
+                )
+                .unwrap(),
             );
             let parameter = crate::tests::decided(
-                crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
-                    .unwrap(),
+                crate::BezierAlgebraicParameter2::try_isolate_with_policy(
+                    polynomial, interval, &policy,
+                )
+                .unwrap(),
             );
             // x=(4t^3-pi)^2/(1+t),y=0. At the selected root, point and
             // tangent are zero, while x''=72*pi*t/(1+t) retains its source

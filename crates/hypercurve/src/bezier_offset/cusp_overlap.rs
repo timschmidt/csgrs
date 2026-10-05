@@ -179,7 +179,7 @@ pub(super) fn rational_mapped_cusp_scalar_value(
     }
     let represented_other_parameter = match other_parameter
         .clone()
-        .promote_represented_exact_point(policy)?
+        .promote_represented_exact_point_with_policy(policy)?
     {
         Classification::Decided(BezierParameter2::Exact(parameter)) => parameter,
         Classification::Decided(BezierParameter2::Algebraic(_)) => {
@@ -261,7 +261,7 @@ pub(super) fn parallel_mapped_cusp_scalar_value(
     let other_parameter = match contact
         .parallel_parameter
         .clone()
-        .promote_represented_exact_point(policy)?
+        .promote_represented_exact_point_with_policy(policy)?
     {
         Classification::Decided(BezierParameter2::Exact(parameter)) => parameter,
         Classification::Decided(BezierParameter2::Algebraic(_)) => {
@@ -340,7 +340,7 @@ pub(super) fn mapped_cusp_scalar_value_from_incidence(
     };
     let mut retained = None;
     for candidate in candidates {
-        let candidate = match candidate.promote_represented_exact_point(policy)? {
+        let candidate = match candidate.promote_represented_exact_point_with_policy(policy)? {
             Classification::Decided(BezierParameter2::Exact(candidate)) => candidate,
             Classification::Decided(BezierParameter2::Algebraic(_)) => continue,
             Classification::Uncertain(reason) => {

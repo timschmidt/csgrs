@@ -15,11 +15,12 @@ fn line_contacts(
     line: LineSeg2,
     policy: &CurveContext,
 ) -> Vec<hypercurve::CurveIntersectionContact2> {
-    let Classification::Decided(range) = BezierParameterRange2::try_new(
-        BezierParameter2::Exact(Real::zero()),
-        BezierParameter2::Exact(Real::one()),
-        policy,
-    )
+    let Classification::Decided(range) = crate::support::under_classified_result(policy, || {
+        BezierParameterRange2::try_new(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        )
+    })
     .unwrap() else {
         panic!("the unit range is exact");
     };
@@ -38,11 +39,12 @@ fn point(x: i64, y: i64) -> Point2 {
 }
 
 fn range(start: i64, end: i64, policy: &CurveContext) -> BezierParameterRange2 {
-    match BezierParameterRange2::try_new(
-        BezierParameter2::Exact(Real::from(start)),
-        BezierParameter2::Exact(Real::from(end)),
-        policy,
-    )
+    match crate::support::under_classified_result(policy, || {
+        BezierParameterRange2::try_new(
+            BezierParameter2::Exact(Real::from(start)),
+            BezierParameter2::Exact(Real::from(end)),
+        )
+    })
     .unwrap()
     {
         Classification::Decided(range) => range,
@@ -154,14 +156,20 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
         .parallel_left(Real::one())
         .unwrap();
-    let right = match parallel.point_at(&Real::one(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
-    };
-    let left = match parallel.point_at(&Real::zero(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
-    };
+    let right =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
+        };
+    let left =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
+        };
     let analytic = crate::support::under(policy, || {
         Curve2::try_analytic_parallel(parallel, range(1, 0, policy))
     })
@@ -389,14 +397,20 @@ fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 
     let parallel = QuadraticBezier2::new(point(0, 0), point(0, 2), point(4, 2))
         .parallel_left(Real::one())
         .unwrap();
-    let right = match parallel.point_at(&Real::one(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
-    };
-    let left = match parallel.point_at(&Real::zero(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
-    };
+    let right =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
+        };
+    let left =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
+        };
     let analytic = crate::support::under(policy, || {
         Curve2::try_analytic_parallel(parallel, range(1, 0, policy))
     })
@@ -556,9 +570,10 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
         .parallel_left(Real::one())
         .unwrap();
-    let analysis = match parallel
-        .singularity_analysis(&CurveParameterRange2::unit(), policy)
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(policy, || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
@@ -569,15 +584,16 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
 
     let zero = BezierParameter2::Exact(Real::from(0));
     let one = BezierParameter2::Exact(Real::from(1));
-    let make_range =
-        |start: BezierParameter2, end: BezierParameter2| match BezierParameterRange2::try_new(
-            start, end, policy,
-        )
+    let make_range = |start: BezierParameter2, end: BezierParameter2| {
+        match crate::support::under_classified_result(policy, || {
+            BezierParameterRange2::try_new(start, end)
+        })
         .unwrap()
         {
             Classification::Decided(range) => range,
             Classification::Uncertain(reason) => panic!("cusp range: {reason:?}"),
-        };
+        }
+    };
     let first = crate::support::under(policy, || {
         Curve2::try_analytic_parallel(parallel.clone(), make_range(zero, cusp.clone()))
     })
@@ -588,14 +604,20 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     })
     .unwrap()
     .into_value();
-    let start = match parallel.point_at(&Real::zero(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
-    };
-    let end = match parallel.point_at(&Real::one(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
-    };
+    let start =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
+        };
+    let end =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
+        };
 
     let boundary = crate::support::under(policy, || {
         CurvePath2::try_new(vec![first, second, quadratic_line(end, start)])
@@ -618,9 +640,10 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
     let parallel = source
         .parallel_left((Real::one() / Real::from(2_u8)).unwrap())
         .unwrap();
-    let analysis = match parallel
-        .singularity_analysis(&CurveParameterRange2::unit(), policy)
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(policy, || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
@@ -637,13 +660,14 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
     let mut fragments = boundaries
         .windows(2)
         .map(|window| {
-            let range =
-                match BezierParameterRange2::try_new(window[0].clone(), window[1].clone(), policy)
-                    .unwrap()
-                {
-                    Classification::Decided(range) => range,
-                    Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
-                };
+            let range = match crate::support::under_classified_result(policy, || {
+                BezierParameterRange2::try_new(window[0].clone(), window[1].clone())
+            })
+            .unwrap()
+            {
+                Classification::Decided(range) => range,
+                Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
+            };
             crate::support::under(policy, || {
                 Curve2::try_analytic_parallel(parallel.clone(), range)
             })
@@ -651,14 +675,20 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
             .into_value()
         })
         .collect::<Vec<_>>();
-    let start = match parallel.point_at(&Real::zero(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
-    };
-    let end = match parallel.point_at(&Real::one(), policy).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
-    };
+    let start =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
+        };
+    let end =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
+        };
     fragments.push(quadratic_line(end, start));
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(

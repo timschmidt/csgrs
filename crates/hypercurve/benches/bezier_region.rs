@@ -103,17 +103,23 @@ fn algebraic_polynomial_parameter(
     interval_end: Real,
     policy: &CurveContext,
 ) -> CurveResult<BezierParameter2> {
-    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        coefficients,
-        policy,
-    )?);
-    let interval = decided(BezierParameterInterval::try_new(
-        interval_start,
-        interval_end,
-        policy,
-    )?);
+    let polynomial = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(coefficients)
+        })
+        .expect("benchmark fixture remains exact"),
+    );
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(interval_start, interval_end)
+        })
+        .expect("benchmark fixture remains exact"),
+    );
     Ok(BezierParameter2::Algebraic(decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .expect("benchmark fixture remains exact"),
     )))
 }
 

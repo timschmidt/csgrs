@@ -1242,7 +1242,7 @@ impl BezierParallel2 {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
         };
-        let parallel_point = match self.point_at(&interior, policy)? {
+        let parallel_point = match self.point_at_with_policy(&interior, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
         };
@@ -1303,7 +1303,7 @@ impl BezierParallel2 {
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
-            let offset = match self.exact_pythagorean_hodograph_offset(policy)? {
+            let offset = match self.exact_pythagorean_hodograph_offset_with_policy(policy)? {
                 Classification::Decided(Some(offset)) => offset,
                 Classification::Decided(None) => return Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -1320,7 +1320,7 @@ impl BezierParallel2 {
                         if opposite.is_none() {
                             opposite = match self
                                 .with_distance(-self.distance())
-                                .exact_pythagorean_hodograph_offset(policy)?
+                                .exact_pythagorean_hodograph_offset_with_policy(policy)?
                             {
                                 Classification::Decided(Some(offset)) => Some(offset.curve),
                                 Classification::Decided(None) => {
@@ -1361,7 +1361,7 @@ impl BezierParallel2 {
                     ));
                 }
                 Ok(Classification::Decided(
-                    match self.exact_pythagorean_hodograph_offset(policy)? {
+                    match self.exact_pythagorean_hodograph_offset_with_policy(policy)? {
                         Classification::Decided(Some(offset)) => Some(offset.curve().clone()),
                         Classification::Decided(None) | Classification::Uncertain(_) => None,
                     },

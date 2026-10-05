@@ -579,23 +579,26 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     }
     let policy = CurveContext::STRICT;
     let half = (Real::one() / Real::from(2_u8)).expect("exact benchmark half");
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        vec![-half, Real::zero(), Real::one()],
-        &policy,
-    )
+    let polynomial = match crate::support::under_classified_result(&policy, || {
+        BezierParameterPolynomial::try_new_power_basis(vec![-half, Real::zero(), Real::one()])
+    })
     .expect("valid benchmark parameter polynomial")
     {
         Classification::Decided(polynomial) => polynomial,
         Classification::Uncertain(reason) => panic!("benchmark polynomial: {reason:?}"),
     };
-    let interval = match BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)
-        .expect("valid benchmark parameter interval")
+    let interval = match crate::support::under_classified_result(&policy, || {
+        BezierParameterInterval::try_new(Real::zero(), Real::one())
+    })
+    .expect("valid benchmark parameter interval")
     {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(reason) => panic!("benchmark interval: {reason:?}"),
     };
-    let parameter = match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
-        .expect("valid benchmark parameter isolator")
+    let parameter = match crate::support::under_classified_result(&policy, || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    })
+    .expect("valid benchmark parameter isolator")
     {
         Classification::Decided(parameter) => parameter,
         Classification::Uncertain(reason) => panic!("benchmark parameter: {reason:?}"),
@@ -1739,8 +1742,10 @@ fn benchmark_bezier_offset(runner: &Runner) {
         Point2::new(real(2.0), real(1.0)),
         Point2::new(real(4.0), real(0.0)),
     );
-    let verification = BezierParallelVerificationOptions::try_new(real(0.05), 14, &policy)
-        .expect("valid parallel verification options");
+    let verification = crate::support::under_value(&policy, || {
+        BezierParallelVerificationOptions::try_new(real(0.05), 14)
+    })
+    .expect("valid parallel verification options");
     let distance = real(0.1);
     let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
         3,

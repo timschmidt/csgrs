@@ -2371,7 +2371,7 @@ pub(super) fn certify_regular_implicit_parameter_graph_with_selector(
             };
             let direction = match start
                 .lifted_parameter
-                .cmp_by_refinement(&end.lifted_parameter, policy)?
+                .cmp_by_refinement_with_policy(&end.lifted_parameter, policy)?
             {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     return Ok(Classification::Decided(None));
@@ -2862,7 +2862,9 @@ pub(super) fn ensure_implicit_parameter_component_fiber(
     policy: &CurveContext,
 ) -> CurveResult<Classification<usize>> {
     for index in 0..fibers.len() {
-        match retained_parameter.cmp_by_refinement(&fibers[index].retained_parameter, policy)? {
+        match retained_parameter
+            .cmp_by_refinement_with_policy(&fibers[index].retained_parameter, policy)?
+        {
             Classification::Decided(std::cmp::Ordering::Less) => {
                 fibers.insert(
                     index,
@@ -2908,7 +2910,7 @@ pub(super) fn insert_implicit_parameter_component_event(
         match event
             .point
             .lifted_parameter
-            .cmp_by_refinement(&events[index].point.lifted_parameter, policy)?
+            .cmp_by_refinement_with_policy(&events[index].point.lifted_parameter, policy)?
         {
             Classification::Decided(std::cmp::Ordering::Less) => {
                 events.insert(index, event);
@@ -3085,13 +3087,13 @@ pub(super) fn implicit_parameter_fiber_root_count(
         let upper = BezierParameter2::Exact(lifted_upper.clone());
         let mut count = 0;
         for root in roots {
-            let lower_order = match root.cmp_by_refinement(&lower, policy)? {
+            let lower_order = match root.cmp_by_refinement_with_policy(&lower, policy)? {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let upper_order = match root.cmp_by_refinement(&upper, policy)? {
+            let upper_order = match root.cmp_by_refinement_with_policy(&upper, policy)? {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -3266,7 +3268,7 @@ pub(super) fn implicit_parameter_fiber_side(
 ) -> CurveResult<Classification<ImplicitParameterFiberSideAttempt>> {
     let sample_parameter = BezierParameter2::Exact(sample.clone());
     let (range_start, range_end) =
-        match sample_parameter.cmp_by_refinement(retained_parameter, policy)? {
+        match sample_parameter.cmp_by_refinement_with_policy(retained_parameter, policy)? {
             Classification::Decided(std::cmp::Ordering::Less) => {
                 (&sample_parameter, retained_parameter)
             }
@@ -3322,7 +3324,7 @@ pub(super) fn implicit_parameter_fiber_side(
     let mut gap_ranks = vec![Vec::new(); neighborhoods.len() + 1];
     for (rank, root) in roots.iter().enumerate() {
         for boundary in [&zero, &one] {
-            match root.cmp_by_refinement(boundary, policy)? {
+            match root.cmp_by_refinement_with_policy(boundary, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     return Ok(Classification::Decided(
                         ImplicitParameterFiberSideAttempt::Boundary,
@@ -3337,7 +3339,7 @@ pub(super) fn implicit_parameter_fiber_side(
         let mut placed = false;
         for (event_index, neighborhood) in neighborhoods.iter().enumerate() {
             let lower = BezierParameter2::Exact(neighborhood.lower.clone());
-            match root.cmp_by_refinement(&lower, policy)? {
+            match root.cmp_by_refinement_with_policy(&lower, policy)? {
                 Classification::Decided(std::cmp::Ordering::Less) => {
                     gap_ranks[event_index].push(rank);
                     placed = true;
@@ -3354,7 +3356,7 @@ pub(super) fn implicit_parameter_fiber_side(
                 }
             }
             let upper = BezierParameter2::Exact(neighborhood.upper.clone());
-            match root.cmp_by_refinement(&upper, policy)? {
+            match root.cmp_by_refinement_with_policy(&upper, policy)? {
                 Classification::Decided(std::cmp::Ordering::Less) => {
                     event_ranks[event_index].push(rank);
                     placed = true;
@@ -3466,7 +3468,7 @@ pub(super) fn finish_implicit_parameter_track(
     match track
         .start
         .retained_parameter
-        .cmp_by_refinement(&end.retained_parameter, policy)?
+        .cmp_by_refinement_with_policy(&end.retained_parameter, policy)?
     {
         Classification::Decided(std::cmp::Ordering::Less) => {}
         Classification::Decided(_) => return Ok(Classification::Decided(None)),
@@ -3475,7 +3477,7 @@ pub(super) fn finish_implicit_parameter_track(
     let direction = match track
         .start
         .lifted_parameter
-        .cmp_by_refinement(&end.lifted_parameter, policy)?
+        .cmp_by_refinement_with_policy(&end.lifted_parameter, policy)?
     {
         Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
         Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
@@ -3514,16 +3516,16 @@ pub(super) fn polynomial_is_rootless_on_open_parameter_range(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let roots = match polynomial.isolate_unit_interval_roots(policy)? {
+    let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
         Classification::Decided(roots) => roots,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     for root in roots {
-        let start_order = match root.cmp_by_refinement(start, policy)? {
+        let start_order = match root.cmp_by_refinement_with_policy(start, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let end_order = match root.cmp_by_refinement(end, policy)? {
+        let end_order = match root.cmp_by_refinement_with_policy(end, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -3551,7 +3553,7 @@ pub(super) fn parameter_component_point_root_rank(
         };
         let mut blocker = None;
         for (rank, root) in roots.into_iter().enumerate() {
-            match root.cmp_by_refinement(&point.other_parameter, policy)? {
+            match root.cmp_by_refinement_with_policy(&point.other_parameter, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     return Ok(Classification::Decided(Some(rank)));
                 }
@@ -3738,14 +3740,14 @@ pub(super) fn insert_parameter_component_point(
     while index < points.len() {
         match point
             .retained_parameter
-            .cmp_by_refinement(&points[index].retained_parameter, policy)?
+            .cmp_by_refinement_with_policy(&points[index].retained_parameter, policy)?
         {
             Classification::Decided(std::cmp::Ordering::Less) => break,
             Classification::Decided(std::cmp::Ordering::Greater) => index += 1,
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 return match point
                     .lifted_parameter
-                    .cmp_by_refinement(&points[index].lifted_parameter, policy)?
+                    .cmp_by_refinement_with_policy(&points[index].lifted_parameter, policy)?
                 {
                     Classification::Decided(std::cmp::Ordering::Equal) => {
                         Ok(Classification::Decided(()))
@@ -3775,14 +3777,14 @@ pub(super) fn lifted_boundary_roots_are_turning_events(
     let one = BezierParameter2::Exact(Real::one());
     let lifted_boundary = BezierParameter2::Exact(lifted_boundary.clone());
     for root in roots {
-        match root.cmp_by_refinement(&zero, policy)? {
+        match root.cmp_by_refinement_with_policy(&zero, policy)? {
             Classification::Decided(std::cmp::Ordering::Equal) => continue,
             Classification::Decided(_) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match root.cmp_by_refinement(&one, policy)? {
+        match root.cmp_by_refinement_with_policy(&one, policy)? {
             Classification::Decided(std::cmp::Ordering::Equal) => continue,
             Classification::Decided(_) => {}
             Classification::Uncertain(reason) => {
@@ -3793,9 +3795,11 @@ pub(super) fn lifted_boundary_roots_are_turning_events(
         let mut blocker = None;
         let mut matched = false;
         for point in turning_points {
-            match root.cmp_by_refinement(&point.parallel_parameter, policy)? {
+            match root.cmp_by_refinement_with_policy(&point.parallel_parameter, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
-                    match lifted_boundary.cmp_by_refinement(&point.other_parameter, policy)? {
+                    match lifted_boundary
+                        .cmp_by_refinement_with_policy(&point.other_parameter, policy)?
+                    {
                         Classification::Decided(std::cmp::Ordering::Equal) => {
                             matched = true;
                             break;
@@ -4084,7 +4088,7 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let roots = match polynomial.isolate_unit_interval_roots(policy)? {
+        let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
             Classification::Decided(roots) => roots,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -4117,7 +4121,7 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
         let mut start_included = true;
         let mut end_included = true;
         for root in &selection_events {
-            match root.cmp_by_refinement(&domain.retained_start, policy)? {
+            match root.cmp_by_refinement_with_policy(&domain.retained_start, policy)? {
                 Classification::Decided(std::cmp::Ordering::Less) => continue,
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     start_included = match partition_parameter_component_selector_point(
@@ -4143,7 +4147,7 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            match root.cmp_by_refinement(&domain.retained_end, policy)? {
+            match root.cmp_by_refinement_with_policy(&domain.retained_end, policy)? {
                 Classification::Decided(std::cmp::Ordering::Greater) => break,
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     end_included = match partition_parameter_component_selector_point(
@@ -4324,7 +4328,7 @@ pub(super) fn insert_ordered_parameter_component_boundary(
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     for index in 0..boundaries.len() {
-        match boundary.cmp_by_refinement(&boundaries[index], policy)? {
+        match boundary.cmp_by_refinement_with_policy(&boundaries[index], policy)? {
             Classification::Decided(std::cmp::Ordering::Less) => {
                 boundaries.insert(index, boundary);
                 return Ok(Classification::Decided(()));
@@ -4739,7 +4743,7 @@ pub(super) fn rational_parameter_component_domains(
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match lifted_start.cmp_by_refinement(&lifted_end, policy)? {
+        match lifted_start.cmp_by_refinement_with_policy(&lifted_end, policy)? {
             Classification::Decided(order) if order == direction => {}
             Classification::Decided(_) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -4794,7 +4798,9 @@ pub(super) fn polynomial_unit_interval_roots(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    Ok(polynomial.isolate_unit_interval_roots(policy)?.map(Some))
+    Ok(polynomial
+        .isolate_unit_interval_roots_with_policy(policy)?
+        .map(Some))
 }
 
 pub(super) fn insert_rational_parameter_component_boundary(
@@ -4806,7 +4812,7 @@ pub(super) fn insert_rational_parameter_component_boundary(
     while index < boundaries.len() {
         match boundary
             .parameter
-            .cmp_by_refinement(&boundaries[index].parameter, policy)?
+            .cmp_by_refinement_with_policy(&boundaries[index].parameter, policy)?
         {
             Classification::Decided(std::cmp::Ordering::Less) => break,
             Classification::Decided(std::cmp::Ordering::Equal) => {
@@ -4945,7 +4951,7 @@ pub(super) fn polynomial_is_rootless_on_parameter_range(
         Classification::Decided(None) => return Ok(Classification::Decided(false)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let roots = match polynomial.isolate_unit_interval_roots(policy)? {
+    let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
         Classification::Decided(roots) => roots,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -4960,13 +4966,13 @@ pub(super) fn parameter_roots_are_outside_range(
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     for root in roots {
-        let start_order = match root.cmp_by_refinement(start, policy)? {
+        let start_order = match root.cmp_by_refinement_with_policy(start, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let end_order = match root.cmp_by_refinement(end, policy)? {
+        let end_order = match root.cmp_by_refinement_with_policy(end, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -5225,15 +5231,16 @@ impl BezierParallelPairParameterSelection2 {
         match self {
             Self::All => Ok(Classification::Decided(true)),
             Self::Increasing => Ok(first
-                .cmp_by_refinement(second, policy)?
+                .cmp_by_refinement_with_policy(second, policy)?
                 .map(|order| order.is_lt())),
             Self::OffDiagonal => {
                 // Saturated residuals can still meet the removed diagonal.
                 // Exclude certified equal parameters before replaying their
                 // equations and tangent data. An inconclusive optional proof
                 // preserves general replay and its final contact filter.
-                let order = policy
-                    .bounded_exact_predicate_pass(|| first.cmp_by_refinement(second, policy))?;
+                let order = policy.bounded_exact_predicate_pass(|| {
+                    first.cmp_by_refinement_with_policy(second, policy)
+                })?;
                 Ok(Classification::Decided(!matches!(
                     order,
                     Classification::Decided(std::cmp::Ordering::Equal)
@@ -5731,7 +5738,7 @@ impl<'a> ParameterComponentChart2<'a> {
                         }
                     },
                 };
-                let range = match BezierParameterRange2::try_new(
+                let range = match BezierParameterRange2::try_new_with_policy(
                     BezierParameter2::Exact(Real::zero()),
                     end,
                     policy,
@@ -6290,7 +6297,7 @@ pub(super) fn select_axis_parameter_components_on_chart(
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let fixed_parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+    let fixed_parameters = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };

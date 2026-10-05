@@ -1,9 +1,10 @@
+mod support;
 use std::cmp::Ordering;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, Classification, CurveContext, CurveError,
-    Real, UncertaintyReason,
+    ExactCurveError, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -27,7 +28,11 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
-    match BezierParameterPolynomial::try_new_power_basis(coefficients, &policy()).unwrap() {
+    match crate::support::under_classified_result(&policy(), || {
+        BezierParameterPolynomial::try_new_power_basis(coefficients)
+    })
+    .unwrap()
+    {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => {
             panic!("polynomial unexpectedly uncertain: {reason:?}")
@@ -38,11 +43,16 @@ fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
 #[test]
 fn bernstein_conversion_preserves_high_degree_constant_identity() {
     let cubic = decided(
-        BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1), r(2), r(4), r(8)], &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1), r(2), r(4), r(8)])
+        })
+        .unwrap(),
     );
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1); 65], &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1); 65])
+        })
+        .unwrap(),
     );
 
     assert_eq!(cubic.coefficients(), &[r(1), r(3), r(3), r(1)]);
@@ -53,7 +63,11 @@ fn bernstein_conversion_preserves_high_degree_constant_identity() {
 #[test]
 fn unit_root_isolation_orders_represented_and_algebraic_roots() {
     let polynomial = polynomial(vec![q(1, 4), q(-1, 2), q(-1, 2), r(1)]);
-    let roots = match polynomial.isolate_unit_interval_roots(&policy()).unwrap() {
+    let roots = match crate::support::under_classified_result(&policy(), || {
+        polynomial.isolate_unit_interval_roots()
+    })
+    .unwrap()
+    {
         Classification::Decided(roots) => roots,
         Classification::Uncertain(reason) => panic!("root isolation was uncertain: {reason:?}"),
     };
@@ -62,17 +76,20 @@ fn unit_root_isolation_orders_represented_and_algebraic_roots() {
     assert_eq!(roots[0], BezierParameter2::Exact(q(1, 2)));
     assert!(matches!(roots[1], BezierParameter2::Algebraic(_)));
     assert_eq!(
-        roots[0].cmp_by_interval(&roots[1], &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || roots[0].cmp_by_interval(&roots[1]))
+            .unwrap(),
         Classification::Decided(Ordering::Less)
     );
     let zero = BezierParameter2::Exact(r(0));
     let one = BezierParameter2::Exact(r(1));
     assert_eq!(
-        zero.cmp_by_interval(&roots[1], &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || zero.cmp_by_interval(&roots[1]))
+            .unwrap(),
         Classification::Decided(Ordering::Less)
     );
     assert_eq!(
-        roots[1].cmp_by_interval(&one, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || roots[1].cmp_by_interval(&one))
+            .unwrap(),
         Classification::Decided(Ordering::Less)
     );
 }
@@ -116,9 +133,10 @@ fn unit_root_isolation_has_no_fixed_dyadic_depth_limit() {
                             .map(|coefficient| coefficient * &scale)
                             .collect(),
                     );
-                    let result = match polynomial
-                        .isolate_unit_interval_roots_with_trace(&policy)
-                        .unwrap()
+                    let result = match crate::support::under_classified_result(&policy, || {
+                        polynomial.isolate_unit_interval_roots_with_trace()
+                    })
+                    .unwrap()
                     {
                         Classification::Decided(result) => result,
                         Classification::Uncertain(reason) => panic!(
@@ -131,10 +149,8 @@ fn unit_root_isolation_has_no_fixed_dyadic_depth_limit() {
                     }
                     for (root, expected) in result.roots().iter().zip(expected) {
                         assert_eq!(
-                            root.cmp_by_interval(
-                                &BezierParameter2::Exact(expected.clone()),
-                                &policy
-                            )
+                            crate::support::under_classified_result(&policy, || root
+                                .cmp_by_interval(&BezierParameter2::Exact(expected.clone())))
                             .unwrap(),
                             Classification::Decided(Ordering::Equal),
                             "bits={bits}, case={case}, scale={scale:?}, policy={policy:?}"
@@ -158,9 +174,10 @@ fn quintic_root_isolation_trace_reuses_sturm_certificates() {
         r(16807),
     ]);
     let result = decided(
-        polynomial
-            .isolate_unit_interval_roots_with_trace(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            polynomial.isolate_unit_interval_roots_with_trace()
+        })
+        .unwrap(),
     );
 
     assert_eq!(
@@ -188,9 +205,10 @@ fn quintic_root_isolation_trace_reuses_sturm_certificates() {
 fn irrational_root_isolation_skips_rational_reconstruction_refinement() {
     let polynomial = polynomial(vec![r(-1), r(0), r(2)]);
     let result = decided(
-        polynomial
-            .isolate_unit_interval_roots_with_trace(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            polynomial.isolate_unit_interval_roots_with_trace()
+        })
+        .unwrap(),
     );
 
     assert_eq!(result.roots().len(), 1);
@@ -206,9 +224,10 @@ fn nonrational_quartic_uses_exact_bernstein_root_certificates() {
     let pi = Real::pi();
     let polynomial = polynomial(vec![pi.clone(), r(0), &pi * r(-5), r(0), &pi * r(6)]);
     let result = decided(
-        polynomial
-            .isolate_unit_interval_roots_with_trace(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            polynomial.isolate_unit_interval_roots_with_trace()
+        })
+        .unwrap(),
     );
 
     assert_eq!(result.roots().len(), 2);
@@ -236,9 +255,10 @@ fn repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation() {
         &pi * r(4),
     ]);
     let result = decided(
-        polynomial
-            .isolate_unit_interval_roots_with_trace(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            polynomial.isolate_unit_interval_roots_with_trace()
+        })
+        .unwrap(),
     );
 
     assert_eq!(result.roots(), &[BezierParameter2::Exact(q(1, 2))]);
@@ -258,9 +278,10 @@ fn cubic_distance_stationary_quintic_isolates_all_five_candidates() {
         r(16620),
     ]);
     let result = decided(
-        polynomial
-            .isolate_unit_interval_roots_with_trace(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            polynomial.isolate_unit_interval_roots_with_trace()
+        })
+        .unwrap(),
     );
 
     assert_eq!(result.roots().len(), 5);
@@ -275,7 +296,11 @@ fn cubic_distance_stationary_quintic_isolates_all_five_candidates() {
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {
+    match crate::support::under_classified_result(&policy(), || {
+        BezierParameterInterval::try_new(start, end)
+    })
+    .unwrap()
+    {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("interval unexpectedly uncertain: {reason:?}"),
     }
@@ -285,7 +310,11 @@ fn isolate(
     polynomial: BezierParameterPolynomial,
     interval: BezierParameterInterval,
 ) -> BezierAlgebraicParameter2 {
-    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap() {
+    match crate::support::under_classified_result(&policy(), || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    })
+    .unwrap()
+    {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("isolator unexpectedly uncertain: {reason:?}"),
     }
@@ -316,16 +345,19 @@ fn algebraic_parameter_recovers_represented_linear_root() {
     let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
     let clone = parameter.clone();
 
-    let represented = parameter.represented_exact_point(&policy()).unwrap();
+    let represented =
+        crate::support::under_classified_result(&policy(), || parameter.represented_exact_point())
+            .unwrap();
     assert_eq!(represented, Classification::Decided(Some(q(1, 2))));
     assert_eq!(
-        clone.represented_exact_point(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || clone.represented_exact_point())
+            .unwrap(),
         represented
     );
     assert_eq!(
-        BezierParameter2::Algebraic(clone)
-            .promote_represented_exact_point(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || BezierParameter2::Algebraic(clone)
+            .promote_represented_exact_point())
+        .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 2)))
     );
 }
@@ -338,14 +370,19 @@ fn nonrational_linear_parameter_uses_exact_point_api() {
         interval(q(1, 4), q(1, 2)),
     );
 
-    let exact = decided(parameter.represented_exact_point(&policy()).unwrap())
-        .expect("a linear scalar-tower root must materialize exactly");
+    let exact = decided(
+        crate::support::under_classified_result(&policy(), || parameter.represented_exact_point())
+            .unwrap(),
+    )
+    .expect("a linear scalar-tower root must materialize exactly");
     assert!(exact.exact_rational_ref().is_none());
     assert_eq!(
         decided(
-            BezierParameter2::Algebraic(parameter)
-                .promote_represented_exact_point(&policy())
-                .unwrap(),
+            crate::support::under_classified_result(&policy(), || BezierParameter2::Algebraic(
+                parameter
+            )
+            .promote_represented_exact_point())
+            .unwrap(),
         ),
         BezierParameter2::Exact(exact)
     );
@@ -359,13 +396,16 @@ fn irrational_nonlinear_parameter_remains_algebraic() {
     );
 
     assert_eq!(
-        parameter.represented_exact_point(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || parameter.represented_exact_point())
+            .unwrap(),
         Classification::Decided(None)
     );
     assert!(matches!(
-        BezierParameter2::Algebraic(parameter)
-            .promote_represented_exact_point(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || BezierParameter2::Algebraic(
+            parameter
+        )
+        .promote_represented_exact_point())
+        .unwrap(),
         Classification::Decided(BezierParameter2::Algebraic(_))
     ));
 }
@@ -376,11 +416,9 @@ fn oriented_parameter_range_retains_irrational_boundary() {
         polynomial(vec![r(-1), r(0), r(2)]),
         interval(q(2, 3), q(3, 4)),
     ));
-    let range = match BezierParameterRange2::try_new(
-        start.clone(),
-        BezierParameter2::Exact(Real::one()),
-        &policy(),
-    )
+    let range = match crate::support::under_classified_result(&policy(), || {
+        BezierParameterRange2::try_new(start.clone(), BezierParameter2::Exact(Real::one()))
+    })
     .unwrap()
     {
         Classification::Decided(range) => range,
@@ -392,9 +430,10 @@ fn oriented_parameter_range_retains_irrational_boundary() {
     assert_eq!(range.reversed().start(), &Real::one());
     assert!(range.scalar_endpoints().is_none());
     let promoted = decided(
-        range
-            .promote_represented_exact_endpoints(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            range.promote_represented_exact_endpoints()
+        })
+        .unwrap(),
     );
     assert!(promoted.scalar_endpoints().is_none());
     assert_eq!(promoted.start(), &start);
@@ -407,14 +446,17 @@ fn parameter_range_promotes_represented_rational_boundary() {
         interval(q(2, 5), q(3, 5)),
     ));
     let range = decided(
-        BezierParameterRange2::try_new(start, BezierParameter2::Exact(Real::one()), &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            BezierParameterRange2::try_new(start, BezierParameter2::Exact(Real::one()))
+        })
+        .unwrap(),
     );
 
     let promoted = decided(
-        range
-            .promote_represented_exact_endpoints(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || {
+            range.promote_represented_exact_endpoints()
+        })
+        .unwrap(),
     );
 
     assert_eq!(promoted.scalar_endpoints(), Some((&q(1, 2), &r(1))));
@@ -423,16 +465,24 @@ fn parameter_range_promotes_represented_rational_boundary() {
 #[test]
 fn parameter_range_rejects_equal_and_accepts_affine_extension_boundaries() {
     let midpoint = BezierParameter2::Exact(q(1, 2));
-    assert_eq!(
-        BezierParameterRange2::try_new(midpoint.clone(), midpoint, &policy()).unwrap_err(),
-        CurveError::InvalidBezierRange
-    );
+    assert!(matches!(
+        crate::support::under_classified_result(&policy(), || BezierParameterRange2::try_new(
+            midpoint.clone(),
+            midpoint
+        ))
+        .unwrap_err(),
+        ExactCurveError::Invalid {
+            cause: CurveError::InvalidBezierRange,
+            ..
+        }
+    ));
     let extension = decided(
-        BezierParameterRange2::try_new(
-            BezierParameter2::Exact(r(-1)),
-            BezierParameter2::Exact(r(1)),
-            &policy(),
-        )
+        crate::support::under_classified_result(&policy(), || {
+            BezierParameterRange2::try_new(
+                BezierParameter2::Exact(r(-1)),
+                BezierParameter2::Exact(r(1)),
+            )
+        })
         .unwrap(),
     );
     let (start, end) = extension
@@ -452,13 +502,16 @@ fn nonlinear_algebraic_parameter_reconstructs_exact_rational_root() {
     );
 
     assert_eq!(
-        parameter.represented_exact_point(&policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || parameter.represented_exact_point())
+            .unwrap(),
         Classification::Decided(Some(q(1, 3)))
     );
     assert_eq!(
-        BezierParameter2::Algebraic(parameter)
-            .promote_represented_exact_point(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || BezierParameter2::Algebraic(
+            parameter
+        )
+        .promote_represented_exact_point())
+        .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 3)))
     );
 }
@@ -479,27 +532,51 @@ fn multi_root_bracket_is_rejected_as_not_an_isolator() {
     // p(t) = t^2 - t + 1/16 has two distinct roots inside [0, 1].
     let polynomial = polynomial(vec![q(1, 16), r(-1), r(1)]);
     let interval = interval(r(0), r(1));
-    let error = BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy())
-        .expect_err("two roots in one bracket must not certify a parameter");
+    let error = crate::support::under_classified_result(&policy(), || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    })
+    .expect_err("two roots in one bracket must not certify a parameter");
 
-    assert_eq!(error, CurveError::InvalidBezierAlgebraicParameter);
+    assert!(matches!(
+        error,
+        ExactCurveError::Invalid {
+            cause: CurveError::InvalidBezierAlgebraicParameter,
+            ..
+        }
+    ));
 }
 
 #[test]
 fn endpoint_root_is_rejected_for_algebraic_isolators() {
     let polynomial = polynomial(vec![r(0), r(1)]);
     let interval = interval(r(0), r(1));
-    let error = BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy())
-        .expect_err("endpoint roots need exact endpoint representation or narrower brackets");
+    let error = crate::support::under_classified_result(&policy(), || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    })
+    .expect_err("endpoint roots need exact endpoint representation or narrower brackets");
 
-    assert_eq!(error, CurveError::InvalidBezierAlgebraicParameter);
+    assert!(matches!(
+        error,
+        ExactCurveError::Invalid {
+            cause: CurveError::InvalidBezierAlgebraicParameter,
+            ..
+        }
+    ));
 }
 
 #[test]
 fn reversed_parameter_intervals_are_rejected() {
-    let reversed = BezierParameterInterval::try_new(q(3, 4), q(1, 4), &policy())
-        .expect_err("reversed intervals are invalid");
-    assert_eq!(reversed, CurveError::InvalidBezierRange);
+    let reversed = crate::support::under_classified_result(&policy(), || {
+        BezierParameterInterval::try_new(q(3, 4), q(1, 4))
+    })
+    .expect_err("reversed intervals are invalid");
+    assert!(matches!(
+        reversed,
+        ExactCurveError::Invalid {
+            cause: CurveError::InvalidBezierRange,
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -510,13 +587,16 @@ fn exact_and_algebraic_parameters_compare_only_when_certified() {
     let algebraic = BezierParameter2::Algebraic(isolate(polynomial, interval(q(2, 5), q(3, 5))));
 
     assert_eq!(
-        left.cmp_by_interval(&algebraic, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || left.cmp_by_interval(&algebraic))
+            .unwrap(),
         Classification::Decided(Ordering::Less)
     );
 
     let overlapping = BezierParameter2::Exact(q(1, 2));
     assert_eq!(
-        overlapping.cmp_by_interval(&algebraic, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || overlapping
+            .cmp_by_interval(&algebraic))
+        .unwrap(),
         Classification::Decided(Ordering::Equal)
     );
 }
@@ -528,11 +608,13 @@ fn endpoint_touching_singleton_isolators_have_strict_order() {
     let right = BezierParameter2::Algebraic(isolate(defining, interval(q(1, 2), q(3, 4))));
 
     assert_eq!(
-        left.cmp_by_interval(&right, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || left.cmp_by_interval(&right))
+            .unwrap(),
         Classification::Decided(Ordering::Less)
     );
     assert_eq!(
-        right.cmp_by_interval(&left, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || right.cmp_by_interval(&left))
+            .unwrap(),
         Classification::Decided(Ordering::Greater)
     );
 }
@@ -549,11 +631,13 @@ fn equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators() 
     ));
 
     assert_eq!(
-        quadratic.cmp_by_interval(&cubic, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || quadratic.cmp_by_interval(&cubic))
+            .unwrap(),
         Classification::Decided(Ordering::Equal)
     );
     assert_eq!(
-        cubic.cmp_by_interval(&quadratic, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || cubic.cmp_by_interval(&quadratic))
+            .unwrap(),
         Classification::Decided(Ordering::Equal)
     );
 }
@@ -567,15 +651,15 @@ fn overlapping_distinct_parameters_compare_by_certified_refinement() {
     let close_rational = BezierParameter2::Exact(q(353_553, 500_000));
 
     assert_eq!(
-        close_rational
-            .cmp_by_interval(&irrational, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || close_rational
+            .cmp_by_interval(&irrational))
+        .unwrap(),
         Classification::Uncertain(UncertaintyReason::Ordering)
     );
     assert_eq!(
-        close_rational
-            .cmp_by_refinement(&irrational, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || close_rational
+            .cmp_by_refinement(&irrational))
+        .unwrap(),
         Classification::Decided(Ordering::Less)
     );
 }
@@ -586,9 +670,9 @@ fn algebraic_root_sign_change_tracks_multiplicity_parity() {
     let simple_root =
         BezierParameter2::Algebraic(isolate(simple.clone(), interval(q(2, 3), q(3, 4))));
     assert_eq!(
-        simple
-            .changes_sign_at_root(&simple_root, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || simple
+            .changes_sign_at_root(&simple_root))
+        .unwrap(),
         Classification::Decided(true)
     );
 
@@ -596,9 +680,9 @@ fn algebraic_root_sign_change_tracks_multiplicity_parity() {
     let double_root =
         BezierParameter2::Algebraic(isolate(double.clone(), interval(q(2, 3), q(3, 4))));
     assert_eq!(
-        double
-            .changes_sign_at_root(&double_root, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || double
+            .changes_sign_at_root(&double_root))
+        .unwrap(),
         Classification::Decided(false)
     );
 }
@@ -610,11 +694,13 @@ fn represented_root_sign_change_tracks_high_multiplicity_parity() {
     let root = BezierParameter2::Exact(q(1, 2));
 
     assert_eq!(
-        double.changes_sign_at_root(&root, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || double.changes_sign_at_root(&root))
+            .unwrap(),
         Classification::Decided(false)
     );
     assert_eq!(
-        triple.changes_sign_at_root(&root, &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || triple.changes_sign_at_root(&root))
+            .unwrap(),
         Classification::Decided(true)
     );
 }
@@ -632,22 +718,23 @@ proptest! {
         prop_assume!(start_n < end_n);
 
         let policy = policy();
-        let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-            vec![r(constant), r(slope)],
-            &policy,
-        ).unwrap() {
+        let polynomial = match crate::support::under_classified_result(&policy, || BezierParameterPolynomial::try_new_power_basis(
+            vec![r(constant), r(slope)])).unwrap() {
             Classification::Decided(value) => value,
             Classification::Uncertain(_) => return Ok(()),
         };
-        let interval = match BezierParameterInterval::try_new(q(start_n, 16), q(end_n, 16), &policy).unwrap() {
+        let interval = match crate::support::under_classified_result(&policy, || BezierParameterInterval::try_new(q(start_n, 16), q(end_n, 16))).unwrap() {
             Classification::Decided(value) => value,
             Classification::Uncertain(_) => return Ok(()),
         };
 
-        match polynomial.root_count_in_interval(&interval, &policy) {
+        match crate::support::under_classified_result(&policy, || polynomial.root_count_in_interval(&interval)) {
             Ok(Classification::Decided(count)) => prop_assert!(count <= 1),
             Ok(Classification::Uncertain(_)) => {}
-            Err(CurveError::InvalidBezierAlgebraicParameter) => {}
+            Err(ExactCurveError::Invalid {
+                cause: CurveError::InvalidBezierAlgebraicParameter,
+                ..
+            }) => {}
             Err(error) => return Err(TestCaseError::fail(format!("unexpected error: {error:?}"))),
         }
     }

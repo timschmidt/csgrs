@@ -490,11 +490,11 @@ fn exact_parameter_inside_retained_range(
     policy: &CurveContext,
 ) -> Option<bool> {
     let parameter = BezierParameter2::Exact(parameter.clone());
-    let start_cmp = match start.cmp_by_interval(&parameter, policy).ok()? {
+    let start_cmp = match start.cmp_by_interval_with_policy(&parameter, policy).ok()? {
         Classification::Decided(ordering) => ordering,
         Classification::Uncertain(_) => return None,
     };
-    let end_cmp = match parameter.cmp_by_interval(end, policy).ok()? {
+    let end_cmp = match parameter.cmp_by_interval_with_policy(end, policy).ok()? {
         Classification::Decided(ordering) => ordering,
         Classification::Uncertain(_) => return None,
     };
@@ -533,12 +533,12 @@ fn parameter_interval_hull(
     end: &BezierParameter2,
     policy: &CurveContext,
 ) -> Classification<(Real, Real)> {
-    let start_interval = match start.known_interval(policy) {
+    let start_interval = match start.known_interval_with_policy(policy) {
         Ok(Classification::Decided(interval)) => interval,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let end_interval = match end.known_interval(policy) {
+    let end_interval = match end.known_interval_with_policy(policy) {
         Ok(Classification::Decided(interval)) => interval,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),

@@ -26,48 +26,66 @@ fn point(x: u8, y: u8) -> Point2 {
 }
 
 fn algebraic_sqrt_half(policy: &CurveContext) -> Option<BezierParameter2> {
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        vec![Real::from(-1_i32), Real::from(0_i32), Real::from(2_i32)],
-        policy,
-    )
+    let polynomial = match support::under_classified_result(policy, || {
+        BezierParameterPolynomial::try_new_power_basis(vec![
+            Real::from(-1_i32),
+            Real::from(0_i32),
+            Real::from(2_i32),
+        ])
+    })
     .ok()?
     {
         Classification::Decided(polynomial) => polynomial,
         Classification::Uncertain(_) => return None,
     };
-    let interval =
-        match BezierParameterInterval::try_new(rational(2, 3), rational(3, 4), policy).ok()? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(_) => return None,
-        };
-    let parameter =
-        match BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).ok()? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(_) => return None,
-        };
+    let interval = match support::under_classified_result(policy, || {
+        BezierParameterInterval::try_new(rational(2, 3), rational(3, 4))
+    })
+    .ok()?
+    {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(_) => return None,
+    };
+    let parameter = match support::under_classified_result(policy, || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    })
+    .ok()?
+    {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(_) => return None,
+    };
     Some(BezierParameter2::Algebraic(parameter))
 }
 
 fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        vec![Real::from(-1_i32), Real::from(0_i32), Real::from(8_i32)],
-        policy,
-    )
+    let polynomial = match support::under_classified_result(policy, || {
+        BezierParameterPolynomial::try_new_power_basis(vec![
+            Real::from(-1_i32),
+            Real::from(0_i32),
+            Real::from(8_i32),
+        ])
+    })
     .ok()?
     {
         Classification::Decided(polynomial) => polynomial,
         Classification::Uncertain(_) => return None,
     };
-    let interval =
-        match BezierParameterInterval::try_new(rational(1, 3), rational(2, 5), policy).ok()? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(_) => return None,
-        };
-    let parameter =
-        match BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).ok()? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(_) => return None,
-        };
+    let interval = match support::under_classified_result(policy, || {
+        BezierParameterInterval::try_new(rational(1, 3), rational(2, 5))
+    })
+    .ok()?
+    {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(_) => return None,
+    };
+    let parameter = match support::under_classified_result(policy, || {
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+    })
+    .ok()?
+    {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(_) => return None,
+    };
     Some(BezierParameter2::Algebraic(parameter))
 }
 

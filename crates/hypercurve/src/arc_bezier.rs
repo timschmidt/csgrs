@@ -95,7 +95,13 @@ impl CircularArcBezierDecomposition2 {
     /// The returned [`CurveOutcome`] records whether selecting or evaluating
     /// the exact span consumed the `APPROXIMATE_512` terminal.
     #[inline(always)]
-    pub fn point_at(
+    pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -105,7 +111,7 @@ impl CircularArcBezierDecomposition2 {
         })
     }
 
-    pub(crate) fn point_at_with_policy(
+    pub(crate) fn point_at_raw(
         &self,
         parameter: &Real,
         policy: &CurveContext,

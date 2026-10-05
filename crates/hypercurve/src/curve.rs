@@ -124,7 +124,15 @@ impl CurveVector2 {
     }
 
     /// Decides the exact sign of one coordinate.
-    pub fn coordinate_sign(
+    pub fn coordinate_sign(&self, axis: crate::Axis2) -> crate::ExactCurveResult<RealSign> {
+        self.coordinate_sign_with_policy(axis, &crate::policy::principal_context())
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+            })
+    }
+
+    /// [`Self::coordinate_sign`] under an explicit predicate policy.
+    pub(crate) fn coordinate_sign_with_policy(
         &self,
         axis: crate::Axis2,
         policy: &CurveContext,
@@ -3332,7 +3340,15 @@ impl NativeBezierFragment2 {
     /// A `false` result is deliberately only a missing certificate; callers
     /// that require simple-path topology must retain that distinction instead
     /// of assuming the fragment self-intersects.
-    pub fn has_certified_injective_axis(&self, policy: &CurveContext) -> ExactCurveResult<bool> {
+    pub fn has_certified_injective_axis(&self) -> crate::ExactCurveResult<bool> {
+        self.has_certified_injective_axis_with_policy(&crate::policy::principal_context())
+    }
+
+    /// [`Self::has_certified_injective_axis`] under an explicit predicate policy.
+    pub(crate) fn has_certified_injective_axis_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
         Ok(
             rationalize_subcurve(&self.curve, CurveFamily2::RationalBezier)?
                 .has_certified_injective_axis(policy),
@@ -6244,7 +6260,7 @@ mod tests {
         denominator: i8,
         policy: &CurveContext,
     ) -> BezierParameter2 {
-        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
+        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![-Real::one(), Real::zero(), Real::from(denominator)],
             policy,
         )
@@ -6256,7 +6272,7 @@ mod tests {
             }
         };
         let roots = match polynomial
-            .isolate_unit_interval_roots(policy)
+            .isolate_unit_interval_roots_with_policy(policy)
             .expect("the selected inverse-square roots isolate")
         {
             Classification::Decided(roots) => roots,
@@ -6815,7 +6831,7 @@ mod tests {
     fn rationalizable_selected_semicircle(
         policy: &CurveContext,
     ) -> crate::bezier_offset::BezierAlgebraicCuspSemicircle2 {
-        let polynomial = crate::BezierParameterPolynomial::try_new_power_basis(
+        let polynomial = crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
             policy,
         )
@@ -6823,7 +6839,7 @@ mod tests {
         let Classification::Decided(polynomial) = polynomial else {
             panic!("the selected quadratic must be decided");
         };
-        let interval = crate::BezierParameterInterval::try_new(
+        let interval = crate::BezierParameterInterval::try_new_with_policy(
             (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
             (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
             policy,
@@ -6832,8 +6848,9 @@ mod tests {
         let Classification::Decided(interval) = interval else {
             panic!("the selected interval must be decided");
         };
-        let parameter = crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
-            .expect("the selected root is isolated");
+        let parameter =
+            crate::BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .expect("the selected root is isolated");
         let Classification::Decided(parameter) = parameter else {
             panic!("the selected root must be decided");
         };

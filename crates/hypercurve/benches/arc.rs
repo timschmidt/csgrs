@@ -205,9 +205,8 @@ fn main() {
     for _ in 0..decomposition_point_iterations {
         black_box(
             black_box(decomposition)
-                .point_at(black_box(&decomposition_parameter), &CurveContext::STRICT)
-                .expect("arc decomposition evaluation remains exact")
-                .into_value(),
+                .point_at(black_box(&decomposition_parameter))
+                .expect("arc decomposition evaluation remains exact"),
         );
         decomposition_point_count += 1;
     }

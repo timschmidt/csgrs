@@ -97,7 +97,22 @@ pub struct BezierParallelVerificationOptions {
 
 impl BezierParallelVerificationOptions {
     /// Constructs verification options after certifying a positive tolerance and recursion budget.
-    pub fn try_new(max_error: Real, max_depth: usize, policy: &CurveContext) -> CurveResult<Self> {
+    pub fn try_new(max_error: Real, max_depth: usize) -> crate::ExactCurveResult<Self> {
+        Self::try_new_with_policy(max_error, max_depth, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+    }
+
+    /// [`Self::try_new`] under an explicit predicate policy.
+    pub(crate) fn try_new_with_policy(
+        max_error: Real,
+        max_depth: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
         if max_depth == 0 || real_sign(&max_error, policy) != Some(RealSign::Positive) {
             return Err(CurveError::InvalidBezierOffsetOptions);
         }
@@ -382,7 +397,7 @@ impl PolynomialBezierNode2 {
             Self::Cubic(curve) => curve.parallel_left(distance.clone())?,
         };
         let half = (Real::one() / Real::from(2_i8))?;
-        source.point_at(&half, policy)
+        source.point_at_with_policy(&half, policy)
     }
 }
 

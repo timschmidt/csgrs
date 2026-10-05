@@ -22,8 +22,7 @@ fn complete(result: CurveIntersectionResult2) -> Option<CurveIntersectionResult2
 }
 
 fn parameter(location: &CurveLocation2, policy: &CurveContext) -> hypercurve::CurveParameter2 {
-    match location
-        .parameter(policy)
+    match support::under_classified_result(policy, || location.parameter())
         .expect("contact parameters are exact")
     {
         Classification::Decided(parameter) => parameter,

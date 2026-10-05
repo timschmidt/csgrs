@@ -42,10 +42,7 @@ fn quarter_arc_decomposes_to_one_exact_conic() {
     assert_eq!(span.curve().control(), &p(1, 1));
     assert_eq!(span.curve().weights(), [&r(1), &r(1), &r(2)]);
     let third = (r(1) / r(3)).unwrap();
-    let point = decomposition
-        .point_at(&third, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let point = decomposition.point_at(&third).unwrap();
     assert_eq!(point.x().partial_cmp(point.y()), Some(Ordering::Greater));
     assert_eq!(point.x().partial_cmp(&r(1)), Some(Ordering::Less));
     assert_eq!(point.y().partial_cmp(&r(0)), Some(Ordering::Greater));
@@ -60,8 +57,7 @@ fn semicircle_uses_two_quarter_spans_with_exact_join() {
     assert_eq!(decomposition.spans()[0].parameter_range(), (&r(0), &half()));
     assert_eq!(decomposition.spans()[1].parameter_range(), (&half(), &r(1)));
     assert_eq!(
-        decomposition
-            .point_at(&half(), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&half()))
             .unwrap()
             .into_value(),
         p(0, 1)
@@ -89,15 +85,13 @@ fn rationally_trimmed_semicircle_redecomposes_exactly() {
     let decomposition = arc.rational_bezier_decomposition().unwrap();
     assert!(!decomposition.spans().is_empty());
     assert_eq!(
-        decomposition
-            .point_at(&r(0), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(0)))
             .unwrap()
             .into_value(),
         arc.start().clone()
     );
     assert_eq!(
-        decomposition
-            .point_at(&r(1), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(1)))
             .unwrap()
             .into_value(),
         arc.end().clone()
@@ -130,8 +124,7 @@ fn major_arc_preserves_rational_charts_and_requested_orientation() {
         );
     }
     assert_eq!(
-        decomposition
-            .point_at(&half(), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&half()))
             .unwrap()
             .into_value(),
         expected_midpoint
@@ -369,36 +362,32 @@ fn full_circle_uses_four_quarter_spans() {
 
     assert_eq!(decomposition.spans().len(), 4);
     assert_eq!(
-        decomposition
-            .point_at(&r(0), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(0)))
             .unwrap()
             .into_value(),
         p(1, 0)
     );
     assert_eq!(
-        decomposition
-            .point_at(&quarter, &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&quarter))
             .unwrap()
             .into_value(),
         p(0, 1)
     );
     assert_eq!(
-        decomposition
-            .point_at(&half(), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&half()))
             .unwrap()
             .into_value(),
         p(-1, 0)
     );
     assert_eq!(
-        decomposition
-            .point_at(&three_quarters, &CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
+        crate::support::under(&CurveContext::STRICT, || decomposition
+            .point_at(&three_quarters))
+        .unwrap()
+        .into_value(),
         p(0, -1)
     );
     assert_eq!(
-        decomposition
-            .point_at(&r(1), &CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(1)))
             .unwrap()
             .into_value(),
         p(1, 0)
@@ -553,16 +542,17 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
         CircularArc2::try_from_center(p(1, 0), p(-1, 0), p(0, 0), false).unwrap();
     let decomposition = exact_semicircle.rational_bezier_decomposition().unwrap();
     let ambiguous_join_parameter = half() + undecidable_zero;
-    let approximate_point = decomposition
-        .point_at(&ambiguous_join_parameter, &CurveContext::APPROXIMATE_512)
-        .unwrap();
+    let approximate_point = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        decomposition.point_at(&ambiguous_join_parameter)
+    })
+    .unwrap();
     assert_eq!(
         approximate_point.certainty,
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(approximate_point.value, p(0, 1));
     assert!(matches!(
-        decomposition.point_at(&ambiguous_join_parameter, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&ambiguous_join_parameter)),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == UncertaintyReason::Ordering

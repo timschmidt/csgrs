@@ -98,3 +98,29 @@ pub(crate) fn under_classified<T>(
     under_classified_result(policy, evaluate)
         .unwrap_or_else(|error| panic!("exact predicate rejected its input: {error:?}"))
 }
+
+/// Runs an exact principal query under `policy`, keeping its certainty and
+/// an undecided predicate as `Classification::Uncertain`.
+pub(crate) fn under_outcome_classified<T>(
+    policy: &hypercurve::CurveContext,
+    evaluate: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
+) -> hypercurve::ExactCurveResult<Outcome<hypercurve::Classification<T>>> {
+    let (result, certainty) = if *policy == hypercurve::CurveContext::STRICT {
+        (evaluate(), hypercurve::CurveCertainty::Certified)
+    } else {
+        let provisional = hypercurve::provisional(evaluate);
+        let certainty = provisional.certainty();
+        (provisional.into_unverified(), certainty)
+    };
+    match result {
+        Ok(value) => Ok(Outcome {
+            value: hypercurve::Classification::Decided(value),
+            certainty,
+        }),
+        Err(hypercurve::ExactCurveError::Blocked(blocker)) => Ok(Outcome {
+            value: hypercurve::Classification::Uncertain(blocker.reason()),
+            certainty,
+        }),
+        Err(error) => Err(error),
+    }
+}

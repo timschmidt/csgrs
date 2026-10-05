@@ -584,11 +584,12 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
     {
         return Classification::Decided(relation);
     }
-    let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis(distances, policy) {
-        Ok(Classification::Decided(polynomial)) => polynomial,
-        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_bernstein_basis_with_policy(distances, policy) {
+            Ok(Classification::Decided(polynomial)) => polynomial,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
     exact_line_contact_relation_from_polynomial(
         polynomial,
         &crate::CurveParameterRange2::unit(),
@@ -673,7 +674,10 @@ pub(crate) fn exact_quadratic_line_contact_relation_with_certified_crossing(
                 Ok(contact) => contact,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
             };
-            let contacts = match other.parameter().cmp_by_interval(known.parameter(), policy) {
+            let contacts = match other
+                .parameter()
+                .cmp_by_interval_with_policy(known.parameter(), policy)
+            {
                 Ok(Classification::Decided(Ordering::Less)) => vec![other, known],
                 Ok(Classification::Decided(Ordering::Greater)) => vec![known, other],
                 Ok(Classification::Decided(Ordering::Equal)) => {
@@ -730,13 +734,14 @@ fn exact_line_contact_relation_from_power_coefficients(
     coefficients: Vec<Real>,
     policy: &CurveContext,
 ) -> Classification<BezierLineContactRelation> {
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy) {
-        Ok(Classification::Decided(polynomial)) => polynomial,
-        Ok(Classification::Uncertain(reason)) => {
-            return Classification::Uncertain(reason);
-        }
-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy) {
+            Ok(Classification::Decided(polynomial)) => polynomial,
+            Ok(Classification::Uncertain(reason)) => {
+                return Classification::Uncertain(reason);
+            }
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
     if polynomial.degree() <= 2 {
         return exact_low_degree_power_line_contact_relation(polynomial.coefficients(), policy);
     }

@@ -132,13 +132,14 @@ impl BezierParallel2 {
             else {
                 return Ok(false);
             };
-            let Classification::Decided(crossings) = ray.isolate_unit_interval_roots(policy)?
+            let Classification::Decided(crossings) =
+                ray.isolate_unit_interval_roots_with_policy(policy)?
             else {
                 return Ok(false);
             };
             let mut turns = 0;
             for crossing in crossings {
-                match crossing.cmp_by_refinement(&end, policy)? {
+                match crossing.cmp_by_refinement_with_policy(&end, policy)? {
                     Classification::Decided(std::cmp::Ordering::Equal) => continue,
                     Classification::Decided(std::cmp::Ordering::Less) => {}
                     Classification::Decided(std::cmp::Ordering::Greater)
@@ -160,7 +161,7 @@ impl BezierParallel2 {
                 return Ok(false);
             }
             Ok(matches!(
-                self.singularity_analysis(&unit, policy)?,
+                self.singularity_analysis_with_policy(&unit, policy)?,
                 Classification::Decided(analysis)
                     if analysis.source_is_regular() && analysis.parallel_is_cusp_free()
             ))

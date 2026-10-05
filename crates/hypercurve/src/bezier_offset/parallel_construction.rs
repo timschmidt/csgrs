@@ -80,7 +80,7 @@ impl CertifiedPythagoreanHodographOffset2 {
             if coefficients.len() == 1 {
                 return Ok(Some(sign));
             }
-            let roots = match polynomial.isolate_incident_ray_roots(
+            let roots = match polynomial.isolate_incident_ray_roots_with_policy(
                 extension.anchor,
                 extension.direction,
                 policy,
@@ -92,7 +92,7 @@ impl CertifiedPythagoreanHodographOffset2 {
                 let Some(barrier) = extension.barrier else {
                     return Ok(None);
                 };
-                let order = match root.cmp_by_refinement(barrier, policy)? {
+                let order = match root.cmp_by_refinement_with_policy(barrier, policy)? {
                     Classification::Decided(order) => order,
                     Classification::Uncertain(_) => return Ok(None),
                 };
@@ -179,17 +179,19 @@ impl BezierParallelSingularityAnalysis2 {
         let mut ranges = Vec::with_capacity(sources.len() + cusps.len() + 1);
         loop {
             let boundary = match (sources.peek(), cusps.peek()) {
-                (Some(source), Some(cusp)) => match source.cmp_by_refinement(cusp, policy)? {
-                    Classification::Decided(std::cmp::Ordering::Less) => sources.next(),
-                    Classification::Decided(std::cmp::Ordering::Greater) => cusps.next(),
-                    Classification::Decided(std::cmp::Ordering::Equal) => {
-                        cusps.next();
-                        sources.next()
+                (Some(source), Some(cusp)) => {
+                    match source.cmp_by_refinement_with_policy(cusp, policy)? {
+                        Classification::Decided(std::cmp::Ordering::Less) => sources.next(),
+                        Classification::Decided(std::cmp::Ordering::Greater) => cusps.next(),
+                        Classification::Decided(std::cmp::Ordering::Equal) => {
+                            cusps.next();
+                            sources.next()
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
+                }
                 (Some(_), None) => sources.next(),
                 (None, Some(_)) => cusps.next(),
                 (None, None) => break,
@@ -522,7 +524,7 @@ impl QuadraticBezier2 {
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
         let analysis = match self
             .parallel_left(distance.clone())?
-            .singularity_analysis(&CurveParameterRange2::unit(), policy)?
+            .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?
         {
             Classification::Decided(analysis) => analysis,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -634,7 +636,7 @@ impl CubicBezier2 {
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
         let analysis = match self
             .parallel_left(distance.clone())?
-            .singularity_analysis(&CurveParameterRange2::unit(), policy)?
+            .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?
         {
             Classification::Decided(analysis) => analysis,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -706,6 +708,20 @@ impl CurvePath2 {
     /// `Unsupported`; selecting a miter, round, or bevel join belongs to the
     /// region/string offset layer.
     pub fn approximate_parallel_blend2d_certified(
+        &self,
+        distance: Real,
+        options: &BezierParallelVerificationOptions,
+    ) -> crate::ExactCurveResult<CertifiedCurvePathParallel2> {
+        self.approximate_parallel_blend2d_certified_with_policy(
+            distance,
+            options,
+            &crate::policy::principal_context(),
+        )
+        .and_then(|value| crate::ExactCurveError::decided(crate::CurveOperation2::Offset, value))
+    }
+
+    /// [`Self::approximate_parallel_blend2d_certified`] under an explicit predicate policy.
+    pub(crate) fn approximate_parallel_blend2d_certified_with_policy(
         &self,
         distance: Real,
         options: &BezierParallelVerificationOptions,
@@ -882,14 +898,14 @@ pub(super) fn append_exact_rational_parallel(
     output: &mut Vec<Curve2>,
 ) -> CurveResult<Classification<()>> {
     let singularities =
-        match parallel.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
+        match parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
             Classification::Decided(singularities) => singularities,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
     if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
-    match parallel.exact_pythagorean_hodograph_offset(policy)? {
+    match parallel.exact_pythagorean_hodograph_offset_with_policy(policy)? {
         Classification::Decided(Some(exact)) => {
             output.push(Curve2::from(exact.curve().clone()));
             Ok(Classification::Decided(()))
@@ -912,14 +928,14 @@ where
     F: FnOnce() -> CurveResult<Classification<CertifiedBezierParallelPath2>>,
 {
     let singularities =
-        match parallel.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
+        match parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
             Classification::Decided(singularities) => singularities,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
     if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
-    match parallel.exact_pythagorean_hodograph_offset(policy)? {
+    match parallel.exact_pythagorean_hodograph_offset_with_policy(policy)? {
         Classification::Decided(Some(exact)) => {
             output.push(Curve2::from(exact.curve().clone()));
             return Ok(Classification::Decided(true));
@@ -1158,11 +1174,13 @@ pub(super) fn construct_quadratic_parallel_spans(
         source.blend2d_offset_left_candidate_with_policy(distance.clone(), policy)?
     {
         let parallel = source.parallel_left(distance.clone())?;
-        if let Classification::Decided(approximation) = parallel.verify_polynomial_candidate(
-            candidate.curve().clone().into(),
-            options,
-            policy,
-        )? {
+        if let Classification::Decided(approximation) = parallel
+            .verify_polynomial_candidate_with_policy(
+                candidate.curve().clone().into(),
+                options,
+                policy,
+            )?
+        {
             trace.verification_leaf_count += approximation.leaf_count();
             trace.spans.push(CertifiedBezierParallelSpan2 {
                 source_start,
@@ -1216,13 +1234,13 @@ pub(super) fn construct_cubic_parallel_spans(
 ) -> CurveResult<Classification<()>> {
     trace.maximum_depth = trace.maximum_depth.max(depth);
     let parallel = source.parallel_left(distance.clone())?;
-    let candidate = match parallel.levien_cubic_candidate(policy) {
+    let candidate = match parallel.levien_cubic_candidate_with_policy(policy) {
         Ok(Classification::Decided(candidate)) => Some(candidate),
         Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
         Err(error) => return Err(error),
     };
     if let Some(candidate) = candidate {
-        let approximation = match parallel.verify_polynomial_candidate(
+        let approximation = match parallel.verify_polynomial_candidate_with_policy(
             candidate.curve().clone().into(),
             options,
             policy,
@@ -1296,7 +1314,7 @@ pub(super) fn construct_cubic_reduced_half(
         };
     if let Some(candidate) = candidate {
         let parallel = source.parallel_left(distance.clone())?;
-        let approximation = match parallel.verify_polynomial_candidate(
+        let approximation = match parallel.verify_polynomial_candidate_with_policy(
             candidate.curve().clone().into(),
             options,
             policy,
@@ -1419,7 +1437,7 @@ pub(super) fn polynomial_from_coefficients(
     coefficients: Vec<Real>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameterPolynomial>>> {
-    match BezierParameterPolynomial::try_new_power_basis(coefficients, policy) {
+    match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy) {
         Ok(Classification::Decided(polynomial)) => Ok(Classification::Decided(Some(polynomial))),
         Err(CurveError::InvalidBezierPolynomial) => Ok(Classification::Decided(None)),
         Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),

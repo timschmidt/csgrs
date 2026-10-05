@@ -2143,7 +2143,7 @@ pub(super) fn self_intersections(
             .evidence(None, &mut pair_result)?;
             for contact in pair_result.contacts {
                 let [first, second] = [contact.first(), contact.second()]
-                    .map(|location| decided(location.parameter(policy), family));
+                    .map(|location| decided(location.parameter_with_policy(policy), family));
                 if !decided(first?.same_value(&second?, policy), family)? {
                     result.contacts.push(contact);
                 }
@@ -2420,16 +2420,18 @@ mod circle_dispatch_tests {
     }
     fn circle(y: i32, root_degree: i32, policy: &CurveContext) -> Curve2 {
         let polynomial = exact(
-            crate::BezierParameterPolynomial::try_new_power_basis(
+            crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![Real::from(-1), Real::zero(), Real::from(root_degree)],
                 policy,
             )
             .unwrap(),
         );
-        let interval =
-            exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), policy).unwrap());
+        let interval = exact(
+            crate::BezierParameterInterval::try_new_with_policy(q(1, 2), q(3, 4), policy).unwrap(),
+        );
         let parameter = exact(
-            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+            crate::BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
         );
         let support = QuadraticBezier2::new(p(-1, y), p(-1, y), p(root_degree - 1, y))
             .parallel_left(Real::zero())
@@ -2471,7 +2473,7 @@ mod circle_dispatch_tests {
     ) {
         for contact in result.contacts() {
             for (curve, location) in [(first, contact.first()), (second, contact.second())] {
-                let parameter = exact(location.parameter(policy).unwrap());
+                let parameter = exact(location.parameter_with_policy(policy).unwrap());
                 let point = curve.point_at_with_policy(&parameter, policy).unwrap();
                 assert_eq!(point.certainty, CurveCertainty::Certified);
                 same(&point.value, contact.point(), policy);
@@ -2493,7 +2495,7 @@ mod circle_dispatch_tests {
                         first_spans[overlap.first_span_index()].chart.clone(),
                         first_parameter.clone(),
                     )
-                    .parameter(policy)
+                    .parameter_with_policy(policy)
                     .unwrap(),
                 );
                 let second_parameter = exact(
@@ -2502,7 +2504,7 @@ mod circle_dispatch_tests {
                         second_spans[overlap.second_span_index()].chart.clone(),
                         second_parameter.clone(),
                     )
-                    .parameter(policy)
+                    .parameter_with_policy(policy)
                     .unwrap(),
                 );
                 let a = first
@@ -2659,7 +2661,7 @@ mod circle_dispatch_tests {
             let circle = circle(0, 2, &policy);
             let selected = |shift: i32| {
                 let polynomial = exact(
-                    crate::BezierParameterPolynomial::try_new_power_basis(
+                    crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![
                             Real::from(2 * shift * shift - 1),
                             Real::from(-4 * shift),
@@ -2670,7 +2672,7 @@ mod circle_dispatch_tests {
                     .unwrap(),
                 );
                 let interval = exact(
-                    crate::BezierParameterInterval::try_new(
+                    crate::BezierParameterInterval::try_new_with_policy(
                         Real::from(shift) + q(1, 2),
                         Real::from(shift) + q(3, 4),
                         &policy,
@@ -2678,8 +2680,10 @@ mod circle_dispatch_tests {
                     .unwrap(),
                 );
                 BezierParameter2::Algebraic(exact(
-                    crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
-                        .unwrap(),
+                    crate::BezierAlgebraicParameter2::try_isolate_with_policy(
+                        polynomial, interval, &policy,
+                    )
+                    .unwrap(),
                 ))
             };
             for y in [Real::zero(), q(1, 2), Real::from(2)] {
@@ -2794,18 +2798,21 @@ mod circle_dispatch_tests {
             // t=3/2-sqrt(3)/4. Isolate the same scalar independently of its
             // represented radical so endpoint equality must replay evidence.
             let polynomial = exact(
-                crate::BezierParameterPolynomial::try_new_power_basis(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![Real::from(33), Real::from(-48), Real::from(16)],
                     &policy,
                 )
                 .unwrap(),
             );
             let interval = exact(
-                crate::BezierParameterInterval::try_new(Real::one(), q(9, 8), &policy).unwrap(),
+                crate::BezierParameterInterval::try_new_with_policy(Real::one(), q(9, 8), &policy)
+                    .unwrap(),
             );
             let selected = BezierParameter2::Algebraic(exact(
-                crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
-                    .unwrap(),
+                crate::BezierAlgebraicParameter2::try_isolate_with_policy(
+                    polynomial, interval, &policy,
+                )
+                .unwrap(),
             ));
             for boundary in [
                 BezierParameter2::Exact(q(3, 2) - q(3, 16).sqrt().unwrap()),
@@ -3356,17 +3363,21 @@ mod circle_dispatch_tests {
                 Classification::Uncertain(UncertaintyReason::Boundary),
             ));
             let polynomial = exact(
-                crate::BezierParameterPolynomial::try_new_power_basis(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![Real::from(-1), Real::zero(), Real::from(2)],
                     &policy,
                 )
                 .unwrap(),
             );
-            let interval =
-                exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), &policy).unwrap());
-            let parameter = exact(
-                crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+            let interval = exact(
+                crate::BezierParameterInterval::try_new_with_policy(q(1, 2), q(3, 4), &policy)
                     .unwrap(),
+            );
+            let parameter = exact(
+                crate::BezierAlgebraicParameter2::try_isolate_with_policy(
+                    polynomial, interval, &policy,
+                )
+                .unwrap(),
             );
             let circle = exact(
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
@@ -3677,7 +3688,9 @@ mod analytic_dispatch_tests {
                                 let point = certified(
                                     curve
                                         .point_at_with_policy(
-                                            &exact(location.parameter(&policy).unwrap()),
+                                            &exact(
+                                                location.parameter_with_policy(&policy).unwrap(),
+                                            ),
                                             &policy,
                                         )
                                         .unwrap(),
@@ -4082,16 +4095,18 @@ mod analytic_dispatch_tests {
     }
     fn selected(value: Real, policy: &CurveContext) -> CurveParameter2 {
         let polynomial = exact(
-            crate::BezierParameterPolynomial::try_new_power_basis(
+            crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![(-1).into(), Real::zero(), 2.into()],
                 policy,
             )
             .unwrap(),
         );
-        let interval =
-            exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), policy).unwrap());
+        let interval = exact(
+            crate::BezierParameterInterval::try_new_with_policy(q(1, 2), q(3, 4), policy).unwrap(),
+        );
         let root = exact(
-            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+            crate::BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
         );
         CurveParameter2::from_selected_fiber(
             crate::bezier_offset::exact_selected_fiber_parameter_for_test(root, value, policy),
@@ -4147,9 +4162,9 @@ mod analytic_dispatch_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for selected_bounds in [false, true] {
                 let bounds = [Real::from(-2), Real::from(2)];
-                let images = bounds
-                    .each_ref()
-                    .map(|t| CurvePoint2::from(exact(source.point_at(t, &policy).unwrap())));
+                let images = bounds.each_ref().map(|t| {
+                    CurvePoint2::from(exact(source.point_at_with_policy(t, &policy).unwrap()))
+                });
                 let [start, end] = bounds.map(|t| {
                     if selected_bounds {
                         selected(t, &policy)
@@ -4225,7 +4240,7 @@ mod analytic_dispatch_tests {
                     let point = certified(
                         curve
                             .point_at_with_policy(
-                                &exact(location.parameter(&policy).unwrap()),
+                                &exact(location.parameter_with_policy(&policy).unwrap()),
                                 &policy,
                             )
                             .unwrap(),
@@ -4294,7 +4309,8 @@ mod analytic_dispatch_tests {
                                 );
                                 same(contact.point(), &p(0, 0).into(), &policy);
                                 for location in [contact.first(), contact.second()] {
-                                    let parameter = exact(location.parameter(&policy).unwrap());
+                                    let parameter =
+                                        exact(location.parameter_with_policy(&policy).unwrap());
                                     same(
                                         &certified(
                                             curve
@@ -5003,7 +5019,7 @@ mod analytic_dispatch_tests {
                     };
                     let restricted = certified(
                         overlap
-                            .restrict(
+                            .restrict_with_policy(
                                 [a_clip.start().clone(), a_clip.end().clone()],
                                 [b_clip.start().clone(), b_clip.end().clone()],
                                 &policy,
@@ -5013,7 +5029,7 @@ mod analytic_dispatch_tests {
                     let restricted = exact(restricted).unwrap();
                     let repeated = exact(certified(
                         restricted
-                            .restrict(
+                            .restrict_with_policy(
                                 [
                                     overlap.first_range().start().clone(),
                                     overlap.first_range().end().clone(),

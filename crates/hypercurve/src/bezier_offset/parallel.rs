@@ -138,7 +138,8 @@ impl BezierParallel2 {
             if real_sign(self.distance(), &strict) == Some(RealSign::Zero) {
                 return true;
             }
-            let Ok(Classification::Decided(analysis)) = self.singularity_analysis(range, &strict)
+            let Ok(Classification::Decided(analysis)) =
+                self.singularity_analysis_with_policy(range, &strict)
             else {
                 return false;
             };
@@ -977,7 +978,26 @@ impl BezierParallel2 {
     /// The two returned carriers use local `[0, 1]` parameters and retain the
     /// same signed left distance. Endpoint splits are rejected as boundaries
     /// because a zero-width source span has no defined unit normal.
-    pub fn split_at_exact(
+    pub fn split_at_exact(&self, parameter: &Real) -> crate::ExactCurveResult<(Self, Self)> {
+        self.split_at_exact_with_policy(parameter, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::split_at_exact`] under an explicit predicate policy.
+    pub(crate) fn split_at_exact_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -1004,6 +1024,29 @@ impl BezierParallel2 {
     /// The returned carrier is reparameterized to `[0, 1]` and retains the
     /// source orientation and signed left distance.
     pub fn subcurve_between_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+    ) -> crate::ExactCurveResult<Self> {
+        self.subcurve_between_exact_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Subdivision,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::subcurve_between_exact`] under an explicit predicate policy.
+    pub(crate) fn subcurve_between_exact_with_policy(
         &self,
         start: &Real,
         end: &Real,
@@ -1312,6 +1355,29 @@ impl BezierParallel2 {
         &self,
         point: &Point2,
         range: &CurveParameterRange2,
+    ) -> crate::ExactCurveResult<bool> {
+        self.contains_point_with_policy(point, range, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::contains_point`] under an explicit predicate policy.
+    pub(crate) fn contains_point_with_policy(
+        &self,
+        point: &Point2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         Ok(self
@@ -1580,12 +1646,13 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let candidates = match incidence.isolate_incident_ray_roots(anchor, direction, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates =
+            match incidence.isolate_incident_ray_roots_with_policy(anchor, direction, policy)? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
 
         let source = self.source_power_basis()?;
         let weight = if let Some(weight) = source.weight {
@@ -1602,7 +1669,7 @@ impl BezierParallel2 {
             None
         };
         let barrier = if let Some(weight) = weight.as_ref() {
-            match weight.isolate_incident_ray_roots(anchor, direction, policy)? {
+            match weight.isolate_incident_ray_roots_with_policy(anchor, direction, policy)? {
                 Classification::Decided(roots) => roots.into_iter().next(),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -1615,7 +1682,7 @@ impl BezierParallel2 {
         let mut retained = Vec::with_capacity(candidates.len());
         for candidate in candidates {
             if let Some(barrier) = barrier.as_ref() {
-                let ordering = match candidate.cmp_by_refinement(barrier, policy)? {
+                let ordering = match candidate.cmp_by_refinement_with_policy(barrier, policy)? {
                     Classification::Decided(ordering) => ordering,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -1845,13 +1912,15 @@ impl BezierParallel2 {
                     Some(square_free) => (square_free, true),
                     None => (coefficients, false),
                 };
-                let polynomial =
-                    match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-                        Classification::Decided(polynomial) => polynomial,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
+                    coefficients,
+                    policy,
+                )? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 let schedule = if square_free && range == &CurveParameterRange2::unit() {
                     polynomial.isolate_square_free_unit_interval_roots(policy)?
                 } else {
@@ -3104,13 +3173,14 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let candidates =
-            match candidate_polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let candidates = match candidate_polynomial
+            .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
+        {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let candidates = match retain_parameters_before_incident_barrier(
             candidates,
             incident.barrier(),
@@ -3362,7 +3432,7 @@ impl BezierParallel2 {
                             if multiplicity % 2 == 0 {
                                 continue;
                             }
-                            match candidate.cmp_by_refinement(
+                            match candidate.cmp_by_refinement_with_policy(
                                 &BezierParameter2::Exact((*deflated_parameter).clone()),
                                 policy,
                             )? {
@@ -3433,7 +3503,7 @@ impl BezierParallel2 {
             let candidate = BezierParameter2::Exact(parameter.clone());
             let mut insert_at = retained.len();
             for (index, existing) in retained.iter_mut().enumerate() {
-                let ordering = candidate.cmp_by_refinement(&existing.0, policy)?;
+                let ordering = candidate.cmp_by_refinement_with_policy(&existing.0, policy)?;
                 match ordering {
                     Classification::Decided(std::cmp::Ordering::Less) => {
                         insert_at = index;
@@ -3476,7 +3546,7 @@ impl BezierParallel2 {
             let center_parameter = center_parameter
                 .scalar()
                 .expect("represented fixed-distance center has an exact parameter");
-            let center = match center_parallel.point_at(center_parameter, policy)? {
+            let center = match center_parallel.point_at_with_policy(center_parameter, policy)? {
                 Classification::Decided(center) => center,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -4187,13 +4257,14 @@ impl BezierParallel2 {
                 ));
             }
             (Some(polynomial), None) | (None, Some(polynomial)) => {
-                let parameters =
-                    match polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
-                        Classification::Decided(parameters) => parameters,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let parameters = match polynomial
+                    .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
+                {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 return Ok(
                     retain_before_barrier(parameters)?.map(BezierParallelIncidence2::Parameters)
                 );
@@ -4242,23 +4313,25 @@ impl BezierParallel2 {
                     BezierParallelIncidence2::EntireCurve,
                 ));
             }
-            let parameters =
-                match line_polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            return Ok(retain_before_barrier(parameters)?.map(BezierParallelIncidence2::Parameters));
-        };
-
-        let parameters =
-            match squared_polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
+            let parameters = match line_polynomial
+                .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
+            {
                 Classification::Decided(parameters) => parameters,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+            return Ok(retain_before_barrier(parameters)?.map(BezierParallelIncidence2::Parameters));
+        };
+
+        let parameters = match squared_polynomial
+            .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
+        {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let parameters = match retain_before_barrier(parameters)? {
             Classification::Decided(parameters) => parameters,
             Classification::Uncertain(reason) => {
@@ -4452,7 +4525,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(CurvePoint2, Option<BezierParameter2>)>> {
         if let Some(parameter) = parameter.scalar() {
-            let point = match self.point_at(parameter, policy)? {
+            let point = match self.point_at_with_policy(parameter, policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -4849,10 +4922,12 @@ impl BezierParallel2 {
                     let Some(polynomial) = squared_polynomial.as_ref() else {
                         return Ok(None);
                     };
-                    Ok(match polynomial.changes_sign_at_root(candidate, policy)? {
-                        Classification::Decided(false) => Some(BezierLineContactKind::Tangent),
-                        Classification::Decided(true) | Classification::Uncertain(_) => None,
-                    })
+                    Ok(
+                        match polynomial.changes_sign_at_root_with_policy(candidate, policy)? {
+                            Classification::Decided(false) => Some(BezierLineContactKind::Tangent),
+                            Classification::Decided(true) | Classification::Uncertain(_) => None,
+                        },
+                    )
                 };
                 for (candidate_index, candidate) in candidates.iter().cloned().enumerate() {
                     // The product polynomial is a compact fast path.  If its
@@ -4892,7 +4967,9 @@ impl BezierParallel2 {
                                 let odd_root = match squared_polynomial.as_ref() {
                                     Some(polynomial) => {
                                         match policy.strict_predicate_pass(|| {
-                                            polynomial.changes_sign_at_root(&candidate, policy)
+                                            polynomial.changes_sign_at_root_with_policy(
+                                                &candidate, policy,
+                                            )
                                         })? {
                                             Classification::Decided(changes) => changes,
                                             Classification::Uncertain(_) => false,
@@ -5024,7 +5101,7 @@ impl BezierParallel2 {
                     }
                     let mut insert_at = retained.len();
                     for (index, existing) in retained.iter_mut().enumerate() {
-                        let ordering = candidate.cmp_by_refinement(existing, policy)?;
+                        let ordering = candidate.cmp_by_refinement_with_policy(existing, policy)?;
                         match ordering {
                             Classification::Decided(std::cmp::Ordering::Less) => {
                                 insert_at = index;
@@ -5274,13 +5351,13 @@ impl BezierParallel2 {
                 && let Some((start, end)) =
                     retained_range.and_then(CurveParameterRange2::as_bezier_parameters)
             {
-                let at_start = match parameter.cmp_by_refinement(start, policy)? {
+                let at_start = match parameter.cmp_by_refinement_with_policy(start, policy)? {
                     Classification::Decided(order) => order,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let at_end = match parameter.cmp_by_refinement(end, policy)? {
+                let at_end = match parameter.cmp_by_refinement_with_policy(end, policy)? {
                     Classification::Decided(order) => order,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -5457,12 +5534,12 @@ impl BezierParallel2 {
             return false;
         };
         let Ok(Classification::Decided(first_derivative)) =
-            self.derivative_at(first_parameter, policy)
+            self.derivative_at_with_policy(first_parameter, policy)
         else {
             return false;
         };
         let Ok(Classification::Decided(second_derivative)) =
-            other.derivative_at(second_parameter, policy)
+            other.derivative_at_with_policy(second_parameter, policy)
         else {
             return false;
         };
@@ -5617,7 +5694,7 @@ impl BezierParallel2 {
             let envelope =
                 CurveParameterRange2::new_validated(lower.clone().into(), upper.clone().into());
             let Ok(Classification::Decided(analysis)) =
-                self.singularity_analysis(&envelope, policy)
+                self.singularity_analysis_with_policy(&envelope, policy)
             else {
                 return Ok(None);
             };
@@ -6138,7 +6215,7 @@ impl BezierParallel2 {
             return None;
         };
         let Ok(Classification::Decided(parallel_derivative)) =
-            self.derivative_at(parallel_parameter, policy)
+            self.derivative_at_with_policy(parallel_parameter, policy)
         else {
             return None;
         };
@@ -6314,7 +6391,7 @@ impl BezierParallel2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(
-            match weight_polynomial.isolate_unit_interval_roots(policy)? {
+            match weight_polynomial.isolate_unit_interval_roots_with_policy(policy)? {
                 Classification::Decided(roots) if roots.is_empty() => Classification::Decided(()),
                 Classification::Decided(_) => {
                     Classification::Uncertain(UncertaintyReason::Boundary)
@@ -6351,7 +6428,7 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match speed_polynomial.isolate_unit_interval_roots(policy)? {
+        match speed_polynomial.isolate_unit_interval_roots_with_policy(policy)? {
             Classification::Decided(roots) if roots.is_empty() => {}
             Classification::Decided(_) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -6458,7 +6535,26 @@ impl BezierParallel2 {
     /// Fragment and operation ranges own parameter admission. Evaluation
     /// certifies a finite source point and, for nonzero displacement, its
     /// defined normal at the requested parameter.
-    pub fn point_at(
+    pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
+        self.point_at_with_policy(parameter, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::point_at`] under an explicit predicate policy.
+    pub(crate) fn point_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -6516,7 +6612,26 @@ impl BezierParallel2 {
     ///
     /// Fragment and operation ranges own admission. Source poles and undefined
     /// normals remain excluded; regular-source cusps have an exact zero derivative.
-    pub fn derivative_at(
+    pub fn derivative_at(&self, parameter: &Real) -> crate::ExactCurveResult<CurveDerivative2> {
+        self.derivative_at_with_policy(parameter, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Evaluation,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::derivative_at`] under an explicit predicate policy.
+    pub(crate) fn derivative_at_with_policy(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -6645,6 +6760,28 @@ impl BezierParallel2 {
     /// obtained by squaring that equation, then rejects source singularities and
     /// the opposite-sign roots introduced by squaring.
     pub fn singularity_analysis(
+        &self,
+        range: &CurveParameterRange2,
+    ) -> crate::ExactCurveResult<BezierParallelSingularityAnalysis2> {
+        self.singularity_analysis_with_policy(range, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Classification,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::singularity_analysis`] under an explicit predicate policy.
+    pub(crate) fn singularity_analysis_with_policy(
         &self,
         range: &CurveParameterRange2,
         policy: &CurveContext,
@@ -6882,6 +7019,27 @@ impl BezierParallel2 {
     /// a stationary parameter or pole. Unresolved scalar signs remain explicit
     /// [`Classification::Uncertain`].
     pub fn exact_pythagorean_hodograph_offset(
+        &self,
+    ) -> crate::ExactCurveResult<Option<CertifiedPythagoreanHodographOffset2>> {
+        self.exact_pythagorean_hodograph_offset_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Offset,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Offset,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::exact_pythagorean_hodograph_offset`] under an explicit predicate policy.
+    pub(crate) fn exact_pythagorean_hodograph_offset_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
@@ -7147,30 +7305,49 @@ impl BezierParallel2 {
     /// Parallel, negative-arm, or undecidable cases use exact Hermite endpoint
     /// derivatives instead. Neither lane is accepted without
     /// [`Self::verify_polynomial_candidate`].
-    pub fn levien_cubic_candidate(
+    pub fn levien_cubic_candidate(&self) -> crate::ExactCurveResult<LevienCubicOffsetCandidate2> {
+        self.levien_cubic_candidate_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Offset,
+                    crate::CurveFamily2::AnalyticParallel,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided_for(
+                    crate::CurveOperation2::Offset,
+                    crate::CurveFamily2::AnalyticParallel,
+                    value,
+                )
+            })
+    }
+
+    /// [`Self::levien_cubic_candidate`] under an explicit predicate policy.
+    pub(crate) fn levien_cubic_candidate_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<LevienCubicOffsetCandidate2>> {
         let zero = Real::zero();
         let one = Real::one();
         let half = (Real::one() / Real::from(2_i8))?;
-        let start = match self.point_at(&zero, policy)? {
+        let start = match self.point_at_with_policy(&zero, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let end = match self.point_at(&one, policy)? {
+        let end = match self.point_at_with_policy(&one, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let midpoint = match self.point_at(&half, policy)? {
+        let midpoint = match self.point_at_with_policy(&half, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let start_derivative = match self.derivative_at(&zero, policy)? {
+        let start_derivative = match self.derivative_at_with_policy(&zero, policy)? {
             Classification::Decided(derivative) => derivative,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let end_derivative = match self.derivative_at(&one, policy)? {
+        let end_derivative = match self.derivative_at_with_policy(&one, policy)? {
             Classification::Decided(derivative) => derivative,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -7246,12 +7423,40 @@ impl BezierParallel2 {
         &self,
         candidate: BezierParallelApproximationCurve2,
         options: &BezierParallelVerificationOptions,
+    ) -> crate::ExactCurveResult<CertifiedBezierParallelApproximation2> {
+        self.verify_polynomial_candidate_with_policy(
+            candidate,
+            options,
+            &crate::policy::principal_context(),
+        )
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::AnalyticParallel,
+                cause,
+            )
+        })
+        .and_then(|value| {
+            crate::ExactCurveError::decided_for(
+                crate::CurveOperation2::Offset,
+                crate::CurveFamily2::AnalyticParallel,
+                value,
+            )
+        })
+    }
+
+    /// [`Self::verify_polynomial_candidate`] under an explicit predicate policy.
+    pub(crate) fn verify_polynomial_candidate_with_policy(
+        &self,
+        candidate: BezierParallelApproximationCurve2,
+        options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelApproximation2>> {
-        let analysis = match self.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let analysis =
+            match self.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
+                Classification::Decided(analysis) => analysis,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
         if !analysis.source_is_regular() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }

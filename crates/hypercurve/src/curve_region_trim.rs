@@ -167,15 +167,29 @@ impl CurveRegionTrimFragment2 {
 
     /// Replays the oriented source parameter range without requiring scalar
     /// coordinates or replacing selected-root evidence.
-    pub fn parameter_range(
+    pub fn parameter_range(&self) -> crate::ExactCurveResult<CurveParameterRange2> {
+        self.parameter_range_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, value)
+            })
+    }
+
+    /// [`Self::parameter_range`] under an explicit predicate policy.
+    pub(crate) fn parameter_range_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameterRange2>> {
-        let start = match self.start_location().parameter(policy)? {
+        let start = match self.start_location().parameter_with_policy(policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(match self.end_location().parameter(policy)? {
+        Ok(match self.end_location().parameter_with_policy(policy)? {
             Classification::Decided(end) => {
                 Classification::Decided(CurveParameterRange2::new_validated(start, end))
             }
@@ -1401,7 +1415,9 @@ mod tests {
                     panic!("one selected interval");
                 };
                 assert!(piece.represented_parameter_range().is_none());
-                let Classification::Decided(range) = piece.parameter_range(&policy).unwrap() else {
+                let Classification::Decided(range) =
+                    piece.parameter_range_with_policy(&policy).unwrap()
+                else {
                     panic!("retained exact range");
                 };
                 let expected = if reversed {
@@ -1526,8 +1542,14 @@ mod tests {
                             .same_point(&pieces[1].curve().start(), &policy),
                         Classification::Decided(false)
                     );
-                    let first = pieces[0].end_location().parameter(&policy).unwrap();
-                    let second = pieces[1].start_location().parameter(&policy).unwrap();
+                    let first = pieces[0]
+                        .end_location()
+                        .parameter_with_policy(&policy)
+                        .unwrap();
+                    let second = pieces[1]
+                        .start_location()
+                        .parameter_with_policy(&policy)
+                        .unwrap();
                     assert_eq!(first, second, "the discontinuity shares an authored knot");
                 }
             }
@@ -1596,16 +1618,18 @@ mod tests {
 
     fn sqrt_half_parameter(policy: &CurveContext) -> crate::BezierAlgebraicParameter2 {
         let polynomial = decided(
-            crate::BezierParameterPolynomial::try_new_power_basis(
+            crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![Real::from(-1), Real::zero(), Real::from(2)],
                 policy,
             )
             .unwrap(),
         );
-        let interval =
-            decided(crate::BezierParameterInterval::try_new(q(2, 3), q(3, 4), policy).unwrap());
+        let interval = decided(
+            crate::BezierParameterInterval::try_new_with_policy(q(2, 3), q(3, 4), policy).unwrap(),
+        );
         decided(
-            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+            crate::BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
         )
     }
 
@@ -1614,7 +1638,7 @@ mod tests {
         piece: &CurveRegionTrimFragment2,
         policy: &CurveContext,
     ) {
-        let range = decided(piece.parameter_range(policy).unwrap());
+        let range = decided(piece.parameter_range_with_policy(policy).unwrap());
         for (parameter, endpoint) in [
             (range.start(), piece.curve().start()),
             (range.end(), piece.curve().end()),
@@ -2499,7 +2523,11 @@ mod tests {
             .unwrap()
             .parallel_left(q(2, 3))
             .unwrap();
-            let derivative = decided(parallel.derivative_at(&q(1, 2), &policy).unwrap());
+            let derivative = decided(
+                parallel
+                    .derivative_at_with_policy(&q(1, 2), &policy)
+                    .unwrap(),
+            );
             assert_eq!(
                 crate::classify::is_zero(derivative.dx(), &policy),
                 Some(true)
@@ -2513,8 +2541,16 @@ mod tests {
                 Classification::Decided(())
             );
             assert_eq!(
-                decided(parallel.point_at(&Real::zero(), &policy).unwrap()),
-                decided(parallel.point_at(&Real::one(), &policy).unwrap()),
+                decided(
+                    parallel
+                        .point_at_with_policy(&Real::zero(), &policy)
+                        .unwrap()
+                ),
+                decided(
+                    parallel
+                        .point_at_with_policy(&Real::one(), &policy)
+                        .unwrap()
+                ),
             );
             // The whole span contains an interior cusp. Its nonconstancy is
             // a support theorem; regular-span construction must still reject it.

@@ -135,26 +135,47 @@ fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFr
 
 fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
+        BezierParameterPolynomial::try_new_power_basis_with_policy(vec![r(-1), r(2)], &policy())
+            .unwrap(),
     );
-    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());
-    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(2, 5), q(3, 5), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
 }
 
 fn algebraic_sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy()).unwrap(),
+        BezierParameterPolynomial::try_new_power_basis_with_policy(
+            vec![r(-1), r(0), r(2)],
+            &policy(),
+        )
+        .unwrap(),
     );
-    let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());
-    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(2, 3), q(3, 4), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
 }
 
 fn algebraic_sqrt_eighth_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(8)], &policy()).unwrap(),
+        BezierParameterPolynomial::try_new_power_basis_with_policy(
+            vec![r(-1), r(0), r(8)],
+            &policy(),
+        )
+        .unwrap(),
     );
-    let interval = decided(BezierParameterInterval::try_new(q(1, 3), q(2, 5), &policy()).unwrap());
-    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(1, 3), q(2, 5), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
 }
 
 fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
@@ -836,7 +857,7 @@ fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
             .arrangement_sources()
             .expect("normalized boundary retains its source provenance");
         assert_eq!(sources.len(), boundary.len());
-        let area = decided(boundary.signed_area(&policy()).unwrap())
+        let area = decided(boundary.signed_area_with_policy(&policy()).unwrap())
             .expect("quadratic lens has an exact signed area");
         assert_real_eq(&area, &expected_area);
     }

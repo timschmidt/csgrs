@@ -1248,13 +1248,14 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let derivative =
-                match BezierParameterPolynomial::try_new_power_basis(derivative, policy)? {
-                    Classification::Decided(polynomial) => polynomial,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let derivative = match BezierParameterPolynomial::try_new_power_basis_with_policy(
+                derivative, policy,
+            )? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             match CurveParameterDomain2::new(range, None).finite_roots(&derivative, policy)? {
                 Classification::Decided(parameters) => {
                     boundaries.extend(parameters.into_iter().map(|source_parameter| {
@@ -1662,7 +1663,7 @@ impl BezierAlgebraicChord2 {
                 Axis2::X => (point.x(), &power.x_numerator),
                 Axis2::Y => (point.y(), &power.y_numerator),
             };
-            let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+            let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
                 polynomial_subtract(numerator, &polynomial_scale(&power.weight, coordinate)),
                 &strict,
             )? {

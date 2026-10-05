@@ -30,18 +30,24 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
-    decided(BezierParameterPolynomial::try_new_power_basis(coefficients, &policy()).unwrap())
+    decided(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, &policy())
+            .unwrap(),
+    )
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    decided(BezierParameterInterval::try_new(start, end, &policy()).unwrap())
+    decided(BezierParameterInterval::try_new_with_policy(start, end, &policy()).unwrap())
 }
 
 fn isolate(
     polynomial: BezierParameterPolynomial,
     interval: BezierParameterInterval,
 ) -> BezierAlgebraicParameter2 {
-    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
 }
 
 fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {
@@ -658,16 +664,24 @@ mod finite_parameter_interval_contract {
     fn square_root(sign: i32, policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let (lower, upper) = if sign < 0 { (-2, -1) } else { (1, 2) };
         let interval = decided(
-            BezierParameterInterval::try_new(Real::from(lower), Real::from(upper), policy).unwrap(),
+            BezierParameterInterval::try_new_with_policy(
+                Real::from(lower),
+                Real::from(upper),
+                policy,
+            )
+            .unwrap(),
         );
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
+            BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![Real::from(-2), Real::zero(), Real::one()],
                 policy,
             )
             .unwrap(),
         );
-        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap())
+        decided(
+            BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
+        )
     }
 
     #[test]
@@ -684,7 +698,10 @@ mod finite_parameter_interval_contract {
                 let parameter = BezierParameter2::Algebraic(root.clone());
                 let value = Real::from(sign) * Real::from(2).sqrt().unwrap();
                 assert!(matches!(
-                    parameter.cmp_by_refinement(&BezierParameter2::Exact(value.clone()), &policy),
+                    parameter.cmp_by_refinement_with_policy(
+                        &BezierParameter2::Exact(value.clone()),
+                        &policy
+                    ),
                     Ok(Classification::Decided(Ordering::Equal))
                 ));
                 // The unrestricted polynomial image of P(t)=(t,t²) is

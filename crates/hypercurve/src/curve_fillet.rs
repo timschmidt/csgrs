@@ -611,11 +611,17 @@ pub(super) fn coincident_linear_source_chart(
 ) -> ExactCurveResult<LineSeg2> {
     let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause);
     let blocked = |reason| ExactCurveError::blocked(CurveOperation2::Fillet, family, reason);
-    let point = match parallel.point_at(sample, policy).map_err(invalid)? {
+    let point = match parallel
+        .point_at_with_policy(sample, policy)
+        .map_err(invalid)?
+    {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => return Err(blocked(reason)),
     };
-    let derivative = match parallel.derivative_at(sample, policy).map_err(invalid)? {
+    let derivative = match parallel
+        .derivative_at_with_policy(sample, policy)
+        .map_err(invalid)?
+    {
         Classification::Decided(derivative) => derivative,
         Classification::Uncertain(reason) => return Err(blocked(reason)),
     };
@@ -1057,7 +1063,7 @@ pub(super) fn constrained_fillet_centers(
             let regular = policy.bounded_exact_predicate_pass(|| {
                 support
                     .with_distance(Real::zero())
-                    .singularity_analysis(&source.curve_parameter_range(), policy)
+                    .singularity_analysis_with_policy(&source.curve_parameter_range(), policy)
                     .map(|analysis| analysis.map(|analysis| analysis.source_is_regular()))
             });
             if !matches!(regular, Ok(Classification::Decided(true))) {
@@ -1724,7 +1730,7 @@ pub(super) fn parallel_pair_centers(
         let range = expanded[axis].as_ref().unwrap_or(&original_ranges[axis]);
         let source = supports[axis].with_distance(sources[axis].parallel_distance());
         let analysis = match source
-            .singularity_analysis(range, policy)
+            .singularity_analysis_with_policy(range, policy)
             .map_err(invalid)?
         {
             Classification::Decided(analysis) => analysis,
@@ -3795,7 +3801,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let selected = |end, denominator| {
                 let Classification::Decided(polynomial) =
-                    crate::BezierParameterPolynomial::try_new_power_basis(
+                    crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![-Real::one(), Real::zero(), Real::from(denominator)],
                         &policy,
                     )
@@ -3803,8 +3809,9 @@ mod tests {
                 else {
                     panic!("inverse-square polynomial")
                 };
-                let Classification::Decided(roots) =
-                    polynomial.isolate_unit_interval_roots(&policy).unwrap()
+                let Classification::Decided(roots) = polynomial
+                    .isolate_unit_interval_roots_with_policy(&policy)
+                    .unwrap()
                 else {
                     panic!("selected inverse-square parameter")
                 };
@@ -4520,7 +4527,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let contact = |denominator: i64, turns: usize| {
                 let Classification::Decided(polynomial) =
-                    crate::BezierParameterPolynomial::try_new_power_basis(
+                    crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![-Real::one(), Real::zero(), Real::from(denominator)],
                         &policy,
                     )
@@ -4528,8 +4535,9 @@ mod tests {
                 else {
                     panic!("selected circle contact polynomial")
                 };
-                let Classification::Decided(roots) =
-                    polynomial.isolate_unit_interval_roots(&policy).unwrap()
+                let Classification::Decided(roots) = polynomial
+                    .isolate_unit_interval_roots_with_policy(&policy)
+                    .unwrap()
                 else {
                     panic!("selected circle contact root")
                 };
@@ -5700,7 +5708,7 @@ mod algebraic_bridge_fillet_regression {
     fn fillet_extension_owns_the_algebraic_endpoint_bridge() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(polynomial) =
-                crate::BezierParameterPolynomial::try_new_power_basis(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![-Real::one(), Real::zero(), Real::from(2)],
                     &policy,
                 )
@@ -5708,8 +5716,9 @@ mod algebraic_bridge_fillet_regression {
             else {
                 panic!("the endpoint polynomial must be exact");
             };
-            let Classification::Decided(mut roots) =
-                polynomial.isolate_unit_interval_roots(&policy).unwrap()
+            let Classification::Decided(mut roots) = polynomial
+                .isolate_unit_interval_roots_with_policy(&policy)
+                .unwrap()
             else {
                 panic!("the positive endpoint root must be isolated");
             };
@@ -6069,16 +6078,19 @@ mod stationary_retained_point_constraint_regression {
         let end = Point2::new(point.x() + Real::one(), point.y() + Real::from(2));
         let source = Curve2::from(QuadraticBezier2::new(origin.clone(), origin, end));
         let polynomial = decided(
-            crate::BezierParameterPolynomial::try_new_power_basis(
+            crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![-Real::one(), Real::zero(), Real::from(2)],
                 policy,
             )
             .unwrap(),
         );
-        let interval =
-            decided(crate::BezierParameterInterval::try_new(q(1, 2), Real::one(), policy).unwrap());
+        let interval = decided(
+            crate::BezierParameterInterval::try_new_with_policy(q(1, 2), Real::one(), policy)
+                .unwrap(),
+        );
         let parameter = CurveParameter2::from(BezierParameter2::Algebraic(decided(
-            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+            crate::BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
         )));
         let result = source.point_at_with_policy(&parameter, policy).unwrap();
         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
@@ -6412,7 +6424,7 @@ mod incident_parallel_cusp_fillet_regression {
             .unwrap();
             for (parameter, expected) in [(q(3, 4), &join), (Real::one(), &contact)] {
                 let Classification::Decided(actual) =
-                    parallel.point_at(&parameter, &policy).unwrap()
+                    parallel.point_at_with_policy(&parameter, &policy).unwrap()
                 else {
                     panic!("the source normal is defined at the authored endpoint and offset cusp");
                 };
@@ -6574,7 +6586,7 @@ mod incident_parallel_cusp_nonlinear_regression {
             .unwrap();
             for (parameter, expected) in [(q(3, 4), &join), (Real::one(), &contact)] {
                 let Classification::Decided(actual) =
-                    parallel.point_at(&parameter, &policy).unwrap()
+                    parallel.point_at_with_policy(&parameter, &policy).unwrap()
                 else {
                     panic!("the source normal is defined at the authored endpoint and offset cusp");
                 };

@@ -161,13 +161,20 @@ fn retained_quadratic_parallel_evaluates_exact_point_and_derivative() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
     let parallel = source.parallel_left(r(2)).unwrap();
 
-    let point = match parallel.point_at(&q(1, 2), &policy()).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("midpoint was uncertain: {reason:?}"),
-    };
+    let point =
+        match crate::support::under_classified_result(&policy(), || parallel.point_at(&q(1, 2)))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("midpoint was uncertain: {reason:?}"),
+        };
     assert_eq!(point, Point2::new(r(1), q(5, 2)));
 
-    let derivative = match parallel.derivative_at(&q(1, 2), &policy()).unwrap() {
+    let derivative = match crate::support::under_classified_result(&policy(), || {
+        parallel.derivative_at(&q(1, 2))
+    })
+    .unwrap()
+    {
         Classification::Decided(derivative) => derivative,
         Classification::Uncertain(reason) => {
             panic!("parallel derivative was uncertain: {reason:?}")
@@ -182,14 +189,20 @@ fn zero_distance_parallel_is_exact_source_even_at_source_cusp() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(0, 0));
     let parallel = source.parallel_left(r(0)).unwrap();
     let midpoint = q(1, 2);
-    let point = match parallel.point_at(&midpoint, &policy()).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("identity parallel was uncertain: {reason:?}"),
-    };
+    let point =
+        match crate::support::under_classified_result(&policy(), || parallel.point_at(&midpoint))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                panic!("identity parallel was uncertain: {reason:?}")
+            }
+        };
     assert_eq!(point, source.point_at(midpoint));
-    let analysis = match parallel
-        .singularity_analysis(&CurveParameterRange2::unit(), &policy())
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(&policy(), || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("identity analysis was uncertain: {reason:?}"),
@@ -248,13 +261,18 @@ fn finite_parallel_singularity_ranges_preserve_charts_and_normal_sheets() {
                                 (start.clone(), end.clone())
                             };
                             let Classification::Decided(range) =
-                                CurveParameterRange2::try_new(start.into(), end.into(), &policy)
-                                    .unwrap()
+                                crate::support::under_classified_result(&policy, || {
+                                    CurveParameterRange2::try_new(start.into(), end.into())
+                                })
+                                .unwrap()
                             else {
                                 panic!("represented finite range")
                             };
                             let Classification::Decided(analysis) =
-                                parallel.singularity_analysis(&range, &policy).unwrap()
+                                crate::support::under_classified_result(&policy, || {
+                                    parallel.singularity_analysis(&range)
+                                })
+                                .unwrap()
                             else {
                                 panic!("finite parabola regularity")
                             };
@@ -265,12 +283,9 @@ fn finite_parallel_singularity_ranges_preserve_charts_and_normal_sheets() {
                                     panic!("one cusp on the positive normal sheet: {analysis:?}")
                                 };
                                 assert_eq!(
-                                    actual
-                                        .cmp_by_refinement(
-                                            &BezierParameter2::Exact(cusp.clone()),
-                                            &policy
-                                        )
-                                        .unwrap(),
+                                    crate::support::under_classified_result(&policy, || actual
+                                        .cmp_by_refinement(&BezierParameter2::Exact(cusp.clone())))
+                                    .unwrap(),
                                     Classification::Decided(std::cmp::Ordering::Equal),
                                 );
                             } else {
@@ -307,12 +322,18 @@ fn finite_parallel_singularity_ranges_separate_source_roots_and_poles() {
                 (2, 3, true),
             ] {
                 let Classification::Decided(range) =
-                    CurveParameterRange2::try_new(r(start).into(), r(end).into(), &policy).unwrap()
+                    crate::support::under_classified_result(&policy, || {
+                        CurveParameterRange2::try_new(r(start).into(), r(end).into())
+                    })
+                    .unwrap()
                 else {
                     panic!("represented finite range")
                 };
                 let Classification::Decided(analysis) =
-                    stationary.singularity_analysis(&range, &policy).unwrap()
+                    crate::support::under_classified_result(&policy, || {
+                        stationary.singularity_analysis(&range)
+                    })
+                    .unwrap()
                 else {
                     panic!("source singularity is retained evidence")
                 };
@@ -324,17 +345,23 @@ fn finite_parallel_singularity_ranges_separate_source_roots_and_poles() {
                         panic!("one source root")
                     };
                     assert_eq!(
-                        root.cmp_by_refinement(&BezierParameter2::Exact(r(2)), &policy)
-                            .unwrap(),
+                        crate::support::under_classified_result(&policy, || root
+                            .cmp_by_refinement(&BezierParameter2::Exact(r(2))))
+                        .unwrap(),
                         Classification::Decided(std::cmp::Ordering::Equal)
                     );
                     assert!(matches!(
-                        rational.singularity_analysis(&range, &policy).unwrap(),
+                        crate::support::under_classified_result(&policy, || rational
+                            .singularity_analysis(&range))
+                        .unwrap(),
                         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
                     ));
                 } else {
                     let Classification::Decided(analysis) =
-                        rational.singularity_analysis(&range, &policy).unwrap()
+                        crate::support::under_classified_result(&policy, || {
+                            rational.singularity_analysis(&range)
+                        })
+                        .unwrap()
                     else {
                         panic!("a pole elsewhere cannot reject this range")
                     };
@@ -372,11 +399,13 @@ fn parallel_cusp_sign_excludes_shared_algebraic_source_singularities() {
                     source.clone()
                 };
                 for distance in [-1, 0, 1] {
-                    let analysis = source
-                        .parallel_left(q(distance, 20))
-                        .unwrap()
-                        .singularity_analysis(&CurveParameterRange2::unit(), &policy)
-                        .unwrap();
+                    let analysis = crate::support::under_classified_result(&policy, || {
+                        source
+                            .parallel_left(q(distance, 20))
+                            .unwrap()
+                            .singularity_analysis(&CurveParameterRange2::unit())
+                    })
+                    .unwrap();
                     let Classification::Decided(analysis) = analysis else {
                         panic!("shared algebraic roots must retain exact cusp classification")
                     };
@@ -392,9 +421,9 @@ fn parallel_cusp_sign_excludes_shared_algebraic_source_singularities() {
                         (upper, std::cmp::Ordering::Less),
                     ] {
                         assert_eq!(
-                            singularity
-                                .cmp_by_refinement(&BezierParameter2::Exact(bound), &policy)
-                                .unwrap(),
+                            crate::support::under_classified_result(&policy, || singularity
+                                .cmp_by_refinement(&BezierParameter2::Exact(bound)))
+                            .unwrap(),
                             Classification::Decided(order)
                         );
                     }
@@ -405,11 +434,15 @@ fn parallel_cusp_sign_excludes_shared_algebraic_source_singularities() {
                             )
                         };
                         assert_eq!(
-                            left.cmp_by_refinement(singularity, &policy).unwrap(),
+                            crate::support::under_classified_result(&policy, || left
+                                .cmp_by_refinement(singularity))
+                            .unwrap(),
                             Classification::Decided(std::cmp::Ordering::Less)
                         );
                         assert_eq!(
-                            right.cmp_by_refinement(singularity, &policy).unwrap(),
+                            crate::support::under_classified_result(&policy, || right
+                                .cmp_by_refinement(singularity))
+                            .unwrap(),
                             Classification::Decided(std::cmp::Ordering::Greater)
                         );
                     } else {
@@ -427,9 +460,10 @@ fn quadratic_parallel_isolates_distance_dependent_interior_cusp() {
     // P'' x P' = -2, so a left distance sqrt(2) creates a parallel cusp.
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
     let parallel = source.parallel_left(r(2).sqrt().unwrap()).unwrap();
-    let analysis = match parallel
-        .singularity_analysis(&CurveParameterRange2::unit(), &policy())
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(&policy(), || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp isolation was uncertain: {reason:?}"),
@@ -438,7 +472,11 @@ fn quadratic_parallel_isolates_distance_dependent_interior_cusp() {
     assert_eq!(analysis.parallel_cusps().len(), 1);
     assert_eq!(exact_parameter(&analysis.parallel_cusps()[0]), &q(1, 2));
 
-    let derivative = match parallel.derivative_at(&q(1, 2), &policy()).unwrap() {
+    let derivative = match crate::support::under_classified_result(&policy(), || {
+        parallel.derivative_at(&q(1, 2))
+    })
+    .unwrap()
+    {
         Classification::Decided(derivative) => derivative,
         Classification::Uncertain(reason) => panic!("cusp derivative was uncertain: {reason:?}"),
     };
@@ -460,9 +498,10 @@ fn quadratic_parallel_cusp_matches_its_radical_parameter() {
         .unwrap();
     let mut strict_cusp = None;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let analysis = match parallel
-            .singularity_analysis(&CurveParameterRange2::unit(), &policy)
-            .unwrap()
+        let analysis = match crate::support::under_classified_result(&policy, || {
+            parallel.singularity_analysis(&CurveParameterRange2::unit())
+        })
+        .unwrap()
         {
             Classification::Decided(analysis) => analysis,
             Classification::Uncertain(reason) => {
@@ -476,19 +515,24 @@ fn quadratic_parallel_cusp_matches_its_radical_parameter() {
         // The isolated cusp stays a selected root of the cusp polynomial and
         // equals the independently derived radical exactly.
         assert_eq!(
-            CurveParameter2::from(cusp.clone())
-                .compare(&expected.clone().into(), &policy)
-                .unwrap()
-                .value,
+            crate::support::under_outcome_classified(&policy, || CurveParameter2::from(
+                cusp.clone()
+            )
+            .compare(&expected.clone().into()))
+            .unwrap()
+            .value,
             Classification::Decided(std::cmp::Ordering::Equal)
         );
         let cusp = &expected;
-        let derivative = match parallel.derivative_at(cusp, &policy).unwrap() {
-            Classification::Decided(derivative) => derivative,
-            Classification::Uncertain(reason) => {
-                panic!("the represented cusp derivative was uncertain: {reason:?}")
-            }
-        };
+        let derivative =
+            match crate::support::under_classified_result(&policy, || parallel.derivative_at(cusp))
+                .unwrap()
+            {
+                Classification::Decided(derivative) => derivative,
+                Classification::Uncertain(reason) => {
+                    panic!("the represented cusp derivative was uncertain: {reason:?}")
+                }
+            };
         assert_eq!(derivative.zero_status(), hyperreal::ZeroKnowledge::Zero);
         if let Some(strict_cusp) = &strict_cusp {
             assert_eq!(cusp, strict_cusp);
@@ -501,11 +545,13 @@ fn quadratic_parallel_cusp_matches_its_radical_parameter() {
 #[test]
 fn cubic_parallel_isolates_a_symmetric_pair_of_offset_cusps() {
     let source = CubicBezier2::new(p(0, 0), p(1, -4), p(2, -4), p(3, 0));
-    let analysis = match source
-        .parallel_left(q(1, 2))
-        .unwrap()
-        .singularity_analysis(&CurveParameterRange2::unit(), &policy())
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(&policy(), || {
+        source
+            .parallel_left(q(1, 2))
+            .unwrap()
+            .singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp-pair isolation failed: {reason:?}"),
@@ -513,10 +559,10 @@ fn cubic_parallel_isolates_a_symmetric_pair_of_offset_cusps() {
     assert!(analysis.source_is_regular());
     assert_eq!(analysis.parallel_cusps().len(), 2);
     assert!(
-        analysis.parallel_cusps()[0]
-            .cmp_by_interval(&analysis.parallel_cusps()[1], &policy())
-            .unwrap()
-            .is_decided()
+        crate::support::under_classified_result(&policy(), || analysis.parallel_cusps()[0]
+            .cmp_by_interval(&analysis.parallel_cusps()[1]))
+        .unwrap()
+        .is_decided()
     );
 }
 
@@ -530,7 +576,11 @@ fn retained_parallel_accepts_every_hyperreal_representation_as_exact_translation
             Point2::new(&translation + r(2), r(0)),
         );
         let parallel = source.parallel_left(q(1, 10)).unwrap();
-        let point = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let point = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 panic!("representation-specific parallel evaluation failed: {reason:?}")
@@ -552,14 +602,19 @@ fn exact_parallel_commutes_with_orientation_preserving_rigid_transform() {
     let parallel = source.parallel_left(q(2, 5)).unwrap();
     let transformed_parallel = transformed.parallel_left(q(2, 5)).unwrap();
     for parameter in [r(0), q(1, 3), q(2, 3), r(1)] {
-        let point = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let point = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => panic!("source parallel failed: {reason:?}"),
         };
         let expected = Point2::new(r(5) - point.y(), point.x() - r(3));
-        let actual = match transformed_parallel
-            .point_at(&parameter, &policy())
-            .unwrap()
+        let actual = match crate::support::under_classified_result(&policy(), || {
+            transformed_parallel.point_at(&parameter)
+        })
+        .unwrap()
         {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
@@ -578,9 +633,10 @@ fn exact_parallel_commutes_with_orientation_preserving_rigid_transform() {
 fn cubic_parallel_analysis_keeps_regular_inflection_cusp_free() {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -2), p(3, 0));
     let parallel = source.parallel_left(q(1, 100)).unwrap();
-    let analysis = match parallel
-        .singularity_analysis(&CurveParameterRange2::unit(), &policy())
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(&policy(), || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => {
@@ -603,9 +659,10 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
         Point2::new(q(2, 3), r(1)),
     );
     let parallel = source.parallel_left(r(1)).unwrap();
-    let exact = match parallel
-        .exact_pythagorean_hodograph_offset(&policy())
-        .unwrap()
+    let exact = match crate::support::under_classified_result(&policy(), || {
+        parallel.exact_pythagorean_hodograph_offset()
+    })
+    .unwrap()
     {
         Classification::Decided(Some(exact)) => exact,
         Classification::Decided(None) => panic!("PH cubic was not recognized"),
@@ -623,7 +680,11 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
     );
 
     for parameter in [r(0), q(1, 2), r(1)] {
-        let analytic = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let analytic = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 panic!("analytic PH evaluation was uncertain: {reason:?}")
@@ -643,15 +704,18 @@ fn approximate_ph_materialization_never_selects_a_structural_component() {
     let parallel = source.parallel_left(Real::one()).unwrap();
 
     assert!(matches!(
-        parallel.exact_pythagorean_hodograph_offset(&CurveContext::STRICT),
+        crate::support::under_classified_result(&CurveContext::STRICT, || parallel
+            .exact_pythagorean_hodograph_offset()),
         Ok(Classification::Uncertain(_))
     ));
     assert!(matches!(
-        parallel.exact_pythagorean_hodograph_offset(&CurveContext::APPROXIMATE_512),
+        crate::support::under_classified_result(&CurveContext::APPROXIMATE_512, || parallel
+            .exact_pythagorean_hodograph_offset()),
         Ok(Classification::Uncertain(_))
     ));
     assert!(matches!(
-        parallel.exact_pythagorean_hodograph_offset(&CurveContext::STRICT),
+        crate::support::under_classified_result(&CurveContext::STRICT, || parallel
+            .exact_pythagorean_hodograph_offset()),
         Ok(Classification::Uncertain(_))
     ));
 }
@@ -661,9 +725,10 @@ fn nonuniform_rational_line_parallel_materializes_exactly() {
     let source =
         RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
     let parallel = source.parallel_left(r(2)).unwrap();
-    let exact = match parallel
-        .exact_pythagorean_hodograph_offset(&policy())
-        .unwrap()
+    let exact = match crate::support::under_classified_result(&policy(), || {
+        parallel.exact_pythagorean_hodograph_offset()
+    })
+    .unwrap()
     {
         Classification::Decided(Some(exact)) => exact,
         Classification::Decided(None) => panic!("rational line was not recognized as PH"),
@@ -673,7 +738,11 @@ fn nonuniform_rational_line_parallel_materializes_exactly() {
     };
 
     for parameter in [r(0), q(1, 2), r(1)] {
-        let analytic = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let analytic = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 panic!("rational analytic parallel was uncertain: {reason:?}")
@@ -685,7 +754,7 @@ fn nonuniform_rational_line_parallel_materializes_exactly() {
         assert_eq!(analytic.y(), &r(2));
     }
     assert_eq!(
-        parallel.point_at(&q(1, 2), &policy()).unwrap(),
+        crate::support::under_classified_result(&policy(), || parallel.point_at(&q(1, 2))).unwrap(),
         Classification::Decided(Point2::new(q(5, 4), r(2)))
     );
 }
@@ -698,9 +767,10 @@ fn rational_quarter_circle_parallel_materializes_concentric_exact_curve() {
     let source =
         RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
     let parallel = source.parallel_left(q(1, 2)).unwrap();
-    let exact = match parallel
-        .exact_pythagorean_hodograph_offset(&policy())
-        .unwrap()
+    let exact = match crate::support::under_classified_result(&policy(), || {
+        parallel.exact_pythagorean_hodograph_offset()
+    })
+    .unwrap()
     {
         Classification::Decided(Some(exact)) => exact,
         Classification::Decided(None) => panic!("rational circle was not recognized as PH"),
@@ -710,7 +780,11 @@ fn rational_quarter_circle_parallel_materializes_concentric_exact_curve() {
     };
 
     for parameter in [r(0), q(1, 2), r(1)] {
-        let analytic = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let analytic = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 panic!("rational circle parallel was uncertain: {reason:?}")
@@ -745,9 +819,10 @@ fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly()
     )
     .unwrap();
     let parallel = source.parallel_left(q(1, 10)).unwrap();
-    let analysis = match parallel
-        .singularity_analysis(&CurveParameterRange2::unit(), &policy())
-        .unwrap()
+    let analysis = match crate::support::under_classified_result(&policy(), || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
     {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => {
@@ -757,9 +832,10 @@ fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly()
     assert!(analysis.source_is_regular());
     assert!(analysis.parallel_is_cusp_free());
 
-    let exact = match parallel
-        .exact_pythagorean_hodograph_offset(&policy())
-        .unwrap()
+    let exact = match crate::support::under_classified_result(&policy(), || {
+        parallel.exact_pythagorean_hodograph_offset()
+    })
+    .unwrap()
     {
         Classification::Decided(Some(exact)) => exact,
         Classification::Decided(None) => panic!("noncircular rational PH curve was rejected"),
@@ -768,19 +844,26 @@ fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly()
         }
     };
     let midpoint = q(1, 2);
-    let analytic_point = match parallel.point_at(&midpoint, &policy()).unwrap() {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            panic!("rational PH point was uncertain: {reason:?}")
-        }
-    };
+    let analytic_point =
+        match crate::support::under_classified_result(&policy(), || parallel.point_at(&midpoint))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                panic!("rational PH point was uncertain: {reason:?}")
+            }
+        };
     assert_eq!(analytic_point, Point2::new(q(227, 600), q(31, 100)));
     assert_eq!(
         crate::support::under_value(&policy(), || exact.curve().point_at(&midpoint)).unwrap(),
         analytic_point
     );
 
-    let analytic_derivative = match parallel.derivative_at(&midpoint, &policy()).unwrap() {
+    let analytic_derivative = match crate::support::under_classified_result(&policy(), || {
+        parallel.derivative_at(&midpoint)
+    })
+    .unwrap()
+    {
         Classification::Decided(derivative) => derivative,
         Classification::Uncertain(reason) => {
             panic!("rational PH derivative was uncertain: {reason:?}")
@@ -808,9 +891,10 @@ fn exact_ph_materialization_retains_natural_degree_with_mixed_weights() {
     );
     let parallel = source.parallel_left(q(1, 10)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let exact = match parallel
-            .exact_pythagorean_hodograph_offset(&policy)
-            .unwrap()
+        let exact = match crate::support::under_classified_result(&policy, || {
+            parallel.exact_pythagorean_hodograph_offset()
+        })
+        .unwrap()
         {
             Classification::Decided(Some(exact)) => exact,
             Classification::Decided(None) => panic!("strictly regular PH curve was rejected"),
@@ -820,7 +904,11 @@ fn exact_ph_materialization_retains_natural_degree_with_mixed_weights() {
         };
         assert_eq!(exact.rational_degree(), 5);
         for parameter in [r(0), q(1, 2), r(1)] {
-            let analytic = match parallel.point_at(&parameter, &policy).unwrap() {
+            let analytic = match crate::support::under_classified_result(&policy, || {
+                parallel.point_at(&parameter)
+            })
+            .unwrap()
+            {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     panic!("analytic PH parallel was uncertain: {reason:?}")
@@ -843,9 +931,10 @@ fn symmetric_algebraic_quarter_circle_parallel_is_exact_under_both_policies() {
             .unwrap();
     let parallel = source.parallel_left(q(1, 2)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let exact = match parallel
-            .exact_pythagorean_hodograph_offset(&policy)
-            .unwrap()
+        let exact = match crate::support::under_classified_result(&policy, || {
+            parallel.exact_pythagorean_hodograph_offset()
+        })
+        .unwrap()
         {
             Classification::Decided(Some(exact)) => exact,
             Classification::Decided(None) => panic!("algebraic rational circle was not PH"),
@@ -887,9 +976,10 @@ fn circular_parallel_materializes_radius_collapse_and_reversal_exactly() {
         (r(2), vec![p(-1, 0), p(-1, -1), p(0, -1)]),
     ] {
         let parallel = source.parallel_left(distance).unwrap();
-        let exact = match parallel
-            .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
-            .unwrap()
+        let exact = match crate::support::under_classified_result(&CurveContext::STRICT, || {
+            parallel.exact_pythagorean_hodograph_offset()
+        })
+        .unwrap()
         {
             Classification::Decided(Some(exact)) => exact,
             Classification::Decided(None) => panic!("circular parallel was not exact"),
@@ -907,11 +997,13 @@ fn circular_parallel_materializes_radius_collapse_and_reversal_exactly() {
 fn rational_parallel_rejects_projective_denominator_boundary() {
     let source =
         RationalBezier2::try_new(vec![p(0, 0), p(1, 1), p(2, 0)], vec![r(1), r(-1), r(1)]).unwrap();
-    let analysis = source
-        .parallel_left(r(1))
-        .unwrap()
-        .singularity_analysis(&CurveParameterRange2::unit(), &policy())
-        .unwrap();
+    let analysis = crate::support::under_classified_result(&policy(), || {
+        source
+            .parallel_left(r(1))
+            .unwrap()
+            .singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap();
     assert_eq!(
         analysis,
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
@@ -929,19 +1021,28 @@ fn exact_parallel_reversal_preserves_image_and_reverses_parameter_derivative() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for parameter in [r(0), q(1, 4), r(1)] {
             let complement = r(1) - &parameter;
-            let expected_point = parallel.point_at(&complement, &policy).unwrap();
+            let expected_point =
+                crate::support::under_classified_result(&policy, || parallel.point_at(&complement))
+                    .unwrap();
             assert_eq!(
-                reversed.point_at(&parameter, &policy).unwrap(),
+                crate::support::under_classified_result(&policy, || reversed.point_at(&parameter))
+                    .unwrap(),
                 expected_point
             );
 
             let Classification::Decided(expected_derivative) =
-                parallel.derivative_at(&complement, &policy).unwrap()
+                crate::support::under_classified_result(&policy, || {
+                    parallel.derivative_at(&complement)
+                })
+                .unwrap()
             else {
                 panic!("source parallel derivative was uncertain");
             };
             let Classification::Decided(actual_derivative) =
-                reversed.derivative_at(&parameter, &policy).unwrap()
+                crate::support::under_classified_result(&policy, || {
+                    reversed.derivative_at(&parameter)
+                })
+                .unwrap()
             else {
                 panic!("reversed parallel derivative was uncertain");
             };
@@ -959,7 +1060,10 @@ fn exact_parallel_split_preserves_parameter_map_and_chain_derivative() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided((left, right)) =
-            parallel.split_at_exact(&split_parameter, &policy).unwrap()
+            crate::support::under_classified_result(&policy, || {
+                parallel.split_at_exact(&split_parameter)
+            })
+            .unwrap()
         else {
             panic!("interior parallel split was uncertain");
         };
@@ -967,20 +1071,27 @@ fn exact_parallel_split_preserves_parameter_map_and_chain_derivative() {
         let left_global = q(1, 6);
         let right_global = q(2, 3);
         assert_eq!(
-            left.point_at(&local, &policy).unwrap(),
-            parallel.point_at(&left_global, &policy).unwrap()
+            crate::support::under_classified_result(&policy, || left.point_at(&local)).unwrap(),
+            crate::support::under_classified_result(&policy, || parallel.point_at(&left_global))
+                .unwrap()
         );
         assert_eq!(
-            right.point_at(&local, &policy).unwrap(),
-            parallel.point_at(&right_global, &policy).unwrap()
+            crate::support::under_classified_result(&policy, || right.point_at(&local)).unwrap(),
+            crate::support::under_classified_result(&policy, || parallel.point_at(&right_global))
+                .unwrap()
         );
 
-        let Classification::Decided(left_derivative) = left.derivative_at(&local, &policy).unwrap()
+        let Classification::Decided(left_derivative) =
+            crate::support::under_classified_result(&policy, || left.derivative_at(&local))
+                .unwrap()
         else {
             panic!("left split derivative was uncertain");
         };
         let Classification::Decided(source_left_derivative) =
-            parallel.derivative_at(&left_global, &policy).unwrap()
+            crate::support::under_classified_result(&policy, || {
+                parallel.derivative_at(&left_global)
+            })
+            .unwrap()
         else {
             panic!("source left derivative was uncertain");
         };
@@ -989,12 +1100,16 @@ fn exact_parallel_split_preserves_parameter_map_and_chain_derivative() {
         assert_real_eq(left_derivative.dy(), expected_left_derivative.dy());
 
         let Classification::Decided(right_derivative) =
-            right.derivative_at(&local, &policy).unwrap()
+            crate::support::under_classified_result(&policy, || right.derivative_at(&local))
+                .unwrap()
         else {
             panic!("right split derivative was uncertain");
         };
         let Classification::Decided(source_right_derivative) =
-            parallel.derivative_at(&right_global, &policy).unwrap()
+            crate::support::under_classified_result(&policy, || {
+                parallel.derivative_at(&right_global)
+            })
+            .unwrap()
         else {
             panic!("source right derivative was uncertain");
         };
@@ -1003,11 +1118,13 @@ fn exact_parallel_split_preserves_parameter_map_and_chain_derivative() {
         assert_real_eq(right_derivative.dy(), expected_right_derivative.dy());
 
         assert_eq!(
-            parallel.split_at_exact(&r(0), &policy).unwrap(),
+            crate::support::under_classified_result(&policy, || parallel.split_at_exact(&r(0)))
+                .unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
         assert_eq!(
-            parallel.split_at_exact(&r(1), &policy).unwrap(),
+            crate::support::under_classified_result(&policy, || parallel.split_at_exact(&r(1)))
+                .unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
     }
@@ -1022,8 +1139,10 @@ fn rational_parallel_subcurve_preserves_parameter_map_and_chain_derivative() {
     let end = q(3, 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(subcurve) = parallel
-            .subcurve_between_exact(&start, &end, &policy)
+        let Classification::Decided(subcurve) =
+            crate::support::under_classified_result(&policy, || {
+                parallel.subcurve_between_exact(&start, &end)
+            })
             .unwrap()
         else {
             panic!("rational parallel subcurve was uncertain");
@@ -1034,18 +1153,22 @@ fn rational_parallel_subcurve_preserves_parameter_map_and_chain_derivative() {
             (r(1), end.clone()),
         ] {
             assert_eq!(
-                subcurve.point_at(&local, &policy).unwrap(),
-                parallel.point_at(&global, &policy).unwrap()
+                crate::support::under_classified_result(&policy, || subcurve.point_at(&local))
+                    .unwrap(),
+                crate::support::under_classified_result(&policy, || parallel.point_at(&global))
+                    .unwrap()
             );
         }
 
         let Classification::Decided(subcurve_derivative) =
-            subcurve.derivative_at(&q(1, 2), &policy).unwrap()
+            crate::support::under_classified_result(&policy, || subcurve.derivative_at(&q(1, 2)))
+                .unwrap()
         else {
             panic!("rational parallel subcurve derivative was uncertain");
         };
         let Classification::Decided(source_derivative) =
-            parallel.derivative_at(&q(1, 2), &policy).unwrap()
+            crate::support::under_classified_result(&policy, || parallel.derivative_at(&q(1, 2)))
+                .unwrap()
         else {
             panic!("rational source parallel derivative was uncertain");
         };
@@ -1054,9 +1177,9 @@ fn rational_parallel_subcurve_preserves_parameter_map_and_chain_derivative() {
         assert_real_eq(subcurve_derivative.dy(), expected_derivative.dy());
 
         assert_eq!(
-            parallel
-                .subcurve_between_exact(&start, &start, &policy)
-                .unwrap(),
+            crate::support::under_classified_result(&policy, || parallel
+                .subcurve_between_exact(&start, &start))
+            .unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
     }
@@ -1076,7 +1199,10 @@ fn exact_parallel_conservative_bounds_cover_both_offset_sides() {
             assert_eq!(bounds.max(), &p(4, 2));
             for parameter in [r(0), q(1, 4), q(1, 2), q(3, 4), r(1)] {
                 let Classification::Decided(point) =
-                    parallel.point_at(&parameter, &policy).unwrap()
+                    crate::support::under_classified_result(&policy, || {
+                        parallel.point_at(&parameter)
+                    })
+                    .unwrap()
                 else {
                     panic!("parallel point was uncertain");
                 };
@@ -1094,9 +1220,9 @@ fn generic_cubic_does_not_claim_exact_ph_parallel() {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -2), p(3, 0));
     let parallel = source.parallel_left(r(1)).unwrap();
     assert!(matches!(
-        parallel
-            .exact_pythagorean_hodograph_offset(&policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || parallel
+            .exact_pythagorean_hodograph_offset())
+        .unwrap(),
         Classification::Decided(None)
     ));
 }
@@ -1109,11 +1235,13 @@ fn exact_parallel_promotes_ph_cubic_without_fitting() {
         Point2::new(q(2, 3), q(1, 3)),
         Point2::new(q(2, 3), r(1)),
     );
-    let result = source
-        .parallel_left(q(1, 5))
-        .unwrap()
-        .exact_pythagorean_hodograph_offset(&policy())
-        .unwrap();
+    let result = crate::support::under_classified_result(&policy(), || {
+        source
+            .parallel_left(q(1, 5))
+            .unwrap()
+            .exact_pythagorean_hodograph_offset()
+    })
+    .unwrap();
     let Classification::Decided(Some(offset)) = result else {
         panic!("the retained exact parallel did not select the PH lane");
     };
@@ -1136,7 +1264,11 @@ fn blend2d_quadratic_candidate_matches_exact_parallel_endpoints() {
         (r(0), candidate.curve().start()),
         (r(1), candidate.curve().end()),
     ] {
-        let exact = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let exact = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 panic!("endpoint parallel evaluation was uncertain: {reason:?}")
@@ -1209,11 +1341,14 @@ fn verifier_certifies_exact_straight_parallel_without_subdivision() {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("line candidate was uncertain: {reason:?}"),
     };
-    let options =
-        BezierParallelVerificationOptions::try_new(q(1, 1_000_000), 4, &policy()).unwrap();
-    let certified = match parallel
-        .verify_polynomial_candidate(candidate.curve().clone().into(), &options, &policy())
-        .unwrap()
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 1_000_000), 4)
+    })
+    .unwrap();
+    let certified = match crate::support::under_classified_result(&policy(), || {
+        parallel.verify_polynomial_candidate(candidate.curve().clone().into(), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(certified) => certified,
         Classification::Uncertain(reason) => panic!("line verification failed: {reason:?}"),
@@ -1235,10 +1370,14 @@ fn verifier_certifies_curved_blend2d_candidate_by_exact_subdivision() {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("curved candidate was uncertain: {reason:?}"),
     };
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy()).unwrap();
-    let certified = match parallel
-        .verify_polynomial_candidate(candidate.curve().clone().into(), &options, &policy())
-        .unwrap()
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 16)
+    })
+    .unwrap();
+    let certified = match crate::support::under_classified_result(&policy(), || {
+        parallel.verify_polynomial_candidate(candidate.curve().clone().into(), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(certified) => certified,
         Classification::Uncertain(reason) => panic!("curved verification failed: {reason:?}"),
@@ -1255,11 +1394,14 @@ fn verifier_certifies_curved_blend2d_candidate_by_exact_subdivision() {
 fn verifier_rejects_candidate_outside_requested_parallel_tube() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
     let parallel = source.parallel_left(r(1)).unwrap();
-    let options = BezierParallelVerificationOptions::try_new(q(1, 10), 8, &policy()).unwrap();
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 10), 8)
+    })
+    .unwrap();
     assert!(matches!(
-        parallel
-            .verify_polynomial_candidate(source.into(), &options, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || parallel
+            .verify_polynomial_candidate(source.into(), &options))
+        .unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
     ));
 }
@@ -1268,19 +1410,21 @@ fn verifier_rejects_candidate_outside_requested_parallel_tube() {
 fn verifier_refuses_source_with_undefined_normal() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(0, 0));
     let parallel = source.parallel_left(r(1)).unwrap();
-    let options = BezierParallelVerificationOptions::try_new(q(1, 10), 8, &policy()).unwrap();
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 10), 8)
+    })
+    .unwrap();
     assert!(matches!(
-        parallel
+        crate::support::under_classified_result(&policy(), || parallel
             .verify_polynomial_candidate(
                 BezierParallelApproximationCurve2::Quadratic(QuadraticBezier2::new(
                     p(0, 1),
                     p(1, 1),
                     p(0, 1),
                 )),
-                &options,
-                &policy(),
-            )
-            .unwrap(),
+                &options
+            ))
+        .unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
     ));
 }
@@ -1288,7 +1432,10 @@ fn verifier_refuses_source_with_undefined_normal() {
 #[test]
 fn adaptive_quadratic_construction_subdivides_until_certified() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
-    let options = BezierParallelVerificationOptions::try_new(q(1, 100), 16, &policy()).unwrap();
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 100), 16)
+    })
+    .unwrap();
     let path = match crate::support::under_classified_result(&policy(), || {
         source.approximate_parallel_blend2d_certified(q(1, 4), &options)
     })
@@ -1319,7 +1466,10 @@ fn adaptive_quadratic_construction_subdivides_until_certified() {
 #[test]
 fn adaptive_cubic_construction_emits_connected_certified_curves() {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -1), p(4, 0));
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 14, &policy()).unwrap();
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 14)
+    })
+    .unwrap();
     let path = match crate::support::under_classified_result(&policy(), || {
         source.approximate_parallel_blend2d_certified(q(1, 10), &options)
     })
@@ -1351,13 +1501,21 @@ fn adaptive_cubic_construction_emits_connected_certified_curves() {
 fn levien_candidate_matches_parallel_endpoints_tangents_and_midpoint() {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, 2), p(4, 0));
     let parallel = source.parallel_left(q(1, 10)).unwrap();
-    let candidate = match parallel.levien_cubic_candidate(&policy()).unwrap() {
+    let candidate = match crate::support::under_classified_result(&policy(), || {
+        parallel.levien_cubic_candidate()
+    })
+    .unwrap()
+    {
         Classification::Decided(candidate) => candidate,
         Classification::Uncertain(reason) => panic!("Levien candidate failed: {reason:?}"),
     };
     assert!(candidate.matched_midpoint());
     for parameter in [r(0), q(1, 2), r(1)] {
-        let exact = match parallel.point_at(&parameter, &policy()).unwrap() {
+        let exact = match crate::support::under_classified_result(&policy(), || {
+            parallel.point_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => panic!("parallel evaluation failed: {reason:?}"),
         };
@@ -1372,7 +1530,11 @@ fn levien_candidate_matches_parallel_endpoints_tangents_and_midpoint() {
         (r(0), hypercurve::BezierEndpoint::Start),
         (r(1), hypercurve::BezierEndpoint::End),
     ] {
-        let exact = match parallel.derivative_at(&parameter, &policy()).unwrap() {
+        let exact = match crate::support::under_classified_result(&policy(), || {
+            parallel.derivative_at(&parameter)
+        })
+        .unwrap()
+        {
             Classification::Decided(derivative) => derivative,
             Classification::Uncertain(reason) => panic!("parallel derivative failed: {reason:?}"),
         };
@@ -1382,11 +1544,14 @@ fn levien_candidate_matches_parallel_endpoints_tangents_and_midpoint() {
             .expect("endpoint tangent cross product is approximable");
         assert!(cross.abs() <= 1.0e-20, "endpoint tangent cross was {cross}");
     }
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 14, &policy()).unwrap();
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 14)
+    })
+    .unwrap();
     assert!(matches!(
-        parallel
-            .verify_polynomial_candidate(candidate.curve().clone().into(), &options, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || parallel
+            .verify_polynomial_candidate(candidate.curve().clone().into(), &options))
+        .unwrap(),
         Classification::Decided(_)
     ));
     let fitted = match crate::support::under_classified_result(&policy(), || {
@@ -1415,10 +1580,14 @@ fn certified_curve_path_parallel_preserves_smooth_exact_connections() {
         Curve2::from(QuadraticBezier2::new(p(0, 1), p(-1, 1), p(-1, 0))),
     ])
     .unwrap();
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy()).unwrap();
-    let parallel = match path
-        .approximate_parallel_blend2d_certified(q(1, 10), &options, &policy())
-        .unwrap()
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 16)
+    })
+    .unwrap();
+    let parallel = match crate::support::under_classified_result(&policy(), || {
+        path.approximate_parallel_blend2d_certified(q(1, 10), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(parallel) => parallel,
         Classification::Uncertain(reason) => panic!("smooth path offset failed: {reason:?}"),
@@ -1436,10 +1605,14 @@ fn certified_curve_path_promotes_rational_ph_span_without_chords() {
     let source =
         RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
     let path = CurvePath2::try_new(vec![Curve2::from(source)]).unwrap();
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 12, &policy()).unwrap();
-    let parallel = match path
-        .approximate_parallel_blend2d_certified(q(1, 2), &options, &policy())
-        .unwrap()
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 12)
+    })
+    .unwrap();
+    let parallel = match crate::support::under_classified_result(&policy(), || {
+        path.approximate_parallel_blend2d_certified(q(1, 2), &options)
+    })
+    .unwrap()
     {
         Classification::Decided(parallel) => parallel,
         Classification::Uncertain(reason) => panic!("rational PH path offset failed: {reason:?}"),
@@ -1461,10 +1634,14 @@ fn certified_curve_path_parallel_leaves_corner_join_to_higher_layer() {
         Curve2::from(QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2))),
     ])
     .unwrap();
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 12, &policy()).unwrap();
+    let options = crate::support::under_value(&policy(), || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 12)
+    })
+    .unwrap();
     assert!(matches!(
-        path.approximate_parallel_blend2d_certified(q(1, 10), &options, &policy())
-            .unwrap(),
+        crate::support::under_classified_result(&policy(), || path
+            .approximate_parallel_blend2d_certified(q(1, 10), &options))
+        .unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
     ));
 }
@@ -1764,7 +1941,7 @@ proptest! {
             (r(0), candidate.curve().start()),
             (r(1), candidate.curve().end()),
         ] {
-            let exact = match parallel.point_at(&parameter, &policy()).unwrap() {
+            let exact = match crate::support::under_classified_result(&policy(), || parallel.point_at(&parameter)).unwrap() {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     prop_assert!(false, "generated endpoint evaluation was uncertain: {reason:?}");

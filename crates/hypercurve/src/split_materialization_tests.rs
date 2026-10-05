@@ -47,19 +47,26 @@ fn policy() -> CurveContext {
 }
 
 fn algebraic_midpoint_interval(start: Real, end: Real) -> BezierParameter2 {
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap()
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                panic!("polynomial unexpectedly uncertain: {reason:?}")
-            }
-        };
-    let interval = match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
+        vec![r(-1), r(2)],
+        &policy(),
+    )
+    .unwrap()
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => {
+            panic!("polynomial unexpectedly uncertain: {reason:?}")
+        }
+    };
+    let interval = match BezierParameterInterval::try_new_with_policy(start, end, &policy())
+        .unwrap()
+    {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(reason) => panic!("interval unexpectedly uncertain: {reason:?}"),
     };
-    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap() {
+    match BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+        .unwrap()
+    {
         Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
         Classification::Uncertain(reason) => {
             panic!("algebraic parameter unexpectedly uncertain: {reason:?}")
@@ -72,20 +79,26 @@ fn algebraic_sqrt_half_interval() -> BezierParameter2 {
 }
 
 fn algebraic_sqrt_half_interval_between(start: Real, end: Real) -> BezierParameter2 {
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy())
-            .unwrap()
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                panic!("polynomial unexpectedly uncertain: {reason:?}")
-            }
-        };
-    let interval = match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
+        vec![r(-1), r(0), r(2)],
+        &policy(),
+    )
+    .unwrap()
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => {
+            panic!("polynomial unexpectedly uncertain: {reason:?}")
+        }
+    };
+    let interval = match BezierParameterInterval::try_new_with_policy(start, end, &policy())
+        .unwrap()
+    {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(reason) => panic!("interval unexpectedly uncertain: {reason:?}"),
     };
-    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap() {
+    match BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+        .unwrap()
+    {
         Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
         Classification::Uncertain(reason) => {
             panic!("algebraic parameter unexpectedly uncertain: {reason:?}")
@@ -94,7 +107,7 @@ fn algebraic_sqrt_half_interval_between(start: Real, end: Real) -> BezierParamet
 }
 
 fn algebraic_cubic_midpoint_interval() -> BezierParameter2 {
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
         vec![r(-1), r(2), r(-1), r(2)],
         &policy(),
     )
@@ -105,11 +118,15 @@ fn algebraic_cubic_midpoint_interval() -> BezierParameter2 {
             panic!("polynomial unexpectedly uncertain: {reason:?}")
         }
     };
-    let interval = match BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap() {
+    let interval = match BezierParameterInterval::try_new_with_policy(q(2, 5), q(3, 5), &policy())
+        .unwrap()
+    {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(reason) => panic!("interval unexpectedly uncertain: {reason:?}"),
     };
-    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap() {
+    match BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+        .unwrap()
+    {
         Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
         Classification::Uncertain(reason) => {
             panic!("algebraic parameter unexpectedly uncertain: {reason:?}")
@@ -405,7 +422,7 @@ fn rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertaint
             let retained = algebraic_cubic_midpoint_interval();
             let Classification::Decided(promoted) = retained
                 .clone()
-                .promote_represented_exact_point(&policy)
+                .promote_represented_exact_point_with_policy(&policy)
                 .unwrap()
             else {
                 panic!("the rational midpoint must admit an exact scalar view");

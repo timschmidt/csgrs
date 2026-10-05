@@ -245,7 +245,7 @@ impl Curve2 {
         };
         let derivative = decided(
             parallel
-                .derivative_at(scalar, policy)
+                .derivative_at_with_policy(scalar, policy)
                 .map_err(|cause| evaluation_error(family, cause))?,
             family,
         )?;
@@ -514,7 +514,7 @@ mod tests {
         let policy = CurveContext::STRICT;
         let family = CurveFamily2::RationalBezier;
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
+            BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![-Real::one(), Real::zero(), Real::from(2)],
                 &policy,
             )
@@ -523,7 +523,7 @@ mod tests {
         )
         .unwrap();
         let interval = decided(
-            BezierParameterInterval::try_new(
+            BezierParameterInterval::try_new_with_policy(
                 (Real::one() / Real::from(2)).unwrap(),
                 Real::one(),
                 &policy,
@@ -534,7 +534,8 @@ mod tests {
         .unwrap();
         CurveParameter2::from(BezierParameter2::Algebraic(
             decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
                 family,
             )
             .unwrap(),

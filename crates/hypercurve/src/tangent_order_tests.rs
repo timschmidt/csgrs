@@ -37,16 +37,19 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
-    decided(BezierParameterPolynomial::try_new_power_basis(coefficients, &policy()).unwrap())
+    decided(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, &policy())
+            .unwrap(),
+    )
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    decided(BezierParameterInterval::try_new(start, end, &policy()).unwrap())
+    decided(BezierParameterInterval::try_new_with_policy(start, end, &policy()).unwrap())
 }
 
 fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     decided(
-        BezierAlgebraicParameter2::try_isolate(
+        BezierAlgebraicParameter2::try_isolate_with_policy(
             polynomial(vec![r(-1), r(0), r(2)]),
             interval(q(7, 10), q(18, 25)),
             &policy(),
@@ -57,7 +60,7 @@ fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {
 
 fn sqrt_three_quarters_parameter() -> BezierAlgebraicParameter2 {
     decided(
-        BezierAlgebraicParameter2::try_isolate(
+        BezierAlgebraicParameter2::try_isolate_with_policy(
             polynomial(vec![r(-3), r(0), r(4)]),
             interval(q(17, 20), q(7, 8)),
             &policy(),
@@ -68,7 +71,7 @@ fn sqrt_three_quarters_parameter() -> BezierAlgebraicParameter2 {
 
 fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     decided(
-        BezierAlgebraicParameter2::try_isolate(
+        BezierAlgebraicParameter2::try_isolate_with_policy(
             polynomial(vec![r(-1), r(2)]),
             interval(q(2, 5), q(3, 5)),
             &policy(),

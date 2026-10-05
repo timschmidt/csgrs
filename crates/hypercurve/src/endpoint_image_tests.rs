@@ -17,14 +17,17 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    decided(BezierParameterInterval::try_new(start, end, &policy()).unwrap())
+    decided(BezierParameterInterval::try_new_with_policy(start, end, &policy()).unwrap())
 }
 
 fn isolate(
     polynomial: BezierParameterPolynomial,
     interval: BezierParameterInterval,
 ) -> BezierAlgebraicParameter2 {
-    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
 }
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -32,7 +35,10 @@ fn p(x: i32, y: i32) -> Point2 {
 }
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
-    decided(BezierParameterPolynomial::try_new_power_basis(coefficients, &policy()).unwrap())
+    decided(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, &policy())
+            .unwrap(),
+    )
 }
 
 fn q(numerator: i32, denominator: i32) -> Real {

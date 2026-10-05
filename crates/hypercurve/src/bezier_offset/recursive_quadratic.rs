@@ -2436,7 +2436,7 @@ impl SelectedThirdAxisDomain2<'_> {
             }
             Self::AffineLine => {
                 let zero = Real::zero();
-                let mut decreasing = match polynomial.isolate_incident_ray_roots(
+                let mut decreasing = match polynomial.isolate_incident_ray_roots_with_policy(
                     &zero,
                     BezierParameterRayDirection2::Decreasing,
                     policy,
@@ -2456,7 +2456,7 @@ impl SelectedThirdAxisDomain2<'_> {
                         return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
                     }
                 }
-                let increasing = match polynomial.isolate_incident_ray_roots(
+                let increasing = match polynomial.isolate_incident_ray_roots_with_policy(
                     &zero,
                     BezierParameterRayDirection2::Increasing,
                     policy,
@@ -2474,13 +2474,14 @@ impl SelectedThirdAxisDomain2<'_> {
                 direction,
                 barrier,
             } => {
-                let parameters =
-                    match polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
-                        Classification::Decided(parameters) => parameters,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let parameters = match polynomial
+                    .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
+                {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)
             }
         }
@@ -2727,12 +2728,13 @@ pub(super) fn selected_trivariate_third_axis_parameters_bounded(
     } else {
         coefficients
     };
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     if matches!(domain, SelectedThirdAxisDomain2::Finite(range) if range == &CurveParameterRange2::unit())
         && first_axis_is_independent
         && polynomial.degree() > MAX_DIRECT_SELECTED_PAIR_NORM_ISOLATION_DEGREE

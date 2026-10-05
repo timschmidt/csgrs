@@ -1886,19 +1886,22 @@ pub(crate) fn degree_nine_selected_fiber_parameter_for_test(
     retained_coefficients[0] = -retained_constant;
     retained_coefficients[9] = Real::one();
     let Classification::Decided(retained_polynomial) =
-        BezierParameterPolynomial::try_new_power_basis(retained_coefficients, policy).unwrap()
+        BezierParameterPolynomial::try_new_power_basis_with_policy(retained_coefficients, policy)
+            .unwrap()
     else {
         panic!("the degree-nine retained polynomial must construct");
     };
     let Classification::Decided(retained_interval) =
-        BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap()
+        BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), policy).unwrap()
     else {
         panic!("the degree-nine retained interval must construct");
     };
-    let Classification::Decided(retained) =
-        BezierAlgebraicParameter2::try_isolate(retained_polynomial, retained_interval, policy)
-            .unwrap()
-    else {
+    let Classification::Decided(retained) = BezierAlgebraicParameter2::try_isolate_with_policy(
+        retained_polynomial,
+        retained_interval,
+        policy,
+    )
+    .unwrap() else {
         panic!("the degree-nine retained root must isolate");
     };
 
@@ -1937,17 +1940,17 @@ pub(crate) fn high_degree_quadratic_selected_fiber_parameter_for_test(
     coefficients[0] = -retained_constant;
     coefficients[65] = Real::one();
     let Classification::Decided(polynomial) =
-        BezierParameterPolynomial::try_new_power_basis(coefficients, policy).unwrap()
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy).unwrap()
     else {
         panic!("the degree-65 retained carrier must construct")
     };
     let Classification::Decided(interval) =
-        BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap()
+        BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), policy).unwrap()
     else {
         panic!("the degree-65 retained interval must construct")
     };
     let Classification::Decided(retained) =
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap()
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy).unwrap()
     else {
         panic!("the degree-65 retained root must isolate")
     };
@@ -2459,8 +2462,8 @@ impl BezierRepresentedQuadraticConicInverse2 {
             };
             let zero = BezierParameter2::Exact(Real::zero());
             let one = BezierParameter2::Exact(Real::one());
-            let after_zero = parameter.cmp_by_refinement(&zero, &strict)?;
-            let before_one = parameter.cmp_by_refinement(&one, &strict)?;
+            let after_zero = parameter.cmp_by_refinement_with_policy(&zero, &strict)?;
+            let before_one = parameter.cmp_by_refinement_with_policy(&one, &strict)?;
             match (after_zero, before_one) {
                 (
                     Classification::Decided(std::cmp::Ordering::Greater),
@@ -5622,7 +5625,7 @@ fn refine_algebraic_cusp_semicircle_parameter_bracket(
         }
     }
     Ok(
-        match BezierParameterInterval::try_new(start, end, &CurveContext::STRICT)? {
+        match BezierParameterInterval::try_new_with_policy(start, end, &CurveContext::STRICT)? {
             Classification::Decided(interval) => Classification::Decided(
                 BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
             ),
@@ -5816,7 +5819,7 @@ fn cusp_chamfer_parameter_bracket(
         ));
     }
     Ok(
-        match BezierParameterInterval::try_new(start, end, policy)? {
+        match BezierParameterInterval::try_new_with_policy(start, end, policy)? {
             Classification::Decided(interval) => Classification::Decided(
                 BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
             ),
@@ -5936,7 +5939,7 @@ fn complement_cusp_parameter_bracket(
             let start = Real::one() - interval.end();
             let end = Real::one() - interval.start();
             Ok(
-                match BezierParameterInterval::try_new(start, end, policy)? {
+                match BezierParameterInterval::try_new_with_policy(start, end, policy)? {
                     Classification::Decided(interval) => Classification::Decided(
                         BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
                     ),
@@ -6415,14 +6418,18 @@ fn selected_parameter_reduced_by_constraint(
     if common.len() <= 1 || common.len() >= original.len() {
         return Ok(BezierParameter2::Algebraic(parameter.clone()));
     }
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis(common, &CurveContext::STRICT)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(_) => {
-                return Ok(BezierParameter2::Algebraic(parameter.clone()));
-            }
-        };
-    match polynomial.root_count_in_interval(parameter.interval(), &CurveContext::STRICT)? {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
+        common,
+        &CurveContext::STRICT,
+    )? {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(_) => {
+            return Ok(BezierParameter2::Algebraic(parameter.clone()));
+        }
+    };
+    match polynomial
+        .root_count_in_interval_with_policy(parameter.interval(), &CurveContext::STRICT)?
+    {
         Classification::Decided(0) | Classification::Uncertain(_) => {
             Ok(BezierParameter2::Algebraic(parameter.clone()))
         }
@@ -11933,7 +11940,7 @@ impl BezierParallelAlgebraicRay2 {
         factor_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let sample = match self.parallel.point_at(parameter, policy)? {
+        let sample = match self.parallel.point_at_with_policy(parameter, policy)? {
             Classification::Decided(sample) => sample,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -14822,17 +14829,19 @@ fn common_polynomial_roots(
             ));
         }
         (Some(polynomial), None) | (None, Some(polynomial)) => polynomial,
-        (Some(first), Some(second)) => match first.greatest_common_divisor(&second, policy)? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) => {
-                return Ok(Classification::Decided(
-                    BezierParallelIncidence2::Parameters(Vec::new()),
-                ));
+        (Some(first), Some(second)) => {
+            match first.greatest_common_divisor_with_policy(&second, policy)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(
+                        BezierParallelIncidence2::Parameters(Vec::new()),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        },
+        }
     };
     Ok(
         match polynomial_roots_in_parameter_domain(&polynomial, domain, policy)? {
@@ -14852,12 +14861,13 @@ fn first_incident_ray_polynomial_root(
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let mut first: Option<BezierParameter2> = None;
     for polynomial in polynomials {
-        let roots = match polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let roots =
+            match polynomial.isolate_incident_ray_roots_with_policy(anchor, direction, policy)? {
+                Classification::Decided(roots) => roots,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let Some(candidate) = roots.into_iter().next() else {
             continue;
         };
@@ -14865,7 +14875,7 @@ fn first_incident_ray_polynomial_root(
             first = Some(candidate);
             continue;
         };
-        let ordering = match candidate.cmp_by_refinement(retained, policy)? {
+        let ordering = match candidate.cmp_by_refinement_with_policy(retained, policy)? {
             Classification::Decided(ordering) => ordering,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -15013,7 +15023,7 @@ fn retained_incident_ray_regular_anchor_from_polynomials(
         }
         // The endpoint may belong to an exterior affine chart. Regularity
         // has already certified this entire bridge; only its ordering matters.
-        let interval = match BezierParameterInterval::try_new(
+        let interval = match BezierParameterInterval::try_new_with_policy(
             lower.clone(),
             upper.clone(),
             &CurveContext::STRICT,
@@ -15101,7 +15111,7 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
         };
         let mut rootless = true;
         for polynomial in std::iter::once(&speed).chain(weight.as_ref()) {
-            match polynomial.root_count_in_interval(&interval, strict)? {
+            match polynomial.root_count_in_interval_with_policy(&interval, strict)? {
                 Classification::Decided(0) => {}
                 Classification::Decided(_) | Classification::Uncertain(_) => {
                     rootless = false;
@@ -15185,7 +15195,7 @@ fn retain_parameters_before_incident_barrier(
     };
     let mut retained = Vec::with_capacity(parameters.len());
     for parameter in parameters {
-        let ordering = match parameter.cmp_by_refinement(barrier, policy)? {
+        let ordering = match parameter.cmp_by_refinement_with_policy(barrier, policy)? {
             Classification::Decided(ordering) => ordering,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -15276,7 +15286,7 @@ fn parallel_line_neighbor_sign(
             &default_boundary
         }
     };
-    let boundary_order = match root.cmp_by_refinement(domain_boundary, policy)? {
+    let boundary_order = match root.cmp_by_refinement_with_policy(domain_boundary, policy)? {
         Classification::Decided(order) => order,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));

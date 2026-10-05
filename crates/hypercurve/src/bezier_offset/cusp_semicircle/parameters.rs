@@ -1522,8 +1522,10 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             }
             return match &self.represented_oblique_contact(contact)?.cusp_parameter {
                 BezierRepresentedCircleChordAngularParameter2::Materialized(cusp_parameter) => {
-                    cusp_parameter
-                        .cmp_by_refinement(&BezierParameter2::Exact(parameter.clone()), policy)
+                    cusp_parameter.cmp_by_refinement_with_policy(
+                        &BezierParameter2::Exact(parameter.clone()),
+                        policy,
+                    )
                 }
                 BezierRepresentedCircleChordAngularParameter2::Recursive(cusp_parameter) => {
                     cusp_parameter.order_to_real(parameter, policy)
@@ -5510,13 +5512,15 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             ..
         }) = data.coincident_tangent_source()
         {
-            return Ok(parallel.point_at(parameter, policy)?.map(|point| {
-                Some(algebraic_constant_point_image(
-                    &point,
-                    semicircle.cusp_parameter(),
-                    policy,
-                ))
-            }));
+            return Ok(parallel
+                .point_at_with_policy(parameter, policy)?
+                .map(|point| {
+                    Some(algebraic_constant_point_image(
+                        &point,
+                        semicircle.cusp_parameter(),
+                        policy,
+                    ))
+                }));
         }
         Ok(Classification::Decided(None))
     }
@@ -7986,8 +7990,10 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         };
         match contact_parameter {
             BezierRepresentedCircleContactParameterData2::Materialized(contact_parameter) => {
-                contact_parameter
-                    .cmp_by_refinement(&BezierParameter2::Exact(parameter.clone()), policy)
+                contact_parameter.cmp_by_refinement_with_policy(
+                    &BezierParameter2::Exact(parameter.clone()),
+                    policy,
+                )
             }
             BezierRepresentedCircleContactParameterData2::Retained {
                 parameter: contact_parameter,

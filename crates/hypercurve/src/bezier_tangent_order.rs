@@ -1934,13 +1934,15 @@ mod exact_real_status_tests {
         policy: &CurveContext,
     ) -> crate::BezierAlgebraicParameter2 {
         let polynomial = crate::tests::decided(
-            crate::BezierParameterPolynomial::try_new_power_basis(coefficients, policy).unwrap(),
+            crate::BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)
+                .unwrap(),
         );
         let interval = crate::tests::decided(
-            crate::BezierParameterInterval::try_new(lower, upper, policy).unwrap(),
+            crate::BezierParameterInterval::try_new_with_policy(lower, upper, policy).unwrap(),
         );
         crate::tests::decided(
-            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+            crate::BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
         )
     }
 

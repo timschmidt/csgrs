@@ -881,15 +881,16 @@ impl RationalBezier2 {
         let Some(substituted) = substitute_implicit_conic(conic, other_basis) else {
             return Ok(None);
         };
-        let polynomial = match BezierParameterPolynomial::try_new_power_basis(substituted, policy) {
-            Ok(Classification::Decided(polynomial)) => polynomial,
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-            Err(CurveError::InvalidBezierPolynomial) => return Ok(None),
-            Err(error) => return Err(error),
-        };
-        let other_parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+        let polynomial =
+            match BezierParameterPolynomial::try_new_power_basis_with_policy(substituted, policy) {
+                Ok(Classification::Decided(polynomial)) => polynomial,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+                Err(CurveError::InvalidBezierPolynomial) => return Ok(None),
+                Err(error) => return Err(error),
+            };
+        let other_parameters = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
             Classification::Decided(parameters) => parameters,
             Classification::Uncertain(reason) => {
                 return Ok(Some(Classification::Uncertain(reason)));
@@ -1315,7 +1316,7 @@ impl RationalBezier2 {
             let source_parameter = contact.parameter().clone();
             let parameter = match source_parameter
                 .clone()
-                .promote_represented_exact_point(policy)?
+                .promote_represented_exact_point_with_policy(policy)?
             {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(_) => source_parameter,

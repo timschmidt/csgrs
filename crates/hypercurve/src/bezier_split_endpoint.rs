@@ -390,17 +390,19 @@ mod tests {
     fn retained_derivatives_replay_nonrational_source_signs() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let polynomial = crate::tests::decided(
-                BezierParameterPolynomial::try_new_power_basis(
+                BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
                     &policy,
                 )
                 .unwrap(),
             );
             let interval = crate::tests::decided(
-                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), &policy)
+                    .unwrap(),
             );
             let parameter = crate::tests::decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
             );
             let curve = CubicBezier2::new(
                 Point2::from_values(0, 0),
@@ -448,17 +450,19 @@ mod tests {
         let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let polynomial = crate::tests::decided(
-                BezierParameterPolynomial::try_new_power_basis(
+                BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
                     &policy,
                 )
                 .unwrap(),
             );
             let interval = crate::tests::decided(
-                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), &policy)
+                    .unwrap(),
             );
             let parameter = crate::tests::decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
             );
             // C=(1/(1+t),t/(1+t)). At the positive root of 4t^3-pi,
             // the kth x derivative is (-1)^k*k!/(1+t)^(k+1), and y=1-x.
@@ -526,17 +530,19 @@ mod tests {
         ];
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let polynomial = crate::tests::decided(
-                BezierParameterPolynomial::try_new_power_basis(
+                BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![Real::from(-1), Real::from(2)],
                     &policy,
                 )
                 .unwrap(),
             );
             let interval = crate::tests::decided(
-                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), &policy)
+                    .unwrap(),
             );
             let parameter = crate::tests::decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
             );
             for source in &sources {
                 let endpoint = BezierAlgebraicEndpointImage2::from_source_curve_first_order(

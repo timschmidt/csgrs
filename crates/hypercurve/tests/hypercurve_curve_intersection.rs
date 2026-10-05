@@ -55,8 +55,10 @@ fn decided<T>(classification: Classification<T>) -> T {
 fn curve_parameter_comparison_reports_terminal_certainty() {
     let zero = hypercurve::CurveParameter2::from(Real::zero());
     let unresolved = hypercurve::CurveParameter2::from(support::terminally_unresolved_zero());
-    let approximate = zero
-        .compare(&unresolved, &CurveContext::APPROXIMATE_512)
+    let approximate =
+        crate::support::under_outcome_classified(&CurveContext::APPROXIMATE_512, || {
+            zero.compare(&unresolved)
+        })
         .unwrap();
     assert_eq!(
         approximate.certainty,
@@ -66,12 +68,16 @@ fn curve_parameter_comparison_reports_terminal_certainty() {
         approximate.value,
         Classification::Decided(std::cmp::Ordering::Equal)
     );
-    let strict = zero.compare(&unresolved, &CurveContext::STRICT).unwrap();
+    let strict = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+        zero.compare(&unresolved)
+    })
+    .unwrap();
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(strict.value, Classification::Uncertain(_)));
-    let identity = unresolved
-        .compare(&unresolved, &CurveContext::STRICT)
-        .unwrap();
+    let identity = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+        unresolved.compare(&unresolved)
+    })
+    .unwrap();
     assert_eq!(identity.certainty, CurveCertainty::Certified);
     assert_eq!(
         identity.value,
@@ -139,15 +145,25 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     assert!(evidence.blockers().is_empty());
     let contact = &evidence.contacts()[0];
     assert_eq!(
-        decided(contact.first().parameter(&CurveContext::STRICT).unwrap())
-            .scalar()
-            .cloned(),
+        decided(
+            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+                .first()
+                .parameter())
+            .unwrap()
+        )
+        .scalar()
+        .cloned(),
         Some(q(1, 2))
     );
     assert_eq!(
-        decided(contact.second().parameter(&CurveContext::STRICT).unwrap())
-            .scalar()
-            .cloned(),
+        decided(
+            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+                .second()
+                .parameter())
+            .unwrap()
+        )
+        .scalar()
+        .cloned(),
         Some(q(1, 2))
     );
     assert!(
@@ -227,15 +243,25 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
     let contact = &evidence.contacts()[0];
     assert_eq!(
-        decided(contact.first().parameter(&CurveContext::STRICT).unwrap())
-            .scalar()
-            .cloned(),
+        decided(
+            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+                .first()
+                .parameter())
+            .unwrap()
+        )
+        .scalar()
+        .cloned(),
         Some(r(1))
     );
     assert_eq!(
-        decided(contact.second().parameter(&CurveContext::STRICT).unwrap())
-            .scalar()
-            .cloned(),
+        decided(
+            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+                .second()
+                .parameter())
+            .unwrap()
+        )
+        .scalar()
+        .cloned(),
         Some(q(1, 2))
     );
     assert_eq!(topology.first().len(), 2);
@@ -320,9 +346,16 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                         } else {
                             contact.first()
                         };
-                        let parameter = decided(location.parameter(&policy).unwrap());
-                        let comparison = parameter
-                            .compare(&expected_parameter.clone().into(), &CurveContext::STRICT)
+                        let parameter = decided(
+                            crate::support::under_classified_result(&policy, || {
+                                location.parameter()
+                            })
+                            .unwrap(),
+                        );
+                        let comparison =
+                            crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+                                parameter.compare(&expected_parameter.clone().into())
+                            })
                             .unwrap();
                         assert_eq!(comparison.certainty, CurveCertainty::Certified);
                         assert_eq!(
@@ -400,10 +433,10 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
             assert!(selection.value.is_complete());
             assert_eq!(selection.value.contacts().len(), 1);
             let cut = decided(
-                selection.value.contacts()[0]
-                    .first()
-                    .parameter(&policy)
-                    .unwrap(),
+                crate::support::under_classified_result(&policy, || {
+                    selection.value.contacts()[0].first().parameter()
+                })
+                .unwrap(),
             );
             assert!(cut.scalar().is_none());
             let tail = crate::support::under(&policy, || source.split_at(cut.clone()))
@@ -502,10 +535,17 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                             } else {
                                 contact.first()
                             };
-                            let parameter = decided(location.parameter(&policy).unwrap());
-                            let compared = parameter
-                                .compare(expected_parameter, &CurveContext::STRICT)
-                                .unwrap();
+                            let parameter = decided(
+                                crate::support::under_classified_result(&policy, || {
+                                    location.parameter()
+                                })
+                                .unwrap(),
+                            );
+                            let compared = crate::support::under_outcome_classified(
+                                &CurveContext::STRICT,
+                                || parameter.compare(expected_parameter),
+                            )
+                            .unwrap();
                             assert_eq!(compared.certainty, CurveCertainty::Certified);
                             assert_eq!(
                                 compared.value,
@@ -560,7 +600,12 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
         let selection = crate::support::under(&policy, || source.intersect_curve(&selecting))
             .unwrap()
             .into_value();
-        let cut = decided(selection.contacts()[0].first().parameter(&policy).unwrap());
+        let cut = decided(
+            crate::support::under_classified_result(&policy, || {
+                selection.contacts()[0].first().parameter()
+            })
+            .unwrap(),
+        );
         let (prefix, tail) = crate::support::under(&policy, || source.split_at(cut))
             .unwrap()
             .into_value();
@@ -948,10 +993,10 @@ fn selected_tail_topology_keeps_reversed_and_nonunit_source_charts() {
                 crate::support::under(&policy, || original.intersect_curve(&selecting)).unwrap();
             assert_eq!(selected.certainty, CurveCertainty::Certified);
             let parameter = decided(
-                selected.value.contacts()[0]
-                    .first()
-                    .parameter(&policy)
-                    .unwrap(),
+                crate::support::under_classified_result(&policy, || {
+                    selected.value.contacts()[0].first().parameter()
+                })
+                .unwrap(),
             );
             let tail = crate::support::under(&policy, || original.split_at(parameter))
                 .unwrap()
@@ -1187,7 +1232,12 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                             for (curve, location) in
                                 [(first, contact.first()), (second, contact.second())]
                             {
-                                let parameter = decided(location.parameter(&policy).unwrap());
+                                let parameter = decided(
+                                    crate::support::under_classified_result(&policy, || {
+                                        location.parameter()
+                                    })
+                                    .unwrap(),
+                                );
                                 let evaluated =
                                     crate::support::under(&policy, || curve.point_at(&parameter))
                                         .unwrap();
@@ -1248,7 +1298,12 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
             crate::support::under(&policy, || selecting.intersect_curve(&selecting_line))
                 .unwrap()
                 .into_value();
-        let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
+        let cut = decided(
+            crate::support::under_classified_result(&policy, || {
+                selected.contacts()[0].first().parameter()
+            })
+            .unwrap(),
+        );
         let tail = crate::support::under(&policy, || independent.split_at(cut))
             .unwrap()
             .into_value()
@@ -1440,10 +1495,10 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
         assert!(selected.value.is_complete());
         assert_eq!(selected.value.contacts().len(), 1);
         let cut = decided(
-            selected.value.contacts()[0]
-                .first()
-                .parameter(&policy)
-                .unwrap(),
+            crate::support::under_classified_result(&policy, || {
+                selected.value.contacts()[0].first().parameter()
+            })
+            .unwrap(),
         );
         let split = crate::support::under(&policy, || original.split_at(cut)).unwrap();
         assert_eq!(split.certainty, CurveCertainty::Certified);
@@ -1554,7 +1609,12 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                         for (curve, location) in
                             [(first, contact.first()), (second, contact.second())]
                         {
-                            let parameter = decided(location.parameter(&policy).unwrap());
+                            let parameter = decided(
+                                crate::support::under_classified_result(&policy, || {
+                                    location.parameter()
+                                })
+                                .unwrap(),
+                            );
                             let point =
                                 crate::support::under(&policy, || curve.point_at(&parameter))
                                     .unwrap();
@@ -1585,7 +1645,12 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
         let selection = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
-        let cut = decided(selection.contacts()[0].first().parameter(&policy).unwrap());
+        let cut = decided(
+            crate::support::under_classified_result(&policy, || {
+                selection.contacts()[0].first().parameter()
+            })
+            .unwrap(),
+        );
         for source in [
             crate::support::under(&policy, || {
                 Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone())
@@ -1658,12 +1723,19 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                             } else {
                                 contact.first()
                             };
-                            let mapped = decided(location.parameter(&policy).unwrap());
+                            let mapped = decided(
+                                crate::support::under_classified_result(&policy, || {
+                                    location.parameter()
+                                })
+                                .unwrap(),
+                            );
                             assert_eq!(
-                                mapped
-                                    .compare(&parameter.clone().into(), &CurveContext::STRICT)
-                                    .unwrap()
-                                    .value,
+                                crate::support::under_outcome_classified(
+                                    &CurveContext::STRICT,
+                                    || mapped.compare(&parameter.clone().into())
+                                )
+                                .unwrap()
+                                .value,
                                 Classification::Decided(std::cmp::Ordering::Equal)
                             );
                             let evaluated =
@@ -1696,7 +1768,12 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
         let selected = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
-        let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
+        let cut = decided(
+            crate::support::under_classified_result(&policy, || {
+                selected.contacts()[0].first().parameter()
+            })
+            .unwrap(),
+        );
         let source =
             Curve2::from(RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap());
         for independent in [false, true] {
@@ -1777,12 +1854,19 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                                 .into_iter()
                                 .zip(parameters)
                         {
-                            let parameter = decided(location.parameter(&policy).unwrap());
+                            let parameter = decided(
+                                crate::support::under_classified_result(&policy, || {
+                                    location.parameter()
+                                })
+                                .unwrap(),
+                            );
                             assert_eq!(
-                                parameter
-                                    .compare(&expected.into(), &CurveContext::STRICT)
-                                    .unwrap()
-                                    .value,
+                                crate::support::under_outcome_classified(
+                                    &CurveContext::STRICT,
+                                    || parameter.compare(&expected.into())
+                                )
+                                .unwrap()
+                                .value,
                                 Classification::Decided(std::cmp::Ordering::Equal)
                             );
                             let point =
@@ -1854,7 +1938,10 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
                     contact.point().coincides_with(&endpoint, &policy).value
                 ));
                 for (curve, location) in [(first, contact.first()), (second, contact.second())] {
-                    let parameter = decided(location.parameter(&policy).unwrap());
+                    let parameter = decided(
+                        crate::support::under_classified_result(&policy, || location.parameter())
+                            .unwrap(),
+                    );
                     let point =
                         crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
@@ -1924,7 +2011,10 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                 };
                 assert!(contact.is_certified_transverse());
                 for (curve, location) in [(first, contact.first()), (second, contact.second())] {
-                    let parameter = decided(location.parameter(&policy).unwrap());
+                    let parameter = decided(
+                        crate::support::under_classified_result(&policy, || location.parameter())
+                            .unwrap(),
+                    );
                     let point =
                         crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                     assert_eq!(point.certainty, CurveCertainty::Certified);
@@ -1967,7 +2057,12 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
                         let [child] = result.value.contacts() else {
                             panic!("one split contact")
                         };
-                        let parameter = decided(child.first().parameter(&policy).unwrap());
+                        let parameter = decided(
+                            crate::support::under_classified_result(&policy, || {
+                                child.first().parameter()
+                            })
+                            .unwrap(),
+                        );
                         let point =
                             crate::support::under(&policy, || piece.point_at(&parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
@@ -2013,14 +2108,12 @@ fn native_retraced_overlaps_survive_independent_restriction() {
             let mut restrictions = Vec::new();
             for overlap in result.value.overlaps() {
                 if let Some(overlap) = decided(
-                    overlap
-                        .restrict(
-                            [r(0).into(), q(1, 4).into()],
-                            [q(3, 4).into(), r(1).into()],
-                            &policy,
-                        )
-                        .unwrap()
-                        .into_value(),
+                    crate::support::under_outcome_classified(&policy, || {
+                        overlap
+                            .restrict([r(0).into(), q(1, 4).into()], [q(3, 4).into(), r(1).into()])
+                    })
+                    .unwrap()
+                    .into_value(),
                 ) {
                     restrictions.push(overlap);
                 }
@@ -2030,14 +2123,14 @@ fn native_retraced_overlaps_survive_independent_restriction() {
             assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
             for _ in 0..8 {
                 overlap = decided(
-                    overlap
-                        .restrict(
+                    crate::support::under_outcome_classified(&policy, || {
+                        overlap.restrict(
                             [q(1, 8).into(), q(1, 4).into()],
                             [q(3, 4).into(), q(7, 8).into()],
-                            &policy,
                         )
-                        .unwrap()
-                        .into_value(),
+                    })
+                    .unwrap()
+                    .into_value(),
                 )
                 .unwrap();
                 for (a, b) in [
@@ -2105,18 +2198,30 @@ fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
                     .contacts()
                     .iter()
                     .find(|contact| {
-                        decided(contact.first().parameter(&policy).unwrap())
-                            .compare(&a.clone().into(), &policy)
-                            .unwrap()
-                            .into_value()
+                        crate::support::under_outcome_classified(&policy, || {
+                            decided(
+                                crate::support::under_classified_result(&policy, || {
+                                    contact.first().parameter()
+                                })
+                                .unwrap(),
+                            )
+                            .compare(&a.clone().into())
+                        })
+                        .unwrap()
+                        .into_value()
                             == Classification::Decided(std::cmp::Ordering::Equal)
                     })
                     .unwrap();
                 assert_eq!(
-                    decided(contact.second().parameter(&policy).unwrap())
-                        .compare(&b.into(), &policy)
+                    crate::support::under_outcome_classified(&policy, || decided(
+                        crate::support::under_classified_result(&policy, || contact
+                            .second()
+                            .parameter())
                         .unwrap()
-                        .into_value(),
+                    )
+                    .compare(&b.into()))
+                    .unwrap()
+                    .into_value(),
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
                 assert!(contact.is_certified_transverse());
@@ -2169,20 +2274,37 @@ fn native_nodal_spline_contacts_retain_authored_charts() {
                     .contacts()
                     .iter()
                     .find(|contact| {
-                        decided(contact.first().parameter(&policy).unwrap())
-                            .compare(&r(expected.0).into(), &policy)
-                            .unwrap()
-                            .into_value()
+                        crate::support::under_outcome_classified(&policy, || {
+                            decided(
+                                crate::support::under_classified_result(&policy, || {
+                                    contact.first().parameter()
+                                })
+                                .unwrap(),
+                            )
+                            .compare(&r(expected.0).into())
+                        })
+                        .unwrap()
+                        .into_value()
                             == Classification::Decided(std::cmp::Ordering::Equal)
                     })
                     .unwrap();
-                let first = decided(contact.first().parameter(&policy).unwrap());
-                let second = decided(contact.second().parameter(&policy).unwrap());
+                let first = decided(
+                    crate::support::under_classified_result(&policy, || {
+                        contact.first().parameter()
+                    })
+                    .unwrap(),
+                );
+                let second = decided(
+                    crate::support::under_classified_result(&policy, || {
+                        contact.second().parameter()
+                    })
+                    .unwrap(),
+                );
                 assert_eq!(
-                    second
-                        .compare(&r(expected.1).into(), &policy)
-                        .unwrap()
-                        .into_value(),
+                    crate::support::under_outcome_classified(&policy, || second
+                        .compare(&r(expected.1).into()))
+                    .unwrap()
+                    .into_value(),
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
                 for (curve, parameter) in [(a, first), (b, second)] {
@@ -2208,7 +2330,12 @@ fn retained_retraced_domains_retain_every_parameter_component() {
         let selected = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
-        let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
+        let cut = decided(
+            crate::support::under_classified_result(&policy, || {
+                selected.contacts()[0].first().parameter()
+            })
+            .unwrap(),
+        );
         let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)));
         let (first, second) = crate::support::under(&policy, || source.split_at(cut))
             .unwrap()
@@ -2736,10 +2863,11 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     assert_eq!(evidence.contacts().len(), 1);
     assert_eq!(
         decided(
-            evidence.contacts()[0]
-                .first()
-                .parameter(&CurveContext::STRICT)
-                .unwrap()
+            crate::support::under_classified_result(&CurveContext::STRICT, || evidence.contacts()
+                [0]
+            .first()
+            .parameter())
+            .unwrap()
         )
         .scalar()
         .cloned(),
@@ -2771,10 +2899,11 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     );
     assert_eq!(
         decided(
-            reversed_evidence.contacts()[0]
+            crate::support::under_classified_result(&CurveContext::STRICT, || reversed_evidence
+                .contacts()[0]
                 .second()
-                .parameter(&CurveContext::STRICT)
-                .unwrap()
+                .parameter())
+            .unwrap()
         )
         .scalar()
         .cloned(),
@@ -2846,19 +2975,17 @@ fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
         Curve2::from(LineSeg2::try_new(p(0, 5), p(4, 3)).unwrap()),
     ])
     .unwrap();
-    let first_area = first
-        .boundary_loop()
-        .unwrap()
-        .signed_area(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let first_area = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+        first.boundary_loop().unwrap().signed_area()
+    })
+    .unwrap()
+    .into_value();
     let first_area = decided(first_area).unwrap();
-    let second_area = second
-        .boundary_loop()
-        .unwrap()
-        .signed_area(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let second_area = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+        second.boundary_loop().unwrap().signed_area()
+    })
+    .unwrap()
+    .into_value();
     let second_area = decided(second_area).unwrap();
     let evidence = first.intersect_path(&second).unwrap();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -3484,8 +3611,14 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
         let interior = (1..16)
             .map(|n| hypercurve::CurveParameter2::from(q(n, 16)))
             .filter(|parameter| {
-                let lower = domain.start().compare(parameter, &policy).unwrap();
-                let upper = parameter.compare(domain.end(), &policy).unwrap();
+                let lower = crate::support::under_outcome_classified(&policy, || {
+                    domain.start().compare(parameter)
+                })
+                .unwrap();
+                let upper = crate::support::under_outcome_classified(&policy, || {
+                    parameter.compare(domain.end())
+                })
+                .unwrap();
                 assert_eq!(lower.certainty, CurveCertainty::Certified);
                 assert_eq!(upper.certainty, CurveCertainty::Certified);
                 decided(lower.value).is_lt() && decided(upper.value).is_lt()
@@ -3616,7 +3749,12 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
                     );
                     for (curve, location) in [(first, contact.first()), (second, contact.second())]
                     {
-                        let parameter = decided(location.parameter(&policy).unwrap());
+                        let parameter = decided(
+                            crate::support::under_classified_result(&policy, || {
+                                location.parameter()
+                            })
+                            .unwrap(),
+                        );
                         let point =
                             crate::support::under(&policy, || curve.point_at(&parameter)).unwrap();
                         assert_eq!(point.certainty, CurveCertainty::Certified);
@@ -3753,11 +3891,12 @@ mod finite_selected_circle_domains {
             _ => unreachable!(),
         };
         let range = exact(
-            BezierParameterRange2::try_new(
-                BezierParameter2::Exact(start),
-                BezierParameter2::Exact(end),
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(start),
+                    BezierParameter2::Exact(end),
+                )
+            })
             .unwrap(),
         );
         crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
@@ -3822,7 +3961,13 @@ mod finite_selected_circle_domains {
                                     for (source, location) in
                                         [(first, contact.first()), (second, contact.second())]
                                     {
-                                        let parameter = exact(location.parameter(&policy).unwrap());
+                                        let parameter = exact(
+                                            crate::support::under_classified_result(
+                                                &policy,
+                                                || location.parameter(),
+                                            )
+                                            .unwrap(),
+                                        );
                                         same(
                                             &certified(
                                                 crate::support::under(&policy, || {
@@ -3892,9 +4037,13 @@ mod point_locations {
         };
         locations
             .iter()
-            .map(|location| match location.parameter(policy).unwrap() {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            .map(|location| {
+                match crate::support::under_classified_result(policy, || location.parameter())
+                    .unwrap()
+                {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => panic!("{reason:?}"),
+                }
             })
             .collect()
     }
@@ -4002,11 +4151,12 @@ mod point_locations {
             let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
                 .parallel_left(r(1))
                 .unwrap();
-            let range = match BezierParameterRange2::try_new(
-                BezierParameter2::Exact(r(0)),
-                BezierParameter2::Exact(r(1)),
-                &policy,
-            )
+            let range = match crate::support::under_classified_result(&policy, || {
+                BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(r(0)),
+                    BezierParameter2::Exact(r(1)),
+                )
+            })
             .unwrap()
             {
                 Classification::Decided(range) => range,
@@ -4149,7 +4299,9 @@ mod self_intersections {
             assert_eq!(result.contacts().len(), 1, "{result:?}");
             let contact = &result.contacts()[0];
             let parameter = |location: &hypercurve::CurveLocation2| {
-                let Classification::Decided(parameter) = location.parameter(&policy).unwrap()
+                let Classification::Decided(parameter) =
+                    crate::support::under_classified_result(&policy, || location.parameter())
+                        .unwrap()
                 else {
                     panic!("seam parameters are exact");
                 };

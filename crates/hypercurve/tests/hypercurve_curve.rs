@@ -3210,7 +3210,9 @@ fn direct_bezier_pair_fillet_retains_both_incident_extensions() {
                 );
                 let compare = |left: &hypercurve::CurveParameter2,
                                right: &hypercurve::CurveParameter2| {
-                    let order = left.compare(right, &policy).unwrap();
+                    let order =
+                        crate::support::under_outcome_classified(&policy, || left.compare(right))
+                            .unwrap();
                     assert_eq!(order.certainty, CurveCertainty::Certified);
                     match order.value {
                         Classification::Decided(order) => order,
@@ -3489,11 +3491,11 @@ fn same_ph_bezier_support_fillet_reuses_rational_projective_self_contact() {
     let next_cut = Point2::new(-q(1, 4), (&sqrt_three / r(8)).unwrap());
     let expected_center = Point2::new(Real::zero(), (&r(17) * &sqrt_three / r(48)).unwrap());
     assert!(matches!(
-        source
+        crate::support::under_classified_result(&CurveContext::STRICT, || source
             .parallel_left(radius.clone())
             .unwrap()
-            .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
-            .unwrap(),
+            .exact_pythagorean_hodograph_offset())
+        .unwrap(),
         Classification::Decided(Some(_))
     ));
     let path =
@@ -3961,16 +3963,26 @@ fn derivatives_at_selected_parameters_stay_exact() {
         // The positive root of scale*t^2 - constant in [lower, upper].
         let root = |scale: i64, constant: i64, lower: Real, upper: Real| {
             let polynomial = decided(
-                BezierParameterPolynomial::try_new_power_basis(
-                    vec![Real::from(-constant), Real::zero(), Real::from(scale)],
-                    &policy,
-                )
+                crate::support::under_classified_result(&policy, || {
+                    BezierParameterPolynomial::try_new_power_basis(vec![
+                        Real::from(-constant),
+                        Real::zero(),
+                        Real::from(scale),
+                    ])
+                })
                 .unwrap(),
             );
-            let interval =
-                decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());
+            let interval = decided(
+                crate::support::under_classified_result(&policy, || {
+                    BezierParameterInterval::try_new(lower, upper)
+                })
+                .unwrap(),
+            );
             CurveParameter2::from(BezierParameter2::Algebraic(decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                crate::support::under_classified_result(&policy, || {
+                    BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+                })
+                .unwrap(),
             )))
         };
         let signs = |curve: &Curve2, parameter: &CurveParameter2| {
@@ -3978,8 +3990,14 @@ fn derivatives_at_selected_parameters_stay_exact() {
                 .unwrap()
                 .into_value();
             assert!(derivative.represented_coordinates().is_none());
-            [Axis2::X, Axis2::Y]
-                .map(|axis| decided(derivative.coordinate_sign(axis, &policy).unwrap()))
+            [Axis2::X, Axis2::Y].map(|axis| {
+                decided(
+                    crate::support::under_classified_result(&policy, || {
+                        derivative.coordinate_sign(axis)
+                    })
+                    .unwrap(),
+                )
+            })
         };
         let sqrt_half = root(2, 1, q(2, 3), q(3, 4));
 

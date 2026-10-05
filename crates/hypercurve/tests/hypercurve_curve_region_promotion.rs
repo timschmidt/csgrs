@@ -432,16 +432,27 @@ fn boundary_vertex_at(
 
 fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(
-            vec![-q(1, 2), Real::zero(), Real::one()],
-            policy,
-        )
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
         .unwrap(),
     );
-    let interval =
-        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-    let parameter =
-        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
     let horizontal = |height: Real| {
         RationalBezier2::try_new(
             vec![
@@ -721,16 +732,27 @@ fn algebraic_material_hole_rectangle(
     reverse: bool,
 ) -> CurveRegion2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(
-            vec![-q(1, 2), Real::zero(), Real::one()],
-            policy,
-        )
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
         .unwrap(),
     );
-    let interval =
-        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-    let parameter =
-        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
     let boundaries = vec![
         shifted_algebraic_rectangle_boundary(0, 0, 12, 4, reverse, &parameter, policy),
         shifted_algebraic_rectangle_boundary(5, 1, 7, 3, reverse, &parameter, policy),
@@ -837,16 +859,27 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
 
 fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(
-            vec![-q(1, 2), Real::zero(), Real::one()],
-            policy,
-        )
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
         .unwrap(),
     );
-    let interval =
-        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-    let parameter =
-        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
     let selected = |height: Real| {
         crate::support::under(policy, || {
             hypercurve::Curve2::from(
@@ -907,16 +940,27 @@ fn axis_aligned_algebraic_dumbbell_region(
     reverse: bool,
 ) -> CurveRegion2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(
-            vec![-q(1, 2), Real::zero(), Real::one()],
-            policy,
-        )
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
         .unwrap(),
     );
-    let interval =
-        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-    let parameter =
-        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
     let selected = |height: Real| {
         crate::support::under(policy, || {
             hypercurve::Curve2::from(
@@ -1056,7 +1100,9 @@ fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement(
             .into_value(),
         RegionPointLocation::Outside
     );
-    let options = BezierFlatteningOptions::try_new(q(1, 32), 12, &policy).unwrap();
+    let options =
+        crate::support::under_value(&policy, || BezierFlatteningOptions::try_new(q(1, 32), 12))
+            .unwrap();
 
     let segmented = crate::support::under(&policy, || source.segment_certified(&options))
         .unwrap()
@@ -2989,16 +3035,27 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
 fn selected_algebraic_round_join_retains_a_general_minor_cut() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
-                vec![-q(1, 2), Real::zero(), Real::one()],
-                &policy,
-            )
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
             .unwrap(),
         );
-        let interval =
-            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
-        let parameter =
-            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
+        let interval = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
         let selected = crate::support::under(&policy, || {
             hypercurve::Curve2::from(
                 RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
@@ -4256,16 +4313,27 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
 fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
     let source = |policy: &CurveContext, reverse: bool| {
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
-                vec![-q(1, 2), Real::zero(), Real::one()],
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
             .unwrap(),
         );
-        let interval =
-            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-        let parameter =
-            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
         let selected = |start: Point2, end: Point2| {
             crate::support::under(policy, || {
                 hypercurve::Curve2::from(
@@ -4382,16 +4450,27 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
 fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
     let source = |policy: &CurveContext, reverse: bool| {
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
-                vec![-q(1, 2), Real::zero(), Real::one()],
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
             .unwrap(),
         );
-        let interval =
-            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-        let parameter =
-            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
         let selected = |start: Point2, end: Point2| {
             crate::support::under(policy, || {
                 hypercurve::Curve2::from(
@@ -4788,16 +4867,27 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
 fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
     let source = |policy: &CurveContext, reverse: bool| {
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
-                vec![-q(1, 2), Real::zero(), Real::one()],
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
             .unwrap(),
         );
-        let interval =
-            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-        let parameter =
-            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
         let selected = |start: Point2, end: Point2| {
             crate::support::under(policy, || {
                 hypercurve::Curve2::from(

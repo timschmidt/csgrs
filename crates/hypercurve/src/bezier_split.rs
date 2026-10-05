@@ -327,7 +327,7 @@ impl CurveParameter2 {
                 | CurveParameterData2::AlgebraicCuspComplement(second),
             ) => Ok(second.order_to_real(first, policy)?.map(Ordering::reverse)),
             (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
-                first.cmp_by_refinement(second, policy)
+                first.cmp_by_refinement_with_policy(second, policy)
             }
             (
                 CurveParameterData2::AlgebraicChord(first),
@@ -390,7 +390,24 @@ impl CurveParameter2 {
     /// local chart. Parameters from distinct geometric charts require their
     /// supporting curves and return an error when no local comparison authority
     /// applies.
-    pub fn compare(
+    pub fn compare(&self, other: &Self) -> crate::ExactCurveResult<Ordering> {
+        self.compare_with_policy(other, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Classification,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::compare`] under an explicit predicate policy.
+    pub(crate) fn compare_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -783,7 +800,7 @@ impl<'a> CurveParameterDomain2<'a> {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
         if self.is_closed_unit() {
-            return polynomial.isolate_unit_interval_roots(policy);
+            return polynomial.isolate_unit_interval_roots_with_policy(policy);
         }
         policy.strict_predicate_pass(|| {
             let ([lower, upper], [outer_lower, outer_upper]) = match self.finite_envelope(policy)? {
@@ -840,7 +857,21 @@ fn parameter_is_in_ordered_range(
 
 impl CurveParameterRange2 {
     /// Constructs a nonempty oriented range without replacing either exact endpoint.
-    pub fn try_new(
+    pub fn try_new(start: CurveParameter2, end: CurveParameter2) -> crate::ExactCurveResult<Self> {
+        Self::try_new_with_policy(start, end, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Construction,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Construction, value)
+            })
+    }
+
+    /// [`Self::try_new`] under an explicit predicate policy.
+    pub(crate) fn try_new_with_policy(
         start: CurveParameter2,
         end: CurveParameter2,
         policy: &CurveContext,
@@ -1425,7 +1456,7 @@ impl BezierSelectedFiberFragment2 {
                 Ok(curve.point_at_affine_classified(&parameter, policy))
             }
             BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
-                parallel.point_at(&parameter, policy)
+                parallel.point_at_with_policy(&parameter, policy)
             }
         }
     }
@@ -1444,7 +1475,10 @@ impl BezierParallelFragment2 {
         range: BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let order = match range.start().cmp_by_refinement(range.end(), policy)? {
+        let order = match range
+            .start()
+            .cmp_by_refinement_with_policy(range.end(), policy)?
+        {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -1473,7 +1507,7 @@ impl BezierParallelFragment2 {
                 }
             }
         } else {
-            let analysis = match parallel.singularity_analysis(&active_range, policy)? {
+            let analysis = match parallel.singularity_analysis_with_policy(&active_range, policy)? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -1564,7 +1598,7 @@ impl BezierParallelFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        self.parallel.point_at(&parameter, policy)
+        self.parallel.point_at_with_policy(&parameter, policy)
     }
 }
 
@@ -1574,13 +1608,13 @@ fn parameter_in_range(
     include_endpoints: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let start = match parameter.cmp_by_refinement(range.start(), policy)? {
+    let start = match parameter.cmp_by_refinement_with_policy(range.start(), policy)? {
         Classification::Decided(order) => order,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let end = match parameter.cmp_by_refinement(range.end(), policy)? {
+    let end = match parameter.cmp_by_refinement_with_policy(range.end(), policy)? {
         Classification::Decided(order) => order,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -2485,7 +2519,10 @@ where
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
         let parameter = if promote_exact_points {
-            match parameter.clone().promote_represented_exact_point(policy)? {
+            match parameter
+                .clone()
+                .promote_represented_exact_point_with_policy(policy)?
+            {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
@@ -2616,7 +2653,7 @@ where
 }
 
 fn validate_parameter(parameter: &BezierParameter2, policy: &CurveContext) -> CurveResult<()> {
-    match parameter.known_interval(policy)? {
+    match parameter.known_interval_with_policy(policy)? {
         Classification::Decided(_) => Ok(()),
         Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
             "Bezier split parameter interval uncertain: {reason:?}"
@@ -2674,9 +2711,9 @@ fn compare_boundary_parameters(
     refine_ordering: bool,
 ) -> CurveResult<Classification<Ordering>> {
     if refine_ordering {
-        first.cmp_by_refinement(second, policy)
+        first.cmp_by_refinement_with_policy(second, policy)
     } else {
-        first.cmp_by_interval(second, policy)
+        first.cmp_by_interval_with_policy(second, policy)
     }
 }
 

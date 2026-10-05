@@ -744,22 +744,28 @@ fn positive_sqrt_ratio_parameter(
     policy: &CurveContext,
 ) -> CurveResult<BezierAlgebraicParameter2> {
     let polynomial = expect_decided(
-        BezierParameterPolynomial::try_new_power_basis(
-            vec![
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
                 Real::from(-numerator),
                 Real::zero(),
                 Real::from(denominator),
-            ],
-            policy,
-        )?,
+            ])
+        })
+        .expect("benchmark fixture remains exact"),
         "quadratic benchmark parameter must remain exact",
     );
     let interval = expect_decided(
-        BezierParameterInterval::try_new(Real::zero(), Real::one(), policy)?,
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .expect("benchmark fixture remains exact"),
         "quadratic benchmark interval must remain exact",
     );
     Ok(expect_decided(
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .expect("benchmark fixture remains exact"),
         "positive quadratic benchmark root must remain isolated",
     ))
 }

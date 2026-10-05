@@ -266,7 +266,7 @@ exact signatures.
   views. Selected parameters remain exact when these views are absent.
   Intersections return `CurveLocation2` contacts and `CurveParameterRange2`
   overlap ranges. A location retains its support parameter and span chart;
-  `location.parameter(&policy)` maps it into the authored curve domain on
+  `location.parameter()` maps it into the authored curve domain on
   demand, preserving selected roots for evaluation and subdivision.
   `CurveParameter2::compare` compares parameters in a shared support chart
   without requiring scalar payloads and reports predicate certainty.

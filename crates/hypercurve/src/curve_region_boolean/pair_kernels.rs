@@ -371,7 +371,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     && let Some(exact) = parallel_parameter.scalar()
                 {
                     let point = parallel
-                        .point_at(exact, &self.data.policy)
+                        .point_at_with_policy(exact, &self.data.policy)
                         .map_err(|cause| self.invalid(0, cause))?;
                     // A finite-arc rejection is optional. Unresolved scalar
                     // coordinates retain the selected point's exact field.
@@ -474,7 +474,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(Classification::Decided(None));
             };
             let point = match parallel
-                .point_at(exact, &self.data.policy)
+                .point_at_with_policy(exact, &self.data.policy)
                 .map_err(|cause| self.invalid(0, cause))?
             {
                 Classification::Decided(point) => point,
@@ -512,13 +512,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let Some(parallel_parameter_exact) = parallel_parameter.scalar() else {
                 return Ok(Classification::Decided(None));
             };
-            let point = match parallel.point_at(parallel_parameter_exact, &self.data.policy) {
-                Ok(Classification::Decided(point)) => point,
-                Ok(Classification::Uncertain(reason)) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-                Err(cause) => return Err(self.invalid(0, cause)),
-            };
+            let point =
+                match parallel.point_at_with_policy(parallel_parameter_exact, &self.data.policy) {
+                    Ok(Classification::Decided(point)) => point,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                    Err(cause) => return Err(self.invalid(0, cause)),
+                };
             let other_parameters = match rational
                 .point_incidence_on_range(
                     &point,
@@ -538,7 +539,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             };
             let parallel_derivative = match parallel
-                .derivative_at(parallel_parameter_exact, &self.data.policy)
+                .derivative_at_with_policy(parallel_parameter_exact, &self.data.policy)
                 .map_err(|cause| self.invalid(0, cause))?
             {
                 Classification::Decided(derivative) => derivative,

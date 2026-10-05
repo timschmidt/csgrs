@@ -880,11 +880,12 @@ mod finite_fixed_distance_domains {
             (source.parallel_left(q(1, 64)).unwrap(), start, end)
         };
         let range = exact(
-            BezierParameterRange2::try_new(
-                BezierParameter2::Exact(start),
-                BezierParameter2::Exact(end),
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(start),
+                    BezierParameter2::Exact(end),
+                )
+            })
             .unwrap(),
         );
         crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
@@ -1106,11 +1107,12 @@ mod finite_selected_point_domains {
             (source.parallel_left(q(1, 64)).unwrap(), start, end)
         };
         let range = exact(
-            BezierParameterRange2::try_new(
-                BezierParameter2::Exact(start),
-                BezierParameter2::Exact(end),
-                policy,
-            )
+            crate::support::under_classified_result(policy, || {
+                BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(start),
+                    BezierParameter2::Exact(end),
+                )
+            })
             .unwrap(),
         );
         crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))

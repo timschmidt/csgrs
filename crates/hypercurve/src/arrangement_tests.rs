@@ -55,10 +55,15 @@ fn contact_parameters_follow_their_carrier_domains() {
 
 fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
+        BezierParameterPolynomial::try_new_power_basis_with_policy(vec![r(-1), r(2)], &policy())
+            .unwrap(),
     );
-    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());
-    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(2, 5), q(3, 5), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
 }
 
 fn through_origin_with_midpoint_tangent(dx: i32, dy: i32) -> QuadraticBezier2 {
@@ -751,16 +756,21 @@ fn native_quadratic_ordering_agrees_with_rational_carriers() {
     // or on representing the shared endpoint by a selected parameter.
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter = decided(
-            BezierAlgebraicParameter2::try_isolate(
+            BezierAlgebraicParameter2::try_isolate_with_policy(
                 decided(
-                    BezierParameterPolynomial::try_new_power_basis(
+                    BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![Real::from(-1), Real::from(2)],
                         &policy,
                     )
                     .unwrap(),
                 ),
                 decided(
-                    BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                    BezierParameterInterval::try_new_with_policy(
+                        Real::zero(),
+                        Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
                 ),
                 &policy,
             )
@@ -865,16 +875,21 @@ fn mixed_native_and_selected_endpoints_share_tangent_ordering() {
     }
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter = decided(
-            BezierAlgebraicParameter2::try_isolate(
+            BezierAlgebraicParameter2::try_isolate_with_policy(
                 decided(
-                    BezierParameterPolynomial::try_new_power_basis(
+                    BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![Real::from(-1), Real::from(2)],
                         &policy,
                     )
                     .unwrap(),
                 ),
                 decided(
-                    BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                    BezierParameterInterval::try_new_with_policy(
+                        Real::zero(),
+                        Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
                 ),
                 &policy,
             )
@@ -947,16 +962,21 @@ fn retained_source_tangents_order_without_coordinate_projection() {
     }
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter = decided(
-            BezierAlgebraicParameter2::try_isolate(
+            BezierAlgebraicParameter2::try_isolate_with_policy(
                 decided(
-                    BezierParameterPolynomial::try_new_power_basis(
+                    BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
                         &policy,
                     )
                     .unwrap(),
                 ),
                 decided(
-                    BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                    BezierParameterInterval::try_new_with_policy(
+                        Real::zero(),
+                        Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
                 ),
                 &policy,
             )
@@ -1066,15 +1086,15 @@ fn retained_source_curvature_orders_without_scalar_projection() {
     }
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter = decided(
-            BezierAlgebraicParameter2::try_isolate(
+            BezierAlgebraicParameter2::try_isolate_with_policy(
                 decided(
-                    BezierParameterPolynomial::try_new_power_basis(
+                    BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![-Real::pi(), r(0), r(0), r(4)],
                         &policy,
                     )
                     .unwrap(),
                 ),
-                decided(BezierParameterInterval::try_new(r(0), r(1), &policy).unwrap()),
+                decided(BezierParameterInterval::try_new_with_policy(r(0), r(1), &policy).unwrap()),
                 &policy,
             )
             .unwrap(),
@@ -1087,17 +1107,21 @@ fn retained_source_curvature_orders_without_scalar_projection() {
                         parameter.clone()
                     } else {
                         decided(
-                            BezierAlgebraicParameter2::try_isolate(
+                            BezierAlgebraicParameter2::try_isolate_with_policy(
                                 decided(
-                                    BezierParameterPolynomial::try_new_power_basis(
+                                    BezierParameterPolynomial::try_new_power_basis_with_policy(
                                         vec![-Real::pi(), r(0), r(0), r(4 * scale.pow(3))],
                                         &policy,
                                     )
                                     .unwrap(),
                                 ),
                                 decided(
-                                    BezierParameterInterval::try_new(r(0), q(1, scale), &policy)
-                                        .unwrap(),
+                                    BezierParameterInterval::try_new_with_policy(
+                                        r(0),
+                                        q(1, scale),
+                                        &policy,
+                                    )
+                                    .unwrap(),
                                 ),
                                 &policy,
                             )

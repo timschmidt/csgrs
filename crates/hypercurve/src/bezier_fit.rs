@@ -583,7 +583,21 @@ impl RationalBezier2 {
 
 impl CertifiedBezierPolyline2 {
     /// Fits this certified polyline to one exact point when the fit has zero error.
-    pub fn fit_exact_point(
+    pub fn fit_exact_point(&self) -> crate::ExactCurveResult<BezierPointFitRelation> {
+        self.fit_exact_point_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+            })
+    }
+
+    /// [`Self::fit_exact_point`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_point_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointFitRelation>> {
@@ -616,7 +630,21 @@ impl CertifiedBezierPolyline2 {
     }
 
     /// Fits this certified polyline to one exact line when the fit has zero error.
-    pub fn fit_exact_line(
+    pub fn fit_exact_line(&self) -> crate::ExactCurveResult<BezierLineFitRelation> {
+        self.fit_exact_line_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Classification, value)
+            })
+    }
+
+    /// [`Self::fit_exact_line`] under an explicit predicate policy.
+    pub(crate) fn fit_exact_line_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineFitRelation>> {

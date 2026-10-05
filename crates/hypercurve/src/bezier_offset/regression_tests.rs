@@ -430,16 +430,20 @@ mod regular_parallel_contact_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let root = |leading, lower, upper| {
                 let polynomial = decided(
-                    BezierParameterPolynomial::try_new_power_basis(
+                    BezierParameterPolynomial::try_new_power_basis_with_policy(
                         vec![-Real::one(), Real::zero(), Real::from(leading)],
                         &policy,
                     )
                     .unwrap(),
                 );
-                let interval =
-                    decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());
+                let interval = decided(
+                    BezierParameterInterval::try_new_with_policy(lower, upper, &policy).unwrap(),
+                );
                 CurveParameter2::from(BezierParameter2::Algebraic(decided(
-                    BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                    BezierAlgebraicParameter2::try_isolate_with_policy(
+                        polynomial, interval, &policy,
+                    )
+                    .unwrap(),
                 )))
             };
             let algebraic = [
@@ -472,8 +476,11 @@ mod regular_parallel_contact_tests {
                             endpoints[order[0]].clone(),
                             endpoints[order[1]].clone(),
                         );
-                        let analysis =
-                            decided(parallel.singularity_analysis(&range, &policy).unwrap());
+                        let analysis = decided(
+                            parallel
+                                .singularity_analysis_with_policy(&range, &policy)
+                                .unwrap(),
+                        );
                         let cells = decided(analysis.regular_subranges(&policy).unwrap());
                         assert_eq!(cells.len(), expected.len() - 1);
                         // The outer endpoints retain their exact parameter
@@ -1346,16 +1353,20 @@ mod regular_parallel_contact_tests {
     }
     fn retained_frame_test_parameters(value: Real, policy: &CurveContext) -> [CurveParameter2; 3] {
         let polynomial = decided(
-            BezierParameterPolynomial::try_new_power_basis(
+            BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![-q(1, 2), Real::zero(), Real::one()],
                 policy,
             )
             .unwrap(),
         );
-        let interval =
-            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
-        let alpha =
-            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let interval = decided(
+            BezierParameterInterval::try_new_with_policy(Real::zero(), Real::one(), policy)
+                .unwrap(),
+        );
+        let alpha = decided(
+            BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, policy)
+                .unwrap(),
+        );
         let selected =
             BezierAlgebraicSelectedFiberAuthority2::exact_parameter(alpha, value.clone(), policy);
         let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
@@ -1708,17 +1719,17 @@ mod empty_incident_component_tests {
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+            let polynomial = decided(BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![Real::from(-2_i8), Real::zero(), Real::one()],
                 &policy,
             ));
-            let interval = decided(BezierParameterInterval::try_new(
+            let interval = decided(BezierParameterInterval::try_new_with_policy(
                 Real::one(),
                 Real::from(2_i8),
                 &policy,
             ));
             let barrier = BezierParameter2::Algebraic(decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy),
             ));
             let anchor = Real::from(2_i8).sqrt().unwrap();
             let parameter = CurveParameter2::from(barrier.clone());
@@ -1779,21 +1790,26 @@ mod finite_domain_ownership_tests {
     #[test]
     fn finite_endpoint_ownership_filters_independent_roots_and_selected_axes() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let root_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-                vec![Real::from(-2), Real::zero(), Real::one()],
-                &policy,
-            ));
-            let interval = decided(BezierParameterInterval::try_new(
+            let root_polynomial =
+                decided(BezierParameterPolynomial::try_new_power_basis_with_policy(
+                    vec![Real::from(-2), Real::zero(), Real::one()],
+                    &policy,
+                ));
+            let interval = decided(BezierParameterInterval::try_new_with_policy(
                 Real::one(),
                 q(3, 2),
                 &policy,
             ));
             let lower = BezierParameter2::Algebraic(decided(
-                BezierAlgebraicParameter2::try_isolate(root_polynomial, interval, &policy),
+                BezierAlgebraicParameter2::try_isolate_with_policy(
+                    root_polynomial,
+                    interval,
+                    &policy,
+                ),
             ));
             // A different degree-four root authority must compare equal to the
             // retained sqrt(2) endpoint without replacing either certificate.
-            let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+            let polynomial = decided(BezierParameterPolynomial::try_new_power_basis_with_policy(
                 polynomial_multiply(
                     &[Real::from(-2), Real::zero(), Real::one()],
                     &polynomial_multiply(
@@ -1845,7 +1861,8 @@ mod finite_domain_ownership_tests {
                             let matches = actual
                                 .iter()
                                 .filter(|root| {
-                                    decided(root.cmp_by_refinement(expected, &policy)).is_eq()
+                                    decided(root.cmp_by_refinement_with_policy(expected, &policy))
+                                        .is_eq()
                                 })
                                 .count();
                             assert_eq!(matches, usize::from(included));
@@ -2372,7 +2389,7 @@ mod structural_overlap_trace_regression {
                 [q(1, 4).into(), Real::one().into()]
             };
             let clipped = public
-                .restrict([Real::zero().into(), q(1, 2).into()], second, &policy)
+                .restrict_with_policy([Real::zero().into(), q(1, 2).into()], second, &policy)
                 .unwrap()
                 .value;
             let Classification::Decided(Some(clipped)) = clipped else {

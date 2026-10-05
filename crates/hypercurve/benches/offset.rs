@@ -25,11 +25,14 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 /// Retains an analytic parallel over its unit source range as a general curve.
 fn unit_parallel_curve(parallel: &hypercurve::BezierParallel2) -> CurveResult<Curve2> {
-    let Classification::Decided(range) = BezierParameterRange2::try_new(
-        BezierParameter2::Exact(Real::zero()),
-        BezierParameter2::Exact(Real::one()),
-        &CurveContext::STRICT,
-    )?
+    let Classification::Decided(range) =
+        crate::support::under_classified_result(&CurveContext::STRICT, || {
+            BezierParameterRange2::try_new(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            )
+        })
+        .expect("benchmark fixture remains exact")
     else {
         panic!("the unit benchmark range must be decided");
     };
@@ -109,7 +112,10 @@ fn bench_exact_bezier_parallel_evaluation(iterations: u32) -> CurveResult<()> {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(point) = parallel.point_at(&parameter, &policy)? else {
+        let Classification::Decided(point) =
+            crate::support::under_classified_result(&policy, || parallel.point_at(&parameter))
+                .expect("benchmark fixture remains exact")
+        else {
             panic!("exact Bezier parallel evaluation became uncertain");
         };
         checksum += black_box(point.x().to_f64_lossy().is_some() as usize);
@@ -178,7 +184,10 @@ fn bench_bezier_parallel_cusp_isolation(iterations: u32) -> CurveResult<()> {
     let mut roots = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(analysis) =
-            parallel.singularity_analysis(&CurveParameterRange2::unit(), &policy)?
+            crate::support::under_classified_result(&policy, || {
+                parallel.singularity_analysis(&CurveParameterRange2::unit())
+            })
+            .expect("benchmark fixture remains exact")
         else {
             panic!("Bezier parallel cusp isolation became uncertain");
         };
@@ -205,7 +214,10 @@ fn bench_exact_ph_offset_construction(iterations: u32) -> CurveResult<()> {
     let mut degree = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(Some(offset)) =
-            parallel.exact_pythagorean_hodograph_offset(&policy)?
+            crate::support::under_classified_result(&policy, || {
+                parallel.exact_pythagorean_hodograph_offset()
+            })
+            .expect("benchmark fixture remains exact")
         else {
             panic!("PH benchmark source was not recognized");
         };
@@ -553,7 +565,10 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     );
     let ph_overlap_parallel = ph_overlap_source.parallel_left(s(1))?;
     let Classification::Decided(Some(ph_overlap)) =
-        ph_overlap_parallel.exact_pythagorean_hodograph_offset(&CurveContext::STRICT)?
+        crate::support::under_classified_result(&CurveContext::STRICT, || {
+            ph_overlap_parallel.exact_pythagorean_hodograph_offset()
+        })
+        .expect("benchmark fixture remains exact")
     else {
         panic!("PH overlap benchmark source was not recognized");
     };
@@ -651,7 +666,10 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
 fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<()> {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -1), p(4, 0));
     let policy = CurveContext::STRICT;
-    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 14, &policy)?;
+    let options = crate::support::under_value(&policy, || {
+        BezierParallelVerificationOptions::try_new(q(1, 20), 14)
+    })
+    .expect("benchmark fixture remains exact");
     let started = Instant::now();
     let mut spans = 0_usize;
     let mut leaves = 0_usize;
@@ -778,20 +796,24 @@ fn curve_region_algebraic_partition_fixture(
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
     let mut curves = if partitioned {
-        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
-            vec![s(-1), Real::zero(), s(2)],
-            &policy,
-        )?
+        let Classification::Decided(polynomial) =
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![s(-1), Real::zero(), s(2)])
+            })?
         else {
             panic!("the benchmark parameter polynomial must be decided");
         };
         let Classification::Decided(interval) =
-            BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterInterval::try_new(q(2, 3), q(3, 4))
+            })?
         else {
             panic!("the benchmark isolating interval must be decided");
         };
         let Classification::Decided(parameter) =
-            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)?
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })?
         else {
             panic!("the benchmark algebraic parameter must be decided");
         };
@@ -800,7 +822,10 @@ fn curve_region_algebraic_partition_fixture(
             .into_iter()
             .map(|(start, end)| {
                 let Classification::Decided(range) =
-                    BezierParameterRange2::try_new(start, end, &policy)?
+                    crate::support::under_classified_result(&policy, || {
+                        BezierParameterRange2::try_new(start, end)
+                    })
+                    .expect("benchmark fixture remains exact")
                 else {
                     panic!("the benchmark partition range must be decided");
                 };
@@ -813,7 +838,10 @@ fn curve_region_algebraic_partition_fixture(
             })
             .collect::<CurveResult<Vec<_>>>()?
     } else {
-        let Classification::Decided(range) = BezierParameterRange2::try_new(zero, one, &policy)?
+        let Classification::Decided(range) =
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterRange2::try_new(zero, one)
+            })?
         else {
             panic!("the benchmark full parameter range must be decided");
         };

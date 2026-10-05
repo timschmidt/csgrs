@@ -563,7 +563,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
             let constant = policy.bounded_exact_predicate_pass(
                 || -> crate::CurveResult<Classification<Option<RealSign>>> {
                     let analysis = match parallel
-                        .singularity_analysis(&source.curve_parameter_range(), policy)?
+                        .singularity_analysis_with_policy(&source.curve_parameter_range(), policy)?
                     {
                         Classification::Decided(analysis) => analysis,
                         Classification::Uncertain(reason) => {
@@ -2478,7 +2478,7 @@ pub(super) fn fillet_offset_centers(
             let ranges =
                 if incidence == Classification::Uncertain(crate::UncertaintyReason::Boundary) {
                     let analysis = match source_parallel()
-                        .singularity_analysis(&finite_range, policy)
+                        .singularity_analysis_with_policy(&finite_range, policy)
                         .map_err(invalid)?
                     {
                         Classification::Decided(analysis) => analysis,

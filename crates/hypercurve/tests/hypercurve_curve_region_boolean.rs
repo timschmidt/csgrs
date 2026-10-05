@@ -86,7 +86,10 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         (s.clone(), &s + Real::one())
                     };
                     let range = decided(
-                        CurveParameterRange2::try_new(start.into(), end.into(), &policy).unwrap(),
+                        crate::support::under_classified_result(&policy, || {
+                            CurveParameterRange2::try_new(start.into(), end.into())
+                        })
+                        .unwrap(),
                     );
                     let curve = certified(
                         crate::support::under(&policy, || {
@@ -183,8 +186,12 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
             })
             .unwrap()
             .into_value();
-            let range =
-                decided(CurveParameterRange2::try_new(start.into(), end.into(), &policy).unwrap());
+            let range = decided(
+                crate::support::under_classified_result(&policy, || {
+                    CurveParameterRange2::try_new(start.into(), end.into())
+                })
+                .unwrap(),
+            );
             let curve = certified(
                 crate::support::under(&policy, || {
                     Curve2::try_from_bezier_range(
@@ -514,11 +521,12 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
                 ),
             );
             let range = decided(
-                CurveParameterRange2::try_new(
-                    shift.clone().into(),
-                    (&shift + Real::one()).into(),
-                    &policy,
-                )
+                crate::support::under_classified_result(&policy, || {
+                    CurveParameterRange2::try_new(
+                        shift.clone().into(),
+                        (&shift + Real::one()).into(),
+                    )
+                })
                 .unwrap(),
             );
             let curve = certified(
@@ -2332,16 +2340,26 @@ fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
         // Roots of 2t^2 - 1 and 8t^2 - 1 select irrational interior cuts.
         for (square, lower, upper) in [(2, q(2, 3), q(3, 4)), (8, q(1, 3), q(2, 5))] {
             let polynomial = decided(
-                BezierParameterPolynomial::try_new_power_basis(
-                    vec![Real::from(-1), Real::zero(), Real::from(square)],
-                    &policy,
-                )
+                crate::support::under_classified_result(&policy, || {
+                    BezierParameterPolynomial::try_new_power_basis(vec![
+                        Real::from(-1),
+                        Real::zero(),
+                        Real::from(square),
+                    ])
+                })
                 .unwrap(),
             );
-            let interval =
-                decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());
+            let interval = decided(
+                crate::support::under_classified_result(&policy, || {
+                    BezierParameterInterval::try_new(lower, upper)
+                })
+                .unwrap(),
+            );
             let cut = BezierParameter2::Algebraic(decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                crate::support::under_classified_result(&policy, || {
+                    BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+                })
+                .unwrap(),
             ));
             let (head, tail) = crate::support::under(&policy, || curve.split_at(cut.into()))
                 .unwrap()

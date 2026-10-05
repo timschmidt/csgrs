@@ -1040,7 +1040,10 @@ fn append_analytic_parallel_samples(
 ) -> CurveResult<()> {
     let endpoint = |parameter: &BezierParameter2| -> CurveResult<_> {
         if let Some(parameter) = parameter.scalar() {
-            return match fragment.parallel().point_at(parameter, policy)? {
+            return match fragment
+                .parallel()
+                .point_at_with_policy(parameter, policy)?
+            {
                 Classification::Decided(point) => Ok(CurvePoint2::from(point)),
                 Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
                     "finite analytic-parallel endpoint evaluation remained uncertain: {reason:?}"
@@ -1436,7 +1439,7 @@ fn append_parallel_parameter_samples(
     }
 
     let midpoint = ((start_parameter + end_parameter) / Real::from(2_u8))?;
-    let midpoint_point = match parallel.point_at(&midpoint, policy)? {
+    let midpoint_point = match parallel.point_at_with_policy(&midpoint, policy)? {
         Classification::Decided(point) => finite_point(&point)?,
         Classification::Uncertain(reason) => {
             return Err(CurveError::Topology(format!(
@@ -1495,7 +1498,7 @@ fn finite_parameter_representative(
     if let Some(exact) = parameter.scalar() {
         return Ok(exact.clone());
     }
-    let interval = match parameter.known_interval(policy)? {
+    let interval = match parameter.known_interval_with_policy(policy)? {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(reason) => {
             return Err(CurveError::Topology(format!(

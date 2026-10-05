@@ -1722,7 +1722,7 @@ fn build_native_coincident_arc_evidence(
                     )?;
                     let orientation = match second_range
                         .start()
-                        .cmp_by_interval(second_range.end(), policy)
+                        .cmp_by_interval_with_policy(second_range.end(), policy)
                         .map_err(|cause| native_arc_parameter_error(second, cause))?
                     {
                         Classification::Decided(std::cmp::Ordering::Less) => {
@@ -1874,7 +1874,7 @@ fn native_arc_overlap_range(
 ) -> ExactCurveResult<BezierParameterRange2> {
     let start = native_arc_span_parameter(curve, evaluator, overlap.start(), policy)?;
     let end = native_arc_span_parameter(curve, evaluator, overlap.end(), policy)?;
-    match BezierParameterRange2::try_new(start, end, policy)
+    match BezierParameterRange2::try_new_with_policy(start, end, policy)
         .map_err(|cause| native_arc_parameter_error(curve, cause))?
     {
         Classification::Decided(range) => Ok(range),
@@ -1893,7 +1893,7 @@ fn bezier_parameter_range_covers_unit(
 ) -> ExactCurveResult<bool> {
     let order = range
         .start()
-        .cmp_by_interval(range.end(), policy)
+        .cmp_by_interval_with_policy(range.end(), policy)
         .map_err(|cause| native_arc_parameter_error(curve, cause))?;
     let (lower, upper) = match order {
         Classification::Decided(std::cmp::Ordering::Less) => (range.start(), range.end()),
@@ -2662,7 +2662,7 @@ impl Curve2 {
         // the next; both describe one authored parameter.
         let mut locations: Vec<CurveLocation2> = Vec::with_capacity(spans.len());
         for location in spans {
-            let parameter = location.parameter(policy).map_err(|cause| {
+            let parameter = location.parameter_with_policy(policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Intersection, self.family(), cause)
             })?;
             let parameter = match parameter {
@@ -2671,12 +2671,19 @@ impl Curve2 {
             };
             let mut duplicate = false;
             if let Some(previous_location) = locations.last() {
-                let previous = match previous_location.parameter(policy).map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Intersection, self.family(), cause)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => return Err(blocked(reason)),
-                };
+                let previous =
+                    match previous_location
+                        .parameter_with_policy(policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Intersection,
+                                self.family(),
+                                cause,
+                            )
+                        })? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
                 duplicate = previous_location.span_index != location.span_index
                     && match previous.same_value(&parameter, policy).map_err(|cause| {
                         ExactCurveError::invalid(
@@ -2924,7 +2931,24 @@ impl CurveLocation2 {
     ///
     /// Identity charts reuse the existing authority. Other affine charts are
     /// replayed only on demand, under certified parameter-transform predicates.
-    pub fn parameter(&self, policy: &CurveContext) -> CurveResult<Classification<CurveParameter2>> {
+    pub fn parameter(&self) -> crate::ExactCurveResult<CurveParameter2> {
+        self.parameter_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, value)
+            })
+    }
+
+    /// [`Self::parameter`] under an explicit predicate policy.
+    pub(crate) fn parameter_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameter2>> {
         let (start, end) = self.span_range.endpoints();
         if start == &Real::zero() && end == &Real::one() {
             return Ok(Classification::Decided(self.local_parameter.clone()));
@@ -2987,6 +3011,27 @@ impl CurveIntersectionOverlap2 {
     /// evidence; wider limits never enlarge it. A singleton restriction has no
     /// positive-length component and returns `None`.
     pub fn restrict(
+        &self,
+        first: [CurveParameter2; 2],
+        second: [CurveParameter2; 2],
+    ) -> crate::ExactCurveResult<Option<Self>> {
+        self.restrict_with_policy(first, second, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Subdivision,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Subdivision,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::restrict`] under an explicit predicate policy.
+    pub(crate) fn restrict_with_policy(
         &self,
         first: [CurveParameter2; 2],
         second: [CurveParameter2; 2],
@@ -3228,7 +3273,7 @@ pub(crate) fn split_curve(
             local_parameter,
         };
         cuts.push(
-            match location.parameter(policy).map_err(|cause| {
+            match location.parameter_with_policy(policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Arrangement, curve.family(), cause)
             })? {
                 Classification::Decided(parameter) => parameter,
@@ -3314,9 +3359,10 @@ fn same_curve_parameter(
     {
         return Classification::Decided(false);
     }
-    let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) =
-        (first.parameter(policy), second.parameter(policy))
-    else {
+    let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) = (
+        first.parameter_with_policy(policy),
+        second.parameter_with_policy(policy),
+    ) else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
     first
@@ -3356,14 +3402,14 @@ mod native_dispatch_tests {
         assert_eq!(
             result.contacts()[0]
                 .first()
-                .parameter(&CurveContext::STRICT)
+                .parameter_with_policy(&CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided((Real::one() / Real::from(2_i8)).unwrap().into())
         );
         assert_eq!(
             result.contacts()[0]
                 .second()
-                .parameter(&CurveContext::STRICT)
+                .parameter_with_policy(&CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided((Real::one() / Real::from(2_i8)).unwrap().into())
         );
@@ -3597,7 +3643,7 @@ mod point_component_dispatch_tests {
                                 (contact.first(), contact.second())
                             };
                             assert_eq!(line.local_parameter().scalar(), Some(&Real::one()));
-                            exact(source.parameter(&policy).unwrap())
+                            exact(source.parameter_with_policy(&policy).unwrap())
                                 .scalar()
                                 .unwrap()
                                 .clone()
@@ -3688,7 +3734,7 @@ mod point_component_dispatch_tests {
                                     } else {
                                         contact.first()
                                     };
-                                    exact(location.parameter(&policy).unwrap()).scalar()
+                                    exact(location.parameter_with_policy(&policy).unwrap()).scalar()
                                         == Some(&Real::from(visit))
                                 })
                                 .count(),
@@ -3744,7 +3790,7 @@ mod overlap_restriction_tests {
             let mut open = overlap.clone();
             open.endpoint_inclusion = [false, false];
             let clipped = exact(
-                open.restrict(
+                open.restrict_with_policy(
                     [limit.start().clone(), limit.end().clone()],
                     [
                         overlap.second_range().start().clone(),
@@ -3788,7 +3834,7 @@ mod overlap_restriction_tests {
                 assert_eq!(
                     exact(
                         clipped
-                            .restrict(
+                            .restrict_with_policy(
                                 [
                                     overlap.first_range().start().clone(),
                                     overlap.first_range().end().clone()
@@ -3808,7 +3854,7 @@ mod overlap_restriction_tests {
             let singleton = std::array::from_fn(|_| clipped.first_range().end().clone());
             assert!(
                 exact(
-                    open.restrict(
+                    open.restrict_with_policy(
                         singleton,
                         [
                             overlap.second_range().start().clone(),
@@ -3827,7 +3873,7 @@ mod overlap_restriction_tests {
             assert!(
                 exact(
                     clipped
-                        .restrict(
+                        .restrict_with_policy(
                             [rest.start().clone(), rest.end().clone()],
                             [
                                 overlap.second_range().start().clone(),
@@ -3843,7 +3889,7 @@ mod overlap_restriction_tests {
                 CurveParameterRange2::new_validated(limit.end().clone(), limit.start().clone());
             assert_eq!(
                 exact(
-                    open.restrict(
+                    open.restrict_with_policy(
                         [reversed_limit.start().clone(), reversed_limit.end().clone()],
                         [
                             overlap.second_range().start().clone(),

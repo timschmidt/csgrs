@@ -324,18 +324,20 @@ pub(super) fn overlap_parameter_through_injective_axis(
     ) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis(preimage_coefficients, policy) {
-            Ok(Classification::Decided(polynomial)) => polynomial,
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-            Err(CurveError::InvalidBezierPolynomial) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-            }
-            Err(error) => return Err(error),
-        };
-    let parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
+        preimage_coefficients,
+        policy,
+    ) {
+        Ok(Classification::Decided(polynomial)) => polynomial,
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+        Err(CurveError::InvalidBezierPolynomial) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        Err(error) => return Err(error),
+    };
+    let parameters = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -360,7 +362,7 @@ pub(super) fn overlap_parameter_through_injective_axis(
         }
     }
     if let Some(parameter) = matched {
-        return match parameter.promote_represented_exact_point(policy)? {
+        return match parameter.promote_represented_exact_point_with_policy(policy)? {
             Classification::Decided(parameter) => Ok(Classification::Decided(Some(parameter))),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         };
@@ -626,7 +628,7 @@ pub(super) fn rational_map_image_polynomial(
         denominator,
         policy,
     ) && let Ok(Classification::Decided(polynomial)) =
-        BezierParameterPolynomial::try_new_power_basis(coefficients, policy)
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)
     {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
@@ -658,7 +660,7 @@ pub(super) fn rational_map_image_polynomial(
         samples.push(resultant);
     }
     let coefficients = hypersolve::curve_resultant::interpolate_integer_node_samples(&samples)?;
-    match BezierParameterPolynomial::try_new_power_basis(coefficients, policy).ok()? {
+    match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy).ok()? {
         Classification::Decided(polynomial) => Some(polynomial),
         Classification::Uncertain(_) => None,
     }
@@ -768,7 +770,7 @@ pub(super) fn locally_certified_rational_image_parameter(
     let mut refinement = BezierParameterRefinement2::new(source_parameter, policy);
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256] {
         let refined = refinement.refine_to(refinement_steps);
-        let source_interval = match refined.known_interval(policy)? {
+        let source_interval = match refined.known_interval_with_policy(policy)? {
             Classification::Decided(interval) => RealInterval {
                 lower: interval.start().clone(),
                 upper: interval.end().clone(),
@@ -868,11 +870,14 @@ pub(super) fn locally_certified_rational_image_parameter(
             continue;
         }
 
-        let interval =
-            match BezierParameterInterval::try_new(Real::new(lower), Real::new(upper), policy)? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(_) => continue,
-            };
+        let interval = match BezierParameterInterval::try_new_with_policy(
+            Real::new(lower),
+            Real::new(upper),
+            policy,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(_) => continue,
+        };
         let Some(global_power) = candidate
             .quotient_power
             .get_or_init(|| {
@@ -955,7 +960,7 @@ pub(super) fn real_coefficient_rational_image_parameter(
     };
     let image_parameters = match candidate
         .image_parameters
-        .get_or_init(|| image_polynomial.isolate_unit_interval_roots(&strict))
+        .get_or_init(|| image_polynomial.isolate_unit_interval_roots_with_policy(&strict))
     {
         Ok(Classification::Decided(parameters)) => parameters,
         Ok(Classification::Uncertain(reason)) => {
@@ -977,7 +982,7 @@ pub(super) fn real_coefficient_rational_image_parameter(
     let mut excluded_endpoints = [false; 2];
     loop {
         let refined = refinement.refine_to(refinement_steps);
-        let source_interval = match refined.known_interval(&strict)? {
+        let source_interval = match refined.known_interval_with_policy(&strict)? {
             Classification::Decided(interval) => RealInterval {
                 lower: interval.start().clone(),
                 upper: interval.end().clone(),
@@ -1109,7 +1114,7 @@ pub(super) fn image_parameter_may_meet_map_interval(
     // Both a retained isolator and a learned scalar enclose the same root.
     // Only certified disjointness excludes a candidate; an unavailable
     // comparison must remain possible while the source enclosure refines.
-    let Ok(Classification::Decided(interval)) = parameter.known_interval(policy) else {
+    let Ok(Classification::Decided(interval)) = parameter.known_interval_with_policy(policy) else {
         return true;
     };
     !matches!(
@@ -1193,7 +1198,7 @@ pub(crate) fn rational_parameter_image_matches(
                 }
             };
             {
-                let target_interval = match target.known_interval(policy)? {
+                let target_interval = match target.known_interval_with_policy(policy)? {
                     Classification::Decided(interval) => interval,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));

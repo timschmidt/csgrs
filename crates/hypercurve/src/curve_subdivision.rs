@@ -3311,7 +3311,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let family = CurveFamily2::CircularArc;
             let polynomial = decided(
-                BezierParameterPolynomial::try_new_power_basis(
+                BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![Real::from(-1), Real::zero(), Real::from(2)],
                     &policy,
                 )
@@ -3320,12 +3320,13 @@ mod tests {
             )
             .unwrap();
             let interval = decided(
-                BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy).unwrap(),
+                BezierParameterInterval::try_new_with_policy(q(2, 3), q(3, 4), &policy).unwrap(),
                 family,
             )
             .unwrap();
             let parameter = decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
                 family,
             )
             .unwrap();
@@ -3476,7 +3477,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let family = CurveFamily2::QuadraticBezier;
             let polynomial = decided(
-                BezierParameterPolynomial::try_new_power_basis(
+                BezierParameterPolynomial::try_new_power_basis_with_policy(
                     vec![Real::from(-1), Real::zero(), Real::from(2)],
                     &policy,
                 )
@@ -3485,12 +3486,13 @@ mod tests {
             )
             .unwrap();
             let interval = decided(
-                BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy).unwrap(),
+                BezierParameterInterval::try_new_with_policy(q(2, 3), q(3, 4), &policy).unwrap(),
                 family,
             )
             .unwrap();
             let parameter = decided(
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy)
+                    .unwrap(),
                 family,
             )
             .unwrap();

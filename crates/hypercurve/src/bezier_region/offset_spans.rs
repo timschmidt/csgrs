@@ -139,7 +139,7 @@ impl CurveTangent2 {
             ),
         };
         let range = if matches!(fragment, BezierSplitFragment2::SelectedFiber(_)) {
-            let analysis = match parallel.singularity_analysis(&range, policy)? {
+            let analysis = match parallel.singularity_analysis_with_policy(&range, policy)? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
@@ -629,13 +629,13 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
     let one = BezierParameter2::Exact(Real::one());
     let mut source_boundaries = vec![(zero.clone(), false)];
     for singularity in analysis.source_singularities() {
-        let after_zero = match singularity.cmp_by_refinement(&zero, policy)? {
+        let after_zero = match singularity.cmp_by_refinement_with_policy(&zero, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let before_one = match singularity.cmp_by_refinement(&one, policy)? {
+        let before_one = match singularity.cmp_by_refinement_with_policy(&one, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -646,7 +646,7 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
             (_, std::cmp::Ordering::Equal) => {}
             (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => {
                 if let Some((previous, _)) = source_boundaries.last() {
-                    match singularity.cmp_by_refinement(previous, policy)? {
+                    match singularity.cmp_by_refinement_with_policy(previous, policy)? {
                         Classification::Decided(std::cmp::Ordering::Greater) => {}
                         Classification::Decided(std::cmp::Ordering::Equal) => continue,
                         Classification::Decided(std::cmp::Ordering::Less) => {
@@ -670,7 +670,7 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
     }
     let end_is_singular = analysis.source_singularities().iter().any(|singularity| {
         matches!(
-            singularity.cmp_by_refinement(&one, policy),
+            singularity.cmp_by_refinement_with_policy(&one, policy),
             Ok(Classification::Decided(std::cmp::Ordering::Equal))
         )
     });
@@ -683,13 +683,14 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
             BezierParameterRange2::new_validated(branch[0].0.clone(), branch[1].0.clone());
         let mut boundaries = vec![(branch[0].0.clone(), branch[0].1)];
         for cusp in analysis.parallel_cusps() {
-            let after_start = match cusp.cmp_by_refinement(source_range.start(), policy)? {
-                Classification::Decided(order) => order.is_gt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let before_end = match cusp.cmp_by_refinement(source_range.end(), policy)? {
+            let after_start =
+                match cusp.cmp_by_refinement_with_policy(source_range.start(), policy)? {
+                    Classification::Decided(order) => order.is_gt(),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let before_end = match cusp.cmp_by_refinement_with_policy(source_range.end(), policy)? {
                 Classification::Decided(order) => order.is_lt(),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -760,7 +761,7 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
             let Some(parameter) = parameter.scalar() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let tangent = match parallel.derivative_at(parameter, policy)? {
+            let tangent = match parallel.derivative_at_with_policy(parameter, policy)? {
                 Classification::Decided(derivative) => CurveTangent2::RepresentedDirection((
                     derivative.dx().clone(),
                     derivative.dy().clone(),
@@ -926,10 +927,11 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
         BezierSubcurve2::Rational(curve) => BezierParallelSource2::Rational(curve.clone()),
     };
     let parallel = BezierParallel2::from_source(source, distance.clone());
-    let analysis = match parallel.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
-        Classification::Decided(analysis) => analysis,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let analysis =
+        match parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
+            Classification::Decided(analysis) => analysis,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     if !analysis.source_is_regular() {
         return exact_offset_spans_from_source_singular_parallel(
             curve, &parallel, &analysis, policy,
@@ -941,20 +943,20 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
     for cusp in analysis.parallel_cusps() {
-        let after_zero = match cusp.cmp_by_refinement(&zero, policy)? {
+        let after_zero = match cusp.cmp_by_refinement_with_policy(&zero, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let before_one = match cusp.cmp_by_refinement(&one, policy)? {
+        let before_one = match cusp.cmp_by_refinement_with_policy(&one, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
         if after_zero == std::cmp::Ordering::Greater && before_one == std::cmp::Ordering::Less {
-            let order = cusp.cmp_by_refinement(
+            let order = cusp.cmp_by_refinement_with_policy(
                 boundaries
                     .last()
                     .expect("parallel split inventory begins at zero"),
@@ -979,7 +981,7 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
     boundaries.push(one);
 
     let fragments = if boundaries.len() == 2 {
-        match parallel.exact_pythagorean_hodograph_offset(policy)? {
+        match parallel.exact_pythagorean_hodograph_offset_with_policy(policy)? {
             Classification::Decided(Some(offset)) => vec![materialized_offset_fragment(
                 BezierSubcurve2::Rational(offset.curve().clone()),
             )],
@@ -990,19 +992,19 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
     } else {
         exact_parallel_fragments(&parallel, &boundaries, false)
     };
-    let offset_start = match parallel.point_at(&Real::zero(), policy)? {
+    let offset_start = match parallel.point_at_with_policy(&Real::zero(), policy)? {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let offset_end = match parallel.point_at(&Real::one(), policy)? {
+    let offset_end = match parallel.point_at_with_policy(&Real::one(), policy)? {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let start_tangent = match parallel.derivative_at(&Real::zero(), policy)? {
+    let start_tangent = match parallel.derivative_at_with_policy(&Real::zero(), policy)? {
         Classification::Decided(derivative) => (derivative.dx().clone(), derivative.dy().clone()),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let end_tangent = match parallel.derivative_at(&Real::one(), policy)? {
+    let end_tangent = match parallel.derivative_at_with_policy(&Real::one(), policy)? {
         Classification::Decided(derivative) => (derivative.dx().clone(), derivative.dy().clone()),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -1892,7 +1894,7 @@ pub(super) fn exact_offset_spans_from_retained_parallel_fragment(
 ) -> CurveResult<Classification<Vec<ExactOffsetSpan2>>> {
     let parallel = fragment.parallel();
     let range = fragment.range();
-    let analysis = match parallel.singularity_analysis(&range, policy)? {
+    let analysis = match parallel.singularity_analysis_with_policy(&range, policy)? {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -1957,7 +1959,7 @@ pub(super) fn exact_offset_span_from_regular_parallel_range(
     // source. Its canonical source root supplies the primitive tangent frame;
     // every other cut stays in its original parameter authority.
     let mut source_endpoints = [None, None];
-    let analysis = match composed.singularity_analysis(range, policy) {
+    let analysis = match composed.singularity_analysis_with_policy(range, policy) {
         Ok(Classification::Decided(analysis)) => Some(analysis),
         // Zero displacement already defines the source without a unit normal.
         // Optional endpoint-frame recovery must not narrow that existing domain.
@@ -2220,7 +2222,7 @@ pub(super) fn coalesced_retained_parallel_offset_run(
                 (first_range.start(), last_range.end())
             };
             let range = CurveParameterRange2::new_validated(start.clone(), end.clone());
-            let analysis = match parallel.singularity_analysis(&range, policy)? {
+            let analysis = match parallel.singularity_analysis_with_policy(&range, policy)? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
             };
@@ -2297,7 +2299,9 @@ pub(super) fn exact_parallel_point_evidence(
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurvePoint2>> {
     if let Some(parameter) = parameter.scalar() {
-        return Ok(parallel.point_at(parameter, policy)?.map(Into::into));
+        return Ok(parallel
+            .point_at_with_policy(parameter, policy)?
+            .map(Into::into));
     }
     Ok(Classification::Decided(CurvePoint2::from(
         crate::BezierAnalyticParallelPoint2::new(parallel.clone(), parameter.clone(), policy),

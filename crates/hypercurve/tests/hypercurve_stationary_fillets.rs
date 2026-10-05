@@ -612,7 +612,10 @@ mod retained_domains {
         );
         let distance = if nonzero { q(1, 8) } else { Real::zero() };
         let parallel = source.parallel_left(distance.clone()).unwrap();
-        let start = decided(parallel.point_at(&q(1, 4), &policy).unwrap());
+        let start = decided(
+            crate::support::under_classified_result(&policy, || parallel.point_at(&q(1, 4)))
+                .unwrap(),
+        );
         // At t=1/2 the primitive tangent is (4/5,3/5). The clockwise
         // fillet center must be start.x+r horizontally from its vertical line,
         // and C(1/2)+(distance-r)*(-3/5,4/5) on the source normal.
@@ -626,11 +629,12 @@ mod retained_domains {
             q(1, 8) + q(4, 5) * distance,
         );
         let range = decided(
-            BezierParameterRange2::try_new(
-                BezierParameter2::Exact(q(1, 4)),
-                BezierParameter2::Exact(Real::one()),
-                &policy,
-            )
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(q(1, 4)),
+                    BezierParameter2::Exact(Real::one()),
+                )
+            })
             .unwrap(),
         );
         let fragment =

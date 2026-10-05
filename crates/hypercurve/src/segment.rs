@@ -999,7 +999,7 @@ impl CircularArc2 {
         }
         match self.rational_bezier_decomposition_raw(policy) {
             Ok(Classification::Decided(decomposition)) => {
-                match decomposition.point_at_with_policy(&half, policy) {
+                match decomposition.point_at_raw(&half, policy) {
                     Ok(point) => Ok(Classification::Decided(point)),
                     Err(crate::ExactCurveError::Invalid { cause, .. }) => Err(cause),
                     Err(crate::ExactCurveError::Blocked(blocker)) => {
@@ -1778,7 +1778,7 @@ impl Segment2 {
             Self::Arc(arc) => match arc.rational_bezier_decomposition_raw(policy) {
                 Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
                 Ok(Classification::Decided(decomposition)) => {
-                    match decomposition.point_at_with_policy(parameter, policy) {
+                    match decomposition.point_at_raw(parameter, policy) {
                         Ok(point) => Ok(Classification::Decided(point)),
                         Err(crate::ExactCurveError::Invalid { cause, .. }) => Err(cause),
                         Err(crate::ExactCurveError::Blocked(blocker)) => {
