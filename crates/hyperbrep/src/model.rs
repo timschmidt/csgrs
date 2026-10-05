@@ -1487,10 +1487,11 @@ impl CertifiedRevolutionBoundary {
     fn classify_point(
         &self,
         point: &CurvePoint2,
-        policy: &CurveContext,
     ) -> Result<Classification<ContourPointLocation>, GeometryError> {
         match self {
-            Self::Native(contour) => Ok(contour.classify_point(point, policy)),
+            Self::Native(contour) => {
+                crate::error::classified(contour.classify_point(point)).map_err(GeometryError::from)
+            }
             Self::Curved(path) => {
                 crate::error::classified(path.classify_point(&point.clone().into()))
                     .map_err(GeometryError::from)
@@ -1524,10 +1525,10 @@ impl CertifiedRevolutionBoundary {
         }
     }
 
-    fn intersects(&self, other: &Self, policy: &CurveContext) -> Result<bool, GeometryError> {
+    fn intersects(&self, other: &Self) -> Result<bool, GeometryError> {
         if let (Self::Native(first), Self::Native(second)) = (self, other) {
             return first
-                .intersect_contour(second, policy)
+                .intersect_contour(second)
                 .map(|intersections| !intersections.is_empty())
                 .map_err(GeometryError::from);
         }
@@ -6039,10 +6040,7 @@ impl Model {
             .sqrt()
             .map_err(|_| GeometryError::ElementaryFunction)?;
         let profile_point = CurvePoint2::new(radius, axial);
-        let location = match revolution
-            .profile
-            .classify_point(&profile_point, &CurveContext::STRICT)?
-        {
+        let location = match revolution.profile.classify_point(&profile_point)? {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
                 return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
@@ -6054,7 +6052,7 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for void in &revolution.voids {
-            match void.classify_point(&profile_point, &CurveContext::STRICT)? {
+            match void.classify_point(&profile_point)? {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -6131,7 +6129,9 @@ impl Model {
                     ((profile_point.y() - &local_parameter * translation.y()) / factor)
                         .map_err(|_| GeometryError::ProjectiveDivision)?,
                 );
-                match profile.classify_point(&normalized, &CurveContext::STRICT) {
+                match crate::error::classified(profile.classify_point(&normalized))
+                    .map_err(GeometryError::from)?
+                {
                     Classification::Decided(location) => location,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
@@ -6186,9 +6186,8 @@ impl Model {
         let v = Vector3::from(sweep.v_path.point_at(&parameter)?);
         let profile_point = project_point_to_plane_frame(point, &path_point, &u, &v)
             .map_err(build_error_geometry)?;
-        let location = match sweep
-            .profile
-            .classify_point(&profile_point, &CurveContext::STRICT)
+        let location = match crate::error::classified(sweep.profile.classify_point(&profile_point))
+            .map_err(GeometryError::from)?
         {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
@@ -6201,7 +6200,9 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for hole in &sweep.holes {
-            match hole.classify_point(&profile_point, &CurveContext::STRICT) {
+            match crate::error::classified(hole.classify_point(&profile_point))
+                .map_err(GeometryError::from)?
+            {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -11711,7 +11712,6 @@ impl ModelBuilder {
         if let Some(outer_revolution) =
             self.certified_oriented_revolution_shell(outer, Orientation::Forward)?
         {
-            let policy = CurveContext::STRICT;
             let mut revolution_voids = Vec::with_capacity(voids.len());
             for void_shell in voids {
                 let Some(void) =
@@ -11721,13 +11721,11 @@ impl ModelBuilder {
                 };
                 if !points_equal(&outer_revolution.axis_origin, &void.axis_origin)?
                     || !vectors_equal(&outer_revolution.axis, &void.axis)?
-                    || outer_revolution
-                        .profile
-                        .intersects(&void.profile, &policy)?
+                    || outer_revolution.profile.intersects(&void.profile)?
                     || !classification_is_inside(
                         outer_revolution
                             .profile
-                            .classify_point(&void.profile.start()?, &policy)?,
+                            .classify_point(&void.profile.start()?)?,
                     )?
                 {
                     return Err(BuildError::VoidShellOutside(*void_shell));
@@ -11738,12 +11736,9 @@ impl ModelBuilder {
                 for second_index in (first_index + 1)..revolution_voids.len() {
                     let (first_shell, first) = &revolution_voids[first_index];
                     let (second_shell, second) = &revolution_voids[second_index];
-                    let boundaries_intersect = first.intersects(second, &policy)?;
-                    let nested =
-                        classification_is_inside(first.classify_point(&second.start()?, &policy)?)?
-                            || classification_is_inside(
-                                second.classify_point(&first.start()?, &policy)?,
-                            )?;
+                    let boundaries_intersect = first.intersects(second)?;
+                    let nested = classification_is_inside(first.classify_point(&second.start()?)?)?
+                        || classification_is_inside(second.classify_point(&first.start()?)?)?;
                     if boundaries_intersect || nested {
                         return Err(BuildError::IntersectingVoidShells {
                             first: *first_shell,
@@ -11784,13 +11779,16 @@ impl ModelBuilder {
                 ))? != std::cmp::Ordering::Less
                 || !outer_prism
                     .contour
-                    .intersect_contour(&prism.contour, &CurveContext::STRICT)
+                    .intersect_contour(&prism.contour)
                     .map_err(GeometryError::from)?
                     .is_empty()
                 || !classification_is_inside(
-                    outer_prism
-                        .contour
-                        .classify_point(prism.contour.segments()[0].start(), &CurveContext::STRICT),
+                    crate::error::classified(
+                        outer_prism
+                            .contour
+                            .classify_point(prism.contour.segments()[0].start()),
+                    )
+                    .map_err(GeometryError::from)?,
                 )?
             {
                 return Err(BuildError::VoidShellOutside(*void_shell));
@@ -11815,20 +11813,25 @@ impl ModelBuilder {
                 if separated_in_z {
                     continue;
                 }
-                let policy = CurveContext::STRICT;
                 let boundaries_intersect = !first
                     .contour
-                    .intersect_contour(&second.contour, &policy)
+                    .intersect_contour(&second.contour)
                     .map_err(GeometryError::from)?
                     .is_empty();
                 let nested = classification_is_inside(
-                    first
-                        .contour
-                        .classify_point(second.contour.segments()[0].start(), &policy),
+                    crate::error::classified(
+                        first
+                            .contour
+                            .classify_point(second.contour.segments()[0].start()),
+                    )
+                    .map_err(GeometryError::from)?,
                 )? || classification_is_inside(
-                    second
-                        .contour
-                        .classify_point(first.contour.segments()[0].start(), &policy),
+                    crate::error::classified(
+                        second
+                            .contour
+                            .classify_point(first.contour.segments()[0].start()),
+                    )
+                    .map_err(GeometryError::from)?,
                 )?;
                 if boundaries_intersect || nested {
                     return Err(BuildError::IntersectingVoidShells {
@@ -17135,7 +17138,7 @@ impl ModelBuilder {
             let contour = Contour2::try_new(segments).map_err(GeometryError::from)?;
             let revolution_profile_area = contour.signed_area().map_err(GeometryError::from)?;
             if !contour
-                .intersect_self(&CurveContext::STRICT)
+                .intersect_self()
                 .map_err(GeometryError::from)?
                 .is_empty()
                 || decided_model_order(compare_reals(

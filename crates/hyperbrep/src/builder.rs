@@ -1927,7 +1927,7 @@ fn normalize_contour(
         return Err(ConstructionError::ProfileTooSmall);
     }
     if !contour
-        .intersect_self(&CurveContext::STRICT)
+        .intersect_self()
         .map_err(GeometryError::from)?
         .is_empty()
     {
@@ -1970,16 +1970,17 @@ fn normalize_contour(
 }
 
 fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), ConstructionError> {
-    let policy = CurveContext::STRICT;
     for hole in holes {
         if !outer
-            .intersect_contour(hole, &policy)
+            .intersect_contour(hole)
             .map_err(GeometryError::from)?
             .is_empty()
         {
             return Err(ConstructionError::IntersectingProfiles);
         }
-        match outer.classify_point(hole.segments()[0].start(), &policy) {
+        match crate::error::classified(outer.classify_point(hole.segments()[0].start()))
+            .map_err(GeometryError::from)?
+        {
             Classification::Decided(ContourPointLocation::Inside) => {}
             Classification::Decided(_) => return Err(ConstructionError::HoleOutside),
             Classification::Uncertain(reason) => {
@@ -1993,7 +1994,7 @@ fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), 
     for first in 0..holes.len() {
         for second in first + 1..holes.len() {
             if !holes[first]
-                .intersect_contour(&holes[second], &policy)
+                .intersect_contour(&holes[second])
                 .map_err(GeometryError::from)?
                 .is_empty()
             {
@@ -2003,7 +2004,9 @@ fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), 
                 (&holes[first], holes[second].segments()[0].start()),
                 (&holes[second], holes[first].segments()[0].start()),
             ] {
-                match container.classify_point(point, &policy) {
+                match crate::error::classified(container.classify_point(point))
+                    .map_err(GeometryError::from)?
+                {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         return Err(ConstructionError::NestedHoles);
                     }
@@ -4749,7 +4752,7 @@ fn normalize_profile(
     }
     let contour = Contour2::try_new(contour_segments).map_err(GeometryError::from)?;
     if !contour
-        .intersect_self(&CurveContext::STRICT)
+        .intersect_self()
         .map_err(GeometryError::from)?
         .is_empty()
     {
@@ -4786,7 +4789,6 @@ fn validate_profile_nesting(
     outer: &[Point2],
     holes: &[Vec<Point2>],
 ) -> Result<(), ConstructionError> {
-    let policy = CurveContext::STRICT;
     let outer_contour = contour_from_profile(outer)?;
     let hole_contours = holes
         .iter()
@@ -4794,13 +4796,15 @@ fn validate_profile_nesting(
         .collect::<Result<Vec<_>, _>>()?;
     for (hole, contour) in holes.iter().zip(&hole_contours) {
         if !outer_contour
-            .intersect_contour(contour, &policy)
+            .intersect_contour(contour)
             .map_err(GeometryError::from)?
             .is_empty()
         {
             return Err(ConstructionError::IntersectingProfiles);
         }
-        match outer_contour.classify_point(&curve_point(&hole[0]), &policy) {
+        match crate::error::classified(outer_contour.classify_point(&curve_point(&hole[0])))
+            .map_err(GeometryError::from)?
+        {
             Classification::Decided(ContourPointLocation::Inside) => {}
             Classification::Decided(_) => return Err(ConstructionError::HoleOutside),
             Classification::Uncertain(reason) => {
@@ -4814,7 +4818,7 @@ fn validate_profile_nesting(
     for first in 0..holes.len() {
         for second in first + 1..holes.len() {
             if !hole_contours[first]
-                .intersect_contour(&hole_contours[second], &policy)
+                .intersect_contour(&hole_contours[second])
                 .map_err(GeometryError::from)?
                 .is_empty()
             {
@@ -4824,7 +4828,9 @@ fn validate_profile_nesting(
                 (&hole_contours[first], &holes[second][0]),
                 (&hole_contours[second], &holes[first][0]),
             ] {
-                match container.classify_point(&curve_point(point), &policy) {
+                match crate::error::classified(container.classify_point(&curve_point(point)))
+                    .map_err(GeometryError::from)?
+                {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         return Err(ConstructionError::NestedHoles);
                     }
