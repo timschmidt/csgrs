@@ -412,7 +412,9 @@ pub fn compact_algebraic_root_low_degree_witness(
                     continue;
                 }
             }
-            if !exact_polynomial_divides(&root.polynomial_coefficients, &factor) {
+            if modular_divisibility_excluded(&root.polynomial_coefficients, &factor)
+                || !exact_polynomial_divides(&root.polynomial_coefficients, &factor)
+            {
                 continue;
             }
             if !strictly_valid() {
@@ -491,6 +493,69 @@ fn compact_selected_root_from_candidates(
         compact.polynomial_coefficients = vec![-witness, Real::one()];
     }
     Some(compact)
+}
+
+/// Proves that a monic `factor` does not divide `polynomial` over the
+/// rationals, using their reductions modulo the prime `2^61 - 1`.
+///
+/// When every coefficient is a rational whose reduced denominator is prime to
+/// the modulus, division by a monic factor keeps each quotient coefficient
+/// integral at the modulus, so exact divisibility over the rationals implies
+/// divisibility of the reductions. A nonzero reduced remainder is therefore
+/// an exact non-divisibility proof. Returns `false` when that implication is
+/// unavailable or the reductions divide; only exact division can then decide.
+fn modular_divisibility_excluded(polynomial: &[Real], factor: &[Real]) -> bool {
+    const MODULUS: u64 = (1 << 61) - 1;
+    fn multiply(left: u64, right: u64) -> u64 {
+        ((u128::from(left) * u128::from(right)) % u128::from(MODULUS)) as u64
+    }
+    fn inverse(value: u64) -> u64 {
+        let (mut base, mut exponent, mut result) = (value, MODULUS - 2, 1_u64);
+        while exponent > 0 {
+            if exponent & 1 == 1 {
+                result = multiply(result, base);
+            }
+            base = multiply(base, base);
+            exponent >>= 1;
+        }
+        result
+    }
+    fn reduce(value: &Real) -> Option<u64> {
+        let rational = value.exact_rational_ref()?;
+        let modulus = num::BigUint::from(MODULUS);
+        let denominator = num::ToPrimitive::to_u64(&(rational.denominator() % &modulus))?;
+        if denominator == 0 {
+            return None;
+        }
+        let numerator = num::ToPrimitive::to_u64(&(rational.numerator() % &modulus))?;
+        let numerator = if rational.is_negative() {
+            (MODULUS - numerator) % MODULUS
+        } else {
+            numerator
+        };
+        Some(multiply(numerator, inverse(denominator)))
+    }
+    if polynomial.len() < factor.len() || factor.last() != Some(&Real::one()) {
+        return false;
+    }
+    let Some(mut remainder) = polynomial.iter().map(reduce).collect::<Option<Vec<_>>>() else {
+        return false;
+    };
+    let Some(factor) = factor.iter().map(reduce).collect::<Option<Vec<_>>>() else {
+        return false;
+    };
+    let factor_degree = factor.len() - 1;
+    for degree in (factor_degree..remainder.len()).rev() {
+        let coefficient = remainder[degree];
+        for (factor_index, factor_coefficient) in factor.iter().enumerate() {
+            let index = degree - factor_degree + factor_index;
+            remainder[index] =
+                (remainder[index] + MODULUS - multiply(coefficient, *factor_coefficient)) % MODULUS;
+        }
+    }
+    remainder[..factor_degree]
+        .iter()
+        .any(|coefficient| *coefficient != 0)
 }
 
 fn exact_polynomial_divides(polynomial: &[Real], factor: &[Real]) -> bool {
@@ -2223,5 +2288,36 @@ mod tests {
             represent_algebraic_tensor_image(&relation, &[], &source.interval).status,
             AlgebraicTensorImageStatus::InvalidRelationShape
         );
+    }
+
+    #[test]
+    fn modular_divisibility_never_excludes_an_exact_factor() {
+        let r = |numerator: i64, denominator: u64| {
+            Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
+        };
+        // (x - 1/3)(x + 5/7)(x^2 - 2) expanded, with the quadratic factor.
+        let quadratic = [r(-2, 1), r(0, 1), r(1, 1)];
+        let linear = [r(-1, 3), r(1, 1)];
+        let other = [r(5, 7), r(1, 1)];
+        let multiply = |left: &[Real], right: &[Real]| {
+            let mut product = vec![Real::zero(); left.len() + right.len() - 1];
+            for (i, a) in left.iter().enumerate() {
+                for (j, b) in right.iter().enumerate() {
+                    product[i + j] = product[i + j].clone() + a * b;
+                }
+            }
+            product
+        };
+        let polynomial = multiply(&multiply(&quadratic, &linear), &other);
+        assert!(exact_polynomial_divides(&polynomial, &quadratic));
+        assert!(!modular_divisibility_excluded(&polynomial, &quadratic));
+
+        let non_factor = [r(-3, 1), r(0, 1), r(1, 1)];
+        assert!(!exact_polynomial_divides(&polynomial, &non_factor));
+        assert!(modular_divisibility_excluded(&polynomial, &non_factor));
+
+        // A non-rational coefficient leaves the decision to exact division.
+        let irrational = [Real::from(2).sqrt().unwrap(), Real::one()];
+        assert!(!modular_divisibility_excluded(&polynomial, &irrational));
     }
 }
