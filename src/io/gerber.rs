@@ -16,7 +16,7 @@ use gerber_types::{
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
 };
 use hypercurve::{
-    Classification, Contour2, CurveRegion2, CurveString2, FillRule, FiniteProjectionOptions,
+    Contour2, CurveRegion2, CurveString2, FillRule, FiniteProjectionOptions,
     FiniteRegionProfile2,
 };
 use hyperlattice::Real;
@@ -228,22 +228,14 @@ pub fn export_gerber_with_options_and_context(
                 format: "Gerber",
                 detail: format!("invalid projection configuration: {error}"),
             })?;
-        match region
-            .project_to_finite_profiles(&projection_options, decisions.curve_policy())
-            .map(|outcome| decisions.consume_curve(outcome))
+        let region_profiles = decisions
+            .exact_curve(|| region.project_to_finite_profiles(&projection_options))
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: format!("native region projection failed: {error}"),
-            })? {
-            Classification::Decided(region_profiles) => {
-                emit_region_profiles(&region_profiles, &mut commands, options)?;
-            },
-            Classification::Uncertain(reason) => {
-                return Err(IoError::Geometry {
-                    format: "Gerber",
-                    detail: format!("region projection is uncertain: {reason:?}"),
-                });
-            },
+            })?;
+        {
+            emit_region_profiles(&region_profiles, &mut commands, options)?;
         }
     }
 
@@ -466,13 +458,11 @@ impl<'a> ImportState<'a> {
                 Polarity::Clear => {
                     self.flush_pending_dark()?;
                     self.curve = self
-                        .curve
-                        .boolean_region(
-                            &curve,
-                            hypercurve::BooleanOp::Difference,
-                            self.decisions.curve_policy(),
-                        )
-                        .map(|outcome| self.decisions.consume_curve(outcome))
+                        .decisions
+                        .exact_curve(|| {
+                            self.curve
+                                .boolean_region(&curve, hypercurve::BooleanOp::Difference)
+                        })
                         .map_err(|error| IoError::Geometry {
                             format: "Gerber",
                             detail: error.to_string(),
@@ -503,16 +493,14 @@ impl<'a> ImportState<'a> {
                     break;
                 };
                 next.push(
-                    left.boolean_region(
-                        &right,
-                        hypercurve::BooleanOp::Union,
-                        self.decisions.curve_policy(),
-                    )
-                    .map(|outcome| self.decisions.consume_curve(outcome))
-                    .map_err(|error| IoError::Geometry {
-                        format: "Gerber",
-                        detail: error.to_string(),
-                    })?,
+                    self.decisions
+                        .exact_curve(|| {
+                            left.boolean_region(&right, hypercurve::BooleanOp::Union)
+                        })
+                        .map_err(|error| IoError::Geometry {
+                            format: "Gerber",
+                            detail: error.to_string(),
+                        })?,
                 );
             }
             level = next;
@@ -523,13 +511,8 @@ impl<'a> ImportState<'a> {
         self.curve = if self.curve.is_empty() {
             dark
         } else {
-            self.curve
-                .boolean_region(
-                    &dark,
-                    hypercurve::BooleanOp::Union,
-                    self.decisions.curve_policy(),
-                )
-                .map(|outcome| self.decisions.consume_curve(outcome))
+            self.decisions
+                .exact_curve(|| self.curve.boolean_region(&dark, hypercurve::BooleanOp::Union))
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
                     detail: error.to_string(),
@@ -812,17 +795,14 @@ impl RegionBuilder {
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
-        let region = decisions.consume_curve(
-            CurveRegion2::try_from_native_boundary_contours(
-                &contours,
-                FillRule::EvenOdd,
-                decisions.curve_policy(),
-            )
+        let region = decisions
+            .exact_curve(|| {
+                CurveRegion2::try_from_native_boundary_contours(&contours, FillRule::EvenOdd)
+            })
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: error.to_string(),
-            })?,
-        );
+            })?;
         Ok(region)
     }
 }
@@ -1184,13 +1164,8 @@ fn add_aperture_hole(
     hole: CurveRegion2,
     decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
-    outer
-        .boolean_region(
-            &hole,
-            hypercurve::BooleanOp::Difference,
-            decisions.curve_policy(),
-        )
-        .map(|outcome| decisions.consume_curve(outcome))
+    decisions
+        .exact_curve(|| outer.boolean_region(&hole, hypercurve::BooleanOp::Difference))
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: format!("aperture-hole subtraction failed: {error}"),
@@ -1704,8 +1679,8 @@ fn polygon_from_coords(
         format: "Gerber",
         detail: format!("invalid finite contour: {error}"),
     })?;
-    CurveRegion2::try_from_native_material_contours(vec![contour], decisions.curve_policy())
-        .map(|outcome| decisions.consume_curve(outcome))
+    decisions
+        .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: error.to_string(),

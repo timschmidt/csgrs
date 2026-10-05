@@ -16,7 +16,7 @@ use csgrs::{
     AttributedMesh, GeometryContext, Real, TriangleMesh, curve,
     solid::{self, SolidExt},
 };
-use hypercurve::{CurveContext, CurveRegion2, Point2};
+use hypercurve::{CurveRegion2, Point2};
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hypersdf::SdfExpr;
 use image::{GrayImage, Luma};
@@ -225,37 +225,17 @@ fn main() {
     config.run("feature", "profile_boolean", "all_operations", 2, || {
         let results = [
             curve_left
-                .boolean_region(
-                    &curve_right,
-                    hypercurve::BooleanOp::Union,
-                    &CurveContext::STRICT,
-                )
-                .expect("union")
-                .into_value(),
+                .boolean_region(&curve_right, hypercurve::BooleanOp::Union)
+                .expect("union"),
             curve_left
-                .boolean_region(
-                    &curve_right,
-                    hypercurve::BooleanOp::Difference,
-                    &CurveContext::STRICT,
-                )
-                .expect("difference")
-                .into_value(),
+                .boolean_region(&curve_right, hypercurve::BooleanOp::Difference)
+                .expect("difference"),
             curve_left
-                .boolean_region(
-                    &curve_right,
-                    hypercurve::BooleanOp::Intersection,
-                    &CurveContext::STRICT,
-                )
-                .expect("intersection")
-                .into_value(),
+                .boolean_region(&curve_right, hypercurve::BooleanOp::Intersection)
+                .expect("intersection"),
             curve_left
-                .boolean_region(
-                    &curve_right,
-                    hypercurve::BooleanOp::Xor,
-                    &CurveContext::STRICT,
-                )
-                .expect("xor")
-                .into_value(),
+                .boolean_region(&curve_right, hypercurve::BooleanOp::Xor)
+                .expect("xor"),
         ];
         let contours = results.iter().map(CurveRegion2::len).sum::<usize>();
         Measurement::new(128, contours as u64, contours as u64)
@@ -270,24 +250,17 @@ fn main() {
         Measurement::new(64, triangles as u64, triangles as u64)
     });
     config.run("feature", "profile_offset", "sharp_and_round", 2, || {
-        let sharp = curve::offset(
-            black_box(&curve_left),
-            Real::one(),
-            &hypercurve::OffsetCornerStyle2::Miter {
-                limit: Real::from(4),
-            },
-            &hypercurve::CurveContext::STRICT,
-        )
-        .expect("offset")
-        .into_value();
-        let rounded = curve::offset(
-            black_box(&curve_left),
-            Real::one(),
-            &hypercurve::OffsetCornerStyle2::Round,
-            &hypercurve::CurveContext::STRICT,
-        )
-        .expect("rounded offset")
-        .into_value();
+        let sharp = black_box(&curve_left)
+            .offset(
+                Real::one(),
+                &hypercurve::OffsetCornerStyle2::Miter {
+                    limit: Real::from(4),
+                },
+            )
+            .expect("offset");
+        let rounded = black_box(&curve_left)
+            .offset(Real::one(), &hypercurve::OffsetCornerStyle2::Round)
+            .expect("rounded offset");
         Measurement::new(128, (sharp.len() + rounded.len()) as u64, sharp.len() as u64)
     });
     config.run("feature", "profile_transform", "all_csg_helpers", 4, || {
@@ -305,10 +278,8 @@ fn main() {
                     &Real::zero(),
                     &Real::zero(),
                     &Real::zero(),
-                    &CurveContext::STRICT,
                 )
-                .expect("rotation")
-                .into_value(),
+                .expect("rotation"),
             source
                 .transform_affine(
                     &Real::from(2),
@@ -317,10 +288,8 @@ fn main() {
                     &Real::from(3),
                     &Real::zero(),
                     &Real::zero(),
-                    &CurveContext::STRICT,
                 )
-                .expect("scale")
-                .into_value(),
+                .expect("scale"),
             curve::transformed(
                 &source,
                 &Matrix4::affine_translation([Real::from(7), Real::from(-4), Real::zero()]),

@@ -10,8 +10,7 @@ use std::collections::BTreeMap;
 
 use crate::hyper_math::hreal_sign;
 use hypercurve::{
-    Contour2, CurveContext, CurveError, CurveRegion2, ExactCurveError, LineSeg2, Point2,
-    Segment2,
+    Contour2, CurveError, CurveRegion2, ExactCurveError, LineSeg2, Point2, Segment2,
 };
 use hyperreal::{Real, RealSign};
 use image::GrayImage;
@@ -152,9 +151,7 @@ pub(crate) fn try_from_image(
         }
     }
 
-    let region =
-        CurveRegion2::try_from_native_contours(material, holes, &CurveContext::STRICT)?
-            .into_value();
+    let region = CurveRegion2::try_from_native_contours(material, holes)?;
     Ok(RasterTraceReport {
         region,
         width: img.width(),
@@ -286,15 +283,14 @@ fn grid_point(point: GridPoint) -> Point2 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hypercurve::Classification;
+
     use image::Luma;
 
     fn assert_role_counts(region: &CurveRegion2, expected: (usize, usize)) {
         let actual = region
-            .loop_role_counts(&CurveContext::STRICT)
-            .expect("raster topology should classify")
-            .into_value();
-        assert_eq!(actual, Classification::Decided(expected));
+            .loop_role_counts()
+            .expect("raster topology should classify");
+        assert_eq!(actual, expected);
     }
 
     #[test]

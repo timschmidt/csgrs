@@ -6,7 +6,7 @@ use super::scalar::{
 };
 use crate::curve;
 use crate::{GeometryContext, GeometryOutcome};
-use hypercurve::{CurveContext, CurveOutcome, CurveRegion2};
+use hypercurve::CurveRegion2;
 use hyperlattice::{Matrix4, Vector3};
 use hyperreal::Real;
 use std::marker::PhantomData;
@@ -76,47 +76,31 @@ where
         Ok(Self::from_native(curve::polygon(&points)))
     }
 
-    pub fn union(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> AdapterResult<CurveOutcome<Self>> {
+    pub fn union(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Union, policy)
-            .map(|outcome| outcome.map(Self::from_native))
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Union)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn difference(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> AdapterResult<CurveOutcome<Self>> {
+    pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Difference, policy)
-            .map(|outcome| outcome.map(Self::from_native))
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Difference)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn intersection(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> AdapterResult<CurveOutcome<Self>> {
+    pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection, policy)
-            .map(|outcome| outcome.map(Self::from_native))
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn xor(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> AdapterResult<CurveOutcome<Self>> {
+    pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Xor, policy)
-            .map(|outcome| outcome.map(Self::from_native))
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Xor)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 

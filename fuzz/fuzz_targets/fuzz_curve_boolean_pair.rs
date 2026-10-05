@@ -3,7 +3,7 @@
 #![no_main]
 
 use csgrs::curve;
-use hypercurve::{CurveContext, CurveRegion2};
+use hypercurve::CurveRegion2;
 use hyperlattice::Real;
 use hyperlimit::PredicatePolicy;
 use libfuzzer_sys::fuzz_target;
@@ -71,17 +71,15 @@ fuzz_target!(|bytes: &[u8]| {
         &Real::one(),
         &decode_real(bytes, &mut idx),
         &decode_real(bytes, &mut idx),
-        &CurveContext::STRICT,
     )
-    .map(|outcome| outcome.into_value())
     .unwrap_or_else(|_| curve::empty());
     let result = match bytes[idx % bytes.len()] % 4 {
-        0 => a.boolean_region(&b, hypercurve::BooleanOp::Union, &CurveContext::STRICT),
-        1 => a.boolean_region(&b, hypercurve::BooleanOp::Difference, &CurveContext::STRICT),
-        2 => a.boolean_region(&b, hypercurve::BooleanOp::Intersection, &CurveContext::STRICT),
-        _ => a.boolean_region(&b, hypercurve::BooleanOp::Xor, &CurveContext::STRICT),
+        0 => a.boolean_region(&b, hypercurve::BooleanOp::Union),
+        1 => a.boolean_region(&b, hypercurve::BooleanOp::Difference),
+        2 => a.boolean_region(&b, hypercurve::BooleanOp::Intersection),
+        _ => a.boolean_region(&b, hypercurve::BooleanOp::Xor),
     };
     if let Ok(result) = result {
-        assert_curve_finite(&result.into_value());
+        assert_curve_finite(&result);
     }
 });

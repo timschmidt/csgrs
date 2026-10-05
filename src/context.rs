@@ -143,6 +143,21 @@ impl GeometryDecisions {
         }
     }
 
+    /// Runs principal exact Hypercurve operations under this context's curve
+    /// policy: directly under STRICT, and otherwise inside
+    /// [`hypercurve::provisional`], recording any approximate terminal they
+    /// consumed.
+    pub(crate) fn exact_curve<T>(&self, operation: impl FnOnce() -> T) -> T {
+        if self.curve_policy == CurveContext::STRICT {
+            return operation();
+        }
+        let provisional = hypercurve::provisional(operation);
+        if !provisional.is_certified() {
+            self.observe(GeometryCertainty::Approximate512Consumed);
+        }
+        provisional.into_unverified()
+    }
+
     pub(crate) fn consume_curve<T>(&self, outcome: CurveOutcome<T>) -> T {
         if outcome.certainty == CurveCertainty::Approximate512Consumed {
             self.observe(GeometryCertainty::Approximate512Consumed);

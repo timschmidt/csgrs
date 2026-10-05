@@ -1,7 +1,7 @@
 //! Native filled regions from TrueType font outlines.
 
 use crate::hyper_math::hreal_to_f64;
-use hypercurve::{Contour2, CurveContext, CurveOutcome, CurveRegion2};
+use hypercurve::{Contour2, CurveRegion2};
 use hyperlattice::Real;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -140,13 +140,8 @@ pub(crate) fn text_region(text: &str, font_data: &[u8], scale: Real) -> CurveReg
         }
     }
 
-    CurveRegion2::try_from_native_contours(
-        material_contours,
-        hole_contours,
-        &CurveContext::STRICT,
-    )
-    .map(CurveOutcome::into_value)
-    .unwrap_or_else(|_| CurveRegion2::empty())
+    CurveRegion2::try_from_native_contours(material_contours, hole_contours)
+        .unwrap_or_else(|_| CurveRegion2::empty())
 }
 
 fn glyph_advance(
