@@ -425,14 +425,18 @@ impl BoardBoundaryGeometry {
         point: &Point2,
         policy: &CurveContext,
     ) -> Result<Classification<RegionPointLocation>, BoardBoundaryGeometryError> {
-        self.region
-            .classify_point(&hypercurve::CurvePoint2::from(curve_point(point)), policy)
-            .map(|outcome| outcome.into_value())
-            .map_err(|error| {
-                BoardBoundaryGeometryError::new(format!(
-                    "board point classification failed: {error:?}"
-                ))
-            })
+        match under_policy(policy, || {
+            self.region
+                .classify_point(&hypercurve::CurvePoint2::from(curve_point(point)))
+        }) {
+            Ok(location) => Ok(Classification::Decided(location)),
+            Err(ExactCurveError::Blocked(blocker)) => {
+                Ok(Classification::Uncertain(blocker.reason()))
+            }
+            Err(error) => Err(BoardBoundaryGeometryError::new(format!(
+                "board point classification failed: {error:?}"
+            ))),
+        }
     }
 
     /// Contracts the filled substrate by an exact non-negative clearance.
@@ -444,33 +448,29 @@ impl BoardBoundaryGeometry {
         clearance: Real,
         policy: &CurveContext,
     ) -> Result<Classification<Self>, BoardBoundaryGeometryError> {
-        let region =
-            match self
-                .region
-                .offset(-clearance.clone(), &OffsetCornerStyle2::Round, policy)
-            {
-                Ok(outcome) => outcome.into_value(),
-                Err(ExactCurveError::Blocked(blocker)) => {
-                    return Ok(Classification::Uncertain(blocker.reason()));
-                }
-                Err(error) => {
-                    return Err(BoardBoundaryGeometryError::new(format!(
-                        "board inset failed: {error:?}"
-                    )));
-                }
-            };
-        let contour_paths = match region
-            .boundary_paths(policy)
-            .map_err(|error| {
-                BoardBoundaryGeometryError::new(format!(
+        let region = match under_policy(policy, || {
+            self.region
+                .offset(-clearance.clone(), &OffsetCornerStyle2::Round)
+        }) {
+            Ok(region) => region,
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+            Err(error) => {
+                return Err(BoardBoundaryGeometryError::new(format!(
+                    "board inset failed: {error:?}"
+                )));
+            }
+        };
+        let contour_paths = match under_policy(policy, || region.boundary_paths()) {
+            Ok(paths) => paths,
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+            Err(error) => {
+                return Err(BoardBoundaryGeometryError::new(format!(
                     "board inset boundary extraction failed: {error:?}"
-                ))
-            })?
-            .into_value()
-        {
-            Classification::Decided(paths) => paths,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+                )));
             }
         };
         let exterior_bounds = contour_paths
@@ -1071,14 +1071,14 @@ impl BoardOutline {
             ))
             .collect::<Vec<_>>();
         let fill_rules = vec![FillRule::NonZero; contour_paths.len()];
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &contour_paths,
-            &roles,
-            &fill_rules,
-            policy,
-        )
-        .map_err(|error| BoardBoundaryGeometryError::from_curve("board outline", error))?
-        .into_value();
+        let region = under_policy(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &contour_paths,
+                &roles,
+                &fill_rules,
+            )
+        })
+        .map_err(|error| BoardBoundaryGeometryError::from_curve("board outline", error))?;
         let exterior_bounds = contour_paths[0]
             .bounds()
             .map_err(|error| {
@@ -3705,4 +3705,14 @@ fn is_non_negative(value: &Real) -> bool {
         value.predicate_sign(),
         Some(RealSign::Zero | RealSign::Positive)
     )
+}
+
+/// Runs a principal exact Hypercurve operation under `policy`: directly under
+/// STRICT, and otherwise inside [`hypercurve::provisional`].
+fn under_policy<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
+    if *policy == CurveContext::STRICT {
+        operation()
+    } else {
+        hypercurve::provisional(operation).into_unverified()
+    }
 }

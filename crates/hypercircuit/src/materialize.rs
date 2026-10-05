@@ -14,9 +14,9 @@ use csgrs::curve;
 use csgrs::solid::{self, SolidExt};
 use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
-    CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveContext, CurveOutcome,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, ExactCurveResult, FillRule,
-    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
+    CircularArc2, Contour2, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, ExactCurveError, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2,
+    Point2 as CurvePoint2,
 };
 use hyperlattice::Point2;
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
@@ -85,10 +85,6 @@ impl MaterializationDecisions {
         }
     }
 
-    fn curve_policy(&self) -> &CurveContext {
-        &self.curves
-    }
-
     fn geometry_context(&self) -> GeometryContext {
         GeometryContext::new(self.predicates)
     }
@@ -110,11 +106,17 @@ impl MaterializationDecisions {
         }
     }
 
-    fn consume<T, E>(&self, result: Result<CurveOutcome<T>, E>) -> Result<T, E> {
-        result.map(|outcome| {
-            self.observe_curve(outcome.certainty);
-            outcome.value
-        })
+    /// Runs principal exact Hypercurve operations under this materialization's
+    /// curve policy: directly under STRICT, and otherwise inside
+    /// [`hypercurve::provisional`], recording any approximate terminal they
+    /// consumed.
+    fn exact_curve<T>(&self, operation: impl FnOnce() -> T) -> T {
+        if self.curves == CurveContext::STRICT {
+            return operation();
+        }
+        let provisional = hypercurve::provisional(operation);
+        self.observe_curve(provisional.certainty());
+        provisional.into_unverified()
     }
 
     fn consume_geometry<T, E>(&self, result: Result<GeometryOutcome<T>, E>) -> Result<T, E> {
@@ -122,13 +124,6 @@ impl MaterializationDecisions {
             self.observe(outcome.certainty);
             outcome.value
         })
-    }
-
-    fn curve_operation<T>(
-        &self,
-        evaluate: impl FnOnce(&CurveContext) -> ExactCurveResult<CurveOutcome<T>>,
-    ) -> ExactCurveResult<T> {
-        self.consume(evaluate(&self.curves))
     }
 
     fn boundary_operation<T>(
@@ -145,13 +140,6 @@ impl MaterializationDecisions {
             }),
             Err(error) => Err(error),
         }
-    }
-
-    fn classify<T, E>(
-        &self,
-        evaluate: impl FnOnce(&CurveContext) -> Result<CurveOutcome<Classification<T>>, E>,
-    ) -> Result<Classification<T>, E> {
-        self.consume(evaluate(&self.curves))
     }
 
     fn compare_reals(&self, left: &Real, right: &Real) -> Option<Ordering> {
@@ -1113,12 +1101,9 @@ fn materialize_zone(
     let boundary = zone_boolean(
         &source,
         "clip to substrate",
-        decisions,
-        boundary.boolean_region(
-            substrate,
-            hypercurve::BooleanOp::Intersection,
-            decisions.curve_policy(),
-        ),
+        decisions.exact_curve(|| {
+            boundary.boolean_region(substrate, hypercurve::BooleanOp::Intersection)
+        }),
     )?;
     let profile = match &zone.fill {
         CopperZoneFill::Solid => boundary.clone(),
@@ -1223,12 +1208,10 @@ fn materialize_zone(
                         zone_boolean(
                             &source,
                             &format!("clip thermal spokes to boundary for {}", feature.source),
-                            decisions,
-                            spokes.boolean_region(
-                                &boundary,
-                                hypercurve::BooleanOp::Intersection,
-                                decisions.curve_policy(),
-                            ),
+                            decisions.exact_curve(|| {
+                                spokes
+                                    .boolean_region(&boundary, hypercurve::BooleanOp::Intersection)
+                            }),
                         )?
                     };
                 if let MaterializedCopperIdentity::Via(via_id) = &feature.identity
@@ -1343,23 +1326,16 @@ fn apply_zone_island_policy(
 ) -> Result<(CurveRegion2, ZoneIslandRealization), GeometryMaterializationError> {
     let region = &profile;
     if !zone.islands.remove_unconnected && zone.islands.minimum_area.is_none() {
-        let retained = match decisions
-            .classify(|attempt| region.loop_roles(attempt))
+        let retained = decisions
+            .exact_curve(|| region.loop_roles())
             .map_err(|error| {
                 GeometryMaterializationError::ZoneIsland(format!(
                     "{source} retained loop classification: {error}"
                 ))
-            })? {
-            Classification::Decided(roles) => roles
-                .iter()
-                .filter(|role| **role == CurveRegionLoopRole::Material)
-                .count(),
-            Classification::Uncertain(reason) => {
-                return Err(GeometryMaterializationError::ZoneIsland(format!(
-                    "{source} retained loop classification: {reason:?}"
-                )));
-            }
-        };
+            })?
+            .iter()
+            .filter(|role| **role == CurveRegionLoopRole::Material)
+            .count();
         return Ok((
             profile,
             ZoneIslandRealization {
@@ -1372,7 +1348,7 @@ fn apply_zone_island_policy(
     // Normalized components keep their selected boundaries and certified hole
     // ownership; no component is reconstructed or re-intersected here.
     let components = decisions
-        .curve_operation(|policy| region.material_components(policy))
+        .exact_curve(|| region.material_components())
         .map_err(|error| {
             GeometryMaterializationError::ZoneIsland(format!(
                 "{source} material component extraction: {error}"
@@ -1386,21 +1362,16 @@ fn apply_zone_island_policy(
     let mut retained = None::<CurveRegion2>;
     for (index, region) in components.into_iter().enumerate() {
         let area = match decisions
-            .classify(|attempt| region.filled_area(attempt))
+            .exact_curve(|| region.filled_area())
             .map_err(|error| {
                 GeometryMaterializationError::ZoneIsland(format!(
                     "{source} component {index} area: {error}"
                 ))
             })? {
-            Classification::Decided(Some(area)) => area,
-            Classification::Decided(None) => {
+            Some(area) => area,
+            None => {
                 return Err(GeometryMaterializationError::ZoneIsland(format!(
                     "{source} component {index} area unsupported"
-                )));
-            }
-            Classification::Uncertain(reason) => {
-                return Err(GeometryMaterializationError::ZoneIsland(format!(
-                    "{source} component {index} area: {reason:?}"
                 )));
             }
         };
@@ -1423,12 +1394,10 @@ fn apply_zone_island_policy(
                 let intersection = zone_boolean(
                     source,
                     &format!("classify island {index} connection to {}", feature.source),
-                    decisions,
-                    component_profile.boolean_region(
-                        &feature.profile,
-                        hypercurve::BooleanOp::Intersection,
-                        decisions.curve_policy(),
-                    ),
+                    decisions.exact_curve(|| {
+                        component_profile
+                            .boolean_region(&feature.profile, hypercurve::BooleanOp::Intersection)
+                    }),
                 )?;
                 if !intersection.is_empty() {
                     connected = true;
@@ -1457,12 +1426,9 @@ fn apply_zone_island_policy(
             Some(current) => zone_boolean(
                 source,
                 &format!("merge retained island {index}"),
-                decisions,
-                current.boolean_region(
-                    &component_profile,
-                    hypercurve::BooleanOp::Union,
-                    decisions.curve_policy(),
-                ),
+                decisions.exact_curve(|| {
+                    current.boolean_region(&component_profile, hypercurve::BooleanOp::Union)
+                }),
             )?,
             None => component_profile,
         });
@@ -1507,12 +1473,8 @@ fn hatch_zone(
             Some(existing) => zone_boolean(
                 source,
                 "merge hatch stripes",
-                decisions,
-                existing.boolean_region(
-                    &stripe,
-                    hypercurve::BooleanOp::Union,
-                    decisions.curve_policy(),
-                ),
+                decisions
+                    .exact_curve(|| existing.boolean_region(&stripe, hypercurve::BooleanOp::Union)),
             )?,
         });
         offset += pitch.clone();
@@ -1523,12 +1485,8 @@ fn hatch_zone(
     zone_boolean(
         source,
         "clip hatch to boundary",
-        decisions,
-        stripes.boolean_region(
-            boundary,
-            hypercurve::BooleanOp::Intersection,
-            decisions.curve_policy(),
-        ),
+        decisions
+            .exact_curve(|| stripes.boolean_region(boundary, hypercurve::BooleanOp::Intersection)),
     )
 }
 
@@ -1556,12 +1514,8 @@ fn thermal_spoke_mask(
         zone_boolean(
             "thermal-spokes",
             "merge exact orthogonal spoke masks",
-            decisions,
-            horizontal.boolean_region(
-                &vertical,
-                hypercurve::BooleanOp::Union,
-                decisions.curve_policy(),
-            ),
+            decisions
+                .exact_curve(|| horizontal.boolean_region(&vertical, hypercurve::BooleanOp::Union)),
         )?
     } else {
         let step = (Real::from(360) / Real::from(count))
@@ -1576,12 +1530,9 @@ fn thermal_spoke_mask(
                 Some(existing) => zone_boolean(
                     "thermal-spokes",
                     "merge spoke masks",
-                    decisions,
-                    existing.boolean_region(
-                        &spoke,
-                        hypercurve::BooleanOp::Union,
-                        decisions.curve_policy(),
-                    ),
+                    decisions.exact_curve(|| {
+                        existing.boolean_region(&spoke, hypercurve::BooleanOp::Union)
+                    }),
                 )?,
             });
         }
@@ -1605,12 +1556,7 @@ fn thermal_spoke_mask(
     zone_boolean(
         "thermal-spokes",
         "clip spoke masks to land clearance bounds",
-        decisions,
-        spokes.boolean_region(
-            &clip,
-            hypercurve::BooleanOp::Intersection,
-            decisions.curve_policy(),
-        ),
+        decisions.exact_curve(|| spokes.boolean_region(&clip, hypercurve::BooleanOp::Intersection)),
     )
 }
 
@@ -1710,8 +1656,7 @@ fn axis_aligned_rectangle_contains_region(
         return false;
     }
 
-    let Ok(Classification::Decided(bounds)) = decisions.classify(|policy| region.bounds(policy))
-    else {
+    let Ok(Some(bounds)) = decisions.exact_curve(|| region.bounds()) else {
         return false;
     };
     matches!(
@@ -1735,11 +1680,7 @@ fn profiles_may_intersect(
     decisions: &MaterializationDecisions,
 ) -> bool {
     decisions
-        .consume(left.boolean_region(
-            right,
-            hypercurve::BooleanOp::Intersection,
-            decisions.curve_policy(),
-        ))
+        .exact_curve(|| left.boolean_region(right, hypercurve::BooleanOp::Intersection))
         .map(|intersection| !intersection.is_empty())
         .unwrap_or(true)
 }
@@ -1752,12 +1693,7 @@ fn zone_offset(
     decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     decisions
-        .consume(curve::offset(
-            profile,
-            distance.clone(),
-            &OffsetCornerStyle2::Round,
-            decisions.curve_policy(),
-        ))
+        .exact_curve(|| profile.offset(distance.clone(), &OffsetCornerStyle2::Round))
         .map_err(|error| {
             GeometryMaterializationError::Boolean(format!("{source} {operation}: {error}"))
         })
@@ -1766,10 +1702,9 @@ fn zone_offset(
 fn zone_boolean(
     source: &str,
     operation: &str,
-    decisions: &MaterializationDecisions,
-    result: hypercurve::ExactCurveResult<CurveOutcome<CurveRegion2>>,
+    result: hypercurve::ExactCurveResult<CurveRegion2>,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    decisions.consume(result).map_err(|error| {
+    result.map_err(|error| {
         GeometryMaterializationError::Boolean(format!("{source} {operation}: {error:?}"))
     })
 }
@@ -1800,36 +1735,24 @@ fn regularized_zone_composition(
         profile = zone_boolean(
             source,
             &format!("regularize thermal gap {index}"),
-            decisions,
-            profile.boolean_region(
-                gap,
-                hypercurve::BooleanOp::Difference,
-                decisions.curve_policy(),
-            ),
+            decisions
+                .exact_curve(|| profile.boolean_region(gap, hypercurve::BooleanOp::Difference)),
         )?;
     }
     for (index, addition) in positive_additions.iter().enumerate() {
         profile = zone_boolean(
             source,
             &format!("regularize positive addition {index}"),
-            decisions,
-            profile.boolean_region(
-                addition,
-                hypercurve::BooleanOp::Union,
-                decisions.curve_policy(),
-            ),
+            decisions
+                .exact_curve(|| profile.boolean_region(addition, hypercurve::BooleanOp::Union)),
         )?;
     }
     for (index, cut) in hard_cuts.iter().enumerate() {
         profile = zone_boolean(
             source,
             &format!("regularize hard cut {index}"),
-            decisions,
-            profile.boolean_region(
-                cut,
-                hypercurve::BooleanOp::Difference,
-                decisions.curve_policy(),
-            ),
+            decisions
+                .exact_curve(|| profile.boolean_region(cut, hypercurve::BooleanOp::Difference)),
         )?;
     }
     Ok(profile)
@@ -1969,11 +1892,9 @@ impl PcbMaterializationReport {
                                 blocker: blocker.clone(),
                             });
                         } else if let Some(openings) = &image.image {
-                            match decisions.consume(profile.boolean_region(
-                                openings,
-                                hypercurve::BooleanOp::Difference,
-                                decisions.curve_policy(),
-                            )) {
+                            match decisions.exact_curve(|| {
+                                profile.boolean_region(openings, hypercurve::BooleanOp::Difference)
+                            }) {
                                 Ok(realized) => {
                                     profile = realized;
                                     subtractions.push(Pcb3dSubtractionEvidence {
@@ -2043,11 +1964,12 @@ impl PcbMaterializationReport {
                                         rebuilt = rebuilt.and_then(|aggregate| {
                                             drilled.and_then(|drilled| match aggregate {
                                                 Some(aggregate) => decisions
-                                                    .consume(aggregate.boolean_region(
-                                                        &drilled,
-                                                        hypercurve::BooleanOp::Union,
-                                                        decisions.curve_policy(),
-                                                    ))
+                                                    .exact_curve(|| {
+                                                        aggregate.boolean_region(
+                                                            &drilled,
+                                                            hypercurve::BooleanOp::Union,
+                                                        )
+                                                    })
                                                     .map(Some)
                                                     .map_err(|error| format!("{error:?}")),
                                                 None => Ok(Some(drilled)),
@@ -2488,11 +2410,9 @@ fn subtract_drill_exact(
     cutter: &CurveRegion2,
     decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, String> {
-    match decisions.consume(profile.boolean_region(
-        cutter,
-        hypercurve::BooleanOp::Difference,
-        decisions.curve_policy(),
-    )) {
+    match decisions
+        .exact_curve(|| profile.boolean_region(cutter, hypercurve::BooleanOp::Difference))
+    {
         Ok(realized) => Ok(realized),
         Err(whole_error) if matches!(drill.shape, DrillShape::Round { .. }) => {
             let sectors = exact_round_drill_sectors(drill, decisions).map_err(|sector_error| {
@@ -2501,11 +2421,9 @@ fn subtract_drill_exact(
             let mut realized = profile.clone();
             for (index, sector) in sectors.iter().enumerate() {
                 realized = decisions
-                    .consume(realized.boolean_region(
-                        sector,
-                        hypercurve::BooleanOp::Difference,
-                        decisions.curve_policy(),
-                    ))
+                    .exact_curve(|| {
+                        realized.boolean_region(sector, hypercurve::BooleanOp::Difference)
+                    })
                     .map_err(|sector_error| {
                         format!(
                             "whole cutter: {whole_error:?}; exact sector {index}: {sector_error:?}"
@@ -2575,12 +2493,8 @@ fn exact_round_drill_sectors(
                 ))
             })?;
             decisions
-                .curve_operation(|policy| {
-                    CurveRegion2::try_from_boundary_paths(
-                        &[path],
-                        hypercurve::FillRule::EvenOdd,
-                        policy,
-                    )
+                .exact_curve(|| {
+                    CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
                 })
                 .map_err(|error| {
                     GeometryMaterializationError::InvalidRoute(format!(
@@ -2675,12 +2589,9 @@ fn materialize_placements(
                     local_profile.clone()
                 } else {
                     decisions
-                        .consume(curve::offset(
-                            &local_profile,
-                            mask_margin.clone(),
-                            &OffsetCornerStyle2::Round,
-                            decisions.curve_policy(),
-                        ))
+                        .exact_curve(|| {
+                            local_profile.offset(mask_margin.clone(), &OffsetCornerStyle2::Round)
+                        })
                         .map_err(|error| {
                             GeometryMaterializationError::Boolean(format!(
                                 "{source} solder-mask offset: {error}"
@@ -2706,12 +2617,10 @@ fn materialize_placements(
                         local_profile.clone()
                     } else {
                         decisions
-                            .consume(curve::offset(
-                                &local_profile,
-                                paste_margin.clone(),
-                                &OffsetCornerStyle2::Round,
-                                decisions.curve_policy(),
-                            ))
+                            .exact_curve(|| {
+                                local_profile
+                                    .offset(paste_margin.clone(), &OffsetCornerStyle2::Round)
+                            })
                             .map_err(|error| {
                                 GeometryMaterializationError::Boolean(format!(
                                     "{source} paste offset: {error}"
@@ -2921,11 +2830,9 @@ fn graphic_profile(
                 Some(Ordering::Greater) => {
                     let inner = exact_circle_profile(&inner_radius, source, decisions)?;
                     decisions
-                        .consume(outer.boolean_region(
-                            &inner,
-                            hypercurve::BooleanOp::Difference,
-                            decisions.curve_policy(),
-                        ))
+                        .exact_curve(|| {
+                            outer.boolean_region(&inner, hypercurve::BooleanOp::Difference)
+                        })
                         .map_err(|error| {
                             GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
                         })?
@@ -2942,13 +2849,9 @@ fn graphic_profile(
             if *filled {
                 let profile = polygon_profile(vertices, source, decisions)?;
                 if let Some(width) = &graphic.stroke_width {
+                    let half_width = half(width)?;
                     decisions
-                        .consume(curve::offset(
-                            &profile,
-                            half(width)?,
-                            &OffsetCornerStyle2::Round,
-                            decisions.curve_policy(),
-                        ))
+                        .exact_curve(|| profile.offset(half_width, &OffsetCornerStyle2::Round))
                         .map(Some)
                         .map_err(|error| {
                             GeometryMaterializationError::Boolean(format!("{source}: {error}"))
@@ -3047,17 +2950,15 @@ fn stroked_path_profile(
     })?;
     let half_width = half(width)?;
     if !closed && let [start, end] = points {
-        match CurveRegion2::stroke_path(
-            &centerline,
-            half_width.clone(),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Round,
-            &CurveContext::STRICT,
-        ) {
-            Ok(outcome) => {
-                decisions.observe_curve(outcome.certainty);
-                return Ok(outcome.value);
-            }
+        match decisions.exact_curve(|| {
+            CurveRegion2::stroke_path(
+                &centerline,
+                half_width.clone(),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+            )
+        }) {
+            Ok(region) => return Ok(region),
             Err(ExactCurveError::Blocked(_)) => {
                 return exact_line_stroke_profile(start, end, width, source, decisions);
             }
@@ -3069,13 +2970,12 @@ fn stroked_path_profile(
         }
     }
     decisions
-        .curve_operation(|policy| {
+        .exact_curve(|| {
             CurveRegion2::stroke_path(
                 &centerline,
                 half_width.clone(),
                 &OffsetCornerStyle2::Round,
                 OffsetCap::Round,
-                policy,
             )
         })
         .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))
@@ -3110,7 +3010,7 @@ fn exact_line_stroke_profile(
     let midpoint_y = ((&start.y + &end.y) / Real::from(2_u8))
         .map_err(|_| GeometryMaterializationError::Arithmetic)?;
     decisions
-        .curve_operation(|policy| {
+        .exact_curve(|| {
             capsule.transform_affine(
                 &direction_x,
                 &(-direction_y.clone()),
@@ -3118,7 +3018,6 @@ fn exact_line_stroke_profile(
                 &direction_x,
                 &midpoint_x,
                 &midpoint_y,
-                policy,
             )
         })
         .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))
@@ -3151,11 +3050,7 @@ fn stroked_polygon_profile(
         )?;
         outline = Some(match outline {
             Some(existing) => decisions
-                .consume(existing.boolean_region(
-                    &edge,
-                    hypercurve::BooleanOp::Union,
-                    decisions.curve_policy(),
-                ))
+                .exact_curve(|| existing.boolean_region(&edge, hypercurve::BooleanOp::Union))
                 .map_err(|error| {
                     GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
                 })?,
@@ -3281,8 +3176,8 @@ fn exact_rounded_rectangle_profile(
     let path = CurvePath2::try_new(curves)
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
     let region = decisions
-        .curve_operation(|policy| {
-            CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, policy)
+        .exact_curve(|| {
+            CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
         })
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
     center_pad_profile(region, width, height)
@@ -3453,11 +3348,7 @@ fn route_profile(
             )?;
             profile = Some(match profile {
                 Some(existing) => decisions
-                    .consume(existing.boolean_region(
-                        &swept,
-                        hypercurve::BooleanOp::Union,
-                        decisions.curve_policy(),
-                    ))
+                    .exact_curve(|| existing.boolean_region(&swept, hypercurve::BooleanOp::Union))
                     .map_err(|error| {
                         GeometryMaterializationError::Boolean(format!(
                             "{source} merge segment {index}: {error:?}"
@@ -3826,11 +3717,7 @@ fn finite_swept_polyline_profile(
         |profile: CurveRegion2, description: &str| -> Result<(), GeometryMaterializationError> {
             swept = Some(match swept.take() {
                 Some(existing) => decisions
-                    .consume(existing.boolean_region(
-                        &profile,
-                        hypercurve::BooleanOp::Union,
-                        decisions.curve_policy(),
-                    ))
+                    .exact_curve(|| existing.boolean_region(&profile, hypercurve::BooleanOp::Union))
                     .map_err(|error| {
                         GeometryMaterializationError::Boolean(format!(
                             "{source} swept-polyline {description}: {error:?}"
@@ -3910,9 +3797,7 @@ fn polygon_profile(
     let contour = Contour2::from_real_ring(&coordinates)
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
     decisions
-        .curve_operation(|policy| {
-            CurveRegion2::try_from_native_material_contours(vec![contour.clone()], policy)
-        })
+        .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour.clone()]))
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))
 }
 
@@ -3991,18 +3876,12 @@ fn exact_compound_composition(
         .map(|profile| (profile, false))
         .chain(negative.iter().map(|profile| (profile, true)))
     {
-        let Classification::Decided(mut profile_paths) = decisions
-            .consume(region.boundary_paths(decisions.curve_policy()))
-            .map_err(|error| error.to_string())?
-        else {
-            return Err("exact aggregate boundary materialization was uncertain".to_owned());
-        };
-        let Classification::Decided(profile_roles) = decisions
-            .classify(|attempt| region.loop_roles(attempt))
-            .map_err(|error| error.to_string())?
-        else {
-            return Err("exact aggregate loop roles were uncertain".to_owned());
-        };
+        let mut profile_paths = decisions
+            .exact_curve(|| region.boundary_paths())
+            .map_err(|error| error.to_string())?;
+        let profile_roles = decisions
+            .exact_curve(|| region.loop_roles())
+            .map_err(|error| error.to_string())?;
         if profile_paths.len() != profile_roles.len() {
             return Err("exact aggregate path/role counts differ".to_owned());
         }
@@ -4024,10 +3903,8 @@ fn exact_compound_composition(
         rules.extend(profile_rules);
     }
     let region = decisions
-        .curve_operation(|policy| {
-            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                &paths, &roles, &rules, policy,
-            )
+        .exact_curve(|| {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &rules)
         })
         .map_err(|error| error.to_string())?;
     Ok(region)
@@ -4051,8 +3928,8 @@ mod tests {
     use csgrs::GeometryCertainty;
     use csgrs::curve;
     use hypercurve::{
-        BooleanOp, Classification, Curve2, CurveContext, CurveFamily2, CurvePath2, CurveRegion2,
-        LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
+        BooleanOp, Curve2, CurveFamily2, CurvePath2, CurveRegion2, LineSeg2, OffsetCap,
+        OffsetCornerStyle2, Point2 as CurvePoint2,
     };
     use hyperlattice::Point2;
     use hyperpath::{CubicBezier, TraceLayer};
@@ -4108,27 +3985,16 @@ mod tests {
         )
         .unwrap();
         let second = curve::translated(&second_local, Real::one(), Real::zero());
-        let Classification::Decided(paths) = first
-            .boundary_paths(decisions.curve_policy())
-            .unwrap()
-            .into_value()
-        else {
-            panic!("exact rounded pad boundary should materialize");
-        };
+        let paths = decisions.exact_curve(|| first.boundary_paths()).unwrap();
         assert!(paths.iter().flat_map(|path| path.curves()).any(|curve| {
             matches!(
                 curve.family(),
                 CurveFamily2::CircularArc | CurveFamily2::RationalQuadraticBezier
             )
         }));
-        let union: CurveRegion2 = first
-            .boolean_region(
-                &second,
-                hypercurve::BooleanOp::Union,
-                decisions.curve_policy(),
-            )
-            .expect("overlapping exact rounded pads must union")
-            .into_value();
+        let union: CurveRegion2 = decisions
+            .exact_curve(|| first.boolean_region(&second, hypercurve::BooleanOp::Union))
+            .expect("overlapping exact rounded pads must union");
         assert!(!union.is_empty());
     }
 
@@ -4162,19 +4028,20 @@ mod tests {
             .unwrap(),
         )])
         .unwrap();
-        let generic = CurveRegion2::stroke_path(
-            &path,
-            half(&width).unwrap(),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Round,
-            &CurveContext::APPROXIMATE_512,
-        )
-        .unwrap()
-        .into_value();
-        let difference = profile
-            .boolean_region(&generic, BooleanOp::Xor, &CurveContext::APPROXIMATE_512)
-            .unwrap()
-            .into_value();
+        let generic = hypercurve::provisional(|| {
+            CurveRegion2::stroke_path(
+                &path,
+                half(&width).unwrap(),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+            )
+        })
+        .into_unverified()
+        .unwrap();
+        let difference =
+            hypercurve::provisional(|| profile.boolean_region(&generic, BooleanOp::Xor))
+                .into_unverified()
+                .unwrap();
         assert!(difference.is_empty());
     }
 
@@ -4310,7 +4177,6 @@ mod tests {
             MaterializationContext::APPROXIMATE_512,
         ] {
             let decisions = MaterializationDecisions::new(&context);
-            let policy = decisions.curve_policy();
             let square = |half: i32| {
                 curve::translated(
                     &curve::rectangle(Real::from(2 * half), Real::from(2 * half)),
@@ -4320,10 +4186,9 @@ mod tests {
             };
             let exterior = square(6);
             let cut = square(4);
-            let ring = exterior
-                .boolean_region(&cut, BooleanOp::Difference, policy)
-                .unwrap()
-                .into_value();
+            let ring = decisions
+                .exact_curve(|| exterior.boolean_region(&cut, BooleanOp::Difference))
+                .unwrap();
             let island = square(1);
             let bridge = curve::translated(
                 &curve::rectangle(Real::from(2), Real::from(4)),
@@ -4335,16 +4200,13 @@ mod tests {
             let sequential = operands
                 .iter()
                 .try_fold(CurveRegion2::empty(), |region, operand| {
-                    region
-                        .boolean_region(operand, BooleanOp::Union, policy)
-                        .map(|result| result.into_value())
+                    decisions.exact_curve(|| region.boolean_region(operand, BooleanOp::Union))
                 })
                 .unwrap();
             assert!(
-                aggregate
-                    .boolean_region(&sequential, BooleanOp::Xor, policy)
+                decisions
+                    .exact_curve(|| aggregate.boolean_region(&sequential, BooleanOp::Xor))
                     .unwrap()
-                    .into_value()
                     .is_empty()
             );
             for (x, y, inside) in [

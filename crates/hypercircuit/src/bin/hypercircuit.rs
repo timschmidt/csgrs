@@ -170,10 +170,10 @@ fn sign_release(arguments: &[String]) -> Result<bool, String> {
     let path = Path::new(&arguments[2]);
     let mut key_id = None;
     let mut seed_file = None;
-    for option in arguments[3..].chunks_exact(2) {
-        match option[0].as_str() {
-            "--key-id" => key_id = Some(option[1].as_str()),
-            "--seed-file" => seed_file = Some(Path::new(&option[1])),
+    for [name, value] in arguments[3..].as_chunks::<2>().0 {
+        match name.as_str() {
+            "--key-id" => key_id = Some(value.as_str()),
+            "--seed-file" => seed_file = Some(Path::new(value)),
             unknown => return Err(format!("unknown signing option `{unknown}`\n\n{USAGE}")),
         }
     }

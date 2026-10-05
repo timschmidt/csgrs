@@ -1472,12 +1472,7 @@ fn union_component_profiles(profiles: Vec<CurveRegion2>) -> Result<Option<CurveR
     };
     for profile in profiles {
         combined = combined
-            .boolean_region(
-                &profile,
-                hypercurve::BooleanOp::Union,
-                &hypercurve::CurveContext::STRICT,
-            )
-            .map(hypercurve::CurveOutcome::into_value)
+            .boolean_region(&profile, hypercurve::BooleanOp::Union)
             .map_err(|error| format!("{error:?}"))?;
     }
     Ok(Some(combined))

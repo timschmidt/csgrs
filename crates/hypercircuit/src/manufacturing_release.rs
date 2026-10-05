@@ -1636,10 +1636,12 @@ fn decode_hex(encoded: &str) -> Result<Vec<u8>, String> {
     }
     encoded
         .as_bytes()
-        .chunks_exact(2)
-        .map(|pair| {
-            let high = decode_hex_digit(pair[0])?;
-            let low = decode_hex_digit(pair[1])?;
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|&[high, low]| {
+            let high = decode_hex_digit(high)?;
+            let low = decode_hex_digit(low)?;
             Ok((high << 4) | low)
         })
         .collect()

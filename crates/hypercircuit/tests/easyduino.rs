@@ -397,13 +397,8 @@ fn nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy() {
         };
         assert!(
             strict_copper
-                .boolean_region(
-                    approximate_copper,
-                    hypercurve::BooleanOp::Xor,
-                    &hypercurve::CurveContext::STRICT,
-                )
+                .boolean_region(approximate_copper, hypercurve::BooleanOp::Xor)
                 .unwrap()
-                .into_value()
                 .is_empty(),
             "both policies must aggregate the same copper on {:?}",
             strict_layer.layer
