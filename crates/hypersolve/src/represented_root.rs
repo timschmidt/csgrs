@@ -1406,6 +1406,7 @@ pub fn dense_tuple_sign_by_refinement(
 ) -> Classification<RealSign> {
     let mut previous = None;
     let mut refinement_steps = 0_usize;
+    let mut two_root_proof_attempted = false;
     let next_refinement_steps = |steps: usize| match steps {
         0 => Some(4),
         4 => Some(8),
@@ -1452,6 +1453,25 @@ pub fn dense_tuple_sign_by_refinement(
         // equality interpretation and would duplicate an exact elimination in
         // both the preliminary strict pass and the outer approximate replay.
         // STRICT alone retains the complete algebraic-image authority.
+        // Two independently selected roots admit a Sturm-Tarski proof in the
+        // local field of one of them, which settles even an exact zero
+        // without the global tensor image below. Try it once, at the first
+        // round that would otherwise build that image.
+        if !policy.selects_approximate_512()
+            && !two_root_proof_attempted
+            && let [_, _] = sources
+        {
+            two_root_proof_attempted = true;
+            if let Some(sign) =
+                crate::algebraic_fiber::dense_sign_at_two_selected_roots(polynomial, sources)
+            {
+                return Classification::Decided(match sign {
+                    Ordering::Less => RealSign::Negative,
+                    Ordering::Equal => RealSign::Zero,
+                    Ordering::Greater => RealSign::Positive,
+                });
+            }
+        }
         let represented = if policy.selects_approximate_512() {
             Classification::Uncertain(UncertaintyReason::Predicate)
         } else {

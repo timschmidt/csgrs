@@ -1377,6 +1377,119 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
     }
 }
 
+/// The ordered-field operations of one selected local algebraic field.
+struct LocalFieldContext<'a> {
+    field: &'a mut LocalAlgebraicField,
+}
+
+impl OrderedFieldPolynomialContext<LocalFieldElement> for LocalFieldContext<'_> {
+    type Error = LocalFieldError;
+
+    fn constant(&mut self, value: &Real) -> Result<LocalFieldElement, Self::Error> {
+        LocalFieldElement::from_polynomial(vec![value.clone()], self.field)
+    }
+
+    fn add(
+        &mut self,
+        left: &LocalFieldElement,
+        right: &LocalFieldElement,
+    ) -> Result<LocalFieldElement, Self::Error> {
+        left.add(right, self.field)
+    }
+
+    fn multiply(
+        &mut self,
+        left: &LocalFieldElement,
+        right: &LocalFieldElement,
+    ) -> Result<LocalFieldElement, Self::Error> {
+        left.multiply(right, self.field)
+    }
+
+    fn scale(
+        &mut self,
+        value: &LocalFieldElement,
+        scale: &Real,
+    ) -> Result<LocalFieldElement, Self::Error> {
+        value.scale(scale, self.field)
+    }
+
+    fn normalize_positive_scale(&mut self, _coefficients: &mut [LocalFieldElement]) {
+        // Elements stay reduced local fractions. Removing common positive
+        // content is an optional size optimization, never a sign change.
+    }
+
+    fn sign(&mut self, value: &LocalFieldElement) -> Result<Ordering, Self::Error> {
+        value.sign(self.field)
+    }
+
+    fn sign_if_separated(
+        &mut self,
+        value: &LocalFieldElement,
+    ) -> Result<Option<Ordering>, Self::Error> {
+        value.sign_if_separated(self.field)
+    }
+}
+
+/// Signs a dense two-axis polynomial at two independently selected roots.
+///
+/// The polynomial is read as univariate in one root with coefficients in the
+/// local field of the other, choosing the lower-degree root as that field.
+/// The division-free Sturm-Tarski chain of the other root's own equation then
+/// signs it on that root's isolating interval, including an exact zero,
+/// without building a global tensor image. `None` leaves the decision to the
+/// caller's other proofs: invalid or point evidence, or an undecided field
+/// sign.
+pub(crate) fn dense_sign_at_two_selected_roots(
+    polynomial: &crate::tensor_resultant::DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<Ordering> {
+    let [first, second] = sources else {
+        return None;
+    };
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != 2 {
+        return None;
+    }
+    let (field_axis, root_axis) =
+        if first.polynomial_coefficients.len() <= second.polynomial_coefficients.len() {
+            (0, 1)
+        } else {
+            (1, 0)
+        };
+    let variable = &sources[root_axis];
+    let mut field = LocalAlgebraicField::new(&sources[field_axis], PredicatePolicy::STRICT).ok()?;
+    let mut predicate = Vec::with_capacity(dimensions[root_axis]);
+    for power in 0..dimensions[root_axis] {
+        let numerator = (0..dimensions[field_axis])
+            .map(|field_power| {
+                let mut exponents = [0_usize; 2];
+                exponents[field_axis] = field_power;
+                exponents[root_axis] = power;
+                polynomial
+                    .coefficient(&exponents)
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+            })
+            .collect();
+        predicate.push(LocalFieldElement::from_polynomial(numerator, &field).ok()?);
+    }
+    let defining = variable
+        .polynomial_coefficients
+        .iter()
+        .map(|coefficient| LocalFieldElement::from_polynomial(vec![coefficient.clone()], &field))
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+    let mut context = LocalFieldContext { field: &mut field };
+    crate::root_sign::ordered_field_sign_at_selected_root(
+        &defining,
+        &predicate,
+        &variable.interval,
+        &mut context,
+    )
+    .ok()
+    .flatten()
+}
+
 /// Isolate a local-field polynomial by exact Bernstein subdivision.
 ///
 /// `None` is a deliberate request to use the division-based Sturm fallback:
@@ -1391,59 +1504,7 @@ fn isolate_local_polynomial_roots_bernstein(
     config: AlgebraicFiberRootIsolationConfig,
     field: &mut LocalAlgebraicField,
 ) -> Result<(Option<Vec<IsolatedRootInterval>>, usize), LocalFieldError> {
-    struct Context<'a> {
-        field: &'a mut LocalAlgebraicField,
-    }
-
-    impl OrderedFieldPolynomialContext<LocalFieldElement> for Context<'_> {
-        type Error = LocalFieldError;
-
-        fn constant(&mut self, value: &Real) -> Result<LocalFieldElement, Self::Error> {
-            LocalFieldElement::from_polynomial(vec![value.clone()], self.field)
-        }
-
-        fn add(
-            &mut self,
-            left: &LocalFieldElement,
-            right: &LocalFieldElement,
-        ) -> Result<LocalFieldElement, Self::Error> {
-            left.add(right, self.field)
-        }
-
-        fn multiply(
-            &mut self,
-            left: &LocalFieldElement,
-            right: &LocalFieldElement,
-        ) -> Result<LocalFieldElement, Self::Error> {
-            left.multiply(right, self.field)
-        }
-
-        fn scale(
-            &mut self,
-            value: &LocalFieldElement,
-            scale: &Real,
-        ) -> Result<LocalFieldElement, Self::Error> {
-            value.scale(scale, self.field)
-        }
-
-        fn normalize_positive_scale(&mut self, _coefficients: &mut [LocalFieldElement]) {
-            // This Bernstein adapter retains the existing reduced local
-            // fractions; it does not construct a signed remainder chain.
-        }
-
-        fn sign(&mut self, value: &LocalFieldElement) -> Result<Ordering, Self::Error> {
-            value.sign(self.field)
-        }
-
-        fn sign_if_separated(
-            &mut self,
-            value: &LocalFieldElement,
-        ) -> Result<Option<Ordering>, Self::Error> {
-            value.sign_if_separated(self.field)
-        }
-    }
-
-    let mut context = Context { field };
+    let mut context = LocalFieldContext { field };
     let report = isolate_ordered_field_polynomial_roots(
         polynomial,
         fiber_lower,
@@ -4800,6 +4861,59 @@ mod tests {
         root.validation = validate_algebraic_root_representation(&root, policy);
         assert!(root.is_valid());
         root
+    }
+
+    #[test]
+    fn two_selected_roots_sign_zero_and_nonzero_values_exactly() {
+        let sqrt_two = represented_root(
+            vec![real(-2), real(0), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let sqrt_three = represented_root(
+            vec![real(-3), real(0), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let sources = [sqrt_two, sqrt_three];
+        // Dense layout: dimensions [3, 3], axis 0 is sqrt(2), axis 1 sqrt(3).
+        let tensor = |terms: &[((usize, usize), i64)]| {
+            let layout = crate::tensor_resultant::DenseTensorPolynomial::zero(vec![3, 3]).unwrap();
+            let mut coefficients = vec![Real::zero(); 9];
+            for ((first, second), value) in terms {
+                coefficients[layout.storage_index(&[*first, *second]).unwrap()] = real(*value);
+            }
+            crate::tensor_resultant::DenseTensorPolynomial::try_new(vec![3, 3], coefficients)
+                .unwrap()
+        };
+        let check = |polynomial: crate::tensor_resultant::DenseTensorPolynomial| {
+            dense_sign_at_two_selected_roots(&polynomial, &sources)
+        };
+        // (sqrt2 * sqrt3)^2 - 6 = 0.
+        assert_eq!(
+            check(tensor(&[((2, 2), 1), ((0, 0), -6)])),
+            Some(Ordering::Equal)
+        );
+        // sqrt2 * sqrt3 - 2 > 0, and its negation is negative.
+        assert_eq!(
+            check(tensor(&[((1, 1), 1), ((0, 0), -2)])),
+            Some(Ordering::Greater)
+        );
+        assert_eq!(
+            check(tensor(&[((1, 1), -1), ((0, 0), 2)])),
+            Some(Ordering::Less)
+        );
+        // sqrt2 - sqrt3 < 0 and sqrt2 + sqrt3 - 3 > 0.
+        assert_eq!(
+            check(tensor(&[((1, 0), 1), ((0, 1), -1)])),
+            Some(Ordering::Less)
+        );
+        assert_eq!(
+            check(tensor(&[((1, 0), 1), ((0, 1), 1), ((0, 0), -3)])),
+            Some(Ordering::Greater)
+        );
     }
 
     #[test]
