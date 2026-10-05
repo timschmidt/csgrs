@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedCurvePolyline2, Curve2,
-    CurveCertainty, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    CurveCertainty, CurvePath2, CurveRegion2, CurveRegionLoopRole, PredicatePolicy,
 };
 use hyperlattice::{Point3, Real};
 use hypermesh::TriangleMesh;
@@ -154,7 +154,7 @@ impl CertifiedCurveRegionLineMesh {
 pub fn curve_line_mesh(
     curve: &Curve2,
     options: &BezierFlatteningOptions,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
     z: Real,
     color: Color3,
 ) -> Result<CertifiedCurveLineMesh> {
@@ -166,7 +166,7 @@ pub fn curve_line_mesh(
 pub fn curve_path_line_mesh(
     path: &CurvePath2,
     options: &BezierFlatteningOptions,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
     z: Real,
     color: Color3,
 ) -> Result<CertifiedCurveLineMesh> {
@@ -177,14 +177,10 @@ pub fn curve_path_line_mesh(
 /// Runs an exact segmentation under `policy`, reporting an undecided
 /// predicate as [`Error::CurveSegmentationUncertain`].
 fn segmentation(
-    policy: &CurveContext,
+    policy: PredicatePolicy,
     segment: impl FnOnce() -> hypercurve::ExactCurveResult<CertifiedCurvePolyline2>,
 ) -> Result<CertifiedCurvePolyline2> {
-    let result = if *policy == CurveContext::STRICT {
-        segment()
-    } else {
-        hypercurve::provisional(segment).into_unverified()
-    };
+    let result = hypercurve::evaluate_under(policy, segment).into_unverified();
     match result {
         Ok(polyline) => Ok(polyline),
         Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
@@ -196,17 +192,13 @@ fn segmentation(
     }
 }
 
-/// Runs one exact region query under `policy`: directly under STRICT, and
-/// otherwise inside [`hypercurve::provisional`], reporting the certainty the
-/// query consumed.
+/// Runs one exact region query under `policy` through
+/// [`hypercurve::evaluate_under`], reporting the certainty it consumed.
 fn region_query<T>(
-    policy: &CurveContext,
+    policy: PredicatePolicy,
     query: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
 ) -> Result<(T, CurveCertainty)> {
-    if *policy == CurveContext::STRICT {
-        return Ok((query()?, CurveCertainty::Certified));
-    }
-    let provisional = hypercurve::provisional(query);
+    let provisional = hypercurve::evaluate_under(policy, query);
     let certainty = provisional.certainty();
     Ok((provisional.into_unverified()?, certainty))
 }
@@ -219,7 +211,7 @@ fn region_query<T>(
 pub fn curve_region_line_mesh(
     region: &CurveRegion2,
     options: &BezierFlatteningOptions,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
     z: Real,
     material_color: Color3,
     hole_color: Color3,
@@ -455,11 +447,10 @@ pub fn polygon_surface_mesh(
 #[cfg(test)]
 mod tests {
     use hypercurve::{
-        CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveGeometry2, CurvePath2,
-        CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2 as CurvePoint2,
+        CubicBezier2, Curve2, CurveCertainty, CurveGeometry2, CurvePath2, CurveRegion2,
+        CurveRegionLoopRole, FillRule, LineSeg2, Point2 as CurvePoint2, PredicatePolicy,
     };
     use hyperlattice::Point3;
-    use hyperlimit::PredicatePolicy;
     use hypermesh::{Triangle, TriangleMesh};
     use hyperreal::Real;
     use hypertri::{Point2, TriangulationContext};
@@ -514,7 +505,7 @@ mod tests {
         let certified = curve_line_mesh(
             &curve,
             &options,
-            &CurveContext::STRICT,
+            PredicatePolicy::STRICT,
             Real::from(5),
             Color3::GREEN,
         )
@@ -558,7 +549,7 @@ mod tests {
         let certified = curve_path_line_mesh(
             &path,
             &options,
-            &CurveContext::STRICT,
+            PredicatePolicy::STRICT,
             Real::zero(),
             Color3::BLUE,
         )
@@ -590,7 +581,7 @@ mod tests {
             curve_line_mesh(
                 &curve,
                 &options,
-                &CurveContext::STRICT,
+                PredicatePolicy::STRICT,
                 Real::zero(),
                 Color3::RED,
             ),
@@ -658,7 +649,7 @@ mod tests {
         let certified = curve_region_line_mesh(
             &region,
             &options,
-            &CurveContext::STRICT,
+            PredicatePolicy::STRICT,
             Real::zero(),
             material_color,
             hole_color,

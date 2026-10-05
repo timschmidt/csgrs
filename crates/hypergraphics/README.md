@@ -136,7 +136,7 @@ selected policy consumed approximate-512 equality.
 coordinate and vertex storage cannot be allocated safely.
 
 `curve_line_mesh` and `curve_path_line_mesh` invoke Hypercurve's certified
-subdivision with caller-owned `BezierFlatteningOptions` and `CurveContext`.
+subdivision with caller-owned `BezierFlatteningOptions` and a Hyperlimit `PredicatePolicy`.
 Their chord endpoints remain `Real`, and the returned adapter retains the exact
 maximum source-chord error, segment count, depth, and source-fragment count.
 Exhausted or undecidable subdivision is an error; it does not fall back to a
