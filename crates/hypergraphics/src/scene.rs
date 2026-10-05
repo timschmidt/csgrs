@@ -184,6 +184,21 @@ pub fn curve_path_line_mesh(
     certified_curve_polyline_mesh(polyline, z, color)
 }
 
+/// Runs one exact region query under `policy`: directly under STRICT, and
+/// otherwise inside [`hypercurve::provisional`], reporting the certainty the
+/// query consumed.
+fn region_query<T>(
+    policy: &CurveContext,
+    query: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
+) -> Result<(T, CurveCertainty)> {
+    if *policy == CurveContext::STRICT {
+        return Ok((query()?, CurveCertainty::Certified));
+    }
+    let provisional = hypercurve::provisional(query);
+    let certainty = provisional.certainty();
+    Ok((provisional.into_unverified()?, certainty))
+}
+
 /// Segment every exact Hypercurve region boundary into one role-colored line mesh.
 ///
 /// Boundary materialization, material/hole roles, and every chord are certified
@@ -197,29 +212,8 @@ pub fn curve_region_line_mesh(
     material_color: Color3,
     hole_color: Color3,
 ) -> Result<CertifiedCurveRegionLineMesh> {
-    let path_outcome = region.boundary_paths(policy)?;
-    let path_materialization_certainty = path_outcome.certainty;
-    let paths = match path_outcome.value {
-        Classification::Decided(paths) => paths,
-        Classification::Uncertain(reason) => {
-            return Err(Error::CurveRegionUncertain {
-                operation: "boundary materialization",
-                reason,
-            });
-        }
-    };
-
-    let role_outcome = region.loop_roles(policy)?;
-    let role_certainty = role_outcome.certainty;
-    let roles = match role_outcome.value {
-        Classification::Decided(roles) => roles,
-        Classification::Uncertain(reason) => {
-            return Err(Error::CurveRegionUncertain {
-                operation: "loop-role classification",
-                reason,
-            });
-        }
-    };
+    let (paths, path_materialization_certainty) = region_query(policy, || region.boundary_paths())?;
+    let (roles, role_certainty) = region_query(policy, || region.loop_roles())?;
     if paths.len() != roles.len() {
         return Err(Error::CurveRegionLoopCountMismatch {
             paths: paths.len(),
@@ -650,10 +644,8 @@ mod tests {
             &[outer, hole],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
             &[FillRule::NonZero, FillRule::NonZero],
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value();
+        .unwrap();
         let max_error = Real::from(hyperreal::Rational::fraction(1, 64).unwrap());
         let options =
             BezierFlatteningOptions::try_new(max_error.clone(), 16, &CurveContext::STRICT).unwrap();

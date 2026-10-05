@@ -95,14 +95,6 @@ pub enum Error {
         /// Exact predicate or supported-operation boundary that remained unresolved.
         reason: hypercurve::UncertaintyReason,
     },
-    /// A region operation remained explicitly unresolved under the selected policy.
-    #[cfg(feature = "exact")]
-    CurveRegionUncertain {
-        /// Exact region operation that could not complete.
-        operation: &'static str,
-        /// Exact predicate or supported-operation boundary that remained unresolved.
-        reason: hypercurve::UncertaintyReason,
-    },
     /// Materialized region paths and authoritative loop roles disagreed in cardinality.
     #[cfg(feature = "exact")]
     CurveRegionLoopCountMismatch {
@@ -205,11 +197,6 @@ impl fmt::Display for Error {
             Self::CurveSegmentationUncertain { reason } => write!(
                 f,
                 "source-curve segmentation remained uncertain: {reason:?}"
-            ),
-            #[cfg(feature = "exact")]
-            Self::CurveRegionUncertain { operation, reason } => write!(
-                f,
-                "source-region {operation} remained uncertain: {reason:?}"
             ),
             #[cfg(feature = "exact")]
             Self::CurveRegionLoopCountMismatch { paths, roles } => write!(
