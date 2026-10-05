@@ -609,14 +609,12 @@ impl BoardBoundaryGeometry {
             ))
         })?;
         for contour in &inset.contour_paths {
-            let result = centerline
-                .intersect_path(contour, policy)
-                .map_err(|error| {
+            let result =
+                under_policy(policy, || centerline.intersect_path(contour)).map_err(|error| {
                     BoardBoundaryGeometryError::new(format!(
                         "board segment intersection failed: {error:?}"
                     ))
-                })?
-                .into_value();
+                })?;
             if !result.is_complete() {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
@@ -667,14 +665,12 @@ impl BoardBoundaryGeometry {
             })?;
         let required_squared = clearance.clone() * clearance.clone();
         for contour in &self.contour_paths {
-            let result = centerline
-                .intersect_path(contour, policy)
-                .map_err(|error| {
+            let result =
+                under_policy(policy, || centerline.intersect_path(contour)).map_err(|error| {
                     BoardBoundaryGeometryError::new(format!(
                         "board segment intersection failed: {error:?}"
                     ))
-                })?
-                .into_value();
+                })?;
             if !result.is_complete() {
                 return Ok(Some(Classification::Uncertain(
                     UncertaintyReason::Predicate,
@@ -760,14 +756,12 @@ impl BoardBoundaryGeometry {
             ))
         })?;
         for contour in &self.contour_paths {
-            let result = rectangle
-                .intersect_path(contour, policy)
-                .map_err(|error| {
+            let result =
+                under_policy(policy, || rectangle.intersect_path(contour)).map_err(|error| {
                     BoardBoundaryGeometryError::new(format!(
                         "placement envelope intersection failed: {error:?}"
                     ))
-                })?
-                .into_value();
+                })?;
             if !result.is_complete() {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
