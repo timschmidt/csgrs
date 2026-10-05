@@ -1969,7 +1969,6 @@ mod tests {
         let origin = Point3::new(half.clone(), half.clone(), -(deep_positive.clone() * &half));
         let direction = Point3::new(Real::zero(), Real::zero(), deep_positive);
 
-
         let report = crate::classify_ray_triangle3_intersection_report(
             &origin,
             &direction,
