@@ -9,7 +9,7 @@
 use std::{cmp::Ordering, collections::BTreeMap, fmt};
 
 use hypercurve::{
-    Classification, Contour2, ContourPointLocation, CurveContext, CurveError, Point2, Segment2,
+    Contour2, ContourPointLocation, CurveContext, CurveError, ExactCurveError, Point2, Segment2,
     TranslationObstacle2, TranslationObstacleBlocker2, translation_obstacle_convex,
 };
 use hyperreal::{Real, RealSign};
@@ -503,12 +503,18 @@ fn classify_pair(
         return Ok(PairStatus::Unknown);
     };
     let translation = Point2::new(&moving.x - &fixed.x, &moving.y - &fixed.y);
-    Ok(match obstacle.classify_translation(&translation, policy)? {
-        Classification::Decided(ContourPointLocation::Inside) => PairStatus::Overlapping,
-        Classification::Decided(ContourPointLocation::Boundary | ContourPointLocation::Outside) => {
+    let location = if *policy == CurveContext::STRICT {
+        obstacle.classify_translation(&translation)
+    } else {
+        hypercurve::provisional(|| obstacle.classify_translation(&translation)).into_unverified()
+    };
+    Ok(match location {
+        Ok(ContourPointLocation::Inside) => PairStatus::Overlapping,
+        Ok(ContourPointLocation::Boundary | ContourPointLocation::Outside) => {
             PairStatus::SeparatedOrTouching
         }
-        Classification::Uncertain(_) => PairStatus::Unknown,
+        Err(ExactCurveError::Blocked(_)) => PairStatus::Unknown,
+        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause.into()),
     })
 }
 
