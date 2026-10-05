@@ -509,8 +509,7 @@ mod tests {
             CurvePoint2::from_values(3, 0),
         )));
         let max_error = Real::from(hyperreal::Rational::fraction(1, 32).unwrap());
-        let options =
-            BezierFlatteningOptions::try_new(max_error.clone(), 16, &CurveContext::STRICT).unwrap();
+        let options = BezierFlatteningOptions::try_new(max_error.clone(), 16).unwrap();
 
         let certified = curve_line_mesh(
             &curve,
@@ -553,7 +552,6 @@ mod tests {
         let options = BezierFlatteningOptions::try_new(
             Real::from(hyperreal::Rational::fraction(1, 16).unwrap()),
             16,
-            &CurveContext::STRICT,
         )
         .unwrap();
 
@@ -585,7 +583,6 @@ mod tests {
         let options = BezierFlatteningOptions::try_new(
             Real::from(hyperreal::Rational::fraction(1, 1_000_000).unwrap()),
             1,
-            &CurveContext::STRICT,
         )
         .unwrap();
 
@@ -654,8 +651,7 @@ mod tests {
         )
         .unwrap();
         let max_error = Real::from(hyperreal::Rational::fraction(1, 64).unwrap());
-        let options =
-            BezierFlatteningOptions::try_new(max_error.clone(), 16, &CurveContext::STRICT).unwrap();
+        let options = BezierFlatteningOptions::try_new(max_error.clone(), 16).unwrap();
         let material_color = Color3::GREEN;
         let hole_color = Color3::RED;
 
