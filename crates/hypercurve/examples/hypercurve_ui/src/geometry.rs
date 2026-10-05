@@ -5,10 +5,10 @@ use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
     BooleanOp as HBooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2,
     ContourFragmentSet, ContourIntersection, ContourIntersectionSet, ContourOperand,
-    ContourSplitMarkers, CubicBezier2, Curve2, CurveContext, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurvePath2, CurvePreviewOptions, CurveRegion2,
-    CurveRegionLoopRole, CurveString2, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2,
+    ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
+    CurvePath2, CurvePreviewOptions, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule,
+    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real, Segment2,
 };
 use serde::{Deserialize, Serialize};
 
@@ -691,7 +691,7 @@ impl Polyline {
                 left_offset_buffer_distance(self, distance),
                 "offset distance",
             )?;
-            let offset = preview(|_context| {
+            let offset = preview(|| {
                 let source =
                     CurveRegion2::try_from_native_material_contours(vec![contour.clone()])?;
                 source.offset(filled_distance.clone(), &OffsetCornerStyle2::Round)
@@ -708,7 +708,7 @@ impl Polyline {
     pub fn outline(&self, distance: f64, cap: OffsetCap) -> Result<Vec<Self>, String> {
         let path = self.to_curve_path()?;
         let distance = real_checked(distance, "outline distance")?;
-        let outline = preview(|_context| {
+        let outline = preview(|| {
             CurveRegion2::stroke_path(&path, distance.clone(), &OffsetCornerStyle2::Round, cap)
         })
         .map_err(|error| error.to_string())?;
@@ -726,10 +726,8 @@ impl Polyline {
         };
         let mut out = Vec::new();
         for segment in segments {
-            match preview(|_context| {
-                crate::geometry::classified(segment.offset_left(distance.clone()))
-            })
-            .map_err(|e| e.to_string())?
+            match preview(|| crate::geometry::classified(segment.offset_left(distance.clone())))
+                .map_err(|e| e.to_string())?
             {
                 Classification::Decided(offset) => out.push(Self::from_segments(&[offset], false)),
                 Classification::Uncertain(_) => {}
@@ -1097,7 +1095,6 @@ impl Shape {
 
         let first = self.to_curve_region()?;
         let second = other.to_curve_region()?;
-        let _policy = CurveContext::STRICT;
         let result = first.boolean_region(&second, op).map_err(|error| {
             first
                 .intersect_region(&second)
@@ -1174,7 +1171,7 @@ pub enum BooleanMode {
     Xor,
 }
 
-fn preview<T>(evaluate: impl FnOnce(&CurveContext) -> T) -> T {
+fn preview<T>(evaluate: impl FnOnce() -> T) -> T {
     // The test article is an interactive rendering boundary, so it uses
     // explicit preview options for curve-local display tolerances. The
     // predicate context remains strict, and the UI must not
@@ -1200,7 +1197,7 @@ pub fn contour_intersections(
 ) -> Result<(Vec<[f64; 2]>, Vec<Polyline>), String> {
     let first = first.to_contour()?;
     let second = second.to_contour()?;
-    let events = preview(|_context| first.intersect_contour(&second)).map_err(|e| e.to_string())?;
+    let events = preview(|| first.intersect_contour(&second)).map_err(|e| e.to_string())?;
     let mut points = Vec::new();
     let mut overlaps = Vec::new();
     for event in events.events() {
@@ -1224,8 +1221,8 @@ pub fn contour_slices(
 ) -> Result<(Vec<Polyline>, Vec<Polyline>), String> {
     let first_contour = first.to_contour()?;
     let second_contour = second.to_contour()?;
-    let events = preview(|_context| first_contour.intersect_contour(&second_contour))
-        .map_err(|e| e.to_string())?;
+    let events =
+        preview(|| first_contour.intersect_contour(&second_contour)).map_err(|e| e.to_string())?;
     let first_fragments = split_contour_for_slices(&first_contour, &events, ContourOperand::First)?;
     let second_fragments =
         split_contour_for_slices(&second_contour, &events, ContourOperand::Second)?;
@@ -1264,7 +1261,7 @@ fn split_contour_for_slices(
     // fallback to source fragments is intentionally local to the UI boundary;
     // exact library booleans still propagate uncertainty. Keeping finite output
     // separate avoids presenting a broken branch graph as exact topology.
-    preview(|_context| {
+    preview(|| {
         let self_events = contour
             .intersect_self()
             .map_err(|error| error.to_string())?;
@@ -2253,13 +2250,13 @@ mod tests {
     fn contour_has_slice_events(first: &Polyline, second: &Polyline) -> Result<bool, String> {
         let first = first.to_contour()?;
         let second = second.to_contour()?;
-        Ok(!preview(|_context| first.intersect_contour(&second))
+        Ok(!preview(|| first.intersect_contour(&second))
             .map_err(|error| error.to_string())?
             .is_empty()
-            || !preview(|_context| first.intersect_self())
+            || !preview(|| first.intersect_self())
                 .map_err(|error| error.to_string())?
                 .is_empty()
-            || !preview(|_context| second.intersect_self())
+            || !preview(|| second.intersect_self())
                 .map_err(|error| error.to_string())?
                 .is_empty())
     }

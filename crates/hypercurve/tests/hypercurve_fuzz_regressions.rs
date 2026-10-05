@@ -1,6 +1,6 @@
 mod support;
 use hypercurve::{
-    CurveContext, LineArcIntersection, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
+    LineArcIntersection, LineSeg2, Point2, PredicatePolicy, Real, Segment2, SegmentIntersection,
 };
 
 fn s(value: i32) -> Real {
@@ -11,8 +11,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 #[test]

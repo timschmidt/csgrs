@@ -1,7 +1,7 @@
 mod support;
 use hypercurve::{
-    ArcArcIntersection, CircleCircleRelation, CircularArc2, CurveContext, LineArcIntersection,
-    LineCircleRelation, LineSeg2, Point2, Real,
+    ArcArcIntersection, CircleCircleRelation, CircularArc2, LineArcIntersection,
+    LineCircleRelation, LineSeg2, Point2, PredicatePolicy, Real,
 };
 
 fn s(value: i32) -> Real {
@@ -12,8 +12,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn circle_arc() -> CircularArc2 {

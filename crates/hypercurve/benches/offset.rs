@@ -6,9 +6,9 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParallelVerificationOptions, BezierParameter2,
     BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2, CircularArc2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveParameterRange2, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
+    Classification, CubicBezier2, Curve2, CurveParameterRange2, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
+    PredicatePolicy, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -26,7 +26,7 @@ fn q(numerator: i32, denominator: i32) -> Real {
 /// Retains an analytic parallel over its unit source range as a general curve.
 fn unit_parallel_curve(parallel: &hypercurve::BezierParallel2) -> CurveResult<Curve2> {
     let Classification::Decided(range) =
-        crate::support::under_classified_result(&CurveContext::STRICT, || {
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             BezierParameterRange2::try_new(
                 BezierParameter2::Exact(Real::zero()),
                 BezierParameter2::Exact(Real::one()),
@@ -60,7 +60,7 @@ fn bench_line_offset(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_arc_offset(name: &str, segment: &Segment2, iterations: u32) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut checksum = 0_usize;
 
@@ -89,7 +89,7 @@ fn bench_curve_region_path_stroke(iterations: u32) -> CurveResult<()> {
         Curve2::from(LineSeg2::try_new(p(4, 3), p(7, 3))?),
     ])
     .expect("benchmark path is exactly connected");
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_loops = 0_usize;
     for _ in 0..iterations {
@@ -110,7 +110,7 @@ fn bench_curve_region_path_stroke(iterations: u32) -> CurveResult<()> {
 fn bench_exact_bezier_parallel_evaluation(iterations: u32) -> CurveResult<()> {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, -1), p(4, 0));
     let parallel = source.parallel_left(q(1, 10))?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let parameter = q(7, 13);
     let started = Instant::now();
     let mut checksum = 0_usize;
@@ -182,7 +182,7 @@ fn bench_exact_bezier_parallel_similarity(iterations: u32) -> CurveResult<()> {
 fn bench_bezier_parallel_cusp_isolation(iterations: u32) -> CurveResult<()> {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(1, 1));
     let parallel = source.parallel_left(s(1))?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut roots = 0_usize;
     for _ in 0..iterations {
@@ -212,7 +212,7 @@ fn bench_exact_ph_offset_construction(iterations: u32) -> CurveResult<()> {
         Point2::new(q(2, 3), s(1)),
     );
     let parallel = source.parallel_left(q(1, 5))?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut degree = 0_usize;
     for _ in 0..iterations {
@@ -240,7 +240,7 @@ fn bench_bezier_parallel_intersections(
     other: &RationalBezier2,
     iterations: u32,
 ) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let parallel_curve = unit_parallel_curve(parallel)?;
     let other_curve = Curve2::from(other.clone());
     let started = Instant::now();
@@ -271,7 +271,7 @@ fn bench_bezier_parallel_pair_intersections(
     second: &hypercurve::BezierParallel2,
     iterations: u32,
 ) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first_curve = unit_parallel_curve(first)?;
     let second_curve = unit_parallel_curve(second)?;
     let started = Instant::now();
@@ -455,7 +455,7 @@ fn implicit_cusp_parabolas() -> CurveResult<(RationalBezier2, RationalBezier2)> 
 fn bench_bezier_parallel_boundary_parameter_fiber(iterations: u32) -> CurveResult<()> {
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let constant = RationalBezier2::try_new(vec![p(0, 1); 5], vec![s(1); 5])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let parallel_curve = unit_parallel_curve(&parallel)?;
     let constant_curve = Curve2::from(constant.clone());
@@ -568,7 +568,7 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     );
     let ph_overlap_parallel = ph_overlap_source.parallel_left(s(1))?;
     let Classification::Decided(Some(ph_overlap)) =
-        crate::support::under_classified_result(&CurveContext::STRICT, || {
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             ph_overlap_parallel.exact_pythagorean_hodograph_offset()
         })
         .expect("benchmark fixture remains exact")
@@ -576,7 +576,7 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         panic!("PH overlap benchmark source was not recognized");
     };
     let Classification::Decided(ph_overlap_target) =
-        crate::support::under_classified_result(&CurveContext::STRICT, || {
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             RationalBezier2::from_homogeneous_controls(
                 ph_overlap.curve().homogeneous_controls().to_vec(),
             )
@@ -647,7 +647,7 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     for _ in 0..cold_iterations {
         let cold_parallel = ph_overlap_source.clone().parallel_left(s(1))?;
         let cold_curve = unit_parallel_curve(&cold_parallel)?;
-        let contacts = crate::support::under(&CurveContext::STRICT, || {
+        let contacts = crate::support::under(&PredicatePolicy::STRICT, || {
             cold_curve.intersect_curve(black_box(&Curve2::from(ph_overlap_target.clone())))
         })
         .expect("the cold PH overlap replay must remain exact")
@@ -668,7 +668,7 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
 
 fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<()> {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -1), p(4, 0));
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let options = crate::support::under_value(&policy, || {
         BezierParallelVerificationOptions::try_new(q(1, 20), 14)
     })
@@ -703,7 +703,7 @@ fn curve_region_bezier_offset_fixture() -> Result<CurveRegion2, Box<dyn std::err
         Curve2::from(QuadraticBezier2::new(p(-1, 0), p(-1, -1), p(0, -1))),
         Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
     ])?;
-    Ok(crate::support::under(&CurveContext::STRICT, || {
+    Ok(crate::support::under(&PredicatePolicy::STRICT, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[source_path],
             &[CurveRegionLoopRole::Material],
@@ -717,7 +717,7 @@ fn bench_curve_region_bezier_exact_offset(
     iterations: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let source = curve_region_bezier_offset_fixture()?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let started = Instant::now();
     let mut loops = 0_usize;
@@ -739,7 +739,7 @@ fn bench_curve_region_bezier_exact_offset(
 fn bench_curve_region_repeated_bezier_offset_lanes(
     iterations: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let fixture = curve_region_bezier_offset_fixture()?;
     let composed_source = crate::support::under(&policy, || {
         fixture.offset(q(1, 10), &OffsetCornerStyle2::Round)
@@ -794,7 +794,7 @@ fn curve_region_algebraic_partition_fixture(
     cyclic_seam: bool,
 ) -> Result<CurveRegion2, Box<dyn std::error::Error>> {
     assert!(!cyclic_seam || partitioned);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)).parallel_left(Real::zero())?;
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
@@ -872,7 +872,7 @@ fn bench_curve_region_algebraic_partition_offset_lanes(
     partitioned_only: Option<bool>,
     cyclic_seam: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let partitioned = curve_region_algebraic_partition_fixture(true, cyclic_seam)?;
     let unsplit = curve_region_algebraic_partition_fixture(false, false)?;
     let partitioned_check = crate::support::under(&policy, || {
@@ -963,7 +963,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let counter_clockwise_right_offset =
         Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1))?);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let iterations = 100_000;
     let mut checksum = 0_usize;

@@ -9,8 +9,8 @@
 mod support;
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Contour2, CurveContext, CurveRegion2, FillRule, IntersectionKind,
-    LineLineIntersection, LineSeg2, Point2, Real, RegionPointLocation,
+    BooleanOp, BulgeVertex2, Contour2, CurveRegion2, FillRule, IntersectionKind,
+    LineLineIntersection, LineSeg2, Point2, PredicatePolicy, Real, RegionPointLocation,
 };
 
 type HPoint = Point2;
@@ -30,8 +30,8 @@ fn vertex(x: f64, y: f64) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0.0))
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn contour(coords: &[(f64, f64)]) -> HContour {

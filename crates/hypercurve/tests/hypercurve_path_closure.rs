@@ -1,8 +1,8 @@
 mod support;
 use hypercurve::{
-    CircularArc2, Classification, ContourPointLocation, Curve2, CurveCertainty, CurveContext,
-    CurveCornerMode2, CurveCornerSolutions2, CurveFamily2, CurvePath2, CurvePoint2, CurveRegion2,
-    LineSeg2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    CircularArc2, Classification, ContourPointLocation, Curve2, CurveCertainty, CurveCornerMode2,
+    CurveCornerSolutions2, CurveFamily2, CurvePath2, CurvePoint2, CurveRegion2, LineSeg2, Point2,
+    PredicatePolicy, QuadraticBezier2, Real, RegionPointLocation,
 };
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -13,14 +13,14 @@ fn q(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()
 }
 
-fn assert_same_point(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
+fn assert_same_point(actual: &CurvePoint2, expected: &CurvePoint2, policy: &PredicatePolicy) {
     let equal =
         crate::support::under_outcome_classification(policy, || actual.coincides_with(expected));
     assert_eq!(equal.certainty, CurveCertainty::Certified);
     assert_eq!(equal.value, Classification::Decided(true));
 }
 
-fn assert_open_path(path: &CurvePath2, start: &Point2, end: &Point2, policy: &CurveContext) {
+fn assert_open_path(path: &CurvePath2, start: &Point2, end: &Point2, policy: &PredicatePolicy) {
     assert_same_point(&path.curves()[0].start(), &start.clone().into(), policy);
     assert_same_point(
         &path.curves().last().unwrap().end(),
@@ -36,7 +36,7 @@ fn assert_open_path(path: &CurvePath2, start: &Point2, end: &Point2, policy: &Cu
 fn boundary_admission_rejects_disconnected_spline_spans() {
     use hypercurve::{CurveError, ExactCurveError, NurbsCurve2, PolynomialSplineCurve2};
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         // The outer endpoints coincide, but the two linear spans jump from
         // (1,0) to (2,0) at the fully repeated interior knot.
         let controls = vec![p(0, 0), p(1, 0), p(2, 0), p(0, 0)];
@@ -83,7 +83,7 @@ fn boundary_admission_rejects_disconnected_spline_spans() {
 fn selected_open_chamfers_reenter_the_public_path_api() {
     let start = p(-4, 0);
     let end = p(1, 2);
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(LineSeg2::try_new(start.clone(), p(0, 0)).unwrap()),
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), end.clone())),
@@ -126,7 +126,7 @@ fn selected_open_chamfers_reenter_the_public_path_api() {
 
 #[test]
 fn selected_spline_chamfers_keep_every_untrimmed_span() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let controls = vec![p(0, 0), p(0, 1), p(1, 2), p(3, 3)];
         let knots = vec![3, 3, 3, 5, 7, 7, 7]
             .into_iter()
@@ -197,7 +197,7 @@ fn selected_spline_chamfers_keep_every_untrimmed_span() {
 
 #[test]
 fn selected_chamfers_preserve_all_major_arc_contacts() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let end = Point2::new(q(3, 5), q(4, 5));
         let path = CurvePath2::try_new(vec![
             Curve2::from(QuadraticBezier2::new(p(0, -2), p(1, -1), p(1, 0))),
@@ -248,7 +248,7 @@ fn selected_chamfers_preserve_all_major_arc_contacts() {
 
 #[test]
 fn selected_path_chamfers_close_through_all_region_booleans() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
@@ -347,7 +347,7 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
 
 #[test]
 fn selected_open_fillets_accept_a_subsequent_chamfer() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let start = p(-4, 0);
         let end = p(1, 2);
         let path = CurvePath2::try_new(vec![
@@ -388,7 +388,7 @@ fn selected_open_fillets_accept_a_subsequent_chamfer() {
 
 #[test]
 fn selected_spline_fillets_preserve_knot_charts_and_other_spans() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let controls = vec![p(0, 0), p(0, 1), p(1, 2), p(3, 3)];
         let knots = vec![3, 3, 3, 5, 7, 7, 7]
             .into_iter()
@@ -480,7 +480,7 @@ fn check_major_arc_fillet(clockwise: bool) {
     let arc = Curve2::from(
         CircularArc2::try_from_center(corner.clone(), arc_end.clone(), center, clockwise).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(QuadraticBezier2::new(
                 p(0, 0),
@@ -598,7 +598,7 @@ fn check_major_arc_fillet(clockwise: bool) {
 #[test]
 fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
     use hypercurve::{FillRule, HomogeneousControl2, OffsetCornerStyle2, RationalBezier2};
-    let admit = |path, policy: &CurveContext| {
+    let admit = |path, policy: &PredicatePolicy| {
         let admitted = crate::support::under(policy, || {
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[path],
@@ -610,7 +610,7 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
         assert_eq!(admitted.certainty, CurveCertainty::Certified);
         admitted.into_value()
     };
-    let check = |region: &CurveRegion2, policy: &CurveContext| {
+    let check = |region: &CurveRegion2, policy: &PredicatePolicy| {
         assert_eq!(region.boundary_loops().len(), 1);
         for (point, expected) in [
             (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
@@ -623,7 +623,7 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             assert_eq!(result.value, expected);
         }
     };
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         // The middle homogeneous control is at infinity; the exact upper
         // semicircle and its complete authored denominator remain finite.
         let Classification::Decided(curve) =
@@ -818,7 +818,7 @@ mod finite_fixed_distance_domains {
     fn certified<T>(value: impl crate::support::IntoCertified<T>) -> T {
         value.into_certified()
     }
-    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
+    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &PredicatePolicy) {
         assert_eq!(
             certified(crate::support::under_outcome_classification(policy, || {
                 first.coincides_with(second)
@@ -826,7 +826,7 @@ mod finite_fixed_distance_domains {
             Classification::Decided(true)
         );
     }
-    fn cap(chart: usize, policy: &CurveContext) -> Curve2 {
+    fn cap(chart: usize, policy: &PredicatePolicy) -> Curve2 {
         // All four charts cover P(t)=(-1/8+t^2,t), 0<=t<=1/8.
         // The rational exterior chart has t=(s-2)/(2s-1), s in [2,5/2].
         // Its genuine pole at s=1/2 is outside the requested interval.
@@ -903,7 +903,7 @@ mod finite_fixed_distance_domains {
     }
     fn run(chart: usize, repeat: bool) {
         let (mut cases, mut successes, mut replays, mut failures) = (0, 0, 0, 0);
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let curved = cap(chart, &policy);
             let corner = Point2::new(q(-9, 64), Real::zero());
             same(&curved.start(), &corner.clone().into(), &policy);
@@ -1047,7 +1047,7 @@ mod finite_selected_point_domains {
     fn certified<T>(value: impl crate::support::IntoCertified<T>) -> T {
         value.into_certified()
     }
-    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
+    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &PredicatePolicy) {
         assert_eq!(
             certified(crate::support::under_outcome_classification(policy, || {
                 first.coincides_with(second)
@@ -1055,7 +1055,7 @@ mod finite_selected_point_domains {
             Classification::Decided(true)
         );
     }
-    fn cap(chart: usize, policy: &CurveContext) -> Curve2 {
+    fn cap(chart: usize, policy: &PredicatePolicy) -> Curve2 {
         // All four charts cover P(t)=(-1/8+t^2,t), 0<=t<=1/8.
         // The rational exterior chart has t=(s-2)/(2s-1), s in [2,5/2].
         // Its genuine pole at s=1/2 is outside the requested interval.
@@ -1132,7 +1132,7 @@ mod finite_selected_point_domains {
     }
     fn run(chart: usize) {
         let (mut cases, mut successes, mut replays, mut failures) = (0, 0, 0, 0);
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let curved = cap(chart, &policy);
             let corner = Point2::new(q(-9, 64), Real::zero());
             let center = Point2::new(q(-9, 64), q(-1, 32));

@@ -177,9 +177,13 @@ impl BezierFitCertificate {
         self.source_flattening_max_depth
     }
 
-    /// Returns the policy used to prove this fit.
-    pub const fn construction_policy(&self) -> &CurveContext {
-        &self.construction_policy
+    /// Returns the predicate policy under which this fit was proved.
+    pub const fn construction_policy(&self) -> hyperlimit::PredicatePolicy {
+        if self.construction_policy.selects_approximate_512() {
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
+        } else {
+            hyperlimit::PredicatePolicy::STRICT
+        }
     }
 
     /// Returns the error metric certified by this fit.

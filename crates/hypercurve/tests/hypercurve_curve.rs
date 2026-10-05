@@ -1,8 +1,8 @@
 mod support;
 use hypercurve::{
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
-    CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, QuadraticBezier2,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveCornerMode2, CurveCornerNoSolution2,
+    CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2, CurvePath2,
+    CurveRegion2, ExactCurveError, LineSeg2, Point2, PredicatePolicy, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 use hypercurve::{ContourPointLocation, CurveCertainty};
@@ -25,7 +25,7 @@ fn p(x: i32, y: i32) -> Point2 {
 fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
     use hypercurve::{CurveParameterSide2, NurbsCurve2, PolynomialSplineCurve2};
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let controls = vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)];
         let knots = [-2, -1, 0, 1, 1, 1, 2, 3, 4]
             .into_iter()
@@ -125,7 +125,7 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
 fn assert_fillet_candidates(
     solutions: hypercurve::CurveCornerSolutions2<CurvePath2>,
     source: &CurvePath2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Vec<CurvePath2> {
     let candidates = solutions.into_solutions();
     assert!(!candidates.is_empty());
@@ -193,7 +193,7 @@ fn linear_family_curve(family: CurveFamily2, vertical: bool) -> Curve2 {
     }
 }
 
-fn closed_linear_spline(family: CurveFamily2, policy: &CurveContext) -> Curve2 {
+fn closed_linear_spline(family: CurveFamily2, policy: &PredicatePolicy) -> Curve2 {
     let controls = vec![p(0, 0), p(2, 0), p(0, 2), p(0, 0)];
     let knots = vec![r(0), r(0), r(1), r(2), r(3), r(3)];
     match family {
@@ -223,7 +223,7 @@ fn every_family_open_chain() -> Vec<Curve2> {
             RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(12, 0)], vec![r(1), r(2), r(1)])
                 .unwrap(),
         ),
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_polynomial_bspline(
                 2,
                 vec![p(12, 0), p(13, 2), p(14, 0)],
@@ -232,7 +232,7 @@ fn every_family_open_chain() -> Vec<Curve2> {
         })
         .unwrap()
         .into_value(),
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_nurbs(
                 2,
                 vec![p(14, 0), p(15, 2), p(16, 0)],
@@ -283,7 +283,7 @@ fn top_level_curve_carries_every_public_family() {
 }
 #[test]
 fn top_level_curve_region_classifies_points_and_shares_results() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let region = crate::support::under(&policy, || {
         CurveRegion2::try_from_boundary_paths(
             &[every_family_closed_path()],
@@ -305,19 +305,19 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         Ok(Some(signed_area))
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || region
+        crate::support::under(&PredicatePolicy::STRICT, || region
             .classify_point(&p(8, -1).into()))
         .map(|outcome| outcome.into_value()),
         Ok(RegionPointLocation::Inside)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || clone
+        crate::support::under(&PredicatePolicy::STRICT, || clone
             .classify_point(&p(8, -4).into()))
         .map(|outcome| outcome.into_value()),
         Ok(RegionPointLocation::Outside)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || clone
+        crate::support::under(&PredicatePolicy::STRICT, || clone
             .classify_point(&p(0, 0).into()))
         .map(|outcome| outcome.into_value()),
         Ok(RegionPointLocation::Boundary)
@@ -337,13 +337,13 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         CurveRegion2::try_from_boundary_paths(&[square], hypercurve::FillRule::EvenOdd).unwrap();
     let bounded_clone = bounded.clone();
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || bounded
+        crate::support::under(&PredicatePolicy::STRICT, || bounded
             .classify_point(&p(1, 1).into()))
         .map(|outcome| outcome.into_value()),
         Ok(RegionPointLocation::Inside)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || bounded_clone
+        crate::support::under(&PredicatePolicy::STRICT, || bounded_clone
             .classify_point(&p(1, 1).into()))
         .map(|outcome| outcome.into_value()),
         Ok(RegionPointLocation::Inside)
@@ -364,13 +364,14 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
     ])
     .unwrap();
 
-    let boundary = crate::support::under(&CurveContext::APPROXIMATE_512, || path.boundary_loop())
-        .expect("the terminal policy must validate the symbolic closing seam");
+    let boundary =
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || path.boundary_loop())
+            .expect("the terminal policy must validate the symbolic closing seam");
     assert_eq!(boundary.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(boundary.value.len(), 3);
 
     let strict_boundary =
-        crate::support::under(&CurveContext::STRICT, || path.boundary_loop()).unwrap_err();
+        crate::support::under(&PredicatePolicy::STRICT, || path.boundary_loop()).unwrap_err();
     assert!(matches!(
         strict_boundary,
         ExactCurveError::Blocked(blocker)
@@ -378,7 +379,7 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.classify_point(&p(1, 1).into())
     })
     .expect("the terminal policy must classify through the retained boundary");
@@ -396,7 +397,7 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
-    let repeated = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let repeated = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.classify_point(&p(1, 1).into())
     })
     .expect("cached terminal evidence must remain observable");
@@ -411,7 +412,7 @@ fn top_level_curve_region_rejects_open_boundary_paths_with_context() {
     )])
     .unwrap();
 
-    let error = crate::support::under(&CurveContext::STRICT, || {
+    let error = crate::support::under(&PredicatePolicy::STRICT, || {
         CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
     })
     .unwrap_err();
@@ -439,7 +440,7 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     .unwrap();
 
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || line
+        crate::support::under(&PredicatePolicy::STRICT, || line
             .point_at(&half.clone().into()))
         .unwrap()
         .into_value(),
@@ -459,14 +460,14 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
         (&r(0), &r(1))
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || quadratic
+        crate::support::under(&PredicatePolicy::STRICT, || quadratic
             .point_at(&half.clone().into()))
         .unwrap()
         .into_value(),
         p(1, 1).into()
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || spline.point_at(&r(1).into()))
+        crate::support::under(&PredicatePolicy::STRICT, || spline.point_at(&r(1).into()))
             .unwrap()
             .into_value(),
         p(1, 1).into()
@@ -496,14 +497,14 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
 fn top_level_curve_reuses_retained_native_endpoints() {
     for curve in every_family_open_chain() {
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || curve
+            crate::support::under(&PredicatePolicy::STRICT, || curve
                 .point_at(curve.parameter_domain().start()))
             .unwrap()
             .into_value(),
             curve.start()
         );
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || curve
+            crate::support::under(&PredicatePolicy::STRICT, || curve
                 .point_at(curve.parameter_domain().end()))
             .unwrap()
             .into_value(),
@@ -515,23 +516,25 @@ fn top_level_curve_reuses_retained_native_endpoints() {
         RationalBezier2::try_new(vec![p(0, 0), p(1, 2), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
     let top_level = Curve2::from(rational.clone());
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || top_level.point_at(&r(0).into()))
-            .unwrap()
-            .into_value(),
+        crate::support::under(&PredicatePolicy::STRICT, || top_level
+            .point_at(&r(0).into()))
+        .unwrap()
+        .into_value(),
         p(0, 0).into()
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || top_level.point_at(&r(1).into()))
-            .unwrap()
-            .into_value(),
+        crate::support::under(&PredicatePolicy::STRICT, || top_level
+            .point_at(&r(1).into()))
+        .unwrap()
+        .into_value(),
         p(2, 0).into()
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || top_level
+        crate::support::under(&PredicatePolicy::STRICT, || top_level
             .point_at(&(r(1) / r(2)).unwrap().into()))
         .unwrap()
         .into_value(),
-        (crate::support::under_value(&CurveContext::STRICT, || rational
+        (crate::support::under_value(&PredicatePolicy::STRICT, || rational
             .point_at(&(r(1) / r(2)).unwrap()))
         .unwrap())
         .into()
@@ -559,7 +562,7 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
         &r(0)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || line_clone
+        crate::support::under(&PredicatePolicy::STRICT, || line_clone
             .derivative_at(&half.clone().into()))
         .unwrap()
         .into_value(),
@@ -609,7 +612,7 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     );
     assert_eq!(
         hypercurve::CurveVector2::from(
-            crate::support::under(&CurveContext::STRICT, || retained_spline
+            crate::support::under(&PredicatePolicy::STRICT, || retained_spline
                 .derivative_at(&r(1)))
             .unwrap()
             .into_value()
@@ -617,9 +620,10 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
         spline_derivative
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || spline.derivative_at(&r(1).into()))
-            .unwrap()
-            .into_value(),
+        crate::support::under(&PredicatePolicy::STRICT, || spline
+            .derivative_at(&r(1).into()))
+        .unwrap()
+        .into_value(),
         spline_derivative
     );
 }
@@ -676,7 +680,7 @@ fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
             ])
             .unwrap();
             let filleted = {
-                let solutions = crate::support::under(&CurveContext::STRICT, || {
+                let solutions = crate::support::under(&PredicatePolicy::STRICT, || {
                     path.fillet_vertex(
                         1,
                         &hypercurve::CurveFillet2::new(Real::one()),
@@ -846,7 +850,7 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
 
 #[test]
 fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
             let path = CurvePath2::try_new(vec![closed_linear_spline(family, &policy)]).unwrap();
             for reversed in [false, true] {
@@ -973,7 +977,7 @@ fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
 
 #[test]
 fn one_curve_closed_spline_extensions_materialize_each_cell_once() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
             let path = CurvePath2::try_new(vec![closed_linear_spline(family, &policy)]).unwrap();
             for reversed in [false, true] {
@@ -1055,7 +1059,7 @@ fn one_curve_closed_spline_extensions_materialize_each_cell_once() {
 #[test]
 fn line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer() {
     let path = right_angle_line_path(4);
-    let chamfer = crate::support::under(&CurveContext::STRICT, || {
+    let chamfer = crate::support::under(&PredicatePolicy::STRICT, || {
         path.chamfer_vertex_by_setbacks(1, r(1), r(1), CurveCornerMode2::TrimOnly)
     })
     .unwrap();
@@ -1080,7 +1084,7 @@ fn line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer() {
         hypercurve::CurvePoint2::from(p(0, 1).clone())
     );
 
-    let fillet = crate::support::under(&CurveContext::STRICT, || {
+    let fillet = crate::support::under(&PredicatePolicy::STRICT, || {
         path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(r(1)),
@@ -1159,7 +1163,7 @@ fn oblique_line_corner_solvers_preserve_exact_orientation() {
 
 #[test]
 fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let next_arc = CircularArc2::try_from_center(p(1, 0), p(2, 1), p(1, 1), false).unwrap();
         let line_arc = CurvePath2::try_new(vec![
             Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
@@ -1328,21 +1332,21 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
         Point2::new(q(1, 2), -half_root_three.clone()),
         Point2::new(q(1, 2), half_root_three),
     ] {
-        let contains = crate::support::under_classified(&CurveContext::STRICT, || {
+        let contains = crate::support::under_classified(&PredicatePolicy::STRICT, || {
             major_arc.contains_point(&cut)
         });
         assert!(
             matches!(contains, Classification::Decided(true)),
             "major-arc cut incidence must be strict: {contains:?}"
         );
-        let sweep = crate::support::under_classified_result(&CurveContext::STRICT, || {
+        let sweep = crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             major_arc.sweep_fraction(&cut)
         })
         .unwrap();
         let Classification::Decided(sweep) = sweep else {
             panic!("major-arc cut sweep fraction must be strict: {sweep:?}");
         };
-        let parameter = crate::support::under_classified_result(&CurveContext::STRICT, || {
+        let parameter = crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             major_arc.parameter_at_sweep_fraction(&sweep)
         })
         .unwrap();
@@ -1376,12 +1380,8 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
         hypercurve::CurvePoint2::from(p(-1, 0).clone())
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || path.chamfer_vertex_by_setbacks(
-            1,
-            Real::one(),
-            r(3),
-            CurveCornerMode2::TrimOnly
-        ))
+        crate::support::under(&PredicatePolicy::STRICT, || path
+            .chamfer_vertex_by_setbacks(1, Real::one(), r(3), CurveCornerMode2::TrimOnly))
         .unwrap()
         .into_value(),
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
@@ -1423,7 +1423,7 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
 
 #[test]
 fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let line_arc = CurvePath2::try_new(vec![
             Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
             Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
@@ -1635,7 +1635,7 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
         (CurveFamily2::RationalBezier, Curve2::from(elevated)),
     ];
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let same_point = |actual: &hypercurve::CurvePoint2, expected: &hypercurve::CurvePoint2| {
             let equality = crate::support::under_outcome_classification(&policy, || {
                 actual.coincides_with(expected)
@@ -1827,7 +1827,7 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
         }
     };
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for elevated in [false, true] {
             for reversed in [false, true] {
                 let path = CurvePath2::try_new(vec![
@@ -1954,7 +1954,7 @@ fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
     .unwrap();
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+        crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(q(1, 2)),
             CurveCornerMode2::TrimOnly)),
@@ -1962,7 +1962,7 @@ fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
             if blocker.operation() == CurveOperation2::Fillet
                 && blocker.family() == Some(CurveFamily2::RationalQuadraticBezier)
     ));
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(q(1, 2)),
@@ -2008,7 +2008,7 @@ fn exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets() 
         Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, -1), p(1, 0), true).unwrap()),
     ])
     .unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         {
             let solutions = crate::support::under(&policy, || {
                 line_arc.fillet_vertex(
@@ -2075,14 +2075,14 @@ fn exact_native_arc_fillet_uses_only_the_shared_approximate_terminal() {
     let undecidable_zero = support::terminally_unresolved_zero();
     let radius = Real::one() + undecidable_zero;
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+        crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(radius.clone()),
             CurveCornerMode2::TrimOnly)),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == UncertaintyReason::RealSign
     ));
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(radius),
@@ -2224,7 +2224,7 @@ fn line_corner_solvers_enumerate_extensions_deterministically() {
 
 #[test]
 fn polynomial_chamfer_materializes_represented_incident_extension() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(QuadraticBezier2::new(
                 p(-1, 1),
@@ -2278,7 +2278,7 @@ fn polynomial_chamfer_materializes_represented_incident_extension() {
 fn rational_chamfer_materializes_the_incident_projective_cell() {
     let half = q(1, 2);
     let quarter = q(1, 4);
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(
                 RationalBezier2::try_new(
@@ -2333,7 +2333,7 @@ fn rational_chamfer_materializes_the_incident_projective_cell() {
 #[test]
 fn spline_chamfer_materializes_only_the_incident_extension_cell() {
     let knots = || vec![r(0), r(0), r(0), r(1), r(1), r(1)];
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let polynomial = crate::support::under(&policy, || {
             Curve2::try_polynomial_bspline(
                 2,
@@ -2436,7 +2436,7 @@ fn line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path() {
         corner.x() + line_direction.x(),
         corner.y() + line_direction.y(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(QuadraticBezier2::new(
                 p(0, 0),
@@ -2478,7 +2478,7 @@ fn line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path() {
 fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
     let path = right_angle_line_path(4);
     assert_eq!(
-        (crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+        (crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(r(5)),
             CurveCornerMode2::TrimOnly
@@ -2489,18 +2489,19 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
         Some(CurveCornerNoSolution2::OutsideTrimDomain)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || path.chamfer_vertex_by_setbacks(
-            1,
-            Real::zero(),
-            Real::zero(),
-            CurveCornerMode2::TrimOnly
-        ))
+        crate::support::under(&PredicatePolicy::STRICT, || path
+            .chamfer_vertex_by_setbacks(
+                1,
+                Real::zero(),
+                Real::zero(),
+                CurveCornerMode2::TrimOnly
+            ))
         .unwrap()
         .into_value(),
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
     );
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+        crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(-Real::one()),
             CurveCornerMode2::TrimOnly
@@ -2512,12 +2513,13 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
         })
     ));
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.chamfer_vertex_by_setbacks(
-            1,
-            -Real::one(),
-            Real::one(),
-            CurveCornerMode2::TrimOnly
-        )),
+        crate::support::under(&PredicatePolicy::STRICT, || path
+            .chamfer_vertex_by_setbacks(
+                1,
+                -Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly
+            )),
         Err(ExactCurveError::Invalid {
             operation: CurveOperation2::Chamfer,
             cause: CurveError::InvalidCornerOptions,
@@ -2525,23 +2527,20 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
         })
     ));
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || path.chamfer_vertex_by_setbacks(
-            1,
-            r(4),
-            Real::one(),
-            CurveCornerMode2::TrimOnly
-        ))
+        crate::support::under(&PredicatePolicy::STRICT, || path
+            .chamfer_vertex_by_setbacks(1, r(4), Real::one(), CurveCornerMode2::TrimOnly))
         .unwrap()
         .into_value(),
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
     );
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.chamfer_vertex_by_setbacks(
-            0,
-            Real::one(),
-            Real::one(),
-            CurveCornerMode2::TrimOnly
-        )),
+        crate::support::under(&PredicatePolicy::STRICT, || path
+            .chamfer_vertex_by_setbacks(
+                0,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly
+            )),
         Err(ExactCurveError::Invalid {
             operation: CurveOperation2::Chamfer,
             cause: CurveError::OpenCurvePath,
@@ -2555,7 +2554,7 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
     ])
     .unwrap();
     assert_eq!(
-        (crate::support::under(&CurveContext::STRICT, || tangent_path.fillet_vertex(
+        (crate::support::under(&PredicatePolicy::STRICT, || tangent_path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(Real::one()),
             CurveCornerMode2::TrimOrExtend
@@ -2572,7 +2571,7 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
     ])
     .unwrap();
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || backtracking
+        crate::support::under(&PredicatePolicy::STRICT, || backtracking
             .chamfer_vertex_by_setbacks(
                 1,
                 Real::one(),
@@ -2596,7 +2595,7 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 1), p(0, 2))),
     ])
     .unwrap();
-    let result = crate::support::under(&CurveContext::STRICT, || {
+    let result = crate::support::under(&PredicatePolicy::STRICT, || {
         path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(Real::one()),
@@ -2605,10 +2604,10 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
     })
     .expect("the selected Bezier pair fillet remains an exact path");
     assert_eq!(result.certainty, CurveCertainty::Certified);
-    assert_fillet_candidates(result.value, &path, &CurveContext::STRICT);
+    assert_fillet_candidates(result.value, &path, &PredicatePolicy::STRICT);
 
     let spline = CurvePath2::try_new(vec![
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_polynomial_bspline(
                 2,
                 vec![p(-4, 0), p(-2, 1), p(0, 0)],
@@ -2620,7 +2619,7 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
         Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 4)).unwrap()),
     ])
     .unwrap();
-    let result = crate::support::under(&CurveContext::STRICT, || {
+    let result = crate::support::under(&PredicatePolicy::STRICT, || {
         spline.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(Real::one()),
@@ -2629,9 +2628,9 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
     })
     .expect("the selected spline fillet remains an exact path");
     assert_eq!(result.certainty, CurveCertainty::Certified);
-    assert_fillet_candidates(result.value, &spline, &CurveContext::STRICT);
+    assert_fillet_candidates(result.value, &spline, &PredicatePolicy::STRICT);
     assert_eq!(
-        (crate::support::under(&CurveContext::STRICT, || spline.fillet_vertex(
+        (crate::support::under(&PredicatePolicy::STRICT, || spline.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(Real::zero()),
             CurveCornerMode2::TrimOrExtend
@@ -2642,12 +2641,13 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
         Some(CurveCornerNoSolution2::ZeroDesignValue)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || spline.chamfer_vertex_by_setbacks(
-            1,
-            Real::zero(),
-            Real::zero(),
-            CurveCornerMode2::TrimOrExtend
-        ))
+        crate::support::under(&PredicatePolicy::STRICT, || spline
+            .chamfer_vertex_by_setbacks(
+                1,
+                Real::zero(),
+                Real::zero(),
+                CurveCornerMode2::TrimOrExtend
+            ))
         .unwrap()
         .into_value(),
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
@@ -2658,7 +2658,7 @@ fn automatic_corner_solver_reconstructs_selected_pairs() {
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
     ])
     .unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let result = crate::support::under(&policy, || {
             algebraic_cut.chamfer_vertex_by_setbacks(
                 1,
@@ -2730,7 +2730,7 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
             carrier,
         ])
         .unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let solutions = crate::support::under(&policy, || {
                 path.fillet_vertex(
                     1,
@@ -2860,7 +2860,7 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
             carrier,
         ])
         .unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
                 path.chamfer_vertex_by_setbacks(
                     1,
@@ -3011,7 +3011,7 @@ fn spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path() {
                 make_spline(next_family, next_controls.clone(), 7, 11),
             ])
             .unwrap();
-            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
                 let filleted = {
                     let solutions = crate::support::under(&policy, || {
                         path.fillet_vertex(
@@ -3086,7 +3086,7 @@ fn represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes()
     ])
     .unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
             chamfer_path.chamfer_vertex_by_setbacks(
                 1,
@@ -3171,7 +3171,7 @@ fn direct_bezier_pair_fillet_retains_both_incident_extensions() {
     ])
     .unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for reversed in [false, true] {
             let path = if reversed {
                 crate::support::under(&policy, || path.clone().reversed())
@@ -3289,7 +3289,7 @@ fn direct_bezier_pair_fillet_retains_both_incident_extensions() {
 #[test]
 fn spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell() {
     let knots = || vec![r(0), r(0), r(0), r(1), r(1), r(1)];
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
             let spline = match family {
                 CurveFamily2::PolynomialBSpline => crate::support::under(&policy, || {
@@ -3384,7 +3384,7 @@ fn independently_parameterized_bezier_continuation_is_an_incident_fillet_compone
     ])
     .unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for reversed in [false, true] {
             let path = if reversed {
                 crate::support::under(&policy, || path.clone().reversed())
@@ -3442,7 +3442,7 @@ fn same_bezier_support_fillet_removes_the_projective_parameter_diagonal() {
     let path =
         CurvePath2::try_new(vec![Curve2::from(source.clone()), Curve2::from(source)]).unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for reversed in [false, true] {
             let path = if reversed {
                 crate::support::under(&policy, || path.clone().reversed())
@@ -3503,7 +3503,7 @@ fn same_ph_bezier_support_fillet_reuses_rational_projective_self_contact() {
     let next_cut = Point2::new(-q(1, 4), (&sqrt_three / r(8)).unwrap());
     let expected_center = Point2::new(Real::zero(), (&r(17) * &sqrt_three / r(48)).unwrap());
     assert!(matches!(
-        crate::support::under_classified_result(&CurveContext::STRICT, || source
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || source
             .parallel_left(radius.clone())
             .unwrap()
             .exact_pythagorean_hodograph_offset())
@@ -3513,7 +3513,7 @@ fn same_ph_bezier_support_fillet_reuses_rational_projective_self_contact() {
     let path =
         CurvePath2::try_new(vec![Curve2::from(source.clone()), Curve2::from(source)]).unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for reversed in [false, true] {
             let path = if reversed {
                 crate::support::under(&policy, || path.clone().reversed())
@@ -3595,7 +3595,7 @@ fn represented_arc_bezier_fillets_use_circle_incidence() {
 
     for (family, carrier) in carriers {
         let path = CurvePath2::try_new(vec![Curve2::from(previous.clone()), carrier]).unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let solutions = crate::support::under(&policy, || {
                 path.fillet_vertex(
                     1,
@@ -3676,7 +3676,7 @@ fn represented_bezier_chamfer_retains_more_than_two_exact_cuts() {
         Point2::new(-q(3, 5), q(4, 5)),
     ];
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let CurveCornerSolutions2::Multiple(candidates) = crate::support::under(&policy, || {
             path.chamfer_vertex_by_setbacks(
                 1,
@@ -3714,7 +3714,7 @@ fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
     .unwrap();
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+        crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(q(15, 4)),
             CurveCornerMode2::TrimOnly)),
@@ -3722,7 +3722,7 @@ fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
             if blocker.operation() == CurveOperation2::Fillet
                 && blocker.family() == Some(CurveFamily2::QuadraticBezier)
     ));
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(q(15, 4)),
@@ -3748,10 +3748,12 @@ fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
         ];
         let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
         let carrier = match family {
-            CurveFamily2::PolynomialBSpline => crate::support::under(&CurveContext::STRICT, || {
-                Curve2::try_polynomial_bspline(2, controls, knots)
-            }),
-            CurveFamily2::Nurbs => crate::support::under(&CurveContext::STRICT, || {
+            CurveFamily2::PolynomialBSpline => {
+                crate::support::under(&PredicatePolicy::STRICT, || {
+                    Curve2::try_polynomial_bspline(2, controls, knots)
+                })
+            }
+            CurveFamily2::Nurbs => crate::support::under(&PredicatePolicy::STRICT, || {
                 Curve2::try_nurbs(2, controls, vec![Real::one(); 3], knots)
             }),
             _ => unreachable!(),
@@ -3765,7 +3767,7 @@ fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
         .unwrap();
 
         assert!(matches!(
-            crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+            crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(q(15, 4)),
                 CurveCornerMode2::TrimOnly)),
@@ -3773,7 +3775,7 @@ fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
                 if blocker.operation() == CurveOperation2::Fillet
                     && blocker.family() == Some(family)
         ));
-        let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
             path.fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(q(15, 4)),
@@ -3794,7 +3796,7 @@ fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
     let path = right_angle_line_path(4);
     let undecidable_zero = support::terminally_unresolved_zero();
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.fillet_vertex(
+        crate::support::under(&PredicatePolicy::STRICT, || path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(undecidable_zero.clone()),
             CurveCornerMode2::TrimOnly)),
@@ -3802,7 +3804,7 @@ fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
             if blocker.operation() == CurveOperation2::Fillet
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(undecidable_zero),
@@ -3828,14 +3830,14 @@ fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
     ])
     .unwrap();
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || near_tangent.fillet_vertex(
+        crate::support::under(&PredicatePolicy::STRICT, || near_tangent.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(Real::one()),
             CurveCornerMode2::TrimOnly)),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == UncertaintyReason::RealSign
     ));
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         near_tangent.fillet_vertex(
             1,
             &hypercurve::CurveFillet2::new(Real::one()),
@@ -3871,7 +3873,7 @@ proptest! {
             ),
         ])
         .unwrap();
-        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&CurveContext::STRICT, || path
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&PredicatePolicy::STRICT, || path
             .chamfer_vertex_by_setbacks(
                 1,
                 r(radius),
@@ -3886,7 +3888,7 @@ proptest! {
         prop_assert_eq!(chamfered.curves()[1].end().coordinates().expect("native endpoint").clone(), p(0, radius));
 
         let filleted = {
-let solutions = crate::support::under(&CurveContext::STRICT, || path
+let solutions = crate::support::under(&PredicatePolicy::STRICT, || path
             .fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(r(radius)),
@@ -3927,7 +3929,7 @@ candidates.pop().unwrap()
         .unwrap();
         let radius = q(fillet_numerator, fillet_denominator);
         let filleted = {
-let solutions = crate::support::under(&CurveContext::STRICT, || path
+let solutions = crate::support::under(&PredicatePolicy::STRICT, || path
             .fillet_vertex(
                 1,
                 &hypercurve::CurveFillet2::new(radius.clone()),
@@ -3971,7 +3973,7 @@ fn derivatives_at_selected_parameters_stay_exact() {
         }
     }
     let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         // The positive root of scale*t^2 - constant in [lower, upper].
         let root = |scale: i64, constant: i64, lower: Real, upper: Real| {
             let polynomial = decided(

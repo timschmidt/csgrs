@@ -1,7 +1,7 @@
 mod support;
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveContext, CurveError,
-    FillRule, Real, Segment2, SegmentKindCounts, UncertaintyReason,
+    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveError, FillRule,
+    PredicatePolicy, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -24,8 +24,8 @@ fn assert_line(segment: &Segment2, start: hypercurve::Point2, end: hypercurve::P
     assert_eq!(line.end(), &end);
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn rectangle() -> Contour2 {

@@ -7,7 +7,7 @@ use std::env;
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{BooleanOp, CurveContext};
+use hypercurve::{BooleanOp, PredicatePolicy};
 
 use pathological_fixture::{MemoryTier, NativeDataset, rotated_region, selected_tiers};
 
@@ -141,7 +141,7 @@ fn run_tier(tier: MemoryTier, mode: BenchmarkMode) {
 }
 
 fn benchmark_booleans(dataset: &NativeDataset) {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut completed_pair_count = 0_usize;
     let mut candidate_pair_count = 0_usize;

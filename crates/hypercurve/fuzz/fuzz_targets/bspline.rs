@@ -3,7 +3,7 @@
 mod support;
 
 use hypercurve::{
-    Curve2, CurveContext, HomogeneousControl2, NurbsCurve2, Point2, PolynomialSplineCurve2, Real,
+    Curve2, PredicatePolicy, HomogeneousControl2, NurbsCurve2, Point2, PolynomialSplineCurve2, Real,
     SplinePeriodicity2,
 };
 use libfuzzer_sys::fuzz_target;
@@ -17,7 +17,7 @@ fn point(x: u8, y: u8) -> Point2 {
 }
 
 /// Exercises the unified exact Bezier decomposition of one spline curve.
-fn touch_native_fragments(curve: Curve2, policy: &CurveContext) {
+fn touch_native_fragments(curve: Curve2, policy: &PredicatePolicy) {
     if let Ok(fragments) = support::under(policy, || curve.native_bezier_fragments()) {
         for fragment in fragments {
             let _ = fragment.parameter_range();
@@ -30,7 +30,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 10 {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let degree = if data[0] & 1 == 0 { 2 } else { 3 };
     let control_count = degree + 2;
     let mut controls = Vec::new();

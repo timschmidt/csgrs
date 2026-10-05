@@ -3,7 +3,7 @@
 mod support;
 
 use hypercurve::{
-    BulgeVertex2, Classification, Curve2, CurveContext, CurveCornerMode2, CurvePath2, CurveRegion2,
+    BulgeVertex2, Classification, Curve2, PredicatePolicy, CurveCornerMode2, CurvePath2, CurveRegion2,
     CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, Point2, Real, Segment2,
 };
 use libfuzzer_sys::fuzz_target;
@@ -59,7 +59,7 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<CurveRegion
     })
 }
 
-fn touch_curve(curve: &CurveString2, policy: &CurveContext, data: &[u8]) {
+fn touch_curve(curve: &CurveString2, policy: &PredicatePolicy, data: &[u8]) {
     let _ = support::under_classified_result(policy, || curve.merge_adjacent_collinear_lines());
     let _ = curve.remove_adjacent_reversed_duplicates();
 
@@ -82,7 +82,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 16 {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let points = data
         .chunks(2)
         .take(6)

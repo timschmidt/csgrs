@@ -12,15 +12,15 @@
 
 mod support;
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveContext, CurveCornerMode2, CurveFillet2,
-    CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCornerMode2, CurveFillet2, CurvePath2,
+    CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
+    PredicatePolicy, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
     RegionPointLocation,
 };
 use proptest::prelude::*;
 use proptest::test_runner::{FileFailurePersistence, TestCaseError};
 
-const STRICT: CurveContext = CurveContext::STRICT;
+const STRICT: PredicatePolicy = PredicatePolicy::STRICT;
 
 fn integer(value: i16) -> Real {
     Real::from(value)

@@ -3,7 +3,7 @@ mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{Classification, Curve2, CurveContext, Point2, RationalBezier2, Real};
+use hypercurve::{Classification, Curve2, Point2, PredicatePolicy, RationalBezier2, Real};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -27,7 +27,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 /// Resolves a rational curve against its exact tail: one certified partial
 /// overlap whose shared span splits the full curve.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let rational_curve =
         RationalBezier2::try_new(vec![p(0, 0), p(2, 2), p(4, 0)], vec![r(1), r(1), r(1)])?;
     let rational_tail = decided(crate::support::under_classified_result(&policy, || {

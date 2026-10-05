@@ -1,8 +1,9 @@
 mod support;
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurvePath2,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePath2,
     CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
-    ExactCurveError, LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
+    ExactCurveError, LineSeg2, Point2, PredicatePolicy, Real, Segment2, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -56,8 +57,8 @@ fn assert_trim_path_line(path: &CurvePathRegionTrim2, start: Point2, end: Point2
     assert_eq!(curve.end(), end.into());
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 #[test]

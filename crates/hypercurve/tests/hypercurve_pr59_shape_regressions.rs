@@ -8,7 +8,7 @@
 
 mod support;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Contour2, CurveContext, CurveRegion2, Point2, Real,
+    BooleanOp, BulgeVertex2, Contour2, CurveRegion2, Point2, PredicatePolicy, Real,
     RegionPointLocation,
 };
 
@@ -30,8 +30,8 @@ fn vertex(x: f64, y: f64) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0.0))
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn rectangle((xmin, ymin, xmax, ymax): Rect) -> HContour {

@@ -4,7 +4,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierParameterPolynomial, Classification, CubicBezier2, CurveContext, Point2,
+    BezierParameterPolynomial, Classification, CubicBezier2, Point2, PredicatePolicy,
     QuadraticBezier2, Real,
 };
 
@@ -84,7 +84,7 @@ fn main() {
             .certified_rational_interval(-160)
             .unwrap();
         let Classification::Decided(polynomial) =
-            crate::support::under_classified_result(&CurveContext::STRICT, || {
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
                 BezierParameterPolynomial::try_new_power_basis(coefficients)
             })
             .unwrap()

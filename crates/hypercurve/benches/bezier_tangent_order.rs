@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, QuadraticBezier2,
-    Real, RegionPointLocation,
+    Curve2, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, PredicatePolicy,
+    QuadraticBezier2, Real, RegionPointLocation,
 };
 
 fn q(numerator: i32, denominator: i32) -> Real {
@@ -23,7 +23,7 @@ fn parabola(k: i32) -> QuadraticBezier2 {
 
 /// A lens whose two sides share the origin with one horizontal tangent, so
 /// admission orders the branch vertex by curvature.
-fn tangent_lens(a: i32, b: i32, policy: &CurveContext) -> CurvePath2 {
+fn tangent_lens(a: i32, b: i32, policy: &PredicatePolicy) -> CurvePath2 {
     let upper = crate::support::under(policy, || Curve2::from(parabola(b)).reversed())
         .expect("reversal is exact")
         .into_value();
@@ -37,7 +37,7 @@ fn tangent_lens(a: i32, b: i32, policy: &CurveContext) -> CurvePath2 {
 }
 
 fn bench_lens(name: &str, a: i32, b: i32, iterations: u32) {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let path = tangent_lens(a, b, &policy);
     let inside = Point2::new(q(1, 2), q(a + b, 8)).into();
     let started = Instant::now();

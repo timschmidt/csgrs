@@ -2034,9 +2034,6 @@ fn native_arc_parameter_error(curve: &Curve2, cause: CurveError) -> ExactCurveEr
 impl Curve2 {
     /// Computes exact contact, overlap, and blocker evidence against another
     /// curve immediately.
-    ///
-    /// The returned [`CurveOutcome`] records whether the complete promotion,
-    /// dispatch, and replay consumed the `APPROXIMATE_512` terminal.
     pub fn intersect_curve(
         &self,
         other: &Self,

@@ -1,7 +1,7 @@
 mod support;
 use hypercurve::{
-    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, FillRule,
-    OffsetCornerStyle2, Point2, PolylineReconstructionOptions, Real, Segment2,
+    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveRegion2, FillRule,
+    OffsetCornerStyle2, Point2, PolylineReconstructionOptions, PredicatePolicy, Real, Segment2,
 };
 use proptest::prelude::*;
 
@@ -34,8 +34,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour_from_points(&[(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)])
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn reconstruction_options() -> PolylineReconstructionOptions {

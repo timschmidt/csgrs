@@ -7,7 +7,7 @@
 //! reduced case and the original Easyduino-scale topology in the corpus.
 
 mod support;
-use hypercurve::{BulgeVertex2, Contour2, CurveContext, CurveRegion2, Point2, Real};
+use hypercurve::{BulgeVertex2, Contour2, CurveRegion2, Point2, PredicatePolicy, Real};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -80,7 +80,7 @@ fn pcb_containment_fixture(
         .take(subject_count)
         .map(|(x, y)| subdivided_square(x, y, 28, 14))
         .collect::<Vec<_>>();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     (
         crate::support::under(&policy, || {
             CurveRegion2::try_from_native_contours(cover, Vec::new())
@@ -97,7 +97,7 @@ fn pcb_containment_fixture(
 
 fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_count: usize) {
     let (cover, subject) = pcb_containment_fixture(cover_count, subject_count);
-    let result = crate::support::under(&CurveContext::STRICT, || {
+    let result = crate::support::under(&PredicatePolicy::STRICT, || {
         subject.boolean_region(&cover, hypercurve::BooleanOp::Difference)
     })
     .expect("PCB containment difference must decide exactly")
@@ -106,7 +106,7 @@ fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_coun
 
     for point in [point(0, 0), point(100, 0)] {
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || cover
+            crate::support::under(&PredicatePolicy::STRICT, || cover
                 .classify_point(&point.clone().into()))
             .expect("cover point classification must decide")
             .into_value(),
@@ -152,7 +152,7 @@ fn easyduino_uno_scale_process_image_with_holes_corpus() {
         .take(136)
         .map(|(x, y)| subdivided_square(x, y, 28, 14))
         .collect::<Vec<_>>();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let cover = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_contours(materials, holes)
     })

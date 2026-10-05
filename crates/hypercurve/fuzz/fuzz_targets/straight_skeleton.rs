@@ -3,7 +3,7 @@
 mod support;
 
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, Curve2, CurveContext, CurvePath2, Point2, Real,
+    BulgeVertex2, Classification, Contour2, Curve2, PredicatePolicy, CurvePath2, Point2, Real,
     Segment2, StraightSkeletonStage2,
 };
 use libfuzzer_sys::fuzz_target;
@@ -64,7 +64,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
     let contour = transformed_fixture(data);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let Classification::Decided(trajectories) = support::under_classified_result(&policy, || {
         contour.straight_skeleton_vertex_trajectories()

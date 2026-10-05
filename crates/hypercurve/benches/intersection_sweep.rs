@@ -4,7 +4,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveContext, CurveString2, LineSeg2, Point2, Real, Segment2,
+    BulgeVertex2, Contour2, CurveString2, LineSeg2, Point2, PredicatePolicy, Real, Segment2,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -101,7 +101,7 @@ fn diagonal_ribbon(rung_count: usize, y_offset: i32) -> Contour2 {
     .expect("diagonal ribbon is a closed simple contour")
 }
 
-fn bench_direct(segment_count: usize, iterations: u32, policy: &CurveContext) {
+fn bench_direct(segment_count: usize, iterations: u32, policy: &PredicatePolicy) {
     let first = zigzag(segment_count, 0);
     let second = zigzag_with_remote_tail(segment_count, 100);
     let started = Instant::now();
@@ -121,7 +121,7 @@ fn bench_direct(segment_count: usize, iterations: u32, policy: &CurveContext) {
     );
 }
 
-fn bench_x_dense(segment_count: usize, iterations: u32, policy: &CurveContext) {
+fn bench_x_dense(segment_count: usize, iterations: u32, policy: &PredicatePolicy) {
     let first = vertically_dense_zigzag(segment_count, 0);
     let second = vertically_dense_zigzag_with_remote_tail(segment_count, 10_000);
     let started = Instant::now();
@@ -141,7 +141,7 @@ fn bench_x_dense(segment_count: usize, iterations: u32, policy: &CurveContext) {
     );
 }
 
-fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurveContext) {
+fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &PredicatePolicy) {
     let first = diagonal_ribbon(rung_count, 0);
     let second = diagonal_ribbon(rung_count, rung_count as i32 / 2 + 2);
     let started = Instant::now();
@@ -162,7 +162,7 @@ fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurveConte
 }
 
 fn main() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     for (segment_count, iterations) in [(32, 100), (64, 50), (128, 20), (512, 3)] {
         bench_direct(segment_count, iterations, &policy);
         bench_x_dense(segment_count, iterations, &policy);

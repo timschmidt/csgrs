@@ -1,8 +1,8 @@
 mod support;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
-    CurveParameterRange2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, Real,
-    RegionPointLocation, Segment2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty,
+    CurveParameterRange2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2,
+    PredicatePolicy, Real, RegionPointLocation, Segment2,
 };
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
@@ -28,7 +28,7 @@ fn decided<T>(value: Classification<T>) -> T {
 fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
     use hypercurve::{CurveGeometry2, RationalQuadraticBezier2};
     let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for shift in [0, 1, -2] {
             let s = Real::from(shift);
             // Every chart traces the same cap, P(t) = (-(t-s)^2, t-s).
@@ -170,7 +170,7 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
     )
     .unwrap();
     // W = 1-4t+2t² has a pole between these two finite restrictions.
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for (start, end) in [(Real::zero(), q(1, 4)), (q(3, 4), Real::one())] {
             let a = crate::support::under_value(&policy, || source.point_at(&start)).unwrap();
             let b = crate::support::under_value(&policy, || source.point_at(&end)).unwrap();
@@ -267,7 +267,7 @@ fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
     CurvePath2::try_new(curves).unwrap()
 }
 
-fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+fn path_region(path: &CurvePath2, policy: &PredicatePolicy) -> CurveRegion2 {
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             std::slice::from_ref(path),
@@ -283,7 +283,7 @@ fn boolean_paths(
     first: &CurvePath2,
     second: &CurvePath2,
     operation: BooleanOp,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveRegion2 {
     crate::support::under(policy, || {
         path_region(first, policy).boolean_region(&path_region(second, policy), operation)
@@ -303,7 +303,7 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
 fn replay_carrier(
     carrier: &hypercurve::CurveRegionCarrier2,
     parameter: &hypercurve::CurveParameter2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> hypercurve::CurvePoint2 {
     let point = crate::support::under(policy, || carrier.curve().point_at(parameter)).unwrap();
     assert_eq!(point.certainty, CurveCertainty::Certified);
@@ -313,7 +313,7 @@ fn replay_carrier(
 fn assert_same_point(
     first: &hypercurve::CurvePoint2,
     second: &hypercurve::CurvePoint2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) {
     let same =
         crate::support::under_outcome_classification(policy, || first.coincides_with(second));
@@ -323,7 +323,7 @@ fn assert_same_point(
 
 fn assert_report_replays(
     report: &hypercurve::CurveRegionIntersectionResult2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) {
     let mut carriers = std::collections::HashMap::new();
     let mut remember = |carrier: &hypercurve::CurveRegionCarrier2| {
@@ -370,7 +370,7 @@ fn assert_report_replays(
 
 #[test]
 fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for reversed in [false, true] {
             for shared_edge in [false, true] {
                 let first_path = square_path(0, 0, 4, 4);
@@ -444,7 +444,7 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
 
 #[test]
 fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let paths = [square_path(0, 0, 4, 4), square_path(2, 0, 6, 4)];
         let region = crate::support::under(&policy, || {
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -488,7 +488,7 @@ fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
 fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
     use hypercurve::{CurveCornerMode2, CurveGeometry2};
     let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(point(-4, 0), point(0, 0)).unwrap().into(),
             QuadraticBezier2::new(point(0, 0), point(0, 1), point(1, 2)).into(),
@@ -593,7 +593,7 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
 }
 
 fn circle(center_x: Real) -> CurveRegion2 {
-    circle_with_policy(center_x, &CurveContext::STRICT)
+    circle_with_policy(center_x, &PredicatePolicy::STRICT)
 }
 
 fn integer_circle(center_x: i64, radius: i64) -> CurveRegion2 {
@@ -605,7 +605,7 @@ fn integer_circle(center_x: i64, radius: i64) -> CurveRegion2 {
     CurveRegion2::try_from_native_material_contours(vec![contour]).unwrap()
 }
 
-fn circle_with_policy(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
+fn circle_with_policy(center_x: Real, policy: &PredicatePolicy) -> CurveRegion2 {
     let contour = Contour2::from_bulge_vertices(&[
         BulgeVertex2::new(
             Point2::new(&center_x - Real::from(2_i8), Real::zero()),
@@ -664,7 +664,7 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
     .unwrap()
 }
 
-fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
+fn symbolic_quadratic_cap(control_y: Real, policy: &PredicatePolicy) -> CurveRegion2 {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(
             point(-2, 4),
@@ -685,7 +685,7 @@ fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion
     .into_value()
 }
 
-fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
+fn symbolic_general_line_region(control_y: Real, policy: &PredicatePolicy) -> CurveRegion2 {
     let bottom = RationalBezier2::try_new(
         vec![
             point(0, 0),
@@ -714,7 +714,7 @@ fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> Curve
     .into_value()
 }
 
-fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
+fn symbolic_elevated_circle(center_x: Real, policy: &PredicatePolicy) -> CurveRegion2 {
     let left = Point2::new(&center_x - Real::from(2_i8), Real::zero());
     let right = Point2::new(center_x + Real::from(2_i8), Real::zero());
     let arcs = [
@@ -750,7 +750,7 @@ fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegio
 
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || region
+        crate::support::under(&PredicatePolicy::STRICT, || region
             .classify_point(&point.clone().into()))
         .unwrap()
         .into_value(),
@@ -758,7 +758,7 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
     );
 }
 
-fn native_segment_counts(region: &CurveRegion2, policy: &CurveContext) -> (usize, usize) {
+fn native_segment_counts(region: &CurveRegion2, policy: &PredicatePolicy) -> (usize, usize) {
     let native = crate::support::under(policy, || region.native_contours_fast_path())
         .expect("native publication must not fail")
         .into_value();
@@ -779,7 +779,7 @@ fn native_segment_counts(region: &CurveRegion2, policy: &CurveContext) -> (usize
 #[test]
 fn boolean_batch_short_circuits_empty_and_identical_operands() {
     let empty = CurveRegion2::empty();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let region = crate::support::under(&policy, || square(0, 0, 4, 4).regularized_region())
         .unwrap()
         .into_value();
@@ -809,7 +809,7 @@ fn boolean_batch_short_circuits_empty_and_identical_operands() {
 fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let contacts = crate::support::under(&policy, || first.intersect_region(&second)).unwrap();
     assert_eq!(contacts.certainty, CurveCertainty::Certified);
     let contacts = contacts.value;
@@ -875,7 +875,7 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
     let third = square(4, 0, 8, 4);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let first_union =
         crate::support::under(&policy, || first.boolean_region(&second, BooleanOp::Union))
@@ -895,7 +895,7 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
 
 #[test]
 fn affine_line_batch_preserves_material_and_hole_roles() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let frame = crate::support::under(&policy, || {
         square(0, 0, 10, 10).boolean_region(&square(3, 3, 7, 7), BooleanOp::Difference)
     })
@@ -918,7 +918,7 @@ fn regularized_affine_contacts_discard_lower_dimensional_intersections() {
     let point_touching = (square(0, 0, 2, 2), square(2, 2, 4, 4));
     let edge_touching = (square(0, 0, 2, 2), square(2, 0, 4, 2));
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for (label, (first, second), second_interior, expected_union_loops) in [
             ("point", &point_touching, point(3, 3), 2_usize),
             ("edge", &edge_touching, point(3, 1), 1_usize),
@@ -984,7 +984,7 @@ fn regularized_conic_tangencies_preserve_regions_but_not_point_intersections() {
     let external = (integer_circle(0, 2), integer_circle(4, 2));
     let internal = (integer_circle(0, 3), integer_circle(2, 1));
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let external_evidence =
             crate::support::under(&policy, || external.0.intersect_region(&external.1)).unwrap();
         assert_eq!(external_evidence.certainty, CurveCertainty::Certified);
@@ -1040,7 +1040,7 @@ fn regularized_partial_shared_edges_resolve_exact_side_ownership() {
     let attached = (square(0, 0, 4, 4), square(4, 1, 6, 3));
     let boundary_contained = (square(0, 0, 4, 4), square(1, 0, 3, 2));
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let attached_results =
             crate::support::under(&policy, || attached.0.boolean_regions(&attached.1)).unwrap();
         assert_eq!(attached_results.certainty, CurveCertainty::Certified);
@@ -1086,7 +1086,7 @@ fn regularized_partial_shared_edges_resolve_exact_side_ownership() {
 fn circular_conic_batch_reuses_one_authoritative_topology() {
     let first = circle(Real::zero());
     let second = circle(Real::one());
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let batch = crate::support::under(&policy, || first.boolean_regions(&second)).unwrap();
     assert_eq!(batch.certainty, CurveCertainty::Certified);
     let batch = batch.into_value();
@@ -1140,7 +1140,7 @@ fn circular_conic_batch_reuses_one_authoritative_topology() {
 fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
     let first = capsule(0);
     let second = capsule(2);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let batch = crate::support::under(&policy, || first.boolean_regions(&second)).unwrap();
     assert_eq!(batch.certainty, CurveCertainty::Certified);
     let batch = batch.into_value();
@@ -1194,7 +1194,7 @@ fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
 
 #[test]
 fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let first = circle_with_policy(Real::zero(), &policy);
         let second = circle_with_policy(Real::one(), &policy);
         let batch = crate::support::under(&policy, || first.boolean_regions(&second))
@@ -1231,7 +1231,7 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
 
 #[test]
 fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
-    let region = symbolic_quadratic_cap(Real::from(-4_i8), &CurveContext::STRICT);
+    let region = symbolic_quadratic_cap(Real::from(-4_i8), &PredicatePolicy::STRICT);
     let union = region
         .boolean_region(&region, BooleanOp::Union)
         .expect("identical exact conic regions have an exact union");
@@ -1245,7 +1245,7 @@ fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
 
 #[test]
 fn elevated_circular_boolean_outputs_publish_native_boundaries() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let first = circle_with_policy(Real::zero(), &policy);
         let second = symbolic_elevated_circle(Real::one(), &policy);
         let batch = crate::support::under(&policy, || first.boolean_regions(&second))
@@ -1273,7 +1273,7 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
         (circle(Real::zero()), square(3, -1, 5, 1)),
         (circle(Real::zero()), square(-1, -1, 1, 1)),
     ];
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     for (case_index, (first, second)) in cases.into_iter().enumerate() {
         let batch = crate::support::under(&policy, || first.boolean_regions(&second))
             .unwrap()
@@ -1333,24 +1333,27 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
 #[test]
 fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
     let undecidable_zero = support::terminally_unresolved_zero();
-    let disk = circle_with_policy(undecidable_zero, &CurveContext::APPROXIMATE_512);
+    let disk = circle_with_policy(undecidable_zero, &PredicatePolicy::APPROXIMATE_512);
     let right_half = square(0, -3, 3, 3);
     // Completed boundaries must retain endpoint identity when a later
     // contact reaches the same point through a different scalar expression.
-    let disk = crate::support::under(&CurveContext::APPROXIMATE_512, || disk.regularized_region())
-        .unwrap()
-        .value;
-    let right_half = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let disk = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+        disk.regularized_region()
+    })
+    .unwrap()
+    .value;
+    let right_half = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         right_half.regularized_region()
     })
     .unwrap()
     .value;
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || disk.boolean_regions(&right_half)),
+        crate::support::under(&PredicatePolicy::STRICT, || disk
+            .boolean_regions(&right_half)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let batch = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         disk.boolean_regions(&right_half)
     })
     .expect("the authorized terminal should decide mixed line/conic contacts");
@@ -1375,7 +1378,7 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
         (batch.value.xor(), point(1, 0), RegionPointLocation::Outside),
     ] {
         assert_eq!(
-            crate::support::under(&CurveContext::APPROXIMATE_512, || region
+            crate::support::under(&PredicatePolicy::APPROXIMATE_512, || region
                 .classify_point(&sample.clone().into()))
             .unwrap()
             .into_value(),
@@ -1387,14 +1390,14 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
 #[test]
 fn circular_conic_batch_obeys_the_approximate_512_terminal() {
     let (first_center, second_center) = support::terminally_equal_pair(Real::pi() + Real::e());
-    let first = circle_with_policy(first_center.clone(), &CurveContext::APPROXIMATE_512);
-    let second = circle_with_policy(second_center, &CurveContext::APPROXIMATE_512);
+    let first = circle_with_policy(first_center.clone(), &PredicatePolicy::APPROXIMATE_512);
+    let second = circle_with_policy(second_center, &PredicatePolicy::APPROXIMATE_512);
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
+        crate::support::under(&PredicatePolicy::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let batch = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         first.boolean_regions(&second)
     })
     .expect("the authorized terminal should decide equal circle supports");
@@ -1415,11 +1418,11 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     let second = symbolic_rectangle(second_x);
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || first
+        crate::support::under(&PredicatePolicy::STRICT, || first
             .boolean_region(&second, BooleanOp::Union)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let outcome = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let outcome = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         first.boolean_region(&second, BooleanOp::Union)
     })
     .expect("the authorized 512-bit terminal should complete equal symbolic boundaries");
@@ -1431,10 +1434,10 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     );
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
+        crate::support::under(&PredicatePolicy::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let batch = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         first.boolean_regions(&second)
     })
     .expect("the shared arrangement must obey the authorized 512-bit terminal");
@@ -1458,18 +1461,18 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         Curve2::from(LineSeg2::try_new(point(0, 1), point(0, 0)).unwrap()),
     ];
     assert!(
-        crate::support::under(&CurveContext::STRICT, || CurvePath2::try_new(
+        crate::support::under(&PredicatePolicy::STRICT, || CurvePath2::try_new(
             curves.clone()
         ))
         .is_err()
     );
-    let path = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let path = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         CurvePath2::try_new(curves)
     })
     .unwrap();
     assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
-    let authored = path_region(&path.value, &CurveContext::APPROXIMATE_512);
-    let normalized = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let authored = path_region(&path.value, &PredicatePolicy::APPROXIMATE_512);
+    let normalized = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         authored.regularized_region()
     })
     .unwrap();
@@ -1502,7 +1505,7 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         "the independently checked output must retain an actual gap"
     );
     assert_eq!(
-        crate::support::under(&CurveContext::APPROXIMATE_512, || normalized
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || normalized
             .value
             .regularized_region())
         .unwrap()
@@ -1511,13 +1514,13 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         "replaying retained topology must preserve its decision requirement",
     );
     assert!(
-        crate::support::under(&CurveContext::STRICT, || normalized
+        crate::support::under(&PredicatePolicy::STRICT, || normalized
             .value
             .regularized_region())
         .is_err(),
         "an approximate topology marker cannot certify an exactly disconnected boundary",
     );
-    let reflected = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let reflected = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         normalized.value.transform_affine(
             &Real::from(-1),
             &Real::zero(),
@@ -1530,7 +1533,7 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
     .unwrap();
     assert_eq!(reflected.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(
-        crate::support::under(&CurveContext::APPROXIMATE_512, || reflected
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || reflected
             .value
             .regularized_region())
         .unwrap()
@@ -1538,7 +1541,7 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         CurveCertainty::Approximate512Consumed,
     );
     assert!(
-        crate::support::under(&CurveContext::STRICT, || reflected
+        crate::support::under(&PredicatePolicy::STRICT, || reflected
             .value
             .regularized_region())
         .is_err()
@@ -1557,7 +1560,7 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
         Curve2::from(LineSeg2::try_new(point(2, 0), point(0, 0)).unwrap()),
     ])
     .unwrap();
-    let construct = |policy: &CurveContext| {
+    let construct = |policy: &PredicatePolicy| {
         crate::support::under(policy, || {
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 std::slice::from_ref(&path),
@@ -1567,11 +1570,11 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
         })
     };
     for _ in 0..2 {
-        let normalized = construct(&CurveContext::APPROXIMATE_512).unwrap();
+        let normalized = construct(&PredicatePolicy::APPROXIMATE_512).unwrap();
         assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
         assert!(normalized.value.is_empty());
     }
-    assert!(construct(&CurveContext::STRICT).is_err());
+    assert!(construct(&PredicatePolicy::STRICT).is_err());
     assert_eq!(
         height.certified_sign_until(-2048).sign(),
         Some(hyperreal::RealSign::Positive)
@@ -1582,14 +1585,14 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
 fn regularized_topology_retains_only_the_policy_actually_consumed() {
     for authored in [
         square(0, 0, 2, 2),
-        symbolic_quadratic_cap(Real::from(2), &CurveContext::STRICT),
+        symbolic_quadratic_cap(Real::from(2), &PredicatePolicy::STRICT),
     ] {
-        let normalized = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        let normalized = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
             authored.regularized_region()
         })
         .unwrap();
         assert_eq!(normalized.certainty, CurveCertainty::Certified);
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             assert_eq!(
                 crate::support::under(&policy, || normalized.value.regularized_region())
                     .unwrap()
@@ -1597,7 +1600,7 @@ fn regularized_topology_retains_only_the_policy_actually_consumed() {
                 CurveCertainty::Certified
             );
         }
-        let reflected = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        let reflected = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
             normalized.value.transform_affine(
                 &Real::from(-1),
                 &Real::zero(),
@@ -1610,7 +1613,7 @@ fn regularized_topology_retains_only_the_policy_actually_consumed() {
         .unwrap();
         assert_eq!(reflected.certainty, CurveCertainty::Certified);
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || reflected
+            crate::support::under(&PredicatePolicy::STRICT, || reflected
                 .value
                 .regularized_region())
             .unwrap()
@@ -1631,12 +1634,12 @@ fn curve_path_construction_obeys_the_approximate_512_terminal() {
     ];
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || CurvePath2::try_new(
+        crate::support::under(&PredicatePolicy::STRICT, || CurvePath2::try_new(
             curves.clone()
         )),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let path = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let path = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         CurvePath2::try_new(curves)
     })
     .expect("the authorized terminal should certify symbolic path connectivity");
@@ -1647,14 +1650,14 @@ fn curve_path_construction_obeys_the_approximate_512_terminal() {
 #[test]
 fn general_curve_batch_obeys_the_approximate_512_terminal() {
     let (first_height, second_height) = support::terminally_equal_pair(Real::pi() + Real::e());
-    let first = symbolic_quadratic_cap(-first_height, &CurveContext::APPROXIMATE_512);
-    let second = symbolic_quadratic_cap(-second_height, &CurveContext::APPROXIMATE_512);
+    let first = symbolic_quadratic_cap(-first_height, &PredicatePolicy::APPROXIMATE_512);
+    let second = symbolic_quadratic_cap(-second_height, &PredicatePolicy::APPROXIMATE_512);
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
+        crate::support::under(&PredicatePolicy::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let batch = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         first.boolean_regions(&second)
     })
     .expect("the authorized terminal should decide equivalent general curves");
@@ -1684,13 +1687,13 @@ fn general_curve_batch_obeys_the_approximate_512_terminal() {
 fn line_general_batch_obeys_the_approximate_512_terminal() {
     let first = square(0, 0, 4, 4);
     let symbolic_zero = support::terminally_unresolved_zero();
-    let second = symbolic_general_line_region(symbolic_zero, &CurveContext::APPROXIMATE_512);
+    let second = symbolic_general_line_region(symbolic_zero, &PredicatePolicy::APPROXIMATE_512);
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
+        crate::support::under(&PredicatePolicy::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let batch = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         first.boolean_regions(&second)
     })
     .expect("the authorized terminal should decide the general line image");
@@ -1712,14 +1715,14 @@ fn line_general_batch_obeys_the_approximate_512_terminal() {
 #[test]
 fn conic_general_batch_obeys_the_approximate_512_terminal() {
     let (first_center, second_center) = support::terminally_equal_pair(Real::pi() + Real::e());
-    let first = circle_with_policy(first_center.clone(), &CurveContext::APPROXIMATE_512);
-    let second = symbolic_elevated_circle(second_center, &CurveContext::APPROXIMATE_512);
+    let first = circle_with_policy(first_center.clone(), &PredicatePolicy::APPROXIMATE_512);
+    let second = symbolic_elevated_circle(second_center, &PredicatePolicy::APPROXIMATE_512);
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
+        crate::support::under(&PredicatePolicy::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let batch = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         first.boolean_regions(&second)
     })
     .expect("the authorized terminal should decide the conic/general shared image");
@@ -1751,7 +1754,7 @@ fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
         Err(ExactCurveError::Blocked(_))
     ));
 
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         region.classify_point(&point.clone().into())
     })
     .expect("the authorized 512-bit terminal should identify the symbolic boundary");
@@ -1768,11 +1771,11 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     let distance = support::terminally_unresolved_zero();
 
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || source
+        crate::support::under(&PredicatePolicy::STRICT, || source
             .offset(distance.clone(), &sharp_offset())),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let outcome = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let outcome = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         source.offset(distance, &sharp_offset())
     })
     .expect("the authorized 512-bit terminal should decide symbolic zero offset");
@@ -1781,7 +1784,7 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     assert_location(&outcome.value, point(2, 2), RegionPointLocation::Inside);
     assert_location(&outcome.value, point(-1, 2), RegionPointLocation::Outside);
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || outcome.value.filled_area())
+        crate::support::under(&PredicatePolicy::STRICT, || outcome.value.filled_area())
             .unwrap()
             .value,
         Some(Real::from(16)),
@@ -1796,7 +1799,7 @@ fn curved_region_boolean_respects_nested_hole_roles() {
     )
     .unwrap();
     let island = square(4, 4, 6, 6);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let union = crate::support::under(&policy, || ring.boolean_region(&island, BooleanOp::Union))
         .unwrap()
@@ -1825,7 +1828,7 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     ])
     .unwrap();
     let cutter_path = square_path(-3, 2, 3, 5);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let algebraic = boolean_paths(&curved, &cutter_path, BooleanOp::Difference, &policy);
     assert!(algebraic.has_algebraic_fragments());
 
@@ -1880,7 +1883,7 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         Curve2::from(LineSeg2::try_new(point(2, 4), point(-2, 4)).unwrap()),
     ])
     .unwrap();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let narrow = boolean_paths(
         &curved,
         &square_path(-3, -1, 3, 2),
@@ -1957,7 +1960,7 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
         Curve2::from(LineSeg2::try_new(quadratic_start, quadratic_end).unwrap()),
     ])
     .unwrap();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let narrow = boolean_paths(
         &quadratic,
         &square_path(-3, -1, 3, 2),
@@ -2031,7 +2034,7 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
     ])
     .unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let narrow = boolean_paths(
             &quadratic,
             &square_path(-3, -1, 3, 2),
@@ -2112,7 +2115,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         ],
     )
     .unwrap();
-    let shared = crate::support::under(&CurveContext::STRICT, || {
+    let shared = crate::support::under(&PredicatePolicy::STRICT, || {
         Curve2::from(polynomial_rational.clone())
             .intersect_curve(&Curve2::from(projective_rational.clone()))
     })
@@ -2129,7 +2132,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
     );
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let narrow = boolean_paths(&polynomial, &narrow_clip, BooleanOp::Intersection, &policy);
         let wide = boolean_paths(
             &reparameterized,
@@ -2236,7 +2239,7 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
     ])
     .unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let narrow_clip = square_path(-1, -1, 2, 5);
         let narrow_topology =
             crate::support::under(&policy, || first.intersection_topology(&narrow_clip))
@@ -2245,7 +2248,7 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
         let pieces = narrow_topology.first()[0].curves();
         assert_eq!(pieces.len(), 2);
         assert_eq!(
-            crate::support::under_outcome_classification(&CurveContext::STRICT, || pieces[0]
+            crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || pieces[0]
                 .end()
                 .coincides_with(&point(2, 0).into()))
             .value,
@@ -2270,9 +2273,10 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
             let pieces = wide_topology.first()[0].curves();
             assert_eq!(pieces.len(), 2);
             assert_eq!(
-                crate::support::under_outcome_classification(&CurveContext::STRICT, || pieces[0]
-                    .end()
-                    .coincides_with(&point(3, 0).into()))
+                crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || pieces
+                    [0]
+                .end()
+                .coincides_with(&point(3, 0).into()))
                 .value,
                 Classification::Decided(true)
             );
@@ -2331,7 +2335,7 @@ fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
         BezierParameterPolynomial,
     };
     let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let start = point(-128, -32);
         let end = point(-128, -128);
         let curve = Curve2::from(QuadraticBezier2::new(
@@ -2383,7 +2387,7 @@ fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
 /// rays; regularization must still union them into one exact loop.
 #[test]
 fn overlapping_diagonal_track_pieces_regularize_to_one_loop() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let loops: [[[f64; 2]; 4]; 4] = [
         [
             [209.33765244648185, 66.40234855351814],

@@ -17,7 +17,7 @@ use crate::{
 /// [`CurvePreviewOptions`] and cannot enlarge the topology context.
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct CurveContext(u8);
+pub(crate) struct CurveContext(u8);
 
 const APPROXIMATE_512_CONTEXT: u8 = 1 << 0;
 const EDGE_PREVIEW_CONTEXT: u8 = 1 << 1;
@@ -58,9 +58,9 @@ struct ProvisionalScope {
 }
 
 impl ProvisionalScope {
-    fn begin() -> Self {
+    fn begin(active: bool) -> Self {
         Self {
-            prior: PROVISIONAL_SCOPE.with(|active| active.replace(true)),
+            prior: PROVISIONAL_SCOPE.with(|scope| scope.replace(active)),
         }
     }
 }
@@ -129,12 +129,33 @@ impl<T> Provisional<T> {
 /// [`Provisional`] records whether any did. Objects constructed inside the
 /// scope retain that policy as part of their evidence.
 pub fn provisional<T>(evaluate: impl FnOnce() -> T) -> Provisional<T> {
-    let _scope = ProvisionalScope::begin();
+    let _scope = ProvisionalScope::begin(true);
     let observation = OperationObservation::begin();
     let value = evaluate();
     Provisional {
         value,
         certainty: observation.finish(),
+    }
+}
+
+/// Evaluates principal operations on this thread under a selected predicate
+/// policy.
+///
+/// [`PredicatePolicy::STRICT`](hyperlimit::PredicatePolicy::STRICT) evaluates
+/// them exactly, even inside an enclosing [`provisional`] scope, so the result
+/// is certified. Any other policy evaluates them as [`provisional`] does. This
+/// is the entry point for callers whose predicate policy is configuration.
+pub fn evaluate_under<T>(
+    policy: hyperlimit::PredicatePolicy,
+    evaluate: impl FnOnce() -> T,
+) -> Provisional<T> {
+    if policy != hyperlimit::PredicatePolicy::STRICT {
+        return provisional(evaluate);
+    }
+    let _scope = ProvisionalScope::begin(false);
+    Provisional {
+        value: evaluate(),
+        certainty: CurveCertainty::Certified,
     }
 }
 
@@ -267,7 +288,7 @@ pub enum CurveCertainty {
 
 /// A completed curve operation paired with its aggregate predicate certainty.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CurveOutcome<T> {
+pub(crate) struct CurveOutcome<T> {
     /// Completed operation value.
     pub value: T,
     /// Weakest certainty consumed while producing `value`.
@@ -312,7 +333,7 @@ pub struct CurvePreviewOptions {
 
 impl CurvePreviewOptions {
     /// Construct validated preview options around an immutable topology context.
-    pub fn try_new(
+    pub(crate) fn try_new(
         context: CurveContext,
         absolute_tolerance: f64,
         relative_tolerance: f64,
@@ -353,9 +374,10 @@ impl CurvePreviewOptions {
         )
     }
 
-    /// Return the immutable predicate context used by this adapter.
-    pub const fn context(self) -> CurveContext {
-        self.context
+    /// Whether this adapter's topology decisions may consume the
+    /// APPROXIMATE_512 terminal.
+    pub const fn is_approximate_512(self) -> bool {
+        self.context.selects_approximate_512()
     }
 
     /// Return the absolute finite preview tolerance.
@@ -371,13 +393,12 @@ impl CurvePreviewOptions {
     /// Evaluate one synchronous lossy preview operation.
     ///
     /// Principal operations called inside `evaluate` run under this adapter's
-    /// edge-preview context, which is also passed to the closure. The returned
-    /// value is preview evidence. It must not be retained as certified
-    /// topology or exact construction provenance.
-    pub fn evaluate<T>(&self, evaluate: impl FnOnce(&CurveContext) -> T) -> T {
+    /// edge-preview context. The returned value is preview evidence. It must
+    /// not be retained as certified topology or exact construction provenance.
+    pub fn evaluate<T>(&self, evaluate: impl FnOnce() -> T) -> T {
         let context = self.context.with_edge_preview();
         let _frame = PreviewFrame::begin(self.tolerance, context);
-        evaluate(&context)
+        evaluate()
     }
 }
 
@@ -949,6 +970,8 @@ mod layout_tests {
 mod tests {
     use std::cell::Cell;
 
+    use super::principal_context;
+
     use hyperreal::{Real, RealSign};
 
     use super::{
@@ -970,12 +993,10 @@ mod tests {
         );
 
         let strict_preview = CurvePreviewOptions::try_strict(1.0e-6, 2.0e-6).unwrap();
-        assert_eq!(
-            strict_preview.context().predicate_policy(),
-            hyperlimit::PredicatePolicy::STRICT
-        );
+        assert!(!strict_preview.is_approximate_512());
         assert_eq!(preview_tolerance(), None);
-        let escaped = strict_preview.evaluate(|context| {
+        let escaped = strict_preview.evaluate(|| {
+            let context = principal_context();
             assert!(context.is_edge_preview());
             assert_eq!(
                 context.predicate_policy(),
@@ -983,17 +1004,15 @@ mod tests {
             );
             assert_eq!(preview_tolerance().unwrap().absolute, 1.0e-6);
             assert_eq!(preview_tolerance().unwrap().relative, 2.0e-6);
-            *context
+            context
         });
         assert_eq!(preview_tolerance(), None);
         assert!(!escaped.is_edge_preview());
 
-        assert_eq!(
+        assert!(
             CurvePreviewOptions::try_approximate_512(1.0e-6, 1.0e-6)
                 .unwrap()
-                .context()
-                .predicate_policy(),
-            hyperlimit::PredicatePolicy::APPROXIMATE_512
+                .is_approximate_512()
         );
         assert_eq!(
             CurvePreviewOptions::try_strict(f64::NAN, 0.0),
@@ -1044,11 +1063,11 @@ mod tests {
         let outer = CurvePreviewOptions::try_strict(1.0e-6, 2.0e-6).unwrap();
         let inner = CurvePreviewOptions::try_strict(3.0e-6, 4.0e-6).unwrap();
 
-        outer.evaluate(|outer_context| {
-            assert!(outer_context.is_edge_preview());
+        outer.evaluate(|| {
+            assert!(principal_context().is_edge_preview());
             assert_eq!(preview_tolerance().unwrap().absolute, 1.0e-6);
-            inner.evaluate(|inner_context| {
-                assert!(inner_context.is_edge_preview());
+            inner.evaluate(|| {
+                assert!(principal_context().is_edge_preview());
                 assert_eq!(preview_tolerance().unwrap().absolute, 3.0e-6);
             });
             assert_eq!(preview_tolerance().unwrap().absolute, 1.0e-6);
@@ -1056,8 +1075,8 @@ mod tests {
         assert_eq!(preview_tolerance(), None);
 
         let panic = std::panic::catch_unwind(|| {
-            outer.evaluate(|context| {
-                assert!(context.is_edge_preview());
+            outer.evaluate(|| {
+                assert!(principal_context().is_edge_preview());
                 panic!("preview unwind sentinel");
             });
         });
@@ -1288,8 +1307,7 @@ mod principal_context_tests {
     fn principal_operations_follow_preview_and_provisional_scopes() {
         assert_eq!(principal_context(), CurveContext::STRICT);
         let preview = CurvePreviewOptions::try_strict(1e-7, 1e-7).unwrap();
-        preview.evaluate(|context| {
-            assert_eq!(principal_context(), *context);
+        preview.evaluate(|| {
             assert!(principal_context().is_edge_preview());
             assert!(!principal_context().selects_approximate_512());
             let _ = provisional(|| {

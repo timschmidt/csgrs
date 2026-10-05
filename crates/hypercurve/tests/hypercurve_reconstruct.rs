@@ -203,7 +203,7 @@ fn rectangle_for_recovery(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour
 fn profiles_for_recovery(
     material: Vec<Contour2>,
     holes: Vec<Contour2>,
-    policy: &hypercurve::CurveContext,
+    policy: &hypercurve::PredicatePolicy,
 ) -> Vec<hypercurve::FiniteRegionProfile2> {
     let region = crate::support::under(policy, || {
         hypercurve::CurveRegion2::try_from_native_contours(material, holes)
@@ -222,7 +222,7 @@ fn profiles_for_recovery(
 
 fn recover_profiles(
     profiles: &[hypercurve::FiniteRegionProfile2],
-    policy: &hypercurve::CurveContext,
+    policy: &hypercurve::PredicatePolicy,
 ) -> hypercurve::CurveRegion2 {
     let outcome = crate::support::under(policy, || {
         hypercurve::CurveRegion2::recover_from_finite_profiles(
@@ -240,8 +240,8 @@ fn recover_profiles(
 
 #[test]
 fn finite_profile_recovery_regularizes_overlaps_before_publication() {
-    use hypercurve::{CurveContext, OffsetCornerStyle2, RegionPointLocation};
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    use hypercurve::{OffsetCornerStyle2, PredicatePolicy, RegionPointLocation};
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let mut profiles = profiles_for_recovery(
             vec![rectangle_for_recovery(0, 0, 4, 4)],
             Vec::new(),
@@ -310,8 +310,8 @@ fn finite_profile_recovery_regularizes_overlaps_before_publication() {
 
 #[test]
 fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
-    use hypercurve::{CurveContext, RegionPointLocation};
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    use hypercurve::{PredicatePolicy, RegionPointLocation};
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let profiles = profiles_for_recovery(
             vec![
                 rectangle_for_recovery(0, 0, 10, 10),
@@ -388,8 +388,8 @@ fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
 #[test]
 fn finite_profile_recovery_accepts_empty_input_with_certified_topology() {
     for policy in [
-        hypercurve::CurveContext::STRICT,
-        hypercurve::CurveContext::APPROXIMATE_512,
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
     ] {
         let recovered = recover_profiles(&[], &policy);
         assert!(recovered.is_empty());

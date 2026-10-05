@@ -4,7 +4,7 @@ mod support;
 
 use std::collections::HashSet;
 
-use hypercurve::{BooleanOp, CurveContext, CurveFamily2};
+use hypercurve::{BooleanOp, CurveFamily2, PredicatePolicy};
 use pathological_fixture::build_native_cell;
 use pathological_fixture::{MemoryTier, NativeDataset};
 
@@ -76,7 +76,7 @@ fn pathological_cell_covers_every_curve_and_real_representation_family() {
 #[test]
 fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans() {
     let cell = build_native_cell(0);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     {
         let evidence =
             crate::support::under(&policy, || cell.source.intersect_region(&cell.rotated))
@@ -124,7 +124,7 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
     // root isolation but blocked while forcing the Real-coefficient roots
     // through the rational-coefficient algebraic-number image package.
     let cell = build_native_cell(2);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let evidence = crate::support::under(&policy, || cell.source.intersect_region(&cell.rotated))
         .expect("pi-weight conic/cubic intersections retain exact evidence")
         .value;
@@ -146,7 +146,7 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
 #[test]
 fn full_pathological_native_workload_decides_all_268_exact_booleans() {
     let dataset = NativeDataset::build(MemoryTier::Mib100);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let operations = [
         BooleanOp::Union,
         BooleanOp::Intersection,

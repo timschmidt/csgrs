@@ -1,8 +1,8 @@
 mod support;
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveContext, CurveRegion2, CurveString2, EndpointTangent2, FillRule,
-    LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
-    ZeroKnowledge,
+    BulgeVertex2, Contour2, CurveRegion2, CurveString2, EndpointTangent2, FillRule,
+    LineLineIntersection, LineSeg2, Point2, PredicatePolicy, Real, Segment2, SegmentKind,
+    SymbolicDependencyMask, ZeroKnowledge,
 };
 
 fn r(value: i32) -> Real {
@@ -17,8 +17,8 @@ fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), r(bulge))
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 #[test]

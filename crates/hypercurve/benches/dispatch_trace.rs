@@ -3,9 +3,9 @@ mod support;
 #[cfg(feature = "triangulation")]
 use hypercurve::triangulate_finite_rings;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Contour2, Curve2, CurveContext, CurveError, CurvePath2,
-    CurveRegion2, LineSeg2, NurbsCurve2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2,
-    Real, Similarity2, StraightSkeletonStage2,
+    BooleanOp, BulgeVertex2, CircularArc2, Contour2, Curve2, CurveError, CurvePath2, CurveRegion2,
+    LineSeg2, NurbsCurve2, OffsetCap, OffsetCornerStyle2, Point2, PredicatePolicy,
+    QuadraticBezier2, Real, Similarity2, StraightSkeletonStage2,
 };
 
 fn r(value: i32) -> Real {
@@ -65,7 +65,7 @@ fn trace<T, E: std::fmt::Display>(name: &str, workload: impl FnOnce() -> Result<
 }
 
 fn main() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let horizontal = LineSeg2::try_new(p(-4, 0), p(4, 0)).expect("line is valid");
     let vertical = LineSeg2::try_new(p(0, -4), p(0, 4)).expect("line is valid");
     trace("line_line_intersection", || {
@@ -189,6 +189,6 @@ fn main() {
     trace("finite_ring_triangulation", || {
         let material = [[0.0, 0.0], [8.0, 0.0], [8.0, 6.0], [0.0, 6.0]];
         let hole = [[2.0, 2.0], [2.0, 4.0], [6.0, 4.0], [6.0, 2.0]];
-        triangulate_finite_rings(&material, &[&hole], &policy)
+        crate::support::under(&policy, || triangulate_finite_rings(&material, &[&hole]))
     });
 }

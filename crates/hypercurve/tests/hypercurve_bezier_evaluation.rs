@@ -1,6 +1,6 @@
 mod support;
 use hypercurve::{
-    BezierFlatteningOptions, CubicBezier2, Curve2, CurveContext, Point2, QuadraticBezier2,
+    BezierFlatteningOptions, CubicBezier2, Curve2, Point2, PredicatePolicy, QuadraticBezier2,
     RationalBezier2, Real,
 };
 
@@ -95,7 +95,7 @@ fn optimized_polynomial_evaluation_matches_de_casteljau_exactly() {
 
 #[test]
 fn certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let options =
         crate::support::under_value(&policy, || BezierFlatteningOptions::try_new(q(1, 64), 16))
             .unwrap();

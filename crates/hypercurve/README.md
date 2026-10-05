@@ -29,7 +29,7 @@ This README describes crate version `0.3.1`.
 | `Curve2` | Shared exact curve carrier with borrowed operations |
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
-| `CurveContext`, `CurvePreviewOptions`, `Classification<T>` | One-byte predicate context, explicit lossy preview adapter, and decided/uncertain result |
+| `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
 | `CurveError`, `ExactCurveError` | Construction and exact-topology failure information |
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
@@ -140,8 +140,8 @@ exact signatures.
 - `CurvePoint2::{from, coordinates, coincides_with, compare_coordinate, bounds}`
   handles exact curve contacts through one opaque value. `coordinates()` is an
   optional view of stored `Real` coordinates; selected points retain their
-  exact meaning and support geometric queries without that view. Predicates
-  return their certainty under the requested `CurveContext`.
+  exact meaning and support geometric queries without that view. Undecided
+  predicates are reported as blockers.
 - `LineSeg2::{try_new, point_at, reversed, classify_point, contains_point,
   structural_facts}` covers checked segments and point predicates.
 - `CircularArc2::{try_from_center, from_bulge, contains_point,
@@ -377,8 +377,8 @@ Hypercurve separates exact values from decisions about them:
 
 - Coordinates are `Real` values, not an implicit `f64` tolerance model.
 - Checked constructors reject malformed or structurally invalid input.
-- `CurveRegion2`, `CurvePath2` and `Curve2` operations are exact: they take
-  no policy argument and return `ExactCurveResult<T>`. A decision that exact predicates cannot settle
+- Every public operation is exact: it takes no policy argument and returns
+  `ExactCurveResult<T>`. A decision that exact predicates cannot settle
   is reported as an `ExactCurveError::Blocked` with its operation and reason,
   never guessed. Optional results are `Option`s: the empty region has no
   bounds, and a region without a line/arc boundary has no native view.
@@ -387,11 +387,13 @@ Hypercurve separates exact values from decisions about them:
   interpretation. Its `Provisional<T>` result yields the value through
   `certified()` only when no such terminal was consumed, and otherwise only
   through the explicitly unverified accessors.
-- APIs not yet migrated to that form take an explicit `CurveContext`:
-  `CurveContext::STRICT` accepts only certified decisions, while
-  `CurveContext::APPROXIMATE_512` may consume the terminal interpretation.
-- `CurvePreviewOptions` owns finite display tolerances separately. Its scoped
-  preview results are never exact topology or construction provenance.
+- `hypercurve::evaluate_under(policy, || ...)` takes a Hyperlimit
+  `PredicatePolicy` for callers whose policy is configuration: `STRICT`
+  evaluates exactly (certified), and `APPROXIMATE_512` behaves as
+  `provisional`.
+- `CurvePreviewOptions` owns finite display tolerances separately. Operations
+  called inside `evaluate` use its edge-preview context; its scoped preview
+  results are never exact topology or construction provenance.
 - `Classification::Decided(value)` is a supported conclusion.
   `Classification::Uncertain(reason)` preserves an undecidable or unsupported
   predicate instead of silently choosing a side.

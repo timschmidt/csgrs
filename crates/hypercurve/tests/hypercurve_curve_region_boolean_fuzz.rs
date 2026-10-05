@@ -5,8 +5,8 @@ mod support;
 use std::collections::HashSet;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    FillRule, LineSeg2, Point2, PredicatePolicy, QuadraticBezier2, RationalBezier2,
     RationalQuadraticBezier2, Real, Similarity2,
 };
 use proptest::prelude::*;
@@ -313,7 +313,7 @@ fn exact_boolean_results(
     second: &CurveRegion2,
     compare_individual_calls: bool,
 ) -> Result<(), String> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let evidence = crate::support::under(&policy, || first.intersect_region(second))
         .map_err(|error| format!("{label}: exact intersection failed: {error}"))?
         .value;
@@ -903,7 +903,7 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
         weight_numerator: 1,
         weight_denominator: 1,
     });
-    let first = crate::support::under(&CurveContext::STRICT, || {
+    let first = crate::support::under(&PredicatePolicy::STRICT, || {
         horizontal.boolean_region(&vertical, BooleanOp::Union)
     })
     .unwrap()
@@ -939,7 +939,7 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
         hypercurve::FillRule::EvenOdd,
     )
     .unwrap();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let transformed = crate::support::under(&policy, || {
         source.transform_affine(
             &Real::zero(),
@@ -1004,7 +1004,7 @@ fn retired_circular_line_endpoint_case() -> RetiredFailureCase {
 }
 
 fn retired_distinct_circular_conic_contacts_case() -> RetiredFailureCase {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let translated = crate::support::under(&policy, || {
         exact_circle_region(1, false).transform_affine(
             &Real::one(),
@@ -1341,7 +1341,7 @@ fn tangent_family_region(family: u8, material_above: bool, outer_y: i16) -> Curv
         ]
     } else {
         vec![
-            crate::support::under(&CurveContext::STRICT, || tangent.reversed())
+            crate::support::under(&PredicatePolicy::STRICT, || tangent.reversed())
                 .expect("the tangent carrier reverses exactly")
                 .into_value(),
             Curve2::from(LineSeg2::try_new(point(-4, endpoint_y), point(-4, outer_y)).unwrap()),
@@ -1365,7 +1365,7 @@ fn deterministic_tangent_curve_family_pair_matrix_completes() {
             let second = tangent_family_region(second_family, false, -8);
             let label = format!("deterministic tangent family pair {first_family}/{second_family}");
             let evidence =
-                crate::support::under(&CurveContext::STRICT, || first.intersect_region(&second))
+                crate::support::under(&PredicatePolicy::STRICT, || first.intersect_region(&second))
                     .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
                     .into_value();
             if first_family == 0 && second_family == 0 {
@@ -1421,7 +1421,7 @@ fn deterministic_coincident_curve_family_images_complete() {
         let second = tangent_family_region(second_family, true, 10);
         let label = format!("deterministic coincident family image {first_family}/{second_family}");
         let evidence =
-            crate::support::under(&CurveContext::STRICT, || first.intersect_region(&second))
+            crate::support::under(&PredicatePolicy::STRICT, || first.intersect_region(&second))
                 .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
                 .into_value();
         assert!(

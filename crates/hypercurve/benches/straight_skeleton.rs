@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, Contour2, Curve2, CurveContext, CurvePath2, LineSeg2, Point2, Real, Segment2,
-    StraightSkeletonArc2, StraightSkeletonArcGeometry2, StraightSkeletonArcKind2,
+    Classification, Contour2, Curve2, CurvePath2, LineSeg2, Point2, PredicatePolicy, Real,
+    Segment2, StraightSkeletonArc2, StraightSkeletonArcGeometry2, StraightSkeletonArcKind2,
     StraightSkeletonNode2, StraightSkeletonStage2,
 };
 
@@ -98,7 +98,7 @@ fn main() {
         std::mem::size_of::<StraightSkeletonArcKind2>(),
         std::mem::size_of::<StraightSkeletonArcGeometry2>(),
     );
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let concave = contour(&[
         (0, 0),
         (30, 0),

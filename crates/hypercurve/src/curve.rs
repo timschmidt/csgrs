@@ -1130,7 +1130,7 @@ impl Curve2 {
     /// result's [`Self::parameter_domain`] before evaluating it.
     ///
     /// At a discontinuous spline knot, each piece keeps its own one-sided
-    /// endpoint. The returned [`CurveOutcome`] covers the complete split.
+    /// endpoint.
     #[inline(always)]
     pub fn split_at(&self, parameter: CurveParameter2) -> crate::ExactCurveResult<(Self, Self)> {
         self.split_at_with_policy(parameter, &crate::policy::principal_context())
@@ -1200,8 +1200,6 @@ impl Curve2 {
     /// evidence across all covered arc or spline spans. Traversal direction
     /// is unchanged. Native scalar ranges use `[0, 1]` result domains except
     /// for splines, which retain the authored knot interval.
-    ///
-    /// The returned [`CurveOutcome`] covers the complete exact extraction.
     #[inline(always)]
     pub fn subcurve(
         &self,
@@ -2110,8 +2108,7 @@ impl Curve2 {
     ///
     /// Promotion runs once per shared curve object. Circular-arc, polynomial
     /// spline, and native NURBS spans preserve their source span index and
-    /// exact parameter interval. The returned [`CurveOutcome`] records whether
-    /// promotion consumed the `APPROXIMATE_512` terminal.
+    /// exact parameter interval.
     #[inline(always)]
     pub fn native_bezier_fragments(&self) -> crate::ExactCurveResult<&[NativeBezierFragment2]> {
         self.native_bezier_fragments_with_policy(&crate::policy::principal_context())
@@ -2839,9 +2836,7 @@ impl CurvePath2 {
     /// Classifies an exact point against this closed path.
     ///
     /// Native full circles use their radial predicate directly. Other paths
-    /// reuse the retained exact Bezier boundary classifier. The returned
-    /// [`CurveOutcome`] records whether the complete classification consumed
-    /// the `APPROXIMATE_512` terminal.
+    /// reuse the retained exact Bezier boundary classifier.
     pub fn classify_point(
         &self,
         point: &CurvePoint2,
@@ -2944,9 +2939,6 @@ impl CurvePath2 {
     }
 
     /// Promotes this path once and borrows exact native Bezier fragments in traversal order.
-    ///
-    /// The returned [`CurveOutcome`] records whether promotion consumed the
-    /// `APPROXIMATE_512` terminal.
     #[inline(always)]
     pub fn native_bezier_fragments(&self) -> crate::ExactCurveResult<&[NativeBezierFragment2]> {
         self.native_bezier_fragments_with_policy(&crate::policy::principal_context())

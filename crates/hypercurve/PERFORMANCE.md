@@ -9130,6 +9130,29 @@ constructed before timing, and reports
 above describe the removed API and are retained as historical measurements;
 this change claims no new timing comparison.
 
+## 2026-10-05: exact-only principal API
+
+Every public curve, path, region, carrier, parameter, contour, string,
+segment, point and split operation now takes no predicate policy and returns
+`ExactCurveResult<T>`. An undecided predicate is an
+`ExactCurveError::Blocked` that names its operation and, for single-support
+decisions, its curve family. `CurveContext` and `CurveOutcome` are
+crate-private; the descriptions of them above are historical.
+
+Approximate evaluation is explicitly qualified:
+
+- `hypercurve::provisional(|| ...)` evaluates principal operations under
+  `APPROXIMATE_512`.
+- `hypercurve::evaluate_under(policy, || ...)` selects by a Hyperlimit
+  `PredicatePolicy` for callers whose policy is configuration.
+
+Both return `Provisional<T>`, whose `certified()` yields the value only when no
+terminal was consumed. Principal operations inside
+`CurvePreviewOptions::evaluate` use the adapter's edge-preview context.
+
+This change makes no performance claim. The policy-taking bodies are the
+crate-private `*_with_policy` forms that the principal methods call.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

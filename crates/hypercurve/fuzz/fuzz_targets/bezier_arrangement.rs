@@ -3,7 +3,7 @@
 mod support;
 
 use hypercurve::{
-    Classification, Curve2, CurveContext, CurvePoint2, Point2, QuadraticBezier2, Real,
+    Classification, Curve2, PredicatePolicy, CurvePoint2, Point2, QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -15,7 +15,7 @@ fn point(x: u8, y: u8) -> Point2 {
     Point2::new(real_from_byte(x), real_from_byte(y))
 }
 
-fn coincide(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
+fn coincide(first: &CurvePoint2, second: &CurvePoint2, policy: &PredicatePolicy) {
     assert_eq!(
         support::under_outcome_classification(policy, || first.coincides_with(second)),
         Classification::Decided(true)
@@ -23,7 +23,7 @@ fn coincide(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
 }
 
 /// Exact pieces of a completed pair topology must reassemble their source.
-fn assert_reassembles(source: &Curve2, pieces: &[Curve2], policy: &CurveContext) {
+fn assert_reassembles(source: &Curve2, pieces: &[Curve2], policy: &PredicatePolicy) {
     let (Some(first), Some(last)) = (pieces.first(), pieces.last()) else {
         panic!("a completed topology keeps at least one piece per curve");
     };
@@ -39,7 +39,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let curve = |chunk: &[u8]| {
         Curve2::from(QuadraticBezier2::new(
             point(chunk[0], chunk[1]),

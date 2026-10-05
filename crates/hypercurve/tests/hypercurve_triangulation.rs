@@ -2,7 +2,7 @@
 mod support;
 
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveContext, CurveError, CurveRegion2, FiniteProjectionOptions,
+    BulgeVertex2, Contour2, CurveError, CurveRegion2, ExactCurveError, FiniteProjectionOptions,
     Point2, Real, triangulate_finite_rings,
 };
 
@@ -40,9 +40,7 @@ fn signed_area(triangles: &[[[f64; 2]; 3]]) -> f64 {
 fn triangulate_finite_rings_normalizes_repeated_closing_vertex() {
     let outer = [[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0], [0.0, 0.0]];
 
-    let triangles = triangulate_finite_rings(&outer, &[], &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let triangles = triangulate_finite_rings(&outer, &[]).unwrap();
 
     assert_eq!(triangles.len(), 2);
     assert!((signed_area(&triangles).abs() - 12.0).abs() < 1.0e-9);
@@ -59,9 +57,7 @@ fn triangulate_finite_rings_normalizes_adjacent_duplicate_vertices() {
         [0.0, 0.0],
     ];
 
-    let triangles = triangulate_finite_rings(&outer, &[], &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let triangles = triangulate_finite_rings(&outer, &[]).unwrap();
 
     assert_eq!(triangles.len(), 2);
     assert!((signed_area(&triangles).abs() - 12.0).abs() < 1.0e-9);
@@ -71,37 +67,41 @@ fn triangulate_finite_rings_normalizes_adjacent_duplicate_vertices() {
 fn triangulate_finite_rings_rejects_nonfinite_before_normalization() {
     let outer = [[0.0, 0.0], [f64::NAN, 0.0], [1.0, 1.0]];
 
-    assert_eq!(
-        triangulate_finite_rings(&outer, &[], &CurveContext::STRICT).unwrap_err(),
-        CurveError::NonFiniteProjectionPoint
-    );
+    assert!(matches!(
+        triangulate_finite_rings(&outer, &[]).unwrap_err(),
+        ExactCurveError::Invalid {
+            cause: CurveError::NonFiniteProjectionPoint,
+            ..
+        }
+    ));
 }
 
 #[test]
 fn triangulate_finite_rings_ignores_all_duplicate_rings() {
     let outer = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]];
 
-    assert!(
-        triangulate_finite_rings(&outer, &[], &CurveContext::STRICT)
-            .unwrap()
-            .into_value()
-            .is_empty()
-    );
+    assert!(triangulate_finite_rings(&outer, &[]).unwrap().is_empty());
 }
 
 #[test]
 fn triangulate_finite_rings_rejects_nonadjacent_repeated_vertices() {
     let repeated_material = [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 4.0]];
     assert!(matches!(
-        triangulate_finite_rings(&repeated_material, &[], &CurveContext::STRICT),
-        Err(CurveError::Topology(_))
+        triangulate_finite_rings(&repeated_material, &[]),
+        Err(ExactCurveError::Invalid {
+            cause: CurveError::Topology(_),
+            ..
+        })
     ));
 
     let material = [[0.0, 0.0], [6.0, 0.0], [6.0, 6.0], [0.0, 6.0]];
     let repeated_hole = [[1.0, 1.0], [2.0, 1.0], [1.0, 1.0], [1.0, 2.0]];
     assert!(matches!(
-        triangulate_finite_rings(&material, &[&repeated_hole], &CurveContext::STRICT),
-        Err(CurveError::Topology(_))
+        triangulate_finite_rings(&material, &[&repeated_hole]),
+        Err(ExactCurveError::Invalid {
+            cause: CurveError::Topology(_),
+            ..
+        })
     ));
 }
 

@@ -2,9 +2,9 @@ mod support;
 use hypercurve::CurveFamily2;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveError,
-    CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCertainty, CurveError, CurvePath2,
+    CurveRegion2, ExactCurveError, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
+    PredicatePolicy, QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -148,7 +148,7 @@ fn exact_path_stroke_is_invariant_to_a_collinear_partition() {
 #[test]
 fn path_stroke_requires_a_policy_positive_half_width() {
     let path = CurvePath2::try_new(vec![line(0, 0, 4, 0)]).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for half_width in [s(0), s(-1)] {
             assert!(matches!(
                 crate::support::under(&policy, || CurveRegion2::stroke_path(
@@ -167,7 +167,7 @@ fn path_stroke_requires_a_policy_positive_half_width() {
 
     let undecidable_zero = support::terminally_unresolved_zero();
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
+        crate::support::under(&PredicatePolicy::STRICT, || CurveRegion2::stroke_path(
             &path,
             undecidable_zero.clone(),
             &OffsetCornerStyle2::Round,
@@ -176,15 +176,14 @@ fn path_stroke_requires_a_policy_positive_half_width() {
             if blocker.reason() == hypercurve::UncertaintyReason::RealSign
     ));
     assert!(matches!(
-        crate::support::under(
-            &CurveContext::APPROXIMATE_512,
-            || CurveRegion2::stroke_path(
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+            CurveRegion2::stroke_path(
                 &path,
                 undecidable_zero,
                 &OffsetCornerStyle2::Round,
-                OffsetCap::Butt
+                OffsetCap::Butt,
             )
-        ),
+        }),
         Err(ExactCurveError::Invalid {
             cause: CurveError::InvalidOffsetOptions,
             ..
@@ -196,7 +195,7 @@ fn path_stroke_requires_a_policy_positive_half_width() {
 fn self_crossing_source_is_regularized_instead_of_rejected() {
     let path =
         CurvePath2::try_new(vec![line(0, 0, 4, 4), line(4, 4, 0, 4), line(0, 4, 4, 0)]).unwrap();
-    let stroke = crate::support::under(&CurveContext::STRICT, || {
+    let stroke = crate::support::under(&PredicatePolicy::STRICT, || {
         CurveRegion2::stroke_path(&path, q(1, 4), &OffsetCornerStyle2::Round, OffsetCap::Round)
     })
     .unwrap();
@@ -235,7 +234,7 @@ fn exact_path_stroke_handles_an_arc_parallel_radius_collapse() {
         CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
     )])
     .unwrap();
-    let stroke = crate::support::under(&CurveContext::STRICT, || {
+    let stroke = crate::support::under(&PredicatePolicy::STRICT, || {
         CurveRegion2::stroke_path(&path, s(1), &OffsetCornerStyle2::Round, OffsetCap::Round)
     })
     .unwrap();
@@ -335,7 +334,7 @@ fn nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame() {
     ];
     for curve in curves {
         let path = CurvePath2::try_new(vec![Curve2::from(curve)]).unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let stroke_call = || {
@@ -390,8 +389,8 @@ fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
             CurveRegion2::stroke_path(&path, q(1, 10), &OffsetCornerStyle2::Round, OffsetCap::Butt)
         })
     };
-    let strict = run(&CurveContext::STRICT).unwrap();
-    let approximate = run(&CurveContext::APPROXIMATE_512).unwrap();
+    let strict = run(&PredicatePolicy::STRICT).unwrap();
+    let approximate = run(&PredicatePolicy::APPROXIMATE_512).unwrap();
     assert_eq!(strict.value, approximate.value);
     assert!(strict.value.boundary_loops().iter().any(|loop_| {
         loop_
@@ -401,7 +400,7 @@ fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
     }));
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
+        crate::support::under(&PredicatePolicy::STRICT, || CurveRegion2::stroke_path(
             &path,
             Real::zero(),
             &OffsetCornerStyle2::Round,
@@ -427,7 +426,7 @@ fn exact_path_stroke_splits_an_interior_source_cusp() {
     ))])
     .unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let stroke_call = || {
@@ -485,7 +484,7 @@ fn exact_path_stroke_preserves_an_even_multiplicity_stationary_source() {
     .unwrap();
     let path = CurvePath2::try_new(vec![Curve2::from(curve)]).unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let stroke_call = || {
@@ -541,7 +540,7 @@ fn exact_path_stroke_splits_a_nonuniform_rational_source_cusp() {
     .unwrap();
     let path = CurvePath2::try_new(vec![Curve2::from(curve)]).unwrap();
 
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let stroke_call = || {
@@ -595,8 +594,8 @@ fn rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies() {
         .unwrap()
     };
 
-    let strict = run(&CurveContext::STRICT);
-    let approximate = run(&CurveContext::APPROXIMATE_512);
+    let strict = run(&PredicatePolicy::STRICT);
+    let approximate = run(&PredicatePolicy::APPROXIMATE_512);
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert_eq!(strict.value, approximate.value);
     assert!(strict.value.boundary_loops().iter().any(|loop_| {
@@ -621,18 +620,18 @@ fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
         ),
     ];
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || CurvePath2::try_new(
+        crate::support::under(&PredicatePolicy::STRICT, || CurvePath2::try_new(
             curves.clone()
         )),
         Err(ExactCurveError::Blocked(_))
     ));
-    let path = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let path = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         CurvePath2::try_new(curves)
     })
     .unwrap()
     .into_value();
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
+        crate::support::under(&PredicatePolicy::STRICT, || CurveRegion2::stroke_path(
             &path,
             q(1, 2),
             &OffsetCornerStyle2::Round,
@@ -640,7 +639,7 @@ fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
         )),
         Err(ExactCurveError::Blocked(_))
     ));
-    let stroke = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let stroke = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         CurveRegion2::stroke_path(&path, q(1, 2), &OffsetCornerStyle2::Round, OffsetCap::Butt)
     })
     .unwrap();
@@ -672,7 +671,7 @@ fn path_stroke_obeys_the_approximate_512_closure_terminal() {
     ])
     .unwrap();
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
+        crate::support::under(&PredicatePolicy::STRICT, || CurveRegion2::stroke_path(
             &path,
             q(1, 2),
             &OffsetCornerStyle2::Round,
@@ -680,7 +679,7 @@ fn path_stroke_obeys_the_approximate_512_closure_terminal() {
         )),
         Err(ExactCurveError::Blocked(_))
     ));
-    let stroke = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let stroke = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         CurveRegion2::stroke_path(&path, q(1, 2), &OffsetCornerStyle2::Round, OffsetCap::Butt)
     })
     .unwrap();

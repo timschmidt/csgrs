@@ -1,41 +1,27 @@
 //! Helpers shared by the Hypercurve fuzz targets.
 
-use hypercurve::CurveContext;
+use hypercurve::PredicatePolicy;
 
-/// Whether `policy` selects the APPROXIMATE_512 terminal; a strict preview
-/// context runs directly.
-fn selects_approximate(policy: &CurveContext) -> bool {
-    policy.predicate_policy() != CurveContext::STRICT.predicate_policy()
-}
-
-/// Runs a principal exact operation directly under STRICT, or inside
-/// `hypercurve::provisional` for any other policy.
+/// Runs a principal exact operation under `policy` through
+/// [`hypercurve::evaluate_under`], without certification.
 #[allow(dead_code)]
-pub fn under<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
-    if !selects_approximate(policy) {
-        operation()
-    } else {
-        hypercurve::provisional(operation).into_unverified()
-    }
+pub fn under<T>(policy: &PredicatePolicy, operation: impl FnOnce() -> T) -> T {
+    hypercurve::evaluate_under(*policy, operation).into_unverified()
 }
 
 /// Runs a principal exact operation under `policy`, keeping its value only
 /// when it succeeded and every decision behind it was certified.
 #[allow(dead_code)]
 pub fn certified_under<T, E>(
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
     operation: impl FnOnce() -> Result<T, E>,
 ) -> Option<T> {
-    if !selects_approximate(policy) {
-        operation().ok()
-    } else {
-        hypercurve::provisional(operation).certified()?.ok()
-    }
+    hypercurve::evaluate_under(*policy, operation).certified()?.ok()
 }
 
 /// [`under`] for operations whose result never carried certainty.
 #[allow(dead_code)]
-pub fn under_value<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
+pub fn under_value<T>(policy: &PredicatePolicy, operation: impl FnOnce() -> T) -> T {
     under(policy, operation)
 }
 
@@ -43,7 +29,7 @@ pub fn under_value<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T
 /// predicate as `Classification::Uncertain` and any other error as `Err`.
 #[allow(dead_code)]
 pub fn under_classified_result<T>(
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
     operation: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
 ) -> hypercurve::ExactCurveResult<hypercurve::Classification<T>> {
     match under(policy, operation) {
@@ -59,7 +45,7 @@ pub fn under_classified_result<T>(
 /// their certainty; the value is unverified outside STRICT.
 #[allow(dead_code)]
 pub fn under_outcome_classified<T>(
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
     operation: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
 ) -> hypercurve::ExactCurveResult<hypercurve::Classification<T>> {
     under_classified_result(policy, operation)
@@ -71,7 +57,7 @@ pub fn under_outcome_classified<T>(
 /// error is a finding.
 #[allow(dead_code)]
 pub fn under_classified<T>(
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
     operation: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
 ) -> hypercurve::Classification<T> {
     under_classified_result(policy, operation)
@@ -82,7 +68,7 @@ pub fn under_classified<T>(
 /// predicate as `Classification::Uncertain`.
 #[allow(dead_code)]
 pub fn under_outcome_classification<T>(
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
     operation: impl FnOnce() -> hypercurve::ExactCurveResult<T>,
 ) -> hypercurve::Classification<T> {
     under_classified(policy, operation)

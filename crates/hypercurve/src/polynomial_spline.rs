@@ -300,9 +300,6 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Splits this polynomial spline exactly at a strict interior parameter.
-    ///
-    /// The returned [`CurveOutcome`] covers the unit-weight NURBS split and
-    /// exact polynomial-carrier reconstruction.
     #[inline(always)]
     pub fn split_at(&self, parameter: Real) -> crate::ExactCurveResult<(Self, Self)> {
         self.split_at_with_policy(parameter, &crate::policy::principal_context())
@@ -334,9 +331,6 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Returns an exact polynomial subcurve over an ordered source range.
-    ///
-    /// The returned [`CurveOutcome`] records any `APPROXIMATE_512` terminal
-    /// consumed throughout the complete reconstruction.
     #[inline(always)]
     pub fn subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
         self.subcurve_with_policy(start, end, &crate::policy::principal_context())
@@ -377,7 +371,6 @@ impl PolynomialSplineCurve2 {
     ///
     /// Periodic and unclamped polynomial splines are materialized in exact
     /// piecewise-Bézier B-spline form over the requested source interval.
-    /// The returned [`CurveOutcome`] covers the complete exact materialization.
     #[inline(always)]
     pub fn clamped_subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
         self.clamped_subcurve_with_policy(start, end, &crate::policy::principal_context())

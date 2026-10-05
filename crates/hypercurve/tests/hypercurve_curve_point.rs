@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 use hypercurve::{
     Axis2, BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    Classification, CurveCertainty, CurveContext, CurvePoint2, Point2, RationalBezier2, Real,
+    Classification, CurveCertainty, CurvePoint2, Point2, PredicatePolicy, RationalBezier2, Real,
 };
 
 fn decided<T>(value: Classification<T>) -> T {
@@ -19,7 +19,7 @@ fn certified<T: std::fmt::Debug>(outcome: crate::support::Outcome<Classification
 }
 
 fn selected_point(reversed: bool) -> CurvePoint2 {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     // alpha^5 + alpha = 1 has one root in (0, 1). The second chart
     // independently selects u = 1 - alpha from (1 - u)^5 - u = 0.
     let coefficients: &[i32] = if reversed {
@@ -70,7 +70,7 @@ fn independent_selected_charts_share_the_general_point_queries() {
     let second = selected_point(true);
     assert!(first.coordinates().is_none());
     assert!(second.coordinates().is_none());
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         assert!(certified(crate::support::under_outcome_classification(
             &policy,
             || first.coincides_with(&second)
@@ -110,7 +110,7 @@ fn independent_selected_charts_share_the_general_point_queries() {
     // Queries keep the selected parameter representation available for reuse.
     assert!(first.coordinates().is_none());
     assert!(certified(crate::support::under_outcome_classification(
-        &CurveContext::STRICT,
+        &PredicatePolicy::STRICT,
         || first.coincides_with(&first.clone())
     )));
 }
@@ -121,13 +121,13 @@ fn coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty() {
     let point = CurvePoint2::from(coordinates.clone());
     assert_eq!(point.coordinates(), Some(&coordinates));
     let bounds = certified(crate::support::under_outcome_classification(
-        &CurveContext::APPROXIMATE_512,
+        &PredicatePolicy::APPROXIMATE_512,
         || point.bounds(),
     ));
     assert_eq!(bounds.min(), &coordinates);
     assert_eq!(bounds.max(), &coordinates);
     assert!(certified(crate::support::under_outcome_classification(
-        &CurveContext::APPROXIMATE_512,
+        &PredicatePolicy::APPROXIMATE_512,
         || point.coincides_with(&point.clone())
     )));
 
@@ -136,13 +136,13 @@ fn coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty() {
         support::terminally_unresolved_zero(),
         Real::zero(),
     ));
-    let strict = crate::support::under_outcome_classification(&CurveContext::STRICT, || {
+    let strict = crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || {
         origin.coincides_with(&unresolved)
     });
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(strict.value, Classification::Uncertain(_)));
     let approximate =
-        crate::support::under_outcome_classification(&CurveContext::APPROXIMATE_512, || {
+        crate::support::under_outcome_classification(&PredicatePolicy::APPROXIMATE_512, || {
             origin.coincides_with(&unresolved)
         });
     assert_eq!(
@@ -151,7 +151,7 @@ fn coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty() {
     );
     assert_eq!(approximate.value, Classification::Decided(true));
     assert!(matches!(
-        crate::support::under_outcome_classification(&CurveContext::STRICT, || origin
+        crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || origin
             .coincides_with(&unresolved))
         .value,
         Classification::Uncertain(_),
@@ -161,8 +161,8 @@ fn coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty() {
 mod generated_derivatives {
     use hypercurve::{
         Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-        BezierParameterPolynomial, BezierParameterRange2, Classification, Curve2, CurveContext,
-        CurveParameter2, ExactCurveError, Point2, QuadraticBezier2, Real, UncertaintyReason,
+        BezierParameterPolynomial, BezierParameterRange2, Classification, Curve2, CurveParameter2,
+        ExactCurveError, Point2, PredicatePolicy, QuadraticBezier2, Real, UncertaintyReason,
     };
 
     fn decided<T>(value: Classification<T>) -> T {
@@ -177,7 +177,7 @@ mod generated_derivatives {
     }
 
     /// The root of `a t^2 - 1` in `[lower, upper]`.
-    fn inverse_root(a: i32, lower: Real, upper: Real, policy: &CurveContext) -> CurveParameter2 {
+    fn inverse_root(a: i32, lower: Real, upper: Real, policy: &PredicatePolicy) -> CurveParameter2 {
         let polynomial = decided(
             crate::support::under_classified_result(policy, || {
                 BezierParameterPolynomial::try_new_power_basis(vec![
@@ -212,7 +212,7 @@ mod generated_derivatives {
 
     #[test]
     fn zero_distance_generated_parallel_matches_its_source_derivative() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let unit = decided(
             crate::support::under_classified_result(&policy, || {
                 BezierParameterRange2::try_new(
@@ -244,7 +244,7 @@ mod generated_derivatives {
 
     #[test]
     fn retained_bezier_pieces_evaluate_selected_derivatives() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let curve = Curve2::from(arch());
         // Split at 1/sqrt(2); the left piece keeps the source chart [0, 1/sqrt(2)].
         let cut = inverse_root(2, q(1, 2), q(3, 4), &policy);
@@ -282,7 +282,7 @@ mod generated_derivatives {
         distance: Real,
         start: BezierParameter2,
         end: BezierParameter2,
-        policy: &CurveContext,
+        policy: &PredicatePolicy,
     ) -> Curve2 {
         let range = decided(
             crate::support::under_classified_result(policy, || {
@@ -299,7 +299,7 @@ mod generated_derivatives {
 
     fn signs(
         derivative: &hypercurve::CurveVector2,
-        policy: &CurveContext,
+        policy: &PredicatePolicy,
     ) -> (hyperreal::RealSign, hyperreal::RealSign) {
         (
             decided(
@@ -324,7 +324,7 @@ mod generated_derivatives {
         // parallel at distance d moves along v * (1 + 16 d / |v|^3). At
         // t = 1/sqrt(3), |v|^6 is about 84.2: d = -1 passes the curvature
         // centre and reverses the tangent; d = -1/2 and d = 1 do not.
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let selected = inverse_root(3, q(1, 2), q(2, 3), &policy);
             let nearby = CurveParameter2::from(q(4, 7));
             for (distance, expected) in [
@@ -358,7 +358,7 @@ mod generated_derivatives {
 
     #[test]
     fn selected_parallel_cusps_have_an_exact_zero_derivative() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         // 64 t^2 - 64 t + 14 = 0 gives (4 - 8t)^2 = 2 and |v|^2 = 6, so the
         // speed ratio 1 + 16 d / 6^(3/2) vanishes at d = -3 sqrt(6) / 8.
         let polynomial = decided(
@@ -399,7 +399,7 @@ mod generated_derivatives {
 
     #[test]
     fn selected_parallel_higher_derivatives_report_the_capability_boundary() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let selected = inverse_root(3, q(1, 2), q(2, 3), &policy);
         assert!(matches!(
             crate::support::under(&policy, || arch_parallel(

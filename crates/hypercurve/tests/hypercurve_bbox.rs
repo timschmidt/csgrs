@@ -1,7 +1,7 @@
 mod support;
 use hypercurve::{
-    Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveRegion2,
-    CurveString2, LineSeg2, Point2, Real, Segment2,
+    Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveRegion2, CurveString2,
+    LineSeg2, Point2, PredicatePolicy, Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -20,8 +20,8 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(line(start_x, start_y, end_x, end_y))
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn assert_bbox(bbox: &Aabb2, min: Point2, max: Point2) {

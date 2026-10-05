@@ -1,7 +1,7 @@
 mod support;
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourOperand, ContourSplitMap, ContourSplitMarkers,
-    CurveContext, CurveError, Real, SegmentSplitMarker,
+    CurveError, PredicatePolicy, Real, SegmentSplitMarker,
 };
 
 fn s(value: i32) -> Real {
@@ -33,8 +33,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     ])
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn assert_topology_error<T>(result: Result<T, CurveError>) {

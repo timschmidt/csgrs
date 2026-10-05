@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    FillRule, LineSeg2, Point2, PredicatePolicy, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -35,7 +35,7 @@ fn rectangle(x0: i32, y0: i32, x1: i32, y1: i32) -> CurvePath2 {
     .expect("benchmark rectangle is connected")
 }
 
-fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+fn path_region(path: &CurvePath2, policy: &PredicatePolicy) -> CurveRegion2 {
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             std::slice::from_ref(path),
@@ -76,7 +76,7 @@ fn closed_under_cubic(curve: CubicBezier2, lower_y: i32) -> CurvePath2 {
 }
 
 fn main() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
 

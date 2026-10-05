@@ -6,8 +6,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurveContext, CurveResult, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    BezierParameterPolynomial, Classification, CurveResult, Point2, PredicatePolicy,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -26,7 +26,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     // Repeated exact comparisons must reuse a proved opaque cancellation.
     // The cold lane keeps the cost of constructing and proving a fresh value.
     let atom = (r(2).sqrt()? + Real::one()).sin();

@@ -4,8 +4,8 @@
 mod support;
 mod contacts {
     use hypercurve::{
-        Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
-        CurveFillet2, CurveFilletContact2, CurvePath2, ExactCurveError, LineSeg2, Point2,
+        Classification, CubicBezier2, Curve2, CurveCertainty, CurveCornerMode2, CurveFillet2,
+        CurveFilletContact2, CurvePath2, ExactCurveError, LineSeg2, Point2, PredicatePolicy,
         QuadraticBezier2, RationalBezier2, Real,
     };
     fn q(n: i64, d: i64) -> Real {
@@ -46,7 +46,7 @@ mod contacts {
     }
     fn check_mode(
         kind: u8,
-        policy: CurveContext,
+        policy: PredicatePolicy,
         reversed: bool,
         mode: CurveCornerMode2,
         quadratic_line: bool,
@@ -125,48 +125,48 @@ mod contacts {
                 && second.value == Classification::Decided(true)
         );
     }
-    fn check(kind: u8, policy: CurveContext) {
+    fn check(kind: u8, policy: PredicatePolicy) {
         check_reversed(kind, policy, false)
     }
     #[test]
     fn stationary_reparameterization_reversed_strict() {
-        check_reversed(1, CurveContext::STRICT, true)
+        check_reversed(1, PredicatePolicy::STRICT, true)
     }
     #[test]
     fn stationary_reparameterization_reversed_approximate() {
-        check_reversed(1, CurveContext::APPROXIMATE_512, true)
+        check_reversed(1, PredicatePolicy::APPROXIMATE_512, true)
     }
     #[test]
     fn one_sided_cusp_reversed_strict() {
-        check_reversed(2, CurveContext::STRICT, true)
+        check_reversed(2, PredicatePolicy::STRICT, true)
     }
     #[test]
     fn one_sided_cusp_reversed_approximate() {
-        check_reversed(2, CurveContext::APPROXIMATE_512, true)
+        check_reversed(2, PredicatePolicy::APPROXIMATE_512, true)
     }
     #[test]
     fn regular_parabola_strict() {
-        check(0, CurveContext::STRICT)
+        check(0, PredicatePolicy::STRICT)
     }
     #[test]
     fn stationary_reparameterization_strict() {
-        check(1, CurveContext::STRICT)
+        check(1, PredicatePolicy::STRICT)
     }
     #[test]
     fn one_sided_cusp_strict() {
-        check(2, CurveContext::STRICT)
+        check(2, PredicatePolicy::STRICT)
     }
     #[test]
     fn regular_parabola_approximate() {
-        check(0, CurveContext::APPROXIMATE_512)
+        check(0, PredicatePolicy::APPROXIMATE_512)
     }
     #[test]
     fn stationary_reparameterization_approximate() {
-        check(1, CurveContext::APPROXIMATE_512)
+        check(1, PredicatePolicy::APPROXIMATE_512)
     }
     #[test]
     fn one_sided_cusp_approximate() {
-        check(2, CurveContext::APPROXIMATE_512)
+        check(2, PredicatePolicy::APPROXIMATE_512)
     }
 
     #[test]
@@ -174,7 +174,7 @@ mod contacts {
         for kind in [1, 2] {
             for reversed in [false, true] {
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                    check_mode(kind, CurveContext::STRICT, reversed, mode, true);
+                    check_mode(kind, PredicatePolicy::STRICT, reversed, mode, true);
                 }
             }
         }
@@ -185,14 +185,14 @@ mod contacts {
         for kind in [1, 2] {
             for reversed in [false, true] {
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                    check_mode(kind, CurveContext::APPROXIMATE_512, reversed, mode, true);
+                    check_mode(kind, PredicatePolicy::APPROXIMATE_512, reversed, mode, true);
                 }
             }
         }
     }
 
     fn interior_stationary_contact_mode(
-        policy: CurveContext,
+        policy: PredicatePolicy,
         reversed: bool,
         mode: CurveCornerMode2,
         quadratic_line: bool,
@@ -274,28 +274,28 @@ mod contacts {
                 && second.value == Classification::Decided(true)
         );
     }
-    fn interior_stationary_contact(policy: CurveContext) {
+    fn interior_stationary_contact(policy: PredicatePolicy) {
         interior_stationary_contact_reversed(policy, false)
     }
     #[test]
     fn interior_stationary_contact_reversed_strict() {
-        interior_stationary_contact_reversed(CurveContext::STRICT, true)
+        interior_stationary_contact_reversed(PredicatePolicy::STRICT, true)
     }
     #[test]
     fn interior_stationary_contact_reversed_approximate() {
-        interior_stationary_contact_reversed(CurveContext::APPROXIMATE_512, true)
+        interior_stationary_contact_reversed(PredicatePolicy::APPROXIMATE_512, true)
     }
     #[test]
     fn interior_stationary_contact_strict() {
-        interior_stationary_contact(CurveContext::STRICT)
+        interior_stationary_contact(PredicatePolicy::STRICT)
     }
     #[test]
     fn interior_stationary_contact_approximate() {
-        interior_stationary_contact(CurveContext::APPROXIMATE_512)
+        interior_stationary_contact(PredicatePolicy::APPROXIMATE_512)
     }
 
     fn opposite_stationary_sheet_mode(
-        policy: CurveContext,
+        policy: PredicatePolicy,
         reversed: bool,
         mode: CurveCornerMode2,
         quadratic_line: bool,
@@ -343,27 +343,27 @@ mod contacts {
     }
     #[test]
     fn opposite_stationary_sheet_strict() {
-        opposite_stationary_sheet(CurveContext::STRICT, false)
+        opposite_stationary_sheet(PredicatePolicy::STRICT, false)
     }
     #[test]
     fn opposite_stationary_sheet_approximate() {
-        opposite_stationary_sheet(CurveContext::APPROXIMATE_512, false)
+        opposite_stationary_sheet(PredicatePolicy::APPROXIMATE_512, false)
     }
     #[test]
     fn opposite_stationary_sheet_reversed_strict() {
-        opposite_stationary_sheet(CurveContext::STRICT, true)
+        opposite_stationary_sheet(PredicatePolicy::STRICT, true)
     }
     #[test]
     fn opposite_stationary_sheet_reversed_approximate() {
-        opposite_stationary_sheet(CurveContext::APPROXIMATE_512, true)
+        opposite_stationary_sheet(PredicatePolicy::APPROXIMATE_512, true)
     }
 
-    fn check_reversed(kind: u8, policy: CurveContext, reversed: bool) {
+    fn check_reversed(kind: u8, policy: PredicatePolicy, reversed: bool) {
         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
             check_mode(kind, policy, reversed, mode, false)
         }
     }
-    fn quadratic_line_interior_contacts(policy: CurveContext) {
+    fn quadratic_line_interior_contacts(policy: PredicatePolicy) {
         for reversed in [false, true] {
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 for constraint in 0..4 {
@@ -372,7 +372,7 @@ mod contacts {
             }
         }
     }
-    fn quadratic_line_opposite_sheet(policy: CurveContext) {
+    fn quadratic_line_opposite_sheet(policy: PredicatePolicy) {
         for reversed in [false, true] {
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 opposite_stationary_sheet_mode(policy, reversed, mode, true);
@@ -381,27 +381,27 @@ mod contacts {
     }
     #[test]
     fn quadratic_line_interior_contacts_strict() {
-        quadratic_line_interior_contacts(CurveContext::STRICT);
+        quadratic_line_interior_contacts(PredicatePolicy::STRICT);
     }
     #[test]
     fn quadratic_line_interior_contacts_approximate() {
-        quadratic_line_interior_contacts(CurveContext::APPROXIMATE_512);
+        quadratic_line_interior_contacts(PredicatePolicy::APPROXIMATE_512);
     }
     #[test]
     fn quadratic_line_opposite_sheet_strict() {
-        quadratic_line_opposite_sheet(CurveContext::STRICT);
+        quadratic_line_opposite_sheet(PredicatePolicy::STRICT);
     }
     #[test]
     fn quadratic_line_opposite_sheet_approximate() {
-        quadratic_line_opposite_sheet(CurveContext::APPROXIMATE_512);
+        quadratic_line_opposite_sheet(PredicatePolicy::APPROXIMATE_512);
     }
 
-    fn interior_stationary_contact_reversed(policy: CurveContext, reversed: bool) {
+    fn interior_stationary_contact_reversed(policy: PredicatePolicy, reversed: bool) {
         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
             interior_stationary_contact_mode(policy, reversed, mode, false, 0)
         }
     }
-    fn opposite_stationary_sheet(policy: CurveContext, reversed: bool) {
+    fn opposite_stationary_sheet(policy: PredicatePolicy, reversed: bool) {
         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
             opposite_stationary_sheet_mode(policy, reversed, mode, false)
         }
@@ -409,9 +409,9 @@ mod contacts {
 }
 mod composition {
     use hypercurve::{
-        BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCertainty, CurveContext,
-        CurveCornerMode2, CurveFillet2, CurveFilletContact2, CurvePath2, CurveRegion2,
-        CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, Real,
+        BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCertainty, CurveCornerMode2,
+        CurveFillet2, CurveFilletContact2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+        LineSeg2, OffsetCornerStyle2, Point2, PredicatePolicy, Real,
     };
     fn q(n: i64, d: i64) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
@@ -422,7 +422,7 @@ mod composition {
     fn line(a: Point2, b: Point2) -> Curve2 {
         LineSeg2::try_new(a, b).unwrap().into()
     }
-    fn region(path: CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+    fn region(path: CurvePath2, policy: &PredicatePolicy) -> CurveRegion2 {
         let result = crate::support::under(policy, || {
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[path],
@@ -434,7 +434,7 @@ mod composition {
         assert!(result.certainty == CurveCertainty::Certified);
         result.into_value()
     }
-    fn regions(policy: CurveContext) -> (CurveRegion2, CurveRegion2) {
+    fn regions(policy: PredicatePolicy) -> (CurveRegion2, CurveRegion2) {
         let source = CubicBezier2::new(
             p(1, -1),
             Point2::new(q(-1, 3), Real::one()),
@@ -475,13 +475,13 @@ mod composition {
         );
         (actual, expected)
     }
-    fn compare(actual: &CurveRegion2, expected: &CurveRegion2, policy: &CurveContext) {
+    fn compare(actual: &CurveRegion2, expected: &CurveRegion2, policy: &PredicatePolicy) {
         let xor = crate::support::under(policy, || actual.boolean_region(expected, BooleanOp::Xor))
             .unwrap_or_else(|_| panic!("independent exact regions must compare"));
         assert!(xor.certainty == CurveCertainty::Certified);
         assert!(xor.value.is_empty());
     }
-    fn topology(policy: CurveContext) {
+    fn topology(policy: PredicatePolicy) {
         let (actual, expected) = regions(policy);
         compare(&actual, &expected, &policy);
         let paths = crate::support::under(&policy, || actual.boundary_paths()).unwrap();
@@ -490,7 +490,7 @@ mod composition {
         assert_eq!(paths.len(), 1);
         compare(&region(paths[0].clone(), &policy), &expected, &policy);
     }
-    fn offset(policy: CurveContext) {
+    fn offset(policy: PredicatePolicy) {
         let (actual, expected) = regions(policy);
         let offset = |region: &CurveRegion2| {
             let outcome = crate::support::under(&policy, || {
@@ -504,30 +504,30 @@ mod composition {
     }
     #[test]
     fn stationary_fillet_region_strict() {
-        topology(CurveContext::STRICT)
+        topology(PredicatePolicy::STRICT)
     }
     #[test]
     fn stationary_fillet_region_approximate() {
-        topology(CurveContext::APPROXIMATE_512)
+        topology(PredicatePolicy::APPROXIMATE_512)
     }
     #[test]
     fn stationary_fillet_offset_strict() {
-        offset(CurveContext::STRICT)
+        offset(PredicatePolicy::STRICT)
     }
     #[test]
     fn stationary_fillet_offset_approximate() {
-        offset(CurveContext::APPROXIMATE_512)
+        offset(PredicatePolicy::APPROXIMATE_512)
     }
 }
 mod exact_scalars {
     use hypercurve::{
-        Classification, CubicBezier2, CurveCertainty, CurveContext, CurveCornerMode2, CurveFillet2,
-        CurveFilletContact2, CurvePath2, LineSeg2, Point2, Real,
+        Classification, CubicBezier2, CurveCertainty, CurveCornerMode2, CurveFillet2,
+        CurveFilletContact2, CurvePath2, LineSeg2, Point2, PredicatePolicy, Real,
     };
     fn q(n: i64, d: i64) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
     }
-    fn check(policy: CurveContext) {
+    fn check(policy: PredicatePolicy) {
         let scale = Real::from(2).sqrt().unwrap();
         let tx = Real::from(3).sqrt().unwrap();
         let ty = Real::from(5).sqrt().unwrap();
@@ -588,19 +588,19 @@ mod exact_scalars {
     }
     #[test]
     fn stationary_contact_exact_scalars_strict() {
-        check(CurveContext::STRICT)
+        check(PredicatePolicy::STRICT)
     }
     #[test]
     fn stationary_contact_exact_scalars_approximate() {
-        check(CurveContext::APPROXIMATE_512)
+        check(PredicatePolicy::APPROXIMATE_512)
     }
 }
 
 mod retained_domains {
     use hypercurve::{
         BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2,
-        CurveCertainty, CurveContext, CurveCornerMode2, CurveFillet2, CurvePath2, LineSeg2, Point2,
-        Real,
+        CurveCertainty, CurveCornerMode2, CurveFillet2, CurvePath2, LineSeg2, Point2,
+        PredicatePolicy, Real,
     };
     fn q(n: i64, d: i64) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
@@ -611,7 +611,7 @@ mod retained_domains {
             Classification::Uncertain(reason) => panic!("fixture classification {reason:?}"),
         }
     }
-    fn check_case(policy: CurveContext, nonzero: bool, reversed: bool, mode: CurveCornerMode2) {
+    fn check_case(policy: PredicatePolicy, nonzero: bool, reversed: bool, mode: CurveCornerMode2) {
         let source = CubicBezier2::new(
             Point2::from_values(0, 0),
             Point2::from_values(0, 0),
@@ -683,22 +683,22 @@ mod retained_domains {
     }
     #[test]
     fn retained_regular_source_range_strict() {
-        check(CurveContext::STRICT, false)
+        check(PredicatePolicy::STRICT, false)
     }
     #[test]
     fn retained_regular_source_range_approximate() {
-        check(CurveContext::APPROXIMATE_512, false)
+        check(PredicatePolicy::APPROXIMATE_512, false)
     }
     #[test]
     fn retained_nonzero_parallel_range_strict() {
-        check(CurveContext::STRICT, true)
+        check(PredicatePolicy::STRICT, true)
     }
     #[test]
     fn retained_nonzero_parallel_range_approximate() {
-        check(CurveContext::APPROXIMATE_512, true)
+        check(PredicatePolicy::APPROXIMATE_512, true)
     }
 
-    fn check(policy: CurveContext, nonzero: bool) {
+    fn check(policy: PredicatePolicy, nonzero: bool) {
         for reversed in [false, true] {
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 check_case(policy, nonzero, reversed, mode)

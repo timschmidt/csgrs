@@ -2,7 +2,8 @@ mod support;
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection,
     ContourIntersectionSet, ContourOperand, ContourOverlapIntersection, ContourPointIntersection,
-    CurveContext, CurveError, IntersectionKind, LineSeg2, ParamRange, Real, Segment2, SegmentKind,
+    CurveError, IntersectionKind, LineSeg2, ParamRange, PredicatePolicy, Real, Segment2,
+    SegmentKind,
 };
 
 fn s(value: i32) -> Real {
@@ -34,8 +35,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     ])
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn point_event_point(event: &ContourIntersection) -> hypercurve::Point2 {

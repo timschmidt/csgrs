@@ -1,6 +1,6 @@
 mod support;
 use hypercurve::{
-    Curve2, CurveContext, ExactCurveError, Point2, RationalBezier2, Real, UncertaintyReason,
+    Curve2, ExactCurveError, Point2, PredicatePolicy, RationalBezier2, Real, UncertaintyReason,
 };
 
 fn rational(numerator: i32, denominator: i32) -> Real {
@@ -25,7 +25,7 @@ fn rational_line_derivatives_exceed_machine_binomial_orders() {
         assert_eq!(derivatives.len(), 128);
         let unified = Curve2::from(curve.clone());
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || unified
+            crate::support::under(&PredicatePolicy::STRICT, || unified
                 .derivatives_at(&parameter.clone().into(), 128))
             .expect("the top-level curve must preserve high derivative completeness")
             .into_value(),
@@ -120,17 +120,17 @@ fn high_derivative_requests_preserve_domain_and_size_guards() {
     .unwrap();
     for parameter in [Real::from(-1), Real::from(2)] {
         assert!(matches!(
-            crate::support::under_value(&CurveContext::STRICT, || curve.derivatives_at(&parameter, 80)),
+            crate::support::under_value(&PredicatePolicy::STRICT, || curve.derivatives_at(&parameter, 80)),
             Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Ordering
         ));
     }
     assert!(
-        crate::support::under_value(&CurveContext::STRICT, || curve
+        crate::support::under_value(&PredicatePolicy::STRICT, || curve
             .derivatives_at(&Real::zero(), usize::MAX))
         .is_err()
     );
     assert!(
-        crate::support::under_value(&CurveContext::STRICT, || curve
+        crate::support::under_value(&PredicatePolicy::STRICT, || curve
             .derivatives_at(&Real::zero(), 0))
         .unwrap()
         .is_empty()
@@ -151,7 +151,7 @@ fn high_derivative_requests_preserve_domain_and_size_guards() {
     )
     .unwrap();
     assert!(matches!(
-        crate::support::under_value(&CurveContext::STRICT, || pole.derivatives_at(&rational(1, 2), 80)),
+        crate::support::under_value(&PredicatePolicy::STRICT, || pole.derivatives_at(&rational(1, 2), 80)),
         Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == UncertaintyReason::Boundary
     ));
 }

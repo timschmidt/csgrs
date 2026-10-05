@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Curve2, CurveCertainty, CurveContext, CurveResult, NurbsCurve2, Point2, PolynomialSplineCurve2,
-    Real,
+    Curve2, CurveCertainty, CurveResult, NurbsCurve2, Point2, PolynomialSplineCurve2,
+    PredicatePolicy, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -21,7 +21,7 @@ fn q(numerator: i32, denominator: i32) -> Real {
 }
 
 /// Counts the exact Bezier spans of a spline through the unified curve API.
-fn fragment_count(curve: impl Into<Curve2>, policy: &CurveContext) -> usize {
+fn fragment_count(curve: impl Into<Curve2>, policy: &PredicatePolicy) -> usize {
     let curve = curve.into();
     crate::support::under(policy, || curve.native_bezier_fragments())
         .expect("benchmark spline decomposition remains exact")
@@ -74,7 +74,7 @@ fn bench_large_nurbs() {
     for _ in 0..iterations {
         let curve =
             NurbsCurve2::try_new(3, controls.clone(), weights.clone(), knots.clone()).unwrap();
-        cold_checksum ^= black_box(fragment_count(curve, &CurveContext::STRICT));
+        cold_checksum ^= black_box(fragment_count(curve, &PredicatePolicy::STRICT));
     }
     let elapsed = started.elapsed();
     println!(
@@ -85,7 +85,7 @@ fn bench_large_nurbs() {
     let curve = NurbsCurve2::try_new(3, controls, weights, knots).unwrap();
     let domain_end = i32::try_from(control_count - 3).unwrap();
     let parameter = q(domain_end, 2);
-    crate::support::under(&CurveContext::STRICT, || curve.point_at(&parameter))
+    crate::support::under(&PredicatePolicy::STRICT, || curve.point_at(&parameter))
         .expect("large NURBS midpoint evaluates exactly");
     let started = Instant::now();
     let mut evaluation_checksum = 0_usize;
@@ -107,7 +107,7 @@ fn main() -> CurveResult<()> {
         return Ok(());
     }
 
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let spline = || {
         crate::support::under(&policy, || {
             PolynomialSplineCurve2::try_new(
@@ -147,7 +147,7 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         cached_polynomial_checksum ^= black_box(fragment_count(
             cached_polynomial.clone(),
-            &CurveContext::STRICT,
+            &PredicatePolicy::STRICT,
         ));
     }
     let elapsed = started.elapsed();
@@ -282,14 +282,18 @@ fn main() -> CurveResult<()> {
     );
 
     let parameter = (r(1) / r(2)).expect("two is nonzero");
-    crate::support::under(&CurveContext::STRICT, || cached_nurbs.point_at(&parameter))
-        .expect("initial rational evaluation remains exact");
+    crate::support::under(&PredicatePolicy::STRICT, || {
+        cached_nurbs.point_at(&parameter)
+    })
+    .expect("initial rational evaluation remains exact");
     let started = Instant::now();
     let mut evaluation_count = 0_u32;
     for _ in 0..iterations {
         black_box(
-            crate::support::under(&CurveContext::STRICT, || cached_nurbs.point_at(&parameter))
-                .expect("cached rational evaluation remains exact"),
+            crate::support::under(&PredicatePolicy::STRICT, || {
+                cached_nurbs.point_at(&parameter)
+            })
+            .expect("cached rational evaluation remains exact"),
         );
         evaluation_count += 1;
     }
@@ -299,7 +303,7 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    crate::support::under(&CurveContext::STRICT, || {
+    crate::support::under(&PredicatePolicy::STRICT, || {
         cached_nurbs.derivative_at(&parameter)
     })
     .expect("initial rational derivative remains exact");
@@ -307,7 +311,7 @@ fn main() -> CurveResult<()> {
     let mut derivative_count = 0_u32;
     for _ in 0..iterations {
         black_box(
-            crate::support::under(&CurveContext::STRICT, || {
+            crate::support::under(&PredicatePolicy::STRICT, || {
                 cached_nurbs.derivative_at(&parameter)
             })
             .expect("cached rational derivative remains exact"),
@@ -368,7 +372,7 @@ fn main() -> CurveResult<()> {
     .expect("periodic benchmark NURBS is valid")
     .into_value();
     let wrapped_parameter = r(4_000_000) + q(1, 2);
-    crate::support::under(&CurveContext::STRICT, || {
+    crate::support::under(&PredicatePolicy::STRICT, || {
         periodic.point_at_wrapped(&wrapped_parameter)
     })
     .expect("large periodic parameter wraps exactly");
@@ -376,7 +380,7 @@ fn main() -> CurveResult<()> {
     let mut periodic_evaluation_count = 0_u32;
     for _ in 0..iterations {
         black_box(
-            crate::support::under(&CurveContext::STRICT, || {
+            crate::support::under(&PredicatePolicy::STRICT, || {
                 periodic.point_at_wrapped(&wrapped_parameter)
             })
             .expect("cached periodic evaluation remains exact"),
@@ -593,7 +597,7 @@ fn main() -> CurveResult<()> {
     );
 
     let symbolic_interpolation_points = vec![p(0, 0), p(1, 0), p(3, 0), p(6, 0)];
-    let symbolic_policy = CurveContext::APPROXIMATE_512;
+    let symbolic_policy = PredicatePolicy::APPROXIMATE_512;
     let symbolic_preflight = crate::support::under(&symbolic_policy, || {
         NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone())
     })

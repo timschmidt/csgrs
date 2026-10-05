@@ -173,6 +173,20 @@ impl TranslationObstacleEvidence2 {
 pub fn translation_obstacle_convex(
     fixed: &Contour2,
     moving: &Contour2,
+) -> crate::ExactCurveResult<TranslationObstacleEvidence2> {
+    translation_obstacle_convex_with_policy(fixed, moving, &crate::policy::principal_context())
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(
+                crate::CurveOperation2::Construction,
+                cause,
+            )
+        })
+}
+
+/// [`translation_obstacle_convex`] under an explicit predicate policy.
+pub(crate) fn translation_obstacle_convex_with_policy(
+    fixed: &Contour2,
+    moving: &Contour2,
     policy: &CurveContext,
 ) -> CurveResult<TranslationObstacleEvidence2> {
     let source_fixed_segment_count = fixed.segments().len();
@@ -452,7 +466,9 @@ mod tests {
     fn rectangle_translation_obstacle_is_exact_expanded_rectangle() {
         let fixed = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)]);
         let moving = contour(&[(0, 0), (1, 0), (1, 1), (0, 1)]);
-        let evidence = translation_obstacle_convex(&fixed, &moving, &CurveContext::STRICT).unwrap();
+        let evidence =
+            translation_obstacle_convex_with_policy(&fixed, &moving, &CurveContext::STRICT)
+                .unwrap();
         let obstacle = evidence.obstacle().unwrap();
         assert_eq!(obstacle.merged_edge_count(), 4);
         assert_eq!(
@@ -495,7 +511,9 @@ mod tests {
     fn clockwise_inputs_normalize_without_changing_forbidden_set() {
         let fixed = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)]);
         let moving = contour(&[(0, 0), (0, 1), (1, 1), (1, 0)]);
-        let evidence = translation_obstacle_convex(&fixed, &moving, &CurveContext::STRICT).unwrap();
+        let evidence =
+            translation_obstacle_convex_with_policy(&fixed, &moving, &CurveContext::STRICT)
+                .unwrap();
         assert_eq!(
             evidence
                 .obstacle()
@@ -511,7 +529,9 @@ mod tests {
     fn concave_operand_requires_exact_convex_decomposition() {
         let fixed = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)]);
         let moving = contour(&[(0, 0), (1, 0), (1, 1), (0, 1)]);
-        let evidence = translation_obstacle_convex(&fixed, &moving, &CurveContext::STRICT).unwrap();
+        let evidence =
+            translation_obstacle_convex_with_policy(&fixed, &moving, &CurveContext::STRICT)
+                .unwrap();
         assert!(evidence.obstacle().is_none());
         assert!(matches!(
             evidence.blocker(),

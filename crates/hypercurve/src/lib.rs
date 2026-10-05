@@ -221,9 +221,8 @@ pub use intersect::{
 pub use nurbs::NurbsCurve2;
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
-pub use policy::{
-    CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions, Provisional, provisional,
-};
+pub use policy::{CurveCertainty, CurvePreviewOptions, Provisional, evaluate_under, provisional};
+pub(crate) use policy::{CurveContext, CurveOutcome};
 pub use polynomial_spline::PolynomialSplineCurve2;
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{HomogeneousControl2, RationalBezier2};

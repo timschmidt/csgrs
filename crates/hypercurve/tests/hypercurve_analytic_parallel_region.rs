@@ -1,8 +1,8 @@
 mod support;
 use hypercurve::{
     BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2, CurveCertainty,
-    CurveContext, CurveFamily2, CurveParameterRange2, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2,
+    CurveFamily2, CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, PredicatePolicy,
     QuadraticBezier2, Real, RegionPointLocation,
 };
 use hypercurve::{
@@ -13,7 +13,7 @@ use hypercurve::{
 fn line_contacts(
     parallel: hypercurve::BezierParallel2,
     line: LineSeg2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Vec<hypercurve::CurveIntersectionContact2> {
     let Classification::Decided(range) = crate::support::under_classified_result(policy, || {
         BezierParameterRange2::try_new(
@@ -38,7 +38,7 @@ fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
-fn range(start: i64, end: i64, policy: &CurveContext) -> BezierParameterRange2 {
+fn range(start: i64, end: i64, policy: &PredicatePolicy) -> BezierParameterRange2 {
     match crate::support::under_classified_result(policy, || {
         BezierParameterRange2::try_new(
             BezierParameter2::Exact(Real::from(start)),
@@ -59,7 +59,7 @@ fn line_parallel_fragment(
     distance: i64,
     start_parameter: i64,
     end_parameter: i64,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Curve2 {
     let parallel = QuadraticBezier2::new(start, midpoint, end)
         .parallel_left(Real::from(distance))
@@ -75,7 +75,7 @@ fn assert_real_equal(left: &Real, right: &Real) {
     assert_eq!(left.partial_cmp(right), Some(std::cmp::Ordering::Equal));
 }
 
-fn loop_vertex_at(region: &CurveRegion2, point: Point2, policy: &CurveContext) -> usize {
+fn loop_vertex_at(region: &CurveRegion2, point: Point2, policy: &PredicatePolicy) -> usize {
     let paths = crate::support::under(policy, || region.boundary_paths())
         .unwrap()
         .value;
@@ -94,7 +94,7 @@ fn loop_vertex_at(region: &CurveRegion2, point: Point2, policy: &CurveContext) -
         .expect("the authored corner survives normalization")
 }
 
-fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion2 {
+fn analytic_square(min_x: i64, max_x: i64, policy: &PredicatePolicy) -> CurveRegion2 {
     let midpoint_x = (min_x + max_x) / 2;
     let edges = [
         (point(min_x, 0), point(midpoint_x, 0), point(max_x, 0)),
@@ -123,7 +123,7 @@ fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion
 
 #[test]
 fn boundary_curves_reenter_boolean_without_native_conversion() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let region = analytic_square(0, 4, &policy);
     let curves = region.boundary_loops()[0].curves();
     assert!(curves.iter().any(|curve| {
@@ -156,7 +156,7 @@ fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
     QuadraticBezier2::new(start, midpoint, end).into()
 }
 
-fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
+fn curved_parallel_cap(policy: &PredicatePolicy) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
         .parallel_left(Real::one())
         .unwrap();
@@ -204,7 +204,7 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
 fn analytic_rational_arc_corner_region(
     unit_end_weights: bool,
     reversed: bool,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> (CurveRegion2, usize) {
     let analytic = QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 1))
         .parallel_left(Real::zero())
@@ -269,7 +269,7 @@ fn analytic_rational_arc_corner_region(
 
 #[test]
 fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for unit_end_weights in [false, true] {
             for reversed in [false, true] {
                 let (source, vertex_index) =
@@ -319,7 +319,7 @@ fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
     let radius = (Real::one() / Real::from(4_i8)).unwrap();
     let count =
         |solutions: hypercurve::CurveCornerSolutions2<CurveRegion2>| solutions.solutions().len();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for unit_end_weights in [false, true] {
             for reversed in [false, true] {
                 let (source, vertex_index) =
@@ -363,7 +363,7 @@ fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
 #[test]
 fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
     let radius = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for unit_end_weights in [false, true] {
             for reversed in [false, true] {
                 let (source, vertex_index) =
@@ -397,7 +397,7 @@ fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
     }
 }
 
-fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
+fn rational_endpoint_curved_parallel_cap(policy: &PredicatePolicy) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(0, 2), point(4, 2))
         .parallel_left(Real::one())
         .unwrap();
@@ -442,7 +442,7 @@ fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 
     .into_value()
 }
 
-fn check_policy(policy: CurveContext) {
+fn check_policy(policy: PredicatePolicy) {
     let fragment = line_parallel_fragment(point(0, 0), point(2, 0), point(4, 0), 1, 1, 0, &policy);
     // The parallel y = 1 of the degenerate quadratic is traversed backwards.
     for (actual, expected) in [
@@ -571,7 +571,7 @@ fn check_policy(policy: CurveContext) {
     }
 }
 
-fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
+fn radical_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 {
     let half = (Real::one() / Real::from(2_u8)).unwrap();
     let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
         .parallel_left(Real::one())
@@ -641,7 +641,7 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     .into_value()
 }
 
-fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
+fn self_crossing_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 {
     let source = CubicBezier2::new(point(0, 0), point(0, 4), point(4, -4), point(4, 0));
     let parallel = source
         .parallel_left((Real::one() / Real::from(2_u8)).unwrap())
@@ -713,14 +713,14 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
 
 #[test]
 fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies() {
-    check_policy(CurveContext::STRICT);
-    check_policy(CurveContext::APPROXIMATE_512);
+    check_policy(PredicatePolicy::STRICT);
+    check_policy(PredicatePolicy::APPROXIMATE_512);
 }
 
 #[test]
 fn analytic_parallel_chamfers_retain_normalized_cut_points() {
     let setback = (Real::one() / Real::from(4_u8)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for (corner, analytic_next) in [(point(4, 3), true), (point(-1, 0), false)] {
             let source = rational_endpoint_curved_parallel_cap(&policy);
             let vertex = loop_vertex_at(&source, corner, &policy);
@@ -852,7 +852,7 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
 fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
     let first_setback = (Real::one() / Real::from(4_u8)).unwrap();
     let second_setback = (Real::one() / Real::from(16_u8)).unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for corner in [point(4, 3), point(-1, 0)] {
             let source = rational_endpoint_curved_parallel_cap(&policy);
             let first_vertex = loop_vertex_at(&source, corner, &policy);
@@ -939,7 +939,7 @@ fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
 
 #[test]
 fn curve_trim_intersects_analytic_parallel_region_boundaries() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let region = analytic_square(0, 4, &policy);
         let source = Curve2::from(LineSeg2::try_new(point(-1, 2), point(5, 2)).unwrap());
         let outcome =
@@ -955,7 +955,7 @@ fn curve_trim_intersects_analytic_parallel_region_boundaries() {
 
 #[test]
 fn curve_trim_retains_an_analytic_parallel_boundary_overlap() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let region = analytic_square(0, 4, &policy);
         let source = Curve2::from(LineSeg2::try_new(point(-1, 0), point(5, 0)).unwrap());
         let outcome =
@@ -972,11 +972,11 @@ fn curve_trim_retains_an_analytic_parallel_boundary_overlap() {
 #[test]
 fn radical_parallel_cusp_spans_connect_under_both_policies() {
     assert_eq!(
-        radical_cusp_split_parallel_region(&CurveContext::STRICT).boundary_loops()[0].len(),
+        radical_cusp_split_parallel_region(&PredicatePolicy::STRICT).boundary_loops()[0].len(),
         3
     );
     assert_eq!(
-        radical_cusp_split_parallel_region(&CurveContext::APPROXIMATE_512).boundary_loops()[0]
+        radical_cusp_split_parallel_region(&PredicatePolicy::APPROXIMATE_512).boundary_loops()[0]
             .len(),
         3
     );
@@ -986,7 +986,7 @@ fn radical_parallel_cusp_spans_connect_under_both_policies() {
 fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
     let distance = (Real::one() / Real::from(10_u8)).unwrap();
     let mut strict_signature = None;
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let source = radical_cusp_split_parallel_region(&policy);
         let offset = crate::support::under(&policy, || {
             source.offset(distance.clone(), &OffsetCornerStyle2::Round)
@@ -1019,7 +1019,7 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
 
 #[test]
 fn cusp_split_analytic_self_crossing_normalizes_at_admission() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let region = self_crossing_cusp_split_parallel_region(&policy);
         assert_eq!(region.boundary_loops().len(), 3);
         assert_eq!(
@@ -1039,7 +1039,7 @@ fn cusp_split_analytic_self_crossing_normalizes_at_admission() {
 
 #[test]
 fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let source = curved_parallel_cap(&policy);
         let exported = crate::support::under(&policy, || source.boundary_paths()).unwrap();
         assert_eq!(exported.certainty, CurveCertainty::Certified);

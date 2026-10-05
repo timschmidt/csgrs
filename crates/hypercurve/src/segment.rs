@@ -1418,9 +1418,7 @@ impl CircularArc2 {
     /// Counterclockwise and clockwise arcs both report a positive magnitude;
     /// orientation remains available through [`CircularArc2::is_clockwise`].
     /// Full circles report `tau`. The result is retained with the arc and is
-    /// the angular measure used by [`CircularArc2::sweep_fraction`]. The
-    /// returned [`CurveOutcome`] records whether exact angle classification
-    /// consumed the `APPROXIMATE_512` terminal.
+    /// the angular measure used by [`CircularArc2::sweep_fraction`].
     #[inline(always)]
     pub fn directed_sweep_angle(&self) -> crate::ExactCurveResult<&Real> {
         self.directed_sweep_angle_with_policy(&crate::policy::principal_context())

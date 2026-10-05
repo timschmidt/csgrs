@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveGeometry2, CurvePath2,
-    CurveRegion2, LineSeg2, Point2, Real, Segment2,
+    CircularArc2, Classification, Contour2, Curve2, CurveGeometry2, CurvePath2, CurveRegion2,
+    LineSeg2, Point2, PredicatePolicy, Real, Segment2,
 };
 
 fn r(value: i32) -> Real {
@@ -79,7 +79,7 @@ fn large_arc_region(arc_count: usize) -> CurveRegion2 {
 fn bench_large_arcs() {
     let arc_count = large_arc_count();
     let iterations = large_arc_iterations();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first = large_arc_chain(arc_count, 0);
     let second = large_arc_chain(arc_count, 10_000);
 
@@ -241,7 +241,7 @@ fn main() {
         ),
     ])
     .expect("major benchmark contour is valid");
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let major_query = p(-1, 0);
     crate::support::under_classified(&policy, || major.classify_point(&major_query));
     let started = Instant::now();

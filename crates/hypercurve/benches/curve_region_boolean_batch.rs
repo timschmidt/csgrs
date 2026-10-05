@@ -5,8 +5,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierParameter2, BezierParameterRange2, BooleanOp, BulgeVertex2, CircularArc2, Classification,
-    Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
-    FillRule, LineSeg2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    LineSeg2, Point2, PredicatePolicy, QuadraticBezier2, RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -50,7 +50,7 @@ fn capsule(center_x: i32) -> Contour2 {
     .unwrap()
 }
 
-fn elevated_circle(center_x: i32, policy: &CurveContext) -> CurveRegion2 {
+fn elevated_circle(center_x: i32, policy: &PredicatePolicy) -> CurveRegion2 {
     let left = point(center_x - 2, 0);
     let right = point(center_x + 2, 0);
     let arcs = [
@@ -114,7 +114,7 @@ fn analytic_parallel_curve(
     end: Point2,
     distance: i32,
     reversed: bool,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Curve2 {
     let (start_parameter, end_parameter) = if reversed { (1, 0) } else { (0, 1) };
     let range = decided(
@@ -134,7 +134,7 @@ fn analytic_parallel_curve(
         .into_value()
 }
 
-fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion2 {
+fn analytic_square(min_x: i32, max_x: i32, policy: &PredicatePolicy) -> CurveRegion2 {
     let midpoint_x = (min_x + max_x) / 2;
     let edges = [
         (point(min_x, 0), point(midpoint_x, 0), point(max_x, 0)),
@@ -168,7 +168,7 @@ fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
     QuadraticBezier2::new(start, midpoint, end).into()
 }
 
-fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
+fn curved_parallel_cap(policy: &PredicatePolicy) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
         .parallel_left(Real::one())
         .unwrap();
@@ -202,7 +202,7 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     .into_value()
 }
 
-fn clipped_region(path: &CurvePath2, clip: CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+fn clipped_region(path: &CurvePath2, clip: CurvePath2, policy: &PredicatePolicy) -> CurveRegion2 {
     let promote = |path: &CurvePath2| {
         crate::support::under(policy, || {
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -223,7 +223,7 @@ fn clipped_region(path: &CurvePath2, clip: CurvePath2, policy: &CurveContext) ->
 
 fn conic_overlap_regions(
     reparameterize: bool,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> (CurveRegion2, CurveRegion2) {
     let start = point(-2, 4);
     let control = point(0, -4);
@@ -259,7 +259,7 @@ fn conic_overlap_regions(
     )
 }
 
-fn nonlinear_line_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2) {
+fn nonlinear_line_overlap_regions(policy: &PredicatePolicy) -> (CurveRegion2, CurveRegion2) {
     let line_region = |control_x| {
         CurvePath2::try_new(vec![
             Curve2::from(
@@ -281,7 +281,7 @@ fn nonlinear_line_overlap_regions(policy: &CurveContext) -> (CurveRegion2, Curve
     )
 }
 
-fn cubic_mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2) {
+fn cubic_mobius_overlap_regions(policy: &PredicatePolicy) -> (CurveRegion2, CurveRegion2) {
     let controls = [point(0, 0), point(7, -5), point(8, -4), point(3, 3)];
     let polynomial = CurvePath2::try_new(vec![
         Curve2::from(CubicBezier2::new(
@@ -334,8 +334,8 @@ fn measure(operation: &mut impl FnMut() -> usize, iterations: u32) -> (u128, usi
 
 fn main() {
     let policy = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_POLICY").as_deref() {
-        Ok("approximate-512") => CurveContext::APPROXIMATE_512,
-        Ok("strict") | Err(_) => CurveContext::STRICT,
+        Ok("approximate-512") => PredicatePolicy::APPROXIMATE_512,
+        Ok("strict") | Err(_) => PredicatePolicy::STRICT,
         Ok(policy) => panic!("unknown batch benchmark policy {policy}"),
     };
     let native_regions = |contours: (Contour2, Contour2)| {

@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, FiniteProjectionOptions,
-    LineSeg2, Point2, RationalBezier2, Real,
+    CubicBezier2, Curve2, CurvePath2, CurveRegion2, FiniteProjectionOptions, LineSeg2, Point2,
+    PredicatePolicy, RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -72,7 +72,7 @@ fn main() {
     let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
     let rational = rational_path();
     let region = cubic_region();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     measure("curve_path_rational_projection", iterations, || {
         crate::support::under(&policy, || rational.project_to_finite_polyline(&options))

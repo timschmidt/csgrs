@@ -6647,7 +6647,8 @@ fn nested_procedural_chord_reversals_match_exact_side_and_winding() {
 #[test]
 fn coordinate_refinement_requires_valid_terminal_bounds() {
     let preview = crate::CurvePreviewOptions::try_approximate_512(1.0e-6, 1.0e-6).unwrap();
-    let escaped = preview.evaluate(|policy| {
+    let escaped = preview.evaluate(|| {
+        let policy = &crate::policy::principal_context();
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
             CurvePoint2::from(Point2::from_values(0, 0)),
             CurvePoint2::from(Point2::from_values(4, 0)),

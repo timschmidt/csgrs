@@ -3,8 +3,8 @@ use std::cmp::Ordering;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, Classification, CurveContext, CurveError,
-    ExactCurveError, Real, UncertaintyReason,
+    BezierParameterPolynomial, BezierParameterRange2, Classification, CurveError, ExactCurveError,
+    PredicatePolicy, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -16,8 +16,8 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
-fn policy() -> CurveContext {
-    CurveContext::STRICT
+fn policy() -> PredicatePolicy {
+    PredicatePolicy::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {
@@ -124,7 +124,7 @@ fn unit_root_isolation_has_no_fixed_dyadic_depth_limit() {
             ),
             (vec![-third_epsilon.clone(), r(1)], vec![third_epsilon]),
         ];
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             for scale in [r(1), r(-3), Real::pi()] {
                 for (case, (coefficients, expected)) in cases.iter().enumerate() {
                     let polynomial = polynomial(

@@ -3,7 +3,7 @@
 mod support;
 
 use hypercurve::{
-    Classification, CubicBezier2, Curve2, CurveContext, CurveIntersectionResult2, CurveLocation2,
+    Classification, CubicBezier2, Curve2, PredicatePolicy, CurveIntersectionResult2, CurveLocation2,
     NurbsCurve2, Point2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -21,7 +21,7 @@ fn complete(result: CurveIntersectionResult2) -> Option<CurveIntersectionResult2
     .then_some(result)
 }
 
-fn parameter(location: &CurveLocation2, policy: &CurveContext) -> hypercurve::CurveParameter2 {
+fn parameter(location: &CurveLocation2, policy: &PredicatePolicy) -> hypercurve::CurveParameter2 {
     match support::under_classified_result(policy, || location.parameter())
         .expect("contact parameters are exact")
     {
@@ -36,7 +36,7 @@ fn parameter(location: &CurveLocation2, policy: &CurveContext) -> hypercurve::Cu
 fn assert_contacts_coincide(
     curve: &Curve2,
     result: &CurveIntersectionResult2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) {
     for contact in result.contacts() {
         let first = support::under(policy, || {
@@ -62,7 +62,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 9 {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let controls: Vec<Point2> = data[..8]
         .chunks_exact(2)
         .map(|pair| Point2::new(coordinate(pair[0]), coordinate(pair[1])))

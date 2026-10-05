@@ -5,8 +5,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierFlatteningOptions, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CubicBezier2, Curve2, CurveContext, CurveParameter2,
-    Point2, RationalQuadraticBezier2, Real,
+    BezierParameterPolynomial, Classification, CubicBezier2, Curve2, CurveParameter2, Point2,
+    PredicatePolicy, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -34,7 +34,7 @@ fn time_cuts(
     curve: &Curve2,
     parameter: &CurveParameter2,
     iterations: u32,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut total = 0_usize;
@@ -55,7 +55,7 @@ fn algebraic(
     coefficients: Vec<Real>,
     lower: Real,
     upper: Real,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Result<CurveParameter2, Box<dyn std::error::Error>> {
     let polynomial = decided(crate::support::under_classified_result(policy, || {
         BezierParameterPolynomial::try_new_power_basis(coefficients)
@@ -73,7 +73,7 @@ fn algebraic(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let cubic = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
     let curve = Curve2::from(cubic.clone());
     let iterations = 25_000_u32;

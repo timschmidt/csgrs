@@ -22,9 +22,9 @@ use hypercurve::{
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveContext, CurveIntersectionResult2, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2,
-    RationalBezier2, Real,
+    CubicBezier2, Curve2, CurveIntersectionResult2, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2, PredicatePolicy, RationalBezier2,
+    Real,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -232,7 +232,7 @@ fn hypercurve_boolean_result_size(
     first: &CurveRegion2,
     second: &CurveRegion2,
     operation: CommonBooleanOp,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> usize {
     let operation = operation.hypercurve();
     let result = crate::support::under(policy, || first.boolean_region(second, operation))
@@ -324,7 +324,7 @@ fn benchmark_boolean_case(
     let cavalier_second = cavalier_polyline(&second_points, None);
     let geo_first = geo_polygon(&first_points);
     let geo_second = geo_polygon(&second_points);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let hypercurve_result_size =
         hypercurve_boolean_result_size(&hypercurve_first, &hypercurve_second, operation, &policy);
@@ -444,7 +444,7 @@ fn benchmark_line_arc_boolean(runner: &Runner) {
     let first_points = vec![[-3.0, -2.0], [3.0, -2.0], [3.0, 2.0], [-3.0, 2.0]];
     let second_points = vec![[-1.0, -2.0], [5.0, -2.0], [5.0, 2.0], [-1.0, 2.0]];
     let bulges = vec![0.0, 1.0, 0.0, 1.0];
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![hypercurve_line_arc_contour(
             &first_points,
@@ -515,7 +515,7 @@ fn benchmark_contour_offset(runner: &Runner) {
     let hypercurve_contour = Contour2::from_bulge_vertices(&hypercurve_vertices)
         .expect("valid hypercurve capsule contour");
     let cavalier_contour = cavalier_polyline(&points, Some(&bulges));
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let distance = -real(5.0);
     let hypercurve_region = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour])
@@ -577,7 +577,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let half = (Real::one() / Real::from(2_u8)).expect("exact benchmark half");
     let polynomial = match crate::support::under_classified_result(&policy, || {
         BezierParameterPolynomial::try_new_power_basis(vec![-half, Real::zero(), Real::one()])
@@ -1692,7 +1692,7 @@ fn benchmark_orthogonal_neck_split(runner: &Runner) {
         [4.0, 4.0],
         [0.0, 4.0],
     ];
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let hypercurve = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour(&points)])
     })
@@ -1734,7 +1734,7 @@ fn benchmark_bezier_offset(runner: &Runner) {
     if !runner.group_enabled("bezier_offset/open_cubic") {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let controls = [[0.0, 0.0], [1.0, 2.0], [2.0, 1.0], [4.0, 0.0]];
     let source = CubicBezier2::new(
         Point2::new(real(0.0), real(0.0)),
@@ -1809,7 +1809,7 @@ fn benchmark_rational_bezier_self_contact_case(
         return;
     }
 
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let hypercurve_curve = RationalBezier2::try_new(
         controls
             .iter()
@@ -2196,7 +2196,7 @@ fn benchmark_pathological_cross_suite(runner: &Runner) {
                     )
                 })
                 .collect::<Vec<_>>();
-            let policy = CurveContext::STRICT;
+            let policy = PredicatePolicy::STRICT;
             runner.measure(&group, "hypercurve_flattened", || {
                 hypercurve_cells
                     .iter()

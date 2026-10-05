@@ -23,7 +23,7 @@ fn decided<T>(value: Classification<T>) -> T {
 fn range(
     start: CurveParameter2,
     end: CurveParameter2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveParameterRange2 {
     decided(
         crate::support::under_classified_result(policy, || {
@@ -33,7 +33,7 @@ fn range(
     )
 }
 
-fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
+fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &PredicatePolicy) {
     assert!(decided(certified(
         crate::support::under_outcome_classification(policy, || actual.coincides_with(expected))
     )));
@@ -49,7 +49,7 @@ fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
     ));
     let root = Real::from(2) + q(1, 2).sqrt().unwrap();
     let expected: CurvePoint2 = Point2::new(q(1, 2).sqrt().unwrap(), q(1, 2)).into();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let whole = certified(
             crate::support::under(&policy, || {
                 Curve2::try_from_bezier_range(
@@ -151,7 +151,7 @@ fn rational_range_admission_checks_only_the_retained_interval() {
         vec![Real::one(), -Real::one(), -Real::one()],
     )
     .unwrap();
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for (start, end) in [
             (Real::zero(), q(1, 4)),
             (q(3, 4), Real::one()),
@@ -221,7 +221,7 @@ fn bezier_range_construction_reuses_selected_fiber_parameters() {
         Point2::new(q(-1, 2), q(1, 2)),
         Point2::new(q(-1, 2), Real::from(2)),
     ));
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),

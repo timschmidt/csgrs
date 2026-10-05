@@ -4,7 +4,7 @@ mod support;
 
 use hypercurve::{
     Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurveParameter2, CurvePoint2,
+    BezierParameterPolynomial, Classification, Curve2, PredicatePolicy, CurveParameter2, CurvePoint2,
     Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -32,7 +32,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 7 {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let mode = data[6] % 3;
     let curve = if mode == 0 {
         QuadraticBezier2::new(

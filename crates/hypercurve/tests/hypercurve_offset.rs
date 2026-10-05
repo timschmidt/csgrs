@@ -1,6 +1,7 @@
 mod support;
 use hypercurve::{
-    CircularArc2, Classification, CurveContext, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
+    CircularArc2, Classification, LineSeg2, Point2, PredicatePolicy, Real, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -25,7 +26,7 @@ fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
 
 #[test]
 fn native_line_and_arc_parallel_primitives_are_exact() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let horizontal = LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap();
     let diagonal = LineSeg2::try_new(p(0, 0), p(3, 4)).unwrap();
     assert_line(
@@ -66,7 +67,7 @@ fn primitive_arc_reports_radius_collapse_boundary() {
     let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
     for distance in [s(1), s(2)] {
         assert_eq!(
-            crate::support::under_classified_result(&CurveContext::STRICT, || arc
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || arc
                 .offset_left(distance))
             .unwrap(),
             Classification::Uncertain(UncertaintyReason::Unsupported)

@@ -4,7 +4,7 @@ mod support;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurvePath2, CurvePoint2,
+    BezierParameterPolynomial, Classification, Curve2, PredicatePolicy, CurvePath2, CurvePoint2,
     CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -25,7 +25,7 @@ fn point(x: u8, y: u8) -> Point2 {
     Point2::new(real_from_byte(x), real_from_byte(y))
 }
 
-fn algebraic_sqrt_half(policy: &CurveContext) -> Option<BezierParameter2> {
+fn algebraic_sqrt_half(policy: &PredicatePolicy) -> Option<BezierParameter2> {
     let polynomial = match support::under_classified_result(policy, || {
         BezierParameterPolynomial::try_new_power_basis(vec![
             Real::from(-1_i32),
@@ -57,7 +57,7 @@ fn algebraic_sqrt_half(policy: &CurveContext) -> Option<BezierParameter2> {
     Some(BezierParameter2::Algebraic(parameter))
 }
 
-fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
+fn algebraic_sqrt_eighth(policy: &PredicatePolicy) -> Option<BezierParameter2> {
     let polynomial = match support::under_classified_result(policy, || {
         BezierParameterPolynomial::try_new_power_basis(vec![
             Real::from(-1_i32),
@@ -89,7 +89,7 @@ fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
     Some(BezierParameter2::Algebraic(parameter))
 }
 
-fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> Option<Curve2> {
+fn algebraic_chord(start: Point2, end: Point2, policy: &PredicatePolicy) -> Option<Curve2> {
     support::under(policy, || {
         Curve2::try_line(CurvePoint2::from(start), CurvePoint2::from(end))
     })
@@ -101,7 +101,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     for chunk in data.chunks(8).take(8) {
         if chunk.len() < 8 {
             break;

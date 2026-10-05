@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircleCircleRelation, CircularArc2, Classification, Contour2,
-    CurveContext, CurveRegion2, CurveResult, CurveString2, LineCircleRelation, LineSeg2, Point2,
+    CurveRegion2, CurveResult, CurveString2, LineCircleRelation, LineSeg2, Point2, PredicatePolicy,
     Real, Segment2,
 };
 
@@ -45,7 +45,7 @@ fn bench_arc_arc_case(
     second: &CircularArc2,
     iterations: u32,
 ) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_weight = 0_usize;
 
@@ -75,7 +75,7 @@ fn bench_arc_arc_case(
 fn bench_line_circle_relation(iterations: u32) -> CurveResult<()> {
     let line = LineSeg2::try_new(p(-100, 0), p(100, 0))?;
     let circle = arc(p(25, 0), p(-25, 0), p(0, 0), false);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_weight = 0_usize;
 
@@ -106,7 +106,7 @@ fn bench_line_circle_relation(iterations: u32) -> CurveResult<()> {
 fn bench_circle_circle_relation(iterations: u32) -> CurveResult<()> {
     let first = arc(p(4, 3), p(4, -3), p(0, 0), true);
     let second = arc(p(4, -3), p(4, 3), p(8, 0), true);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_weight = 0_usize;
 
@@ -144,7 +144,7 @@ fn bench_sparse_curve_self_contacts(segment_count: i32, iterations: u32) -> Curv
     }
 
     let curve = CurveString2::try_new(segments)?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut decided_false_count = 0_usize;
 
@@ -184,7 +184,7 @@ fn bench_sparse_curve_string_intersections(segment_count: i32, iterations: u32) 
 
     let curve = CurveString2::try_new(segments)?;
     let cutter = CurveString2::try_new(vec![line_segment(p(241, -2), p(241, 3))])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_events = 0_usize;
 
@@ -214,7 +214,7 @@ fn bench_sparse_region_events(
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let region = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(contours)
     })?

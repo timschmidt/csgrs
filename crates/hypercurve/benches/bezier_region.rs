@@ -6,8 +6,8 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BooleanOp, BulgeVertex2, Classification, Contour2, Curve2,
-    CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
-    CurveResult, FillRule, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, CurveResult, FillRule,
+    LineSeg2, Point2, PredicatePolicy, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -79,7 +79,7 @@ fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<
     })
 }
 
-fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveResult<CurveRegion2> {
+fn path_region(path: &CurvePath2, policy: &PredicatePolicy) -> CurveResult<CurveRegion2> {
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             std::slice::from_ref(path),
@@ -101,7 +101,7 @@ fn algebraic_polynomial_parameter(
     coefficients: Vec<Real>,
     interval_start: Real,
     interval_end: Real,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveResult<BezierParameter2> {
     let polynomial = decided(
         crate::support::under_classified_result(policy, || {
@@ -123,7 +123,7 @@ fn algebraic_polynomial_parameter(
     )))
 }
 
-fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveResult<Curve2> {
+fn algebraic_chord(start: Point2, end: Point2, policy: &PredicatePolicy) -> CurveResult<Curve2> {
     Ok(crate::support::under(policy, || {
         Curve2::try_line(CurvePoint2::from(start), CurvePoint2::from(end))
     })
@@ -133,7 +133,7 @@ fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveRe
 
 fn benchmark_measurements(
     region: &CurveRegion2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let iterations = std::env::var("HYPERCURVE_BEZIER_REGION_MEASURE_ITERATIONS")
         .ok()
@@ -180,7 +180,7 @@ fn benchmark_measurements(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first_region = square_region(0, 0, 4, 4)?;
     let second_region = square_region(2, 0, 6, 4)?;
     if std::env::var_os("HYPERCURVE_BEZIER_REGION_MEASURE_ONLY").is_some() {
@@ -584,7 +584,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn halved_loop(
     curves: [Curve2; 2],
     parameter: &BezierParameter2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Result<CurvePath2, Box<dyn std::error::Error>> {
     let mut halves = Vec::with_capacity(4);
     for curve in curves {
@@ -598,7 +598,7 @@ fn halved_loop(
 
 fn even_odd_region(
     paths: &[CurvePath2],
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> Result<CurveRegion2, Box<dyn std::error::Error>> {
     Ok(crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths(paths, FillRule::EvenOdd)

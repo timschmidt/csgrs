@@ -767,7 +767,7 @@ mod tests {
             .unwrap();
             let preview = CurvePreviewOptions::try_new(policy, 1e-12, 1e-12).unwrap();
             let Classification::Decided(bounds) =
-                preview.evaluate(|_| Aabb2::from_arc(&arc).unwrap())
+                preview.evaluate(|| Aabb2::from_arc(&arc).unwrap())
             else {
                 panic!("the radius-squared-3 arc has certified bounds");
             };

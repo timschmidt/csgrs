@@ -1,7 +1,7 @@
 mod support;
 use hypercurve::{
-    CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2, CurvePath2, LineSeg2,
-    Point2, Real, UncertaintyReason,
+    CircularArc2, Classification, Curve2, CurveGeometry2, CurvePath2, LineSeg2, Point2,
+    PredicatePolicy, Real, UncertaintyReason,
 };
 use hypercurve::{CurveCertainty, CurveFamily2, CurveOperation2, ExactCurveError};
 use hyperreal::RealSign;
@@ -57,13 +57,13 @@ fn semicircle_uses_two_quarter_spans_with_exact_join() {
     assert_eq!(decomposition.spans()[0].parameter_range(), (&r(0), &half()));
     assert_eq!(decomposition.spans()[1].parameter_range(), (&half(), &r(1)));
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&half()))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&half()))
             .unwrap()
             .into_value(),
         p(0, 1)
     );
     assert_eq!(
-        crate::support::under_classified_result(&CurveContext::STRICT, || arc
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || arc
             .representative_point())
         .unwrap(),
         Classification::Decided(p(0, 1))
@@ -85,13 +85,13 @@ fn rationally_trimmed_semicircle_redecomposes_exactly() {
     let decomposition = arc.rational_bezier_decomposition().unwrap();
     assert!(!decomposition.spans().is_empty());
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(0)))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&r(0)))
             .unwrap()
             .into_value(),
         arc.start().clone()
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(1)))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&r(1)))
             .unwrap()
             .into_value(),
         arc.end().clone()
@@ -124,29 +124,29 @@ fn major_arc_preserves_rational_charts_and_requested_orientation() {
         );
     }
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&half()))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&half()))
             .unwrap()
             .into_value(),
         expected_midpoint
     );
     assert_eq!(
-        crate::support::under_classified_result(&CurveContext::STRICT, || arc
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || arc
             .representative_point())
         .unwrap(),
         Classification::Decided(expected_midpoint.clone())
     );
     assert_eq!(
-        crate::support::under_classified(&CurveContext::STRICT, || arc
+        crate::support::under_classified(&PredicatePolicy::STRICT, || arc
             .contains_point(&expected_midpoint)),
         Classification::Decided(true)
     );
     assert_eq!(
-        crate::support::under_classified(&CurveContext::STRICT, || arc
+        crate::support::under_classified(&PredicatePolicy::STRICT, || arc
             .contains_sweep_point(&Point2::new(half().sqrt().unwrap(), half().sqrt().unwrap()))),
         Classification::Decided(false)
     );
     assert_eq!(
-        crate::support::under_classified(&CurveContext::STRICT, || arc
+        crate::support::under_classified(&PredicatePolicy::STRICT, || arc
             .contains_sweep_point(&p(-1, 0))),
         Classification::Decided(true)
     );
@@ -163,7 +163,7 @@ fn angular_inverse_selects_unequal_major_arc_charts() {
             clockwise,
         )
         .unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             for (point, expected) in [
                 (Point2::new(r(0), direction.clone()), q(1, 3)),
                 (p(-1, 0), q(2, 3)),
@@ -189,7 +189,7 @@ fn angular_inverse_selects_unequal_major_arc_charts() {
 #[test]
 fn sweep_fraction_orders_major_arc_cardinal_points_exactly() {
     let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     assert_eq!(
         crate::support::under_classified_result(&policy, || arc.sweep_fraction(&p(1, 0))).unwrap(),
@@ -211,7 +211,7 @@ fn sweep_fraction_orders_major_arc_cardinal_points_exactly() {
 
 #[test]
 fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
-    let policy = CurveContext::APPROXIMATE_512;
+    let policy = PredicatePolicy::APPROXIMATE_512;
     let minor = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
     let root_half = (r(2).sqrt().unwrap() / r(2)).unwrap();
     let minor_midpoint = Point2::new(root_half.clone(), root_half);
@@ -248,7 +248,7 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
 
     let major = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
     let Classification::Decided(strict_major_parameter) =
-        crate::support::under_classified_result(&CurveContext::STRICT, || {
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             major.parameter_at_sweep_fraction(&q(1, 3))
         })
         .unwrap()
@@ -335,7 +335,7 @@ fn inverse_sweep_witness_replays_exact_point_across_existing_clone() {
         CircularArc2::try_from_center(Point2::new(r(3), q(13, 3)), p(5, 3), center, false).unwrap();
     let retained_clone = arc.clone();
     let witness = p(3, 0);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let Classification::Decided(parameter) =
         crate::support::under_classified_result(&policy, || arc.sweep_fraction(&witness)).unwrap()
@@ -362,43 +362,44 @@ fn full_circle_uses_four_quarter_spans() {
 
     assert_eq!(decomposition.spans().len(), 4);
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(0)))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&r(0)))
             .unwrap()
             .into_value(),
         p(1, 0)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&quarter))
-            .unwrap()
-            .into_value(),
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition
+            .point_at(&quarter))
+        .unwrap()
+        .into_value(),
         p(0, 1)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&half()))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&half()))
             .unwrap()
             .into_value(),
         p(-1, 0)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition
             .point_at(&three_quarters))
         .unwrap()
         .into_value(),
         p(0, -1)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&r(1)))
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&r(1)))
             .unwrap()
             .into_value(),
         p(1, 0)
     );
     assert_eq!(
-        crate::support::under_classified(&CurveContext::STRICT, || arc
+        crate::support::under_classified(&PredicatePolicy::STRICT, || arc
             .contains_sweep_point(&p(0, 1))),
         Classification::Decided(true)
     );
     assert_eq!(
-        crate::support::under_classified(&CurveContext::STRICT, || arc
+        crate::support::under_classified(&PredicatePolicy::STRICT, || arc
             .contains_sweep_point(&p(7, -3))),
         Classification::Decided(true)
     );
@@ -407,7 +408,7 @@ fn full_circle_uses_four_quarter_spans() {
 #[test]
 fn sweep_fraction_orders_full_circle_cardinal_points_exactly() {
     let arc = CircularArc2::try_from_center(p(1, 0), p(1, 0), p(0, 0), false).unwrap();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     assert_eq!(
         crate::support::under_classified_result(&policy, || arc.sweep_fraction(&p(0, 1))).unwrap(),
@@ -434,7 +435,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
     assert_eq!(fragments.len(), 2);
     assert!(std::ptr::eq(
         fragments,
-        crate::support::under(&CurveContext::STRICT, || clone.native_bezier_fragments())
+        crate::support::under(&PredicatePolicy::STRICT, || clone.native_bezier_fragments())
             .unwrap()
             .into_value()
     ));
@@ -444,7 +445,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
             .all(|fragment| matches!(fragment.curve(), CurveGeometry2::RationalQuadraticBezier(_)))
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || arc.point_at(&half().into()))
+        crate::support::under(&PredicatePolicy::STRICT, || arc.point_at(&half().into()))
             .unwrap()
             .into_value(),
         p(0, -1).into()
@@ -463,7 +464,7 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
     let center = Point2::new(Real::from(3) + &undecidable_zero, Real::one());
     let arc = CircularArc2::try_from_center(p(3, 0), p(3, 2), center, false).unwrap();
 
-    let approximate_sweep = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate_sweep = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         arc.directed_sweep_angle()
     })
     .unwrap();
@@ -480,27 +481,29 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
-    let approximate_decomposition = crate::support::under(&CurveContext::APPROXIMATE_512, || {
-        arc.rational_bezier_decomposition()
-    })
-    .unwrap();
+    let approximate_decomposition =
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+            arc.rational_bezier_decomposition()
+        })
+        .unwrap();
     assert_eq!(
         approximate_decomposition.certainty,
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(approximate_decomposition.value.spans().len(), 2);
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || arc.rational_bezier_decomposition()),
+        crate::support::under(&PredicatePolicy::STRICT, || arc.rational_bezier_decomposition()),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::BezierDecomposition
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
     let curve = Curve2::from(arc.clone());
-    let approximate_curve_fragments = crate::support::under(&CurveContext::APPROXIMATE_512, || {
-        curve.native_bezier_fragments()
-    })
-    .unwrap();
+    let approximate_curve_fragments =
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+            curve.native_bezier_fragments()
+        })
+        .unwrap();
     assert_eq!(
         approximate_curve_fragments.certainty,
         CurveCertainty::Approximate512Consumed
@@ -510,29 +513,30 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
         matches!(fragment.curve(), CurveGeometry2::RationalQuadraticBezier(_))
     }));
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || curve.native_bezier_fragments()),
+        crate::support::under(&PredicatePolicy::STRICT, || curve.native_bezier_fragments()),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::NativeTopology
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
     let path = CurvePath2::try_new(vec![curve]).unwrap();
-    let approximate_path_fragments = crate::support::under(&CurveContext::APPROXIMATE_512, || {
-        path.native_bezier_fragments()
-    })
-    .unwrap();
+    let approximate_path_fragments =
+        crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+            path.native_bezier_fragments()
+        })
+        .unwrap();
     assert_eq!(
         approximate_path_fragments.certainty,
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(approximate_path_fragments.value.len(), 2);
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || path.native_bezier_fragments()),
+        crate::support::under(&PredicatePolicy::STRICT, || path.native_bezier_fragments()),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::NativeTopology
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
-    let repeated = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let repeated = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         path.native_bezier_fragments()
     })
     .unwrap();
@@ -542,7 +546,7 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
         CircularArc2::try_from_center(p(1, 0), p(-1, 0), p(0, 0), false).unwrap();
     let decomposition = exact_semicircle.rational_bezier_decomposition().unwrap();
     let ambiguous_join_parameter = half() + undecidable_zero;
-    let approximate_point = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate_point = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         decomposition.point_at(&ambiguous_join_parameter)
     })
     .unwrap();
@@ -552,7 +556,7 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
     );
     assert_eq!(approximate_point.value, p(0, 1));
     assert!(matches!(
-        crate::support::under(&CurveContext::STRICT, || decomposition.point_at(&ambiguous_join_parameter)),
+        crate::support::under(&PredicatePolicy::STRICT, || decomposition.point_at(&ambiguous_join_parameter)),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == UncertaintyReason::Ordering

@@ -42,10 +42,8 @@ impl CircularArc2 {
     /// and a full circle uses four quarter-circle spans. Major sweeps start
     /// with two exact quarter turns; their last span covers the remainder.
     /// This avoids introducing a square root merely to partition the circle.
-    /// The returned parameter
-    /// intervals partition `[0, 1]`; each interval uses the native rational
-    /// Bezier parameter locally. The returned [`CurveOutcome`] records whether
-    /// classifying the exact sweep consumed the `APPROXIMATE_512` terminal.
+    /// The returned parameter intervals partition `[0, 1]`; each interval uses
+    /// the native rational Bezier parameter locally.
     #[inline(always)]
     pub fn rational_bezier_decomposition(
         &self,
@@ -91,9 +89,6 @@ impl CircularArcBezierDecomposition2 {
     }
 
     /// Evaluates the piecewise-rational arc parameterization on `[0, 1]`.
-    ///
-    /// The returned [`CurveOutcome`] records whether selecting or evaluating
-    /// the exact span consumed the `APPROXIMATE_512` terminal.
     #[inline(always)]
     pub fn point_at(&self, parameter: &Real) -> crate::ExactCurveResult<Point2> {
         self.point_at_with_policy(parameter, &crate::policy::principal_context())

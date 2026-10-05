@@ -29,6 +29,18 @@ pub type FiniteTriangle2 = [[f64; 2]; 3];
 pub fn triangulate_finite_rings(
     material: &[[f64; 2]],
     holes: &[&[[f64; 2]]],
+) -> crate::ExactCurveResult<Vec<FiniteTriangle2>> {
+    triangulate_finite_rings_with_policy(material, holes, &crate::policy::principal_context())
+        .map(CurveOutcome::into_value)
+        .map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Subdivision, cause)
+        })
+}
+
+/// [`triangulate_finite_rings`] under an explicit predicate policy.
+pub(crate) fn triangulate_finite_rings_with_policy(
+    material: &[[f64; 2]],
+    holes: &[&[[f64; 2]]],
     policy: &CurveContext,
 ) -> CurveResult<CurveOutcome<Vec<FiniteTriangle2>>> {
     fn push_ring(
@@ -155,7 +167,7 @@ impl FiniteRegionProfile2 {
             .iter()
             .map(|hole| hole.points())
             .collect::<Vec<_>>();
-        triangulate_finite_rings(self.material().points(), &hole_refs, policy)
+        triangulate_finite_rings_with_policy(self.material().points(), &hole_refs, policy)
     }
 }
 

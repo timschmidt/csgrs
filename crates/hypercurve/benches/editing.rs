@@ -4,10 +4,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
-    CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionLoopRole, CurveResult,
-    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
+    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveCornerMode2,
+    CurveCornerSolutions2, CurveRegion2, CurveRegionLoopRole, CurveResult, CurveString2,
+    CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
+    PredicatePolicy, QuadraticBezier2, RationalBezier2, Real, Segment2,
 };
 use hypercurve::{Curve2, CurvePath2};
 
@@ -20,7 +20,7 @@ use hypercurve::{
 fn selected_point(
     curve: &RationalBezier2,
     parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurvePoint2 {
     crate::support::under(policy, || {
         Curve2::from(curve.clone()).point_at(&hypercurve::CurveParameter2::from(
@@ -116,7 +116,7 @@ fn bench_parameter_trim(iterations: u32) -> CurveResult<()> {
         line_segment(10, 0, 10, 6),
         line_segment(10, 6, 16, 6),
     ])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -146,7 +146,7 @@ fn bench_point_arc_trim(iterations: u32) -> CurveResult<()> {
         p(2, 0),
         s(1),
     )?)])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -176,7 +176,7 @@ fn bench_parameter_arc_trim(iterations: u32) -> CurveResult<()> {
         p(2, 0),
         s(1),
     )?)])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let start = CurveStringTrimPoint2::new(0, q(1, 7));
     let end = CurveStringTrimPoint2::new(0, q(5, 7));
     let started = Instant::now();
@@ -203,7 +203,7 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)])?;
     let start_cutter = CurveString2::try_new(vec![line_segment(2, -1, 2, 1)])?;
     let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -231,7 +231,7 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     // Repeated queries retain the common path and its exact source owners.
     let curve = CurvePath2::try_new(vec![LineSeg2::try_new(p(-2, 1), p(8, 1))?.into()])
         .expect("benchmark path must connect exactly");
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let region = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![
             rectangle(0, 0, 2, 2),
@@ -265,7 +265,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         Curve2::from(line(4, 4, 8, 4)),
     ])
     .expect("line corner benchmark path must be connected");
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let design_value = s(1);
 
     if corner_lane_enabled("curve_path_design_chamfer") {
@@ -320,7 +320,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
 }
 
 fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let next_arc = CircularArc2::try_from_center(p(1, 0), p(2, 1), p(1, 1), false)?;
     let line_arc_path = CurvePath2::try_new(vec![
         Curve2::from(line(-1, 0, 1, 0)),
@@ -428,7 +428,7 @@ fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let radius = q(1, 2);
     let next_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true)?;
     let line_arc_path = CurvePath2::try_new(vec![
@@ -574,7 +574,7 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_retained_circle_chamfer_lane(name: &str, path: &CurvePath2, iterations: u32) {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let setback = q(1, 2);
     let started = Instant::now();
     let mut curves = 0_usize;
@@ -601,7 +601,7 @@ fn bench_retained_circle_chamfer_lane(name: &str, path: &CurvePath2, iterations:
 }
 
 fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: u32) {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let radius = q(1, 2);
     let started = Instant::now();
     let mut curves = 0_usize;
@@ -628,7 +628,7 @@ fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: 
 }
 
 fn bench_retained_circle_corner_solvers(iterations: u32) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true)?;
     let conic = crate::support::under(&policy, || native_arc.rational_bezier_decomposition())
         .expect("retained-circle fixture decomposition must remain exact")
@@ -693,7 +693,7 @@ fn bench_represented_bezier_chamfer_lane(
     if !corner_lane_enabled(name) {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut candidates = 0_usize;
     for _ in 0..iterations {
@@ -726,7 +726,7 @@ fn bench_represented_bezier_fillet_lane(
     if !corner_lane_enabled(name) {
         return;
     }
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut candidates = 0_usize;
     for _ in 0..iterations {
@@ -752,7 +752,7 @@ fn bench_represented_bezier_fillet_lane(
 fn positive_sqrt_ratio_parameter(
     numerator: i32,
     denominator: i32,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveResult<BezierAlgebraicParameter2> {
     let polynomial = expect_decided(
         crate::support::under_classified_result(policy, || {
@@ -783,13 +783,13 @@ fn positive_sqrt_ratio_parameter(
 
 fn positive_reciprocal_sqrt_parameter(
     denominator: i32,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveResult<BezierAlgebraicParameter2> {
     positive_sqrt_ratio_parameter(1, denominator, policy)
 }
 
 fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let third = q(1, 3);
     let controls = [
         p(1, 0),
@@ -829,7 +829,7 @@ fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::
 
 fn independent_field_algebraic_chord_regions()
 -> Result<[CurveRegion2; 2], Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let second_parameter = positive_reciprocal_sqrt_parameter(3, &policy)?;
     let first_split_parameter = BezierParameter2::Algebraic(first_parameter.clone());
@@ -878,7 +878,7 @@ fn independent_field_algebraic_chord_regions()
 
 fn noninjective_collinear_algebraic_chord_paths()
 -> Result<[CurvePath2; 2], Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let second_parameter = positive_reciprocal_sqrt_parameter(3, &policy)?;
     let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
@@ -900,7 +900,7 @@ fn noninjective_collinear_algebraic_chord_paths()
 
 fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dyn std::error::Error>>
 {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
     let vertical = RationalBezier2::try_new(
         vec![
@@ -949,7 +949,7 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
 }
 
 fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let horizontal = |height: Real| {
         RationalBezier2::try_new(
@@ -988,7 +988,7 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
 
 fn axis_aligned_algebraic_dumbbell_offset_region()
 -> Result<CurveRegion2, Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let selected = |height: Real| {
         RationalBezier2::try_new(
@@ -1064,7 +1064,7 @@ fn bench_represented_bezier_region_corner_lanes(
     two_bezier_region: &CurveRegion2,
     iterations: u32,
 ) {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let next_setback = (s(657).sqrt().expect("positive benchmark radicand") / s(16))
         .expect("nonzero benchmark divisor");
     if corner_lane_enabled("curve_region_line_quadratic_algebraic_chamfer") {
@@ -1470,7 +1470,7 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     .expect("line/rational benchmark path must remain exact");
     let line_polynomial_spline = CurvePath2::try_new(vec![
         Curve2::from(line(-4, 0, 0, 0)),
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_polynomial_bspline(2, quadratic_controls.clone(), quadratic_knots.clone())
         })
         .expect("polynomial spline benchmark carrier must remain exact")
@@ -1479,7 +1479,7 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     .expect("line/polynomial-spline benchmark path must remain exact");
     let line_nurbs = CurvePath2::try_new(vec![
         Curve2::from(line(-4, 0, 0, 0)),
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_nurbs(
                 2,
                 quadratic_controls,
@@ -1507,7 +1507,7 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     ])
     .expect("exact PH cubic benchmark path must remain exact");
     let spline_ph_pair = CurvePath2::try_new(vec![
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_polynomial_bspline(
                 3,
                 vec![
@@ -1521,7 +1521,7 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         })
         .expect("polynomial PH spline benchmark carrier must remain exact")
         .into_value(),
-        crate::support::under(&CurveContext::STRICT, || {
+        crate::support::under(&PredicatePolicy::STRICT, || {
             Curve2::try_nurbs(
                 3,
                 vec![
@@ -1654,7 +1654,7 @@ fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
         p(0, 0),
         false,
     )?)])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -1684,7 +1684,7 @@ fn bench_curve_string_line_merge_evidence(iterations: u32) -> CurveResult<()> {
         line_segment(5, 0, 5, 3),
         line_segment(5, 3, 5, 7),
     ])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_spans = 0_usize;
 
@@ -1736,7 +1736,7 @@ fn bench_curve_string_reversed_duplicate_evidence(iterations: u32) -> CurveResul
 fn bench_curve_string_pair_link_evidence(iterations: u32) -> CurveResult<()> {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -1766,7 +1766,7 @@ fn bench_curve_string_ordered_link_evidence(iterations: u32) -> CurveResult<()> 
         CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?,
         CurveString2::try_new(vec![line_segment(2, 0, 3, 0)])?,
     ];
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -1790,7 +1790,7 @@ fn bench_curve_string_ordered_link_evidence(iterations: u32) -> CurveResult<()> 
 fn bench_curve_string_connect_evidence(iterations: u32) -> CurveResult<()> {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
     let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -1815,7 +1815,7 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let material = rectangle(0, 0, 10, 10);
     let hole = rectangle(2, 2, 8, 8);
     let island = rectangle(4, 4, 6, 6);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_roles = 0_usize;
 
@@ -1846,7 +1846,7 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
         Segment2::Line(line(0, 0, 0, 10)),
         Segment2::Line(line(10, 0, 10, 10)),
     ];
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_loops = 0_usize;
     let mut total_spans = 0_usize;
@@ -1878,7 +1878,7 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
         Segment2::Line(line(4, 0, 0, 0)),
         Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(4, 0), s(1))?),
     ];
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_loops = 0_usize;
     let mut total_spans = 0_usize;
@@ -1914,7 +1914,7 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
         vertex(5, 7, 0),
         vertex(0, 7, 0),
     ])?;
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut total_spans = 0_usize;
 
@@ -1938,7 +1938,7 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_region_boolean(iterations: u32) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let first = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)])
     })
@@ -1991,7 +1991,7 @@ fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let region = crate::support::under(&policy, || {
         CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)])
     })
@@ -2078,7 +2078,7 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_higher_order_curve_edits(iterations: u32) {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let path = higher_order_fillet_path();
     let region = crate::support::under(&policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(

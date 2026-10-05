@@ -717,10 +717,6 @@ impl NurbsCurve2 {
     }
 
     /// Splits this NURBS exactly at a strict interior knot-domain parameter.
-    ///
-    /// The returned [`CurveOutcome`] records whether parameter ordering, knot
-    /// refinement, or reconstructed-carrier validation consumed the
-    /// `APPROXIMATE_512` terminal.
     #[inline(always)]
     pub fn split_at(&self, parameter: Real) -> crate::ExactCurveResult<(Self, Self)> {
         self.split_at_with_policy(parameter, &crate::policy::principal_context())
@@ -854,9 +850,8 @@ impl NurbsCurve2 {
     /// periodic carrier. It preserves the source parameter interval and exact
     /// rational image while replacing irrelevant exterior knots with clamped
     /// endpoints. Continuous spans share one endpoint control; fully repeated
-    /// discontinuous knots preserve both one-sided controls and weights.
-    /// No fitting, sampling, or endpoint-only reconstruction is involved.
-    /// The returned [`CurveOutcome`] covers the complete exact materialization.
+    /// discontinuous knots preserve both one-sided controls and weights. No
+    /// fitting, sampling, or endpoint-only reconstruction is involved.
     #[inline(always)]
     pub fn clamped_subcurve(&self, start: Real, end: Real) -> crate::ExactCurveResult<Self> {
         self.clamped_subcurve_with_policy(start, end, &crate::policy::principal_context())

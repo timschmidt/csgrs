@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveContext, CurveRegion2,
-    CurveResult, Point2, Real, RegionPointLocation,
+    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveRegion2, CurveResult,
+    Point2, PredicatePolicy, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -42,7 +42,7 @@ fn sparse_region(contour_count: i32) -> CurveRegion2 {
 fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let contour = rectangle(0, 0, 10, 10);
     let point = p(100, 100);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
@@ -66,7 +66,7 @@ fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
 fn bench_batched_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let contour = rectangle(0, 0, 10, 10);
     let points = vec![p(100, 100); 64];
-    let _policy = CurveContext::STRICT;
+    let _policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
@@ -92,7 +92,7 @@ fn bench_batched_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
 fn bench_sparse_region_outside(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
     let point = hypercurve::CurvePoint2::from(p(5_000, 5_000));
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
@@ -124,7 +124,7 @@ fn bench_batched_sparse_region(iterations: u32) -> Result<(), Box<dyn std::error
             })
         })
         .collect::<Vec<_>>();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut decided_count = 0_usize;
 
@@ -152,7 +152,7 @@ fn bench_batched_sparse_region(iterations: u32) -> Result<(), Box<dyn std::error
 fn bench_sparse_region_single_hit(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
     let point = hypercurve::CurvePoint2::from(p(612, 2));
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut inside_count = 0_usize;
 
@@ -175,7 +175,7 @@ fn bench_sparse_region_single_hit(iterations: u32) -> Result<(), Box<dyn std::er
 
 fn bench_sparse_region_filled_area(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let started = Instant::now();
     let mut checksum = 0_usize;
 

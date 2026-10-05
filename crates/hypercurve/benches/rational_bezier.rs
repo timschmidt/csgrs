@@ -4,8 +4,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Axis2, Classification, Curve2, CurveCertainty, CurveContext, CurveIntersectionResult2, Point2,
-    RationalBezier2, Real,
+    Axis2, Classification, Curve2, CurveCertainty, CurveIntersectionResult2, Point2,
+    PredicatePolicy, RationalBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -31,7 +31,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 fn contacts(
     first: &RationalBezier2,
     second: &RationalBezier2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveIntersectionResult2 {
     let evidence = crate::support::under(policy, || {
         Curve2::from(first.clone()).intersect_curve(&Curve2::from(second.clone()))
@@ -78,7 +78,7 @@ fn large_rational_inputs(control_count: usize) -> (Vec<Point2>, Vec<Real>) {
 }
 
 fn bench_large_rational_bezier() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let control_count = large_rational_control_count();
     let iterations = large_rational_iterations();
     let (controls, weights) = large_rational_inputs(control_count);
@@ -148,7 +148,7 @@ fn main() {
         return;
     }
 
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let curve = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],

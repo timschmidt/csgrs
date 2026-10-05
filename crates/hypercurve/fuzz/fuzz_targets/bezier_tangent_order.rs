@@ -3,7 +3,7 @@
 mod support;
 
 use hypercurve::{
-    Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, QuadraticBezier2,
+    Curve2, PredicatePolicy, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, QuadraticBezier2,
     Real, RegionPointLocation,
 };
 use libfuzzer_sys::fuzz_target;
@@ -36,9 +36,9 @@ fuzz_target!(|data: &[u8]| {
     let sign = if data[2] & 1 == 0 { 1 } else { -1 };
     let (a, b) = (Real::from(sign * first), Real::from(sign * second));
     let policy = if data[2] & 2 == 0 {
-        CurveContext::STRICT
+        PredicatePolicy::STRICT
     } else {
-        CurveContext::APPROXIMATE_512
+        PredicatePolicy::APPROXIMATE_512
     };
     let lower = Curve2::from(parabola(&a));
     let upper = support::under(&policy, || Curve2::from(parabola(&b)).reversed())

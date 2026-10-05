@@ -1,7 +1,8 @@
 mod support;
 use hypercurve::{
-    BooleanOp, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
-    FillRule, LineSeg2, OffsetCornerStyle2, Point2, RationalBezier2, Real, RegionPointLocation,
+    BooleanOp, Curve2, CurveCertainty, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    LineSeg2, OffsetCornerStyle2, Point2, PredicatePolicy, RationalBezier2, Real,
+    RegionPointLocation,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -53,7 +54,7 @@ fn normalized_rational_cap_round_offset_retains_exact_unit_directions() {
 fn authored_rational_cap_offset_does_not_require_a_signed_area_representation() {
     let cap = rational_convex_cap();
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || cap.signed_area())
+        crate::support::under(&PredicatePolicy::STRICT, || cap.signed_area())
             .unwrap()
             .value,
         None,
@@ -62,7 +63,7 @@ fn authored_rational_cap_offset_does_not_require_a_signed_area_representation() 
 }
 
 fn assert_cap_round_offset(cap: &CurveRegion2) {
-    let offset = crate::support::under(&CurveContext::STRICT, || {
+    let offset = crate::support::under(&PredicatePolicy::STRICT, || {
         cap.offset(ratio(1, 10), &OffsetCornerStyle2::Round)
     })
     .expect("a convex rational cap has an exactly representable round offset");
@@ -82,7 +83,7 @@ fn assert_cap_round_offset(cap: &CurveRegion2) {
         ),
         (point(2, 3), RegionPointLocation::Outside),
     ] {
-        let location = crate::support::under(&CurveContext::STRICT, || {
+        let location = crate::support::under(&PredicatePolicy::STRICT, || {
             offset.value.classify_point(&sample.clone().into())
         })
         .unwrap();
@@ -121,14 +122,14 @@ fn overlapping_material_rectangles() -> CurveRegion2 {
 #[test]
 fn zero_offset_regularizes_overlapping_authored_material() {
     let region = overlapping_material_rectangles();
-    let result = crate::support::under(&CurveContext::STRICT, || {
+    let result = crate::support::under(&PredicatePolicy::STRICT, || {
         region.offset(Real::zero(), &OffsetCornerStyle2::Round)
     })
     .unwrap();
     assert_eq!(result.certainty, CurveCertainty::Certified);
     assert_eq!(result.value.boundary_loops().len(), 1);
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || result.value.filled_area())
+        crate::support::under(&PredicatePolicy::STRICT, || result.value.filled_area())
             .unwrap()
             .value,
         Some(Real::from(10)),
@@ -138,7 +139,9 @@ fn zero_offset_regularizes_overlapping_authored_material() {
     {
         hyperreal::dispatch_trace::reset();
         let replayed = hyperreal::dispatch_trace::with_recording(|| {
-            crate::support::under(&CurveContext::STRICT, || result.value.regularized_region())
+            crate::support::under(&PredicatePolicy::STRICT, || {
+                result.value.regularized_region()
+            })
         })
         .unwrap();
         let trace = hyperreal::dispatch_trace::take_trace();
@@ -155,7 +158,7 @@ fn zero_offset_regularizes_overlapping_authored_material() {
 fn identical_and_empty_booleans_regularize_authored_winding() {
     let region = overlapping_material_rectangles();
     let empty = CurveRegion2::empty();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     for (first, second, nonempty_results) in [
         (&region, &region, [true, true, false, false]),
         (&region, &empty, [true, false, true, true]),
@@ -237,7 +240,7 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
         ratio(5125, 104976)
     );
     assert_eq!(
-        crate::support::under(&CurveContext::STRICT, || region
+        crate::support::under(&PredicatePolicy::STRICT, || region
             .classify_point(&source_witness.clone().into()))
         .unwrap()
         .value,
@@ -247,7 +250,7 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
     hyperreal::dispatch_trace::reset();
     #[cfg(feature = "dispatch-trace")]
     let _trace_guard = hyperreal::dispatch_trace::recording_scope();
-    let offset = crate::support::under(&CurveContext::STRICT, || {
+    let offset = crate::support::under(&PredicatePolicy::STRICT, || {
         region.offset(ratio(1, 4), &OffsetCornerStyle2::Round)
     })
     .unwrap();
@@ -269,7 +272,7 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
         Point2::new(ratio(1, 2), ratio(76, 100)),
     ] {
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || offset
+            crate::support::under(&PredicatePolicy::STRICT, || offset
                 .value
                 .classify_point(&sample.clone().into()))
             .unwrap()
@@ -313,7 +316,7 @@ fn authored_rational_boolean_operands_do_not_require_signed_area() {
         (Point2::new(Real::one(), ratio(1, 10)), true, false),
         (point(6, 6), false, false),
     ];
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let batch = crate::support::under(&policy, || cap.boolean_regions(&stripe))
             .expect("an exact Boolean boundary does not require a Green integral");
         assert_eq!(batch.certainty, CurveCertainty::Certified);

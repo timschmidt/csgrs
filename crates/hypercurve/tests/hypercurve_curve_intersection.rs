@@ -4,9 +4,9 @@ use hypercurve::{
     QuadraticBezier2, RationalQuadraticBezier2, RegionPointLocation, UncertaintyReason,
 };
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveGeometry2,
+    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2,
     CurveOverlapOrientation2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
-    Point2, RationalBezier2, Real,
+    Point2, PredicatePolicy, RationalBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -56,7 +56,7 @@ fn curve_parameter_comparison_reports_terminal_certainty() {
     let zero = hypercurve::CurveParameter2::from(Real::zero());
     let unresolved = hypercurve::CurveParameter2::from(support::terminally_unresolved_zero());
     let approximate =
-        crate::support::under_outcome_classified(&CurveContext::APPROXIMATE_512, || {
+        crate::support::under_outcome_classified(&PredicatePolicy::APPROXIMATE_512, || {
             zero.compare(&unresolved)
         })
         .unwrap();
@@ -68,13 +68,13 @@ fn curve_parameter_comparison_reports_terminal_certainty() {
         approximate.value,
         Classification::Decided(std::cmp::Ordering::Equal)
     );
-    let strict = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+    let strict = crate::support::under_outcome_classified(&PredicatePolicy::STRICT, || {
         zero.compare(&unresolved)
     })
     .unwrap();
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(strict.value, Classification::Uncertain(_)));
-    let identity = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+    let identity = crate::support::under_outcome_classified(&PredicatePolicy::STRICT, || {
         unresolved.compare(&unresolved)
     })
     .unwrap();
@@ -85,7 +85,7 @@ fn curve_parameter_comparison_reports_terminal_certainty() {
     );
 }
 
-fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+fn path_region(path: &CurvePath2, policy: &PredicatePolicy) -> CurveRegion2 {
     crate::support::under(policy, || {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             std::slice::from_ref(path),
@@ -101,7 +101,7 @@ fn boolean_paths(
     first: &CurvePath2,
     second: &CurvePath2,
     operation: BooleanOp,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) -> CurveRegion2 {
     crate::support::under(policy, || {
         path_region(first, policy).boolean_region(&path_region(second, policy), operation)
@@ -146,7 +146,7 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     let contact = &evidence.contacts()[0];
     assert_eq!(
         decided(
-            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || contact
                 .first()
                 .parameter())
             .unwrap()
@@ -157,7 +157,7 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     );
     assert_eq!(
         decided(
-            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || contact
                 .second()
                 .parameter())
             .unwrap()
@@ -177,7 +177,7 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
 #[test]
 fn top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts() {
     let controls = vec![p(9, 0), p(-7, 3), p(-7, -10), p(9, 9)];
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let curve = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap();
         let middle = decided(
             crate::support::under_classified_result(&policy, || {
@@ -244,7 +244,7 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     let contact = &evidence.contacts()[0];
     assert_eq!(
         decided(
-            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || contact
                 .first()
                 .parameter())
             .unwrap()
@@ -255,7 +255,7 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     );
     assert_eq!(
         decided(
-            crate::support::under_classified_result(&CurveContext::STRICT, || contact
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || contact
                 .second()
                 .parameter())
             .unwrap()
@@ -279,7 +279,7 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
     let crossing = Curve2::from(
         LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let rational = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 3]).unwrap();
         let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
         let curves = [
@@ -352,11 +352,11 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                             })
                             .unwrap(),
                         );
-                        let comparison =
-                            crate::support::under_outcome_classified(&CurveContext::STRICT, || {
-                                parameter.compare(&expected_parameter.clone().into())
-                            })
-                            .unwrap();
+                        let comparison = crate::support::under_outcome_classified(
+                            &PredicatePolicy::STRICT,
+                            || parameter.compare(&expected_parameter.clone().into()),
+                        )
+                        .unwrap();
                         assert_eq!(comparison.certainty, CurveCertainty::Certified);
                         assert_eq!(
                             comparison.value,
@@ -370,7 +370,7 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                         assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                         assert_eq!(
                             crate::support::under_outcome_classification(
-                                &CurveContext::STRICT,
+                                &PredicatePolicy::STRICT,
                                 || evaluated.value.coincides_with(&point.clone().into())
                             )
                             .value,
@@ -382,7 +382,7 @@ fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
                         for endpoint in [split.value.0.end(), split.value.1.start()] {
                             assert_eq!(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || endpoint.coincides_with(&point.clone().into())
                                 )
                                 .value,
@@ -404,7 +404,7 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
     let selecting = Curve2::from(
         LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
         let sources = [
             Curve2::from(QuadraticBezier2::new(
@@ -529,7 +529,7 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                         ] {
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || contact.point().coincides_with(&point.clone().into())
                                 )
                                 .value
@@ -546,7 +546,7 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                                 .unwrap(),
                             );
                             let compared = crate::support::under_outcome_classified(
-                                &CurveContext::STRICT,
+                                &PredicatePolicy::STRICT,
                                 || parameter.compare(expected_parameter),
                             )
                             .unwrap();
@@ -561,7 +561,7 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                             assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || evaluated.value.coincides_with(&point.clone().into())
                                 )
                                 .value
@@ -574,7 +574,7 @@ fn retained_source_intersections_clip_contacts_and_reuse_selected_locations() {
                                 for endpoint in [split.value.0.end(), split.value.1.start()] {
                                     assert!(decided(
                                         crate::support::under_outcome_classification(
-                                            &CurveContext::STRICT,
+                                            &PredicatePolicy::STRICT,
                                             || endpoint.coincides_with(&point.clone().into())
                                         )
                                         .value
@@ -600,7 +600,7 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
     let selecting = Curve2::from(
         LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let selection = crate::support::under(&policy, || source.intersect_curve(&selecting))
             .unwrap()
             .into_value();
@@ -685,7 +685,7 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                                 assert!(expected.iter().any(|expected| {
                                     decided(
                                         crate::support::under_outcome_classification(
-                                            &CurveContext::STRICT,
+                                            &PredicatePolicy::STRICT,
                                             || point.coincides_with(&expected.clone().into()),
                                         )
                                         .value,
@@ -694,7 +694,7 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                             }
                             assert!(!decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || points[0].coincides_with(&points[1])
                                 )
                                 .value
@@ -706,7 +706,7 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                         assert!(!result.contacts()[0].is_certified_transverse());
                         assert!(decided(
                             crate::support::under_outcome_classification(
-                                &CurveContext::STRICT,
+                                &PredicatePolicy::STRICT,
                                 || result.contacts()[0]
                                     .point()
                                     .coincides_with(&Point2::new(root.clone(), q(1, 2)).into())
@@ -732,7 +732,7 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
         Point2::new(root.clone(), Real::one() + &root),
         p(1, 2),
     ));
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
@@ -796,7 +796,7 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
                                 .any(|endpoint| {
                                     decided(
                                         crate::support::under_outcome_classification(
-                                            &CurveContext::STRICT,
+                                            &PredicatePolicy::STRICT,
                                             || point.value.coincides_with(endpoint),
                                         )
                                         .value,
@@ -810,7 +810,7 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
     }
 }
 
-fn generated_parabola_chord(policy: &CurveContext) -> Curve2 {
+fn generated_parabola_chord(policy: &PredicatePolicy) -> Curve2 {
     let path = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
@@ -839,7 +839,7 @@ fn assert_single_contact_curve_pieces(
     source: &Curve2,
     pieces: &[Curve2],
     contact: &Point2,
-    policy: &CurveContext,
+    policy: &PredicatePolicy,
 ) {
     assert_eq!(pieces.len(), 2);
     for (actual, expected) in [
@@ -849,7 +849,7 @@ fn assert_single_contact_curve_pieces(
         (pieces[1].start(), contact.clone().into()),
     ] {
         assert!(decided(
-            crate::support::under_outcome_classification(&CurveContext::STRICT, || actual
+            crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || actual
                 .coincides_with(&expected))
             .value
         ));
@@ -861,7 +861,7 @@ fn assert_single_contact_curve_pieces(
             assert_eq!(point.certainty, CurveCertainty::Certified);
             assert!([piece.start(), piece.end()].iter().any(|endpoint| {
                 decided(
-                    crate::support::under_outcome_classification(&CurveContext::STRICT, || {
+                    crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || {
                         point.value.coincides_with(endpoint)
                     })
                     .value,
@@ -881,7 +881,7 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
     let crossing = Curve2::from(
         LineSeg2::try_new(Point2::new(-q(1, 2), r(-1)), Point2::new(-q(1, 2), r(2))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let original = generated_parabola_chord(&policy);
         for reverse_first in [false, true] {
             let chord = if reverse_first {
@@ -928,7 +928,7 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                             assert!(replay.value.overlaps().is_empty());
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || replay.value.contacts()[0]
                                         .point()
                                         .coincides_with(&point.clone().into())
@@ -976,7 +976,7 @@ fn selected_tail_topology_keeps_reversed_and_nonunit_source_charts() {
     let selecting = vertical(q(1, 2));
     let crossing = vertical(q(3, 4));
     let point = Point2::new(q(3, 4), r(0));
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
         let curves = [
             Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))),
@@ -1065,7 +1065,7 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
     use hypercurve::{NurbsCurve2, PolynomialSplineCurve2};
 
     let crossing = Curve2::from(LineSeg2::try_new(p(-1, 0), p(13, 0)).unwrap());
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let controls = vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)];
         let knots = [-2, -1, 0, 1, 1, 1, 2, 3, 4]
             .into_iter()
@@ -1133,7 +1133,7 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                     ] {
                         assert!(decided(
                             crate::support::under_outcome_classification(
-                                &CurveContext::STRICT,
+                                &PredicatePolicy::STRICT,
                                 || actual.coincides_with(&expected)
                             )
                             .value
@@ -1148,7 +1148,7 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                         assert_eq!(replay.value.contacts().len(), 1);
                         assert!(decided(
                             crate::support::under_outcome_classification(
-                                &CurveContext::STRICT,
+                                &PredicatePolicy::STRICT,
                                 || replay.value.contacts()[0]
                                     .point()
                                     .coincides_with(&expected.clone().into())
@@ -1175,7 +1175,7 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
             LineSeg2::try_new(Point2::new(x.clone(), r(-1)), Point2::new(x, r(2))).unwrap(),
         )
     };
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let original = generated_parabola_chord(&policy);
         for reverse_chord in [false, true] {
             let chord = if reverse_chord {
@@ -1239,7 +1239,7 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                         ] {
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || contact.point().coincides_with(&point.clone().into())
                                 )
                                 .value
@@ -1259,7 +1259,7 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                                 assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                                 assert!(decided(
                                     crate::support::under_outcome_classification(
-                                        &CurveContext::STRICT,
+                                        &PredicatePolicy::STRICT,
                                         || evaluated.value.coincides_with(&point.clone().into())
                                     )
                                     .value
@@ -1273,7 +1273,7 @@ fn generated_chords_keep_open_contacts_and_general_locations() {
                                     for endpoint in [split.value.0.end(), split.value.1.start()] {
                                         assert!(decided(
                                             crate::support::under_outcome_classification(
-                                                &CurveContext::STRICT,
+                                                &PredicatePolicy::STRICT,
                                                 || endpoint.coincides_with(&point.clone().into())
                                             )
                                             .value
@@ -1303,7 +1303,7 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
         -Real::one() + &alpha * (Real::one() + squared),
         r(2) * &alpha * root,
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let original = generated_parabola_chord(&policy);
         let independent = Curve2::from(LineSeg2::try_new(p(-1, 0), end.clone()).unwrap());
         let selected =
@@ -1389,7 +1389,7 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                             assert_eq!(second_point.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || first_point.value.coincides_with(&second_point.value)
                                 )
                                 .value
@@ -1412,7 +1412,7 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                                     expected.iter().any(|expected| {
                                         decided(
                                             crate::support::under_outcome_classification(
-                                                &CurveContext::STRICT,
+                                                &PredicatePolicy::STRICT,
                                                 || point.coincides_with(&expected.clone().into()),
                                             )
                                             .value,
@@ -1432,7 +1432,7 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                             }
                             assert!(!decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || points[0].coincides_with(&points[1])
                                 )
                                 .value
@@ -1458,7 +1458,7 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                                     ] {
                                         assert!(decided(
                                             crate::support::under_outcome_classification(
-                                                &CurveContext::STRICT,
+                                                &PredicatePolicy::STRICT,
                                                 || actual.coincides_with(&expected)
                                             )
                                             .value
@@ -1505,7 +1505,7 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
     let selecting = Curve2::from(
         LineSeg2::try_new(Point2::new(-q(1, 2), r(-1)), Point2::new(-q(1, 2), r(2))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let original = generated_parabola_chord(&policy);
         let independent = Curve2::from(LineSeg2::try_new(p(-1, 0), end.clone()).unwrap());
         let selected =
@@ -1605,7 +1605,7 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                             ] {
                                 assert!(decided(
                                     crate::support::under_outcome_classification(
-                                        &CurveContext::STRICT,
+                                        &PredicatePolicy::STRICT,
                                         || actual.coincides_with(&expected)
                                     )
                                     .value
@@ -1615,7 +1615,7 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                         assert!(
                             decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || contact.point().coincides_with(&expected.clone().into())
                                 )
                                 .value
@@ -1647,7 +1647,7 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || point.value.coincides_with(&expected.clone().into())
                                 )
                                 .value
@@ -1668,7 +1668,7 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
     );
     let controls = vec![p(0, 0), p(1, 1), p(2, 0), p(3, 1)];
     let knots = vec![r(0), r(0), r(1), r(2), r(3), r(3)];
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let selection = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
@@ -1736,7 +1736,7 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                                 .find(|contact| {
                                     decided(
                                         crate::support::under_outcome_classification(
-                                            &CurveContext::STRICT,
+                                            &PredicatePolicy::STRICT,
                                             || {
                                                 contact
                                                     .point()
@@ -1760,7 +1760,7 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                             );
                             assert_eq!(
                                 crate::support::under_outcome_classified(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || mapped.compare(&parameter.clone().into())
                                 )
                                 .unwrap()
@@ -1772,7 +1772,7 @@ fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts()
                             assert_eq!(evaluated.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || evaluated.value.coincides_with(&point.into())
                                 )
                                 .value
@@ -1794,7 +1794,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
     let crossing = Curve2::from(
         LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let selected = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
@@ -1857,7 +1857,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                             .find(|contact| {
                                 decided(
                                     crate::support::under_outcome_classification(
-                                        &CurveContext::STRICT,
+                                        &PredicatePolicy::STRICT,
                                         || contact.point().coincides_with(&p(0, 0).into()),
                                     )
                                     .value,
@@ -1893,7 +1893,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                             );
                             assert_eq!(
                                 crate::support::under_outcome_classified(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || parameter.compare(&expected.into())
                                 )
                                 .unwrap()
@@ -1906,7 +1906,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
                             assert_eq!(point.certainty, CurveCertainty::Certified);
                             assert!(decided(
                                 crate::support::under_outcome_classification(
-                                    &CurveContext::STRICT,
+                                    &PredicatePolicy::STRICT,
                                     || point.value.coincides_with(&p(0, 0).into())
                                 )
                                 .value
@@ -1921,7 +1921,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
 
 #[test]
 fn selected_circle_tangency_reuses_retained_normal_evidence() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
@@ -2001,7 +2001,7 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
 
 #[test]
 fn selected_circle_crossings_replay_the_retained_rational_source() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
@@ -2134,7 +2134,7 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
 
 #[test]
 fn native_retraced_overlaps_survive_independent_restriction() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)));
         let independent = Curve2::from(
             RationalBezier2::try_new(vec![p(0, 0), p(2, 0), p(0, 0)], vec![r(1); 3])
@@ -2223,7 +2223,7 @@ fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
     // x=12(2t-1)^2, y=12((2t-1)^3-(2t-1)/4).
     // The diagonal overlap coexists with the ordered visits (1/4,3/4)
     // and (3/4,1/4) to the transverse double point (3,0).
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let source = Curve2::from(CubicBezier2::new(
             p(12, -9),
             p(-4, 13),
@@ -2303,7 +2303,7 @@ fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
 
 #[test]
 fn native_nodal_spline_contacts_retain_authored_charts() {
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let controls = vec![p(12, -9), p(-4, 13), p(-4, -13), p(12, 9)];
         let knots = [2, 2, 2, 2, 6, 6, 6, 6].map(r).to_vec();
         let polynomial = crate::support::under(&policy, || {
@@ -2382,7 +2382,7 @@ fn retained_retraced_domains_retain_every_parameter_component() {
     let crossing = Curve2::from(
         LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
     );
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let selected = crate::support::under(&policy, || selecting.intersect_curve(&crossing))
             .unwrap()
             .into_value();
@@ -2459,7 +2459,7 @@ fn top_level_shared_component_retains_certified_overlap() {
     assert_pieces_share_one_overlap(
         &topology.first()[0],
         &topology.second()[0],
-        &CurveContext::STRICT,
+        &PredicatePolicy::STRICT,
     );
 }
 
@@ -2469,7 +2469,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
         RationalBezier2::try_new(vec![p(0, 0), p(2, 3), p(4, 0)], vec![r(1), r(2), r(1)]).unwrap();
     let elevated = base.elevated_to_degree(5).unwrap();
     let independent = decided(
-        crate::support::under_classified_result(&CurveContext::STRICT, || {
+        crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
             RationalBezier2::from_homogeneous_controls(elevated.homogeneous_controls().to_vec())
         })
         .unwrap(),
@@ -2517,7 +2517,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
 
 #[test]
 fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let source = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -2589,9 +2589,10 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 
     assert_eq!(topology.first().len(), 2);
     assert!(decided(
-        crate::support::under_outcome_classification(&CurveContext::STRICT, || topology.first()[1]
-            .start()
-            .coincides_with(&Point2::new(q(1, 2), r(0)).into()))
+        crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || topology.first()
+            [1]
+        .start()
+        .coincides_with(&Point2::new(q(1, 2), r(0)).into()))
         .value
     ));
     assert_eq!(topology.second().len(), 1);
@@ -2642,7 +2643,7 @@ fn promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary() {
         Some(BezierParameter2::Algebraic(_))
     ));
 
-    let region = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
+    let region = boolean_paths(&first, &second, BooleanOp::Union, &PredicatePolicy::STRICT);
     assert_eq!(region.boundary_loops().len(), 1);
 }
 
@@ -2697,9 +2698,9 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
         Some(BezierParameter2::Algebraic(_))
     ));
 
-    let region = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
+    let region = boolean_paths(&first, &second, BooleanOp::Union, &PredicatePolicy::STRICT);
     let exported =
-        crate::support::under(&CurveContext::STRICT, || region.boundary_paths()).unwrap();
+        crate::support::under(&PredicatePolicy::STRICT, || region.boundary_paths()).unwrap();
     assert_eq!(exported.certainty, hypercurve::CurveCertainty::Certified);
     let paths = exported.value;
     assert!(
@@ -2715,11 +2716,11 @@ fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
     let (first_x, second_x) = support::terminally_equal_pair(Real::pi() + Real::e());
     let first = symbolic_rectangle_path(first_x);
     let second = symbolic_rectangle_path(second_x);
-    let approximate = CurveContext::APPROXIMATE_512;
+    let approximate = PredicatePolicy::APPROXIMATE_512;
 
-    let strict_first = path_region(&first, &CurveContext::STRICT);
-    let strict_second = path_region(&second, &CurveContext::STRICT);
-    let strict = crate::support::under(&CurveContext::STRICT, || {
+    let strict_first = path_region(&first, &PredicatePolicy::STRICT);
+    let strict_second = path_region(&second, &PredicatePolicy::STRICT);
+    let strict = crate::support::under(&PredicatePolicy::STRICT, || {
         strict_first.boolean_region(&strict_second, BooleanOp::Union)
     })
     .unwrap_err();
@@ -2848,7 +2849,7 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     );
     let line = Curve2::from(LineSeg2::try_new(p(2, 1), p(5, 1)).unwrap());
 
-    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         arc.intersect_curve(&line)
     })
     .expect("the authorized terminal must resolve the ambiguous semicircle");
@@ -2865,7 +2866,7 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     );
 
     let strict =
-        crate::support::under(&CurveContext::STRICT, || arc.intersect_curve(&line)).unwrap_err();
+        crate::support::under(&PredicatePolicy::STRICT, || arc.intersect_curve(&line)).unwrap_err();
     assert!(matches!(
         strict,
         ExactCurveError::Blocked(blocker)
@@ -2873,7 +2874,7 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
-    let topology = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let topology = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         arc.intersection_topology(&line)
     })
     .expect("topology must replay the authorized terminal from retained arc facts");
@@ -2883,7 +2884,7 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
 
     let arc_path = CurvePath2::try_new(vec![arc]).unwrap();
     let line_path = CurvePath2::try_new(vec![line]).unwrap();
-    let path_result = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+    let path_result = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
         arc_path.intersect_path(&line_path)
     })
     .expect("path intersection must preserve terminal certainty");
@@ -2894,7 +2895,7 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     assert!(path_result.value.is_complete());
     assert_eq!(path_result.value.contacts().len(), 1);
 
-    let strict_path = crate::support::under(&CurveContext::STRICT, || {
+    let strict_path = crate::support::under(&PredicatePolicy::STRICT, || {
         arc_path.intersection_topology(&line_path)
     })
     .unwrap_err();
@@ -2911,7 +2912,7 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     let line = Curve2::from(LineSeg2::try_new(p(4, -4), p(4, 4)).unwrap());
     let arc =
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
 
     let topology = crate::support::under(&policy, || line.intersection_topology(&arc))
         .unwrap()
@@ -2922,10 +2923,10 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     assert_eq!(evidence.contacts().len(), 1);
     assert_eq!(
         decided(
-            crate::support::under_classified_result(&CurveContext::STRICT, || evidence.contacts()
-                [0]
-            .first()
-            .parameter())
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || evidence
+                .contacts()[0]
+                .first()
+                .parameter())
             .unwrap()
         )
         .scalar()
@@ -2958,7 +2959,7 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     );
     assert_eq!(
         decided(
-            crate::support::under_classified_result(&CurveContext::STRICT, || reversed_evidence
+            crate::support::under_classified_result(&PredicatePolicy::STRICT, || reversed_evidence
                 .contacts()[0]
                 .second()
                 .parameter())
@@ -2976,7 +2977,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let second =
         Curve2::from(CircularArc2::try_from_center(p(4, 3), p(0, 5), p(0, 0), false).unwrap());
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let topology = crate::support::under(&policy, || first.intersection_topology(&second))
         .unwrap()
         .into_value();
@@ -3034,13 +3035,13 @@ fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
         Curve2::from(LineSeg2::try_new(p(0, 5), p(4, 3)).unwrap()),
     ])
     .unwrap();
-    let first_area = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+    let first_area = crate::support::under_outcome_classified(&PredicatePolicy::STRICT, || {
         first.boundary_loop().unwrap().signed_area()
     })
     .unwrap()
     .into_value();
     let first_area = decided(first_area).unwrap();
-    let second_area = crate::support::under_outcome_classified(&CurveContext::STRICT, || {
+    let second_area = crate::support::under_outcome_classified(&PredicatePolicy::STRICT, || {
         second.boundary_loop().unwrap().signed_area()
     })
     .unwrap()
@@ -3057,7 +3058,7 @@ fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
         (BooleanOp::Xor, &first_area - &second_area),
     ];
     for (operation, expected_area) in cases {
-        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
+        let region = boolean_paths(&first, &second, operation, &PredicatePolicy::STRICT);
         assert!(
             region
                 .boundary_loops()
@@ -3120,7 +3121,7 @@ fn closed_under_curve(curve: Curve2, lower_y: i32) -> CurvePath2 {
 
 #[test]
 fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let source = Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
         p(0, 0),
         p(1, 3),
@@ -3172,7 +3173,7 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
         );
         assert!(!region.boundary_loops().is_empty());
         assert!(
-            crate::support::under(&CurveContext::STRICT, || region.signed_area())
+            crate::support::under(&PredicatePolicy::STRICT, || region.signed_area())
                 .unwrap()
                 .into_value()
                 .is_some()
@@ -3218,7 +3219,7 @@ fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
     let first = rectangle(0, 0, 2, 2);
     let same = first.clone();
     let reversed = first.reversed().unwrap();
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let same_evidence = crate::support::under(&policy, || first.intersect_path(&same))
         .unwrap()
         .into_value();
@@ -3319,9 +3320,9 @@ fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
         (BooleanOp::Xor, r(12)),
     ];
     for (operation, expected_area) in cases {
-        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
+        let region = boolean_paths(&first, &second, operation, &PredicatePolicy::STRICT);
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || region.signed_area())
+            crate::support::under(&PredicatePolicy::STRICT, || region.signed_area())
                 .unwrap()
                 .into_value(),
             Some(expected_area)
@@ -3333,7 +3334,7 @@ fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
 fn promoted_region_boolean_materializes_exact_regularized_operation_matrix() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     let cases = [
         (BooleanOp::Union, r(7)),
         (BooleanOp::Intersection, r(1)),
@@ -3380,9 +3381,9 @@ fn promoted_region_boolean_consumes_complete_shared_boundaries() {
     ];
 
     for (operation, expected_area) in cases {
-        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
+        let region = boolean_paths(&first, &second, operation, &PredicatePolicy::STRICT);
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || region.signed_area())
+            crate::support::under(&PredicatePolicy::STRICT, || region.signed_area())
                 .unwrap()
                 .into_value(),
             Some(expected_area)
@@ -3406,14 +3407,14 @@ fn promoted_region_boolean_preserves_disjoint_exact_conic_boundaries() {
     };
     let first = circle(0);
     let second = circle(4);
-    let union = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
+    let union = boolean_paths(&first, &second, BooleanOp::Union, &PredicatePolicy::STRICT);
     assert_eq!(union.boundary_loops().len(), 2);
 
     let intersection = boolean_paths(
         &first,
         &second,
         BooleanOp::Intersection,
-        &CurveContext::STRICT,
+        &PredicatePolicy::STRICT,
     );
     assert!(intersection.is_empty());
 }
@@ -3453,7 +3454,7 @@ fn promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_spli
     }));
 
     for operation in [BooleanOp::Union, BooleanOp::Intersection] {
-        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
+        let region = boolean_paths(&first, &second, operation, &PredicatePolicy::STRICT);
         assert_eq!(region.boundary_loops().len(), 1);
         assert!(!region.boundary_loops()[0].has_algebraic_fragments());
     }
@@ -3476,7 +3477,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     let root = r(2).sqrt().unwrap();
     for (piece, x) in pieces.iter().zip([-root.clone(), root]) {
         assert!(decided(
-            crate::support::under_outcome_classification(&CurveContext::STRICT, || piece
+            crate::support::under_outcome_classification(&PredicatePolicy::STRICT, || piece
                 .end()
                 .coincides_with(&Point2::new(x, r(2)).into()))
             .value
@@ -3484,10 +3485,10 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     }
 
     for operation in [BooleanOp::Difference, BooleanOp::Xor] {
-        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
+        let region = boolean_paths(&first, &second, operation, &PredicatePolicy::STRICT);
         assert!(region.has_algebraic_fragments());
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || region
+            crate::support::under(&PredicatePolicy::STRICT, || region
                 .classify_point(&p(0, 1).into()))
             .unwrap()
             .into_value(),
@@ -3495,7 +3496,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             "{operation:?} retained algebraic interior"
         );
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || region
+            crate::support::under(&PredicatePolicy::STRICT, || region
                 .classify_point(&p(0, 3).into()))
             .unwrap()
             .into_value(),
@@ -3503,14 +3504,14 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             "{operation:?} retained algebraic overlap interior"
         );
         assert_eq!(
-            crate::support::under(&CurveContext::STRICT, || region
+            crate::support::under(&PredicatePolicy::STRICT, || region
                 .classify_point(&p(0, 0).into()))
             .unwrap()
             .into_value(),
             RegionPointLocation::Boundary,
             "{operation:?} retained algebraic boundary"
         );
-        let transformed = crate::support::under(&CurveContext::STRICT, || {
+        let transformed = crate::support::under(&PredicatePolicy::STRICT, || {
             region.transform_affine(&r(-2), &r(0), &r(0), &r(3), &r(7), &r(-1))
         })
         .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"))
@@ -3522,7 +3523,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             (p(7, -1), RegionPointLocation::Boundary),
         ] {
             assert_eq!(
-                crate::support::under(&CurveContext::STRICT, || transformed
+                crate::support::under(&PredicatePolicy::STRICT, || transformed
                     .classify_point(&point.clone().into()))
                 .unwrap()
                 .into_value(),
@@ -3579,7 +3580,7 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
         ),
         (
             CurveFamily2::PolynomialBSpline,
-            crate::support::under(&CurveContext::STRICT, || {
+            crate::support::under(&PredicatePolicy::STRICT, || {
                 Curve2::try_polynomial_bspline(
                     2,
                     controls.to_vec(),
@@ -3591,7 +3592,7 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
         ),
         (
             CurveFamily2::Nurbs,
-            crate::support::under(&CurveContext::STRICT, || {
+            crate::support::under(&PredicatePolicy::STRICT, || {
                 Curve2::try_nurbs(
                     2,
                     controls.to_vec(),
@@ -3608,7 +3609,7 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
 #[test]
 fn equivalent_top_level_families_complete_independent_region_booleans() {
     let cutter = rectangle(-3, 2, 3, 5);
-    let policy = CurveContext::STRICT;
+    let policy = PredicatePolicy::STRICT;
     for (family, curve) in equivalent_parabola_curves() {
         let source = CurvePath2::try_new(vec![
             curve,
@@ -3639,7 +3640,7 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
 #[test]
 fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
     use hypercurve::CurveCornerMode2;
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let source = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
@@ -3747,7 +3748,7 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
 #[test]
 fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
     use hypercurve::CurveCornerMode2;
-    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
@@ -3854,7 +3855,7 @@ mod finite_selected_circle_domains {
     fn certified<T>(value: impl crate::support::IntoCertified<T>) -> T {
         value.into_certified()
     }
-    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
+    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &PredicatePolicy) {
         assert_eq!(
             certified(crate::support::under_outcome_classification(policy, || {
                 first.coincides_with(second)
@@ -3862,7 +3863,7 @@ mod finite_selected_circle_domains {
             Classification::Decided(true)
         );
     }
-    fn circle(policy: &CurveContext) -> Curve2 {
+    fn circle(policy: &PredicatePolicy) -> Curve2 {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
@@ -3893,7 +3894,7 @@ mod finite_selected_circle_domains {
         assert!(circle.geometry().is_none());
         circle
     }
-    fn cap(chart: u8, policy: &CurveContext) -> Curve2 {
+    fn cap(chart: u8, policy: &PredicatePolicy) -> Curve2 {
         // The four increasing charts cover P(t)=(-1/8+t^2,t), 0<=t<=1/8.
         // The last chart has a genuine unused native pole at s=1/2.
         let (parallel, start, end) = match chart {
@@ -3968,7 +3969,7 @@ mod finite_selected_circle_domains {
             .unwrap()
             .into_value()
     }
-    fn oriented(curve: &Curve2, reverse: bool, policy: &CurveContext) -> Curve2 {
+    fn oriented(curve: &Curve2, reverse: bool, policy: &PredicatePolicy) -> Curve2 {
         if reverse {
             certified(crate::support::under(policy, || curve.reversed()).unwrap())
         } else {
@@ -3983,7 +3984,7 @@ mod finite_selected_circle_domains {
     #[test]
     fn retained_fillet_intersects_finite_analytic_parallel_in_all_charts() {
         let (mut cases, mut contacts, mut replays, mut failures) = (0, 0, 0, 0);
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let original_circle = circle(&policy);
             for chart in 0..4 {
                 let original_cap = cap(chart, &policy);
@@ -4077,7 +4078,7 @@ fn path_piece_count(topology: &hypercurve::CurvePathIntersectionTopology2) -> us
         .sum()
 }
 
-fn assert_pieces_share_one_overlap(first: &Curve2, second: &Curve2, policy: &CurveContext) {
+fn assert_pieces_share_one_overlap(first: &Curve2, second: &Curve2, policy: &PredicatePolicy) {
     let replay = crate::support::under(policy, || first.intersect_curve(second)).unwrap();
     assert_eq!(replay.certainty, CurveCertainty::Certified);
     assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
@@ -4088,12 +4089,12 @@ fn assert_pieces_share_one_overlap(first: &Curve2, second: &Curve2, policy: &Cur
 mod point_locations {
     use super::{p, q, r};
     use hypercurve::{
-        Classification, CubicBezier2, Curve2, CurveContext, CurveParameter2, CurvePoint2,
-        CurvePointLocations2, ExactCurveError, Point2, QuadraticBezier2, RationalBezier2, Real,
+        Classification, CubicBezier2, Curve2, CurveParameter2, CurvePoint2, CurvePointLocations2,
+        ExactCurveError, Point2, PredicatePolicy, QuadraticBezier2, RationalBezier2, Real,
         UncertaintyReason,
     };
 
-    fn locations(curve: &Curve2, point: Point2, policy: &CurveContext) -> Vec<CurveParameter2> {
+    fn locations(curve: &Curve2, point: Point2, policy: &PredicatePolicy) -> Vec<CurveParameter2> {
         let outcome =
             crate::support::under(policy, || curve.point_locations(&CurvePoint2::from(point)))
                 .unwrap();
@@ -4122,7 +4123,7 @@ mod point_locations {
 
     #[test]
     fn point_locations_report_every_exact_visit() {
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             // (2t, 4t^2): the parabola y = x^2 on x in [0, 2].
             let parabola = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 4)));
             assert_eq!(scalars(&locations(&parabola, p(1, 1), &policy)), [q(1, 2)]);
@@ -4152,7 +4153,7 @@ mod point_locations {
 
     #[test]
     fn point_locations_report_continuous_spline_seams_once() {
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             // Linear spline (1,0) -> (0,0) -> (1,0) with knots 0, 1, 2.
             let zigzag = crate::support::under(&policy, || {
                 Curve2::try_polynomial_bspline(
@@ -4170,7 +4171,7 @@ mod point_locations {
 
     #[test]
     fn constant_and_unrepresented_queries_are_explicit() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let constant = Curve2::from(QuadraticBezier2::new(p(1, 1), p(1, 1), p(1, 1)));
         assert_eq!(
             crate::support::under(&policy, || constant
@@ -4211,7 +4212,7 @@ mod point_locations {
             BezierParameter2, BezierParameterRange2, CurvePath2, CurveRegion2, FillRule,
             OffsetCornerStyle2,
         };
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             // The left parallel at distance 1 of the x-axis quadratic is y = 1.
             let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
                 .parallel_left(r(1))
@@ -4285,11 +4286,11 @@ mod point_locations {
 mod self_intersections {
     use super::{p, q, r};
     use hypercurve::{
-        Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext,
-        CurveIntersectionResult2, LineSeg2, NurbsCurve2, Point2, Real,
+        Classification, CubicBezier2, Curve2, CurveCertainty, CurveIntersectionResult2, LineSeg2,
+        NurbsCurve2, Point2, PredicatePolicy, Real,
     };
 
-    fn self_contacts(curve: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
+    fn self_contacts(curve: &Curve2, policy: &PredicatePolicy) -> CurveIntersectionResult2 {
         let outcome = crate::support::under(policy, || curve.self_intersections()).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         assert!(outcome.value.is_complete(), "{:?}", outcome.value);
@@ -4299,7 +4300,7 @@ mod self_intersections {
 
     /// The same cubic image refined at interior knots, so joints become span
     /// boundaries that must not be reported as contacts.
-    fn refined(controls: [Point2; 4], knots: Vec<Real>, policy: &CurveContext) -> Curve2 {
+    fn refined(controls: [Point2; 4], knots: Vec<Real>, policy: &PredicatePolicy) -> Curve2 {
         let zero = Real::zero;
         let one = Real::one;
         let nurbs = crate::support::under(policy, || {
@@ -4328,7 +4329,7 @@ mod self_intersections {
 
     #[test]
     fn authored_loop_reports_one_unordered_crossing() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let [a, b, c, d] = loop_controls();
         let curve = Curve2::from(CubicBezier2::new(a, b, c, d));
         let result = self_contacts(&curve, &policy);
@@ -4341,7 +4342,7 @@ mod self_intersections {
 
     #[test]
     fn span_joints_are_the_identity_not_contacts() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         for knots in [vec![q(1, 2)], vec![q(1, 4), q(1, 2), q(3, 4)]] {
             let spans = knots.len() + 1;
             let curve = refined(loop_controls(), knots, &policy);
@@ -4355,7 +4356,7 @@ mod self_intersections {
 
     #[test]
     fn closed_seams_join_distinct_parameters() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let controls = [p(0, 0), p(2, 2), p(-2, 2), p(0, 0)];
         let [a, b, c, d] = controls.clone();
         let authored = self_contacts(&Curve2::from(CubicBezier2::new(a, b, c, d)), &policy);
@@ -4381,7 +4382,7 @@ mod self_intersections {
 
     #[test]
     fn injective_curves_are_disjoint() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 2)).unwrap());
         assert!(self_contacts(&line, &policy).is_disjoint());
         let arch = refined([p(0, 0), p(1, 2), p(2, 2), p(3, 0)], vec![q(1, 2)], &policy);
@@ -4393,7 +4394,7 @@ mod self_intersections {
     /// parameter correspondence, which only the shared joint satisfies.
     #[test]
     fn shared_component_arcs_retain_their_node_crossing() {
-        let policy = CurveContext::STRICT;
+        let policy = PredicatePolicy::STRICT;
         let [a, b, c, d] = loop_controls();
         let curve = Curve2::from(CubicBezier2::new(a, b, c, d));
         let (left, right) = crate::support::under(&policy, || curve.split_at(q(1, 2).into()))
