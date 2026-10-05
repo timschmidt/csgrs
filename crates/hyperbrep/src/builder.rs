@@ -1878,13 +1878,9 @@ pub(crate) fn extrude_curve_region(
     region: &CurveRegion2,
     z_min: Real,
     z_max: Real,
-    context: &CurveContext,
 ) -> Result<(Model, Vec<SolidId>), ConstructionError> {
     require_increasing(&z_min, &z_max, Axis::Z)?;
-    let components = region
-        .material_components(context)
-        .map_err(GeometryError::from)?
-        .into_value();
+    let components = region.material_components().map_err(GeometryError::from)?;
     let mut builder = ModelBuilder::new();
     let mut solids = Vec::with_capacity(components.len());
     for component in components {
@@ -1893,22 +1889,19 @@ pub(crate) fn extrude_curve_region(
             .iter()
             .map(|boundary| persistent_planar_curves(boundary.curves()))
             .collect::<Result<Vec<_>, _>>()?;
-        let area = match component
-            .signed_area(context)
-            .map_err(GeometryError::from)?
-            .into_value()
-        {
-            Classification::Decided(Some(area)) => area,
-            Classification::Decided(None) => {
-                return Err(GeometryError::UnsupportedMeasurement.into());
-            }
-            Classification::Uncertain(reason) => {
-                return Err(
-                    BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason))
-                        .into(),
-                );
-            }
-        };
+        let area =
+            match crate::error::classified(component.signed_area()).map_err(GeometryError::from)? {
+                Classification::Decided(Some(area)) => area,
+                Classification::Decided(None) => {
+                    return Err(GeometryError::UnsupportedMeasurement.into());
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(BuildError::Geometry(
+                        GeometryError::PlanarClassificationUnresolved(reason),
+                    )
+                    .into());
+                }
+            };
         solids.push(add_persistent_curve_region(
             &mut builder,
             &loops,
@@ -10573,7 +10566,6 @@ mod tests {
     }
     #[test]
     fn planar_path_nesting_preserves_generated_offset_endpoints() {
-        let policy = CurveContext::STRICT;
         let point = |x, y| CurvePoint2::new(r(x), r(y));
         let line = |first, second| Curve2::from(LineSeg2::try_new(first, second).unwrap());
         let cap = CurvePath2::try_new(vec![
@@ -10582,22 +10574,16 @@ mod tests {
         ])
         .unwrap();
         let region =
-            CurveRegion2::try_from_boundary_paths(&[cap], hypercurve::FillRule::EvenOdd, &policy)
-                .unwrap()
-                .into_value();
+            CurveRegion2::try_from_boundary_paths(&[cap], hypercurve::FillRule::EvenOdd).unwrap();
         let offset = region
             .offset(
                 (Real::one() / r(4)).unwrap(),
                 &hypercurve::OffsetCornerStyle2::Round,
-                &policy,
             )
             .unwrap();
-        assert_eq!(offset.certainty, hypercurve::CurveCertainty::Certified);
-        let paths = offset.value.boundary_paths(&policy).unwrap();
-        assert_eq!(paths.certainty, hypercurve::CurveCertainty::Certified);
-        let Classification::Decided(mut paths) = paths.value else {
-            panic!("the exact offset retains its boundary paths");
-        };
+        let mut paths = offset
+            .boundary_paths()
+            .expect("the exact offset retains its boundary paths");
         assert_eq!(paths.len(), 1);
         let mut curves = paths.pop().unwrap().curves().to_vec();
         let retained_start = curves

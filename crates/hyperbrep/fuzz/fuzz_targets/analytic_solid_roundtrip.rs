@@ -921,7 +921,7 @@ fuzz_target!(|bytes: &[u8]| {
                 },
             ) => {
                 let _ = region.is_empty();
-                let _ = region.filled_area(&hypercurve::CurveContext::STRICT);
+                let _ = region.filled_area();
             }
             (2, boolean::FacePairTrim::NoContact) => {}
             _ => {

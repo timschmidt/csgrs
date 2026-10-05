@@ -6623,16 +6623,16 @@ impl Model {
                     }
                 }
             }
-            CertifiedPrismProfile::CurveRegion { region, .. } => match region
-                .classify_point(&planar, &policy)
-                .map_err(GeometryError::from)?
-                .into_value()
-            {
-                Classification::Decided(location) => location,
-                Classification::Uncertain(reason) => {
-                    return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+            CertifiedPrismProfile::CurveRegion { region, .. } => {
+                match crate::error::classified(region.classify_point(&planar))
+                    .map_err(GeometryError::from)?
+                {
+                    Classification::Decided(location) => location,
+                    Classification::Uncertain(reason) => {
+                        return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+                    }
                 }
-            },
+            }
         };
         match planar_location {
             RegionPointLocation::Outside => return Ok(SolidPointLocation::Outside),
@@ -7298,17 +7298,8 @@ impl Model {
                 ))? == std::cmp::Ordering::Equal;
             if horizontal_profile && vertical_extrusion {
                 let region = region
-                    .transform_affine(
-                        &u.0[0],
-                        &v.0[0],
-                        &u.0[1],
-                        &v.0[1],
-                        &origin.x,
-                        &origin.y,
-                        &CurveContext::STRICT,
-                    )
-                    .map_err(GeometryError::from)?
-                    .into_value();
+                    .transform_affine(&u.0[0], &v.0[0], &u.0[1], &v.0[1], &origin.x, &origin.y)
+                    .map_err(GeometryError::from)?;
                 return Ok(Some(CertifiedZPrismProfile {
                     region,
                     z_min,
@@ -7349,13 +7340,8 @@ impl Model {
             }
             if is_top && !profiles.is_empty() {
                 let outer = profiles.remove(0);
-                let region = CurveRegion2::try_from_native_contours(
-                    vec![outer],
-                    profiles,
-                    &CurveContext::STRICT,
-                )
-                .map_err(GeometryError::from)?
-                .into_value();
+                let region = CurveRegion2::try_from_native_contours(vec![outer], profiles)
+                    .map_err(GeometryError::from)?;
                 return Ok(Some(CertifiedZPrismProfile {
                     region,
                     z_min,
@@ -12226,13 +12212,8 @@ impl ModelBuilder {
         let first_region = self.face_region_in_plane_frame(first, common_surface)?;
         let second_region = self.face_region_in_plane_frame(second, common_surface)?;
         let intersection = first_region
-            .boolean_region(
-                &second_region,
-                BooleanOp::Intersection,
-                &CurveContext::STRICT,
-            )
-            .map_err(GeometryError::from)?
-            .into_value();
+            .boolean_region(&second_region, BooleanOp::Intersection)
+            .map_err(GeometryError::from)?;
         if !intersection.is_empty() {
             return Ok(true);
         }
@@ -12448,10 +12429,8 @@ impl ModelBuilder {
         for cut in &cuts {
             let contact = point.clone() + direction.clone() * cut;
             let contact = project_point_to_surface_plane(&contact, surface)?;
-            match region
-                .classify_point(&contact.clone().into(), &CurveContext::STRICT)
+            match crate::error::classified(region.classify_point(&contact.clone().into()))
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(RegionPointLocation::Boundary) => {
                     insert_sorted_real(&mut contacts, cut)?;
@@ -12478,10 +12457,8 @@ impl ModelBuilder {
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
             let midpoint = point.clone() + direction.clone() * midpoint;
             let midpoint = project_point_to_surface_plane(&midpoint, surface)?;
-            match region
-                .classify_point(&midpoint.clone().into(), &CurveContext::STRICT)
+            match crate::error::classified(region.classify_point(&midpoint.clone().into()))
                 .map_err(GeometryError::from)?
-                .into_value()
             {
                 Classification::Decided(
                     RegionPointLocation::Inside | RegionPointLocation::Boundary,
@@ -12528,14 +12505,11 @@ impl ModelBuilder {
                 crate::STRICT_PREDICATES,
             ))? == std::cmp::Ordering::Equal
             {
-                match self
-                    .face_region_in_plane_frame(*face_id, surface)?
-                    .classify_point(
-                        &project_point_to_surface_plane(point, surface)?.into(),
-                        &CurveContext::STRICT,
-                    )
-                    .map_err(GeometryError::from)?
-                    .into_value()
+                match crate::error::classified(
+                    self.face_region_in_plane_frame(*face_id, surface)?
+                        .classify_point(&project_point_to_surface_plane(point, surface)?.into()),
+                )
+                .map_err(GeometryError::from)?
                 {
                     Classification::Decided(
                         RegionPointLocation::Inside | RegionPointLocation::Boundary,
@@ -12599,14 +12573,13 @@ impl ModelBuilder {
                 continue;
             }
             let intersection = point.clone() + direction.clone() * parameter;
-            match self
-                .face_region_in_plane_frame(*face_id, surface)?
-                .classify_point(
-                    &project_point_to_surface_plane(&intersection, surface)?.into(),
-                    &CurveContext::STRICT,
-                )
-                .map_err(GeometryError::from)?
-                .into_value()
+            match crate::error::classified(
+                self.face_region_in_plane_frame(*face_id, surface)?
+                    .classify_point(
+                        &project_point_to_surface_plane(&intersection, surface)?.into(),
+                    ),
+            )
+            .map_err(GeometryError::from)?
             {
                 Classification::Decided(RegionPointLocation::Inside) => crossings += 1,
                 Classification::Decided(RegionPointLocation::Outside) => {}
@@ -12653,9 +12626,8 @@ impl ModelBuilder {
         }
         let outer = contours.remove(0);
         Ok(
-            CurveRegion2::try_from_native_contours(vec![outer], contours, &CurveContext::STRICT)
-                .map_err(GeometryError::from)?
-                .into_value(),
+            CurveRegion2::try_from_native_contours(vec![outer], contours)
+                .map_err(GeometryError::from)?,
         )
     }
 

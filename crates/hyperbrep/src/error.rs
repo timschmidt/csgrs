@@ -218,3 +218,39 @@ impl From<hypercurve::CurveError> for GeometryError {
 
 /// Result of an exact geometry operation.
 pub type GeometryResult<T> = Result<T, GeometryError>;
+
+/// Keeps an exact Hypercurve query's undecided predicate as this crate's
+/// `Classification::Uncertain`, rather than a failure.
+///
+/// Principal Hypercurve queries report such predicates as
+/// [`hypercurve::ExactCurveError::Blocked`]; planar classification here treats
+/// them as unresolved data with their reason.
+pub(crate) fn classified<T>(
+    result: hypercurve::ExactCurveResult<T>,
+) -> Result<hypercurve::Classification<T>, hypercurve::ExactCurveError> {
+    match result {
+        Ok(value) => Ok(hypercurve::Classification::Decided(value)),
+        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
+            Ok(hypercurve::Classification::Uncertain(blocker.reason()))
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Like [`classified`] for an optional query, such as the bounds of a region
+/// or its native line/arc view: an absent value is unsupported here.
+pub(crate) fn classified_present<T>(
+    result: hypercurve::ExactCurveResult<Option<T>>,
+) -> Result<hypercurve::Classification<T>, hypercurve::ExactCurveError> {
+    classified(result).map(|classification| match classification {
+        hypercurve::Classification::Decided(Some(value)) => {
+            hypercurve::Classification::Decided(value)
+        }
+        hypercurve::Classification::Decided(None) => {
+            hypercurve::Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
+        }
+        hypercurve::Classification::Uncertain(reason) => {
+            hypercurve::Classification::Uncertain(reason)
+        }
+    })
+}

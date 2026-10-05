@@ -7151,10 +7151,9 @@ fn tensor_parameter_region(
             })
             .collect::<Result<Vec<_>, _>>()?,
     )?;
-    Ok(
-        CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)?
-            .into_value(),
-    )
+    Ok(CurveRegion2::try_from_native_material_contours(vec![
+        contour,
+    ])?)
 }
 
 fn project_curve_onto_plane_along_direction(
@@ -13727,10 +13726,7 @@ mod tests {
         assert!(!region.is_empty());
         assert!(*covers_contained_face);
         assert!(matches!(
-            region
-                .loop_role_counts(&CurveContext::STRICT)
-                .unwrap()
-                .into_value(),
+            crate::error::classified(region.loop_role_counts()).unwrap(),
             hypercurve::Classification::Decided((1, 0))
         ));
         let complete_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
@@ -13829,10 +13825,10 @@ mod tests {
             assert!(!covers_contained_face);
             assert!(matches!(
                 region
-                    .filled_area(&CurveContext::STRICT)
+                    .filled_area()
                     .unwrap()
-                    .into_value(),
-                hypercurve::Classification::Decided(Some(area))
+                    ,
+                Some(area)
                     if compare_reals(&area, &r(2), crate::STRICT_PREDICATES).value()
                         == Some(Ordering::Equal)
             ));
@@ -14298,12 +14294,8 @@ mod tests {
                 .unwrap(),
         )
         .unwrap();
-        let trim_region = CurveRegion2::try_from_native_material_contours(
-            vec![trim_contour],
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+        let trim_region =
+            CurveRegion2::try_from_native_material_contours(vec![trim_contour]).unwrap();
         let mut retained_ranges = Vec::new();
         for carrier in &carriers {
             for fragment in carrier
