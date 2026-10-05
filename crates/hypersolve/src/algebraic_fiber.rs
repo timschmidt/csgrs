@@ -1413,9 +1413,69 @@ impl OrderedFieldPolynomialContext<LocalFieldElement> for LocalFieldContext<'_> 
         value.scale(scale, self.field)
     }
 
-    fn normalize_positive_scale(&mut self, _coefficients: &mut [LocalFieldElement]) {
-        // Elements stay reduced local fractions. Removing common positive
-        // content is an optional size optimization, never a sign change.
+    fn normalize_positive_scale(&mut self, coefficients: &mut [LocalFieldElement]) {
+        // Division-free remainders multiply every coefficient by a leading
+        // coefficient at each elimination. Without removing that common
+        // content the rational coefficients grow exponentially along the
+        // sequence. Each fraction first takes primitive integer form, which
+        // preserves its value; the numerators then share one positive
+        // scale, which preserves every sign and root of the tuple.
+        let primitive = |values: &[Real]| -> Option<Vec<Real>> {
+            let rationals = values
+                .iter()
+                .map(Real::exact_rational_ref)
+                .collect::<Option<Vec<_>>>()?;
+            Some(
+                hyperreal::Rational::primitive_bigint_ratio(&rationals)
+                    .into_iter()
+                    .map(hyperreal::Rational::from_bigint)
+                    .map(Real::from)
+                    .collect(),
+            )
+        };
+        let mut normalized = Vec::with_capacity(coefficients.len());
+        for element in coefficients.iter() {
+            let Some(denominator) = &element.denominator else {
+                normalized.push(element.clone());
+                continue;
+            };
+            let joined = element
+                .numerator
+                .iter()
+                .chain(denominator)
+                .cloned()
+                .collect::<Vec<_>>();
+            let Some(mut joined) = primitive(&joined) else {
+                return;
+            };
+            let denominator = joined.split_off(element.numerator.len());
+            normalized.push(LocalFieldElement {
+                numerator: joined,
+                denominator: Some(denominator),
+            });
+        }
+        let numerators = normalized
+            .iter()
+            .flat_map(|element| element.numerator.iter().cloned())
+            .collect::<Vec<_>>();
+        if numerators
+            .iter()
+            .all(|value| value.zero_status() == ZeroKnowledge::Zero)
+        {
+            return;
+        }
+        let Some(numerators) = primitive(&numerators) else {
+            return;
+        };
+        let mut numerators = numerators.into_iter();
+        for element in &mut normalized {
+            for coefficient in &mut element.numerator {
+                *coefficient = numerators
+                    .next()
+                    .expect("one primitive coefficient per numerator coefficient");
+            }
+        }
+        coefficients.clone_from_slice(&normalized);
     }
 
     fn sign(&mut self, value: &LocalFieldElement) -> Result<Ordering, Self::Error> {

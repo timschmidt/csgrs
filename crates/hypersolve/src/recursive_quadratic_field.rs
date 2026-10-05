@@ -2606,6 +2606,11 @@ pub fn recursive_foreign_base_root<C: SelectedAlgebraContext>(
     // caller's approximate terminal cannot collapse an unresolved root to zero.
     match policy.strict_predicate_pass(|| radicand.sign(policy))? {
         Classification::Decided(RealSign::Positive) => {
+            // Adjoining a second copy of an authored square root would build
+            // a reducible tower whose coefficients grow at every level.
+            if let Some(root) = field.retained_positive_square_root(&radicand) {
+                return Ok(Classification::Decided(Some((field, root))));
+            }
             let Some(extension) = field.extension(radicand) else {
                 return Ok(Classification::Decided(None));
             };
