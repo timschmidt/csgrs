@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2, CurveContext,
+    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2,
     CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
     Segment2,
 };
@@ -3520,7 +3520,6 @@ fn validate_planar_path_nesting(
     outer: &CurvePath2,
     holes: &[CurvePath2],
 ) -> Result<(), ConstructionError> {
-    let _policy = CurveContext::STRICT;
     let paths_are_disjoint =
         |first: &CurvePath2, second: &CurvePath2| -> Result<bool, ConstructionError> {
             let result = first.intersect_path(second).map_err(GeometryError::from)?;

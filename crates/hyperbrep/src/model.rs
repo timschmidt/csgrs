@@ -6,8 +6,8 @@ use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveContext, CurveFamily2, CurveGeometry2, CurvePath2, CurveRegion2, LineLineIntersection,
-    LineSeg2, Point2 as CurvePoint2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    CurveFamily2, CurveGeometry2, CurvePath2, CurveRegion2, LineLineIntersection, LineSeg2,
+    Point2 as CurvePoint2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
     RegionPointLocation, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
@@ -2711,7 +2711,6 @@ impl Model {
         };
         let interior_forward = area_order == expected_outer_order;
 
-        let _policy = CurveContext::STRICT;
         let loop_start = materialized_loop.curve().start();
         let classify = |path: &CurvePath2,
                         point: &hypercurve::CurvePoint2|
@@ -3633,7 +3632,6 @@ impl Model {
             .collect::<Vec<_>>();
         let first_region = staged.build_model_wire_curve_path(*outer)?;
         let second_region = staged.build_model_wire_curve_path(target_inner)?;
-        let _policy = CurveContext::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         for wire in remaining_inner {
@@ -4515,7 +4513,6 @@ impl Model {
         });
 
         reset_model_caches(data);
-        let _policy = CurveContext::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         if !inner.is_empty() {
@@ -6565,7 +6562,6 @@ impl Model {
             return Ok(SolidPointLocation::Outside);
         }
         let planar = hypercurve::CurvePoint2::from(CurvePoint2::new(planar_u, planar_v));
-        let _policy = CurveContext::STRICT;
         let planar_location = match &prism.profile {
             CertifiedPrismProfile::Paths { outer, holes } => {
                 match crate::error::classified(outer.classify_point(&planar))
@@ -7114,7 +7110,6 @@ impl Model {
         let FaceBoundary::Trimmed { outer, inner } = &face.boundary else {
             return Ok(Classification::Decided(ContourPointLocation::Inside));
         };
-        let _policy = CurveContext::STRICT;
         match crate::error::classified(
             self.build_model_wire_curve_path(*outer)?
                 .classify_point(&point.clone().into()),
@@ -10796,7 +10791,6 @@ impl ModelBuilder {
         if inner.is_empty() {
             return Ok(());
         }
-        let _policy = CurveContext::STRICT;
         let outer_path = self.build_wire_curve_path(outer)?;
         for wire in inner {
             let path = self.build_wire_curve_path(*wire)?;

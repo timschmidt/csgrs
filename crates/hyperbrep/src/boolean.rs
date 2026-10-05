@@ -6,7 +6,7 @@ use std::fmt;
 
 use hypercurve::{
     Aabb2, BezierLineImageFitRelation, BooleanOp, Classification, Contour2, ContourPointLocation,
-    Curve2, CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionBoundaryContact2,
+    Curve2, CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionBoundaryContact2,
     CurveRegionBoundaryKind2, CurveRegionLoopRole, ExactCurveError, FillRule, LineArcIntersection,
     LineLineIntersection, LineSeg2, RationalBezier2, RationalQuadraticBezier2, RegionPointLocation,
     Segment2, UncertaintyReason,
@@ -4852,7 +4852,6 @@ fn spanning_segment_on_planar_face(
 ) -> Result<Classification<Option<(Point3, Point3)>>, GeometryError> {
     let surface = face_surface(model, face);
     let region = planar_face_region(model, face)?;
-    let _policy = CurveContext::STRICT;
     let bounds = match crate::error::classified_present(region.bounds())? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
