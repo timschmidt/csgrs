@@ -8,18 +8,18 @@ use std::time::Instant;
 use csgrs::{
     AttributedMesh,
     parts::{
-        AssemblyDocumentation, BlueprintProjection, CsgPartInterface, ExactVector3,
-        InstallationVector, PartMetadata, PartSource, blueprint_from_aabb_parts,
+        AssemblyDocumentation, BlueprintProjection, CsgPartInterface, InstallationVector,
+        PartMetadata, PartSource, blueprint_from_aabb_parts,
     },
     solid::{self, SolidExt},
 };
-use hyperlattice::Real;
+use hyperlattice::{Real, Vector3};
 
-fn vec3(x: i64, y: i64, z: i64) -> ExactVector3 {
-    ExactVector3::from_i64(x, y, z)
+fn vector(x: i64, y: i64, z: i64) -> Vector3 {
+    Vector3::new([Real::from(x), Real::from(y), Real::from(z)])
 }
 
-fn metadata(handle: &str, offset: ExactVector3) -> PartMetadata {
+fn metadata(handle: &str, offset: Vector3) -> PartMetadata {
     let mut interface = CsgPartInterface::exact_csg(
         "bench-family",
         handle,
@@ -30,7 +30,7 @@ fn metadata(handle: &str, offset: ExactVector3) -> PartMetadata {
     );
     interface.documentation = AssemblyDocumentation {
         installation: Some(
-            InstallationVector::new(vec3(0, 0, 1), offset, false, false)
+            InstallationVector::new(vector(0, 0, 1), offset, false, false)
                 .expect("bench install direction is nonzero"),
         ),
         pose_hint: None,
@@ -49,7 +49,7 @@ fn main() {
             );
             AttributedMesh::from_uniform(
                 geometry,
-                metadata(&format!("p{idx}"), vec3(i64::from(idx), 0, 8)),
+                metadata(&format!("p{idx}"), vector(i64::from(idx), 0, 8)),
             )
         })
         .collect::<Vec<_>>();

@@ -306,6 +306,9 @@ required-features = ["stl-io"]
 [[example]]
 name = "scalar_adapter"
 
+[[example]]
+name = "assembly_manual"
+
 [[test]]
 name = "adversarial"
 path = "tests/adversarial.rs"
