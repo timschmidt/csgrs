@@ -875,7 +875,7 @@ fn transform_path(path: &CurvePath2, transform: &ExactAffine2) -> SvgResult<Curv
 fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Curve2>> {
     let invalid = |cause| ExactCurveError::Invalid {
         operation: CurveOperation2::Transformation,
-        family: curve.family(),
+        family: Some(curve.family()),
         cause,
     };
     let transformed = match curve.geometry() {
@@ -998,7 +998,7 @@ fn transform_bezier_subcurve(
     let family = Curve2::from(curve.clone()).family();
     let invalid = |cause| ExactCurveError::Invalid {
         operation: CurveOperation2::Transformation,
-        family,
+        family: Some(family),
         cause,
     };
     match curve {
@@ -1186,7 +1186,7 @@ fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
 }
 
 fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<CurveRegion2> {
-    CurveRegion2::try_from_boundary_paths(paths, fill_rule, &CurveContext::STRICT)
+    CurveRegion2::try_from_boundary_paths_with_policy(paths, fill_rule, &CurveContext::STRICT)
         .map(CurveOutcome::into_value)
         .map_err(svg_geometry_error)
 }
@@ -1467,7 +1467,7 @@ pub fn export_svg_document_with_options(
     if !geometry.region.is_empty() {
         let profiles = match geometry
             .region
-            .project_to_finite_profiles(&projection, &CurveContext::STRICT)
+            .project_to_finite_profiles_with_policy(&projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
             .into_value()
         {

@@ -44,6 +44,104 @@ std::thread_local! {
 
     /// Lossy tolerances scoped to an explicit preview adapter.
     static ACTIVE_PREVIEW_TOLERANCE: Cell<Option<PreviewTolerance>> = const { Cell::new(None) };
+
+    /// Whether principal operations on this thread run inside [`provisional`].
+    static PROVISIONAL_SCOPE: Cell<bool> = const { Cell::new(false) };
+}
+
+struct ProvisionalScope {
+    prior: bool,
+}
+
+impl ProvisionalScope {
+    fn begin() -> Self {
+        Self {
+            prior: PROVISIONAL_SCOPE.with(|active| active.replace(true)),
+        }
+    }
+}
+
+impl Drop for ProvisionalScope {
+    fn drop(&mut self) {
+        PROVISIONAL_SCOPE.with(|active| active.set(self.prior));
+    }
+}
+
+/// A value computed by principal operations inside [`provisional`].
+///
+/// Principal operations are exact: outside a provisional scope every topology
+/// decision is certified. Inside one they may consume Hyperlimit's terminal
+/// 512-bit interpretation, so their result is only provisional. Promotion to
+/// an ordinary value requires that no such terminal was consumed; a value
+/// that did consume one is available only through the explicitly unverified
+/// accessors, for example for display.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[must_use = "a provisional value must be certified or explicitly used unverified"]
+pub struct Provisional<T> {
+    value: T,
+    certainty: CurveCertainty,
+}
+
+impl<T> Provisional<T> {
+    /// Weakest certainty consumed while producing this value.
+    pub const fn certainty(&self) -> CurveCertainty {
+        self.certainty
+    }
+
+    /// Whether every topology decision behind this value was certified.
+    pub fn is_certified(&self) -> bool {
+        self.certainty == CurveCertainty::Certified
+    }
+
+    /// Promotes the value when every decision behind it was certified.
+    pub fn certified(self) -> Option<T> {
+        self.is_certified().then_some(self.value)
+    }
+
+    /// Borrows the value without certification, for example for display.
+    pub const fn as_unverified(&self) -> &T {
+        &self.value
+    }
+
+    /// Returns the value without certification, for example for display.
+    pub fn into_unverified(self) -> T {
+        self.value
+    }
+
+    /// Transforms the value without changing its certainty.
+    pub fn map<U>(self, map: impl FnOnce(T) -> U) -> Provisional<U> {
+        Provisional {
+            value: map(self.value),
+            certainty: self.certainty,
+        }
+    }
+}
+
+/// Evaluates principal operations on this thread under the provisional
+/// `APPROXIMATE_512` policy.
+///
+/// Topology decisions that exact predicates cannot settle may then consume
+/// Hyperlimit's terminal 512-bit interpretation; the returned
+/// [`Provisional`] records whether any did. Objects constructed inside the
+/// scope retain that policy as part of their evidence.
+pub fn provisional<T>(evaluate: impl FnOnce() -> T) -> Provisional<T> {
+    let _scope = ProvisionalScope::begin();
+    let observation = OperationObservation::begin();
+    let value = evaluate();
+    Provisional {
+        value,
+        certainty: observation.finish(),
+    }
+}
+
+/// The policy of a principal operation on this thread: STRICT, or
+/// `APPROXIMATE_512` inside [`provisional`].
+pub(crate) fn principal_context() -> CurveContext {
+    if PROVISIONAL_SCOPE.with(Cell::get) {
+        CurveContext::APPROXIMATE_512
+    } else {
+        CurveContext::STRICT
+    }
 }
 
 struct StrictPredicatePass {

@@ -1145,14 +1145,7 @@ fn require_classification<T>(
 }
 
 fn remap_spline_operation(error: ExactCurveError, operation: CurveOperation2) -> ExactCurveError {
-    match error {
-        ExactCurveError::Invalid { family, cause, .. } => {
-            ExactCurveError::invalid(operation, family, cause)
-        }
-        ExactCurveError::Blocked(blocker) => {
-            ExactCurveError::blocked(operation, blocker.family(), blocker.reason())
-        }
-    }
+    error.with_operation(operation)
 }
 
 fn remap_spline_family_operation(

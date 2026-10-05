@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -34,12 +36,13 @@ fn rectangle(x0: i32, y0: i32, x1: i32, y1: i32) -> CurvePath2 {
 }
 
 fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        std::slice::from_ref(path),
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            std::slice::from_ref(path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
     .expect("benchmark path is a valid exact region boundary")
     .into_value()
 }
@@ -280,10 +283,11 @@ fn main() {
     let started = Instant::now();
     let mut boolean_checksum = 0_usize;
     for _ in 0..boolean_iterations {
-        let regions = partial_first_region
-            .boolean_regions(&partial_second_region, &policy)
-            .expect("all canonical partial-overlap Booleans are exact")
-            .into_value();
+        let regions = crate::support::under(&policy, || {
+            partial_first_region.boolean_regions(&partial_second_region)
+        })
+        .expect("all canonical partial-overlap Booleans are exact")
+        .into_value();
         boolean_checksum ^= black_box(
             regions.union().boundary_loops().len()
                 + regions.intersection().boundary_loops().len()
@@ -300,10 +304,11 @@ fn main() {
     let started = Instant::now();
     let mut partial_checksum = 0_usize;
     for _ in 0..boolean_iterations {
-        let region = partial_first_region
-            .boolean_region(&partial_second_region, BooleanOp::Union, &policy)
-            .expect("partial-overlap union is exact")
-            .into_value();
+        let region = crate::support::under(&policy, || {
+            partial_first_region.boolean_region(&partial_second_region, BooleanOp::Union)
+        })
+        .expect("partial-overlap union is exact")
+        .into_value();
         partial_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
@@ -335,10 +340,11 @@ fn main() {
     let started = Instant::now();
     let mut partial_arc_checksum = 0_usize;
     for _ in 0..boolean_iterations {
-        let region = partial_arc_first_region
-            .boolean_region(&partial_arc_second_region, BooleanOp::Union, &policy)
-            .expect("partial-arc union is exact")
-            .into_value();
+        let region = crate::support::under(&policy, || {
+            partial_arc_first_region.boolean_region(&partial_arc_second_region, BooleanOp::Union)
+        })
+        .expect("partial-arc union is exact")
+        .into_value();
         partial_arc_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
@@ -365,10 +371,11 @@ fn main() {
     let started = Instant::now();
     let mut nonlinear_checksum = 0_usize;
     for _ in 0..boolean_iterations {
-        let region = nonlinear_first_region
-            .boolean_region(&nonlinear_second_region, BooleanOp::Union, &policy)
-            .expect("partial nonlinear-overlap union is exact")
-            .into_value();
+        let region = crate::support::under(&policy, || {
+            nonlinear_first_region.boolean_region(&nonlinear_second_region, BooleanOp::Union)
+        })
+        .expect("partial nonlinear-overlap union is exact")
+        .into_value();
         nonlinear_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
@@ -432,10 +439,11 @@ fn main() {
     let started = Instant::now();
     let mut circle_checksum = 0_usize;
     for _ in 0..boolean_iterations {
-        let region = first_circle_region
-            .boolean_region(&second_circle_region, BooleanOp::Union, &policy)
-            .expect("benchmark circle union is exact")
-            .into_value();
+        let region = crate::support::under(&policy, || {
+            first_circle_region.boolean_region(&second_circle_region, BooleanOp::Union)
+        })
+        .expect("benchmark circle union is exact")
+        .into_value();
         circle_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();

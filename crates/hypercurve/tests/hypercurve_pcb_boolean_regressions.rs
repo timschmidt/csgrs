@@ -6,9 +6,8 @@
 //! severe performance cliff in the unified region kernel. Keep both a routine
 //! reduced case and the original Easyduino-scale topology in the corpus.
 
-use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, Point2, Real,
-};
+mod support;
+use hypercurve::{BulgeVertex2, Contour2, CurveContext, CurveRegion2, Point2, Real};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -83,34 +82,35 @@ fn pcb_containment_fixture(
         .collect::<Vec<_>>();
     let policy = CurveContext::STRICT;
     (
-        CurveRegion2::try_from_native_contours(cover, Vec::new(), &policy)
-            .expect("disjoint cover components form an exact region")
-            .into_value(),
-        CurveRegion2::try_from_native_contours(subject, Vec::new(), &policy)
-            .expect("disjoint subject components form an exact region")
-            .into_value(),
+        crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(cover, Vec::new())
+        })
+        .expect("disjoint cover components form an exact region")
+        .into_value(),
+        crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(subject, Vec::new())
+        })
+        .expect("disjoint subject components form an exact region")
+        .into_value(),
     )
 }
 
 fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_count: usize) {
     let (cover, subject) = pcb_containment_fixture(cover_count, subject_count);
-    let result = subject
-        .boolean_region(
-            &cover,
-            hypercurve::BooleanOp::Difference,
-            &CurveContext::STRICT,
-        )
-        .expect("PCB containment difference must decide exactly")
-        .value;
+    let result = crate::support::under(&CurveContext::STRICT, || {
+        subject.boolean_region(&cover, hypercurve::BooleanOp::Difference)
+    })
+    .expect("PCB containment difference must decide exactly")
+    .value;
     assert!(result.is_empty());
 
     for point in [point(0, 0), point(100, 0)] {
         assert_eq!(
-            cover
-                .classify_point(&point.clone().into(), &CurveContext::STRICT)
-                .expect("cover point classification must decide")
-                .into_value(),
-            Classification::Decided(hypercurve::RegionPointLocation::Inside),
+            crate::support::under(&CurveContext::STRICT, || cover
+                .classify_point(&point.clone().into()))
+            .expect("cover point classification must decide")
+            .into_value(),
+            hypercurve::RegionPointLocation::Inside,
         );
     }
 }
@@ -153,17 +153,22 @@ fn easyduino_uno_scale_process_image_with_holes_corpus() {
         .map(|(x, y)| subdivided_square(x, y, 28, 14))
         .collect::<Vec<_>>();
     let policy = CurveContext::STRICT;
-    let cover = CurveRegion2::try_from_native_contours(materials, holes, &policy)
-        .expect("holed front-copper corpus forms an exact region")
-        .into_value();
-    let subject = CurveRegion2::try_from_native_contours(subjects, Vec::new(), &policy)
-        .expect("paste corpus forms an exact region")
-        .into_value();
+    let cover = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(materials, holes)
+    })
+    .expect("holed front-copper corpus forms an exact region")
+    .into_value();
+    let subject = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(subjects, Vec::new())
+    })
+    .expect("paste corpus forms an exact region")
+    .into_value();
 
-    let result = subject
-        .boolean_region(&cover, hypercurve::BooleanOp::Difference, &policy)
-        .expect("holed PCB containment difference must decide exactly")
-        .value;
+    let result = crate::support::under(&policy, || {
+        subject.boolean_region(&cover, hypercurve::BooleanOp::Difference)
+    })
+    .expect("holed PCB containment difference must decide exactly")
+    .value;
 
     assert!(result.is_empty());
 }
@@ -183,17 +188,12 @@ fn pcb_process_image_hole_ownership_culls_sparse_materials() {
         .take(128)
         .map(|(x, y)| subdivided_square(x, y, 10, 10))
         .collect::<Vec<_>>();
-    let region = CurveRegion2::try_from_native_contours(materials, holes, &CurveContext::STRICT)
-        .expect("sparse material and hole loops form an exact region")
-        .into_value();
+    let region = CurveRegion2::try_from_native_contours(materials, holes)
+        .expect("sparse material and hole loops form an exact region");
 
     let profiles = region
-        .boundary_profiles(&CurveContext::STRICT)
-        .expect("PCB profile ownership must complete exactly")
-        .into_value();
-    let Classification::Decided(profiles) = profiles else {
-        panic!("PCB profile ownership must decide");
-    };
+        .boundary_profiles()
+        .expect("PCB profile ownership must complete exactly");
 
     assert_eq!(profiles.len(), 512);
     assert_eq!(

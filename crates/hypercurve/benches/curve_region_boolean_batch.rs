@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -70,13 +72,14 @@ fn elevated_circle(center_x: i32, policy: &CurveContext) -> CurveRegion2 {
             ));
         }
     }
-    CurveRegion2::try_from_boundary_paths(
-        &[CurvePath2::try_new_with_policy(curves, policy)
-            .unwrap()
-            .into_value()],
-        hypercurve::FillRule::EvenOdd,
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths(
+            &[CurvePath2::try_new_with_policy(curves, policy)
+                .unwrap()
+                .into_value()],
+            hypercurve::FillRule::EvenOdd,
+        )
+    })
     .unwrap()
     .into_value()
 }
@@ -141,14 +144,15 @@ fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion
             analytic_parallel_curve(start, midpoint, end, 0, false, policy)
         })
         .collect();
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[CurvePath2::try_new_with_policy(fragments, policy)
-            .unwrap()
-            .into_value()],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[CurvePath2::try_new_with_policy(fragments, policy)
+                .unwrap()
+                .into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .unwrap()
     .into_value()
 }
@@ -176,31 +180,34 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
         policy,
     )
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[boundary.into_value()],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary.into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .unwrap()
     .into_value()
 }
 
 fn clipped_region(path: &CurvePath2, clip: CurvePath2, policy: &CurveContext) -> CurveRegion2 {
     let promote = |path: &CurvePath2| {
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            std::slice::from_ref(path),
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::EvenOdd],
-            policy,
-        )
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                std::slice::from_ref(path),
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::EvenOdd],
+            )
+        })
         .unwrap()
         .into_value()
     };
-    promote(path)
-        .boolean_region(&promote(&clip), BooleanOp::Intersection, policy)
-        .unwrap()
-        .into_value()
+    crate::support::under(policy, || {
+        promote(path).boolean_region(&promote(&clip), BooleanOp::Intersection)
+    })
+    .unwrap()
+    .into_value()
 }
 
 fn conic_overlap_regions(
@@ -322,18 +329,22 @@ fn main() {
     };
     let native_regions = |contours: (Contour2, Contour2)| {
         [contours.0, contours.1].map(|contour| {
-            CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
-                .unwrap()
-                .into_value()
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![contour])
+            })
+            .unwrap()
+            .into_value()
         })
     };
     let [first, second] = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
         Ok("circles") => native_regions((circle(0), circle(1))),
         Ok("capsules") => native_regions((capsule(0), capsule(2))),
         Ok("elevated-circles") => [
-            CurveRegion2::try_from_native_material_contours(vec![circle(0)], &policy)
-                .unwrap()
-                .into_value(),
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![circle(0)])
+            })
+            .unwrap()
+            .into_value(),
             elevated_circle(1, &policy),
         ],
         Ok("point-touch-rectangles") => {
@@ -368,8 +379,7 @@ fn main() {
         ]
         .into_iter()
         .map(|operation| {
-            first
-                .boolean_region(&second, operation, &policy)
+            crate::support::under(&policy, || first.boolean_region(&second, operation))
                 .unwrap()
                 .into_value()
         })
@@ -377,8 +387,7 @@ fn main() {
         .sum()
     };
     let mut shared = || {
-        let regions = first
-            .boolean_regions(&second, &policy)
+        let regions = crate::support::under(&policy, || first.boolean_regions(&second))
             .unwrap()
             .into_value();
         region_weight(regions.union())
@@ -395,13 +404,11 @@ fn main() {
             BooleanOp::Xor,
         ]
         .map(|operation| {
-            first
-                .boolean_region(&second, operation, &policy)
+            crate::support::under(&policy, || first.boolean_region(&second, operation))
                 .unwrap()
                 .into_value()
         });
-        let shared_regions = first
-            .boolean_regions(&second, &policy)
+        let shared_regions = crate::support::under(&policy, || first.boolean_regions(&second))
             .unwrap()
             .into_value();
         println!(

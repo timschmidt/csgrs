@@ -1,5 +1,4 @@
 mod support;
-
 use hypercurve::{
     BezierParameter2, CurveCertainty, CurveFamily2, CurveOperation2, ExactCurveError,
     QuadraticBezier2, RationalQuadraticBezier2, RegionPointLocation, UncertaintyReason,
@@ -81,12 +80,13 @@ fn curve_parameter_comparison_reports_terminal_certainty() {
 }
 
 fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        std::slice::from_ref(path),
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            std::slice::from_ref(path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
     .expect("test path must define an exact region")
     .into_value()
 }
@@ -97,10 +97,11 @@ fn boolean_paths(
     operation: BooleanOp,
     policy: &CurveContext,
 ) -> CurveRegion2 {
-    path_region(first, policy)
-        .boolean_region(&path_region(second, policy), operation, policy)
-        .expect("test region Boolean must complete exactly")
-        .into_value()
+    crate::support::under(policy, || {
+        path_region(first, policy).boolean_region(&path_region(second, policy), operation)
+    })
+    .expect("test region Boolean must complete exactly")
+    .into_value()
 }
 
 fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
@@ -2402,11 +2403,10 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
     ));
 
     let region = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
-    let exported = region.boundary_paths(&CurveContext::STRICT).unwrap();
+    let exported =
+        crate::support::under(&CurveContext::STRICT, || region.boundary_paths()).unwrap();
     assert_eq!(exported.certainty, hypercurve::CurveCertainty::Certified);
-    let Classification::Decided(paths) = exported.value else {
-        panic!("lossless exact boundaries")
-    };
+    let paths = exported.value;
     assert!(
         paths
             .iter()
@@ -2424,9 +2424,10 @@ fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
 
     let strict_first = path_region(&first, &CurveContext::STRICT);
     let strict_second = path_region(&second, &CurveContext::STRICT);
-    let strict = strict_first
-        .boolean_region(&strict_second, BooleanOp::Union, &CurveContext::STRICT)
-        .unwrap_err();
+    let strict = crate::support::under(&CurveContext::STRICT, || {
+        strict_first.boolean_region(&strict_second, BooleanOp::Union)
+    })
+    .unwrap_err();
     assert!(matches!(
         strict,
         ExactCurveError::Blocked(blocker)
@@ -2435,9 +2436,10 @@ fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
 
     let approximate_first = path_region(&first, &approximate);
     let approximate_second = path_region(&second, &approximate);
-    let region = approximate_first
-        .boolean_region(&approximate_second, BooleanOp::Union, &approximate)
-        .expect("region Boolean must report the shared terminal");
+    let region = crate::support::under(&approximate, || {
+        approximate_first.boolean_region(&approximate_second, BooleanOp::Union)
+    })
+    .expect("region Boolean must report the shared terminal");
     assert_eq!(region.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(region.value.boundary_loops().len(), 1);
 }
@@ -2786,12 +2788,9 @@ fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
                 .iter()
                 .all(|loop_| !loop_.is_empty())
         );
-        let actual_area = region
-            .signed_area(&CurveContext::STRICT)
-            .unwrap()
-            .into_value();
-        let actual_area = decided(actual_area)
-            .unwrap_or_else(|| panic!("{operation:?} did not retain an exact area"));
+        let actual_area = region.signed_area().unwrap();
+        let actual_area =
+            actual_area.unwrap_or_else(|| panic!("{operation:?} did not retain an exact area"));
         assert_real_close(&actual_area, &expected_area, 1.0e-10);
     }
 }
@@ -2899,13 +2898,10 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
         );
         assert!(!region.boundary_loops().is_empty());
         assert!(
-            decided(
-                region
-                    .signed_area(&CurveContext::STRICT)
-                    .unwrap()
-                    .into_value()
-            )
-            .is_some()
+            crate::support::under(&CurveContext::STRICT, || region.signed_area())
+                .unwrap()
+                .into_value()
+                .is_some()
         );
     }
 }
@@ -2980,7 +2976,9 @@ fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
             (BooleanOp::Xor, r(0)),
         ] {
             let region = boolean_paths(&first, second, operation, &policy);
-            let area = decided(region.signed_area(&policy).unwrap().into_value())
+            let area = crate::support::under(&policy, || region.signed_area())
+                .unwrap()
+                .into_value()
                 .expect("the polygon Boolean has a represented area");
             assert_eq!(
                 area.partial_cmp(&expected_area),
@@ -3060,12 +3058,9 @@ fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
     for (operation, expected_area) in cases {
         let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert_eq!(
-            decided(
-                region
-                    .signed_area(&CurveContext::STRICT)
-                    .unwrap()
-                    .into_value()
-            ),
+            crate::support::under(&CurveContext::STRICT, || region.signed_area())
+                .unwrap()
+                .into_value(),
             Some(expected_area)
         );
     }
@@ -3092,14 +3087,18 @@ fn promoted_region_boolean_materializes_exact_regularized_operation_matrix() {
                 .all(|loop_| !loop_.is_empty())
         );
         assert_eq!(
-            decided(region.signed_area(&policy).unwrap().into_value()),
+            crate::support::under(&policy, || region.signed_area())
+                .unwrap()
+                .into_value(),
             Some(expected_area)
         );
     }
 
     let direct = boolean_paths(&first, &second, BooleanOp::Union, &policy);
     assert_eq!(
-        decided(direct.signed_area(&policy).unwrap().into_value()),
+        crate::support::under(&policy, || direct.signed_area())
+            .unwrap()
+            .into_value(),
         Some(r(7))
     );
 }
@@ -3123,12 +3122,9 @@ fn promoted_region_boolean_consumes_complete_shared_boundaries() {
     for (operation, expected_area) in cases {
         let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert_eq!(
-            decided(
-                region
-                    .signed_area(&CurveContext::STRICT)
-                    .unwrap()
-                    .into_value()
-            ),
+            crate::support::under(&CurveContext::STRICT, || region.signed_area())
+                .unwrap()
+                .into_value(),
             Some(expected_area)
         );
     }
@@ -3237,41 +3233,34 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert!(region.has_algebraic_fragments());
         assert_eq!(
-            region
-                .classify_point(&p(0, 1).into(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Inside),
+            crate::support::under(&CurveContext::STRICT, || region
+                .classify_point(&p(0, 1).into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Inside,
             "{operation:?} retained algebraic interior"
         );
         assert_eq!(
-            region
-                .classify_point(&p(0, 3).into(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Outside),
+            crate::support::under(&CurveContext::STRICT, || region
+                .classify_point(&p(0, 3).into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Outside,
             "{operation:?} retained algebraic overlap interior"
         );
         assert_eq!(
-            region
-                .classify_point(&p(0, 0).into(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Boundary),
+            crate::support::under(&CurveContext::STRICT, || region
+                .classify_point(&p(0, 0).into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Boundary,
             "{operation:?} retained algebraic boundary"
         );
-        let transformed = region
-            .transform_affine(
-                &r(-2),
-                &r(0),
-                &r(0),
-                &r(3),
-                &r(7),
-                &r(-1),
-                &CurveContext::STRICT,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"))
-            .into_value();
+        let transformed = crate::support::under(&CurveContext::STRICT, || {
+            region.transform_affine(&r(-2), &r(0), &r(0), &r(3), &r(7), &r(-1))
+        })
+        .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"))
+        .into_value();
         assert!(transformed.has_algebraic_fragments());
         for (point, expected) in [
             (p(7, 2), RegionPointLocation::Inside),
@@ -3279,11 +3268,11 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             (p(7, -1), RegionPointLocation::Boundary),
         ] {
             assert_eq!(
-                transformed
-                    .classify_point(&point.clone().into(), &CurveContext::STRICT)
-                    .unwrap()
-                    .into_value(),
-                Classification::Decided(expected),
+                crate::support::under(&CurveContext::STRICT, || transformed
+                    .classify_point(&point.clone().into()))
+                .unwrap()
+                .into_value(),
+                expected,
                 "{operation:?} transformed algebraic classification"
             );
         }
@@ -3967,15 +3956,17 @@ mod point_locations {
                 Curve2::from(QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0))),
             ])
             .unwrap();
-            let region = CurveRegion2::try_from_boundary_paths(&[lens], FillRule::EvenOdd, &policy)
-                .unwrap()
-                .into_value();
-            let offset = region
-                .offset(q(1, 4), &OffsetCornerStyle2::Round, &policy)
-                .unwrap()
-                .into_value();
+            let region = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&[lens], FillRule::EvenOdd)
+            })
+            .unwrap()
+            .into_value();
+            let offset = crate::support::under(&policy, || {
+                region.offset(q(1, 4), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             let mut checked = 0;
-            for boundary in offset.boundary_loops() {
+            for boundary in offset.value.boundary_loops() {
                 for curve in boundary.curves() {
                     let start = curve.start();
                     if start.coordinates().is_none() {

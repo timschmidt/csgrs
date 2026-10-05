@@ -2,9 +2,7 @@ use std::f64::consts::TAU;
 
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotBounds};
-use hypercurve::{
-    BooleanOp, Curve2, CurveContext, CurvePath2, CurveRegion2, LineSeg2, Point2, Real,
-};
+use hypercurve::{BooleanOp, Curve2, CurvePath2, CurveRegion2, LineSeg2, Point2, Real};
 use serde::{Deserialize, Serialize};
 
 use crate::geometry::{BooleanMode, CurvePrimitive, Polyline, Shape, Vertex};
@@ -424,13 +422,8 @@ fn fuzzed_region(
         );
     }
     let path = CurvePath2::try_new(exact_curves).map_err(|error| error.to_string())?;
-    let region = CurveRegion2::try_from_boundary_paths(
-        &[path],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .map_err(|error| error.to_string())?
-    .into_value();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+        .map_err(|error| error.to_string())?;
     Ok(GeneratedRegion {
         region,
         display: Polyline::from_curve_data(display_curves, true),
@@ -467,10 +460,8 @@ fn boolean_pair(
                 BooleanMode::Difference => BooleanOp::Difference,
                 BooleanMode::Xor => BooleanOp::Xor,
             },
-            &CurveContext::STRICT,
         )
-        .map_err(|error| error.to_string())?
-        .value;
+        .map_err(|error| error.to_string())?;
     Shape::from_curve_region(&region).map(|display| display.map(|display| (region, display)))
 }
 

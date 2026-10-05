@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, Point2, Real,
+    BooleanOp, BulgeVertex2, Contour2, CurveContext, CurveRegion2, Point2, Real,
     RegionPointLocation,
 };
 use libfuzzer_sys::fuzz_target;
@@ -22,9 +22,8 @@ fn rectangle(x: u8, y: u8, width: u8, height: u8) -> CurveRegion2 {
         BulgeVertex2::new(Point2::new(min_x, max_y), Real::zero()),
     ])
     .expect("positive rectangle dimensions form a valid contour");
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+    CurveRegion2::try_from_native_material_contours(vec![contour])
         .expect("positive rectangle must promote exactly")
-        .into_value()
 }
 
 fn boolean_membership(
@@ -57,7 +56,7 @@ fuzz_target!(|data: &[u8]| {
 
     let first = rectangle(data[0], data[1], data[2], data[3]);
     let second = rectangle(data[4], data[5], data[6], data[7]);
-    let policy = CurveContext::STRICT;
+    let _policy = CurveContext::STRICT;
     let query = hypercurve::CurvePoint2::from(Point2::new(
         r(data[8] as i32 - 128),
         r(data[9] as i32 - 128),
@@ -65,15 +64,10 @@ fuzz_target!(|data: &[u8]| {
     // Rectangles with rational corners must always classify, and every
     // Boolean between them must complete with certified topology: an error
     // or blocker here is a completeness regression, not a skipped case.
-    let decided_location = |region: &CurveRegion2| match region
-        .classify_point(&query, &policy)
-        .expect("rectangle classification must be valid")
-        .into_value()
-    {
-        Classification::Decided(location) => location,
-        Classification::Uncertain(reason) => {
-            panic!("rational rectangle classification stayed uncertain: {reason:?}")
-        }
+    let decided_location = |region: &CurveRegion2| {
+        region
+            .classify_point(&query)
+            .expect("rational rectangle classification must complete")
     };
     let first_location = decided_location(&first);
     let second_location = decided_location(&second);
@@ -85,12 +79,11 @@ fuzz_target!(|data: &[u8]| {
         BooleanOp::Xor,
     ] {
         let result = first
-            .boolean_region(&second, op, &policy)
+            .boolean_region(&second, op)
             .unwrap_or_else(|error| panic!("{op:?} of rectangles must complete: {error:?}"));
-        assert_eq!(result.certainty, hypercurve::CurveCertainty::Certified);
         if let Some(expected_inside) = boolean_membership(op, first_location, second_location) {
             assert_eq!(
-                decided_location(&result.value),
+                decided_location(&result),
                 if expected_inside {
                     RegionPointLocation::Inside
                 } else {

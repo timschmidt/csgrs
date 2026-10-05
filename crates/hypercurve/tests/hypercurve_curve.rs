@@ -1,5 +1,4 @@
 mod support;
-
 use hypercurve::{
     CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
     CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
@@ -97,11 +96,10 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
                 .unwrap();
                 let path = CurvePath2::try_new(vec![clamped, Curve2::from(closing_line)]).unwrap();
                 assert!(matches!(
-                    CurveRegion2::try_from_boundary_paths(
+                    crate::support::under(&policy, || CurveRegion2::try_from_boundary_paths(
                         &[path],
-                        hypercurve::FillRule::EvenOdd,
-                        &policy
-                    ),
+                        hypercurve::FillRule::EvenOdd
+                    )),
                     Err(ExactCurveError::Invalid {
                         cause: CurveError::DisconnectedCurvePath,
                         ..
@@ -276,41 +274,43 @@ fn top_level_curve_carries_every_public_family() {
 #[test]
 fn top_level_curve_region_classifies_points_and_shares_results() {
     let policy = CurveContext::STRICT;
-    let region = CurveRegion2::try_from_boundary_paths(
-        &[every_family_closed_path()],
-        hypercurve::FillRule::EvenOdd,
-        &policy,
-    )
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths(
+            &[every_family_closed_path()],
+            hypercurve::FillRule::EvenOdd,
+        )
+    })
     .unwrap()
     .into_value();
     let clone = region.clone();
-    let signed_area = match region.signed_area(&policy).unwrap().into_value() {
-        Classification::Decided(Some(area)) => area,
+    let signed_area = match crate::support::under(&policy, || region.signed_area())
+        .unwrap()
+        .into_value()
+    {
+        Some(area) => area,
         other => panic!("degree-two rational boundary contributions are exact: {other:?}"),
     };
     assert_eq!(
-        clone
-            .signed_area(&policy)
-            .map(|outcome| outcome.into_value()),
-        Ok(Classification::Decided(Some(signed_area)))
+        crate::support::under(&policy, || clone.signed_area()).map(|outcome| outcome.into_value()),
+        Ok(Some(signed_area))
     );
     assert_eq!(
-        region
-            .classify_point(&p(8, -1).into(), &CurveContext::STRICT)
-            .map(|outcome| outcome.into_value()),
-        Ok(Classification::Decided(RegionPointLocation::Inside))
+        crate::support::under(&CurveContext::STRICT, || region
+            .classify_point(&p(8, -1).into()))
+        .map(|outcome| outcome.into_value()),
+        Ok(RegionPointLocation::Inside)
     );
     assert_eq!(
-        clone
-            .classify_point(&p(8, -4).into(), &CurveContext::STRICT)
-            .map(|outcome| outcome.into_value()),
-        Ok(Classification::Decided(RegionPointLocation::Outside))
+        crate::support::under(&CurveContext::STRICT, || clone
+            .classify_point(&p(8, -4).into()))
+        .map(|outcome| outcome.into_value()),
+        Ok(RegionPointLocation::Outside)
     );
     assert_eq!(
-        clone
-            .classify_point(&p(0, 0).into(), &CurveContext::STRICT)
-            .map(|outcome| outcome.into_value()),
-        Ok(Classification::Decided(RegionPointLocation::Boundary))
+        crate::support::under(&CurveContext::STRICT, || clone
+            .classify_point(&p(0, 0).into()))
+        .map(|outcome| outcome.into_value()),
+        Ok(RegionPointLocation::Boundary)
     );
     let debug = format!("{region:?}");
     assert!(!debug.contains("native_boundary"));
@@ -323,25 +323,20 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         Curve2::from(LineSeg2::try_new(p(0, 2), p(0, 0)).unwrap()),
     ])
     .unwrap();
-    let bounded = CurveRegion2::try_from_boundary_paths(
-        &[square],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .unwrap()
-    .into_value();
+    let bounded =
+        CurveRegion2::try_from_boundary_paths(&[square], hypercurve::FillRule::EvenOdd).unwrap();
     let bounded_clone = bounded.clone();
     assert_eq!(
-        bounded
-            .classify_point(&p(1, 1).into(), &CurveContext::STRICT)
-            .map(|outcome| outcome.into_value()),
-        Ok(Classification::Decided(RegionPointLocation::Inside))
+        crate::support::under(&CurveContext::STRICT, || bounded
+            .classify_point(&p(1, 1).into()))
+        .map(|outcome| outcome.into_value()),
+        Ok(RegionPointLocation::Inside)
     );
     assert_eq!(
-        bounded_clone
-            .classify_point(&p(1, 1).into(), &CurveContext::STRICT)
-            .map(|outcome| outcome.into_value()),
-        Ok(Classification::Decided(RegionPointLocation::Inside))
+        crate::support::under(&CurveContext::STRICT, || bounded_clone
+            .classify_point(&p(1, 1).into()))
+        .map(|outcome| outcome.into_value()),
+        Ok(RegionPointLocation::Inside)
     );
 }
 
@@ -408,18 +403,16 @@ fn top_level_curve_region_rejects_open_boundary_paths_with_context() {
     )])
     .unwrap();
 
-    let error = CurveRegion2::try_from_boundary_paths(
-        &[path],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
+    let error = crate::support::under(&CurveContext::STRICT, || {
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+    })
     .unwrap_err();
 
     assert!(matches!(
         error,
         ExactCurveError::Invalid {
             operation: CurveOperation2::Construction,
-            family: CurveFamily2::Line,
+            family: Some(CurveFamily2::Line),
             cause: CurveError::OpenCurvePath,
             ..
         }
@@ -872,13 +865,7 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     };
     assert_eq!(arc.center(), &p(1, 1));
     assert_eq!(arc.end(), &p(1, 0));
-    CurveRegion2::try_from_boundary_paths(
-        &[solved_fillet],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .unwrap()
-    .into_value();
+    CurveRegion2::try_from_boundary_paths(&[solved_fillet], hypercurve::FillRule::EvenOdd).unwrap();
 }
 
 #[test]
@@ -1956,11 +1943,12 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
                 } else {
                     boundary_path
                 };
-                let region = CurveRegion2::try_from_boundary_paths(
-                    &[boundary_path],
-                    hypercurve::FillRule::EvenOdd,
-                    &policy,
-                )
+                let region = crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths(
+                        &[boundary_path],
+                        hypercurve::FillRule::EvenOdd,
+                    )
+                })
                 .unwrap()
                 .into_value();
                 let fragments = region.boundary_loops()[0].curves();
@@ -1978,23 +1966,21 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
                             && is_rational_arc(&fragments[*index])
                     })
                     .expect("the retained circular pair stays adjacent in CurveRegion2");
-                let trim = region
-                    .fillet_loop_vertex(
+                let trim = crate::support::under(&policy, || {
+                    region.fillet_loop_vertex(
                         0,
                         corner,
                         &hypercurve::CurveFillet2::new(q(1, 2)),
                         CurveCornerMode2::TrimOnly,
-                        &policy,
                     )
-                    .unwrap();
-                let extended = region
+                })
+                .unwrap();
+                let extended = crate::support::under(&policy, || region
                     .fillet_loop_vertex(
                         0,
                         corner,
                         &hypercurve::CurveFillet2::new(q(1, 2)),
-                        CurveCornerMode2::TrimOrExtend,
-                        &policy,
-                    )
+                        CurveCornerMode2::TrimOrExtend))
                     .unwrap_or_else(|error| {
                         panic!(
                             "CurveRegion2 retained circular supports must extend: policy={policy:?}, elevated={elevated}, reversed={reversed}, error={error:?}"
@@ -2044,7 +2030,7 @@ fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
         ),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Fillet
-                && blocker.family() == CurveFamily2::RationalQuadraticBezier
+                && blocker.family() == Some(CurveFamily2::RationalQuadraticBezier)
     ));
     let approximate = path
         .fillet_vertex(
@@ -3824,7 +3810,7 @@ fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
         ),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Fillet
-                && blocker.family() == CurveFamily2::QuadraticBezier
+                && blocker.family() == Some(CurveFamily2::QuadraticBezier)
     ));
     let approximate = path
         .fillet_vertex(
@@ -3881,7 +3867,7 @@ fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
             ),
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.operation() == CurveOperation2::Fillet
-                    && blocker.family() == family
+                    && blocker.family() == Some(family)
         ));
         let approximate = path
             .fillet_vertex(

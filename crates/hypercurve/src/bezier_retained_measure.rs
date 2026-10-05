@@ -33,13 +33,26 @@ use crate::{
 };
 
 impl CurveRegion2 {
-    /// Returns a certified exact boundary envelope for the unified region.
+    /// Returns a certified exact boundary envelope for the unified region, or
+    /// `None` for the empty region, which has no envelope.
     ///
     /// Native line/arc topology uses the compact private bounds fast path. All
     /// other retained carriers use derivative-root and algebraic-source
-    /// evidence without segmentation. Empty regions and carriers lacking
-    /// sufficient exact interior evidence return explicit uncertainty.
-    pub fn bounds(
+    /// evidence without segmentation. Carriers lacking sufficient exact
+    /// interior evidence report a blocker.
+    pub fn bounds(&self) -> crate::ExactCurveResult<Option<Aabb2>> {
+        if self.boundary_loops().is_empty() {
+            return Ok(None);
+        }
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.bounds_with_policy(&crate::policy::principal_context()),
+        )
+        .map(Some)
+    }
+
+    /// [`Self::bounds`] under an explicit predicate policy.
+    pub(crate) fn bounds_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Aabb2>>> {

@@ -111,15 +111,13 @@ fuzz_target!(|data: &[u8]| {
             let Ok(path) = CurvePath2::try_new(vec![head, tail, closing.into()]) else {
                 continue;
             };
-            if let Ok(outcome) = CurveRegion2::try_from_boundary_paths(
+            if let Ok(region) = CurveRegion2::try_from_boundary_paths(
                 std::slice::from_ref(&path),
                 hypercurve::FillRule::EvenOdd,
-                &policy,
             ) {
-                let region = outcome.into_value();
-                let _ = region.signed_area(&policy);
-                let _ = region.loop_roles(&policy);
-                let _ = region.bounds(&policy);
+                let _ = region.signed_area();
+                let _ = region.loop_roles();
+                let _ = region.bounds();
             }
         }
     }
@@ -172,9 +170,8 @@ fuzz_target!(|data: &[u8]| {
             if let Ok(region) = CurveRegion2::try_from_boundary_paths(
                 &[outer, inner],
                 hypercurve::FillRule::EvenOdd,
-                &policy,
             ) {
-                let _ = region.value.loop_roles(&policy);
+                let _ = region.loop_roles();
             }
         }
     }

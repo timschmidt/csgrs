@@ -392,7 +392,7 @@ fn material_component_reentry_shares_single_region_evidence() {
     )
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let region = CurveRegion2::try_from_boundary_paths(
+        let region = CurveRegion2::try_from_boundary_paths_with_policy(
             std::slice::from_ref(&path),
             crate::FillRule::EvenOdd,
             &policy,
@@ -401,7 +401,7 @@ fn material_component_reentry_shares_single_region_evidence() {
         .into_value();
         let mut current = region.clone();
         for _ in 0..16 {
-            let outcome = current.material_components(&policy).unwrap();
+            let outcome = current.material_components_with_policy(&policy).unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             assert_eq!(outcome.value.len(), 1);
             current = outcome.into_value().pop().unwrap();
@@ -1592,7 +1592,7 @@ fn resource_blocked_selected_corner_chamfers_in_its_affine_fiber() {
         .unwrap();
         let chamfer = |mode| {
             region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     1,
                     setback.clone(),
@@ -1622,7 +1622,7 @@ fn resource_blocked_selected_corner_chamfers_in_its_affine_fiber() {
         assert!(retained_local_boundary);
 
         let projective = region
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
                 1,
                 Real::from(6_i8),
@@ -1742,7 +1742,7 @@ fn nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let work = || {
-            region.chamfer_loop_vertex_by_setbacks(
+            region.chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
                 1,
                 setback.clone(),
@@ -1804,7 +1804,7 @@ fn nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image() {
                 (p(1, 1), RegionPointLocation::Outside),
             ] {
                 let location = edited
-                    .classify_point(&point.clone().into(), &policy)
+                    .classify_point_with_policy(&point.clone().into(), &policy)
                     .unwrap();
                 assert_eq!(location.certainty, CurveCertainty::Certified);
                 assert_eq!(location.value, Classification::Decided(expected));
@@ -2228,7 +2228,7 @@ fn selected_parallel_companion_fillets_without_range_promotion() {
         )
         .unwrap();
         let fillets = region
-            .fillet_loop_vertex(
+            .fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(radius.clone()),
@@ -2355,7 +2355,7 @@ fn resource_blocked_selected_boundary_fillets_and_reconstructs_in_place() {
         )
         .unwrap();
         let chamfers = region
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
                 1,
                 radius.clone(),
@@ -2371,7 +2371,7 @@ fn resource_blocked_selected_boundary_fillets_and_reconstructs_in_place() {
         assert_eq!(chamfers.certainty, CurveCertainty::Certified);
         assert!(chamfers.value.candidate_count() > 0);
         let fillets = region
-            .fillet_loop_vertex(
+            .fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(radius.clone()),
@@ -2386,7 +2386,7 @@ fn resource_blocked_selected_boundary_fillets_and_reconstructs_in_place() {
         assert_eq!(fillets.certainty, CurveCertainty::Certified);
         assert!(!fillets.value.solutions().is_empty());
         let extended_fillets = region
-            .fillet_loop_vertex(
+            .fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(radius.clone()),
@@ -2771,7 +2771,7 @@ fn one_fragment_selected_loop_chamfers_from_one_interval() {
         for reversed in [false, true] {
             let region = one_fragment_selected_corner_region(reversed, &policy);
             let result = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -2802,7 +2802,7 @@ fn retained_algebraic_straights_trim_or_extend_chamfer_and_fillet() {
             let region = retained_straight_extension_region(reversed, &policy);
             let corner = if reversed { 3 } else { 1 };
             let trim_chamfers = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     corner,
                     Real::one(),
@@ -2814,7 +2814,7 @@ fn retained_algebraic_straights_trim_or_extend_chamfer_and_fillet() {
             assert_eq!(trim_chamfers.certainty, CurveCertainty::Certified);
             let trim_chamfers = trim_chamfers.into_value();
             let extended_chamfers = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     corner,
                     Real::one(),
@@ -2831,7 +2831,7 @@ fn retained_algebraic_straights_trim_or_extend_chamfer_and_fillet() {
             );
 
             let trim_fillets = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -2842,7 +2842,7 @@ fn retained_algebraic_straights_trim_or_extend_chamfer_and_fillet() {
             assert_eq!(trim_fillets.certainty, CurveCertainty::Certified);
             let trim_fillets = trim_fillets.into_value();
             let extended_fillets = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -2878,7 +2878,7 @@ fn retained_algebraic_straights_trim_or_extend_chamfer_and_fillet() {
                         (p(5, 5), RegionPointLocation::Outside),
                     ] {
                         let location = edited
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(location.value, Classification::Decided(expected));
@@ -2889,7 +2889,7 @@ fn retained_algebraic_straights_trim_or_extend_chamfer_and_fillet() {
                         // normalized loop touching the rectangle at (2,0).
                         let exterior = Point2::new(q(17, 8), -q(1, 8));
                         let location = edited
-                            .classify_point(&exterior.clone().into(), &policy)
+                            .classify_point_with_policy(&exterior.clone().into(), &policy)
                             .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(
@@ -2918,7 +2918,7 @@ fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
             let region = retained_nonlinear_extension_region(reversed, &policy);
             assert_eq!(
                 region
-                    .classify_point(&added_material.clone().into(), &policy)
+                    .classify_point_with_policy(&added_material.clone().into(), &policy)
                     .unwrap()
                     .value,
                 Classification::Decided(Outside)
@@ -2936,7 +2936,7 @@ fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
             {
                 let (previous_setback, next_setback) = setbacks(setback.clone());
                 let trim = region
-                    .chamfer_loop_vertex_by_setbacks(
+                    .chamfer_loop_vertex_by_setbacks_with_policy(
                         0,
                         corner,
                         previous_setback.clone(),
@@ -2947,7 +2947,7 @@ fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
                     .expect("the nonlinear corner has an interior setback")
                     .into_value();
                 let extended = region
-                    .chamfer_loop_vertex_by_setbacks(
+                    .chamfer_loop_vertex_by_setbacks_with_policy(
                         0,
                         corner,
                         previous_setback,
@@ -2968,7 +2968,7 @@ fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
                 for_each_corner_region(corner_regions(&extended), |edited| {
                     assert!(matches!(
                         edited
-                            .classify_point(&p(10, 10).into(), &policy)
+                            .classify_point_with_policy(&p(10, 10).into(), &policy)
                             .expect("the canonicalized extension remains classifiable")
                             .into_value(),
                         Classification::Decided(_)
@@ -2985,7 +2985,7 @@ fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
                         });
                     if exact_endpoint.is_none()
                         && edited
-                            .classify_point(&added_material.clone().into(), &policy)
+                            .classify_point_with_policy(&added_material.clone().into(), &policy)
                             .unwrap()
                             .value
                             == Classification::Decided(Inside)
@@ -3002,7 +3002,7 @@ fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
                         ] {
                             assert_eq!(
                                 edited
-                                    .classify_point(&point.clone().into(), &policy)
+                                    .classify_point_with_policy(&point.clone().into(), &policy)
                                     .unwrap()
                                     .value,
                                 Classification::Decided(location),
@@ -3041,7 +3041,7 @@ fn retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots() {
             ] {
                 let (previous_setback, next_setback) = setbacks(setback.clone());
                 let trim = region
-                    .chamfer_loop_vertex_by_setbacks(
+                    .chamfer_loop_vertex_by_setbacks_with_policy(
                         0,
                         corner,
                         previous_setback.clone(),
@@ -3052,7 +3052,7 @@ fn retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots() {
                     .expect("the rational corner has a decided trim result")
                     .into_value();
                 let extended = region
-                    .chamfer_loop_vertex_by_setbacks(
+                    .chamfer_loop_vertex_by_setbacks_with_policy(
                         0,
                         corner,
                         previous_setback,
@@ -3072,7 +3072,7 @@ fn retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots() {
                 for_each_corner_region(corner_regions(&extended), |edited| {
                     assert!(matches!(
                         edited
-                            .classify_point(&p(20, 20).into(), &policy)
+                            .classify_point_with_policy(&p(20, 20).into(), &policy)
                             .expect("the pole-free rational extension remains classifiable")
                             .into_value(),
                         Classification::Decided(_)
@@ -3193,7 +3193,7 @@ fn retained_analytic_corners_preserve_normalized_sets() {
                                 .iter()
                                 .chain(&common_samples)
                                 .map(|(label, point, _)| {
-                                    let location = edited.classify_point(&point.clone().into(), &policy).unwrap();
+                                    let location = edited.classify_point_with_policy(&point.clone().into(), &policy).unwrap();
                                     assert_eq!(
                                         location.certainty,
                                         CurveCertainty::Certified,
@@ -3231,7 +3231,7 @@ fn retained_analytic_corners_preserve_normalized_sets() {
                     (chamfer_setback.clone(), Real::zero())
                 };
                 let chamfers = region
-                    .chamfer_loop_vertex_by_setbacks(
+                    .chamfer_loop_vertex_by_setbacks_with_policy(
                         0,
                         corner,
                         previous_setback,
@@ -3248,7 +3248,7 @@ fn retained_analytic_corners_preserve_normalized_sets() {
                 assert_extended_set(corner_regions(&chamfers.value), "chamfer", &chamfer_samples);
 
                 let fillets = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(q(299, 125)),
@@ -3273,7 +3273,7 @@ fn retained_analytic_corners_preserve_normalized_sets() {
                     algebraic_line_end.clone(),
                     &policy,
                 )
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(q(1, 2)),
@@ -3303,7 +3303,7 @@ fn one_fragment_materialized_loop_chamfers_to_one_middle_interval() {
         for reversed in [false, true] {
             let region = one_fragment_materialized_corner_region(reversed, &policy);
             let result = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3335,7 +3335,7 @@ fn one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once() {
         for reversed in [false, true] {
             let region = one_fragment_materialized_corner_region(reversed, &policy);
             let trimmed = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3346,7 +3346,7 @@ fn one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once() {
                 .expect("the one-fragment cubic has interior chamfer cuts")
                 .into_value();
             let extended = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3422,7 +3422,7 @@ fn one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier() {
         for reversed in [false, true] {
             let region = one_fragment_selected_corner_region(reversed, &policy);
             let trimmed = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3433,7 +3433,7 @@ fn one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier() {
                 .expect("the retained closed cubic has interior chamfer cuts")
                 .into_value();
             let extended = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3528,7 +3528,7 @@ fn one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelop
             )
             .unwrap();
             let trimmed = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3541,7 +3541,7 @@ fn one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelop
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let extended_work = || {
-                region.chamfer_loop_vertex_by_setbacks(
+                region.chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3583,7 +3583,7 @@ fn one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source() {
             ] {
                 let region = one_fragment_selected_corner_region(reversed, &policy);
                 let result = region
-                    .chamfer_loop_vertex_by_setbacks(
+                    .chamfer_loop_vertex_by_setbacks_with_policy(
                         0,
                         0,
                         previous_setback,
@@ -3617,7 +3617,7 @@ fn one_fragment_selected_loop_fillets_from_one_interval() {
         for reversed in [false, true] {
             let region = one_fragment_selected_corner_region(reversed, &policy);
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     0,
                     &crate::CurveFillet2::new(radius.clone()),
@@ -3701,7 +3701,7 @@ fn one_fragment_ph_loop_fillets_through_rational_self_contact() {
             )
             .expect("the selected PH loop has authored topology");
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     0,
                     &crate::CurveFillet2::new(radius.clone()),
@@ -3785,7 +3785,7 @@ fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
             )
             .expect("the one-fragment PH loop has authored topology");
             let fillets = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     0,
                     &crate::CurveFillet2::new(radius.clone()),
@@ -3815,7 +3815,7 @@ fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
                     }
                     for (index, point) in boundary_samples.iter().enumerate() {
                         let location = edited
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(
@@ -3836,7 +3836,7 @@ fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
                         (p(1, 1), RegionPointLocation::Outside),
                     ] {
                         let location = edited
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(location.value, Classification::Decided(expected));
@@ -3848,7 +3848,7 @@ fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
             assert_extended_set(fillet_regions(&fillets.value));
 
             let chamfers = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     0,
                     setback.clone(),
@@ -3931,7 +3931,7 @@ fn one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier() {
                 )
                 .unwrap();
                 let extended = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         0,
                         &crate::CurveFillet2::new(radius.clone()),
@@ -4062,7 +4062,7 @@ fn direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel() {
                 );
                 let corner = if reversed { 2 } else { 1 };
                 let result = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(Real::one()),
@@ -4083,7 +4083,7 @@ fn direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel() {
                 };
                 assert_eq!(
                     filleted
-                        .classify_point(&p(3, 1).into(), &policy)
+                        .classify_point_with_policy(&p(3, 1).into(), &policy)
                         .expect("the unified parallel-pair fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -4571,7 +4571,7 @@ fn selected_circle_direct_line_fillet_cut(
         panic!("the endpoint fixture starts on its selected circle")
     };
     let baseline = source
-        .fillet_loop_vertex(
+        .fillet_loop_vertex_with_policy(
             0,
             1,
             &crate::CurveFillet2::new(q(1, 10)),
@@ -4999,7 +4999,7 @@ fn assert_disjoint_square_replay_preserves_set(
     assert!(result.intersection().is_empty());
     for point in [p(0, 0), p(-1, 0), p(1, 0), p(0, 1), p(-10, -10)] {
         let Classification::Decided(expected) = source
-            .classify_point(&point.clone().into(), policy)
+            .classify_point_with_policy(&point.clone().into(), policy)
             .unwrap()
             .value
         else {
@@ -5007,7 +5007,7 @@ fn assert_disjoint_square_replay_preserves_set(
         };
         for region in [result.union(), result.difference(), result.xor()] {
             let outcome = region
-                .classify_point(&point.clone().into(), policy)
+                .classify_point_with_policy(&point.clone().into(), policy)
                 .unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             assert_eq!(outcome.value, Classification::Decided(expected));
@@ -5016,7 +5016,7 @@ fn assert_disjoint_square_replay_preserves_set(
     assert_eq!(
         result
             .union()
-            .classify_point(&p(5, 5).into(), policy)
+            .classify_point_with_policy(&p(5, 5).into(), policy)
             .unwrap()
             .value,
         Classification::Decided(RegionPointLocation::Inside)
@@ -5032,7 +5032,7 @@ fn regularization_orders_retained_circle_branches_at_shared_vertices() {
             false,
         );
         let candidates = source
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
                 selected_circle_rational_arc_corner(&source),
                 q(1, 10),
@@ -5044,20 +5044,20 @@ fn regularization_orders_retained_circle_branches_at_shared_vertices() {
         assert_eq!(candidates.certainty, CurveCertainty::Certified);
         let mut split_walks = 0;
         for_each_corner_region(corner_regions(&candidates.value), |authored| {
-            let normalized = authored.regularized_region(&policy).unwrap();
+            let normalized = authored.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(normalized.certainty, CurveCertainty::Certified);
             if normalized.value.boundary_loops().len() == 2 {
                 split_walks += 1;
             }
             for point in [p(0, 0), p(-1, 0), p(1, 0), p(0, 1), p(-10, -10)] {
                 let expected = authored
-                    .classify_point(&point.clone().into(), &policy)
+                    .classify_point_with_policy(&point.clone().into(), &policy)
                     .unwrap()
                     .value;
                 assert!(matches!(expected, Classification::Decided(_)));
                 let actual = normalized
                     .value
-                    .classify_point(&point.clone().into(), &policy)
+                    .classify_point_with_policy(&point.clone().into(), &policy)
                     .unwrap();
                 assert_eq!(actual.certainty, CurveCertainty::Certified);
                 assert_eq!(actual.value, expected);
@@ -5082,7 +5082,7 @@ fn selected_circle_and_retained_rational_arc_fillet_exactly() {
                 );
                 let corner = selected_circle_rational_arc_corner(&region);
                 let result = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
@@ -5114,14 +5114,14 @@ fn selected_circle_and_retained_rational_arc_fillet_exactly() {
                 );
                 assert_eq!(
                     filleted
-                        .classify_point(&p(0, 0).into(), &policy)
+                        .classify_point_with_policy(&p(0, 0).into(), &policy)
                         .expect("the retained fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
                 );
                 let disjoint = selected_fillet_disjoint_square(&policy);
                 let replay = filleted
-                    .boolean_regions(&disjoint, &policy)
+                    .boolean_regions_with_policy(&disjoint, &policy)
                     .expect("the mixed retained fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert_eq!(replay.value.union().boundary_loops().len(), 2);
@@ -5145,7 +5145,7 @@ fn selected_circle_and_major_retained_rational_arc_fillet_exactly() {
                 let corner = selected_circle_rational_arc_corner(&region);
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let result = region
-                        .fillet_loop_vertex(0, corner, &crate::CurveFillet2::new(q(1, 10)), mode, &policy)
+                        .fillet_loop_vertex_with_policy(0, corner, &crate::CurveFillet2::new(q(1, 10)), mode, &policy)
                         .unwrap_or_else(|error| {
                             panic!(
                                 "the selected-circle/major-conic fillet must complete: policy={policy:?}, elevated={elevated}, reversed={reversed}, mode={mode:?}, error={error:?}"
@@ -5189,7 +5189,7 @@ fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
                         let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
                         if major && homogeneous_scale == 1 && !reversed {
                             let authored_replay = region
-                                .boolean_regions(
+                                .boolean_regions_with_policy(
                                     &selected_fillet_disjoint_square(&policy),
                                     &policy,
                                 )
@@ -5204,7 +5204,7 @@ fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
                         }
                         let corner = selected_circle_rational_arc_corner(&region);
                         let trim = region
-                            .chamfer_loop_vertex_by_setbacks(
+                            .chamfer_loop_vertex_by_setbacks_with_policy(
                                 0,
                                 corner,
                                 q(1, 10),
@@ -5218,7 +5218,7 @@ fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
                                 )
                             });
                         let extended = region
-                        .chamfer_loop_vertex_by_setbacks(
+                        .chamfer_loop_vertex_by_setbacks_with_policy(
                             0,
                             corner,
                             q(1, 10),
@@ -5242,7 +5242,7 @@ fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
                             if !major {
                                 assert_eq!(
                                     chamfered
-                                        .classify_point(&p(0, 0).into(), &policy)
+                                        .classify_point_with_policy(&p(0, 0).into(), &policy)
                                         .expect("the extended mixed chamfer remains classifiable",)
                                         .into_value(),
                                     Classification::Decided(RegionPointLocation::Inside),
@@ -5294,7 +5294,10 @@ fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
                                     for probe in [p(5, 4), p(6, 5), p(5, 6), p(4, 5)] {
                                         assert_eq!(
                                             chamfered
-                                                .classify_point(&probe.clone().into(), &policy)
+                                                .classify_point_with_policy(
+                                                    &probe.clone().into(),
+                                                    &policy
+                                                )
                                                 .expect("the distant Boolean probe is finite")
                                                 .into_value(),
                                             Classification::Decided(RegionPointLocation::Outside,),
@@ -5303,7 +5306,7 @@ fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
                                     }
                                 }
                                 let replay = chamfered
-                                    .boolean_regions(
+                                    .boolean_regions_with_policy(
                                         &selected_fillet_disjoint_square(&policy),
                                     &policy,
                                 )
@@ -5435,7 +5438,7 @@ fn nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts() 
             } else {
                 path.clone()
             };
-            let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
                 std::slice::from_ref(&source_path),
                 &[CurveRegionLoopRole::Material],
                 &[FillRule::NonZero],
@@ -5468,7 +5471,7 @@ fn nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts() 
                 .expect("the normalized quarter disk retains its arc-line corner");
             let (previous_setback, next_setback) = (arc_setback.clone(), line_setback.clone());
             let edited = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     corner,
                     previous_setback,
@@ -5513,14 +5516,14 @@ fn nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts() 
             );
             assert_eq!(
                 edited
-                    .classify_point(&Point2::new(q(1, 10), q(1, 10)).into(), &policy)
+                    .classify_point_with_policy(&Point2::new(q(1, 10), q(1, 10)).into(), &policy)
                     .expect("the rebuilt nonlinear-circle chamfer remains classifiable")
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside),
             );
 
             let filleted = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(fillet_radius.clone()),
@@ -5539,7 +5542,10 @@ fn nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts() 
                     has_endpoint(candidate, &arc_cut) && has_endpoint(candidate, &line_fillet_cut);
                 assert_eq!(
                     candidate
-                        .classify_point(&Point2::new(q(1, 10), q(1, 10)).into(), &policy)
+                        .classify_point_with_policy(
+                            &Point2::new(q(1, 10), q(1, 10)).into(),
+                            &policy
+                        )
                         .expect("the rebuilt nonlinear-circle fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -5560,7 +5566,7 @@ fn collapsed_rational_arc_offset_tests_selected_circle_incidence_exactly() {
             let region = selected_circle_collapsed_arc_offset_region(&policy, reversed);
             let corner = selected_circle_rational_arc_corner(&region);
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -5595,7 +5601,7 @@ fn collapsed_selected_circle_offset_retains_its_exact_center() {
             );
             let corner = selected_circle_rational_arc_corner(&region);
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -5629,7 +5635,7 @@ fn collapsed_concentric_offsets_compare_retained_and_represented_centers() {
             // Both offsets collapse to the common center, so every contact
             // on the shared circle is admissible: the family needs an
             // exact contact constraint rather than an arbitrary choice.
-            let result = region.fillet_loop_vertex(
+            let result = region.fillet_loop_vertex_with_policy(
                 0,
                 corner,
                 &crate::CurveFillet2::new(Real::one()),
@@ -5669,7 +5675,7 @@ fn collapsed_selected_circle_center_classifies_every_neighbor_carrier() {
                 let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
                 let corner = if reversed { 2 } else { 1 };
                 let result = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(Real::one()),
@@ -5720,7 +5726,7 @@ fn collapsed_general_selected_frames_retain_exact_centers() {
             )
             .expect("the scaled quarter turn is a similarity");
             let transformed = chord_region
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .expect("the chord-normal fixture transforms exactly");
             assert_eq!(transformed.certainty, CurveCertainty::Certified);
 
@@ -5766,7 +5772,7 @@ fn collapsed_general_selected_frames_retain_exact_centers() {
                     _ => unreachable!(),
                 }
                 let result = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         if reversed { 2 } else { 1 },
                         &crate::CurveFillet2::new(circle.radial_distance().abs()),
@@ -5812,7 +5818,7 @@ fn collapsed_chord_pair_center_classifies_an_analytic_parallel() {
                 })
                 .expect("the retained circle/parallel corner is present");
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -5955,7 +5961,7 @@ fn selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let fillet_work = || {
-            region.fillet_loop_vertex(
+            region.fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(half.clone()),
@@ -6028,7 +6034,7 @@ fn selected_circle_and_retained_rational_arc_extend_on_full_supports() {
                     let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
                     let corner = selected_circle_rational_arc_corner(&region);
                     let trim = region
-                        .fillet_loop_vertex(
+                        .fillet_loop_vertex_with_policy(
                             0,
                             corner,
                             &crate::CurveFillet2::new(q(1, 10)),
@@ -6037,7 +6043,7 @@ fn selected_circle_and_retained_rational_arc_extend_on_full_supports() {
                         )
                         .expect("the finite mixed circular corner remains supported");
                     let extended = region
-                        .fillet_loop_vertex(
+                        .fillet_loop_vertex_with_policy(
                             0,
                             corner,
                             &crate::CurveFillet2::new(q(1, 10)),
@@ -6066,14 +6072,17 @@ fn selected_circle_and_retained_rational_arc_extend_on_full_supports() {
                         );
                         assert_eq!(
                             filleted
-                                .classify_point(&p(0, 0).into(), &policy)
+                                .classify_point_with_policy(&p(0, 0).into(), &policy)
                                 .expect("the extended circular fillet remains classifiable")
                                 .into_value(),
                             Classification::Decided(RegionPointLocation::Inside),
                         );
                         if homogeneous_scale == 1 && !elevated && !reversed {
                             let replay = filleted
-                                .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                                .boolean_regions_with_policy(
+                                    &selected_fillet_disjoint_square(&policy),
+                                    &policy,
+                                )
                                 .expect(
                                     "the extended circular fillet re-enters the Boolean kernel",
                                 );
@@ -6109,7 +6118,7 @@ fn selected_circle_and_promoted_line_extend_through_the_chord_support_cell() {
             let corner = if reversed { 2 } else { 1 };
             let solve = |region: &CurveRegion2, mode| {
                 region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(q(1, 10)),
@@ -6173,7 +6182,7 @@ fn selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam() {
                     .collect::<Vec<_>>();
                 assert_eq!(source_circle_fragments.len(), 2);
                 let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     2,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6201,7 +6210,7 @@ fn selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam() {
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     assert_eq!(
                         filleted
-                            .classify_point(&p(0, 0).into(), &policy)
+                            .classify_point_with_policy(&p(0, 0).into(), &policy)
                             .expect("the one-sided smooth-run fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -6249,7 +6258,7 @@ fn selected_circle_chamfer_crosses_one_sided_smooth_run_seam() {
                 };
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let result = region
-                        .chamfer_loop_vertex_by_setbacks(
+                        .chamfer_loop_vertex_by_setbacks_with_policy(
                             0,
                             2,
                             previous_setback.clone(),
@@ -6289,7 +6298,7 @@ fn selected_circle_chamfer_crosses_one_sided_smooth_run_seam() {
                     for_each_corner_region(corner_regions(&result.value), |chamfered| {
                         assert_eq!(
                             chamfered
-                                .classify_point(&p(0, 0).into(), &policy)
+                                .classify_point_with_policy(&p(0, 0).into(), &policy)
                                 .expect("the smooth-run chamfer remains classifiable")
                                 .into_value(),
                             Classification::Decided(RegionPointLocation::Inside),
@@ -6342,7 +6351,7 @@ fn selected_circle_fillet_owns_exact_smooth_run_seam_endpoint() {
                 .collect::<Vec<_>>();
             assert_eq!(source_circle_fragments.len(), 2);
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     2,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6378,7 +6387,7 @@ fn selected_circle_fillet_owns_exact_smooth_run_seam_endpoint() {
             for_each_corner_region(fillet_regions(&result.value), |filleted| {
                 assert_eq!(
                     filleted
-                        .classify_point(&p(0, 0).into(), &policy)
+                        .classify_point_with_policy(&p(0, 0).into(), &policy)
                         .expect("the seam-endpoint fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -6428,7 +6437,7 @@ fn selected_circle_fillet_crosses_an_independently_reframed_run() {
                     .collect::<Vec<_>>();
                 assert_eq!(source_circle_fragments.len(), 2);
                 let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     2,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6463,7 +6472,7 @@ fn selected_circle_fillet_crosses_an_independently_reframed_run() {
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     assert_eq!(
                         filleted
-                            .classify_point(&p(0, 0).into(), &policy)
+                            .classify_point_with_policy(&p(0, 0).into(), &policy)
                             .expect("the independently reframed fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -6485,7 +6494,7 @@ fn selected_circle_pair_with_rationalizable_support_fillet_exactly() {
             );
             let corner = selected_circle_pair_corner(&region);
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
@@ -6518,14 +6527,14 @@ fn selected_circle_pair_with_rationalizable_support_fillet_exactly() {
             );
             assert_eq!(
                 filleted
-                    .classify_point(&p(0, 0).into(), &policy)
+                    .classify_point_with_policy(&p(0, 0).into(), &policy)
                     .expect("the selected-circle pair fillet remains classifiable")
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside),
             );
             if !reversed {
                 let replay = filleted
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the selected-circle pair fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert_eq!(replay.value.union().boundary_loops().len(), 2);
@@ -6546,7 +6555,7 @@ fn selected_circle_pair_fillets_extend_over_both_full_supports() {
             );
             let corner = selected_circle_pair_corner(&region);
             let trim = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6555,7 +6564,7 @@ fn selected_circle_pair_fillets_extend_over_both_full_supports() {
                 )
                 .expect("the finite selected-circle pair remains supported");
             let extended = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6752,7 +6761,7 @@ fn independent_selected_circle_pair_fillets_extend_over_both_full_supports() {
             let region = independent_selected_circle_pair_region(&policy, reversed);
             let corner = selected_circle_pair_corner(&region);
             let trim = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6761,7 +6770,7 @@ fn independent_selected_circle_pair_fillets_extend_over_both_full_supports() {
                 )
                 .expect("the finite independent selected-circle pair remains supported");
             let extended = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(q(1, 10)),
@@ -6810,7 +6819,7 @@ fn independent_pair_native_fillet(policy: &CurveContext, reversed: bool) -> Curv
     let region = independent_selected_circle_pair_region(policy, reversed);
     let corner = selected_circle_pair_corner(&region);
     let result = region
-        .fillet_loop_vertex(
+        .fillet_loop_vertex_with_policy(
             0,
             corner,
             &crate::CurveFillet2::new(q(1, 10)),
@@ -6971,7 +6980,7 @@ fn collapsed_pair_radial_fillet_rejects_the_excluded_contact() {
             let filleted = independent_pair_native_fillet(&policy, reversed);
             let (corner, radius) = pair_radial_corner(&filleted);
             let result = filleted
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(radius),
@@ -7019,11 +7028,11 @@ fn noncollapsed_pair_radial_fillet_reenters_the_corner_kernel() {
             )
             .expect("the scaled reflection is a similarity");
             let transformed = filleted
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .expect("the pair-radial fixture transforms exactly");
             assert_eq!(transformed.certainty, CurveCertainty::Certified);
             let reflected = filleted
-                .transform_similarity(&reflected, &policy)
+                .transform_similarity_with_policy(&reflected, &policy)
                 .expect("the pair-radial fixture reflects exactly");
             assert_eq!(reflected.certainty, CurveCertainty::Certified);
 
@@ -7035,7 +7044,7 @@ fn noncollapsed_pair_radial_fillet_reenters_the_corner_kernel() {
                 let (corner, parent_radius) = pair_radial_corner(&region);
                 let radius = (parent_radius / Real::from(2_i8)).unwrap();
                 let result = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(radius),
@@ -7164,7 +7173,7 @@ fn independent_selected_circle_pair_fillet_retains_pair_native_circle() {
                 .expect("the scaled reflection is a similarity"),
             ] {
                 let transformed = filleted
-                    .transform_similarity(&transform, &policy)
+                    .transform_similarity_with_policy(&transform, &policy)
                     .unwrap_or_else(|error| {
                         panic!(
                             "the pair-native fillet must retain its exact similarity: policy={policy:?}, reversed={reversed}, error={error:?}"
@@ -7266,11 +7275,11 @@ fn independent_selected_circle_pair_fillet_retains_pair_native_circle() {
                 }
                 if !reversed {
                     let transformed_square = selected_fillet_disjoint_square(&policy)
-                        .transform_similarity(&transform, &policy)
+                        .transform_similarity_with_policy(&transform, &policy)
                         .expect("the disjoint Boolean fixture retains the same similarity");
                     let replay = transformed
                         .value
-                        .boolean_regions(&transformed_square.value, &policy)
+                        .boolean_regions_with_policy(&transformed_square.value, &policy)
                         .expect("the transformed pair-native fillet re-enters the Boolean kernel");
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
@@ -7279,7 +7288,7 @@ fn independent_selected_circle_pair_fillet_retains_pair_native_circle() {
             }
             if !reversed {
                 let replay = filleted
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the pair-native fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert_eq!(replay.value.union().boundary_loops().len(), 2);
@@ -7664,7 +7673,7 @@ fn next_selected_radial_boolean_fillet_generation(
     let cutter = selected_radial_crossing_cutter(source, Some(source_radius), false, false, policy);
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
-    let boolean_work = || source.boolean_regions(&cutter, policy);
+    let boolean_work = || source.boolean_regions_with_policy(&cutter, policy);
     #[cfg(feature = "dispatch-trace")]
     let booleans = hyperreal::dispatch_trace::with_recording(boolean_work);
     #[cfg(not(feature = "dispatch-trace"))]
@@ -7685,7 +7694,7 @@ fn next_selected_radial_boolean_fillet_generation(
     let (loop_index, corner) = selected_radial_linear_corner(&clipped, source_radius);
     let radius = (source_radius / Real::from(100_i16)).unwrap();
     let result = clipped
-        .fillet_loop_vertex(
+        .fillet_loop_vertex_with_policy(
             loop_index,
             corner,
             &crate::CurveFillet2::new(radius.clone()),
@@ -7840,7 +7849,7 @@ fn recursively_nested_selected_radial_operations_remain_exact() {
         let (fourth_generation, fourth_radius) =
             fourth_selected_radial_boolean_fillet_generation(&policy);
         let replay = fourth_generation
-            .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+            .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
             .expect("the fourth-generation fillet re-enters the Boolean kernel");
         assert_eq!(replay.certainty, CurveCertainty::Certified);
         assert!(replay.value.intersection().is_empty());
@@ -7943,7 +7952,7 @@ fn recursively_nested_selected_radial_operations_remain_exact() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let chamfer_work = || {
-            fourth_generation.chamfer_loop_vertex_by_setbacks(
+            fourth_generation.chamfer_loop_vertex_by_setbacks_with_policy(
                 loop_index,
                 corner,
                 setback.clone(),
@@ -7987,7 +7996,7 @@ fn recursively_nested_selected_radial_operations_remain_exact() {
         assert_eq!(chamfer.certainty, CurveCertainty::Certified);
         for_each_corner_region(corner_regions(&chamfer.value), |chamfered| {
             let replay = chamfered
-                .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                 .expect("the fourth-generation chamfer re-enters the Boolean kernel");
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert!(replay.value.intersection().is_empty());
@@ -8005,7 +8014,7 @@ fn recursive_selected_radial_crosses_a_nonlinear_quadratic() {
         let cutter = recursive_selected_radial_nonlinear_cutter(&policy);
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
-        let intersection_work = || recursive_disk.intersect_region(&cutter, &policy);
+        let intersection_work = || recursive_disk.intersect_region_with_policy(&cutter, &policy);
         #[cfg(feature = "dispatch-trace")]
         let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
         #[cfg(not(feature = "dispatch-trace"))]
@@ -8067,7 +8076,7 @@ fn recursive_selected_radial_crosses_a_nonlinear_quadratic() {
         );
         assert!(!intersections.value.contacts().is_empty());
         let booleans = recursive_disk
-            .boolean_regions(&cutter, &policy)
+            .boolean_regions_with_policy(&cutter, &policy)
             .unwrap_or_else(|error| {
                 panic!(
                     "the recursive selected-radial/nonlinear crossing must publish Boolean topology: policy={policy:?}, error={error:?}"
@@ -8087,7 +8096,7 @@ fn recursive_selected_radial_cap_crosses_a_nonlinear_quadratic() {
         let cutter = recursive_selected_radial_nonlinear_cutter(&policy);
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
-        let intersection_work = || recursive_cap.intersect_region(&cutter, &policy);
+        let intersection_work = || recursive_cap.intersect_region_with_policy(&cutter, &policy);
         #[cfg(feature = "dispatch-trace")]
         let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
         #[cfg(not(feature = "dispatch-trace"))]
@@ -8120,7 +8129,7 @@ fn recursive_selected_radial_cap_crosses_a_nonlinear_quadratic() {
         );
         assert!(!intersections.value.contacts().is_empty());
         let booleans = recursive_cap
-            .boolean_regions(&cutter, &policy)
+            .boolean_regions_with_policy(&cutter, &policy)
             .unwrap_or_else(|error| {
                 panic!(
                     "the recursive selected-radial cap/nonlinear crossing must publish Boolean topology: policy={policy:?}, error={error:?}"
@@ -8143,7 +8152,7 @@ fn recursive_selected_radial_projective_chamfer_reenters_corner_kernel() {
         let edit_radius = (third_radius / Real::from(10_i8)).unwrap();
 
         let trim_chamfer = third_generation
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 loop_index,
                 corner,
                 edit_radius.clone(),
@@ -8153,7 +8162,7 @@ fn recursive_selected_radial_projective_chamfer_reenters_corner_kernel() {
             )
             .expect("the recursive selected-radial/line trim chamfer remains exact");
         let extended_chamfer = third_generation
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 loop_index,
                 corner,
                 edit_radius.clone(),
@@ -8227,7 +8236,7 @@ fn recursive_selected_radial_projective_chamfer_reenters_corner_kernel() {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let nested_chamfer_work = || {
-                candidate.chamfer_loop_vertex_by_setbacks(
+                candidate.chamfer_loop_vertex_by_setbacks_with_policy(
                     nested_loop,
                     nested_corner,
                     nested_setback.clone(),
@@ -8267,7 +8276,7 @@ fn recursive_selected_radial_projective_chamfer_reenters_corner_kernel() {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let nested_fillet_work = || {
-                candidate.fillet_loop_vertex(
+                candidate.fillet_loop_vertex_with_policy(
                     nested_loop,
                     nested_corner,
                     &crate::CurveFillet2::new(nested_fillet_radius),
@@ -8398,7 +8407,8 @@ fn assert_fourth_selected_radial_public_offset_regularizes(policy: CurveContext)
     let distance = (fourth_radius / Real::from(20_i8)).unwrap();
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
-    let offset_work = || fourth_generation.offset(distance, &OffsetCornerStyle2::Bevel, &policy);
+    let offset_work =
+        || fourth_generation.offset_with_policy(distance, &OffsetCornerStyle2::Bevel, &policy);
     #[cfg(feature = "dispatch-trace")]
     let offset = hyperreal::dispatch_trace::with_recording(offset_work);
     #[cfg(not(feature = "dispatch-trace"))]
@@ -8442,7 +8452,7 @@ fn independent_pair_native_fillet_crosses_a_boolean_cutter() {
             for analytic_bottom in [false, true] {
                 let cutter = pair_native_crossing_cutter(&filleted, analytic_bottom, &policy);
                 let evidence = filleted
-                    .intersect_region(&cutter, &policy)
+                    .intersect_region_with_policy(&cutter, &policy)
                     .expect("the crossing carrier pairs return retained evidence");
                 assert!(
                     evidence.value.is_complete(),
@@ -8450,7 +8460,7 @@ fn independent_pair_native_fillet_crosses_a_boolean_cutter() {
                     evidence.value.blockers()
                 );
                 let booleans = filleted
-                    .boolean_regions(&cutter, &policy)
+                    .boolean_regions_with_policy(&cutter, &policy)
                     .unwrap_or_else(|error| {
                         panic!(
                             "the pair-native fillet must cross the Boolean cutter: policy={policy:?}, reversed={reversed}, analytic_bottom={analytic_bottom}, error={error:?}"
@@ -8468,7 +8478,7 @@ fn assert_pair_native_boolean_boundary_offsets_exactly(policy: CurveContext, rev
     let pair_native = independent_pair_native_fillet(&policy, reversed);
     let cutter = pair_native_crossing_cutter(&pair_native, false, &policy);
     let booleans = pair_native
-        .boolean_regions(&cutter, &policy)
+        .boolean_regions_with_policy(&cutter, &policy)
         .expect("the pair-native cutter publishes one exact intersection");
     let clipped = booleans.value.intersection();
     let parent_radius = clipped
@@ -8487,7 +8497,7 @@ fn assert_pair_native_boolean_boundary_offsets_exactly(policy: CurveContext, rev
     let distance = (parent_radius / Real::from(200_i16)).unwrap();
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
-    let offset_work = || clipped.offset(distance, &OffsetCornerStyle2::Bevel, &policy);
+    let offset_work = || clipped.offset_with_policy(distance, &OffsetCornerStyle2::Bevel, &policy);
     #[cfg(feature = "dispatch-trace")]
     let offset = hyperreal::dispatch_trace::with_recording(offset_work);
     #[cfg(not(feature = "dispatch-trace"))]
@@ -8562,7 +8572,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
             let pair_native = independent_pair_native_fillet(&policy, reversed);
             let cutter = pair_native_crossing_cutter(&pair_native, false, &policy);
             let booleans = pair_native
-                .boolean_regions(&cutter, &policy)
+                .boolean_regions_with_policy(&cutter, &policy)
                 .unwrap_or_else(|error| {
                     panic!(
                         "the pair-native cutter must publish its retained corner: policy={policy:?}, reversed={reversed}, error={error:?}"
@@ -8634,7 +8644,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
                 });
             let radius = (parent_radius / Real::from(100_i16)).unwrap();
             let chamfer = clipped
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     loop_index,
                     corner,
                     radius.clone(),
@@ -8662,7 +8672,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
                     "the chamfer must retain its pair-native circular parent"
                 );
                 let replay = chamfered
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the third-generation chamfer re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.intersection().is_empty());
@@ -8673,7 +8683,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
             let offset_distance = (radius.clone() / Real::from(2_i8)).unwrap();
             #[cfg(feature = "dispatch-trace")]
             let offset_result = hyperreal::dispatch_trace::with_recording(|| {
-                clipped.offset(offset_distance, &OffsetCornerStyle2::Bevel, &policy)
+                clipped.offset_with_policy(offset_distance, &OffsetCornerStyle2::Bevel, &policy)
             });
             #[cfg(not(feature = "dispatch-trace"))]
             let offset_result =
@@ -8710,7 +8720,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
                 "the offset must retain its pair-native circular authority"
             );
             let result = clipped
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     loop_index,
                     corner,
                     &crate::CurveFillet2::new(radius),
@@ -8751,7 +8761,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
                     "the original pair-native carrier must retain its pair-contact authority"
                 );
                 let replay = filleted
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the third-generation fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.intersection().is_empty());
@@ -8768,7 +8778,7 @@ fn pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet() {
         let pair_native = independent_pair_native_fillet(&construction_policy, reversed);
         let cutter = pair_native_crossing_cutter(&pair_native, true, &construction_policy);
         let clipped = pair_native
-            .boolean_regions(&cutter, &construction_policy)
+            .boolean_regions_with_policy(&cutter, &construction_policy)
             .expect("the analytic cutter must publish its retained corner")
             .into_value()
             .intersection()
@@ -8811,7 +8821,7 @@ fn pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet() {
             .expect("the clipped region retains a pair-radial/analytic corner");
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let result = clipped
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     loop_index,
                     corner,
                     &crate::CurveFillet2::new(
@@ -8825,7 +8835,7 @@ fn pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet() {
             assert!(!result.value.solutions().is_empty());
             for_each_corner_region(fillet_regions(&result.value), |filleted| {
                 let replay = filleted
-                    .boolean_regions(
+                    .boolean_regions_with_policy(
                         &selected_fillet_disjoint_square(&CurveContext::STRICT),
                         &CurveContext::STRICT,
                     )
@@ -8925,7 +8935,7 @@ fn pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fille
         )
         .expect("the selected cutter has authored topology");
         let clipped = pair_native
-            .boolean_regions(&cutter, &construction_policy)
+            .boolean_regions_with_policy(&cutter, &construction_policy)
             .expect("the selected cutter must publish its retained corner")
             .into_value()
             .intersection()
@@ -8963,7 +8973,7 @@ fn pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fille
             .expect("the clipped region retains a pair-radial/algebraic-chord corner");
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let result = clipped
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     loop_index,
                     corner,
                     &crate::CurveFillet2::new(
@@ -8977,7 +8987,7 @@ fn pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fille
             assert!(!result.value.solutions().is_empty());
             for_each_corner_region(fillet_regions(&result.value), |filleted| {
                 let replay = filleted
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the pair-radial/algebraic-chord fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert_eq!(
@@ -9047,16 +9057,16 @@ fn translated_pair_native_circles_fillet_after_boolean_crossing() {
             )
             .expect("the pair-native disk translation is a similarity");
             let shifted = disk
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .expect("the second pair-native disk translates exactly")
                 .into_value();
             let lens = disk
-                .boolean_region(&shifted, BooleanOp::Intersection, &policy)
+                .boolean_region_with_policy(&shifted, BooleanOp::Intersection, &policy)
                 .expect("translated pair-native disks must intersect exactly")
                 .into_value();
             let (loop_index, corner) = pair_radial_crossing_corner(&lens, &policy);
             let result = lens
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     loop_index,
                     corner,
                     &crate::CurveFillet2::new((radius / Real::from(10_i8)).unwrap()),
@@ -9091,7 +9101,7 @@ fn translated_pair_native_circles_fillet_after_boolean_crossing() {
             );
             for_each_corner_region(fillet_regions(&result.value), |filleted| {
                 let replay = filleted
-                    .boolean_regions(
+                    .boolean_regions_with_policy(
                         &selected_fillet_disjoint_square(&CurveContext::STRICT),
                         &CurveContext::STRICT,
                     )
@@ -9137,7 +9147,7 @@ fn selected_circle_and_analytic_parallel_fillet_exactly() {
                 })
                 .expect("the fixture retains its selected-circle/analytic corner");
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
@@ -9169,21 +9179,21 @@ fn selected_circle_and_analytic_parallel_fillet_exactly() {
             );
             assert_eq!(
                 filleted
-                    .classify_point(&p(0, 0).into(), &policy)
+                    .classify_point_with_policy(&p(0, 0).into(), &policy)
                     .expect("the selected-circle/analytic fillet remains classifiable")
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside),
             );
             assert_eq!(
                 filleted
-                    .classify_point(&p(-1, 0).into(), &policy)
+                    .classify_point_with_policy(&p(-1, 0).into(), &policy)
                     .expect("the selected-circle/analytic exterior remains classifiable")
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Outside),
             );
             if !curved {
                 let replay = filleted
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the selected-circle/analytic fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert_eq!(replay.value.union().boundary_loops().len(), 2);
@@ -9308,7 +9318,7 @@ fn selected_circle_and_analytic_parallel_extend_on_full_supports() {
                     })
                     .expect("the fixture retains its selected-circle/analytic corner");
                 let trim = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(q(1, 10)),
@@ -9317,7 +9327,7 @@ fn selected_circle_and_analytic_parallel_extend_on_full_supports() {
                     )
                     .expect("the finite selected-circle/analytic corner remains supported");
                 let extended = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         corner,
                         &crate::CurveFillet2::new(q(1, 10)),
@@ -9342,14 +9352,17 @@ fn selected_circle_and_analytic_parallel_extend_on_full_supports() {
                     }));
                     assert_eq!(
                         filleted
-                            .classify_point(&p(0, 0).into(), &policy)
+                            .classify_point_with_policy(&p(0, 0).into(), &policy)
                             .expect("the extended analytic fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
                     );
                     if !curved && !reversed {
                         let replay = filleted
-                            .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                            .boolean_regions_with_policy(
+                                &selected_fillet_disjoint_square(&policy),
+                                &policy,
+                            )
                             .expect("the extended analytic fillet re-enters the Boolean kernel");
                         assert_eq!(replay.certainty, CurveCertainty::Certified);
                         assert_disjoint_square_replay_preserves_set(
@@ -9394,7 +9407,7 @@ fn selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel() {
                 )
             ));
             let result = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
@@ -9433,7 +9446,7 @@ fn selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel() {
             if policy == CurveContext::STRICT && !reversed {
                 assert_eq!(
                     filleted
-                        .classify_point(&p(0, 0).into(), &policy)
+                        .classify_point_with_policy(&p(0, 0).into(), &policy)
                         .expect("the retained direct-Bezier fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -10223,14 +10236,14 @@ fn assert_algebraic_ray_spatial_endpoint_ownership(retained: bool) {
             ] {
                 assert_eq!(
                     region
-                        .classify_point(&image.clone().into(), &policy)
+                        .classify_point_with_policy(&image.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(expected)
                 );
                 assert_eq!(
                     region
-                        .classify_point(&exact.clone().into(), &policy)
+                        .classify_point_with_policy(&exact.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(expected)
@@ -10507,7 +10520,7 @@ fn independent_field_corner_edits_preserve_normalized_sets() {
                         assert!(edited.has_regularized_filled_left_topology(&policy));
                         let assert_location = |sample: &Point2, expected, label| {
                             let location = edited
-                                .classify_point(&sample.clone().into(), &policy)
+                                .classify_point_with_policy(&sample.clone().into(), &policy)
                                 .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(
@@ -10561,7 +10574,7 @@ fn independent_field_corner_edits_preserve_normalized_sets() {
                     assert!(found, "the exact exterior corner lobe was lost");
                 };
             let trim_chamfers = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     1,
                     q(1, 10),
@@ -10572,7 +10585,7 @@ fn independent_field_corner_edits_preserve_normalized_sets() {
                 .expect("the endpoint-image/chord trim chamfer must decide")
                 .into_value();
             let extended_chamfers = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     1,
                     q(1, 10),
@@ -10604,7 +10617,7 @@ fn independent_field_corner_edits_preserve_normalized_sets() {
 
             let radius = q(1, 100);
             let fillets = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     1,
                     &crate::CurveFillet2::new(radius.clone()),
@@ -10713,7 +10726,7 @@ fn nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray() {
                 (Real::zero(), setback.clone())
             };
             let trim = region
-                .chamfer_loop_vertex_by_setbacks(
+                .chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     corner,
                     previous_setback.clone(),
@@ -10726,7 +10739,7 @@ fn nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray() {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let extended_work = || {
-                region.chamfer_loop_vertex_by_setbacks(
+                region.chamfer_loop_vertex_by_setbacks_with_policy(
                     0,
                     corner,
                     previous_setback,
@@ -10785,7 +10798,7 @@ fn nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain() {
             let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
             let corner = if reversed { 2 } else { 1 };
             let trim_work = || {
-                region.fillet_loop_vertex(
+                region.fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(radius.clone()),
@@ -10808,7 +10821,7 @@ fn nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain() {
                 })
                 .into_value();
             let extended = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(radius.clone()),
@@ -10912,7 +10925,7 @@ fn nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain() {
                 );
                 let classify = |point: Point2| {
                     let outcome = edited
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     outcome.into_value()
@@ -10966,7 +10979,8 @@ fn nonlinear_algebraic_endpoint_images_reenter_exact_offset_kernel() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
-            let offset = region.offset(distance.clone(), &OffsetCornerStyle2::Bevel, &policy);
+            let offset =
+                region.offset_with_policy(distance.clone(), &OffsetCornerStyle2::Bevel, &policy);
             let offset = offset.unwrap_or_else(|error| {
                 panic!(
                     "the nonlinear algebraic-endpoint offset must decide: policy={policy:?}, reversed={reversed}, error={error:?}"
@@ -10977,7 +10991,7 @@ fn nonlinear_algebraic_endpoint_images_reenter_exact_offset_kernel() {
             assert_eq!(
                 offset
                     .value
-                    .classify_point(&p(2, 2).into(), &policy)
+                    .classify_point_with_policy(&p(2, 2).into(), &policy)
                     .unwrap()
                     .value,
                 Classification::Decided(RegionPointLocation::Outside),
@@ -10999,21 +11013,21 @@ fn independent_field_algebraic_chord_closes_and_classifies_a_region() {
         let tenth = (Real::one() / Real::from(10_i8)).unwrap();
         assert_eq!(
             region
-                .classify_point(&Point2::new(tenth.clone(), tenth).into(), &policy)
+                .classify_point_with_policy(&Point2::new(tenth.clone(), tenth).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
             region
-                .classify_point(&p(1, 1).into(), &policy)
+                .classify_point_with_policy(&p(1, 1).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
             region
-                .classify_point(&p(0, 0).into(), &policy)
+                .classify_point_with_policy(&p(0, 0).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Boundary)
@@ -11177,7 +11191,7 @@ fn independent_field_chord_publishes_nonzero_parallel_line_overlap() {
             .unwrap();
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let work = || region.intersect_region(&cutter, &policy);
+            let work = || region.intersect_region_with_policy(&cutter, &policy);
             #[cfg(feature = "dispatch-trace")]
             let evidence = hyperreal::dispatch_trace::with_recording(work);
             #[cfg(not(feature = "dispatch-trace"))]
@@ -11222,7 +11236,7 @@ fn independent_field_chord_publishes_nonzero_parallel_line_overlap() {
                 "the positive-dimensional support must be certified before overlap mapping: {trace:?}",
             );
             let booleans = region
-                .boolean_regions(&cutter, &policy)
+                .boolean_regions_with_policy(&cutter, &policy)
                 .expect("the shared chord/parallel boundary must regularize");
             assert_eq!(booleans.certainty, CurveCertainty::Certified);
         }
@@ -11327,7 +11341,7 @@ fn independent_field_chord_crosses_a_genuine_analytic_parallel_boolean() {
             )
             .expect("the analytic cutter has authored topology");
             let evidence = triangle
-                .intersect_region(&cutter, &policy)
+                .intersect_region_with_policy(&cutter, &policy)
                 .expect("the retained chord/analytic carrier pair remains exact");
             assert!(
                 evidence.value.is_complete(),
@@ -11335,7 +11349,7 @@ fn independent_field_chord_crosses_a_genuine_analytic_parallel_boolean() {
                 evidence.value.blockers()
             );
             let booleans = triangle
-                .boolean_regions(&cutter, &policy)
+                .boolean_regions_with_policy(&cutter, &policy)
                 .expect("the retained chord/analytic Boolean must complete");
             assert_eq!(booleans.certainty, CurveCertainty::Certified);
             assert!(!booleans.value.intersection().is_empty());
@@ -12004,7 +12018,7 @@ fn nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers() {
         for reversed in [false, true] {
             let region = nonrepresented_cardinal_chord_pair_corner_region(&policy, reversed);
             let outcome = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     if reversed { 2 } else { 1 },
                     &crate::CurveFillet2::new(radius.clone()),
@@ -12077,7 +12091,7 @@ fn independent_oblique_chord_pair_fillets_extend_on_infinite_supports() {
                 chord.retained_support()
             });
             let trim = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -12091,7 +12105,7 @@ fn independent_oblique_chord_pair_fillets_extend_on_infinite_supports() {
                 });
             assert_eq!(trim.certainty, CurveCertainty::Certified);
             let extended = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(Real::one()),
@@ -12168,13 +12182,13 @@ fn independent_oblique_chord_pair_fillets_extend_on_infinite_supports() {
                 );
                 assert_eq!(
                     filleted
-                        .classify_point(&p(10, 10).into(), &policy)
+                        .classify_point_with_policy(&p(10, 10).into(), &policy)
                         .expect("the chord-normal fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Outside),
                 );
                 let replay = filleted
-                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .boolean_regions_with_policy(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the chord-normal fillet re-enters the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.intersection().is_empty());
@@ -12186,7 +12200,7 @@ fn independent_oblique_chord_pair_fillets_extend_on_infinite_supports() {
                     replay
                         .value
                         .union()
-                        .classify_point(&p(5, 5).into(), &policy)
+                        .classify_point_with_policy(&p(5, 5).into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -12201,7 +12215,7 @@ fn independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = independent_oblique_chord_pair_corner_region(&policy, false);
         let extended = region
-            .fillet_loop_vertex(
+            .fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(Real::one()),
@@ -12309,7 +12323,7 @@ fn independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = independent_oblique_chord_pair_corner_region(&policy, false);
         let extended = region
-            .fillet_loop_vertex(
+            .fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(Real::one()),
@@ -12512,7 +12526,7 @@ fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
-                        .fillet_loop_vertex(
+                        .fillet_loop_vertex_with_policy(
                             0,
                             if reversed { 2 } else { 1 },
                             &crate::CurveFillet2::new(radius.clone()),
@@ -12644,7 +12658,7 @@ fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
 fn boundary_curve_views_share_retained_domains_and_endpoint_evidence() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = nonrepresented_chord_rational_arc_corner_region(&policy, false, false, false);
-        let paths = region.boundary_paths(&policy).unwrap();
+        let paths = region.boundary_paths_with_policy(&policy).unwrap();
         assert_eq!(paths.certainty, CurveCertainty::Certified);
         let Classification::Decided(paths) = paths.value else {
             panic!("retained boundary curves must remain exact connected paths");
@@ -12691,7 +12705,7 @@ fn selected_corner_candidates_reenter_normalization_with_retained_contacts() {
         ];
         for (source, corner, radius) in cases {
             let outcome = source
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new(radius),
@@ -12726,7 +12740,7 @@ fn general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_ke
             let mut trim_count = None;
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 let outcome = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         if reversed { 1 } else { 2 },
                         &crate::CurveFillet2::new(radius.clone()),
@@ -12814,7 +12828,7 @@ fn major_retained_rational_arc_and_general_chord_share_the_fillet_kernel() {
                 );
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
-                        .fillet_loop_vertex(
+                        .fillet_loop_vertex_with_policy(
                             0,
                             if reversed { 1 } else { 2 },
                             &crate::CurveFillet2::new(radius.clone()),
@@ -12849,7 +12863,7 @@ fn nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel() {
             let mut trim_count = None;
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 let outcome = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         if reversed { 2 } else { 1 },
                         &crate::CurveFillet2::new(radius.clone()),
@@ -12936,7 +12950,7 @@ fn nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel() {
                         (&p(4, 4), RegionPointLocation::Outside),
                     ] {
                         let location = filleted
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(location.value, Classification::Decided(expected));
@@ -12954,7 +12968,7 @@ fn collapsed_selected_circle_center_classifies_nonrepresented_chord() {
         for reversed in [false, true] {
             let region = nonrepresented_chord_selected_circle_corner_region(&policy, reversed);
             let outcome = region
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     if reversed { 2 } else { 1 },
                     &crate::CurveFillet2::new(Real::one()),
@@ -13181,7 +13195,7 @@ fn nonrepresented_chord_line_corner_fillets_through_shared_carriers() {
             let mut trim_count = None;
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 let outcome = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         vertex,
                         &crate::CurveFillet2::new(radius.clone()),
@@ -13270,7 +13284,7 @@ fn nonrepresented_chord_parallel_corner_fillets_without_reintersection() {
             let mut trim_count = None;
             for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                 let outcome = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         vertex,
                         &crate::CurveFillet2::new(radius.clone()),
@@ -14093,10 +14107,10 @@ fn retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions(
         let mut reference = None;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let split_offset = split_region
-                .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(distance.clone(), &OffsetCornerStyle2::Round, &policy)
                 .expect("the algebraically partitioned exact offset must complete");
             let unsplit_offset = unsplit_region
-                .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(distance.clone(), &OffsetCornerStyle2::Round, &policy)
                 .expect("the equivalent unsplit exact offset must complete");
             assert_eq!(split_offset.certainty, unsplit_offset.certainty);
             if policy == CurveContext::STRICT {
@@ -14279,7 +14293,7 @@ fn regularized_composite_chord_roles_preserve_nested_islands_and_profiles() {
         let nested_loop = |scale: i32| {
             let scale = Real::from(scale);
             let transformed = base
-                .transform_affine(
+                .transform_affine_with_policy(
                     &scale,
                     &Real::zero(),
                     &Real::zero(),
@@ -14323,7 +14337,7 @@ fn regularized_composite_chord_roles_preserve_nested_islands_and_profiles() {
         );
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
-        let regularize = || region.regularized_region(&policy);
+        let regularize = || region.regularized_region_with_policy(&policy);
         #[cfg(feature = "dispatch-trace")]
         let regularized = hyperreal::dispatch_trace::with_recording(regularize);
         #[cfg(not(feature = "dispatch-trace"))]
@@ -14357,7 +14371,7 @@ fn regularized_composite_chord_roles_preserve_nested_islands_and_profiles() {
             .with_certified_loop_roles(expected)
             .expect("the exact nesting roles match the retained loops");
         let profiles = profiled
-            .boundary_profiles(&policy)
+            .boundary_profiles_with_policy(&policy)
             .expect("composite point evidence must assign hole ownership");
         assert_eq!(profiles.certainty, CurveCertainty::Certified);
         let Classification::Decided(profiles) = profiles.value else {
@@ -14514,11 +14528,13 @@ fn authored_region_clones_share_certified_normalization_without_retaining_the_in
         .unwrap();
         let source = Arc::downgrade(&authored.data);
         let cloned = authored.clone();
-        let normalized = authored.regularized_region(&first_policy).unwrap();
+        let normalized = authored
+            .regularized_region_with_policy(&first_policy)
+            .unwrap();
         assert_eq!(normalized.certainty, CurveCertainty::Certified);
         assert!(!Arc::ptr_eq(&normalized.value.data, &authored.data));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let replay = cloned.regularized_region(&policy).unwrap();
+            let replay = cloned.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert!(Arc::ptr_eq(&normalized.value.data, &replay.value.data));
         }
@@ -14531,7 +14547,7 @@ fn authored_region_clones_share_certified_normalization_without_retaining_the_in
         assert_eq!(
             normalized
                 .value
-                .classify_point(
+                .classify_point_with_policy(
                     &Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap()).into(),
                     &CurveContext::STRICT,
                 )
@@ -14591,7 +14607,7 @@ fn boundary_path_construction_obeys_selected_terminal_policy() {
     ))])
     .expect("one-curve path construction has no adjacency decision");
 
-    let strict = CurveRegion2::try_from_boundary_paths(
+    let strict = CurveRegion2::try_from_boundary_paths_with_policy(
         std::slice::from_ref(&path),
         crate::FillRule::EvenOdd,
         &CurveContext::STRICT,
@@ -14604,7 +14620,7 @@ fn boundary_path_construction_obeys_selected_terminal_policy() {
                 && blocker.reason() == UncertaintyReason::RealSign
     ));
 
-    let approximate = CurveRegion2::try_from_boundary_paths(
+    let approximate = CurveRegion2::try_from_boundary_paths_with_policy(
         std::slice::from_ref(&path),
         crate::FillRule::EvenOdd,
         &CurveContext::APPROXIMATE_512,
@@ -14623,7 +14639,7 @@ fn boundary_path_construction_obeys_selected_terminal_policy() {
         exact_start,
     ))])
     .unwrap();
-    let exact = CurveRegion2::try_from_boundary_paths(
+    let exact = CurveRegion2::try_from_boundary_paths_with_policy(
         &[exact_path],
         crate::FillRule::EvenOdd,
         &CurveContext::STRICT,
@@ -14716,7 +14732,9 @@ fn rational_line_measurements_obey_policy_and_isolate_cached_certainty() {
     .expect("exact endpoints close the retained loop");
     let region = CurveRegion2::new(vec![loop_]).expect("one retained loop");
 
-    let approximate = region.signed_area(&CurveContext::APPROXIMATE_512).unwrap();
+    let approximate = region
+        .signed_area_with_policy(&CurveContext::APPROXIMATE_512)
+        .unwrap();
     assert_eq!(
         approximate.certainty,
         CurveCertainty::Approximate512Consumed
@@ -14725,7 +14743,9 @@ fn rational_line_measurements_obey_policy_and_isolate_cached_certainty() {
         approximate.value,
         Classification::Decided(Some(Real::from(8_i8)))
     );
-    let strict = region.signed_area(&CurveContext::STRICT).unwrap();
+    let strict = region
+        .signed_area_with_policy(&CurveContext::STRICT)
+        .unwrap();
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert_eq!(
         strict.value,
@@ -14733,7 +14753,7 @@ fn rational_line_measurements_obey_policy_and_isolate_cached_certainty() {
     );
     assert_eq!(
         region
-            .signed_area(&CurveContext::APPROXIMATE_512)
+            .signed_area_with_policy(&CurveContext::APPROXIMATE_512)
             .unwrap()
             .certainty,
         CurveCertainty::Approximate512Consumed
@@ -14747,7 +14767,7 @@ fn curve_region_mutations_report_selected_terminal_policy() {
 
     let scale = Real::one() + &undecidable_zero;
     let strict_transform = region
-        .transform_affine(
+        .transform_affine_with_policy(
             &scale,
             &Real::zero(),
             &Real::zero(),
@@ -14759,7 +14779,7 @@ fn curve_region_mutations_report_selected_terminal_policy() {
         .expect("the determinant is certified positive without deciding the symbolic zero");
     assert_eq!(strict_transform.certainty, CurveCertainty::Certified);
     let approximate_transform = region
-        .transform_affine(
+        .transform_affine_with_policy(
             &scale,
             &Real::zero(),
             &Real::zero(),
@@ -14803,7 +14823,7 @@ fn curve_region_mutations_report_selected_terminal_policy() {
     .unwrap();
     assert_eq!(
         region
-            .transform_similarity(&identity, &CurveContext::APPROXIMATE_512)
+            .transform_similarity_with_policy(&identity, &CurveContext::APPROXIMATE_512)
             .unwrap()
             .certainty,
         CurveCertainty::Certified
@@ -14829,7 +14849,7 @@ fn curve_region_mutations_report_selected_terminal_policy() {
     let flattening =
         BezierFlatteningOptions::try_new(Real::one(), 4, &CurveContext::STRICT).unwrap();
     let strict_segmentation = bent
-        .segment_certified(&flattening, &CurveContext::STRICT)
+        .segment_certified_with_policy(&flattening, &CurveContext::STRICT)
         .unwrap();
     assert_eq!(strict_segmentation.certainty, CurveCertainty::Certified);
     assert!(matches!(
@@ -14837,7 +14857,7 @@ fn curve_region_mutations_report_selected_terminal_policy() {
         Classification::Uncertain(UncertaintyReason::Ordering)
     ));
     let approximate_segmentation = bent
-        .segment_certified(&flattening, &CurveContext::APPROXIMATE_512)
+        .segment_certified_with_policy(&flattening, &CurveContext::APPROXIMATE_512)
         .unwrap();
     assert_eq!(
         approximate_segmentation.certainty,
@@ -14849,14 +14869,14 @@ fn curve_region_mutations_report_selected_terminal_policy() {
     ));
 
     let collapse_distance = -Real::one() + &undecidable_zero;
-    let strict_offset = region.offset(
+    let strict_offset = region.offset_with_policy(
         collapse_distance.clone(),
         &OffsetCornerStyle2::Round,
         &CurveContext::STRICT,
     );
     assert!(matches!(strict_offset, Err(ExactCurveError::Blocked(_))));
     let approximate_offset = region
-        .offset(
+        .offset_with_policy(
             collapse_distance,
             &OffsetCornerStyle2::Round,
             &CurveContext::APPROXIMATE_512,
@@ -14937,13 +14957,16 @@ fn curve_region_clones_share_geometry_and_lazy_caches() {
 
     assert!(Arc::ptr_eq(&region.data, &clone.data));
     assert!(region.data.signed_area_cache.is_empty());
-    let clone_area = clone.signed_area(&policy).expect("clone area").into_value();
+    let clone_area = clone
+        .signed_area_with_policy(&policy)
+        .expect("clone area")
+        .into_value();
     assert!(matches!(clone_area, Classification::Decided(Some(_))));
     assert!(!region.data.signed_area_cache.is_empty());
     assert_eq!(
         clone_area,
         region
-            .signed_area(&policy)
+            .signed_area_with_policy(&policy)
             .expect("source area")
             .into_value()
     );
@@ -14960,7 +14983,7 @@ fn single_loop_filled_side_uses_area_without_constructing_nesting_bounds() {
         let region = single_quadratic_loop_region(clockwise);
         assert!(region.data.native_boundary_bounds.is_empty());
         assert!(matches!(
-            region.filled_side_is_left(&policy),
+            region.filled_side_is_left_with_policy(&policy),
             Ok(CurveOutcome {
                 value: Classification::Decided(sides),
                 ..
@@ -15077,7 +15100,7 @@ fn irrational_weight_semicircle_region_recovers_exact_native_accelerator() {
             ));
         }
     }
-    let region = CurveRegion2::try_from_boundary_paths(
+    let region = CurveRegion2::try_from_boundary_paths_with_policy(
         &[CurvePath2::try_new(curves).unwrap()],
         crate::FillRule::EvenOdd,
         &policy,
@@ -15087,19 +15110,19 @@ fn irrational_weight_semicircle_region_recovers_exact_native_accelerator() {
     let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
     assert_eq!(
         region
-            .classify_point(&point.clone().into(), &policy)
+            .classify_point_with_policy(&point.clone().into(), &policy)
             .map(CurveOutcome::into_value),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
         region
-            .classify_point(&p(1, 1).into(), &policy)
+            .classify_point_with_policy(&p(1, 1).into(), &policy)
             .map(CurveOutcome::into_value),
         Ok(Classification::Decided(RegionPointLocation::Boundary))
     );
     assert_eq!(
         region
-            .classify_point(&p(1, 2).into(), &policy)
+            .classify_point_with_policy(&p(1, 2).into(), &policy)
             .map(CurveOutcome::into_value),
         Ok(Classification::Decided(RegionPointLocation::Outside))
     );
@@ -15165,7 +15188,7 @@ fn explicit_signed_loops_classify_after_regularization() {
     }
 
     let policy = CurveContext::STRICT;
-    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
         &[rectangle(-3, 3), rectangle(1, 7)],
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
         &[FillRule::NonZero, FillRule::NonZero],
@@ -15175,13 +15198,13 @@ fn explicit_signed_loops_classify_after_regularization() {
     .into_value();
     assert_eq!(
         region
-            .classify_point(&p(-2, 0).into(), &policy)
+            .classify_point_with_policy(&p(-2, 0).into(), &policy)
             .map(CurveOutcome::into_value),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
         region
-            .classify_point(&p(2, 0).into(), &policy)
+            .classify_point_with_policy(&p(2, 0).into(), &policy)
             .map(CurveOutcome::into_value),
         Ok(Classification::Decided(RegionPointLocation::Outside))
     );

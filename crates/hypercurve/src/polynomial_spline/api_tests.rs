@@ -233,7 +233,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
         strict_insertion,
         ExactCurveError::Blocked(blocker)
             if blocker.operation() == CurveOperation2::KnotInsertion
-                && blocker.family() == CurveFamily2::PolynomialBSpline
+                && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
     ));
     let inserted = curve
         .insert_knot(knot, &CurveContext::APPROXIMATE_512)
@@ -261,7 +261,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
         curve.reversed(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Reversal
-                && blocker.family() == CurveFamily2::PolynomialBSpline
+                && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
     ));
     let reversed = curve
         .reversed(&CurveContext::APPROXIMATE_512)
@@ -286,7 +286,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
         curve.transform_similarity(&transform, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Transformation
-                && blocker.family() == CurveFamily2::PolynomialBSpline
+                && blocker.family() == Some(CurveFamily2::PolynomialBSpline)
     ));
     let transformed = Curve2::from(curve.clone())
         .transform_similarity(&transform, &CurveContext::APPROXIMATE_512)
@@ -685,7 +685,7 @@ fn invalid_polynomial_spline_evidence_context_and_source() {
     .unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Construction);
-    assert_eq!(error.family(), CurveFamily2::PolynomialBSpline);
+    assert_eq!(error.family(), Some(CurveFamily2::PolynomialBSpline));
     assert!(matches!(
         error,
         ExactCurveError::Invalid {
@@ -701,7 +701,7 @@ fn polynomial_spline_out_of_domain_evaluation_is_contextual() {
     let error = curve.point_at(&r(3), &CurveContext::STRICT).unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
-    assert_eq!(error.family(), CurveFamily2::PolynomialBSpline);
+    assert_eq!(error.family(), Some(CurveFamily2::PolynomialBSpline));
     assert!(matches!(
         error,
         ExactCurveError::Invalid {

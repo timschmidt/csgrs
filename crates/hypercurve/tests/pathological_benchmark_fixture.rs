@@ -1,5 +1,6 @@
 #[path = "../benches/common/pathological.rs"]
 mod pathological_fixture;
+mod support;
 
 use std::collections::HashSet;
 
@@ -77,15 +78,12 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
     let cell = build_native_cell(0);
     let policy = CurveContext::STRICT;
     {
-        let evidence = cell
-            .source
-            .intersect_region(&cell.rotated, &policy)
-            .expect("all-family intersections are evidenceable")
-            .value;
+        let evidence =
+            crate::support::under(&policy, || cell.source.intersect_region(&cell.rotated))
+                .expect("all-family intersections are evidenceable")
+                .value;
         assert!(evidence.blockers().is_empty());
-        let results = cell
-            .source
-            .boolean_regions(&cell.rotated, &policy)
+        let results = crate::support::under(&policy, || cell.source.boolean_regions(&cell.rotated))
             .expect("all-family immediate curved Booleans are decided")
             .value;
         assert!(results.authored_carrier_pair_count() > 0);
@@ -111,9 +109,10 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         BooleanOp::Xor,
     ] {
         assert!(
-            cell.source_projection
-                .boolean_region(&cell.rotated_projection, operation, &policy)
-                .is_ok()
+            crate::support::under(&policy, || cell
+                .source_projection
+                .boolean_region(&cell.rotated_projection, operation))
+            .is_ok()
         );
     }
 }
@@ -126,16 +125,12 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
     // through the rational-coefficient algebraic-number image package.
     let cell = build_native_cell(2);
     let policy = CurveContext::STRICT;
-    let evidence = cell
-        .source
-        .intersect_region(&cell.rotated, &policy)
+    let evidence = crate::support::under(&policy, || cell.source.intersect_region(&cell.rotated))
         .expect("pi-weight conic/cubic intersections retain exact evidence")
         .value;
     assert!(evidence.blockers().is_empty(), "{:#?}", evidence.blockers());
 
-    let results = cell
-        .source
-        .boolean_regions(&cell.rotated, &policy)
+    let results = crate::support::under(&policy, || cell.source.boolean_regions(&cell.rotated))
         .expect("pi-weight all-family pair completes immediate exact Booleans")
         .value;
     for operation in [
@@ -161,22 +156,19 @@ fn full_pathological_native_workload_decides_all_268_exact_booleans() {
     let mut decided = 0_usize;
 
     for (cell_index, cell) in dataset.cells.iter().enumerate() {
-        let evidence = cell
-            .source
-            .intersect_region(&cell.rotated, &policy)
-            .unwrap_or_else(|error| {
-                panic!("pathological cell {cell_index} failed exact intersections: {error}")
-            })
-            .value;
+        let evidence =
+            crate::support::under(&policy, || cell.source.intersect_region(&cell.rotated))
+                .unwrap_or_else(|error| {
+                    panic!("pathological cell {cell_index} failed exact intersections: {error}")
+                })
+                .value;
         assert!(
             evidence.blockers().is_empty(),
             "pathological cell {cell_index} retained blockers: {:#?}",
             evidence.blockers()
         );
 
-        let results = cell
-            .source
-            .boolean_regions(&cell.rotated, &policy)
+        let results = crate::support::under(&policy, || cell.source.boolean_regions(&cell.rotated))
             .unwrap_or_else(|error| {
                 panic!("pathological cell {cell_index} immediate Booleans failed: {error}")
             })

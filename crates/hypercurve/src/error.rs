@@ -55,7 +55,7 @@ pub enum CurveOperation2 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactCurveBlocker {
     operation: CurveOperation2,
-    family: CurveFamily2,
+    family: Option<CurveFamily2>,
     counterpart_family: Option<CurveFamily2>,
     reason: UncertaintyReason,
 }
@@ -69,7 +69,7 @@ impl ExactCurveBlocker {
     ) -> Self {
         Self {
             operation,
-            family,
+            family: Some(family),
             counterpart_family: None,
             reason,
         }
@@ -80,8 +80,9 @@ impl ExactCurveBlocker {
         self.operation
     }
 
-    /// Returns the curve family involved in the blocked operation.
-    pub const fn family(self) -> CurveFamily2 {
+    /// Returns the curve family involved in the blocked operation, when the
+    /// decision concerned one support rather than a whole region or path.
+    pub const fn family(self) -> Option<CurveFamily2> {
         self.family
     }
 
@@ -104,8 +105,8 @@ pub enum ExactCurveError {
     Invalid {
         /// Operation that detected the invalid state.
         operation: CurveOperation2,
-        /// Curve family being processed.
-        family: CurveFamily2,
+        /// Curve family being processed, when the state concerned one support.
+        family: Option<CurveFamily2>,
         /// Underlying invariant failure.
         cause: CurveError,
     },
@@ -122,9 +123,34 @@ impl ExactCurveError {
     ) -> Self {
         Self::Invalid {
             operation,
-            family,
+            family: Some(family),
             cause,
         }
+    }
+
+    /// Wraps an invalid region- or path-level state with operation context.
+    pub(crate) const fn invalid_unattributed(
+        operation: CurveOperation2,
+        cause: CurveError,
+    ) -> Self {
+        Self::Invalid {
+            operation,
+            family: None,
+            cause,
+        }
+    }
+
+    /// Constructs a region- or path-level blocker with operation context.
+    pub(crate) const fn blocked_unattributed(
+        operation: CurveOperation2,
+        reason: UncertaintyReason,
+    ) -> Self {
+        Self::Blocked(ExactCurveBlocker {
+            operation,
+            family: None,
+            counterpart_family: None,
+            reason,
+        })
     }
 
     /// Constructs a blocker with operation context.
@@ -145,10 +171,36 @@ impl ExactCurveError {
     ) -> Self {
         Self::Blocked(ExactCurveBlocker {
             operation,
-            family,
+            family: Some(family),
             counterpart_family: Some(counterpart_family),
             reason,
         })
+    }
+
+    /// Converts an undecided region- or path-level classification into a
+    /// blocker with operation context.
+    pub(crate) fn decided<T>(
+        operation: CurveOperation2,
+        value: crate::Classification<T>,
+    ) -> ExactCurveResult<T> {
+        match value {
+            crate::Classification::Decided(value) => Ok(value),
+            crate::Classification::Uncertain(reason) => {
+                Err(Self::blocked_unattributed(operation, reason))
+            }
+        }
+    }
+
+    /// Converts a policy-scoped region- or path-level query result into the
+    /// principal exact result, attributing failures to `operation`.
+    pub(crate) fn principal_query<T>(
+        operation: CurveOperation2,
+        result: CurveResult<crate::CurveOutcome<crate::Classification<T>>>,
+    ) -> ExactCurveResult<T> {
+        match result {
+            Ok(outcome) => Self::decided(operation, outcome.into_value()),
+            Err(cause) => Err(Self::invalid_unattributed(operation, cause)),
+        }
     }
 
     /// Returns the operation that failed.
@@ -159,8 +211,8 @@ impl ExactCurveError {
         }
     }
 
-    /// Returns the affected curve family.
-    pub const fn family(&self) -> CurveFamily2 {
+    /// Returns the affected curve family, when the failure concerned one support.
+    pub const fn family(&self) -> Option<CurveFamily2> {
         match self {
             Self::Invalid { family, .. } => *family,
             Self::Blocked(blocker) => blocker.family(),
@@ -169,7 +221,11 @@ impl ExactCurveError {
 
     pub(crate) fn with_operation(self, operation: CurveOperation2) -> Self {
         match self {
-            Self::Invalid { family, cause, .. } => Self::invalid(operation, family, cause),
+            Self::Invalid { family, cause, .. } => Self::Invalid {
+                operation,
+                family,
+                cause,
+            },
             Self::Blocked(blocker) => Self::Blocked(ExactCurveBlocker {
                 operation,
                 ..blocker
@@ -180,16 +236,21 @@ impl ExactCurveError {
 
 impl fmt::Display for ExactCurveBlocker {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.counterpart_family {
-            Some(counterpart) => write!(
+        match (self.family, self.counterpart_family) {
+            (Some(family), Some(counterpart)) => write!(
                 f,
                 "exact {:?} for {:?} against {:?} was blocked by {:?}",
-                self.operation, self.family, counterpart, self.reason
+                self.operation, family, counterpart, self.reason
             ),
-            None => write!(
+            (Some(family), None) => write!(
                 f,
                 "exact {:?} for {:?} was blocked by {:?}",
-                self.operation, self.family, self.reason
+                self.operation, family, self.reason
+            ),
+            (None, _) => write!(
+                f,
+                "exact {:?} was blocked by {:?}",
+                self.operation, self.reason
             ),
         }
     }
@@ -203,7 +264,10 @@ impl fmt::Display for ExactCurveError {
                 family,
                 cause,
             } => {
-                write!(f, "invalid {:?} during exact {:?}", family, operation)?;
+                match family {
+                    Some(family) => write!(f, "invalid {:?} during exact {:?}", family, operation)?,
+                    None => write!(f, "invalid state during exact {:?}", operation)?,
+                }
                 write!(f, ": {cause}")
             }
             Self::Blocked(blocker) => blocker.fmt(f),
@@ -470,7 +534,7 @@ mod blocker_tests {
             panic!("a pair blocker stays blocked");
         };
         assert_eq!(blocker.operation(), CurveOperation2::Offset);
-        assert_eq!(blocker.family(), CurveFamily2::RationalBezier);
+        assert_eq!(blocker.family(), Some(CurveFamily2::RationalBezier));
         assert_eq!(blocker.counterpart_family(), Some(CurveFamily2::Line));
         assert_eq!(
             blocker.to_string(),

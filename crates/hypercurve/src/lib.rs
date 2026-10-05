@@ -221,7 +221,9 @@ pub use intersect::{
 pub use nurbs::NurbsCurve2;
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
-pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};
+pub use policy::{
+    CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions, Provisional, provisional,
+};
 pub use polynomial_spline::PolynomialSplineCurve2;
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{HomogeneousControl2, RationalBezier2};
@@ -488,7 +490,7 @@ mod tests {
             BulgeVertex2::new(p(3, 1), s(0)),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_native_contours(
+        let region = CurveRegion2::try_from_native_contours_with_policy(
             vec![material],
             vec![clockwise_hole],
             &topology_policy(),
@@ -497,7 +499,10 @@ mod tests {
         .into_value();
 
         assert_eq!(
-            region.filled_area(&topology_policy()).unwrap().into_value(),
+            region
+                .filled_area_with_policy(&topology_policy())
+                .unwrap()
+                .into_value(),
             Classification::Decided(Some(Real::from(12_i8)))
         );
     }

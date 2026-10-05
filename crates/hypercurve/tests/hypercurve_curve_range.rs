@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::*;
 
 fn q(n: i32, d: i32) -> Real {
@@ -8,9 +9,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::from_values(x, y)
 }
 
-fn certified<T>(outcome: CurveOutcome<T>) -> T {
-    assert_eq!(outcome.certainty, CurveCertainty::Certified);
-    outcome.value
+fn certified<T>(outcome: impl support::IntoCertified<T>) -> T {
+    outcome.into_certified()
 }
 
 fn decided<T>(value: Classification<T>) -> T {

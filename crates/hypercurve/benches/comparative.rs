@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use hypercurve::CurveFamily2;
 #[path = "common/pathological.rs"]
 mod pathological_fixture;
@@ -198,12 +200,8 @@ fn hypercurve_line_arc_contour(points: &[[f64; 2]], bulges: &[f64]) -> Contour2 
 }
 
 fn hypercurve_region(points: &[[f64; 2]]) -> CurveRegion2 {
-    CurveRegion2::try_from_native_material_contours(
-        vec![hypercurve_contour(points)],
-        &CurveContext::STRICT,
-    )
-    .expect("valid unified hypercurve benchmark region")
-    .into_value()
+    CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour(points)])
+        .expect("valid unified hypercurve benchmark region")
 }
 
 fn cavalier_polyline(points: &[[f64; 2]], bulges: Option<&[f64]>) -> Polyline<f64> {
@@ -237,8 +235,7 @@ fn hypercurve_boolean_result_size(
     policy: &CurveContext,
 ) -> usize {
     let operation = operation.hypercurve();
-    let result = first
-        .boolean_region(second, operation, policy)
+    let result = crate::support::under(policy, || first.boolean_region(second, operation))
         .expect("hypercurve boolean benchmark completes")
         .into_value();
     result
@@ -448,16 +445,20 @@ fn benchmark_line_arc_boolean(runner: &Runner) {
     let second_points = vec![[-1.0, -2.0], [5.0, -2.0], [5.0, 2.0], [-1.0, 2.0]];
     let bulges = vec![0.0, 1.0, 0.0, 1.0];
     let policy = CurveContext::STRICT;
-    let first = CurveRegion2::try_from_native_material_contours(
-        vec![hypercurve_line_arc_contour(&first_points, &bulges)],
-        &policy,
-    )
+    let first = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![hypercurve_line_arc_contour(
+            &first_points,
+            &bulges,
+        )])
+    })
     .expect("valid first exact capsule")
     .into_value();
-    let second = CurveRegion2::try_from_native_material_contours(
-        vec![hypercurve_line_arc_contour(&second_points, &bulges)],
-        &policy,
-    )
+    let second = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![hypercurve_line_arc_contour(
+            &second_points,
+            &bulges,
+        )])
+    })
     .expect("valid second exact capsule")
     .into_value();
     let cavalier_first = cavalier_polyline(&first_points, Some(&bulges));
@@ -470,8 +471,7 @@ fn benchmark_line_arc_boolean(runner: &Runner) {
     ];
 
     runner.measure(name, "hypercurve_exact_batch", || {
-        let results = first
-            .boolean_regions(black_box(&second), &policy)
+        let results = crate::support::under(&policy, || first.boolean_regions(black_box(&second)))
             .expect("exact capsule batch completes")
             .into_value();
         [
@@ -517,22 +517,25 @@ fn benchmark_contour_offset(runner: &Runner) {
     let cavalier_contour = cavalier_polyline(&points, Some(&bulges));
     let policy = CurveContext::STRICT;
     let distance = -real(5.0);
-    let hypercurve_region =
-        CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour], &policy)
-            .expect("valid hypercurve capsule region")
-            .into_value();
+    let hypercurve_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour])
+    })
+    .expect("valid hypercurve capsule region")
+    .into_value();
 
-    let hypercurve_offset = hypercurve_region
-        .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
-        .expect("hypercurve capsule offset completes");
+    let hypercurve_offset = crate::support::under(&policy, || {
+        hypercurve_region.offset(distance.clone(), &OffsetCornerStyle2::Round)
+    })
+    .expect("hypercurve capsule offset completes");
     assert!(!hypercurve_offset.value.is_empty());
     assert!(!cavalier_contour.parallel_offset(5.0).is_empty());
 
     let name = "line_arc_offset/capsule_inward";
     runner.measure(name, "hypercurve", || {
-        let result = hypercurve_region
-            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
-            .expect("hypercurve capsule offset completes");
+        let result = crate::support::under(&policy, || {
+            hypercurve_region.offset(distance.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("hypercurve capsule offset completes");
         result
             .value
             .boundary_loops()
@@ -640,12 +643,13 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     )
     .expect("closed benchmark boundary")
     .into_value();
-    let hypercurve = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[boundary],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )
+    let hypercurve = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .expect("valid benchmark region")
     .into_value();
     let cavalier = cavalier_polyline(
@@ -663,8 +667,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         limit: Real::from(2_u8),
     };
     assert_eq!(
-        hypercurve
-            .offset(distance.clone(), &round, &policy)
+        crate::support::under(&policy, || hypercurve.offset(distance.clone(), &round))
             .expect("exact algebraic round offset completes")
             .into_value()
             .boundary_loops()
@@ -675,8 +678,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
 
     if runner.group_enabled(offset_name) {
         runner.measure(offset_name, "hypercurve_exact_round", || {
-            hypercurve
-                .offset(distance.clone(), &round, &policy)
+            crate::support::under(&policy, || hypercurve.offset(distance.clone(), &round))
                 .expect("exact algebraic round offset completes")
                 .into_value()
                 .boundary_loops()
@@ -685,8 +687,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .sum()
         });
         runner.measure(offset_name, "hypercurve_exact_miter", || {
-            hypercurve
-                .offset(distance.clone(), &miter, &policy)
+            crate::support::under(&policy, || hypercurve.offset(distance.clone(), &miter))
                 .expect("exact algebraic miter offset completes")
                 .into_value()
                 .boundary_loops()
@@ -704,10 +705,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     }
 
     if runner.group_enabled(reoffset_name) {
-        let rounded = hypercurve
-            .offset(distance.clone(), &round, &policy)
-            .expect("selected-circle benchmark source completes")
-            .into_value();
+        let rounded =
+            crate::support::under(&policy, || hypercurve.offset(distance.clone(), &round))
+                .expect("selected-circle benchmark source completes")
+                .into_value();
         let expansion =
             (Real::one() / Real::from(20_u8)).expect("exact re-offset expansion distance");
         let past_collapse =
@@ -719,10 +720,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .map(|boundary| boundary.len())
                 .sum::<usize>()
         };
-        let expansion_complete = rounded.offset(expansion.clone(), &round, &policy).is_ok();
-        let past_collapse_complete = rounded
-            .offset(past_collapse.clone(), &round, &policy)
-            .is_ok();
+        let expansion_complete =
+            crate::support::under(&policy, || rounded.offset(expansion.clone(), &round)).is_ok();
+        let past_collapse_complete =
+            crate::support::under(&policy, || rounded.offset(past_collapse.clone(), &round))
+                .is_ok();
 
         let mut cavalier_rounded = cavalier.parallel_offset(-0.1);
         assert_eq!(cavalier_rounded.len(), 1);
@@ -736,8 +738,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 "hypercurve_rejected_expand"
             },
             || {
-                rounded
-                    .offset(expansion.clone(), &round, &policy)
+                crate::support::under(&policy, || rounded.offset(expansion.clone(), &round))
                     .map_or(0, |result| result_weight(&result.value))
             },
         );
@@ -756,8 +757,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 "hypercurve_rejected_past_collapse"
             },
             || {
-                rounded
-                    .offset(past_collapse.clone(), &round, &policy)
+                crate::support::under(&policy, || rounded.offset(past_collapse.clone(), &round))
                     .map_or(0, |result| result_weight(&result.value))
             },
         );
@@ -772,8 +772,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
 
     if runner.group_enabled(cusp_chord_reoffset_name) {
         let radius = (Real::one() / Real::from(20_u8)).expect("exact cusp/chord benchmark radius");
-        let first = hypercurve
-            .offset(radius.clone(), &round, &policy)
+        let first = crate::support::under(&policy, || hypercurve.offset(radius.clone(), &round))
             .expect("first cusp/chord benchmark round offset completes")
             .into_value();
         let translation = Similarity2::try_from_real_affine(
@@ -785,12 +784,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             (Real::one() / Real::from(40_u8)).expect("exact cusp/chord benchmark translation"),
         )
         .expect("valid cusp/chord benchmark translation");
-        let second = first
-            .transform_similarity(&translation, &policy)
+        let second = crate::support::under(&policy, || first.transform_similarity(&translation))
             .expect("translated cusp/chord benchmark region remains exact")
             .into_value();
-        let intersection = first
-            .boolean_regions(&second, &policy)
+        let intersection = crate::support::under(&policy, || first.boolean_regions(&second))
             .expect("cusp/chord benchmark Boolean completes")
             .into_value()
             .intersection()
@@ -798,9 +795,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         let reoffset_distance =
             (Real::one() / Real::from(100_u8)).expect("exact cusp/chord re-offset distance");
         let bevel = OffsetCornerStyle2::Bevel;
-        let reoffset_complete = intersection
-            .offset(reoffset_distance.clone(), &bevel, &policy)
-            .is_ok();
+        let reoffset_complete = crate::support::under(&policy, || {
+            intersection.offset(reoffset_distance.clone(), &bevel)
+        })
+        .is_ok();
         let region_weight = |region: &CurveRegion2| {
             region
                 .boundary_loops()
@@ -828,9 +826,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 "hypercurve_rejected_reoffset"
             },
             || {
-                intersection
-                    .offset(reoffset_distance.clone(), &bevel, &policy)
-                    .map_or(0, |result| region_weight(&result.value))
+                crate::support::under(&policy, || {
+                    intersection.offset(reoffset_distance.clone(), &bevel)
+                })
+                .map_or(0, |result| region_weight(&result.value))
             },
         );
         runner.measure(cusp_chord_reoffset_name, "cavalier_f64_reoffset", || {
@@ -844,8 +843,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
 
     if runner.group_enabled(oblique_cusp_chord_name) {
         let radius = (Real::one() / Real::from(20_u8)).expect("exact oblique benchmark radius");
-        let rounded = hypercurve
-            .offset(radius, &round, &policy)
+        let rounded = crate::support::under(&policy, || hypercurve.offset(radius, &round))
             .expect("oblique benchmark round offset completes")
             .into_value();
         let rotation = Similarity2::try_from_real_affine(
@@ -857,8 +855,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             Real::zero(),
         )
         .expect("valid exact oblique benchmark rotation");
-        let first = rounded
-            .transform_similarity(&rotation, &policy)
+        let first = crate::support::under(&policy, || rounded.transform_similarity(&rotation))
             .expect("oblique benchmark rotation remains exact")
             .into_value();
         let translated_in_rotated_frame = Similarity2::try_from_real_affine(
@@ -870,10 +867,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             (Real::from(11_u8) / Real::from(200_u8)).expect("exact rotated-frame y translation"),
         )
         .expect("valid exact rotated-frame translation");
-        let second = first
-            .transform_similarity(&translated_in_rotated_frame, &policy)
-            .expect("translated oblique benchmark operand remains exact")
-            .into_value();
+        let second = crate::support::under(&policy, || {
+            first.transform_similarity(&translated_in_rotated_frame)
+        })
+        .expect("translated oblique benchmark operand remains exact")
+        .into_value();
         let reoffset_distance =
             (Real::one() / Real::from(500_u16)).expect("exact oblique re-offset distance");
         let bevel = OffsetCornerStyle2::Bevel;
@@ -884,17 +882,20 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .map(|boundary| boundary.len())
                 .sum::<usize>()
         };
-        let evidence_complete = first
-            .intersect_region(&second, &policy)
+        let evidence_complete = crate::support::under(&policy, || first.intersect_region(&second))
             .is_ok_and(|result| result.value.is_complete());
-        let boolean_complete = first.boolean_regions(&second, &policy).is_ok();
-        let reoffset_complete = first.boolean_regions(&second, &policy).is_ok_and(|result| {
-            result
-                .value
-                .intersection()
-                .offset(reoffset_distance.clone(), &bevel, &policy)
+        let boolean_complete =
+            crate::support::under(&policy, || first.boolean_regions(&second)).is_ok();
+        let reoffset_complete = crate::support::under(&policy, || first.boolean_regions(&second))
+            .is_ok_and(|result| {
+                crate::support::under(&policy, || {
+                    result
+                        .value
+                        .intersection()
+                        .offset(reoffset_distance.clone(), &bevel)
+                })
                 .is_ok()
-        });
+            });
 
         let mut cavalier_first = cavalier.parallel_offset(-0.05);
         assert_eq!(cavalier_first.len(), 1);
@@ -917,11 +918,12 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 "hypercurve_rejected_evidence"
             },
             || {
-                first
-                    .intersect_region(&second, &policy)
-                    .map_or(0, |result| {
+                crate::support::under(&policy, || first.intersect_region(&second)).map_or(
+                    0,
+                    |result| {
                         result.value.contacts().len() + usize::from(result.value.is_complete())
-                    })
+                    },
+                )
             },
         );
         runner.measure(
@@ -932,12 +934,15 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 "hypercurve_rejected_four_booleans"
             },
             || {
-                first.boolean_regions(&second, &policy).map_or(0, |result| {
-                    region_weight(result.value.union())
-                        + region_weight(result.value.intersection())
-                        + region_weight(result.value.difference())
-                        + region_weight(result.value.xor())
-                })
+                crate::support::under(&policy, || first.boolean_regions(&second)).map_or(
+                    0,
+                    |result| {
+                        region_weight(result.value.union())
+                            + region_weight(result.value.intersection())
+                            + region_weight(result.value.difference())
+                            + region_weight(result.value.xor())
+                    },
+                )
             },
         );
         runner.measure(
@@ -948,13 +953,18 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 "hypercurve_rejected_boolean_reoffset"
             },
             || {
-                first.boolean_regions(&second, &policy).map_or(0, |result| {
-                    result
-                        .value
-                        .intersection()
-                        .offset(reoffset_distance.clone(), &bevel, &policy)
+                crate::support::under(&policy, || first.boolean_regions(&second)).map_or(
+                    0,
+                    |result| {
+                        crate::support::under(&policy, || {
+                            result
+                                .value
+                                .intersection()
+                                .offset(reoffset_distance.clone(), &bevel)
+                        })
                         .map_or(0, |reoffset| region_weight(&reoffset.value))
-                })
+                    },
+                )
             },
         );
         runner.measure(oblique_cusp_chord_name, "cavalier_f64_intersection", || {
@@ -999,24 +1009,24 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     if runner.group_enabled(chord_pair_transform_name) {
         let quarter =
             (Real::one() / Real::from(4_u8)).expect("exact chord-pair benchmark translation");
-        let shifted = hypercurve
-            .transform_affine(
+        let shifted = crate::support::under(&policy, || {
+            hypercurve.transform_affine(
                 &Real::one(),
                 &Real::zero(),
                 &Real::zero(),
                 &Real::one(),
                 &quarter,
                 &quarter,
-                &policy,
             )
-            .expect("translated chord-pair benchmark operand remains exact")
-            .into_value();
-        let exact_intersection = hypercurve
-            .boolean_regions(&shifted, &policy)
-            .expect("chord-pair benchmark intersection completes")
-            .into_value()
-            .intersection()
-            .clone();
+        })
+        .expect("translated chord-pair benchmark operand remains exact")
+        .into_value();
+        let exact_intersection =
+            crate::support::under(&policy, || hypercurve.boolean_regions(&shifted))
+                .expect("chord-pair benchmark intersection completes")
+                .into_value()
+                .intersection()
+                .clone();
         let selected_endpoint_count = exact_intersection
             .boundary_loops()
             .iter()
@@ -1031,15 +1041,16 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         assert!(selected_endpoint_count >= 2);
 
         let transformed_region = || {
-            exact_intersection.transform_affine(
-                &Real::zero(),
-                &Real::one(),
-                &Real::one(),
-                &Real::zero(),
-                &Real::from(2_i8),
-                &Real::from(-3_i8),
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                exact_intersection.transform_affine(
+                    &Real::zero(),
+                    &Real::one(),
+                    &Real::one(),
+                    &Real::zero(),
+                    &Real::from(2_i8),
+                    &Real::from(-3_i8),
+                )
+            })
         };
         let region_weight = |region: &CurveRegion2| {
             region
@@ -1050,15 +1061,14 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         };
         let transform_complete = transformed_region().is_ok();
         let transform_offset_complete = transformed_region().is_ok_and(|transformed| {
-            transformed
-                .value
-                .offset(
+            crate::support::under(&policy, || {
+                transformed.value.offset(
                     (Real::one() / Real::from(20_u8))
                         .expect("exact transformed chord-pair offset distance"),
                     &miter,
-                    &policy,
                 )
-                .is_ok()
+            })
+            .is_ok()
         });
 
         let mut cavalier_shifted = cavalier.clone();
@@ -1087,15 +1097,14 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             },
             || {
                 transformed_region().map_or(0, |transformed| {
-                    transformed
-                        .value
-                        .offset(
+                    crate::support::under(&policy, || {
+                        transformed.value.offset(
                             (Real::one() / Real::from(20_u8))
                                 .expect("exact transformed chord-pair offset distance"),
                             &miter,
-                            &policy,
                         )
-                        .map_or(0, |result| region_weight(&result.value))
+                    })
+                    .map_or(0, |result| region_weight(&result.value))
                 })
             },
         );
@@ -1121,38 +1130,39 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         || runner.group_enabled(shared_chord_reentry_name)
         || runner.group_enabled(shared_chord_collinear_reentry_name)
     {
-        let rounded = hypercurve
-            .offset(
+        let rounded = crate::support::under(&policy, || {
+            hypercurve.offset(
                 (Real::one() / Real::from(20_u8)).expect("exact shared-chord radius"),
                 &round,
-                &policy,
             )
-            .expect("shared-chord round offset completes")
-            .into_value();
-        let tall = hypercurve
-            .transform_affine(
+        })
+        .expect("shared-chord round offset completes")
+        .into_value();
+        let tall = crate::support::under(&policy, || {
+            hypercurve.transform_affine(
                 &Real::one(),
                 &Real::zero(),
                 &Real::zero(),
                 &Real::from(3_u8),
                 &Real::zero(),
                 &Real::from(-1_i8),
-                &policy,
             )
-            .expect("shared-chord cutter transform completes")
-            .into_value();
-        let cutter = tall
-            .offset(
+        })
+        .expect("shared-chord cutter transform completes")
+        .into_value();
+        let cutter = crate::support::under(&policy, || {
+            tall.offset(
                 (Real::one() / Real::from(40_u8)).expect("exact shared-chord distance"),
                 &miter,
-                &policy,
             )
-            .expect("shared-chord cutter offset completes")
-            .into_value();
-        let evidence_complete = rounded
-            .intersect_region(&cutter, &policy)
-            .is_ok_and(|result| result.value.is_complete());
-        let all_four_complete = rounded.boolean_regions(&cutter, &policy).is_ok();
+        })
+        .expect("shared-chord cutter offset completes")
+        .into_value();
+        let evidence_complete =
+            crate::support::under(&policy, || rounded.intersect_region(&cutter))
+                .is_ok_and(|result| result.value.is_complete());
+        let all_four_complete =
+            crate::support::under(&policy, || rounded.boolean_regions(&cutter)).is_ok();
 
         let mut cavalier_rounded = cavalier.parallel_offset(-0.05);
         assert_eq!(cavalier_rounded.len(), 1);
@@ -1183,7 +1193,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             } else {
                 "hypercurve_rejected_evidence"
             },
-            || match rounded.intersect_region(&cutter, &policy) {
+            || match crate::support::under(&policy, || rounded.intersect_region(&cutter)) {
                 Ok(result) => {
                     result.value.contacts().len()
                         + result.value.overlaps().len()
@@ -1200,7 +1210,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             } else {
                 "hypercurve_rejected_all_four"
             },
-            || match rounded.boolean_regions(&cutter, &policy) {
+            || match crate::support::under(&policy, || rounded.boolean_regions(&cutter)) {
                 Ok(result) => [
                     result.value.union(),
                     result.value.intersection(),
@@ -1228,29 +1238,29 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         });
 
         if runner.group_enabled(shared_chord_reentry_name) {
-            let exact_intersection = rounded
-                .boolean_regions(&cutter, &policy)
-                .expect("shared-chord Boolean batch completes before re-entry")
-                .into_value()
-                .intersection()
-                .clone();
-            let replay_clip = CurveRegion2::try_from_native_material_contours(
-                vec![hypercurve_contour(&[
+            let exact_intersection =
+                crate::support::under(&policy, || rounded.boolean_regions(&cutter))
+                    .expect("shared-chord Boolean batch completes before re-entry")
+                    .into_value()
+                    .intersection()
+                    .clone();
+            let replay_clip = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour(&[
                     [-1.0, 0.0],
                     [2.0, 0.0],
                     [2.0, 2.0],
                     [-1.0, 2.0],
-                ])],
-                &policy,
-            )
+                ])])
+            })
             .expect("valid exact shared-chord replay clip")
             .into_value();
-            let evidence_complete = exact_intersection
-                .intersect_region(&replay_clip, &policy)
-                .is_ok_and(|result| result.value.is_complete());
-            let all_four_complete = exact_intersection
-                .boolean_regions(&replay_clip, &policy)
-                .is_ok();
+            let evidence_complete = crate::support::under(&policy, || {
+                exact_intersection.intersect_region(&replay_clip)
+            })
+            .is_ok_and(|result| result.value.is_complete());
+            let all_four_complete =
+                crate::support::under(&policy, || exact_intersection.boolean_regions(&replay_clip))
+                    .is_ok();
 
             let cavalier_intersection_result =
                 cavalier_rounded.boolean(&cavalier_cutter, CavalierBooleanOp::And);
@@ -1267,7 +1277,9 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 } else {
                     "hypercurve_rejected_evidence"
                 },
-                || match exact_intersection.intersect_region(&replay_clip, &policy) {
+                || match crate::support::under(&policy, || {
+                    exact_intersection.intersect_region(&replay_clip)
+                }) {
                     Ok(result) => {
                         result.value.contacts().len()
                             + result.value.overlaps().len()
@@ -1284,7 +1296,9 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 } else {
                     "hypercurve_rejected_all_four"
                 },
-                || match exact_intersection.boolean_regions(&replay_clip, &policy) {
+                || match crate::support::under(&policy, || {
+                    exact_intersection.boolean_regions(&replay_clip)
+                }) {
                     Ok(result) => [
                         result.value.union(),
                         result.value.intersection(),
@@ -1313,8 +1327,8 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         }
 
         if runner.group_enabled(shared_chord_collinear_reentry_name) {
-            let wide = hypercurve
-                .transform_affine(
+            let wide = crate::support::under(&policy, || {
+                hypercurve.transform_affine(
                     &Real::from(4_u8),
                     &Real::zero(),
                     &Real::zero(),
@@ -1322,24 +1336,24 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     &(Real::one() / Real::from(10_u8)).expect("exact wide-cutter x translation"),
                     &(Real::from(3_u8) / Real::from(10_u8))
                         .expect("exact wide-cutter y translation"),
-                    &policy,
                 )
-                .expect("exact wide-cutter transform completes")
-                .into_value();
-            let wide_cutter = wide
-                .offset(
+            })
+            .expect("exact wide-cutter transform completes")
+            .into_value();
+            let wide_cutter = crate::support::under(&policy, || {
+                wide.offset(
                     (Real::one() / Real::from(40_u8)).expect("exact wide-cutter offset distance"),
                     &miter,
-                    &policy,
                 )
-                .expect("exact wide-cutter offset completes")
-                .into_value();
-            let exact_intersection = rounded
-                .boolean_regions(&wide_cutter, &policy)
-                .expect("exact-support cutter Boolean completes before collinear re-entry")
-                .into_value()
-                .intersection()
-                .clone();
+            })
+            .expect("exact wide-cutter offset completes")
+            .into_value();
+            let exact_intersection =
+                crate::support::under(&policy, || rounded.boolean_regions(&wide_cutter))
+                    .expect("exact-support cutter Boolean completes before collinear re-entry")
+                    .into_value()
+                    .intersection()
+                    .clone();
             let zero = Real::zero();
             let one = Real::one();
             let minus_one = -one.clone();
@@ -1352,18 +1366,18 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 BulgeVertex2::new(Point2::new(minus_one, top), zero),
             ])
             .expect("valid exact shared-chord collinear contour");
-            let replay_clip = CurveRegion2::try_from_native_material_contours(
-                vec![collinear_clip_contour],
-                &policy,
-            )
+            let replay_clip = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![collinear_clip_contour])
+            })
             .expect("valid exact shared-chord collinear replay clip")
             .into_value();
-            let evidence_complete = exact_intersection
-                .intersect_region(&replay_clip, &policy)
-                .is_ok_and(|result| result.value.is_complete());
-            let all_four_complete = exact_intersection
-                .boolean_regions(&replay_clip, &policy)
-                .is_ok();
+            let evidence_complete = crate::support::under(&policy, || {
+                exact_intersection.intersect_region(&replay_clip)
+            })
+            .is_ok_and(|result| result.value.is_complete());
+            let all_four_complete =
+                crate::support::under(&policy, || exact_intersection.boolean_regions(&replay_clip))
+                    .is_ok();
 
             let cavalier_wide = cavalier_polyline(
                 &[
@@ -1394,7 +1408,9 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 } else {
                     "hypercurve_rejected_evidence"
                 },
-                || match exact_intersection.intersect_region(&replay_clip, &policy) {
+                || match crate::support::under(&policy, || {
+                    exact_intersection.intersect_region(&replay_clip)
+                }) {
                     Ok(result) => {
                         result.value.contacts().len()
                             + result.value.overlaps().len()
@@ -1411,7 +1427,9 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 } else {
                     "hypercurve_rejected_all_four"
                 },
-                || match exact_intersection.boolean_regions(&replay_clip, &policy) {
+                || match crate::support::under(&policy, || {
+                    exact_intersection.boolean_regions(&replay_clip)
+                }) {
                     Ok(result) => [
                         result.value.union(),
                         result.value.intersection(),
@@ -1445,8 +1463,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     }
 
     if runner.group_enabled(boolean_name) || runner.group_enabled(reentry_name) {
-        let exact_first = hypercurve
-            .offset(distance, &round, &policy)
+        let exact_first = crate::support::under(&policy, || hypercurve.offset(distance, &round))
             .expect("exact algebraic round offset completes")
             .into_value();
         let translation = Similarity2::try_from_real_affine(
@@ -1458,10 +1475,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             (Real::one() / Real::from(40_u8)).expect("exact benchmark translation"),
         )
         .expect("valid benchmark translation");
-        let exact_second = exact_first
-            .transform_similarity(&translation, &policy)
-            .expect("selected round region translation completes")
-            .into_value();
+        let exact_second =
+            crate::support::under(&policy, || exact_first.transform_similarity(&translation))
+                .expect("selected round region translation completes")
+                .into_value();
 
         let mut cavalier_offset = cavalier.parallel_offset(-0.1);
         assert_eq!(cavalier_offset.len(), 1);
@@ -1476,11 +1493,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         ];
 
         if runner.group_enabled(boolean_name) {
-            let intersection_complete = exact_first
-                .intersect_region(&exact_second, &policy)
-                .expect("selected round intersection evaluates")
-                .into_value()
-                .is_complete();
+            let intersection_complete =
+                crate::support::under(&policy, || exact_first.intersect_region(&exact_second))
+                    .expect("selected round intersection evaluates")
+                    .into_value()
+                    .is_complete();
             runner.measure(
                 boolean_name,
                 if intersection_complete {
@@ -1489,10 +1506,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     "hypercurve_rejected_intersection"
                 },
                 || {
-                    let result = exact_first
-                        .intersect_region(&exact_second, &policy)
-                        .expect("selected round intersection evaluates")
-                        .into_value();
+                    let result = crate::support::under(&policy, || {
+                        exact_first.intersect_region(&exact_second)
+                    })
+                    .expect("selected round intersection evaluates")
+                    .into_value();
                     result.contacts().len()
                         + result.overlaps().len()
                         + result.blockers().len()
@@ -1501,10 +1519,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             );
             if intersection_complete {
                 runner.measure(boolean_name, "hypercurve_exact_all_four", || {
-                    let result = exact_first
-                        .boolean_regions(&exact_second, &policy)
-                        .expect("selected round Boolean batch completes")
-                        .into_value();
+                    let result = crate::support::under(&policy, || {
+                        exact_first.boolean_regions(&exact_second)
+                    })
+                    .expect("selected round Boolean batch completes")
+                    .into_value();
                     [
                         result.union(),
                         result.intersection(),
@@ -1534,33 +1553,36 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         if runner.group_enabled(reentry_name) {
             let reentry_distance =
                 (Real::one() / Real::from(20_u8)).expect("exact re-entry distance");
-            let reentry_first = hypercurve
-                .offset(reentry_distance, &round, &policy)
-                .expect("first re-entry round offset completes")
-                .into_value();
-            let reentry_second = reentry_first
-                .transform_similarity(&translation, &policy)
-                .expect("second re-entry round region translation completes")
-                .into_value();
-            let exact_intersection = reentry_first
-                .boolean_regions(&reentry_second, &policy)
-                .expect("first selected round Boolean batch completes")
-                .into_value()
-                .intersection()
-                .clone();
-            let exact_third = reentry_second
-                .transform_similarity(&translation, &policy)
-                .expect("third selected round region translation completes")
-                .into_value();
-            let reentry_complete = exact_intersection
-                .boolean_regions(&exact_third, &policy)
-                .is_ok();
-            let evidence_complete = exact_intersection
-                .intersect_region(&exact_third, &policy)
-                .is_ok_and(|result| result.value.is_complete());
-            let single_intersection_complete = exact_intersection
-                .boolean_region(&exact_third, BooleanOp::Intersection, &policy)
-                .is_ok();
+            let reentry_first =
+                crate::support::under(&policy, || hypercurve.offset(reentry_distance, &round))
+                    .expect("first re-entry round offset completes")
+                    .into_value();
+            let reentry_second =
+                crate::support::under(&policy, || reentry_first.transform_similarity(&translation))
+                    .expect("second re-entry round region translation completes")
+                    .into_value();
+            let exact_intersection =
+                crate::support::under(&policy, || reentry_first.boolean_regions(&reentry_second))
+                    .expect("first selected round Boolean batch completes")
+                    .into_value()
+                    .intersection()
+                    .clone();
+            let exact_third = crate::support::under(&policy, || {
+                reentry_second.transform_similarity(&translation)
+            })
+            .expect("third selected round region translation completes")
+            .into_value();
+            let reentry_complete =
+                crate::support::under(&policy, || exact_intersection.boolean_regions(&exact_third))
+                    .is_ok();
+            let evidence_complete = crate::support::under(&policy, || {
+                exact_intersection.intersect_region(&exact_third)
+            })
+            .is_ok_and(|result| result.value.is_complete());
+            let single_intersection_complete = crate::support::under(&policy, || {
+                exact_intersection.boolean_region(&exact_third, BooleanOp::Intersection)
+            })
+            .is_ok();
             let mut cavalier_reentry_offset = cavalier.parallel_offset(-0.05);
             assert_eq!(cavalier_reentry_offset.len(), 1);
             let cavalier_reentry_first = cavalier_reentry_offset.pop().unwrap();
@@ -1581,7 +1603,9 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 } else {
                     "hypercurve_rejected_evidence"
                 },
-                || match exact_intersection.intersect_region(&exact_third, &policy) {
+                || match crate::support::under(&policy, || {
+                    exact_intersection.intersect_region(&exact_third)
+                }) {
                     Ok(result) => {
                         result.value.contacts().len()
                             + result.value.overlaps().len()
@@ -1599,16 +1623,17 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     "hypercurve_rejected_intersection"
                 },
                 || {
-                    exact_intersection
-                        .boolean_region(&exact_third, BooleanOp::Intersection, &policy)
-                        .map_or(0, |result| {
-                            result
-                                .value
-                                .boundary_loops()
-                                .iter()
-                                .map(|boundary| boundary.len())
-                                .sum()
-                        })
+                    crate::support::under(&policy, || {
+                        exact_intersection.boolean_region(&exact_third, BooleanOp::Intersection)
+                    })
+                    .map_or(0, |result| {
+                        result
+                            .value
+                            .boundary_loops()
+                            .iter()
+                            .map(|boundary| boundary.len())
+                            .sum()
+                    })
                 },
             );
             runner.measure(
@@ -1618,7 +1643,9 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 } else {
                     "hypercurve_rejected_all_four"
                 },
-                || match exact_intersection.boolean_regions(&exact_third, &policy) {
+                || match crate::support::under(&policy, || {
+                    exact_intersection.boolean_regions(&exact_third)
+                }) {
                     Ok(result) => [
                         result.value.union(),
                         result.value.intersection(),
@@ -1668,17 +1695,17 @@ fn benchmark_orthogonal_neck_split(runner: &Runner) {
         [0.0, 4.0],
     ];
     let policy = CurveContext::STRICT;
-    let hypercurve =
-        CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour(&points)], &policy)
-            .expect("hypercurve dumbbell fixture must remain exact")
-            .into_value();
+    let hypercurve = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour(&points)])
+    })
+    .expect("hypercurve dumbbell fixture must remain exact")
+    .into_value();
     let style = OffsetCornerStyle2::Miter {
         limit: Real::from(2_u8),
     };
     let cavalier = cavalier_polyline(&points, None);
     assert_eq!(
-        hypercurve
-            .offset(real(-1.5), &style, &policy)
+        crate::support::under(&policy, || hypercurve.offset(real(-1.5), &style))
             .expect("hypercurve dumbbell erosion must split")
             .into_value()
             .boundary_loops()
@@ -1688,8 +1715,7 @@ fn benchmark_orthogonal_neck_split(runner: &Runner) {
     assert_eq!(cavalier.parallel_offset(1.5).len(), 2);
 
     runner.measure(name, "hypercurve_curve_region", || {
-        hypercurve
-            .offset(real(-1.5), black_box(&style), &policy)
+        crate::support::under(&policy, || hypercurve.offset(real(-1.5), black_box(&style)))
             .expect("hypercurve dumbbell erosion must split")
             .into_value()
             .boundary_loops()
@@ -1799,22 +1825,23 @@ fn benchmark_rational_bezier_self_contact_case(
         vec![0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
     )
     .expect("valid finite self-contact fixture");
-    let raw_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[CurvePath2::try_new(vec![
-            Curve2::from(hypercurve_curve.clone()),
-            Curve2::from(
-                LineSeg2::try_new(
-                    Point2::new(real(controls[3][0]), real(controls[3][1])),
-                    Point2::new(real(controls[0][0]), real(controls[0][1])),
-                )
-                .expect("self-contact fixture closes with a nondegenerate line"),
-            ),
-        ])
-        .expect("self-contact benchmark path is connected")],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )
+    let raw_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[CurvePath2::try_new(vec![
+                Curve2::from(hypercurve_curve.clone()),
+                Curve2::from(
+                    LineSeg2::try_new(
+                        Point2::new(real(controls[3][0]), real(controls[3][1])),
+                        Point2::new(real(controls[0][0]), real(controls[0][1])),
+                    )
+                    .expect("self-contact fixture closes with a nondegenerate line"),
+                ),
+            ])
+            .expect("self-contact benchmark path is connected")],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .expect("self-contact benchmark region is valid")
     .into_value();
 
@@ -1872,8 +1899,7 @@ fn benchmark_rational_bezier_self_contact_case(
         1,
     );
     assert_eq!(
-        raw_region
-            .regularized_region(&policy)
+        crate::support::under(&policy, || raw_region.regularized_region())
             .expect("exact region regularization completes")
             .into_value()
             .boundary_loops()
@@ -1896,8 +1922,7 @@ fn benchmark_rational_bezier_self_contact_case(
         )
     });
     runner.measure(name, "hypercurve_exact_region", || {
-        raw_region
-            .regularized_region(black_box(&policy))
+        crate::support::under(black_box(&policy), || raw_region.regularized_region())
             .expect("exact region regularization replays")
             .into_value()
             .boundary_loops()

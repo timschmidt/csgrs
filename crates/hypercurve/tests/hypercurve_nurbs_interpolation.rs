@@ -1,5 +1,4 @@
 mod support;
-
 use hypercurve::{CurveContext, NurbsCurve2, Point2, RationalBezier2, Real};
 use proptest::prelude::*;
 

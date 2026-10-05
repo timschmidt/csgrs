@@ -1,9 +1,11 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    FiniteProjectionOptions, LineSeg2, Point2, RationalBezier2, Real,
+    CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, FiniteProjectionOptions,
+    LineSeg2, Point2, RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -46,13 +48,7 @@ fn cubic_region() -> CurveRegion2 {
         Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
     ])
     .unwrap();
-    CurveRegion2::try_from_boundary_paths(
-        &[path],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .unwrap()
-    .into_value()
+    CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd).unwrap()
 }
 
 fn measure(name: &str, iterations: u32, mut workload: impl FnMut() -> usize) {
@@ -89,42 +85,36 @@ fn main() {
     measure(
         "curve_region_exact_profile_projection",
         iterations.saturating_mul(5),
-        || match region
-            .project_to_finite_profiles_exact(&options, &policy)
+        || {
+            let profiles = crate::support::under(&policy, || {
+                region.project_to_finite_profiles_exact(&options)
+            })
             .unwrap()
-            .into_value()
-        {
-            Classification::Decided(profiles) => profiles
+            .into_value();
+            profiles
                 .iter()
                 .map(|profile| profile.material().points().len())
-                .sum(),
-            Classification::Uncertain(reason) => {
-                panic!("exact projection benchmark became uncertain: {reason:?}")
-            }
+                .sum()
         },
     );
     measure(
         "curve_region_boundary_paths",
         iterations.saturating_mul(5_000),
-        || match region.boundary_paths(&policy).unwrap().into_value() {
-            Classification::Decided(paths) => paths.iter().map(|path| path.curves().len()).sum(),
-            Classification::Uncertain(reason) => {
-                panic!("materialized boundary benchmark became uncertain: {reason:?}")
-            }
+        || {
+            let paths = crate::support::under(&policy, || region.boundary_paths())
+                .unwrap()
+                .into_value();
+            paths.iter().map(|path| path.curves().len()).sum()
         },
     );
     measure(
         "curve_region_curve_path_projection",
         iterations.saturating_mul(5_000),
-        || match region
-            .project_to_finite_curve_paths(&policy)
-            .unwrap()
-            .into_value()
-        {
-            Classification::Decided(paths) => paths.iter().map(|path| path.curves().len()).sum(),
-            Classification::Uncertain(reason) => {
-                panic!("curve-path projection benchmark became uncertain: {reason:?}")
-            }
+        || {
+            let paths = crate::support::under(&policy, || region.project_to_finite_curve_paths())
+                .unwrap()
+                .into_value();
+            paths.iter().map(|path| path.curves().len()).sum()
         },
     );
 }

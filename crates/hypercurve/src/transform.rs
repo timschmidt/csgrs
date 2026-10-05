@@ -356,7 +356,13 @@ impl CurveRegion2 {
     /// It delegates to the general exact affine implementation while preserving
     /// authoritative roles, fill rules, algebraic endpoint evidence, and any
     /// regenerated native line/arc fast path.
-    pub fn transform_similarity(
+    pub fn transform_similarity(&self, transform: &Similarity2) -> crate::ExactCurveResult<Self> {
+        self.transform_similarity_with_policy(transform, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::transform_similarity`] under an explicit predicate policy.
+    pub(crate) fn transform_similarity_with_policy(
         &self,
         transform: &Similarity2,
         policy: &crate::CurveContext,

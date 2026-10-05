@@ -1,6 +1,7 @@
 //! Stationary contacts retain the tangent of the side that survives a fillet.
 //! Circles and comparison regions below are independently constructed.
 
+mod support;
 mod contacts {
     use hypercurve::{
         Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
@@ -395,9 +396,9 @@ mod contacts {
 }
 mod composition {
     use hypercurve::{
-        BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveCertainty,
-        CurveContext, CurveCornerMode2, CurveFillet2, CurveFilletContact2, CurvePath2,
-        CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, Real,
+        BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCertainty, CurveContext,
+        CurveCornerMode2, CurveFillet2, CurveFilletContact2, CurvePath2, CurveRegion2,
+        CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, Real,
     };
     fn q(n: i64, d: i64) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
@@ -409,12 +410,13 @@ mod composition {
         LineSeg2::try_new(a, b).unwrap().into()
     }
     fn region(path: CurvePath2, policy: &CurveContext) -> CurveRegion2 {
-        let result = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[path],
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            policy,
-        )
+        let result = crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
         .unwrap_or_else(|_| panic!("exact fillet path must enter region topology"));
         assert!(result.certainty == CurveCertainty::Certified);
         result.into_value()
@@ -460,8 +462,7 @@ mod composition {
         (actual, expected)
     }
     fn compare(actual: &CurveRegion2, expected: &CurveRegion2, policy: &CurveContext) {
-        let xor = actual
-            .boolean_region(expected, BooleanOp::Xor, policy)
+        let xor = crate::support::under(policy, || actual.boolean_region(expected, BooleanOp::Xor))
             .unwrap_or_else(|_| panic!("independent exact regions must compare"));
         assert!(xor.certainty == CurveCertainty::Certified);
         assert!(xor.value.is_empty());
@@ -469,20 +470,19 @@ mod composition {
     fn topology(policy: CurveContext) {
         let (actual, expected) = regions(policy);
         compare(&actual, &expected, &policy);
-        let paths = actual.boundary_paths(&policy).unwrap();
+        let paths = crate::support::under(&policy, || actual.boundary_paths()).unwrap();
         assert!(paths.certainty == CurveCertainty::Certified);
-        let Classification::Decided(paths) = paths.value else {
-            panic!("boundary path remains exact")
-        };
+        let paths = paths.value;
         assert_eq!(paths.len(), 1);
         compare(&region(paths[0].clone(), &policy), &expected, &policy);
     }
     fn offset(policy: CurveContext) {
         let (actual, expected) = regions(policy);
         let offset = |region: &CurveRegion2| {
-            let outcome = region
-                .offset(q(1, 20), &OffsetCornerStyle2::Round, &policy)
-                .unwrap_or_else(|_| panic!("offset of stationary fillet must close"));
+            let outcome = crate::support::under(&policy, || {
+                region.offset(q(1, 20), &OffsetCornerStyle2::Round)
+            })
+            .unwrap_or_else(|_| panic!("offset of stationary fillet must close"));
             assert!(outcome.certainty == CurveCertainty::Certified);
             outcome.into_value()
         };

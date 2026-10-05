@@ -10,6 +10,7 @@
 //! complete; a blocked operation is a failure, while a corner request with no
 //! admissible exact solution is a legitimate outcome.
 
+mod support;
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
     CurveFillet2, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
@@ -151,10 +152,8 @@ fn trim_region(x: i16, y: i16, width: i16, height: i16) -> CurveRegion2 {
         &[CurvePath2::try_new(curves).unwrap()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 #[derive(Clone, Debug)]
@@ -192,41 +191,34 @@ fn region_location(
     region: &CurveRegion2,
     point: &CurvePoint2,
 ) -> Result<RegionPointLocation, TestCaseError> {
-    let location = region
-        .classify_point(point, &STRICT)
+    let location = crate::support::under(&STRICT, || region.classify_point(point))
         .map_err(|error| TestCaseError::fail(format!("{label}: classification failed: {error}")))?
         .into_value();
-    match location {
-        Classification::Decided(location) => Ok(location),
-        Classification::Uncertain(reason) => Err(TestCaseError::fail(format!(
-            "{label}: point classification uncertain: {reason:?}"
-        ))),
-    }
+    Ok(location)
 }
 
 fn assert_round_trip(label: &str, region: &CurveRegion2) -> Result<(), TestCaseError> {
     if region.is_empty() {
         return Ok(());
     }
-    let Classification::Decided(paths) =
-        required(label, region.boundary_paths(&STRICT))?.into_value()
-    else {
-        return Err(TestCaseError::fail(format!(
-            "{label}: boundary export uncertain"
-        )));
-    };
+    let paths = required(
+        label,
+        crate::support::under(&STRICT, || region.boundary_paths()),
+    )?
+    .into_value();
     let rebuilt = required(
         label,
-        CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero, &STRICT),
+        crate::support::under(&STRICT, || {
+            CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero)
+        }),
     )?
     .into_value();
     let difference = required(
         label,
-        rebuilt.boolean_region(region, BooleanOp::Xor, &STRICT),
-    )?
-    .into_value();
+        crate::support::under(&STRICT, || rebuilt.boolean_region(region, BooleanOp::Xor)),
+    )?;
     prop_assert!(
-        difference.is_empty(),
+        difference.value.is_empty(),
         "{label}: exported stroke boundary rebuilt a different set"
     );
     Ok(())
@@ -349,13 +341,14 @@ fn run_sequence(seed: &Seed, steps: &[Step]) -> Result<(), TestCaseError> {
                 };
                 let stroke = required(
                     &label,
-                    CurveRegion2::stroke_path(
-                        &path,
-                        fraction(half_width, 4),
-                        &corner,
-                        OffsetCap::Round,
-                        &STRICT,
-                    ),
+                    crate::support::under(&STRICT, || {
+                        CurveRegion2::stroke_path(
+                            &path,
+                            fraction(half_width, 4),
+                            &corner,
+                            OffsetCap::Round,
+                        )
+                    }),
                 )?
                 .into_value();
                 for vertex in path_vertices(&path) {
@@ -896,10 +889,8 @@ fn bevel_stroke_contains_an_algebraic_chamfer_vertex() {
         fraction(2, 4),
         &OffsetCornerStyle2::Bevel,
         OffsetCap::Round,
-        &STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     for vertex in path_vertices(&chamfered) {
         assert_eq!(
             region_location("chamfered stroke", &stroke, &vertex).unwrap(),

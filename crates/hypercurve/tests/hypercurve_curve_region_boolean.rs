@@ -1,22 +1,20 @@
 mod support;
-
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
-    CurveOutcome, CurveParameterRange2, CurvePath2, CurveRegion2, LineSeg2, Point2, Real,
+    CurveParameterRange2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, Real,
     RegionPointLocation, Segment2,
 };
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
-    QuadraticBezier2, RationalBezier2, UncertaintyReason,
+    QuadraticBezier2, RationalBezier2,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
-fn certified<T>(outcome: CurveOutcome<T>) -> T {
-    assert_eq!(outcome.certainty, CurveCertainty::Certified);
-    outcome.value
+fn certified<T>(outcome: impl support::IntoCertified<T>) -> T {
+    outcome.into_certified()
 }
 
 fn decided<T>(value: Classification<T>) -> T {
@@ -106,19 +104,22 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap(),
                     );
                     let region = certified(
-                        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                            &[path],
-                            &[CurveRegionLoopRole::Material],
-                            &[FillRule::NonZero],
-                            &policy,
-                        )
+                        crate::support::under(&policy, || {
+                            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                                &[path],
+                                &[CurveRegionLoopRole::Material],
+                                &[FillRule::NonZero],
+                            )
+                        })
                         .unwrap(),
                     );
-                    let paths = decided(certified(region.boundary_paths(&policy).unwrap()));
+                    let paths = certified(
+                        crate::support::under(&policy, || region.boundary_paths()).unwrap(),
+                    );
                     assert_eq!(paths.len(), 1);
-                    let region_bounds = region.bounds(&policy).unwrap();
+                    let region_bounds = crate::support::under(&policy, || region.bounds()).unwrap();
                     assert_eq!(region_bounds.certainty, CurveCertainty::Certified);
-                    let region_bounds = decided(region_bounds.value);
+                    let region_bounds = region_bounds.value.expect("a nonempty region has bounds");
                     for n in 0..=4 {
                         let t = ratio(n, 4);
                         let sample = Point2::new(-(&t * &t), t);
@@ -138,13 +139,13 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         (0, RegionPointLocation::Outside),
                         (1, RegionPointLocation::Outside),
                     ] {
-                        let location = region
-                            .classify_point(&Point2::new(ratio(n, 8), ratio(1, 2)).into(), &policy)
-                            .unwrap();
+                        let location = crate::support::under(&policy, || {
+                            region.classify_point(&Point2::new(ratio(n, 8), ratio(1, 2)).into())
+                        })
+                        .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(
-                            location.value,
-                            Classification::Decided(expected),
+                            location.value, expected,
                             "shift={shift}, reversed={reversed}, n={n}, source={source:?}"
                         );
                     }
@@ -193,19 +194,18 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
             let path =
                 certified(CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap());
             let region = certified(
-                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                    &[path],
-                    &[CurveRegionLoopRole::Material],
-                    &[FillRule::NonZero],
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        &[path],
+                        &[CurveRegionLoopRole::Material],
+                        &[FillRule::NonZero],
+                    )
+                })
                 .unwrap(),
             );
-            let bounds = region.bounds(&policy).unwrap();
+            let bounds = crate::support::under(&policy, || region.bounds()).unwrap();
             assert_eq!(bounds.certainty, CurveCertainty::Certified);
-            let Classification::Decided(bounds) = bounds.value else {
-                panic!("finite region bounds");
-            };
+            let bounds = bounds.value.expect("a nonempty region has bounds");
             for sample in [&a, &b, &middle, &inside] {
                 assert_eq!(
                     bounds.contains_point(sample, &policy),
@@ -217,11 +217,12 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 (inside, RegionPointLocation::Inside),
                 (point(1, 1), RegionPointLocation::Outside),
             ] {
-                let location = region
-                    .classify_point(&sample.clone().into(), &policy)
-                    .unwrap();
+                let location = crate::support::under(&policy, || {
+                    region.classify_point(&sample.clone().into())
+                })
+                .unwrap();
                 assert_eq!(location.certainty, CurveCertainty::Certified);
-                assert_eq!(location.value, Classification::Decided(expected));
+                assert_eq!(location.value, expected);
             }
         }
     }
@@ -255,12 +256,13 @@ fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
 }
 
 fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        std::slice::from_ref(path),
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            std::slice::from_ref(path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
     .unwrap()
     .into_value()
 }
@@ -271,20 +273,19 @@ fn boolean_paths(
     operation: BooleanOp,
     policy: &CurveContext,
 ) -> CurveRegion2 {
-    path_region(first, policy)
-        .boolean_region(&path_region(second, policy), operation, policy)
-        .unwrap()
-        .into_value()
+    crate::support::under(policy, || {
+        path_region(first, policy).boolean_region(&path_region(second, policy), operation)
+    })
+    .unwrap()
+    .into_value()
 }
 
 fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(
         &[square_path(min_x, min_y, max_x, max_y)],
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 fn replay_carrier(
@@ -368,30 +369,32 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
                 } else {
                     second_path
                 };
-                let first = CurveRegion2::try_from_boundary_paths(
-                    &[first_path],
-                    hypercurve::FillRule::EvenOdd,
-                    &policy,
-                )
+                let first = crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths(
+                        &[first_path],
+                        hypercurve::FillRule::EvenOdd,
+                    )
+                })
                 .unwrap()
                 .into_value();
-                let second = CurveRegion2::try_from_boundary_paths(
-                    &[second_path],
-                    hypercurve::FillRule::EvenOdd,
-                    &policy,
-                )
+                let second = crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths(
+                        &[second_path],
+                        hypercurve::FillRule::EvenOdd,
+                    )
+                })
                 .unwrap()
                 .into_value();
                 for (first, second) in [(&first, &second), (&second, &first)] {
-                    let report = first.intersect_region(second, &policy).unwrap();
+                    let report =
+                        crate::support::under(&policy, || first.intersect_region(second)).unwrap();
                     assert_eq!(report.certainty, CurveCertainty::Certified);
                     assert!(report.value.is_complete());
                     assert!(!report.value.contacts().is_empty());
                     assert_eq!(!report.value.overlaps().is_empty(), shared_edge);
                     assert_report_replays(&report.value, &policy);
                 }
-                let contact = first
-                    .intersect_region(&second, &policy)
+                let contact = crate::support::under(&policy, || first.intersect_region(&second))
                     .unwrap()
                     .value
                     .contacts()[0]
@@ -427,34 +430,36 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
 fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let paths = [square_path(0, 0, 4, 4), square_path(2, 0, 6, 4)];
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &paths,
-            &[CurveRegionLoopRole::Material; 2],
-            &[FillRule::NonZero; 2],
-            &policy,
-        )
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &paths,
+                &[CurveRegionLoopRole::Material; 2],
+                &[FillRule::NonZero; 2],
+            )
+        })
         .unwrap()
         .value;
         let probe = square(1, 1, 5, 3);
         // The probe crosses both authored interior seams, but lies wholly
         // inside the represented union. Neither seam belongs to its boundary.
         for (first, second) in [(&region, &probe), (&probe, &region)] {
-            let report = first.intersect_region(second, &policy).unwrap();
+            let report = crate::support::under(&policy, || first.intersect_region(second)).unwrap();
             assert_eq!(report.certainty, CurveCertainty::Certified);
             assert!(report.value.is_complete());
             assert!(report.value.contacts().is_empty());
             assert!(report.value.overlaps().is_empty());
         }
-        let canceled = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[paths[0].clone(), paths[0].clone()],
-            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
-            &[FillRule::NonZero; 2],
-            &policy,
-        )
+        let canceled = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[paths[0].clone(), paths[0].clone()],
+                &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+                &[FillRule::NonZero; 2],
+            )
+        })
         .unwrap()
         .value;
         for (first, second) in [(&canceled, &probe), (&probe, &canceled)] {
-            let report = first.intersect_region(second, &policy).unwrap();
+            let report = crate::support::under(&policy, || first.intersect_region(second)).unwrap();
             assert_eq!(report.certainty, CurveCertainty::Certified);
             assert!(report.value.is_complete());
             assert!(report.value.contacts().is_empty());
@@ -525,34 +530,40 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
             let cap_path =
                 certified(CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap());
             let cap = certified(
-                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                    &[cap_path],
-                    &[CurveRegionLoopRole::Material],
-                    &[FillRule::NonZero],
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        &[cap_path],
+                        &[CurveRegionLoopRole::Material],
+                        &[FillRule::NonZero],
+                    )
+                })
                 .unwrap(),
             );
-            let region = CurveRegion2::try_from_boundary_paths(
-                std::slice::from_ref(&path),
-                hypercurve::FillRule::EvenOdd,
-                &policy,
-            )
+            let region = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&path),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
             .unwrap()
             .value;
             // These operands have not been explicitly regularized by the caller.
             for (first, second) in [(&region, &cap), (&cap, &region)] {
-                let report = first.intersect_region(second, &policy).unwrap();
+                let report =
+                    crate::support::under(&policy, || first.intersect_region(second)).unwrap();
                 assert_eq!(report.certainty, CurveCertainty::Certified);
                 assert!(report.value.is_complete(), "{:?}", report.value.blockers());
                 assert!(!report.value.contacts().is_empty());
                 assert_report_replays(&report.value, &policy);
-                let result = first
-                    .boolean_region(second, BooleanOp::Intersection, &policy)
-                    .unwrap();
+                let result = crate::support::under(&policy, || {
+                    first.boolean_region(second, BooleanOp::Intersection)
+                })
+                .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert!(!result.value.is_empty());
-                let reentry = result.value.intersect_region(first, &policy).unwrap();
+                let reentry =
+                    crate::support::under(&policy, || result.value.intersect_region(first))
+                        .unwrap();
                 assert_eq!(reentry.certainty, CurveCertainty::Certified);
                 assert!(
                     reentry.value.is_complete(),
@@ -575,9 +586,7 @@ fn integer_circle(center_x: i64, radius: i64) -> CurveRegion2 {
         BulgeVertex2::new(point(center_x + radius, 0), Real::one()),
     ])
     .unwrap();
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
-        .unwrap()
-        .into_value()
+    CurveRegion2::try_from_native_material_contours(vec![contour]).unwrap()
 }
 
 fn circle_with_policy(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
@@ -592,9 +601,11 @@ fn circle_with_policy(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
         ),
     ])
     .unwrap();
-    CurveRegion2::try_from_native_material_contours(vec![contour], policy)
-        .unwrap()
-        .into_value()
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![contour])
+    })
+    .unwrap()
+    .into_value()
 }
 
 fn capsule(center_x: i64) -> CurveRegion2 {
@@ -609,9 +620,7 @@ fn capsule_at(center_x: i64, center_y: i64) -> CurveRegion2 {
         BulgeVertex2::new(point(center_x - 3, center_y + 2), Real::one()),
     ])
     .unwrap();
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
-        .unwrap()
-        .into_value()
+    CurveRegion2::try_from_native_material_contours(vec![contour]).unwrap()
 }
 
 fn symbolic_rectangle(width: Real) -> CurveRegion2 {
@@ -635,10 +644,8 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(
         &[CurvePath2::try_new(curves).unwrap()],
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
@@ -651,12 +658,13 @@ fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion
         Curve2::from(LineSeg2::try_new(point(2, 4), point(-2, 4)).unwrap()),
     ])
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .unwrap()
     .into_value()
 }
@@ -679,12 +687,13 @@ fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> Curve
         Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
     ])
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .unwrap()
     .into_value()
 }
@@ -709,34 +718,34 @@ fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegio
             curves.push(Curve2::from(general));
         }
     }
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[CurvePath2::try_new_with_policy(curves, policy)
-            .unwrap()
-            .into_value()],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[CurvePath2::try_new_with_policy(curves, policy)
+                .unwrap()
+                .into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .unwrap()
     .into_value()
 }
 
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
     assert_eq!(
-        region
-            .classify_point(&point.clone().into(), &CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
-        Classification::Decided(expected)
+        crate::support::under(&CurveContext::STRICT, || region
+            .classify_point(&point.clone().into()))
+        .unwrap()
+        .into_value(),
+        expected
     );
 }
 
 fn native_segment_counts(region: &CurveRegion2, policy: &CurveContext) -> (usize, usize) {
-    let native = region
-        .native_contours_fast_path(policy)
+    let native = crate::support::under(policy, || region.native_contours_fast_path())
         .expect("native publication must not fail")
         .into_value();
-    let Classification::Decided(native) = native else {
+    let Some(native) = native else {
         panic!("certified line/circular Boolean output must publish native contours");
     };
     native
@@ -754,13 +763,11 @@ fn native_segment_counts(region: &CurveRegion2, policy: &CurveContext) -> (usize
 fn boolean_batch_short_circuits_empty_and_identical_operands() {
     let empty = CurveRegion2::empty();
     let policy = CurveContext::STRICT;
-    let region = square(0, 0, 4, 4)
-        .regularized_region(&policy)
+    let region = crate::support::under(&policy, || square(0, 0, 4, 4).regularized_region())
         .unwrap()
         .into_value();
 
-    let empty_first = empty
-        .boolean_regions(&region, &policy)
+    let empty_first = crate::support::under(&policy, || empty.boolean_regions(&region))
         .unwrap()
         .into_value();
     assert_eq!(empty_first.union(), &region);
@@ -770,8 +777,7 @@ fn boolean_batch_short_circuits_empty_and_identical_operands() {
     assert_eq!(empty_first.candidate_carrier_pair_count(), 0);
     assert_eq!(empty_first.topology_fragment_count(), 0);
 
-    let identical = region
-        .boolean_regions(&region, &policy)
+    let identical = crate::support::under(&policy, || region.boolean_regions(&region))
         .unwrap()
         .into_value();
     assert_eq!(identical.union(), &region);
@@ -787,7 +793,7 @@ fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
     let policy = CurveContext::STRICT;
-    let contacts = first.intersect_region(&second, &policy).unwrap();
+    let contacts = crate::support::under(&policy, || first.intersect_region(&second)).unwrap();
     assert_eq!(contacts.certainty, CurveCertainty::Certified);
     let contacts = contacts.value;
     assert!(contacts.is_complete());
@@ -803,7 +809,7 @@ fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
             && contact.second().loop_index() == 0
     }));
 
-    let results = first.boolean_regions(&second, &policy).unwrap();
+    let results = crate::support::under(&policy, || first.boolean_regions(&second)).unwrap();
     assert_eq!(results.certainty, CurveCertainty::Certified);
     let results = results.value;
     assert_eq!(results.authored_carrier_pair_count(), 16);
@@ -854,14 +860,15 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
     let third = square(4, 0, 8, 4);
     let policy = CurveContext::STRICT;
 
-    let first_union = first
-        .boolean_region(&second, BooleanOp::Union, &policy)
-        .unwrap()
-        .value;
-    let chained = first_union
-        .boolean_region(&third, BooleanOp::Union, &policy)
-        .unwrap()
-        .value;
+    let first_union =
+        crate::support::under(&policy, || first.boolean_region(&second, BooleanOp::Union))
+            .unwrap()
+            .value;
+    let chained = crate::support::under(&policy, || {
+        first_union.boolean_region(&third, BooleanOp::Union)
+    })
+    .unwrap()
+    .value;
 
     for x in [1, 3, 5, 7] {
         assert_location(&chained, point(x, 2), RegionPointLocation::Inside);
@@ -872,12 +879,15 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
 #[test]
 fn affine_line_batch_preserves_material_and_hole_roles() {
     let policy = CurveContext::STRICT;
-    let frame = square(0, 0, 10, 10)
-        .boolean_region(&square(3, 3, 7, 7), BooleanOp::Difference, &policy)
+    let frame = crate::support::under(&policy, || {
+        square(0, 0, 10, 10).boolean_region(&square(3, 3, 7, 7), BooleanOp::Difference)
+    })
+    .unwrap()
+    .into_value();
+    let inset = square(1, 1, 9, 9);
+    let results = crate::support::under(&policy, || frame.boolean_regions(&inset))
         .unwrap()
         .into_value();
-    let inset = square(1, 1, 9, 9);
-    let results = frame.boolean_regions(&inset, &policy).unwrap().into_value();
     let intersection = results.intersection();
 
     assert_eq!(intersection.boundary_loops().len(), 2);
@@ -896,7 +906,8 @@ fn regularized_affine_contacts_discard_lower_dimensional_intersections() {
             ("point", &point_touching, point(3, 3), 2_usize),
             ("edge", &edge_touching, point(3, 1), 1_usize),
         ] {
-            let evidence = first.intersect_region(second, &policy).unwrap();
+            let evidence =
+                crate::support::under(&policy, || first.intersect_region(second)).unwrap();
             assert_eq!(evidence.certainty, CurveCertainty::Certified, "{label}");
             assert!(evidence.value.is_complete(), "{label}");
             assert!(!evidence.value.contacts().is_empty(), "{label}");
@@ -906,7 +917,7 @@ fn regularized_affine_contacts_discard_lower_dimensional_intersections() {
                 assert!(!evidence.value.overlaps().is_empty(), "{label}");
             }
 
-            let results = first.boolean_regions(second, &policy).unwrap();
+            let results = crate::support::under(&policy, || first.boolean_regions(second)).unwrap();
             assert_eq!(results.certainty, CurveCertainty::Certified, "{label}");
             let results = results.into_value();
             assert!(results.intersection().is_empty(), "{label}");
@@ -938,11 +949,11 @@ fn regularized_affine_contacts_discard_lower_dimensional_intersections() {
             for (operation, result) in [("union", results.union()), ("xor", results.xor())] {
                 for sample in [point(1, 1), second_interior.clone()] {
                     assert_eq!(
-                        result
-                            .classify_point(&sample.clone().into(), &policy)
-                            .unwrap()
-                            .into_value(),
-                        Classification::Decided(RegionPointLocation::Inside),
+                        crate::support::under(&policy, || result
+                            .classify_point(&sample.clone().into()))
+                        .unwrap()
+                        .into_value(),
+                        RegionPointLocation::Inside,
                         "{label} {operation} result at {sample:?}"
                     );
                 }
@@ -957,12 +968,14 @@ fn regularized_conic_tangencies_preserve_regions_but_not_point_intersections() {
     let internal = (integer_circle(0, 3), integer_circle(2, 1));
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let external_evidence = external.0.intersect_region(&external.1, &policy).unwrap();
+        let external_evidence =
+            crate::support::under(&policy, || external.0.intersect_region(&external.1)).unwrap();
         assert_eq!(external_evidence.certainty, CurveCertainty::Certified);
         assert!(external_evidence.value.is_complete());
         assert!(!external_evidence.value.contacts().is_empty());
         assert!(external_evidence.value.overlaps().is_empty());
-        let external_results = external.0.boolean_regions(&external.1, &policy).unwrap();
+        let external_results =
+            crate::support::under(&policy, || external.0.boolean_regions(&external.1)).unwrap();
         assert_eq!(external_results.certainty, CurveCertainty::Certified);
         let external_results = external_results.into_value();
         assert!(external_results.intersection().is_empty());
@@ -974,12 +987,14 @@ fn regularized_conic_tangencies_preserve_regions_but_not_point_intersections() {
             assert_location(result, point(4, 0), RegionPointLocation::Inside);
         }
 
-        let internal_evidence = internal.0.intersect_region(&internal.1, &policy).unwrap();
+        let internal_evidence =
+            crate::support::under(&policy, || internal.0.intersect_region(&internal.1)).unwrap();
         assert_eq!(internal_evidence.certainty, CurveCertainty::Certified);
         assert!(internal_evidence.value.is_complete());
         assert!(!internal_evidence.value.contacts().is_empty());
         assert!(internal_evidence.value.overlaps().is_empty());
-        let internal_results = internal.0.boolean_regions(&internal.1, &policy).unwrap();
+        let internal_results =
+            crate::support::under(&policy, || internal.0.boolean_regions(&internal.1)).unwrap();
         assert_eq!(internal_results.certainty, CurveCertainty::Certified);
         let internal_results = internal_results.into_value();
         assert_eq!(internal_results.union().boundary_loops().len(), 1);
@@ -1009,7 +1024,8 @@ fn regularized_partial_shared_edges_resolve_exact_side_ownership() {
     let boundary_contained = (square(0, 0, 4, 4), square(1, 0, 3, 2));
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let attached_results = attached.0.boolean_regions(&attached.1, &policy).unwrap();
+        let attached_results =
+            crate::support::under(&policy, || attached.0.boolean_regions(&attached.1)).unwrap();
         assert_eq!(attached_results.certainty, CurveCertainty::Certified);
         let attached_results = attached_results.into_value();
         assert!(attached_results.intersection().is_empty());
@@ -1022,10 +1038,10 @@ fn regularized_partial_shared_edges_resolve_exact_side_ownership() {
             assert_location(result, point(4, 2), RegionPointLocation::Inside);
         }
 
-        let contained_results = boundary_contained
-            .0
-            .boolean_regions(&boundary_contained.1, &policy)
-            .unwrap();
+        let contained_results = crate::support::under(&policy, || {
+            boundary_contained.0.boolean_regions(&boundary_contained.1)
+        })
+        .unwrap();
         assert_eq!(contained_results.certainty, CurveCertainty::Certified);
         let contained_results = contained_results.into_value();
         assert_eq!(contained_results.union().boundary_loops().len(), 1);
@@ -1054,7 +1070,7 @@ fn circular_conic_batch_reuses_one_authoritative_topology() {
     let first = circle(Real::zero());
     let second = circle(Real::one());
     let policy = CurveContext::STRICT;
-    let batch = first.boolean_regions(&second, &policy).unwrap();
+    let batch = crate::support::under(&policy, || first.boolean_regions(&second)).unwrap();
     assert_eq!(batch.certainty, CurveCertainty::Certified);
     let batch = batch.into_value();
     assert_eq!(batch.authored_carrier_pair_count(), 16);
@@ -1076,8 +1092,7 @@ fn circular_conic_batch_reuses_one_authoritative_topology() {
         batch.xor(),
     ];
     let independent = operations.map(|operation| {
-        first
-            .boolean_region(&second, operation, &policy)
+        crate::support::under(&policy, || first.boolean_region(&second, operation))
             .unwrap()
             .into_value()
     });
@@ -1089,14 +1104,14 @@ fn circular_conic_batch_reuses_one_authoritative_topology() {
                     (Real::from(y_numerator) / Real::from(2_i8)).unwrap(),
                 );
                 assert_eq!(
-                    shared
-                        .classify_point(&sample.clone().into(), &policy)
-                        .unwrap()
-                        .into_value(),
-                    independent
-                        .classify_point(&sample.clone().into(), &policy)
-                        .unwrap()
-                        .into_value(),
+                    crate::support::under(&policy, || shared
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .into_value(),
+                    crate::support::under(&policy, || independent
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .into_value(),
                     "shared and native circle results differ at ({x_numerator}/2, {y_numerator}/2)",
                 );
             }
@@ -1109,7 +1124,7 @@ fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
     let first = capsule(0);
     let second = capsule(2);
     let policy = CurveContext::STRICT;
-    let batch = first.boolean_regions(&second, &policy).unwrap();
+    let batch = crate::support::under(&policy, || first.boolean_regions(&second)).unwrap();
     assert_eq!(batch.certainty, CurveCertainty::Certified);
     let batch = batch.into_value();
     assert!(batch.authored_carrier_pair_count() > 16);
@@ -1125,8 +1140,7 @@ fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
         BooleanOp::Xor,
     ]
     .map(|operation| {
-        first
-            .boolean_region(&second, operation, &policy)
+        crate::support::under(&policy, || first.boolean_region(&second, operation))
             .unwrap()
             .into_value()
     });
@@ -1146,14 +1160,14 @@ fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
                     (Real::from(y_numerator) / Real::from(2_i8)).unwrap(),
                 );
                 assert_eq!(
-                    shared
-                        .classify_point(&sample.clone().into(), &policy)
-                        .unwrap()
-                        .into_value(),
-                    independent
-                        .classify_point(&sample.clone().into(), &policy)
-                        .unwrap()
-                        .into_value(),
+                    crate::support::under(&policy, || shared
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .into_value(),
+                    crate::support::under(&policy, || independent
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .into_value(),
                     "shared and native capsule results differ at ({x_numerator}/2, {y_numerator}/2)",
                 );
             }
@@ -1166,8 +1180,7 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = circle_with_policy(Real::zero(), &policy);
         let second = circle_with_policy(Real::one(), &policy);
-        let batch = first
-            .boolean_regions(&second, &policy)
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
             .expect("overlapping circles must complete under either policy")
             .into_value();
         for region in [
@@ -1183,8 +1196,7 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
 
         let first = capsule(0);
         let second = capsule(2);
-        let batch = first
-            .boolean_regions(&second, &policy)
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
             .expect("overlapping capsules must complete under either policy")
             .into_value();
         for region in [
@@ -1204,16 +1216,14 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
 fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
     let region = symbolic_quadratic_cap(Real::from(-4_i8), &CurveContext::STRICT);
     let union = region
-        .boolean_region(&region, BooleanOp::Union, &CurveContext::STRICT)
-        .expect("identical exact conic regions have an exact union")
-        .into_value();
-    assert!(matches!(
+        .boolean_region(&region, BooleanOp::Union)
+        .expect("identical exact conic regions have an exact union");
+    assert!(
         union
-            .native_contours_fast_path(&CurveContext::STRICT)
+            .native_contours_fast_path()
             .expect("native classification is evidence, not an API failure")
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    ));
+            .is_none()
+    );
 }
 
 #[test]
@@ -1221,8 +1231,7 @@ fn elevated_circular_boolean_outputs_publish_native_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = circle_with_policy(Real::zero(), &policy);
         let second = symbolic_elevated_circle(Real::one(), &policy);
-        let batch = first
-            .boolean_regions(&second, &policy)
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
             .expect("a native and degree-elevated circle must share exact circle topology")
             .into_value();
         for region in [
@@ -1249,19 +1258,18 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
     ];
     let policy = CurveContext::STRICT;
     for (case_index, (first, second)) in cases.into_iter().enumerate() {
-        let batch = first
-            .boolean_regions(&second, &policy)
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
             .unwrap()
             .into_value();
         if matches!(case_index, 2 | 3) {
             assert!(batch.intersection().is_empty());
             assert!(matches!(
-                batch
+                crate::support::under(&policy, || batch
                     .intersection()
-                    .filled_side_is_left(&policy)
+                    .filled_side_is_left())
                     .unwrap()
                     .into_value(),
-                Classification::Decided(sides) if sides.is_empty()
+                sides if sides.is_empty()
             ));
         }
         let independent = [
@@ -1271,8 +1279,7 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
             BooleanOp::Xor,
         ]
         .map(|operation| {
-            first
-                .boolean_region(&second, operation, &policy)
+            crate::support::under(&policy, || first.boolean_region(&second, operation))
                 .unwrap()
                 .into_value()
         });
@@ -1290,14 +1297,14 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
                 for y in -4_i64..=4 {
                     let sample = point(x, y);
                     assert_eq!(
-                        shared
-                            .classify_point(&sample.clone().into(), &policy)
-                            .unwrap()
-                            .into_value(),
-                        independent
-                            .classify_point(&sample.clone().into(), &policy)
-                            .unwrap()
-                            .into_value(),
+                        crate::support::under(&policy, || shared
+                            .classify_point(&sample.clone().into()))
+                        .unwrap()
+                        .into_value(),
+                        crate::support::under(&policy, || independent
+                            .classify_point(&sample.clone().into()))
+                        .unwrap()
+                        .into_value(),
                         "mixed case {case_index}, operation {operation_index} differs at ({x}, {y})",
                     );
                 }
@@ -1313,22 +1320,23 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
     let right_half = square(0, -3, 3, 3);
     // Completed boundaries must retain endpoint identity when a later
     // contact reaches the same point through a different scalar expression.
-    let disk = disk
-        .regularized_region(&CurveContext::APPROXIMATE_512)
+    let disk = crate::support::under(&CurveContext::APPROXIMATE_512, || disk.regularized_region())
         .unwrap()
         .value;
-    let right_half = right_half
-        .regularized_region(&CurveContext::APPROXIMATE_512)
-        .unwrap()
-        .value;
+    let right_half = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        right_half.regularized_region()
+    })
+    .unwrap()
+    .value;
 
     assert!(matches!(
-        disk.boolean_regions(&right_half, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || disk.boolean_regions(&right_half)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = disk
-        .boolean_regions(&right_half, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal should decide mixed line/conic contacts");
+    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        disk.boolean_regions(&right_half)
+    })
+    .expect("the authorized terminal should decide mixed line/conic contacts");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
 
     for (region, sample, expected) in [
@@ -1350,11 +1358,11 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
         (batch.value.xor(), point(1, 0), RegionPointLocation::Outside),
     ] {
         assert_eq!(
-            region
-                .classify_point(&sample.clone().into(), &CurveContext::APPROXIMATE_512)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(expected),
+            crate::support::under(&CurveContext::APPROXIMATE_512, || region
+                .classify_point(&sample.clone().into()))
+            .unwrap()
+            .into_value(),
+            expected,
         );
     }
 }
@@ -1366,12 +1374,13 @@ fn circular_conic_batch_obeys_the_approximate_512_terminal() {
     let second = circle_with_policy(second_center, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
-        first.boolean_regions(&second, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = first
-        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal should decide equal circle supports");
+    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        first.boolean_regions(&second)
+    })
+    .expect("the authorized terminal should decide equal circle supports");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert!(batch.value.difference().is_empty());
     assert!(batch.value.xor().is_empty());
@@ -1389,12 +1398,14 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     let second = symbolic_rectangle(second_x);
 
     assert!(matches!(
-        first.boolean_region(&second, BooleanOp::Union, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || first
+            .boolean_region(&second, BooleanOp::Union)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let outcome = first
-        .boolean_region(&second, BooleanOp::Union, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized 512-bit terminal should complete equal symbolic boundaries");
+    let outcome = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        first.boolean_region(&second, BooleanOp::Union)
+    })
+    .expect("the authorized 512-bit terminal should complete equal symbolic boundaries");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_location(
         &outcome.value,
@@ -1403,12 +1414,13 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     );
 
     assert!(matches!(
-        first.boolean_regions(&second, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = first
-        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
-        .expect("the shared arrangement must obey the authorized 512-bit terminal");
+    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        first.boolean_regions(&second)
+    })
+    .expect("the shared arrangement must obey the authorized 512-bit terminal");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert_location(
         batch.value.union(),
@@ -1432,9 +1444,10 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
     let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512).unwrap();
     assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
     let authored = path_region(&path.value, &CurveContext::APPROXIMATE_512);
-    let normalized = authored
-        .regularized_region(&CurveContext::APPROXIMATE_512)
-        .unwrap();
+    let normalized = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        authored.regularized_region()
+    })
+    .unwrap();
     assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
     let has_certified_gap = normalized.value.boundary_loops().iter().any(|boundary| {
         let fragments = boundary.curves();
@@ -1464,47 +1477,46 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         "the independently checked output must retain an actual gap"
     );
     assert_eq!(
-        normalized
+        crate::support::under(&CurveContext::APPROXIMATE_512, || normalized
             .value
-            .regularized_region(&CurveContext::APPROXIMATE_512)
-            .unwrap()
-            .certainty,
+            .regularized_region())
+        .unwrap()
+        .certainty,
         CurveCertainty::Approximate512Consumed,
         "replaying retained topology must preserve its decision requirement",
     );
     assert!(
-        normalized
+        crate::support::under(&CurveContext::STRICT, || normalized
             .value
-            .regularized_region(&CurveContext::STRICT)
-            .is_err(),
+            .regularized_region())
+        .is_err(),
         "an approximate topology marker cannot certify an exactly disconnected boundary",
     );
-    let reflected = normalized
-        .value
-        .transform_affine(
+    let reflected = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        normalized.value.transform_affine(
             &Real::from(-1),
             &Real::zero(),
             &Real::zero(),
             &Real::one(),
             &Real::zero(),
             &Real::zero(),
-            &CurveContext::APPROXIMATE_512,
         )
-        .unwrap();
+    })
+    .unwrap();
     assert_eq!(reflected.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(
-        reflected
+        crate::support::under(&CurveContext::APPROXIMATE_512, || reflected
             .value
-            .regularized_region(&CurveContext::APPROXIMATE_512)
-            .unwrap()
-            .certainty,
+            .regularized_region())
+        .unwrap()
+        .certainty,
         CurveCertainty::Approximate512Consumed,
     );
     assert!(
-        reflected
+        crate::support::under(&CurveContext::STRICT, || reflected
             .value
-            .regularized_region(&CurveContext::STRICT)
-            .is_err()
+            .regularized_region())
+        .is_err()
     );
 }
 
@@ -1521,12 +1533,13 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
     ])
     .unwrap();
     let construct = |policy: &CurveContext| {
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            std::slice::from_ref(&path),
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::EvenOdd],
-            policy,
-        )
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                std::slice::from_ref(&path),
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::EvenOdd],
+            )
+        })
     };
     for _ in 0..2 {
         let normalized = construct(&CurveContext::APPROXIMATE_512).unwrap();
@@ -1546,39 +1559,37 @@ fn regularized_topology_retains_only_the_policy_actually_consumed() {
         square(0, 0, 2, 2),
         symbolic_quadratic_cap(Real::from(2), &CurveContext::STRICT),
     ] {
-        let normalized = authored
-            .regularized_region(&CurveContext::APPROXIMATE_512)
-            .unwrap();
+        let normalized = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+            authored.regularized_region()
+        })
+        .unwrap();
         assert_eq!(normalized.certainty, CurveCertainty::Certified);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert_eq!(
-                normalized
-                    .value
-                    .regularized_region(&policy)
+                crate::support::under(&policy, || normalized.value.regularized_region())
                     .unwrap()
                     .certainty,
                 CurveCertainty::Certified
             );
         }
-        let reflected = normalized
-            .value
-            .transform_affine(
+        let reflected = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+            normalized.value.transform_affine(
                 &Real::from(-1),
                 &Real::zero(),
                 &Real::zero(),
                 &Real::one(),
                 &Real::zero(),
                 &Real::zero(),
-                &CurveContext::APPROXIMATE_512,
             )
-            .unwrap();
+        })
+        .unwrap();
         assert_eq!(reflected.certainty, CurveCertainty::Certified);
         assert_eq!(
-            reflected
+            crate::support::under(&CurveContext::STRICT, || reflected
                 .value
-                .regularized_region(&CurveContext::STRICT)
-                .unwrap()
-                .certainty,
+                .regularized_region())
+            .unwrap()
+            .certainty,
             CurveCertainty::Certified
         );
     }
@@ -1611,12 +1622,13 @@ fn general_curve_batch_obeys_the_approximate_512_terminal() {
     let second = symbolic_quadratic_cap(-second_height, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
-        first.boolean_regions(&second, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = first
-        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal should decide equivalent general curves");
+    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        first.boolean_regions(&second)
+    })
+    .expect("the authorized terminal should decide equivalent general curves");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(batch.value.union().boundary_loops().len(), 1);
     assert_eq!(batch.value.intersection().boundary_loops().len(), 1);
@@ -1646,12 +1658,13 @@ fn line_general_batch_obeys_the_approximate_512_terminal() {
     let second = symbolic_general_line_region(symbolic_zero, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
-        first.boolean_regions(&second, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = first
-        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal should decide the general line image");
+    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        first.boolean_regions(&second)
+    })
+    .expect("the authorized terminal should decide the general line image");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert_location(
         batch.value.union(),
@@ -1674,12 +1687,13 @@ fn conic_general_batch_obeys_the_approximate_512_terminal() {
     let second = symbolic_elevated_circle(second_center, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
-        first.boolean_regions(&second, &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || first.boolean_regions(&second)),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let batch = first
-        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal should decide the conic/general shared image");
+    let batch = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        first.boolean_regions(&second)
+    })
+    .expect("the authorized terminal should decide the conic/general shared image");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert_location(
         batch.value.union(),
@@ -1701,23 +1715,22 @@ fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
     let region = symbolic_rectangle(boundary_x);
     let point = Point2::new(query_x, (Real::one() / Real::from(2_u8)).unwrap());
 
-    let strict = region
-        .classify_point(&point.clone().into(), &CurveContext::STRICT)
-        .expect("strict point classification must preserve uncertainty as data");
-    assert_eq!(strict.certainty, CurveCertainty::Certified);
-    assert!(matches!(strict.value, Classification::Uncertain(_)));
+    // STRICT cannot certify the symbolic boundary and must say so rather
+    // than guess a location.
+    assert!(matches!(
+        region.classify_point(&point.clone().into()),
+        Err(ExactCurveError::Blocked(_))
+    ));
 
-    let approximate = region
-        .classify_point(&point.clone().into(), &CurveContext::APPROXIMATE_512)
-        .expect("the authorized 512-bit terminal should identify the symbolic boundary");
+    let approximate = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        region.classify_point(&point.clone().into())
+    })
+    .expect("the authorized 512-bit terminal should identify the symbolic boundary");
     assert_eq!(
         approximate.certainty,
         CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(
-        approximate.value,
-        Classification::Decided(RegionPointLocation::Boundary)
-    );
+    assert_eq!(approximate.value, RegionPointLocation::Boundary);
 }
 
 #[test]
@@ -1726,23 +1739,23 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     let distance = support::terminally_unresolved_zero();
 
     assert!(matches!(
-        source.offset(distance.clone(), &sharp_offset(), &CurveContext::STRICT),
+        crate::support::under(&CurveContext::STRICT, || source
+            .offset(distance.clone(), &sharp_offset())),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
-    let outcome = source
-        .offset(distance, &sharp_offset(), &CurveContext::APPROXIMATE_512)
-        .expect("the authorized 512-bit terminal should decide symbolic zero offset");
+    let outcome = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        source.offset(distance, &sharp_offset())
+    })
+    .expect("the authorized 512-bit terminal should decide symbolic zero offset");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(outcome.value.boundary_loops().len(), 1);
     assert_location(&outcome.value, point(2, 2), RegionPointLocation::Inside);
     assert_location(&outcome.value, point(-1, 2), RegionPointLocation::Outside);
     assert_eq!(
-        outcome
-            .value
-            .filled_area(&CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || outcome.value.filled_area())
             .unwrap()
             .value,
-        Classification::Decided(Some(Real::from(16))),
+        Some(Real::from(16)),
     );
 }
 
@@ -1751,25 +1764,23 @@ fn curved_region_boolean_respects_nested_hole_roles() {
     let ring = CurveRegion2::try_from_boundary_paths(
         &[square_path(0, 0, 10, 10), square_path(2, 2, 8, 8)],
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let island = square(4, 4, 6, 6);
     let policy = CurveContext::STRICT;
 
-    let union = ring
-        .boolean_region(&island, BooleanOp::Union, &policy)
+    let union = crate::support::under(&policy, || ring.boolean_region(&island, BooleanOp::Union))
         .unwrap()
         .value;
     assert_location(&union, point(1, 1), RegionPointLocation::Inside);
     assert_location(&union, point(3, 3), RegionPointLocation::Outside);
     assert_location(&union, point(5, 5), RegionPointLocation::Inside);
 
-    let intersection = ring
-        .boolean_region(&island, BooleanOp::Intersection, &policy)
-        .unwrap()
-        .value;
+    let intersection = crate::support::under(&policy, || {
+        ring.boolean_region(&island, BooleanOp::Intersection)
+    })
+    .unwrap()
+    .value;
     assert!(intersection.is_empty());
 }
 
@@ -1790,16 +1801,19 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     assert!(algebraic.has_algebraic_fragments());
 
     let disjoint = square(10, 0, 12, 2);
-    let chained = algebraic
-        .boolean_region(&disjoint, BooleanOp::Union, &policy)
-        .unwrap()
-        .value;
+    let chained = crate::support::under(&policy, || {
+        algebraic.boolean_region(&disjoint, BooleanOp::Union)
+    })
+    .unwrap()
+    .value;
     assert!(chained.has_algebraic_fragments());
     assert_location(&chained, point(0, 1), RegionPointLocation::Inside);
     assert_location(&chained, point(11, 1), RegionPointLocation::Inside);
 
     let crossing = square(-2, -1, 2, 1);
-    let results = algebraic.boolean_regions(&crossing, &policy).unwrap().value;
+    let results = crate::support::under(&policy, || algebraic.boolean_regions(&crossing))
+        .unwrap()
+        .value;
     let crossed = results.union();
     assert!(results.topology_fragment_count() > 0);
     assert!(
@@ -1811,18 +1825,18 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     assert_location(crossed, point(0, 1), RegionPointLocation::Inside);
 
     assert_eq!(
-        algebraic
-            .boolean_region(&algebraic, BooleanOp::Union, &policy)
-            .unwrap()
-            .value,
+        crate::support::under(&policy, || algebraic
+            .boolean_region(&algebraic, BooleanOp::Union))
+        .unwrap()
+        .value,
         algebraic
     );
     assert!(
-        algebraic
-            .boolean_region(&algebraic, BooleanOp::Xor, &policy)
-            .unwrap()
-            .value
-            .is_empty()
+        crate::support::under(&policy, || algebraic
+            .boolean_region(&algebraic, BooleanOp::Xor))
+        .unwrap()
+        .value
+        .is_empty()
     );
 }
 
@@ -1852,7 +1866,9 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
     );
     assert!(narrow.has_algebraic_fragments());
     assert!(wide.has_algebraic_fragments());
-    let results = narrow.boolean_regions(&wide, &policy).unwrap().value;
+    let results = crate::support::under(&policy, || narrow.boolean_regions(&wide))
+        .unwrap()
+        .value;
     let union = results.union();
     assert_location(union, point(0, 1), RegionPointLocation::Inside);
     assert_location(union, point(0, 3), RegionPointLocation::Boundary);
@@ -1929,7 +1945,9 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
         );
         assert!(wide.has_algebraic_fragments());
 
-        let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+        let results = crate::support::under(&policy, || narrow.boolean_regions(&wide))
+            .unwrap()
+            .into_value();
         assert_location(results.union(), point(0, 3), RegionPointLocation::Boundary);
         assert_location(
             results.intersection(),
@@ -2001,7 +2019,9 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
             );
             assert!(wide.has_algebraic_fragments());
 
-            let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+            let results = crate::support::under(&policy, || narrow.boolean_regions(&wide))
+                .unwrap()
+                .into_value();
             assert_location(results.union(), point(0, 3), RegionPointLocation::Boundary);
             assert_location(
                 results.intersection(),
@@ -2091,55 +2111,57 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         );
         assert!(narrow.has_algebraic_fragments());
 
-        let evidence = narrow.intersect_region(&wide, &policy).unwrap();
+        let evidence = crate::support::under(&policy, || narrow.intersect_region(&wide)).unwrap();
         assert!(evidence.value.is_complete());
         assert_eq!(evidence.value.contacts().len(), 2);
         assert_eq!(evidence.value.overlaps().len(), 1);
         assert_report_replays(&evidence.value, &policy);
 
-        let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+        let results = crate::support::under(&policy, || narrow.boolean_regions(&wide))
+            .unwrap()
+            .into_value();
         assert!(results.difference().is_empty());
         for sample in [&narrow_sample, &wide_only_sample] {
             assert_eq!(
-                results
+                crate::support::under(&policy, || results
                     .union()
-                    .classify_point(&sample.clone().into(), &policy)
-                    .unwrap()
-                    .into_value(),
-                Classification::Decided(RegionPointLocation::Inside)
+                    .classify_point(&sample.clone().into()))
+                .unwrap()
+                .into_value(),
+                RegionPointLocation::Inside
             );
         }
         assert_eq!(
-            results
+            crate::support::under(&policy, || results
                 .intersection()
-                .classify_point(&narrow_sample.clone().into(), &policy)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Inside)
+                .classify_point(&narrow_sample.clone().into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Inside
         );
         assert_eq!(
-            results
+            crate::support::under(&policy, || results
                 .intersection()
-                .classify_point(&wide_only_sample.clone().into(), &policy)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Outside)
+                .classify_point(&wide_only_sample.clone().into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Outside
         );
         assert_eq!(
-            results
+            crate::support::under(&policy, || results
                 .xor()
-                .classify_point(&narrow_sample.clone().into(), &policy)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Outside)
+                .classify_point(&narrow_sample.clone().into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Outside
         );
         assert_eq!(
-            results
+            crate::support::under(&policy, || results
                 .xor()
-                .classify_point(&wide_only_sample.clone().into(), &policy)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(RegionPointLocation::Inside)
+                .classify_point(&wide_only_sample.clone().into()))
+            .unwrap()
+            .into_value(),
+            RegionPointLocation::Inside
         );
     }
 }
@@ -2229,7 +2251,9 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
             let wide = boolean_paths(wide_path, &wide_clip, BooleanOp::Intersection, &policy);
             assert!(!wide.has_algebraic_fragments());
 
-            let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+            let results = crate::support::under(&policy, || narrow.boolean_regions(&wide))
+                .unwrap()
+                .into_value();
             assert_eq!(
                 results
                     .union()
@@ -2304,9 +2328,11 @@ fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
             let (head, tail) = curve.split_at(cut.into(), &policy).unwrap().into_value();
             let closing = LineSeg2::try_new(end.clone(), start.clone()).unwrap();
             let path = CurvePath2::try_new(vec![head, tail, closing.into()]).unwrap();
-            let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd, &policy)
-                .unwrap_or_else(|error| panic!("square={square}: {error:?}"))
-                .into_value();
+            let region = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd)
+            })
+            .unwrap_or_else(|error| panic!("square={square}: {error:?}"))
+            .into_value();
             assert!(region.is_empty(), "square={square}: {region:?}");
         }
     }
@@ -2362,9 +2388,11 @@ fn overlapping_diagonal_track_pieces_regularize_to_one_loop() {
             .unwrap()
         })
         .collect::<Vec<_>>();
-    let region = CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero, &policy)
-        .unwrap()
-        .into_value();
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero)
+    })
+    .unwrap()
+    .into_value();
     assert_eq!(region.boundary_loops().len(), 1);
     for (sample, expected) in [
         ([209.25, 66.51], RegionPointLocation::Inside),
@@ -2372,11 +2400,10 @@ fn overlapping_diagonal_track_pieces_regularize_to_one_loop() {
         ([209.4, 66.7], RegionPointLocation::Outside),
     ] {
         assert_eq!(
-            region
-                .classify_point(&point(sample).into(), &policy)
+            crate::support::under(&policy, || region.classify_point(&point(sample).into()))
                 .unwrap()
                 .value,
-            Classification::Decided(expected),
+            expected,
             "{sample:?}"
         );
     }

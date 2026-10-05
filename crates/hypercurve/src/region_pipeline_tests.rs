@@ -110,7 +110,7 @@ fn region_from_traversal(
             )
         })
         .collect::<Result<Vec<_>, _>>()?;
-    CurveRegion2::try_from_boundary_paths(&paths, FillRule::EvenOdd, policy)
+    CurveRegion2::try_from_boundary_paths_with_policy(&paths, FillRule::EvenOdd, policy)
 }
 
 fn loop_envelope(boundary: &CurveRegionBoundaryLoop2) -> BezierRetainedCurveEnvelope2 {
@@ -246,7 +246,7 @@ fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() 
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
     assert_eq!(
-        decided(region.signed_area(&policy()).unwrap()),
+        decided(region.signed_area_with_policy(&policy()).unwrap()),
         Some(q(32, 3))
     );
 }
@@ -380,7 +380,7 @@ fn conic_region_boundary_materializes_with_exact_area() {
     let sqrt_three = Real::from(3_i8).sqrt().unwrap();
     let expected = ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap()
         - (Real::from(8_i8) / Real::from(3_i8)).unwrap();
-    let area = decided(region.signed_area(&policy()).unwrap())
+    let area = decided(region.signed_area_with_policy(&policy()).unwrap())
         .expect("same-sign conic region area is supported");
     assert_real_close(&area, &expected, 1.0e-12);
 }
@@ -418,7 +418,7 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 4);
     assert_eq!(
-        decided(retained.signed_area(&policy()).unwrap()),
+        decided(retained.signed_area_with_policy(&policy()).unwrap()),
         Some(r(8))
     );
     for (point, location) in [
@@ -429,7 +429,7 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
         assert_eq!(
             decided(
                 retained
-                    .classify_point(&point.clone().into(), &policy())
+                    .classify_point_with_policy(&point.clone().into(), &policy())
                     .unwrap()
             ),
             location
@@ -441,7 +441,7 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
 fn retained_exact_line_images_assign_nested_material_and_hole() {
     let outer = quadratic_polygon_path(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
     let same_orientation_inner = quadratic_polygon_path(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
-    let retained = CurveRegion2::try_from_boundary_paths(
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
         &[outer, same_orientation_inner],
         crate::FillRule::EvenOdd,
         &policy(),
@@ -449,13 +449,16 @@ fn retained_exact_line_images_assign_nested_material_and_hole() {
     .unwrap()
     .into_value();
 
-    let roles = decided(retained.loop_roles(&policy()).unwrap());
+    let roles = decided(retained.loop_roles_with_policy(&policy()).unwrap());
     assert_eq!(
         roles,
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(
-        retained.filled_area(&policy()).unwrap().into_value(),
+        retained
+            .filled_area_with_policy(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(Some(r(32)))
     );
 }
@@ -489,20 +492,26 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
         ]),
     ];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let outcome =
-            CurveRegion2::try_from_boundary_paths(&paths, crate::FillRule::EvenOdd, &policy)
-                .unwrap();
+        let outcome = CurveRegion2::try_from_boundary_paths_with_policy(
+            &paths,
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let retained = outcome.into_value();
         assert_eq!(
-            decided(retained.loop_roles(&policy).unwrap()),
+            decided(retained.loop_roles_with_policy(&policy).unwrap()),
             vec![CurveRegionLoopRole::Material; 2]
         );
         assert_eq!(
-            decided(retained.filled_side_is_left(&policy).unwrap()),
+            decided(retained.filled_side_is_left_with_policy(&policy).unwrap()),
             &[true; 2]
         );
-        assert_eq!(decided(retained.filled_area(&policy).unwrap()), Some(r(20)));
+        assert_eq!(
+            decided(retained.filled_area_with_policy(&policy).unwrap()),
+            Some(r(20))
+        );
         for (point, expected) in [
             (p(1, 1), RegionPointLocation::Inside),
             (p(5, 1), RegionPointLocation::Inside),
@@ -515,14 +524,17 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
             assert_eq!(
                 decided(
                     retained
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                 ),
                 expected
             );
         }
         assert_eq!(
-            retained.regularized_region(&policy).unwrap().into_value(),
+            retained
+                .regularized_region_with_policy(&policy)
+                .unwrap()
+                .into_value(),
             retained
         );
     }
@@ -614,7 +626,7 @@ fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
     )
     .unwrap()
     .into_value();
-    let retained = CurveRegion2::try_from_boundary_paths(
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
         &[outer, same_orientation_inner],
         crate::FillRule::EvenOdd,
         &policy(),
@@ -623,49 +635,56 @@ fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
     .into_value();
     let clone = retained.clone();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let roles = decided(retained.loop_roles(&policy).unwrap());
+        let roles = decided(retained.loop_roles_with_policy(&policy).unwrap());
         assert_eq!(
             roles,
             vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
         );
-        let native = decided(retained.native_contours_fast_path(&policy).unwrap());
+        let native = decided(
+            retained
+                .native_contours_fast_path_with_policy(&policy)
+                .unwrap(),
+        );
         assert_eq!(native.material_contours().len(), 1);
         assert_eq!(native.hole_contours().len(), 1);
         assert_eq!(
-            retained.filled_area(&policy).unwrap().into_value(),
+            retained
+                .filled_area_with_policy(&policy)
+                .unwrap()
+                .into_value(),
             Classification::Decided(Some(r(32)))
         );
         assert_eq!(
             retained
-                .classify_point(&p(1, 1).into(), &policy)
+                .classify_point_with_policy(&p(1, 1).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
             retained
-                .classify_point(&p(3, 3).into(), &policy)
+                .classify_point_with_policy(&p(3, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
             retained
-                .classify_point(&p(2, 3).into(), &policy)
+                .classify_point_with_policy(&p(2, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Boundary)
         );
         assert_eq!(
             retained
-                .classify_point(&p(7, 3).into(), &policy)
+                .classify_point_with_policy(&p(7, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
             clone
-                .classify_point(&p(3, 3).into(), &policy)
+                .classify_point_with_policy(&p(3, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
@@ -690,43 +709,47 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     let path = CurvePath2::try_new_with_policy(vec![first, second, lower], &policy)
         .unwrap()
         .into_value();
-    let region = CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy)
-        .unwrap()
-        .into_value();
+    let region = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy,
+    )
+    .unwrap()
+    .into_value();
     let clone = region.clone();
 
     assert!(region.has_algebraic_fragments());
     assert_eq!(
         region
-            .classify_point(&p(0, 0).into(), &policy)
+            .classify_point_with_policy(&p(0, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
         region
-            .classify_point(&p(0, 2).into(), &policy)
+            .classify_point_with_policy(&p(0, 2).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
         region
-            .classify_point(&p(2, 0).into(), &policy)
+            .classify_point_with_policy(&p(2, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
         region
-            .classify_point(&p(0, 1).into(), &policy)
+            .classify_point_with_policy(&p(0, 1).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
         clone
-            .classify_point(&p(0, 0).into(), &policy)
+            .classify_point_with_policy(&p(0, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
@@ -742,20 +765,30 @@ fn retained_certified_nonlinear_line_image_uses_authoritative_roles() {
         QuadraticBezier2::new(p(0, 4), p(0, 2), p(0, 0)).into(),
     ])
     .unwrap();
-    let retained =
-        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
-            .unwrap()
-            .into_value();
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
     assert_eq!(
-        decided(retained.loop_roles(&policy()).unwrap()),
+        decided(retained.loop_roles_with_policy(&policy()).unwrap()),
         vec![CurveRegionLoopRole::Material]
     );
-    let native = decided(retained.native_contours_fast_path(&policy()).unwrap());
+    let native = decided(
+        retained
+            .native_contours_fast_path_with_policy(&policy())
+            .unwrap(),
+    );
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
     assert_eq!(
-        retained.filled_area(&policy()).unwrap().into_value(),
+        retained
+            .filled_area_with_policy(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(Some(r(16)))
     );
 }
@@ -782,7 +815,7 @@ fn quadratic_lens_path(left_x: i32, right_x: i32, height: i32) -> CurvePath2 {
 fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
     let material = quadratic_lens_path(0, 8, 4);
     let same_orientation_inner = quadratic_lens_path(2, 6, 1);
-    let retained = CurveRegion2::try_from_boundary_paths(
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
         &[material, same_orientation_inner],
         crate::FillRule::EvenOdd,
         &policy(),
@@ -791,10 +824,10 @@ fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
     .into_value();
 
     assert_eq!(
-        decided(retained.loop_roles(&policy()).unwrap()),
+        decided(retained.loop_roles_with_policy(&policy()).unwrap()),
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
-    let profiles = decided(retained.boundary_profiles(&policy()).unwrap());
+    let profiles = decided(retained.boundary_profiles_with_policy(&policy()).unwrap());
     assert_eq!(profiles.len(), 1);
     assert_eq!(profiles[0].material_loop_index(), 0);
     assert_eq!(profiles[0].hole_loop_indices(), &[1]);
@@ -822,7 +855,7 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
         .expect("regularized arrangement region")
         .into_value();
 
-    let envelope = decided(retained.bounds(&policy()).unwrap().into_value());
+    let envelope = decided(retained.bounds_with_policy(&policy()).unwrap().into_value());
     assert_eq!(envelope.min(), &p(0, -2));
     assert_eq!(envelope.max(), &p(4, 2));
 }
@@ -955,7 +988,7 @@ proptest! {
                 .into_value();
 
         prop_assert_eq!(
-            decided(region.signed_area(&policy()).unwrap()),
+            decided(region.signed_area_with_policy(&policy()).unwrap()),
             Some(q(8 * height, 3))
         );
     }
@@ -1030,9 +1063,12 @@ fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let region = outcome.into_value();
             assert_eq!(region.len(), loop_count);
-            assert_eq!(decided(region.signed_area(&policy).unwrap()), Some(area));
+            assert_eq!(
+                decided(region.signed_area_with_policy(&policy).unwrap()),
+                Some(area)
+            );
             assert!(
-                decided(region.filled_side_is_left(&policy).unwrap())
+                decided(region.filled_side_is_left_with_policy(&policy).unwrap())
                     .iter()
                     .all(|left| *left)
             );
@@ -1040,17 +1076,17 @@ fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
                 assert_eq!(
                     decided(
                         region
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap()
                     ),
                     expected
                 );
             }
-            let replay = region.regularized_region(&policy).unwrap();
+            let replay = region.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert_eq!(replay.into_value(), region);
             let difference = region
-                .boolean_region(&region, crate::BooleanOp::Difference, &policy)
+                .boolean_region_with_policy(&region, crate::BooleanOp::Difference, &policy)
                 .unwrap();
             assert_eq!(difference.certainty, CurveCertainty::Certified);
             assert!(difference.into_value().is_empty());
@@ -1095,13 +1131,13 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
             assert_eq!(
                 decided(
                     region
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                 ),
                 expected
             );
         }
-        let paths = decided(region.boundary_paths(&policy).unwrap());
+        let paths = decided(region.boundary_paths_with_policy(&policy).unwrap());
         let reversed = paths
             .iter()
             .map(|path| {
@@ -1110,17 +1146,20 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
                 outcome.into_value()
             })
             .collect::<Vec<_>>();
-        let reconstructed =
-            CurveRegion2::try_from_boundary_paths(&reversed, crate::FillRule::EvenOdd, &policy)
-                .unwrap();
+        let reconstructed = CurveRegion2::try_from_boundary_paths_with_policy(
+            &reversed,
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap();
         assert_eq!(reconstructed.certainty, CurveCertainty::Certified);
         let xor = region
-            .boolean_region(&reconstructed.into_value(), crate::BooleanOp::Xor, &policy)
+            .boolean_region_with_policy(&reconstructed.into_value(), crate::BooleanOp::Xor, &policy)
             .unwrap();
         assert_eq!(xor.certainty, CurveCertainty::Certified);
         assert!(xor.into_value().is_empty());
         let translated = region
-            .transform_affine(
+            .transform_affine_with_policy(
                 &Real::one(),
                 &Real::zero(),
                 &Real::zero(),
@@ -1132,15 +1171,15 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
             .unwrap()
             .into_value();
         let union = region
-            .boolean_region(&translated, crate::BooleanOp::Union, &policy)
+            .boolean_region_with_policy(&translated, crate::BooleanOp::Union, &policy)
             .unwrap()
             .into_value();
-        let components = union.material_components(&policy).unwrap();
+        let components = union.material_components_with_policy(&policy).unwrap();
         assert_eq!(components.certainty, CurveCertainty::Certified);
         assert_eq!(components.value.len(), 2);
         for component in components.into_value() {
             assert!(component.has_algebraic_fragments());
-            let replay = component.regularized_region(&policy).unwrap();
+            let replay = component.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert_eq!(replay.into_value(), component);
         }
@@ -1170,11 +1209,14 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             square(2, 14),
             square(20, 24),
         ];
-        let region =
-            CurveRegion2::try_from_boundary_paths(&paths, crate::FillRule::EvenOdd, &policy)
-                .unwrap()
-                .into_value();
-        let outcome = region.material_components(&policy).unwrap();
+        let region = CurveRegion2::try_from_boundary_paths_with_policy(
+            &paths,
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let outcome = region.material_components_with_policy(&policy).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let components = outcome.into_value();
         assert_eq!(components.len(), 3);
@@ -1189,7 +1231,7 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
                 .filter(|component| {
                     decided(
                         component
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap(),
                     ) == RegionPointLocation::Inside
                 })
@@ -1198,10 +1240,10 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             let component = owners[0];
             assert_eq!(component.len(), expected_loops);
             assert_eq!(
-                decided(component.signed_area(&policy).unwrap()),
+                decided(component.signed_area_with_policy(&policy).unwrap()),
                 Some(expected_area)
             );
-            let roles = decided(component.loop_roles(&policy).unwrap());
+            let roles = decided(component.loop_roles_with_policy(&policy).unwrap());
             assert_eq!(roles[0], CurveRegionLoopRole::Material);
             assert!(
                 roles[1..]
@@ -1209,12 +1251,15 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
                     .all(|role| *role == CurveRegionLoopRole::Hole)
             );
             assert!(
-                decided(component.filled_side_is_left(&policy).unwrap())
+                decided(component.filled_side_is_left_with_policy(&policy).unwrap())
                     .iter()
                     .all(|left| *left)
             );
             assert_eq!(
-                component.material_components(&policy).unwrap().into_value(),
+                component
+                    .material_components_with_policy(&policy)
+                    .unwrap()
+                    .into_value(),
                 vec![component.clone()]
             );
         }
@@ -1223,7 +1268,7 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
                 assert_eq!(
                     decided(
                         component
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap()
                     ),
                     RegionPointLocation::Outside
@@ -1235,34 +1280,34 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             for other in &components[i + 1..] {
                 assert!(
                     component
-                        .boolean_region(other, crate::BooleanOp::Intersection, &policy)
+                        .boolean_region_with_policy(other, crate::BooleanOp::Intersection, &policy)
                         .unwrap()
                         .into_value()
                         .is_empty()
                 );
             }
             recomposed = recomposed
-                .boolean_region(component, crate::BooleanOp::Union, &policy)
+                .boolean_region_with_policy(component, crate::BooleanOp::Union, &policy)
                 .unwrap()
                 .into_value();
         }
         assert!(
             region
-                .boolean_region(&recomposed, crate::BooleanOp::Xor, &policy)
+                .boolean_region_with_policy(&recomposed, crate::BooleanOp::Xor, &policy)
                 .unwrap()
                 .into_value()
                 .is_empty()
         );
         assert!(
             CurveRegion2::empty()
-                .material_components(&policy)
+                .material_components_with_policy(&policy)
                 .unwrap()
                 .into_value()
                 .is_empty()
         );
 
         // Admission removes the inner filled seam before component extraction.
-        let authored = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        let authored = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
             &[
                 quadratic_polygon_path(&[p(0, 0), p(8, 0), p(8, 8), p(0, 8)]),
                 quadratic_polygon_path(&[p(2, 2), p(6, 2), p(6, 6), p(2, 6)]),
@@ -1275,16 +1320,23 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
         .into_value();
         assert_eq!(authored.len(), 1);
         assert_eq!(
-            decided(authored.classify_point(&p(2, 4).into(), &policy).unwrap()),
+            decided(
+                authored
+                    .classify_point_with_policy(&p(2, 4).into(), &policy)
+                    .unwrap()
+            ),
             RegionPointLocation::Inside
         );
-        let components = authored.material_components(&policy).unwrap().into_value();
+        let components = authored
+            .material_components_with_policy(&policy)
+            .unwrap()
+            .into_value();
         assert_eq!(components.len(), 1);
         assert_eq!(components[0].len(), 1);
         assert_eq!(
             decided(
                 components[0]
-                    .classify_point(&p(2, 4).into(), &policy)
+                    .classify_point_with_policy(&p(2, 4).into(), &policy)
                     .unwrap()
             ),
             RegionPointLocation::Inside

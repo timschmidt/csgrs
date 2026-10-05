@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -221,10 +223,12 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurvePath2::try_new(vec![LineSeg2::try_new(p(-2, 1), p(8, 1))?.into()])
         .expect("benchmark path must connect exactly");
     let policy = CurveContext::STRICT;
-    let region = CurveRegion2::try_from_native_material_contours(
-        vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)],
-        &policy,
-    )
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![
+            rectangle(0, 0, 2, 2),
+            rectangle(4, 0, 6, 2),
+        ])
+    })
     .expect("benchmark region must promote exactly")
     .into_value();
     let started = Instant::now();
@@ -371,26 +375,27 @@ fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
         Segment2::Line(line(2, 3, -1, 3)),
         Segment2::Line(line(-1, 3, -1, 0)),
     ])?;
-    let region = CurveRegion2::try_from_native_material_contours(vec![rounded_contour], &policy)
-        .expect("line-arc benchmark region must promote")
-        .into_value();
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rounded_contour])
+    })
+    .expect("line-arc benchmark region must promote")
+    .into_value();
 
     if corner_lane_enabled("curve_region_line_arc_design_chamfer") {
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = black_box(&region)
-                .chamfer_loop_vertex_by_setbacks(
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                black_box(&region).chamfer_loop_vertex_by_setbacks(
                     0,
                     1,
                     q(1, 2),
                     s(1),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("line-arc region design chamfer must remain exact")
-                .into_value()
-            else {
+            })
+            .expect("line-arc region design chamfer must remain exact")
+            .into_value() else {
                 panic!("line-arc region design chamfer must remain unique");
             };
             loops += black_box(chamfered).boundary_loops().len();
@@ -478,25 +483,26 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         Segment2::Line(line(1, 1, -2, 1)),
         Segment2::Line(line(-2, 1, -2, 0)),
     ])?;
-    let line_arc_region =
-        CurveRegion2::try_from_native_material_contours(vec![line_arc_contour], &policy)
-            .expect("line-arc fillet benchmark region must promote")
-            .into_value();
+    let line_arc_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![line_arc_contour])
+    })
+    .expect("line-arc fillet benchmark region must promote")
+    .into_value();
 
     if corner_lane_enabled("curve_region_line_arc_design_fillet") {
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(&line_arc_region)
-                .fillet_loop_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(&line_arc_region).fillet_loop_vertex(
                     0,
                     1,
                     &hypercurve::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("line-arc region design fillet must remain exact")
-                .into_value();
+            })
+            .expect("line-arc region design fillet must remain exact")
+            .into_value();
             let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
@@ -515,25 +521,26 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         Segment2::Line(line(1, 1, -1, 1)),
         Segment2::Line(line(-1, 1, -1, -1)),
     ])?;
-    let arc_arc_region =
-        CurveRegion2::try_from_native_material_contours(vec![arc_arc_contour], &policy)
-            .expect("arc-arc fillet benchmark region must promote")
-            .into_value();
+    let arc_arc_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![arc_arc_contour])
+    })
+    .expect("arc-arc fillet benchmark region must promote")
+    .into_value();
 
     if corner_lane_enabled("curve_region_arc_arc_design_fillet") {
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(&arc_arc_region)
-                .fillet_loop_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(&arc_arc_region).fillet_loop_vertex(
                     0,
                     1,
                     &hypercurve::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("arc-arc region design fillet must remain exact")
-                .into_value();
+            })
+            .expect("arc-arc region design fillet must remain exact")
+            .into_value();
             let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
@@ -788,12 +795,13 @@ fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::
     );
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
     let path = CurvePath2::try_new(vec![source_curve, chord, closure.into()])?;
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )?
+    Ok(crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })?
     .into_value())
 }
 
@@ -819,24 +827,26 @@ fn independent_field_algebraic_chord_regions()
         "independent-field chord must remain exact",
     );
     let chord_path = CurvePath2::try_new(vec![chord, y_curve, x_curve])?;
-    let chord_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[chord_path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )?
+    let chord_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[chord_path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })?
     .into_value();
     let source_path = CurvePath2::try_new(vec![
         QuadraticBezier2::from_line_segment(line(0, 0, 1, 1)).into(),
         QuadraticBezier2::from_line_segment(line(1, 1, -1, 1)).into(),
         QuadraticBezier2::from_line_segment(line(-1, 1, 0, 0)).into(),
     ])?;
-    let source_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[source_path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )?
+    let source_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[source_path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })?
     .into_value();
     Ok([chord_region, source_region])
 }
@@ -899,12 +909,13 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
         chord(second_apex, second_start)?,
     ])?;
     let region = |path| {
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[path],
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
         .map(|outcome| outcome.into_value())
     };
     Ok([region(first_path)?, region(second_path)?])
@@ -939,12 +950,13 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
         ],
         &policy,
     )?;
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[path.into_value()],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )?
+    Ok(crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path.into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })?
     .into_value())
 }
 
@@ -988,12 +1000,13 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
             "axis-aligned dumbbell chord must remain exact",
         ));
     }
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[CurvePath2::try_new(fragments)?],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )?
+    Ok(crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[CurvePath2::try_new(fragments)?],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })?
     .into_value())
 }
 
@@ -1015,9 +1028,8 @@ fn orthogonal_dumbbell_offset_region() -> CurveRegion2 {
     .map(|(x, y)| vertex(x, y, 0));
     let contour = Contour2::from_bulge_vertices(&vertices)
         .expect("native dumbbell benchmark contour must remain exact");
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+    CurveRegion2::try_from_native_material_contours(vec![contour])
         .expect("native dumbbell benchmark region must remain exact")
-        .into_value()
 }
 
 fn bench_represented_bezier_region_corner_lanes(
@@ -1032,17 +1044,17 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut candidates = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(region)
-                .chamfer_loop_vertex_by_setbacks(
+            let solutions = crate::support::under(&policy, || {
+                black_box(region).chamfer_loop_vertex_by_setbacks(
                     0,
                     1,
                     s(1),
                     s(1),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("algebraic Bezier region chamfer must retain exact carriers")
-                .into_value();
+            })
+            .expect("algebraic Bezier region chamfer must retain exact carriers")
+            .into_value();
             candidates += black_box(solutions).candidate_count();
         }
         assert_ne!(candidates, 0);
@@ -1056,17 +1068,17 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut candidates = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(two_bezier_region)
-                .chamfer_loop_vertex_by_setbacks(
+            let solutions = crate::support::under(&policy, || {
+                black_box(two_bezier_region).chamfer_loop_vertex_by_setbacks(
                     0,
                     1,
                     s(1),
                     s(1),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("two algebraic Bezier cuts must retain one exact chord")
-                .into_value();
+            })
+            .expect("two algebraic Bezier cuts must retain one exact chord")
+            .into_value();
             candidates += black_box(solutions).candidate_count();
         }
         assert_ne!(candidates, 0);
@@ -1077,20 +1089,20 @@ fn bench_represented_bezier_region_corner_lanes(
         );
     }
     if corner_lane_enabled("curve_region_line_quadratic_algebraic_regularize") {
-        let CurveCornerSolutions2::Unique(chamfered) = region
-            .chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
-            .expect("algebraic Bezier region chamfer must retain exact carriers")
-            .into_value()
-        else {
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            region.chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly)
+        })
+        .expect("algebraic Bezier region chamfer must retain exact carriers")
+        .into_value() else {
             panic!("algebraic Bezier region chamfer must be unique");
         };
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let regularized = black_box(&chamfered)
-                .regularized_region(&policy)
-                .expect("one-field algebraic chamfer regularization must remain exact")
-                .into_value();
+            let regularized =
+                crate::support::under(&policy, || black_box(&chamfered).regularized_region())
+                    .expect("one-field algebraic chamfer regularization must remain exact")
+                    .into_value();
             fragments += black_box(&regularized).boundary_loops()[0].curves().len();
         }
         assert_ne!(fragments, 0);
@@ -1106,10 +1118,10 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let regularized = black_box(&retained)
-                .regularized_region(&policy)
-                .expect("source-related algebraic chord regularization must remain exact")
-                .into_value();
+            let regularized =
+                crate::support::under(&policy, || black_box(&retained).regularized_region())
+                    .expect("source-related algebraic chord regularization must remain exact")
+                    .into_value();
             fragments += black_box(&regularized)
                 .boundary_loops()
                 .iter()
@@ -1129,10 +1141,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut topology_fragments = 0_usize;
         for _ in 0..iterations {
-            let results = black_box(&chord_region)
-                .boolean_regions(black_box(&source_region), &policy)
-                .expect("independent-field algebraic chord Boolean must remain exact")
-                .into_value();
+            let results = crate::support::under(&policy, || {
+                black_box(&chord_region).boolean_regions(black_box(&source_region))
+            })
+            .expect("independent-field algebraic chord Boolean must remain exact")
+            .into_value();
             topology_fragments += black_box(&results).topology_fragment_count();
         }
         assert_ne!(topology_fragments, 0);
@@ -1168,10 +1181,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut topology_fragments = 0_usize;
         for _ in 0..iterations {
-            let results = black_box(&first)
-                .boolean_regions(black_box(&second), &policy)
-                .expect("strict-interior algebraic chord Boolean must remain exact")
-                .into_value();
+            let results = crate::support::under(&policy, || {
+                black_box(&first).boolean_regions(black_box(&second))
+            })
+            .expect("strict-interior algebraic chord Boolean must remain exact")
+            .into_value();
             topology_fragments += black_box(&results).topology_fragment_count();
         }
         assert_ne!(topology_fragments, 0);
@@ -1190,10 +1204,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let offset = black_box(&source)
-                .offset(q(1, 10), black_box(&style), &policy)
-                .expect("axis-aligned algebraic offset must remain exact")
-                .into_value();
+            let offset = crate::support::under(&policy, || {
+                black_box(&source).offset(q(1, 10), black_box(&style))
+            })
+            .expect("axis-aligned algebraic offset must remain exact")
+            .into_value();
             fragments += black_box(&offset).boundary_loops()[0].len();
         }
         assert_ne!(fragments, 0);
@@ -1210,10 +1225,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let offset = black_box(&source)
-                .offset(q(1, 10), black_box(&style), &policy)
-                .expect("axis-aligned algebraic round offset must remain exact")
-                .into_value();
+            let offset = crate::support::under(&policy, || {
+                black_box(&source).offset(q(1, 10), black_box(&style))
+            })
+            .expect("axis-aligned algebraic round offset must remain exact")
+            .into_value();
             fragments += black_box(&offset).boundary_loops()[0].len();
         }
         assert_ne!(fragments, 0);
@@ -1229,17 +1245,17 @@ fn bench_represented_bezier_region_corner_lanes(
         let style = OffsetCornerStyle2::Miter {
             limit: Real::from(2_u8),
         };
-        let expanded = source
-            .offset(q(1, 10), &style, &policy)
+        let expanded = crate::support::under(&policy, || source.offset(q(1, 10), &style))
             .expect("first algebraic benchmark offset must remain exact")
             .into_value();
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let offset = black_box(&expanded)
-                .offset(q(1, 10), black_box(&style), &policy)
-                .expect("repeated algebraic offset must remain exact")
-                .into_value();
+            let offset = crate::support::under(&policy, || {
+                black_box(&expanded).offset(q(1, 10), black_box(&style))
+            })
+            .expect("repeated algebraic offset must remain exact")
+            .into_value();
             fragments += black_box(&offset).boundary_loops()[0].len();
         }
         assert_ne!(fragments, 0);
@@ -1256,8 +1272,7 @@ fn bench_represented_bezier_region_corner_lanes(
             limit: Real::from(2_u8),
         };
         assert_eq!(
-            source
-                .offset(-q(3, 2), &style, &policy)
+            crate::support::under(&policy, || source.offset(-q(3, 2), &style))
                 .expect("algebraic dumbbell erosion must split exactly")
                 .into_value()
                 .boundary_loops()
@@ -1267,10 +1282,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let offset = black_box(&source)
-                .offset(-q(3, 2), black_box(&style), &policy)
-                .expect("algebraic dumbbell erosion must split exactly")
-                .into_value();
+            let offset = crate::support::under(&policy, || {
+                black_box(&source).offset(-q(3, 2), black_box(&style))
+            })
+            .expect("algebraic dumbbell erosion must split exactly")
+            .into_value();
             fragments += black_box(&offset)
                 .boundary_loops()
                 .iter()
@@ -1290,8 +1306,7 @@ fn bench_represented_bezier_region_corner_lanes(
             limit: Real::from(2_u8),
         };
         assert_eq!(
-            source
-                .offset(-q(3, 2), &style, &policy)
+            crate::support::under(&policy, || source.offset(-q(3, 2), &style))
                 .expect("native dumbbell erosion must split exactly")
                 .into_value()
                 .boundary_loops()
@@ -1301,10 +1316,11 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut fragments = 0_usize;
         for _ in 0..iterations {
-            let offset = black_box(&source)
-                .offset(-q(3, 2), black_box(&style), &policy)
-                .expect("native dumbbell erosion must split exactly")
-                .into_value();
+            let offset = crate::support::under(&policy, || {
+                black_box(&source).offset(-q(3, 2), black_box(&style))
+            })
+            .expect("native dumbbell erosion must split exactly")
+            .into_value();
             fragments += black_box(&offset)
                 .boundary_loops()
                 .iter()
@@ -1319,26 +1335,32 @@ fn bench_represented_bezier_region_corner_lanes(
         );
     }
     if corner_lane_enabled("curve_region_two_quadratic_algebraic_disjoint_boolean") {
-        let CurveCornerSolutions2::Unique(chamfered) = two_bezier_region
-            .chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
-            .expect("two algebraic Bezier cuts must retain one exact chord")
-            .into_value()
-        else {
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            two_bezier_region.chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                s(1),
+                s(1),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("two algebraic Bezier cuts must retain one exact chord")
+        .into_value() else {
             panic!("two-Bezier algebraic region chamfer must be unique");
         };
-        let distant = CurveRegion2::try_from_native_material_contours(
-            vec![rectangle(10, 10, 12, 12)],
-            &policy,
-        )
+        let distant = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![rectangle(10, 10, 12, 12)])
+        })
         .expect("distant Boolean benchmark region must remain exact")
         .into_value();
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let results = black_box(&chamfered)
-                .boolean_regions(black_box(&distant), &policy)
-                .expect("disjoint algebraic chamfer Boolean must remain exact")
-                .into_value();
+            let results = crate::support::under(&policy, || {
+                black_box(&chamfered).boolean_regions(black_box(&distant))
+            })
+            .expect("disjoint algebraic chamfer Boolean must remain exact")
+            .into_value();
             loops += black_box(&results).union().boundary_loops().len();
         }
         assert_ne!(loops, 0);
@@ -1352,17 +1374,17 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut candidates = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(region)
-                .chamfer_loop_vertex_by_setbacks(
+            let solutions = crate::support::under(&policy, || {
+                black_box(region).chamfer_loop_vertex_by_setbacks(
                     0,
                     1,
                     s(1),
                     next_setback.clone(),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("represented Bezier region chamfer must remain exact")
-                .into_value();
+            })
+            .expect("represented Bezier region chamfer must remain exact")
+            .into_value();
             candidates += black_box(solutions).candidate_count();
         }
         assert_ne!(candidates, 0);
@@ -1376,16 +1398,16 @@ fn bench_represented_bezier_region_corner_lanes(
         let started = Instant::now();
         let mut candidates = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(region)
-                .fillet_loop_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(region).fillet_loop_vertex(
                     0,
                     1,
                     &hypercurve::CurveFillet2::new(q(15, 4)),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("represented Bezier region fillet must remain exact")
-                .into_value();
+            })
+            .expect("represented Bezier region fillet must remain exact")
+            .into_value();
             candidates += black_box(solutions.solutions()).len();
         }
         assert_ne!(candidates, 0);
@@ -1507,13 +1529,9 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         Curve2::from(line(-4, 2, -4, 0)),
     ])
     .expect("region benchmark path must remain exact");
-    let region = CurveRegion2::try_from_boundary_paths(
-        &[region_path],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .expect("represented Bezier benchmark region must remain exact")
-    .into_value();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[region_path], hypercurve::FillRule::EvenOdd)
+            .expect("represented Bezier benchmark region must remain exact");
     let two_bezier_region_path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0))),
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
@@ -1523,10 +1541,8 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     let two_bezier_region = CurveRegion2::try_from_boundary_paths(
         &[two_bezier_region_path],
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
-    .expect("two-Bezier benchmark region must remain exact")
-    .into_value();
+    .expect("two-Bezier benchmark region must remain exact");
     let next_setback = (s(657).sqrt()? / s(16))?;
 
     bench_represented_bezier_chamfer_lane(
@@ -1762,11 +1778,12 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let mut total_roles = 0_usize;
 
     for _ in 0..iterations {
-        let region = CurveRegion2::try_from_native_boundary_contours(
-            &[material.clone(), hole.clone(), island.clone()],
-            FillRule::EvenOdd,
-            &policy,
-        )
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_boundary_contours(
+                &[material.clone(), hole.clone(), island.clone()],
+                FillRule::EvenOdd,
+            )
+        })
         .expect("native boundary construction must evaluate")
         .into_value();
         total_roles += black_box(region.len());
@@ -1792,10 +1809,11 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let mut total_loops = 0_usize;
     let mut total_spans = 0_usize;
     for _ in 0..iterations {
-        let region =
-            CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
-                .expect("native arrangement must produce an exact region")
-                .into_value();
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero)
+        })
+        .expect("native arrangement must produce an exact region")
+        .into_value();
         total_loops += black_box(region.len());
         total_spans += black_box(
             region
@@ -1823,10 +1841,11 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     let mut total_loops = 0_usize;
     let mut total_spans = 0_usize;
     for _ in 0..iterations {
-        let region =
-            CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
-                .expect("native arrangement must produce an exact region")
-                .into_value();
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero)
+        })
+        .expect("native arrangement must produce an exact region")
+        .into_value();
         total_loops += black_box(region.len());
         total_spans += black_box(
             region
@@ -1875,22 +1894,24 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
 
 fn bench_region_boolean(iterations: u32) -> CurveResult<()> {
     let policy = CurveContext::STRICT;
-    let first =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
-            .expect("benchmark region is valid")
-            .into_value();
-    let second =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, -1, 6, 3)], &policy)
-            .expect("benchmark region is valid")
-            .into_value();
+    let first = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)])
+    })
+    .expect("benchmark region is valid")
+    .into_value();
+    let second = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, -1, 6, 3)])
+    })
+    .expect("benchmark region is valid")
+    .into_value();
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
 
     for _ in 0..iterations {
-        let result = first
-            .boolean_region(&second, BooleanOp::Union, &policy)
-            .expect("region Boolean benchmark remains exact")
-            .into_value();
+        let result =
+            crate::support::under(&policy, || first.boolean_region(&second, BooleanOp::Union))
+                .expect("region Boolean benchmark remains exact")
+                .into_value();
         total_boundary_contours += black_box(result.len());
     }
 
@@ -1926,27 +1947,28 @@ fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
 
 fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
     let policy = CurveContext::STRICT;
-    let region =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
-            .expect("benchmark rectangle must promote")
-            .into_value();
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)])
+    })
+    .expect("benchmark rectangle must promote")
+    .into_value();
 
     if corner_lane_enabled("curve_region_affine_transform") {
         let started = Instant::now();
         let mut transformed_loops = 0_usize;
         for _ in 0..iterations {
-            let transformed = black_box(&region)
-                .transform_affine(
+            let transformed = crate::support::under(&policy, || {
+                black_box(&region).transform_affine(
                     &Real::zero(),
                     &-Real::one(),
                     &Real::one(),
                     &Real::zero(),
                     &Real::zero(),
                     &Real::zero(),
-                    &policy,
                 )
-                .expect("benchmark transform must remain exact")
-                .into_value();
+            })
+            .expect("benchmark transform must remain exact")
+            .into_value();
             transformed_loops += black_box(transformed).boundary_loops().len();
         }
         let elapsed = started.elapsed();
@@ -1960,18 +1982,17 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut chamfered_loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = black_box(&region)
-                .chamfer_loop_vertex_by_setbacks(
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                black_box(&region).chamfer_loop_vertex_by_setbacks(
                     0,
                     1,
                     s(1),
                     s(1),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("benchmark design-parameter chamfer must remain exact")
-                .into_value()
-            else {
+            })
+            .expect("benchmark design-parameter chamfer must remain exact")
+            .into_value() else {
                 panic!("CurveRegion2 design-parameter chamfer benchmark must be unique");
             };
             chamfered_loops += black_box(chamfered).boundary_loops().len();
@@ -1987,16 +2008,16 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut filleted_loops = 0_usize;
         for _ in 0..iterations {
-            let solutions = black_box(&region)
-                .fillet_loop_vertex(
+            let solutions = crate::support::under(&policy, || {
+                black_box(&region).fillet_loop_vertex(
                     0,
                     1,
                     &hypercurve::CurveFillet2::new(s(1)),
                     CurveCornerMode2::TrimOnly,
-                    &policy,
                 )
-                .expect("benchmark design-parameter fillet must remain exact")
-                .into_value();
+            })
+            .expect("benchmark design-parameter fillet must remain exact")
+            .into_value();
             let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
@@ -2014,30 +2035,30 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
 fn bench_higher_order_curve_edits(iterations: u32) {
     let policy = CurveContext::STRICT;
     let path = higher_order_fillet_path();
-    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        std::slice::from_ref(&path),
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            std::slice::from_ref(&path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
     .expect("higher-order editing benchmark region must promote")
     .into_value();
 
     let started = Instant::now();
     let mut region_chamfer_loops = 0_usize;
     for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(chamfered) = region
-            .chamfer_loop_vertex_by_setbacks(
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            region.chamfer_loop_vertex_by_setbacks(
                 0,
                 1,
                 q(1, 2),
                 q(1, 2),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .expect("higher-order region chamfer must remain exact")
-            .into_value()
-        else {
+        })
+        .expect("higher-order region chamfer must remain exact")
+        .into_value() else {
             panic!("higher-order region chamfer benchmark must remain unique");
         };
         region_chamfer_loops += black_box(chamfered.boundary_loops().len());
@@ -2051,16 +2072,16 @@ fn bench_higher_order_curve_edits(iterations: u32) {
     let started = Instant::now();
     let mut region_fillet_loops = 0_usize;
     for _ in 0..iterations {
-        let filleted = region
-            .fillet_loop_vertex(
+        let filleted = crate::support::under(&policy, || {
+            region.fillet_loop_vertex(
                 0,
                 1,
                 &hypercurve::CurveFillet2::new(q(1, 2)),
                 CurveCornerMode2::TrimOnly,
-                &policy,
             )
-            .expect("higher-order region fillet must remain exact")
-            .into_value();
+        })
+        .expect("higher-order region fillet must remain exact")
+        .into_value();
         assert!(!filleted.solutions().is_empty());
         region_fillet_loops += black_box(filleted.solutions())
             .iter()

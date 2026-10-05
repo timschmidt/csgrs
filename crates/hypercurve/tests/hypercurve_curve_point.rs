@@ -1,3 +1,4 @@
+mod support;
 use std::cmp::Ordering;
 
 use hypercurve::{
@@ -5,8 +6,6 @@ use hypercurve::{
     Classification, CurveCertainty, CurveContext, CurveOutcome, CurvePoint2, Point2,
     RationalBezier2, Real,
 };
-
-mod support;
 
 fn decided<T>(value: Classification<T>) -> T {
     match value {

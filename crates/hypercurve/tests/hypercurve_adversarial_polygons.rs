@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, FillRule,
     OffsetCornerStyle2, Point2, PolylineReconstructionOptions, Real, Segment2,
@@ -86,17 +87,18 @@ fn assert_contour_finite(contour: &Contour2) {
 }
 
 fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
-    CurveRegion2::try_from_native_contours(material, holes, &policy())
-        .unwrap()
-        .into_value()
+    crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_contours(material, holes)
+    })
+    .unwrap()
+    .into_value()
 }
 
-fn assert_region_topology(region: &CurveRegion2, operation: &str) {
-    let classification = region
-        .native_contours_fast_path(&policy())
+fn assert_region_topology(region: &CurveRegion2, _operation: &str) {
+    let classification = crate::support::under(&policy(), || region.native_contours_fast_path())
         .unwrap()
         .into_value();
-    if let Classification::Decided(native) = classification {
+    if let Some(native) = classification {
         for contour in native
             .material_contours()
             .iter()
@@ -107,10 +109,10 @@ fn assert_region_topology(region: &CurveRegion2, operation: &str) {
         return;
     }
 
-    let role_counts = region.loop_role_counts(&policy()).unwrap().into_value();
-    let Classification::Decided((material_count, hole_count)) = role_counts else {
-        panic!("polygon {operation} did not retain decided loop roles: {role_counts:?}");
-    };
+    let role_counts = crate::support::under(&policy(), || region.loop_role_counts())
+        .unwrap()
+        .into_value();
+    let (material_count, hole_count) = role_counts;
     assert_eq!(material_count + hole_count, region.boundary_loops().len());
     for boundary in region.boundary_loops() {
         assert!(!boundary.is_empty());
@@ -122,13 +124,16 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
     assert_contour_finite(contour);
 
     let _ = contour.has_self_contacts(&policy).unwrap();
-    let source = CurveRegion2::try_from_native_material_contours(vec![contour.clone()], &policy)
-        .unwrap()
-        .into_value();
-    let offset = source
-        .offset(s(distance), &OffsetCornerStyle2::Round, &policy)
-        .unwrap()
-        .into_value();
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![contour.clone()])
+    })
+    .unwrap()
+    .into_value();
+    let offset = crate::support::under(&policy, || {
+        source.offset(s(distance), &OffsetCornerStyle2::Round)
+    })
+    .unwrap()
+    .into_value();
     assert_region_topology(&offset, "offset");
 }
 
@@ -141,7 +146,9 @@ fn exercise_clipping(a: &CurveRegion2, b: &CurveRegion2) {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let region = a.boolean_region(b, op, &policy).unwrap().into_value();
+        let region = crate::support::under(&policy, || a.boolean_region(b, op))
+            .unwrap()
+            .into_value();
         assert_region_topology(&region, "Boolean");
     }
 }
@@ -318,13 +325,16 @@ fn reconstructed_slender_concavity_offsets_through_authoritative_region() {
 
     let contour =
         Contour2::reconstruct_from_closed_polyline(&samples, reconstruction_options()).unwrap();
-    let source = CurveRegion2::try_from_native_material_contours(vec![contour], &policy())
-        .unwrap()
-        .into_value();
-    let offset = source
-        .offset(s(1), &OffsetCornerStyle2::Round, &policy())
-        .unwrap()
-        .into_value();
+    let source = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_material_contours(vec![contour])
+    })
+    .unwrap()
+    .into_value();
+    let offset = crate::support::under(&policy(), || {
+        source.offset(s(1), &OffsetCornerStyle2::Round)
+    })
+    .unwrap()
+    .into_value();
     assert_region_topology(&offset, "offset");
 }
 

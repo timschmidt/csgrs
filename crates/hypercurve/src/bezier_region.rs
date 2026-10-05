@@ -2096,6 +2096,19 @@ impl CurveRegion2 {
     pub fn arrange_unordered_segments(
         source_segments: &[Segment2],
         fill_rule: FillRule,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::arrange_unordered_segments_with_policy(
+            source_segments,
+            fill_rule,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::arrange_unordered_segments`] under an explicit predicate policy.
+    pub(crate) fn arrange_unordered_segments_with_policy(
+        source_segments: &[Segment2],
+        fill_rule: FillRule,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
@@ -2110,6 +2123,19 @@ impl CurveRegion2 {
     /// migration constructor for callers that already know which contours are
     /// material and which are holes.
     pub fn try_from_native_contours(
+        material_contours: Vec<Contour2>,
+        hole_contours: Vec<Contour2>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_from_native_contours_with_policy(
+            material_contours,
+            hole_contours,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_from_native_contours`] under an explicit predicate policy.
+    pub(crate) fn try_from_native_contours_with_policy(
         material_contours: Vec<Contour2>,
         hole_contours: Vec<Contour2>,
         policy: &CurveContext,
@@ -2243,9 +2269,20 @@ impl CurveRegion2 {
     /// Constructs a unified region whose native contours are all material.
     pub fn try_from_native_material_contours(
         material_contours: Vec<Contour2>,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_from_native_material_contours_with_policy(
+            material_contours,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_from_native_material_contours`] under an explicit predicate policy.
+    pub(crate) fn try_from_native_material_contours_with_policy(
+        material_contours: Vec<Contour2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        Self::try_from_native_contours(material_contours, Vec::new(), policy)
+        Self::try_from_native_contours_with_policy(material_contours, Vec::new(), policy)
     }
 
     /// Constructs the exact regularized fill of native boundary contours.
@@ -2258,13 +2295,26 @@ impl CurveRegion2 {
     pub fn try_from_native_boundary_contours(
         contours: &[Contour2],
         fill_rule: FillRule,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_from_native_boundary_contours_with_policy(
+            contours,
+            fill_rule,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_from_native_boundary_contours`] under an explicit predicate policy.
+    pub(crate) fn try_from_native_boundary_contours_with_policy(
+        contours: &[Contour2],
+        fill_rule: FillRule,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         let paths = contours
             .iter()
             .map(curve_path_from_native_contour)
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Self::try_from_boundary_paths(&paths, fill_rule, policy)
+        Self::try_from_boundary_paths_with_policy(&paths, fill_rule, policy)
     }
 
     /// Classifies native contours through the shared raw-loop nesting authority.
@@ -2309,6 +2359,21 @@ impl CurveRegion2 {
     /// callers do not supply orientation hints. Construction returns the
     /// regularized boundary, with material on the left.
     pub fn try_from_boundary_paths_with_loop_semantics(
+        paths: &[CurvePath2],
+        roles: &[CurveRegionLoopRole],
+        fill_rules: &[FillRule],
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_from_boundary_paths_with_loop_semantics_with_policy(
+            paths,
+            roles,
+            fill_rules,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_from_boundary_paths_with_loop_semantics`] under an explicit predicate policy.
+    pub(crate) fn try_from_boundary_paths_with_loop_semantics_with_policy(
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
@@ -2362,6 +2427,19 @@ impl CurveRegion2 {
     /// Reuses each path's cached boundary, including retained generated curves;
     /// construction removes canceled seams and orients material on the left.
     pub fn try_from_boundary_paths(
+        paths: &[CurvePath2],
+        fill_rule: FillRule,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::try_from_boundary_paths_with_policy(
+            paths,
+            fill_rule,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::try_from_boundary_paths`] under an explicit predicate policy.
+    pub(crate) fn try_from_boundary_paths_with_policy(
         paths: &[CurvePath2],
         fill_rule: FillRule,
         policy: &CurveContext,
@@ -2422,6 +2500,28 @@ impl CurveRegion2 {
     /// carrier while preserving certified arrangement connectivity.
     #[allow(clippy::too_many_arguments)]
     pub fn transform_affine(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+    ) -> crate::ExactCurveResult<Self> {
+        self.transform_affine_with_policy(
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::transform_affine`] under an explicit predicate policy.
+    pub(crate) fn transform_affine_with_policy(
         &self,
         m00: &Real,
         m01: &Real,
@@ -2776,7 +2876,15 @@ impl CurveRegion2 {
         self
     }
 
-    pub fn filled_side_is_left(
+    pub fn filled_side_is_left(&self) -> crate::ExactCurveResult<&[bool]> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.filled_side_is_left_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::filled_side_is_left`] under an explicit predicate policy.
+    pub(crate) fn filled_side_is_left_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<&[bool]>>> {
@@ -3167,7 +3275,15 @@ impl CurveRegion2 {
     /// evidence and enter the Boolean carrier-pair probe. Any genuinely
     /// unsupported carrier remains explicit uncertainty; authored orientation
     /// never overrides a topology blocker.
-    pub fn loop_roles(
+    pub fn loop_roles(&self) -> crate::ExactCurveResult<Vec<CurveRegionLoopRole>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.loop_roles_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::loop_roles`] under an explicit predicate policy.
+    pub(crate) fn loop_roles_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Vec<CurveRegionLoopRole>>>> {
@@ -3298,7 +3414,15 @@ impl CurveRegion2 {
     /// The tuple is `(material, holes)`. Role classification follows the same
     /// exact retained-curve path as [`CurveRegion2::loop_roles`]; no native
     /// projection is required.
-    pub fn loop_role_counts(
+    pub fn loop_role_counts(&self) -> crate::ExactCurveResult<(usize, usize)> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.loop_role_counts_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::loop_role_counts`] under an explicit predicate policy.
+    pub(crate) fn loop_role_counts_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<(usize, usize)>>> {
@@ -3325,7 +3449,15 @@ impl CurveRegion2 {
     /// Roles come from [`Self::loop_roles`]. Each hole contributes exact
     /// retained representative evidence which is classified against material
     /// carriers without materializing multi-field coordinates.
-    pub fn boundary_profiles(
+    pub fn boundary_profiles(&self) -> crate::ExactCurveResult<Vec<CurveRegionProfile2<'_>>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.boundary_profiles_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::boundary_profiles`] under an explicit predicate policy.
+    pub(crate) fn boundary_profiles_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Vec<CurveRegionProfile2<'_>>>>> {
@@ -3340,7 +3472,13 @@ impl CurveRegion2 {
     /// Selected curves and certified connectivity are retained directly;
     /// decomposition does not reconstruct endpoints or intersect the boundary
     /// again after normalization and exact hole ownership have been decided.
-    pub fn material_components(
+    pub fn material_components(&self) -> crate::ExactCurveResult<Vec<Self>> {
+        self.material_components_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::material_components`] under an explicit predicate policy.
+    pub(crate) fn material_components_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Vec<Self>>> {
@@ -3598,11 +3736,33 @@ impl CurveRegion2 {
         })
     }
 
-    /// Borrows an exact line/arc representation when the unified boundary has one.
+    /// Borrows an exact line/arc representation when the unified boundary has
+    /// one, and returns `None` when it has none.
     ///
     /// This adapter never segments a higher-order carrier and exposes no
     /// independent Boolean, offset, or corner-edit engine.
     pub fn native_contours_fast_path(
+        &self,
+    ) -> crate::ExactCurveResult<Option<CurveRegionNativeContourView2<'_>>> {
+        let operation = crate::CurveOperation2::NativeTopology;
+        match self
+            .native_contours_fast_path_with_policy(&crate::policy::principal_context())
+            .map_err(|cause| crate::ExactCurveError::invalid_unattributed(operation, cause))?
+            .into_value()
+        {
+            Classification::Decided(view) => Ok(Some(view)),
+            // The native query reports a boundary without any line/arc
+            // representation as unsupported; every other unsupported
+            // sub-route is consumed before that final answer.
+            Classification::Uncertain(UncertaintyReason::Unsupported) => Ok(None),
+            Classification::Uncertain(reason) => Err(crate::ExactCurveError::blocked_unattributed(
+                operation, reason,
+            )),
+        }
+    }
+
+    /// [`Self::native_contours_fast_path`] under an explicit predicate policy.
+    pub(crate) fn native_contours_fast_path_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<CurveRegionNativeContourView2<'_>>>> {
@@ -3642,6 +3802,26 @@ impl CurveRegion2 {
     /// first projective pole; analytic replacements certify source regularity
     /// and the absence of parallel cusps on the actual replacement range.
     pub fn chamfer_loop_vertex_by_setbacks(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        previous_setback: Real,
+        next_setback: Real,
+        mode: CurveCornerMode2,
+    ) -> crate::ExactCurveResult<CurveCornerSolutions2<Self>> {
+        self.chamfer_loop_vertex_by_setbacks_with_policy(
+            loop_index,
+            vertex_index,
+            previous_setback,
+            next_setback,
+            mode,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::chamfer_loop_vertex_by_setbacks`] under an explicit predicate policy.
+    pub(crate) fn chamfer_loop_vertex_by_setbacks_with_policy(
         &self,
         loop_index: usize,
         vertex_index: usize,
@@ -3699,6 +3879,24 @@ impl CurveRegion2 {
     /// cells are partitioned at projective and regularity barriers, and retain
     /// exact or algebraic cuts without endpoint materialization.
     pub fn fillet_loop_vertex(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        request: &CurveFillet2,
+        mode: CurveCornerMode2,
+    ) -> crate::ExactCurveResult<CurveCornerSolutions2<Self>> {
+        self.fillet_loop_vertex_with_policy(
+            loop_index,
+            vertex_index,
+            request,
+            mode,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::fillet_loop_vertex`] under an explicit predicate policy.
+    pub(crate) fn fillet_loop_vertex_with_policy(
         &self,
         loop_index: usize,
         vertex_index: usize,
@@ -3829,7 +4027,18 @@ impl CurveRegion2 {
     /// Selected parameters, analytic carriers, and connectivity certificates
     /// survive unchanged. Authored splines retain their promoted exact spans.
     /// No endpoint or curve definition needs scalar materialization.
-    pub fn boundary_paths(
+    pub fn boundary_paths(&self) -> crate::ExactCurveResult<Vec<CurvePath2>> {
+        self.boundary_paths_with_policy(&crate::policy::principal_context())
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Evaluation,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::boundary_paths`] under an explicit predicate policy.
+    pub(crate) fn boundary_paths_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Vec<CurvePath2>>>> {
@@ -3848,6 +4057,20 @@ impl CurveRegion2 {
     /// Use [`Self::project_to_finite_profiles`] for direct mesh/IO output and
     /// [`Self::recover_from_finite_profiles`] for its reconstruction counterpart.
     pub fn segment_certified(
+        &self,
+        options: &BezierFlatteningOptions,
+    ) -> crate::ExactCurveResult<CurveRegionCertifiedSegmentationResult2> {
+        self.segment_certified_with_policy(options, &crate::policy::principal_context())
+            .and_then(|outcome| {
+                crate::ExactCurveError::decided(
+                    crate::CurveOperation2::Evaluation,
+                    outcome.into_value(),
+                )
+            })
+    }
+
+    /// [`Self::segment_certified`] under an explicit predicate policy.
+    pub(crate) fn segment_certified_with_policy(
         &self,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
@@ -3955,6 +4178,23 @@ impl CurveRegion2 {
     /// certified predicates; `APPROXIMATE_512` may consume its terminal
     /// equality policy while returning the same exact carrier geometry.
     pub fn stroke_path(
+        path: &CurvePath2,
+        half_width: Real,
+        corner_style: &OffsetCornerStyle2,
+        cap_style: OffsetCap,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::stroke_path_with_policy(
+            path,
+            half_width,
+            corner_style,
+            cap_style,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::stroke_path`] under an explicit predicate policy.
+    pub(crate) fn stroke_path_with_policy(
         path: &CurvePath2,
         half_width: Real,
         corner_style: &OffsetCornerStyle2,
@@ -4209,6 +4449,16 @@ impl CurveRegion2 {
     /// than sampled geometry. After corner-option validation, an empty region
     /// remains empty for every signed distance without requiring its sign.
     pub fn offset(
+        &self,
+        distance: Real,
+        corner_style: &OffsetCornerStyle2,
+    ) -> crate::ExactCurveResult<Self> {
+        self.offset_with_policy(distance, corner_style, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::offset`] under an explicit predicate policy.
+    pub(crate) fn offset_with_policy(
         &self,
         distance: Real,
         corner_style: &OffsetCornerStyle2,
@@ -4867,6 +5117,17 @@ impl CurveRegion2 {
     pub fn classify_point(
         &self,
         point: &CurvePoint2,
+    ) -> crate::ExactCurveResult<RegionPointLocation> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.classify_point_with_policy(point, &crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::classify_point`] under an explicit predicate policy.
+    pub(crate) fn classify_point_with_policy(
+        &self,
+        point: &CurvePoint2,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<RegionPointLocation>>> {
         resolve_certified_operation(policy, |attempt| {
@@ -4880,6 +5141,32 @@ impl CurveRegion2 {
     /// within the batch. Input order, selected evidence and the operation-wide
     /// policy terminal are preserved, including in mixed-representation batches.
     pub fn classify_points(
+        &self,
+        points: &[CurvePoint2],
+    ) -> crate::ExactCurveResult<Vec<RegionPointLocation>> {
+        self.classify_points_with_policy(points, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Classification,
+                    cause,
+                )
+            })
+            .and_then(|outcome| {
+                outcome
+                    .into_value()
+                    .into_iter()
+                    .map(|value| {
+                        crate::ExactCurveError::decided(
+                            crate::CurveOperation2::Classification,
+                            value,
+                        )
+                    })
+                    .collect()
+            })
+    }
+
+    /// [`Self::classify_points`] under an explicit predicate policy.
+    pub(crate) fn classify_points_with_policy(
         &self,
         points: &[CurvePoint2],
         policy: &CurveContext,
@@ -4934,7 +5221,15 @@ impl CurveRegion2 {
     /// Higher-order retained carriers remain explicitly unsupported because
     /// [`crate::RegionFacts`] describes native segment-family facts and must not
     /// silently flatten a curved boundary.
-    pub fn structural_facts(
+    pub fn structural_facts(&self) -> crate::ExactCurveResult<crate::RegionFacts> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.structural_facts_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::structural_facts`] under an explicit predicate policy.
+    pub(crate) fn structural_facts_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<crate::RegionFacts>>> {
@@ -5409,7 +5704,15 @@ impl CurveRegion2 {
 
     /// Returns exact signed area only when all retained loops have implemented
     /// Green integrals or a policy-certified line image.
-    pub fn signed_area(
+    pub fn signed_area(&self) -> crate::ExactCurveResult<Option<Real>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.signed_area_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::signed_area`] under an explicit predicate policy.
+    pub(crate) fn signed_area_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
@@ -5443,7 +5746,15 @@ impl CurveRegion2 {
     /// self-contact analysis cannot certify a non-repeated loop as simple, the
     /// query remains explicitly uncertain instead of treating traversal
     /// multiplicity as filled-set area.
-    pub fn filled_area(
+    pub fn filled_area(&self) -> crate::ExactCurveResult<Option<Real>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Classification,
+            self.filled_area_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::filled_area`] under an explicit predicate policy.
+    pub(crate) fn filled_area_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
@@ -6630,7 +6941,7 @@ mod single_loop_corner_publication_tests {
         ])
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let source = CurveRegion2::try_from_boundary_paths(
+            let source = CurveRegion2::try_from_boundary_paths_with_policy(
                 std::slice::from_ref(&path),
                 crate::FillRule::EvenOdd,
                 &policy,
@@ -6638,8 +6949,10 @@ mod single_loop_corner_publication_tests {
             .unwrap()
             .into_value();
             assert_eq!(source.len(), 1);
-            let Classification::Decided(paths) =
-                source.boundary_paths(&policy).unwrap().into_value()
+            let Classification::Decided(paths) = source
+                .boundary_paths_with_policy(&policy)
+                .unwrap()
+                .into_value()
             else {
                 panic!("the cap has an exact connected boundary");
             };
@@ -6649,7 +6962,7 @@ mod single_loop_corner_publication_tests {
                 .position(|curve| curve.start().coordinates() == Some(&p(4, 0)))
                 .unwrap();
             let outcome = source
-                .fillet_loop_vertex(
+                .fillet_loop_vertex_with_policy(
                     0,
                     corner,
                     &crate::CurveFillet2::new((Real::one() / Real::from(2)).unwrap()),
@@ -6820,10 +7133,12 @@ mod retained_point_classification_tests {
                         .collect(),
                 )
                 .unwrap();
-                let region =
-                    CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
-                        .unwrap()
-                        .value;
+                let region = CurveRegion2::try_from_native_material_contours_with_policy(
+                    vec![contour],
+                    &policy,
+                )
+                .unwrap()
+                .value;
                 assert_eq!(region.boundary_loops().len(), 1);
                 let mut expected_region = Vec::new();
                 for (point_index, ((x, y), point)) in coordinates.iter().zip(&images).enumerate() {
@@ -6840,7 +7155,7 @@ mod retained_point_classification_tests {
                         ContourPointLocation::Boundary => RegionPointLocation::Boundary,
                     };
                     expected_region.push(Classification::Decided(location));
-                    let public = region.classify_point(point, &policy).unwrap();
+                    let public = region.classify_point_with_policy(point, &policy).unwrap();
                     assert_eq!(public.certainty, CurveCertainty::Certified);
                     assert_eq!(public.value, Classification::Decided(location));
                     let actual =
@@ -6856,7 +7171,9 @@ mod retained_point_classification_tests {
                     }
                     checked += 1;
                 }
-                let batch = region.classify_points(&images, &policy).unwrap();
+                let batch = region
+                    .classify_points_with_policy(&images, &policy)
+                    .unwrap();
                 assert_eq!(batch.certainty, CurveCertainty::Certified);
                 assert_eq!(batch.value, expected_region);
                 let mixed: Vec<_> = coordinates
@@ -6871,7 +7188,7 @@ mod retained_point_classification_tests {
                         }
                     })
                     .collect();
-                let mixed = region.classify_points(&mixed, &policy).unwrap();
+                let mixed = region.classify_points_with_policy(&mixed, &policy).unwrap();
                 assert_eq!(mixed.certainty, CurveCertainty::Certified);
                 assert_eq!(mixed.value, expected_region);
             }
@@ -6921,7 +7238,7 @@ mod retained_point_classification_tests {
     #[test]
     fn public_point_queries_preserve_nested_islands_holes_and_empty_regions() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
                 &[
                     rectangle_path(0, 10),
                     rectangle_path(2, 8),
@@ -6956,16 +7273,18 @@ mod retained_point_classification_tests {
                     .iter()
                     .map(|(_, location)| Classification::Decided(*location))
                     .collect();
-                let batch = region.classify_points(&points, &policy).unwrap();
+                let batch = region
+                    .classify_points_with_policy(&points, &policy)
+                    .unwrap();
                 assert_eq!(batch.certainty, CurveCertainty::Certified);
                 assert_eq!(batch.value, expected);
                 for (point, expected) in points.iter().zip(&expected) {
-                    let result = region.classify_point(point, &policy).unwrap();
+                    let result = region.classify_point_with_policy(point, &policy).unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(&result.value, expected);
                 }
                 let empty = CurveRegion2::empty()
-                    .classify_points(&points, &policy)
+                    .classify_points_with_policy(&points, &policy)
                     .unwrap();
                 assert_eq!(empty.certainty, CurveCertainty::Certified);
                 assert!(
@@ -6985,7 +7304,7 @@ mod retained_point_classification_tests {
                 LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap();
             let path =
                 CurvePath2::try_new(vec![line.clone().into(), line.reversed().into()]).unwrap();
-            let filled = CurveRegion2::try_from_boundary_paths(
+            let filled = CurveRegion2::try_from_boundary_paths_with_policy(
                 std::slice::from_ref(&path),
                 crate::FillRule::EvenOdd,
                 &policy,
@@ -7025,12 +7344,15 @@ mod retained_point_classification_tests {
             let top =
                 LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-1, 1)).unwrap();
             let path = CurvePath2::try_new(vec![lower.into(), top.into()]).unwrap();
-            let cap =
-                CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy)
-                    .unwrap()
-                    .value;
+            let cap = CurveRegion2::try_from_boundary_paths_with_policy(
+                &[path],
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .value;
             let offset = cap
-                .offset(q(1, 4), &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(q(1, 4), &OffsetCornerStyle2::Round, &policy)
                 .unwrap();
             assert_eq!(offset.certainty, CurveCertainty::Certified);
             let cases = [
@@ -7048,11 +7370,17 @@ mod retained_point_classification_tests {
                 .iter()
                 .map(|(_, location)| Classification::Decided(*location))
                 .collect();
-            let batch = offset.value.classify_points(&points, &policy).unwrap();
+            let batch = offset
+                .value
+                .classify_points_with_policy(&points, &policy)
+                .unwrap();
             assert_eq!(batch.certainty, CurveCertainty::Certified);
             assert_eq!(batch.value, expected);
             for (point, expected) in points.iter().zip(expected) {
-                let result = offset.value.classify_point(point, &policy).unwrap();
+                let result = offset
+                    .value
+                    .classify_point_with_policy(point, &policy)
+                    .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(result.value, expected);
             }

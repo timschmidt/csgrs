@@ -4314,7 +4314,7 @@ mod analytic_dispatch_tests {
                 ])
                 .unwrap();
                 let region = certified(
-                    crate::CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    crate::CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
                         &[path],
                         &[crate::CurveRegionLoopRole::Material],
                         &[crate::FillRule::NonZero],
@@ -4322,7 +4322,7 @@ mod analytic_dispatch_tests {
                     )
                     .unwrap(),
                 );
-                let region = certified(region.regularized_region(&policy).unwrap());
+                let region = certified(region.regularized_region_with_policy(&policy).unwrap());
                 for (point, expected) in [
                     (p(2, 5), crate::RegionPointLocation::Inside),
                     (p(0, 0), crate::RegionPointLocation::Outside),
@@ -4335,7 +4335,7 @@ mod analytic_dispatch_tests {
                     assert_eq!(
                         certified(
                             region
-                                .classify_point(&point.clone().into(), &policy)
+                                .classify_point_with_policy(&point.clone().into(), &policy)
                                 .unwrap()
                         ),
                         Classification::Decided(expected)

@@ -11,7 +11,7 @@ use crate::bezier_offset::{
     BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionSet2,
 };
 
-#[path = "../tests/support/mod.rs"]
+#[path = "../tests/support/scalars.rs"]
 mod support;
 
 fn r(value: i32) -> Real {

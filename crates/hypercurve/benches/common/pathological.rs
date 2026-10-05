@@ -313,17 +313,13 @@ pub fn build_native_cell(index: usize) -> NativeCell {
     let source = CurveRegion2::try_from_boundary_paths(
         std::slice::from_ref(&source_path),
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
-    .expect("pathological source region is valid")
-    .into_value();
+    .expect("pathological source region is valid");
     let rotated = CurveRegion2::try_from_boundary_paths(
         std::slice::from_ref(&rotated_path),
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
-    .expect("pathological rotated region is valid")
-    .into_value();
+    .expect("pathological rotated region is valid");
     let source_projection = line_region(&flatten_path(&source_path));
     let rotated_projection = line_region(&flatten_path(&rotated_path));
     NativeCell {
@@ -344,13 +340,8 @@ pub fn rotated_region(path: &CurvePath2, index: usize) -> CurveRegion2 {
         .transform_similarity(&cell_rotation(origin_x, origin_y), &CurveContext::STRICT)
         .expect("pathological rotation remains exact")
         .into_value();
-    CurveRegion2::try_from_boundary_paths(
-        &[rotated],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .expect("pathological rotated region is valid")
-    .into_value()
+    CurveRegion2::try_from_boundary_paths(&[rotated], hypercurve::FillRule::EvenOdd)
+        .expect("pathological rotated region is valid")
 }
 
 fn all_family_path(
@@ -581,7 +572,6 @@ fn line_region(points: &[[f64; 2]]) -> CurveRegion2 {
         .collect::<Vec<_>>();
     let contour = Contour2::from_bulge_vertices(&vertices)
         .expect("flattened pathological contour is a valid closed polyline");
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+    CurveRegion2::try_from_native_material_contours(vec![contour])
         .expect("flattened pathological region has exact unified topology")
-        .into_value()
 }

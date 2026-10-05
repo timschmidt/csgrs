@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurvePath2,
     CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
@@ -31,10 +32,9 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
 }
 
 fn rectangle_region(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> CurveRegion2 {
-    CurveRegion2::try_from_native_material_contours(
-        vec![rectangle(xmin, ymin, xmax, ymax)],
-        &policy(),
-    )
+    crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(xmin, ymin, xmax, ymax)])
+    })
     .unwrap()
     .into_value()
 }
@@ -762,10 +762,12 @@ fn curve_string_trim_between_curve_intersections_evidence_overlap_blocker() {
 fn curve_path_trim_inside_region_splits_disconnected_inside_windows() {
     let curve =
         CurvePath2::try_new(vec![LineSeg2::try_new(p(-2, 1), p(8, 1)).unwrap().into()]).unwrap();
-    let region = CurveRegion2::try_from_native_material_contours(
-        vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)],
-        &policy(),
-    )
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_material_contours(vec![
+            rectangle(0, 0, 2, 2),
+            rectangle(4, 0, 6, 2),
+        ])
+    })
     .unwrap()
     .into_value();
 
@@ -781,11 +783,12 @@ fn curve_path_trim_inside_region_splits_disconnected_inside_windows() {
 
 #[test]
 fn curve_path_trim_inside_region_respects_holes() {
-    let region = CurveRegion2::try_from_native_contours(
-        vec![rectangle(0, 0, 10, 4)],
-        vec![rectangle(4, 0, 6, 4)],
-        &policy(),
-    )
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_contours(
+            vec![rectangle(0, 0, 10, 4)],
+            vec![rectangle(4, 0, 6, 4)],
+        )
+    })
     .unwrap()
     .into_value();
     let curve =

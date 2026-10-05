@@ -691,16 +691,12 @@ impl Polyline {
                 left_offset_buffer_distance(self, distance),
                 "offset distance",
             )?;
-            let offset = preview(|context| {
-                let source = CurveRegion2::try_from_native_material_contours(
-                    vec![contour.clone()],
-                    context,
-                )?
-                .into_value();
-                source.offset(filled_distance.clone(), &OffsetCornerStyle2::Round, context)
+            let offset = preview(|_context| {
+                let source =
+                    CurveRegion2::try_from_native_material_contours(vec![contour.clone()])?;
+                source.offset(filled_distance.clone(), &OffsetCornerStyle2::Round)
             })
-            .map_err(|error| error.to_string())?
-            .into_value();
+            .map_err(|error| error.to_string())?;
             Ok(Shape::from_curve_region(&offset)?
                 .map(Shape::into_polylines)
                 .unwrap_or_default())
@@ -712,17 +708,10 @@ impl Polyline {
     pub fn outline(&self, distance: f64, cap: OffsetCap) -> Result<Vec<Self>, String> {
         let path = self.to_curve_path()?;
         let distance = real_checked(distance, "outline distance")?;
-        let outline = preview(|context| {
-            CurveRegion2::stroke_path(
-                &path,
-                distance.clone(),
-                &OffsetCornerStyle2::Round,
-                cap,
-                context,
-            )
+        let outline = preview(|_context| {
+            CurveRegion2::stroke_path(&path, distance.clone(), &OffsetCornerStyle2::Round, cap)
         })
-        .map_err(|error| error.to_string())?
-        .into_value();
+        .map_err(|error| error.to_string())?;
         Ok(Shape::from_curve_region(&outline)?
             .map(Shape::into_polylines)
             .unwrap_or_default())
@@ -1019,48 +1008,36 @@ impl Shape {
             roles.push(CurveRegionLoopRole::Hole);
         }
         let fill_rules = vec![FillRule::NonZero; paths.len()];
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &paths,
-            &roles,
-            &fill_rules,
-            &CurveContext::STRICT,
-        )
-        .map(|outcome| outcome.into_value())
-        .map_err(|error| error.to_string())
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)
+            .map_err(|error| error.to_string())
     }
 
     pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {
-        let paths = match region
-            .boundary_paths(&CurveContext::STRICT)
+        let paths = match crate::geometry::classified(region.boundary_paths())
             .map_err(|error| error.to_string())?
-            .into_value()
         {
             Classification::Decided(paths) => paths,
-            Classification::Uncertain(_) => match region
-                .project_to_finite_curve_paths(&CurveContext::STRICT)
-                .map_err(|error| error.to_string())?
-                .into_value()
-            {
-                Classification::Decided(paths) => paths,
-                Classification::Uncertain(_) => return Ok(None),
-            },
+            Classification::Uncertain(_) => {
+                match crate::geometry::classified(region.project_to_finite_curve_paths())
+                    .map_err(|error| error.to_string())?
+                {
+                    Classification::Decided(paths) => paths,
+                    Classification::Uncertain(_) => return Ok(None),
+                }
+            }
         };
         if paths.is_empty() {
             return Ok(Some(Self::default()));
         }
-        let roles = match region
-            .loop_roles(&CurveContext::STRICT)
+        let roles = match crate::geometry::classified(region.loop_roles())
             .map_err(|error| error.to_string())?
-            .into_value()
         {
             Classification::Decided(roles) => Some(roles),
             Classification::Uncertain(_) => None,
         };
         let filled_sides = if roles.is_none() {
-            match region
-                .filled_side_is_left(&CurveContext::STRICT)
+            match crate::geometry::classified(region.filled_side_is_left())
                 .map_err(|error| error.to_string())?
-                .into_value()
             {
                 Classification::Decided(sides) => Some(sides),
                 Classification::Uncertain(_) => return Ok(None),
@@ -1118,12 +1095,12 @@ impl Shape {
 
         let first = self.to_curve_region()?;
         let second = other.to_curve_region()?;
-        let policy = CurveContext::STRICT;
-        let result = first.boolean_region(&second, op, &policy).map_err(|error| {
+        let _policy = CurveContext::STRICT;
+        let result = first.boolean_region(&second, op).map_err(|error| {
             first
-                .intersect_region(&second, &policy)
+                .intersect_region(&second)
                 .ok()
-                .and_then(|result| result.value.blockers().first().cloned())
+                .and_then(|result| result.blockers().first().cloned())
                 .map_or_else(
                     || error.to_string(),
                     |blocker| {
@@ -1132,7 +1109,7 @@ impl Shape {
                                 CurveIntersectionPairBlockerKind2::Uncertain(_) => {
                                     "uncertain predicate"
                                 }
-                                CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                                CurveIntersectionPairBlockerKind2::IncompleteReplay => {
                                     "incomplete contact replay"
                                 }
                                 CurveIntersectionPairBlockerKind2::SharedComponent => {
@@ -1160,7 +1137,7 @@ impl Shape {
                     },
                 )
         })?;
-        Self::from_curve_region(&result.value)
+        Self::from_curve_region(&result)
     }
 
     pub fn offset_once(&self, distance: f64) -> Self {
@@ -1751,6 +1728,20 @@ fn arc_center_from_bulge(start: Vertex, end: Vertex) -> Option<(f64, f64)> {
         (start.x + end.x) * 0.5 - dy * factor,
         (start.y + end.y) * 0.5 + dx * factor,
     ))
+}
+
+/// Keeps an exact Hypercurve query's undecided predicate as
+/// `Classification::Uncertain`, so the UI can fall back to another view.
+pub(crate) fn classified<T>(
+    result: hypercurve::ExactCurveResult<T>,
+) -> Result<Classification<T>, hypercurve::ExactCurveError> {
+    match result {
+        Ok(value) => Ok(Classification::Decided(value)),
+        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
+            Ok(Classification::Uncertain(blocker.reason()))
+        }
+        Err(error) => Err(error),
+    }
 }
 
 #[cfg(test)]

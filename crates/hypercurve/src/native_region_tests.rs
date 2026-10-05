@@ -53,20 +53,23 @@ fn policy() -> CurveContext {
 }
 
 fn region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
-    CurveRegion2::try_from_native_contours(material, holes, &policy())
+    CurveRegion2::try_from_native_contours_with_policy(material, holes, &policy())
         .unwrap()
         .into_value()
 }
 
 fn classify(region: &CurveRegion2, point: &crate::Point2) -> Classification<RegionPointLocation> {
     region
-        .classify_point(&point.clone().into(), &policy())
+        .classify_point_with_policy(&point.clone().into(), &policy())
         .unwrap()
         .into_value()
 }
 
 fn filled_area(region: &CurveRegion2) -> Classification<Option<Real>> {
-    region.filled_area(&policy()).unwrap().into_value()
+    region
+        .filled_area_with_policy(&policy())
+        .unwrap()
+        .into_value()
 }
 
 fn arrange_lines(
@@ -83,7 +86,7 @@ fn arrange_segments(
     segments: Vec<Segment2>,
     fill_rule: FillRule,
 ) -> ExactCurveResult<CurveRegion2> {
-    CurveRegion2::arrange_unordered_segments(&segments, fill_rule, &policy())
+    CurveRegion2::arrange_unordered_segments_with_policy(&segments, fill_rule, &policy())
         .map(|outcome| outcome.into_value())
 }
 
@@ -108,15 +111,18 @@ fn empty_region_classifies_everything_outside() {
 #[test]
 fn empty_native_boundary_input_constructs_an_exact_empty_region() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let outcome =
-            CurveRegion2::try_from_native_boundary_contours(&[], FillRule::EvenOdd, &policy)
-                .expect("empty boundary input represents the empty set");
+        let outcome = CurveRegion2::try_from_native_boundary_contours_with_policy(
+            &[],
+            FillRule::EvenOdd,
+            &policy,
+        )
+        .expect("empty boundary input represents the empty set");
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let region = outcome.into_value();
         assert!(region.is_empty());
         assert_eq!(
             region
-                .classify_point(&p(0, 0).into(), &policy)
+                .classify_point_with_policy(&p(0, 0).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
@@ -193,7 +199,7 @@ fn material_island_inside_hole_restores_membership() {
 
 #[test]
 fn boundary_contour_fill_assigns_disjoint_nested_roles() {
-    let region = CurveRegion2::try_from_native_boundary_contours(
+    let region = CurveRegion2::try_from_native_boundary_contours_with_policy(
         &[rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)],
         FillRule::EvenOdd,
         &policy(),
@@ -201,7 +207,10 @@ fn boundary_contour_fill_assigns_disjoint_nested_roles() {
     .unwrap()
     .into_value();
     assert_eq!(
-        region.loop_role_counts(&policy()).unwrap().into_value(),
+        region
+            .loop_role_counts_with_policy(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided((1, 1))
     );
     assert_eq!(
@@ -252,13 +261,14 @@ fn boundary_contour_fill_regularizes_crossings_and_touches() {
                     ],
                 ),
             ] {
-                let outcome =
-                    CurveRegion2::try_from_native_boundary_contours(&contours, fill, &policy)
-                        .unwrap();
+                let outcome = CurveRegion2::try_from_native_boundary_contours_with_policy(
+                    &contours, fill, &policy,
+                )
+                .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let region = outcome.into_value();
                 let Classification::Decided(native) = region
-                    .native_contours_fast_path(&policy)
+                    .native_contours_fast_path_with_policy(&policy)
                     .unwrap()
                     .into_value()
                 else {
@@ -270,15 +280,18 @@ fn boundary_contour_fill_regularizes_crossings_and_touches() {
                     .chain(native.hole_contours())
                     .cloned()
                     .collect::<Vec<_>>();
-                let restored =
-                    CurveRegion2::try_from_native_boundary_contours(&boundaries, fill, &policy)
-                        .unwrap()
-                        .into_value();
+                let restored = CurveRegion2::try_from_native_boundary_contours_with_policy(
+                    &boundaries,
+                    fill,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
                 for (point, expected) in probes {
                     for result in [&region, &restored] {
                         assert_eq!(
                             result
-                                .classify_point(&point.clone().into(), &policy)
+                                .classify_point_with_policy(&point.clone().into(), &policy)
                                 .unwrap()
                                 .into_value(),
                             Classification::Decided(expected)
@@ -287,13 +300,13 @@ fn boundary_contour_fill_regularizes_crossings_and_touches() {
                 }
                 assert!(
                     region
-                        .boolean_region(&restored, BooleanOp::Xor, &policy)
+                        .boolean_region_with_policy(&restored, BooleanOp::Xor, &policy)
                         .unwrap()
                         .into_value()
                         .is_empty()
                 );
             }
-            let joined = CurveRegion2::try_from_native_boundary_contours(
+            let joined = CurveRegion2::try_from_native_boundary_contours_with_policy(
                 &[rectangle(0, 0, 4, 4), rectangle(4, 0, 8, 4)],
                 fill,
                 &policy,
@@ -301,7 +314,7 @@ fn boundary_contour_fill_regularizes_crossings_and_touches() {
             .unwrap()
             .into_value();
             let grown = joined
-                .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(Real::one(), &OffsetCornerStyle2::Round, &policy)
                 .unwrap()
                 .into_value();
             for (point, expected) in [
@@ -311,7 +324,7 @@ fn boundary_contour_fill_regularizes_crossings_and_touches() {
             ] {
                 assert_eq!(
                     grown
-                        .classify_point(&point.into(), &policy)
+                        .classify_point_with_policy(&point.into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(expected)
@@ -338,10 +351,11 @@ fn native_boundary_global_fill_retains_winding_and_recursive_islands() {
             .unwrap();
             for fill in [FillRule::EvenOdd, FillRule::NonZero] {
                 let contours = [doubled.clone(), reversed_rectangle(2, 2, 8, 8)];
-                let region =
-                    CurveRegion2::try_from_native_boundary_contours(&contours, fill, &policy)
-                        .unwrap()
-                        .into_value();
+                let region = CurveRegion2::try_from_native_boundary_contours_with_policy(
+                    &contours, fill, &policy,
+                )
+                .unwrap()
+                .into_value();
                 for (point, expected) in [
                     (
                         p(1, 1),
@@ -356,7 +370,7 @@ fn native_boundary_global_fill_retains_winding_and_recursive_islands() {
                 ] {
                     assert_eq!(
                         region
-                            .classify_point(&point.into(), &policy)
+                            .classify_point_with_policy(&point.into(), &policy)
                             .unwrap()
                             .into_value(),
                         Classification::Decided(expected)
@@ -372,7 +386,7 @@ fn native_boundary_global_fill_retains_winding_and_recursive_islands() {
                 )
                 .unwrap();
                 assert!(
-                    CurveRegion2::try_from_native_boundary_contours(
+                    CurveRegion2::try_from_native_boundary_contours_with_policy(
                         &[outer.clone(), opposite],
                         fill,
                         &policy
@@ -390,7 +404,7 @@ fn native_boundary_global_fill_retains_winding_and_recursive_islands() {
             if reverse_order {
                 nested.reverse();
             }
-            let region = CurveRegion2::try_from_native_boundary_contours(
+            let region = CurveRegion2::try_from_native_boundary_contours_with_policy(
                 &nested,
                 FillRule::EvenOdd,
                 &policy,
@@ -398,7 +412,10 @@ fn native_boundary_global_fill_retains_winding_and_recursive_islands() {
             .unwrap()
             .into_value();
             assert_eq!(
-                region.loop_role_counts(&policy).unwrap().into_value(),
+                region
+                    .loop_role_counts_with_policy(&policy)
+                    .unwrap()
+                    .into_value(),
                 Classification::Decided((3, 2))
             );
             for i in 0..5 {
@@ -409,7 +426,7 @@ fn native_boundary_global_fill_retains_winding_and_recursive_islands() {
                 };
                 assert_eq!(
                     region
-                        .classify_point(&p(2 * i + 1, 10).into(), &policy)
+                        .classify_point_with_policy(&p(2 * i + 1, 10).into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(expected)
@@ -432,7 +449,7 @@ fn native_boundary_circle_fills_reenter_exact_boolean_operations() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for fill in [FillRule::EvenOdd, FillRule::NonZero] {
             for separation in [2, 4] {
-                let region = CurveRegion2::try_from_native_boundary_contours(
+                let region = CurveRegion2::try_from_native_boundary_contours_with_policy(
                     &[circle(0), circle(separation)],
                     fill,
                     &policy,
@@ -448,25 +465,25 @@ fn native_boundary_circle_fills_reenter_exact_boolean_operations() {
                 };
                 assert_eq!(
                     region
-                        .classify_point(&p(separation / 2, 0).into(), &policy)
+                        .classify_point_with_policy(&p(separation / 2, 0).into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(expected)
                 );
                 let restored = region
-                    .boolean_region(&region, BooleanOp::Intersection, &policy)
+                    .boolean_region_with_policy(&region, BooleanOp::Intersection, &policy)
                     .unwrap()
                     .into_value();
                 assert_eq!(
                     restored
-                        .classify_point(&p(separation / 2, 0).into(), &policy)
+                        .classify_point_with_policy(&p(separation / 2, 0).into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(expected)
                 );
                 assert!(
                     restored
-                        .boolean_region(&region, BooleanOp::Xor, &policy)
+                        .boolean_region_with_policy(&region, BooleanOp::Xor, &policy)
                         .unwrap()
                         .into_value()
                         .is_empty()
@@ -602,7 +619,10 @@ fn unordered_line_arc_segments_recover_the_exact_native_view() {
         classify(region, &p(2, -1)),
         Classification::Decided(RegionPointLocation::Inside)
     );
-    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
+    let Classification::Decided(facts) = region
+        .structural_facts_with_policy(&policy())
+        .unwrap()
+        .into_value()
     else {
         panic!("the exact line and circular spans expose native facts");
     };
@@ -646,7 +666,10 @@ fn contour_profiles_group_holes_with_their_exact_material_owner() {
         vec![rectangle(0, 0, 10, 10), rectangle(20, 0, 30, 10)],
         vec![rectangle(2, 2, 4, 4), rectangle(22, 2, 24, 4)],
     );
-    let profiles = region.boundary_profiles(&policy()).unwrap().into_value();
+    let profiles = region
+        .boundary_profiles_with_policy(&policy())
+        .unwrap()
+        .into_value();
     let Classification::Decided(profiles) = profiles else {
         panic!("profile ownership should be decided: {profiles:?}");
     };
@@ -662,7 +685,10 @@ fn contour_profiles_group_holes_with_their_exact_material_owner() {
 fn contour_profiles_remove_holes_without_a_material_owner() {
     let region = region(Vec::new(), vec![rectangle(2, 2, 4, 4)]);
     assert_eq!(
-        region.boundary_profiles(&policy()).unwrap().into_value(),
+        region
+            .boundary_profiles_with_policy(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(Vec::new())
     );
 }
@@ -741,7 +767,7 @@ fn unified_finite_profiles_preserve_material_hole_bins_and_ownership() {
         vec![rectangle(2, 2, 4, 4), rectangle(22, 2, 24, 4)],
     );
     let profiles = region
-        .project_to_finite_profiles_exact(
+        .project_to_finite_profiles_exact_with_policy(
             &FiniteProjectionOptions::try_new(0.01).unwrap(),
             &policy(),
         )
@@ -832,13 +858,16 @@ fn strict_and_approximate_512_share_the_unified_policy_terminal() {
     for context in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
             region
-                .classify_point(&p(1, 1).into(), &context)
+                .classify_point_with_policy(&p(1, 1).into(), &context)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
-            region.filled_area(&context).unwrap().into_value(),
+            region
+                .filled_area_with_policy(&context)
+                .unwrap()
+                .into_value(),
             Classification::Decided(Some(Real::from(84_i8)))
         );
     }
@@ -875,14 +904,14 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     ];
 
     let segments = lines.into_iter().map(Segment2::Line).collect::<Vec<_>>();
-    let strict = CurveRegion2::arrange_unordered_segments(
+    let strict = CurveRegion2::arrange_unordered_segments_with_policy(
         &segments,
         FillRule::NonZero,
         &CurveContext::STRICT,
     );
     assert!(matches!(strict, Err(ExactCurveError::Blocked(_))));
 
-    let approximate = CurveRegion2::arrange_unordered_segments(
+    let approximate = CurveRegion2::arrange_unordered_segments_with_policy(
         &segments,
         FillRule::NonZero,
         &CurveContext::APPROXIMATE_512,
@@ -959,7 +988,7 @@ proptest! {
         }
         let built = arrange_segments(segments, FillRule::NonZero).unwrap();
                 prop_assert_eq!(
-            built.structural_facts(&policy()).unwrap().into_value().map(|facts| facts.segment_kinds),
+            built.structural_facts_with_policy(&policy()).unwrap().into_value().map(|facts| facts.segment_kinds),
             Classification::Decided(SegmentKindCounts { lines: 1, arcs: 2 })
         );
         prop_assert_eq!(
@@ -999,7 +1028,10 @@ fn batched_classifier_and_structural_facts_use_the_unified_surface() {
         vec![rectangle(0, 0, 10, 10), rectangle(4, 4, 6, 6)],
         vec![rectangle(2, 2, 8, 8)],
     );
-    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
+    let Classification::Decided(facts) = region
+        .structural_facts_with_policy(&policy())
+        .unwrap()
+        .into_value()
     else {
         panic!("native specialization should expose structural facts");
     };
@@ -1016,7 +1048,7 @@ fn batched_classifier_and_structural_facts_use_the_unified_surface() {
         .each_ref()
         .map(|point| crate::CurvePoint2::from(point.clone()));
     let batched = region
-        .classify_points(&queries, &policy())
+        .classify_points_with_policy(&queries, &policy())
         .unwrap()
         .into_value();
     assert_eq!(
@@ -1034,8 +1066,9 @@ fn empty_unordered_arrangement_reenters_exact_set_operations() {
     let material = region(vec![rectangle(0, 0, 4, 4)], Vec::new());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for fill_rule in [FillRule::EvenOdd, FillRule::NonZero] {
-            let outcome = CurveRegion2::arrange_unordered_segments(&[], fill_rule, &policy)
-                .expect("an empty arrangement represents the empty set");
+            let outcome =
+                CurveRegion2::arrange_unordered_segments_with_policy(&[], fill_rule, &policy)
+                    .expect("an empty arrangement represents the empty set");
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let empty = outcome.into_value();
             assert!(empty.is_empty());
@@ -1049,7 +1082,9 @@ fn empty_unordered_arrangement_reenters_exact_set_operations() {
                     (&empty, &material, empty_first_filled),
                     (&material, &empty, empty_second_filled),
                 ] {
-                    let result = first.boolean_region(second, operation, &policy).unwrap();
+                    let result = first
+                        .boolean_region_with_policy(second, operation, &policy)
+                        .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     let result = result.into_value();
                     assert_eq!(result.is_empty(), !filled);
@@ -1074,7 +1109,7 @@ fn empty_unordered_arrangement_reenters_exact_set_operations() {
                     ] {
                         assert_eq!(
                             result
-                                .classify_point(&point.into(), &policy)
+                                .classify_point_with_policy(&point.into(), &policy)
                                 .unwrap()
                                 .into_value(),
                             Classification::Decided(expected)
@@ -1083,7 +1118,7 @@ fn empty_unordered_arrangement_reenters_exact_set_operations() {
                 }
             }
             let offset = empty
-                .offset(Real::from(-1), &crate::OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(Real::from(-1), &crate::OffsetCornerStyle2::Round, &policy)
                 .unwrap();
             assert_eq!(offset.certainty, CurveCertainty::Certified);
             assert!(offset.value.is_empty());
@@ -1097,11 +1132,11 @@ fn empty_region_offsets_preserve_set_and_policy_identity() {
     let material = region(vec![rectangle(0, 0, 4, 4)], Vec::new());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let difference = material
-            .boolean_region(&material, BooleanOp::Difference, &policy)
+            .boolean_region_with_policy(&material, BooleanOp::Difference, &policy)
             .unwrap()
             .into_value();
         let collapsed = material
-            .offset(Real::from(-3), &OffsetCornerStyle2::Bevel, &policy)
+            .offset_with_policy(Real::from(-3), &OffsetCornerStyle2::Bevel, &policy)
             .unwrap()
             .into_value();
         assert!(difference.is_empty());
@@ -1123,13 +1158,13 @@ fn empty_region_offsets_preserve_set_and_policy_identity() {
                     Real::one(),
                     symbolic_zero.clone(),
                 ] {
-                    let result = empty.offset(distance, &style, &policy).unwrap();
+                    let result = empty.offset_with_policy(distance, &style, &policy).unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert!(result.value.is_empty());
                 }
             }
             assert!(matches!(
-                empty.offset(
+                empty.offset_with_policy(
                     Real::one(),
                     &OffsetCornerStyle2::Miter {
                         limit: Real::from(-1)
@@ -1160,35 +1195,36 @@ fn unordered_native_regions_reenter_operations_without_summary_queries() {
                 (vec![Segment2::Arc(full_circle.clone())], p(3, 0), p(4, 0)),
             ] {
                 let outcome =
-                    CurveRegion2::arrange_unordered_segments(&segments, fill, &policy).unwrap();
+                    CurveRegion2::arrange_unordered_segments_with_policy(&segments, fill, &policy)
+                        .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let region = outcome.into_value();
                 // The next operation is deliberately the first consumer.
                 let grown = region
-                    .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
+                    .offset_with_policy(Real::one(), &OffsetCornerStyle2::Round, &policy)
                     .unwrap()
                     .into_value();
                 assert_eq!(
                     grown
-                        .classify_point(&boundary.into(), &policy)
+                        .classify_point_with_policy(&boundary.into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Boundary)
                 );
                 assert_eq!(
                     grown
-                        .classify_point(&outside.into(), &policy)
+                        .classify_point_with_policy(&outside.into(), &policy)
                         .unwrap()
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Outside)
                 );
                 let original = grown
-                    .boolean_region(&region, BooleanOp::Intersection, &policy)
+                    .boolean_region_with_policy(&region, BooleanOp::Intersection, &policy)
                     .unwrap()
                     .into_value();
                 assert!(
                     original
-                        .boolean_region(&region, BooleanOp::Xor, &policy)
+                        .boolean_region_with_policy(&region, BooleanOp::Xor, &policy)
                         .unwrap()
                         .into_value()
                         .is_empty()
@@ -1217,12 +1253,12 @@ fn round_erosion_of_regions_narrower_than_its_diameter_is_empty() {
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let collapsed = strip
-            .offset(Real::from(-1), &OffsetCornerStyle2::Round, &policy)
+            .offset_with_policy(Real::from(-1), &OffsetCornerStyle2::Round, &policy)
             .unwrap();
         assert_eq!(collapsed.certainty, CurveCertainty::Certified);
         assert!(collapsed.value.is_empty());
         let retained = strip
-            .offset(
+            .offset_with_policy(
                 (Real::from(-1) / Real::from(2)).unwrap(),
                 &OffsetCornerStyle2::Round,
                 &policy,
@@ -1269,10 +1305,10 @@ fn approximate_region_bounds_order_approximately_coincident_representations() {
     );
     let policy = CurveContext::APPROXIMATE_512;
     let clipped = diamond
-        .boolean_region(&upper, BooleanOp::Intersection, &policy)
+        .boolean_region_with_policy(&upper, BooleanOp::Intersection, &policy)
         .unwrap()
         .into_value();
-    let bounds = clipped.bounds(&policy).unwrap();
+    let bounds = clipped.bounds_with_policy(&policy).unwrap();
     assert_eq!(bounds.certainty, CurveCertainty::Approximate512Consumed);
     let Classification::Decided(bounds) = bounds.value else {
         panic!(

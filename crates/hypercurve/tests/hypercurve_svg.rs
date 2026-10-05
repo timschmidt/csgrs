@@ -1,5 +1,6 @@
 #![cfg(feature = "svg")]
 
+mod support;
 use hypercurve::{
     CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveFamily2, CurvePath2,
     LineSeg2, NurbsCurve2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
@@ -175,12 +176,12 @@ fn document_import_preserves_cubic_fills_and_strokes() {
     .unwrap();
 
     assert_eq!(
-        geometry
+        crate::support::under(&CurveContext::STRICT, || geometry
             .region()
-            .loop_role_counts(&CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
-        Classification::Decided((1, 0))
+            .loop_role_counts())
+        .unwrap()
+        .into_value(),
+        (1, 0)
     );
     assert!(
         geometry
@@ -239,12 +240,12 @@ fn document_import_applies_inherited_styles_and_all_affine_transform_forms() {
     assert!(!geometry.region().is_empty());
     assert_eq!(geometry.wires().len(), 1);
     assert_eq!(
-        geometry
+        crate::support::under(&CurveContext::STRICT, || geometry
             .region()
-            .loop_role_counts(&CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
-        Classification::Decided((1, 0))
+            .loop_role_counts())
+        .unwrap()
+        .into_value(),
+        (1, 0)
     );
 }
 
@@ -260,12 +261,12 @@ fn document_import_unions_filled_shapes_and_skips_transparent_geometry() {
     .unwrap();
 
     assert_eq!(
-        geometry
+        crate::support::under(&CurveContext::STRICT, || geometry
             .region()
-            .loop_role_counts(&CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
-        Classification::Decided((2, 0))
+            .loop_role_counts())
+        .unwrap()
+        .into_value(),
+        (2, 0)
     );
 }
 
@@ -618,12 +619,12 @@ fn document_import_applies_fill_rule_before_normalizing_repeated_traversal() {
         );
         let geometry = import_svg_document(&document).unwrap();
         assert_eq!(geometry.region().is_empty(), fill_rule == "evenodd");
-        let result = geometry
-            .region()
-            .classify_point(&point(2, 2).into(), &CurveContext::STRICT)
-            .unwrap();
+        let result = crate::support::under(&CurveContext::STRICT, || {
+            geometry.region().classify_point(&point(2, 2).into())
+        })
+        .unwrap();
         assert_eq!(result.certainty, hypercurve::CurveCertainty::Certified);
-        assert_eq!(result.value, Classification::Decided(expected));
+        assert_eq!(result.value, expected);
     }
 }
 
@@ -681,14 +682,13 @@ fn compound_fill_uses_global_winding_before_nesting_and_overlap_selection() {
                     };
                     assert_eq!(geometry.region().len(), if filled { 1 } else { 2 });
                     for (x, y, expected) in queries {
-                        let result = geometry
-                            .region()
-                            .classify_point(&point(x, y).into(), &CurveContext::STRICT)
-                            .unwrap();
+                        let result = crate::support::under(&CurveContext::STRICT, || {
+                            geometry.region().classify_point(&point(x, y).into())
+                        })
+                        .unwrap();
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         assert_eq!(
-                            result.value,
-                            Classification::Decided(expected),
+                            result.value, expected,
                             "{layout}, {fill}, same={same_direction}, order={reverse_order}, point=({x},{y})"
                         );
                     }
@@ -714,12 +714,12 @@ fn compound_fill_preserves_recursive_islands_and_cancels_opposed_traversals() {
             (11, 5, Outside),
         ] {
             assert_eq!(
-                geometry
+                crate::support::under(&CurveContext::STRICT, || geometry
                     .region()
-                    .classify_point(&point(x, y).into(), &CurveContext::STRICT)
-                    .unwrap()
-                    .into_value(),
-                Classification::Decided(expected)
+                    .classify_point(&point(x, y).into()))
+                .unwrap()
+                .into_value(),
+                expected
             );
         }
         let canceled = format!(
@@ -728,12 +728,12 @@ fn compound_fill_preserves_recursive_islands_and_cancels_opposed_traversals() {
         let geometry = import_svg_document(&canceled).unwrap();
         assert!(geometry.region().is_empty());
         assert_eq!(
-            geometry
+            crate::support::under(&CurveContext::STRICT, || geometry
                 .region()
-                .classify_point(&point(0, 2).into(), &CurveContext::STRICT)
-                .unwrap()
-                .into_value(),
-            Classification::Decided(Outside)
+                .classify_point(&point(0, 2).into()))
+            .unwrap()
+            .into_value(),
+            Outside
         );
     }
 }

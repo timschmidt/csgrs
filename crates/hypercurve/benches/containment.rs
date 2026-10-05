@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -34,9 +36,7 @@ fn sparse_region(contour_count: i32) -> CurveRegion2 {
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    CurveRegion2::try_from_native_material_contours(contours, &CurveContext::STRICT)
-        .unwrap()
-        .into_value()
+    CurveRegion2::try_from_native_material_contours(contours).unwrap()
 }
 
 fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
@@ -89,7 +89,7 @@ fn bench_batched_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_sparse_region_outside(iterations: u32) -> CurveResult<()> {
+fn bench_sparse_region_outside(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
     let point = hypercurve::CurvePoint2::from(p(5_000, 5_000));
     let policy = CurveContext::STRICT;
@@ -97,8 +97,8 @@ fn bench_sparse_region_outside(iterations: u32) -> CurveResult<()> {
     let mut outside_count = 0_usize;
 
     for _ in 0..iterations {
-        match region.classify_point(&point, &policy)?.into_value() {
-            Classification::Decided(RegionPointLocation::Outside) => {
+        match crate::support::under(&policy, || region.classify_point(&point))?.into_value() {
+            RegionPointLocation::Outside => {
                 outside_count += black_box(1);
             }
             other => panic!("sparse outside benchmark expected outside, got {other:?}"),
@@ -113,7 +113,7 @@ fn bench_sparse_region_outside(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
+fn bench_batched_sparse_region(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
     let points = (0..64)
         .map(|index| {
@@ -129,14 +129,13 @@ fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
     let mut decided_count = 0_usize;
 
     for _ in 0..iterations {
-        for result in region
-            .classify_points(black_box(&points), &policy)?
+        for result in crate::support::under(&policy, || region.classify_points(black_box(&points)))?
             .into_value()
         {
             match result {
-                Classification::Decided(
-                    RegionPointLocation::Inside | RegionPointLocation::Outside,
-                ) => decided_count += black_box(1),
+                RegionPointLocation::Inside | RegionPointLocation::Outside => {
+                    decided_count += black_box(1)
+                }
                 other => panic!("batched sparse region benchmark became non-decided: {other:?}"),
             }
         }
@@ -150,7 +149,7 @@ fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
+fn bench_sparse_region_single_hit(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
     let point = hypercurve::CurvePoint2::from(p(612, 2));
     let policy = CurveContext::STRICT;
@@ -158,8 +157,8 @@ fn bench_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let mut inside_count = 0_usize;
 
     for _ in 0..iterations {
-        match region.classify_point(&point, &policy)?.into_value() {
-            Classification::Decided(RegionPointLocation::Inside) => {
+        match crate::support::under(&policy, || region.classify_point(&point))?.into_value() {
+            RegionPointLocation::Inside => {
                 inside_count += black_box(1);
             }
             other => panic!("sparse single-hit benchmark expected inside, got {other:?}"),
@@ -174,15 +173,15 @@ fn bench_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_sparse_region_filled_area(iterations: u32) -> CurveResult<()> {
+fn bench_sparse_region_filled_area(iterations: u32) -> Result<(), Box<dyn std::error::Error>> {
     let region = sparse_region(120);
     let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut checksum = 0_usize;
 
     for _ in 0..iterations {
-        match region.filled_area(&policy)?.into_value() {
-            Classification::Decided(Some(area)) => {
+        match crate::support::under(&policy, || region.filled_area())?.into_value() {
+            Some(area) => {
                 checksum ^= format!("{area:?}").len();
             }
             other => panic!("sparse area benchmark expected exact filled area, got {other:?}"),
@@ -197,7 +196,7 @@ fn bench_sparse_region_filled_area(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn main() -> CurveResult<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_contour_bbox_miss(100_000)?;
     bench_batched_contour_bbox_miss(10_000)?;
     bench_sparse_region_outside(10_000)?;

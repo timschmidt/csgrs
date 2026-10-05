@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    Classification, Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, Real, RegionPointLocation,
+    Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, QuadraticBezier2,
+    Real, RegionPointLocation,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -50,9 +50,10 @@ fuzz_target!(|data: &[u8]| {
     .expect("distinct curvatures give a nonzero closing segment");
     let path = CurvePath2::try_new(vec![lower, closing.into(), upper])
         .expect("the lens boundary is connected");
-    let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd, &policy)
-        .expect("a simple tangent lens must be admitted")
-        .into_value();
+    let region = under(&policy, || {
+        CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd)
+    })
+    .expect("a simple tangent lens must be admitted");
 
     // At x = 1/2 the curves sit at a/4 and b/4, so (a+b)/8 is strictly inside.
     let eighth = (Real::from(1) / Real::from(8)).unwrap();
@@ -62,10 +63,18 @@ fuzz_target!(|data: &[u8]| {
         (inside, RegionPointLocation::Inside),
         (outside, RegionPointLocation::Outside),
     ] {
-        let location = region
-            .classify_point(&point.into(), &policy)
-            .expect("classification completes")
-            .value;
-        assert_eq!(location, Classification::Decided(expected));
+        let location = under(&policy, || region.classify_point(&point.into()))
+            .expect("classification completes");
+        assert_eq!(location, expected);
     }
 });
+
+/// Runs a principal exact operation under `policy`: directly under STRICT,
+/// and otherwise inside `hypercurve::provisional`.
+fn under<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
+    if *policy == CurveContext::STRICT {
+        operation()
+    } else {
+        hypercurve::provisional(operation).into_unverified()
+    }
+}

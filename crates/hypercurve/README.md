@@ -68,8 +68,8 @@ segments, and classifies an interior point.
 <!-- quickstart:start -->
 ```rust
 use hypercurve::{
-    BezierDegree, Classification, Contour2, CurveContext, CurveRegion2, LineSeg2, Point2,
-    QuadraticBezier2, Segment2,
+    BezierDegree, Contour2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RegionPointLocation,
+    Segment2,
 };
 use hyperreal::Real;
 
@@ -88,14 +88,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .map(|(start, end)| LineSeg2::try_new(p(start.0, start.1), p(end.0, end.1)).map(Segment2::Line))
     .collect::<hypercurve::CurveResult<Vec<_>>>()?;
 
-    let policy = CurveContext::STRICT;
     let contour = Contour2::try_new(boundary)?;
-    let region =
-        CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?.into_value();
-    let location = region
-        .classify_point(&p(1, 1).into(), &policy)?
-        .into_value();
-    assert!(matches!(location, Classification::Decided(_)));
+    let region = CurveRegion2::try_from_native_material_contours(vec![contour])?;
+    assert_eq!(
+        region.classify_point(&p(1, 1).into())?,
+        RegionPointLocation::Inside
+    );
     Ok(())
 }
 ```
@@ -358,8 +356,7 @@ exact signatures.
   `Contour2::{from_real_ring, from_finite_ring,
   reconstruct_from_closed_polyline}` import or reconstruct line/arc geometry.
 - `CurveRegion2::recover_from_finite_profiles` reconstructs and regularizes a
-  region from finite material/hole profiles, returning `CurveOutcome` with the
-  admission certainty. `PolylineReconstructionOptions` controls reconstruction
+  region from finite material/hole profiles. `PolylineReconstructionOptions` controls reconstruction
   tolerance; the import remains lossy relative to the original source curves.
 - `project_to_finite_polyline`, `project_to_finite_curve_paths`,
   `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
@@ -380,10 +377,19 @@ Hypercurve separates exact values from decisions about them:
 
 - Coordinates are `Real` values, not an implicit `f64` tolerance model.
 - Checked constructors reject malformed or structurally invalid input.
-- Topological branches use an explicit `CurveContext`.
+- `CurveRegion2` operations are exact: they take no policy argument and
+  return `ExactCurveResult<T>`. A decision that exact predicates cannot settle
+  is reported as an `ExactCurveError::Blocked` with its operation and reason,
+  never guessed. Optional results are `Option`s: the empty region has no
+  bounds, and a region without a line/arc boundary has no native view.
+- `hypercurve::provisional(|| ...)` evaluates those operations under the
+  `APPROXIMATE_512` policy, which may consume Hyperlimit's terminal 512-bit
+  interpretation. Its `Provisional<T>` result yields the value through
+  `certified()` only when no such terminal was consumed, and otherwise only
+  through the explicitly unverified accessors.
+- APIs not yet migrated to that form take an explicit `CurveContext`:
   `CurveContext::STRICT` accepts only certified decisions, while
-  `CurveContext::APPROXIMATE_512` may consume Hyperlimit's terminal 512-bit
-  interpretation.
+  `CurveContext::APPROXIMATE_512` may consume the terminal interpretation.
 - `CurvePreviewOptions` owns finite display tolerances separately. Its scoped
   preview results are never exact topology or construction provenance.
 - `Classification::Decided(value)` is a supported conclusion.

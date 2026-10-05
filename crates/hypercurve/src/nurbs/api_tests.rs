@@ -834,7 +834,7 @@ fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_sourc
         .insert_knots(request.clone(), &CurveContext::STRICT)
         .unwrap_err();
     assert_eq!(first.operation(), CurveOperation2::KnotInsertion);
-    assert_eq!(first.family(), CurveFamily2::Nurbs);
+    assert_eq!(first.family(), Some(CurveFamily2::Nurbs));
     assert_eq!(
         curve
             .insert_knots(request, &CurveContext::STRICT)
@@ -918,7 +918,7 @@ fn nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors
     for knot in [r(-1), r(0), r(2), r(3)] {
         let error = curve.remove_knot(knot, &CurveContext::STRICT).unwrap_err();
         assert_eq!(error.operation(), CurveOperation2::KnotRemoval);
-        assert_eq!(error.family(), CurveFamily2::Nurbs);
+        assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
         assert!(matches!(
             error,
             ExactCurveError::Invalid {
@@ -1150,7 +1150,7 @@ fn nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles() {
         .degree_elevation(1, &CurveContext::STRICT)
         .unwrap_err();
     assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);
-    assert_eq!(invalid.family(), CurveFamily2::Nurbs);
+    assert_eq!(invalid.family(), Some(CurveFamily2::Nurbs));
 
     let singular = NurbsCurve2::try_new(
         1,
@@ -1180,7 +1180,7 @@ fn out_of_domain_nurbs_knot_insertion_has_contextual_error() {
     let error = curve.insert_knot(r(3), &CurveContext::STRICT).unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::KnotInsertion);
-    assert_eq!(error.family(), CurveFamily2::Nurbs);
+    assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
 }
 
 #[test]
@@ -1310,7 +1310,7 @@ fn invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context() {
             .unwrap_err(),
     ] {
         assert_eq!(error.operation(), CurveOperation2::Subdivision);
-        assert_eq!(error.family(), CurveFamily2::Nurbs);
+        assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
     }
 }
 
@@ -1414,7 +1414,7 @@ fn out_of_domain_nurbs_evaluation_has_contextual_error() {
     let error = curve.point_at(&r(3), &CurveContext::STRICT).unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
-    assert_eq!(error.family(), CurveFamily2::Nurbs);
+    assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
     assert!(matches!(
         error,
         ExactCurveError::Invalid {
@@ -1613,7 +1613,7 @@ fn invalid_nurbs_construction_returns_contextual_error() {
     .unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Construction);
-    assert_eq!(error.family(), CurveFamily2::Nurbs);
+    assert_eq!(error.family(), Some(CurveFamily2::Nurbs));
     assert!(matches!(
         error,
         ExactCurveError::Invalid {

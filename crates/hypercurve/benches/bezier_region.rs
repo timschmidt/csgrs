@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -65,28 +67,26 @@ fn square_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<Cu
 }
 
 fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurveRegion2> {
-    CurveRegion2::try_from_boundary_paths(
-        &[square_path(min_x, min_y, max_x, max_y)?],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .map(|outcome| outcome.into_value())
-    .map_err(|error| match error {
-        hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
-        hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
-            "square benchmark region blocked: {:?}",
-            blocker.reason()
-        )),
+    let path = square_path(min_x, min_y, max_x, max_y)?;
+    CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd).map_err(|error| {
+        match error {
+            hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
+            hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+                "square benchmark region blocked: {:?}",
+                blocker.reason()
+            )),
+        }
     })
 }
 
 fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveResult<CurveRegion2> {
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        std::slice::from_ref(path),
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        policy,
-    )
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            std::slice::from_ref(path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
     .map(|outcome| outcome.into_value())
     .map_err(|error| match error {
         hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
@@ -125,22 +125,23 @@ fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveRe
     )?))
 }
 
-fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> CurveResult<()> {
+fn benchmark_measurements(
+    region: &CurveRegion2,
+    policy: &CurveContext,
+) -> Result<(), Box<dyn std::error::Error>> {
     let iterations = std::env::var("HYPERCURVE_BEZIER_REGION_MEASURE_ITERATIONS")
         .ok()
         .and_then(|value| value.parse::<u32>().ok())
         .unwrap_or(1_000_000);
-    let expected_area = decided(region.signed_area(policy)?.into_value())
+    let expected_area = crate::support::under(policy, || region.signed_area())?
+        .into_value()
         .expect("benchmark square has an exact area");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let area = decided(
-            black_box(region)
-                .signed_area(black_box(policy))?
-                .into_value(),
-        )
-        .expect("cached square area remains exact");
+        let area = crate::support::under(black_box(policy), || black_box(region).signed_area())?
+            .into_value()
+            .expect("cached square area remains exact");
         checksum += black_box(area == expected_area) as usize;
     }
     let elapsed = started.elapsed();
@@ -177,7 +178,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let first_region = square_region(0, 0, 4, 4)?;
     let second_region = square_region(2, 0, 6, 4)?;
     if std::env::var_os("HYPERCURVE_BEZIER_REGION_MEASURE_ONLY").is_some() {
-        return Ok(benchmark_measurements(&first_region, &policy)?);
+        return benchmark_measurements(&first_region, &policy);
     }
     let region_clone_iterations = 1_000_000_u32;
     let started = Instant::now();
@@ -251,10 +252,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut region_boolean_checksum = 0_usize;
     for _ in 0..region_boolean_iterations {
-        let region = first_region
-            .boolean_region(&second_region, BooleanOp::Union, &policy)
-            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
-            .value;
+        let region = crate::support::under(&policy, || {
+            first_region.boolean_region(&second_region, BooleanOp::Union)
+        })
+        .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
+        .value;
         region_boolean_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
@@ -267,10 +269,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut batch_region_boolean_checksum = 0_usize;
     let batch_region_boolean_iterations = 1_000_u32;
     for _ in 0..batch_region_boolean_iterations {
-        let results = first_region
-            .boolean_regions(&second_region, &policy)
-            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
-            .value;
+        let results =
+            crate::support::under(&policy, || first_region.boolean_regions(&second_region))
+                .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
+                .value;
         batch_region_boolean_checksum ^= black_box(
             results.union().boundary_loops().len()
                 + results.intersection().boundary_loops().len()
@@ -292,17 +294,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cutter = square_path(-3, 2, 3, 5)?;
     let curved_region = path_region(&curved, &policy)?;
     let cutter_region = path_region(&cutter, &policy)?;
-    let algebraic = curved_region
-        .boolean_region(&cutter_region, BooleanOp::Difference, &policy)
-        .map_err(|error| CurveError::Topology(format!("curved benchmark setup: {error}")))?
-        .into_value();
+    let algebraic = crate::support::under(&policy, || {
+        curved_region.boolean_region(&cutter_region, BooleanOp::Difference)
+    })
+    .map_err(|error| CurveError::Topology(format!("curved benchmark setup: {error}")))?
+    .into_value();
     let crossing = square_region(-2, -1, 2, 1)?;
     let curved_boolean_iterations = 100_u32;
     let started = Instant::now();
     let mut curved_boolean_checksum = 0_usize;
     for _ in 0..curved_boolean_iterations {
-        let results = algebraic
-            .boolean_regions(&crossing, &policy)
+        let results = crate::support::under(&policy, || algebraic.boolean_regions(&crossing))
             .map_err(|error| CurveError::Topology(format!("curved benchmark: {error}")))?
             .value;
         curved_boolean_checksum = curved_boolean_checksum.wrapping_add(black_box(
@@ -335,11 +337,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        let location = decided(
-            algebraic_ray_region
-                .classify_point(black_box(&algebraic_ray_query), &policy)?
-                .into_value(),
-        );
+        let location = crate::support::under(&policy, || {
+            algebraic_ray_region.classify_point(black_box(&algebraic_ray_query))
+        })?
+        .into_value();
         classification_checksum =
             classification_checksum.wrapping_add(black_box(location as usize));
     }
@@ -363,8 +364,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let region = even_odd_region(std::slice::from_ref(&lens_path), &policy)?;
-        checksum ^=
-            black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
+        checksum ^= black_box(
+            format!(
+                "{:?}",
+                crate::support::under(&policy, || region.signed_area())?.into_value()
+            )
+            .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -374,19 +380,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let classified_region = even_odd_region(std::slice::from_ref(&lens_path), &policy)?;
     let classified_point = hypercurve::CurvePoint2::from(p(2, 0));
-    decided(
-        classified_region
-            .classify_point(&classified_point, &policy)?
-            .into_value(),
-    );
+    crate::support::under(&policy, || {
+        classified_region.classify_point(&classified_point)
+    })?
+    .into_value();
     let started = Instant::now();
     let mut curved_classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        let location = decided(
-            classified_region
-                .classify_point(black_box(&classified_point), black_box(&policy))?
-                .into_value(),
-        );
+        let location = crate::support::under(black_box(&policy), || {
+            classified_region.classify_point(black_box(&classified_point))
+        })?
+        .into_value();
         curved_classification_checksum =
             curved_classification_checksum.wrapping_add(black_box(location as usize));
     }
@@ -396,24 +400,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         elapsed / classification_iterations
     );
 
-    let immediate_region =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(-4, -4, 4, 4)], &policy)
-            .unwrap()
-            .into_value();
+    let immediate_region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(-4, -4, 4, 4)])
+    })
+    .unwrap()
+    .into_value();
     let native_point = hypercurve::CurvePoint2::from(p(1, 1));
-    decided(
-        immediate_region
-            .classify_point(&native_point, &policy)?
-            .into_value(),
-    );
+    crate::support::under(&policy, || immediate_region.classify_point(&native_point))?.into_value();
     let started = Instant::now();
     let mut native_classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        let location = decided(
-            immediate_region
-                .classify_point(black_box(&native_point), black_box(&policy))?
-                .into_value(),
-        );
+        let location = crate::support::under(black_box(&policy), || {
+            immediate_region.classify_point(black_box(&native_point))
+        })?
+        .into_value();
         native_classification_checksum =
             native_classification_checksum.wrapping_add(black_box(location as usize));
     }
@@ -427,14 +427,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut retained_checksum = 0_usize;
     for _ in 0..iterations {
         let region = even_odd_region(std::slice::from_ref(&lens_path), &policy)?;
-        retained_checksum ^=
-            black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
-        if let Classification::Decided(envelope) = region.bounds(&policy)?.into_value() {
-            retained_checksum ^= black_box(format!("{envelope:?}").len());
-        }
-        if let Classification::Decided(roles) = region.loop_roles(&policy)?.into_value() {
-            retained_checksum ^= black_box(roles.len());
-        }
+        retained_checksum ^= black_box(
+            format!(
+                "{:?}",
+                crate::support::under(&policy, || region.signed_area())?.into_value()
+            )
+            .len(),
+        );
+        let envelope = crate::support::under(&policy, || region.bounds())?.into_value();
+        retained_checksum ^= black_box(format!("{envelope:?}").len());
+        let roles = crate::support::under(&policy, || region.loop_roles())?.into_value();
+        retained_checksum ^= black_box(roles.len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -450,19 +453,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
     let algebraic_region = even_odd_region(&[algebraic_path], &policy)?;
     let algebraic_region_query = hypercurve::CurvePoint2::from(p(2, 0));
-    decided(
-        algebraic_region
-            .classify_point(&algebraic_region_query, &policy)?
-            .into_value(),
-    );
+    crate::support::under(&policy, || {
+        algebraic_region.classify_point(&algebraic_region_query)
+    })?
+    .into_value();
     let started = Instant::now();
     let mut algebraic_classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        let location = decided(
-            algebraic_region
-                .classify_point(black_box(&algebraic_region_query), black_box(&policy))?
-                .into_value(),
-        );
+        let location = crate::support::under(black_box(&policy), || {
+            algebraic_region.classify_point(black_box(&algebraic_region_query))
+        })?
+        .into_value();
         algebraic_classification_checksum =
             algebraic_classification_checksum.wrapping_add(black_box(location as usize));
     }
@@ -474,7 +475,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut algebraic_envelope_checksum = 0_usize;
     for _ in 0..iterations {
-        let envelope = decided(algebraic_region.bounds(&policy)?.into_value());
+        let envelope = crate::support::under(&policy, || algebraic_region.bounds())?.into_value();
         algebraic_envelope_checksum ^= black_box(format!("{envelope:?}").len());
     }
     let elapsed = started.elapsed();
@@ -496,18 +497,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {
-        if let Classification::Decided(roles) =
-            algebraic_line_region.loop_roles(&policy)?.into_value()
-        {
-            let material_count = roles
-                .iter()
-                .filter(|role| matches!(role, CurveRegionLoopRole::Material))
-                .count();
-            let hole_count = roles.len() - material_count;
-            algebraic_line_role_checksum ^= black_box(roles.len() + material_count + hole_count);
-            algebraic_line_role_checksum ^=
-                black_box(format!("{:?}", algebraic_line_region.filled_area(&policy)?).len());
-        }
+        let roles =
+            crate::support::under(&policy, || algebraic_line_region.loop_roles())?.into_value();
+        let material_count = roles
+            .iter()
+            .filter(|role| matches!(role, CurveRegionLoopRole::Material))
+            .count();
+        let hole_count = roles.len() - material_count;
+        algebraic_line_role_checksum ^= black_box(roles.len() + material_count + hole_count);
+        algebraic_line_role_checksum ^= black_box(
+            format!(
+                "{:?}",
+                crate::support::under(&policy, || algebraic_line_region.filled_area())?
+            )
+            .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -521,14 +525,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut overlap_checksum = 0_usize;
     for _ in 0..iterations {
         let retained = even_odd_region(&overlap_paths, &policy)?;
-        overlap_checksum ^=
-            black_box(format!("{:?}", decided(retained.signed_area(&policy)?.into_value())).len());
-        if let Classification::Decided(roles) = retained.loop_roles(&policy)?.into_value() {
-            overlap_checksum ^= black_box(roles.len());
-            overlap_checksum ^= black_box(usize::from(
-                retained.filled_area(&policy)?.into_value().is_decided(),
-            ));
-        }
+        overlap_checksum ^= black_box(
+            format!(
+                "{:?}",
+                crate::support::under(&policy, || retained.signed_area())?.into_value()
+            )
+            .len(),
+        );
+        let roles = crate::support::under(&policy, || retained.loop_roles())?.into_value();
+        overlap_checksum ^= black_box(roles.len());
+        overlap_checksum ^= black_box(usize::from(
+            crate::support::under(&policy, || retained.filled_area())?
+                .into_value()
+                .is_some(),
+        ));
     }
     let elapsed = started.elapsed();
     println!(
@@ -545,8 +555,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut conic_checksum = 0_usize;
     for _ in 0..iterations {
         let region = even_odd_region(std::slice::from_ref(&conic_path), &policy)?;
-        conic_checksum ^=
-            black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
+        conic_checksum ^= black_box(
+            format!(
+                "{:?}",
+                crate::support::under(&policy, || region.signed_area())?.into_value()
+            )
+            .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -577,5 +592,8 @@ fn even_odd_region(
     paths: &[CurvePath2],
     policy: &CurveContext,
 ) -> Result<CurveRegion2, Box<dyn std::error::Error>> {
-    Ok(CurveRegion2::try_from_boundary_paths(paths, FillRule::EvenOdd, policy)?.into_value())
+    Ok(crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths(paths, FillRule::EvenOdd)
+    })?
+    .into_value())
 }

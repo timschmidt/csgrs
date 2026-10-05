@@ -402,7 +402,7 @@ fn rational_bezier_degree_elevation_preserves_projective_controls_and_poles() {
     let curve = curve();
     let invalid = curve.elevated_to_degree(2).unwrap_err();
     assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);
-    assert_eq!(invalid.family(), CurveFamily2::RationalBezier);
+    assert_eq!(invalid.family(), Some(CurveFamily2::RationalBezier));
 
     let singular = RationalBezier2::try_new(vec![p(0, 0), p(2, 0)], vec![r(1), r(-1)]).unwrap();
     let first = singular.elevated_to_degree(2).unwrap();

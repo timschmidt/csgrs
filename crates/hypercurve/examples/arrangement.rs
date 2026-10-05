@@ -1,7 +1,4 @@
-use hypercurve::{
-    Classification, CurveContext, CurveRegion2, FillRule, LineSeg2, Point2, RegionPointLocation,
-    Segment2,
-};
+use hypercurve::{CurveRegion2, FillRule, LineSeg2, Point2, RegionPointLocation, Segment2};
 use hyperreal::Real;
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -13,7 +10,6 @@ fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> hypercurve::Curve
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let policy = CurveContext::STRICT;
     let boundary = vec![
         line(0, 0, 4, 0)?,
         line(4, 0, 4, 4)?,
@@ -24,15 +20,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let region = CurveRegion2::arrange_unordered_segments(
         &boundary.into_iter().map(Segment2::Line).collect::<Vec<_>>(),
         FillRule::NonZero,
-        &policy,
-    )?
-    .into_value();
-    assert!(matches!(
-        region
-            .classify_point(&p(2, 2).into(), &policy)?
-            .into_value(),
-        Classification::Decided(RegionPointLocation::Inside)
-    ));
+    )?;
+    assert_eq!(
+        region.classify_point(&p(2, 2).into())?,
+        RegionPointLocation::Inside
+    );
 
     Ok(())
 }

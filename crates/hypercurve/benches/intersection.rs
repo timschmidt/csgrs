@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -202,15 +204,20 @@ fn bench_sparse_region_events(
         contours.push(rectangle(x, 0, x + 4, 4));
     }
     let policy = CurveContext::STRICT;
-    let region = CurveRegion2::try_from_native_material_contours(contours, &policy)?.into_value();
-    let cutter =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(12, -1, 18, 5)], &policy)?
-            .into_value();
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(contours)
+    })?
+    .into_value();
+    let cutter = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(12, -1, 18, 5)])
+    })?
+    .into_value();
     let started = Instant::now();
     let mut total_pairs = 0_usize;
 
     for _ in 0..iterations {
-        let evidence = region.intersect_region(&cutter, &policy)?.into_value();
+        let evidence =
+            crate::support::under(&policy, || region.intersect_region(&cutter))?.into_value();
         if !evidence.is_complete() {
             panic!("sparse unified-region benchmark returned incomplete evidence");
         }

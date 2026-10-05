@@ -2419,7 +2419,7 @@ fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
         .expect("valid source rectangle");
 
         let intersections = chord_region
-            .intersect_region(&source_region, &policy)
+            .intersect_region_with_policy(&source_region, &policy)
             .expect("collinear chord/source intersection must complete")
             .into_value();
         assert!(intersections.is_complete(), "{intersections:?}");
@@ -2436,7 +2436,7 @@ fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
                 .is_algebraic_chord()
         );
 
-        let booleans = chord_region.boolean_regions(&source_region, &policy);
+        let booleans = chord_region.boolean_regions_with_policy(&source_region, &policy);
         assert!(
             booleans.is_ok(),
             "collinear chord overlap must enter all four Booleans: {booleans:?}"
@@ -4324,7 +4324,7 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
         let first_region = region(first_loop);
         let second_region = region(second_loop);
         let intersections = first_region
-            .intersect_region(&second_region, &policy)
+            .intersect_region_with_policy(&second_region, &policy)
             .expect("public strict interior chord intersection must complete");
         assert_eq!(intersections.certainty, crate::CurveCertainty::Certified);
         assert!(intersections.value.is_complete(), "{intersections:?}");
@@ -4368,7 +4368,7 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
             built.is_ok(),
             "strict interior chord contact must build Boolean regions: {built:?}"
         );
-        let booleans = first_region.boolean_regions(&second_region, &policy);
+        let booleans = first_region.boolean_regions_with_policy(&second_region, &policy);
         assert!(
             booleans.is_ok(),
             "strict interior algebraic chord crossing must traverse all Booleans: {booleans:?}"
@@ -4398,7 +4398,7 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
                 replay_topology.is_ok(),
                 "{name} correlated-output split topology must replay: {replay_topology:?}"
             );
-            let replay = result.regularized_region(&policy);
+            let replay = result.regularized_region_with_policy(&policy);
             assert!(
                 replay.is_ok(),
                 "{name} must remain an authoritative Boolean input after correlated chord splits: {replay:?}"
@@ -4423,7 +4423,9 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
         )
         .expect("far exact triangle must close");
         let far_region = region(far_loop);
-        let replay_boolean = booleans.xor().boolean_regions(&far_region, &policy);
+        let replay_boolean = booleans
+            .xor()
+            .boolean_regions_with_policy(&far_region, &policy);
         assert!(
             replay_boolean.is_ok(),
             "a correlated Boolean output must remain usable against a disjoint exact region: {replay_boolean:?}"
@@ -4455,7 +4457,9 @@ fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
             contained_topology.is_ok(),
             "contained correlated topology must classify: {contained_topology:?}"
         );
-        let contained_replay = booleans.xor().boolean_regions(&enclosing_region, &policy);
+        let contained_replay = booleans
+            .xor()
+            .boolean_regions_with_policy(&enclosing_region, &policy);
         assert!(
             contained_replay.is_ok(),
             "a correlated Boolean output must remain classifiable inside an exact region: {contained_replay:?}"
@@ -4606,7 +4610,7 @@ fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {
         assert_eq!(contact_count, 4);
 
         let intersections = chord_region
-            .intersect_region(&source_region, &policy)
+            .intersect_region_with_policy(&source_region, &policy)
             .expect("the retraced spur must cancel from the filled boundary");
         assert_eq!(
             intersections.certainty,
@@ -4617,12 +4621,14 @@ fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {
         assert!(intersections.is_complete(), "{intersections:?}");
         assert!(intersections.overlaps().is_empty(), "{intersections:?}");
         assert!(intersections.contacts().is_empty(), "{intersections:?}");
-        let normalized = source_region.regularized_region(&policy).unwrap();
+        let normalized = source_region
+            .regularized_region_with_policy(&policy)
+            .unwrap();
         assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
         assert_eq!(normalized.value.boundary_loops().len(), 1);
         assert_eq!(normalized.value.boundary_loops()[0].fragments().len(), 4);
         let intersection = chord_region
-            .boolean_region(&source_region, BooleanOp::Intersection, &policy)
+            .boolean_region_with_policy(&source_region, BooleanOp::Intersection, &policy)
             .unwrap();
         assert_eq!(intersection.certainty, crate::CurveCertainty::Certified);
         assert!(intersection.value.is_empty());
@@ -4761,7 +4767,7 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                     }
                     let path = CurvePath2::try_new(curves).unwrap();
                     let mut region = certified(
-                        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
                             &[path],
                             &[CurveRegionLoopRole::Material],
                             &[FillRule::NonZero],
@@ -4770,7 +4776,7 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                         .unwrap(),
                     );
                     for generation in 0..2 {
-                        region = certified(region.regularized_region(&policy).unwrap_or_else(|error| {
+                        region = certified(region.regularized_region_with_policy(&policy).unwrap_or_else(|error| {
                             panic!("finite={finite} elevated={elevated} reversed={reversed} generation={generation}: {error:?}")
                         }));
                         for (point, location) in [
@@ -4786,15 +4792,18 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                             assert_eq!(
                                 certified(
                                     region
-                                        .classify_point(&point.clone().into(), &policy)
+                                        .classify_point_with_policy(&point.clone().into(), &policy)
                                         .unwrap()
                                 ),
                                 Classification::Decided(location)
                             );
                         }
-                        let sides =
-                            decided(certified(region.filled_side_is_left(&policy).unwrap()));
-                        let paths = decided(certified(region.boundary_paths(&policy).unwrap()));
+                        let sides = decided(certified(
+                            region.filled_side_is_left_with_policy(&policy).unwrap(),
+                        ));
+                        let paths = decided(certified(
+                            region.boundary_paths_with_policy(&policy).unwrap(),
+                        ));
                         let mut checked = 0;
                         // Verify the actual owned side at the leftmost regular point.
                         // Selected cuts need no scalar reconstruction to locate it.
@@ -4841,7 +4850,10 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                                         assert_eq!(
                                             certified(
                                                 region
-                                                    .classify_point(&sample.clone().into(), &policy)
+                                                    .classify_point_with_policy(
+                                                        &sample.clone().into(),
+                                                        &policy
+                                                    )
                                                     .unwrap()
                                             ),
                                             Classification::Decided(expected),
@@ -4854,7 +4866,7 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                         assert_eq!(checked, 1);
                         region = certified(
                             region
-                                .boolean_region(&region, BooleanOp::Union, &policy)
+                                .boolean_region_with_policy(&region, BooleanOp::Union, &policy)
                                 .unwrap(),
                         );
                     }
@@ -4984,7 +4996,7 @@ fn regularization_orders_all_branches_at_a_pinched_algebraic_corner() {
                     }),
                 Classification::Decided((vec![if reversed { -1 } else { 1 }], Inside))
             );
-            let normalized = raw.regularized_region(&policy).unwrap();
+            let normalized = raw.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
             let normalized = normalized.value;
             for (point, expected) in [
@@ -4995,19 +5007,21 @@ fn regularization_orders_all_branches_at_a_pinched_algebraic_corner() {
                 (Point2::from_values(0, 0), Boundary),
             ] {
                 let actual = normalized
-                    .classify_point(&point.clone().into(), &policy)
+                    .classify_point_with_policy(&point.clone().into(), &policy)
                     .unwrap();
                 assert_eq!(actual.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(actual.value, Classification::Decided(expected));
             }
-            let repeated = normalized.boolean_regions(&normalized, &policy).unwrap();
+            let repeated = normalized
+                .boolean_regions_with_policy(&normalized, &policy)
+                .unwrap();
             assert_eq!(repeated.certainty, crate::CurveCertainty::Certified);
             assert!(repeated.value.difference().is_empty());
             assert!(repeated.value.xor().is_empty());
             for result in [repeated.value.union(), repeated.value.intersection()] {
                 assert_eq!(
                     result
-                        .classify_point(&Point2::new(q(1, 2), q(3, 10)).into(), &policy)
+                        .classify_point_with_policy(&Point2::new(q(1, 2), q(3, 10)).into(), &policy)
                         .unwrap()
                         .value,
                     Classification::Decided(Inside)
@@ -5178,7 +5192,7 @@ fn regularization_removes_symmetric_polynomial_and_rational_retracing() {
                 vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
-            let normalized = region.regularized_region(&policy).unwrap();
+            let normalized = region.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
             assert!(normalized.value.is_empty());
         }
@@ -5729,7 +5743,7 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
         let curved_cap = |control_y: i8| {
             let left = Point2::from_values(-10, -10);
             let right = Point2::from_values(10, -10);
-            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
                 &[CurvePath2::try_new(vec![
                     Curve2::from(LineSeg2::try_new(left.clone(), right.clone()).unwrap()),
                     Curve2::from(QuadraticBezier2::new(
@@ -5785,27 +5799,28 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
             parameter.clone(),
             &policy,
         );
-        let parabola_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[CurvePath2::try_new(vec![
-                Curve2::from(parabola),
-                Curve2::from(
-                    LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(0, 1))
-                        .unwrap(),
-                ),
-                Curve2::from(
-                    LineSeg2::try_new(Point2::from_values(0, 1), Point2::from_values(0, 0))
-                        .unwrap(),
-                ),
-            ])
-            .unwrap()],
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+        let parabola_region =
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
+                &[CurvePath2::try_new(vec![
+                    Curve2::from(parabola),
+                    Curve2::from(
+                        LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(0, 1))
+                            .unwrap(),
+                    ),
+                    Curve2::from(
+                        LineSeg2::try_new(Point2::from_values(0, 1), Point2::from_values(0, 0))
+                            .unwrap(),
+                    ),
+                ])
+                .unwrap()],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
         let parabola_classification = parabola_region
-            .classify_point(&parabola_boundary.clone().into(), &policy)
+            .classify_point_with_policy(&parabola_boundary.clone().into(), &policy)
             .unwrap();
         assert_eq!(
             parabola_classification.certainty,
@@ -5824,24 +5839,27 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
         let lower_right = Point2::from_values(2, -1);
         let upper_right = Point2::from_values(2, 1);
         let upper_left = Point2::from_values(-2, 1);
-        let dyadic_crossing_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[CurvePath2::try_new(vec![
-                Curve2::from(LineSeg2::try_new(lower_left.clone(), lower_right.clone()).unwrap()),
-                Curve2::from(QuadraticBezier2::new(
-                    lower_right,
-                    Point2::from_values(0, 0),
-                    upper_right.clone(),
-                )),
-                Curve2::from(LineSeg2::try_new(upper_right, upper_left.clone()).unwrap()),
-                Curve2::from(LineSeg2::try_new(upper_left, lower_left).unwrap()),
-            ])
-            .unwrap()],
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+        let dyadic_crossing_region =
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
+                &[CurvePath2::try_new(vec![
+                    Curve2::from(
+                        LineSeg2::try_new(lower_left.clone(), lower_right.clone()).unwrap(),
+                    ),
+                    Curve2::from(QuadraticBezier2::new(
+                        lower_right,
+                        Point2::from_values(0, 0),
+                        upper_right.clone(),
+                    )),
+                    Curve2::from(LineSeg2::try_new(upper_right, upper_left.clone()).unwrap()),
+                    Curve2::from(LineSeg2::try_new(upper_left, lower_left).unwrap()),
+                ])
+                .unwrap()],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
         assert_eq!(
             dyadic_crossing_region
                 .classify_algebraic_point_off_boundary_raw(&dyadic_ray_point, &policy)
@@ -5853,7 +5871,7 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
         let tangent_end = Point2::new(Real::from(2_i8), &ninth * Real::from(4_i8));
         let tangent_upper_right = Point2::new(Real::from(3_i8), &ninth * Real::from(4_i8));
         let tangent_lower_right = Point2::new(Real::from(3_i8), ninth.clone());
-        let tangent_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        let tangent_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
             &[CurvePath2::try_new(vec![
                 Curve2::from(QuadraticBezier2::new(
                     tangent_start.clone(),
@@ -6413,12 +6431,12 @@ fn selected_parallel_arrangement_splits_interior_cusps() {
                 cusp_endpoint_visits, 4,
                 "both cusp branches retain their endpoint evidence"
             );
-            let normalized = region.regularized_region(&policy).unwrap();
+            let normalized = region.regularized_region_with_policy(&policy).unwrap();
             assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
             assert!(!normalized.value.is_empty());
             let expanded = normalized
                 .value
-                .offset(
+                .offset_with_policy(
                     (Real::one() / Real::from(64)).unwrap(),
                     &crate::OffsetCornerStyle2::Round,
                     &policy,
@@ -6616,7 +6634,7 @@ fn square_region(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> CurveRegion2 {
             )
         })
         .collect();
-    CurveRegion2::try_from_boundary_paths(
+    CurveRegion2::try_from_boundary_paths_with_policy(
         &[CurvePath2::try_new(curves).unwrap()],
         crate::FillRule::EvenOdd,
         &CurveContext::STRICT,
@@ -6804,7 +6822,9 @@ fn retained_aabb_candidates_match_cartesian_pairs_in_authored_order() {
                 .unwrap()
             })
             .collect();
-        let result = CurveRegion2::try_from_native_contours(contours, Vec::new(), policy).unwrap();
+        let result =
+            CurveRegion2::try_from_native_contours_with_policy(contours, Vec::new(), policy)
+                .unwrap();
         assert_eq!(result.certainty, crate::CurveCertainty::Certified);
         result.into_value()
     };
@@ -6881,7 +6901,9 @@ fn retained_aabb_candidates_match_cartesian_pairs_in_authored_order() {
                 .collect::<Vec<_>>(),
             complete_unary
         );
-        let evidence = first.intersect_region(&second, &policy).unwrap();
+        let evidence = first
+            .intersect_region_with_policy(&second, &policy)
+            .unwrap();
         assert_eq!(evidence.certainty, crate::CurveCertainty::Certified);
         assert!(evidence.value.is_complete());
         assert_eq!(evidence.value.overlaps().len(), 16);
@@ -6915,8 +6937,18 @@ fn native_region_fast_path_matches_forced_general_arrangement() {
     for (operation, fast_region) in operations.into_iter().zip(&fast) {
         let general_region = general.region(operation);
         assert_eq!(
-            decided(fast_region.signed_area(&policy).unwrap().into_value()),
-            decided(general_region.signed_area(&policy).unwrap().into_value())
+            decided(
+                fast_region
+                    .signed_area_with_policy(&policy)
+                    .unwrap()
+                    .into_value()
+            ),
+            decided(
+                general_region
+                    .signed_area_with_policy(&policy)
+                    .unwrap()
+                    .into_value()
+            )
         );
         for x_numerator in -2_i8..=14 {
             for y_numerator in -2_i8..=10 {
@@ -6926,11 +6958,11 @@ fn native_region_fast_path_matches_forced_general_arrangement() {
                 );
                 assert_eq!(
                     fast_region
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     general_region
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     "forced-general {operation:?} differs at {point:?}"

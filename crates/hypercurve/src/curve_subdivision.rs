@@ -3451,10 +3451,13 @@ mod tests {
                 Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(closing)),
             ])
             .unwrap();
-            let region =
-                CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy)
-                    .unwrap()
-                    .value;
+            let region = CurveRegion2::try_from_boundary_paths_with_policy(
+                &[path],
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .value;
             let corners = [p(2, 0), p(4, 0), p(4, 3), p(2, 3)];
             let cutter = CurvePath2::try_new(
                 (0..4)
@@ -3470,11 +3473,16 @@ mod tests {
                     .collect(),
             )
             .unwrap();
-            let cutter =
-                CurveRegion2::try_from_boundary_paths(&[cutter], crate::FillRule::EvenOdd, &policy)
-                    .unwrap()
-                    .value;
-            let result = region.boolean_regions(&cutter, &policy).unwrap();
+            let cutter = CurveRegion2::try_from_boundary_paths_with_policy(
+                &[cutter],
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let result = region
+                .boolean_regions_with_policy(&cutter, &policy)
+                .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             for (region, expected) in [
                 (result.value.union(), [true, true, true, false]),
@@ -3492,7 +3500,7 @@ mod tests {
                 .zip(expected)
                 {
                     let actual = region
-                        .classify_point(&query.clone().into(), &policy)
+                        .classify_point_with_policy(&query.clone().into(), &policy)
                         .unwrap();
                     assert_eq!(actual.certainty, CurveCertainty::Certified);
                     assert_eq!(
@@ -3510,7 +3518,7 @@ mod tests {
             let expanded = result
                 .value
                 .difference()
-                .offset(q(1, 16), &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(q(1, 16), &OffsetCornerStyle2::Round, &policy)
                 .unwrap_or_else(|error| {
                     #[cfg(feature = "dispatch-trace")]
                     for entry in hyperreal::dispatch_trace::take()
@@ -3522,7 +3530,10 @@ mod tests {
                     panic!("offset after selected subdivision and Boolean: {error:?}");
                 });
             assert_eq!(expanded.certainty, CurveCertainty::Certified);
-            let final_result = expanded.value.boolean_regions(&cutter, &policy).unwrap();
+            let final_result = expanded
+                .value
+                .boolean_regions_with_policy(&cutter, &policy)
+                .unwrap();
             assert_eq!(final_result.certainty, CurveCertainty::Certified);
             for (query, expected) in [
                 (Point2::new(q(65, 32), q(3, 2)), RegionPointLocation::Inside),
@@ -3531,7 +3542,7 @@ mod tests {
                 let actual = final_result
                     .value
                     .intersection()
-                    .classify_point(&query.clone().into(), &policy)
+                    .classify_point_with_policy(&query.clone().into(), &policy)
                     .unwrap();
                 assert_eq!(actual.certainty, CurveCertainty::Certified);
                 assert_eq!(actual.value, Classification::Decided(expected));

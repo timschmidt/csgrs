@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -88,13 +90,9 @@ fn bench_curve_region_path_stroke(iterations: u32) -> CurveResult<()> {
     let started = Instant::now();
     let mut total_loops = 0_usize;
     for _ in 0..iterations {
-        let stroke = CurveRegion2::stroke_path(
-            &path,
-            s(1),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Round,
-            &policy,
-        )
+        let stroke = crate::support::under(&policy, || {
+            CurveRegion2::stroke_path(&path, s(1), &OffsetCornerStyle2::Round, OffsetCap::Round)
+        })
         .expect("exact path stroke completes");
         total_loops += black_box(stroke.value.boundary_loops().len());
     }
@@ -678,12 +676,13 @@ fn curve_region_bezier_offset_fixture() -> Result<CurveRegion2, Box<dyn std::err
         Curve2::from(QuadraticBezier2::new(p(-1, 0), p(-1, -1), p(0, -1))),
         Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
     ])?;
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[source_path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        &CurveContext::STRICT,
-    )?
+    Ok(crate::support::under(&CurveContext::STRICT, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[source_path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })?
     .into_value())
 }
 
@@ -696,9 +695,10 @@ fn bench_curve_region_bezier_exact_offset(
     let started = Instant::now();
     let mut loops = 0_usize;
     for _ in 0..iterations {
-        let result = source
-            .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
-            .into_value();
+        let result = crate::support::under(&policy, || {
+            source.offset(q(1, 10), &OffsetCornerStyle2::Round)
+        })?
+        .into_value();
         loops += black_box(result.boundary_loops().len());
     }
     let elapsed = started.elapsed();
@@ -713,25 +713,30 @@ fn bench_curve_region_repeated_bezier_offset_lanes(
     iterations: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
-    let composed_source = curve_region_bezier_offset_fixture()?
-        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
-        .into_value();
+    let fixture = curve_region_bezier_offset_fixture()?;
+    let composed_source = crate::support::under(&policy, || {
+        fixture.offset(q(1, 10), &OffsetCornerStyle2::Round)
+    })?
+    .into_value();
     let direct_source = curve_region_bezier_offset_fixture()?;
 
-    let composed_check = composed_source
-        .offset(q(1, 5), &OffsetCornerStyle2::Round, &policy)?
-        .into_value();
-    let direct_check = direct_source
-        .offset(q(3, 10), &OffsetCornerStyle2::Round, &policy)?
-        .into_value();
+    let composed_check = crate::support::under(&policy, || {
+        composed_source.offset(q(1, 5), &OffsetCornerStyle2::Round)
+    })?
+    .into_value();
+    let direct_check = crate::support::under(&policy, || {
+        direct_source.offset(q(3, 10), &OffsetCornerStyle2::Round)
+    })?
+    .into_value();
     assert_eq!(composed_check, direct_check);
 
     let started = Instant::now();
     let mut composed_loops = 0_usize;
     for _ in 0..iterations {
-        let result = composed_source
-            .offset(q(1, 5), &OffsetCornerStyle2::Round, &policy)?
-            .into_value();
+        let result = crate::support::under(&policy, || {
+            composed_source.offset(q(1, 5), &OffsetCornerStyle2::Round)
+        })?
+        .into_value();
         composed_loops += black_box(result.boundary_loops().len());
     }
     let composed_elapsed = started.elapsed();
@@ -743,9 +748,10 @@ fn bench_curve_region_repeated_bezier_offset_lanes(
     let started = Instant::now();
     let mut direct_loops = 0_usize;
     for _ in 0..iterations {
-        let result = direct_source
-            .offset(q(3, 10), &OffsetCornerStyle2::Round, &policy)?
-            .into_value();
+        let result = crate::support::under(&policy, || {
+            direct_source.offset(q(3, 10), &OffsetCornerStyle2::Round)
+        })?
+        .into_value();
         direct_loops += black_box(result.boundary_loops().len());
     }
     let direct_elapsed = started.elapsed();
@@ -816,12 +822,13 @@ fn curve_region_algebraic_partition_fixture(
     if cyclic_seam {
         curves.rotate_left(1);
     }
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[CurvePath2::try_new(curves)?],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &policy,
-    )?
+    Ok(crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[CurvePath2::try_new(curves)?],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })?
     .into_value())
 }
 
@@ -833,12 +840,14 @@ fn bench_curve_region_algebraic_partition_offset_lanes(
     let policy = CurveContext::STRICT;
     let partitioned = curve_region_algebraic_partition_fixture(true, cyclic_seam)?;
     let unsplit = curve_region_algebraic_partition_fixture(false, false)?;
-    let partitioned_check = partitioned
-        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
-        .into_value();
-    let unsplit_check = unsplit
-        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
-        .into_value();
+    let partitioned_check = crate::support::under(&policy, || {
+        partitioned.offset(q(1, 10), &OffsetCornerStyle2::Round)
+    })?
+    .into_value();
+    let unsplit_check = crate::support::under(&policy, || {
+        unsplit.offset(q(1, 10), &OffsetCornerStyle2::Round)
+    })?
+    .into_value();
     assert_eq!(partitioned_check, unsplit_check);
 
     let partitioned_name = if cyclic_seam {
@@ -856,9 +865,10 @@ fn bench_curve_region_algebraic_partition_offset_lanes(
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let result = source
-                .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
-                .into_value();
+            let result = crate::support::under(&policy, || {
+                source.offset(q(1, 10), &OffsetCornerStyle2::Round)
+            })?
+            .into_value();
             loops += black_box(result.boundary_loops().len());
         }
         let elapsed = started.elapsed();

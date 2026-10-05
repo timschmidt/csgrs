@@ -1,7 +1,7 @@
+mod support;
 use hypercurve::{
-    BooleanOp, Classification, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, RationalBezier2, Real,
-    RegionPointLocation,
+    BooleanOp, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    FillRule, LineSeg2, OffsetCornerStyle2, Point2, RationalBezier2, Real, RegionPointLocation,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -39,18 +39,13 @@ fn rational_convex_cap() -> CurveRegion2 {
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 #[test]
 fn normalized_rational_cap_round_offset_retains_exact_unit_directions() {
-    let cap = rational_convex_cap()
-        .regularized_region(&CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let cap = rational_convex_cap().regularized_region().unwrap();
     assert_cap_round_offset(&cap);
 }
 
@@ -58,20 +53,19 @@ fn normalized_rational_cap_round_offset_retains_exact_unit_directions() {
 fn authored_rational_cap_offset_does_not_require_a_signed_area_representation() {
     let cap = rational_convex_cap();
     assert_eq!(
-        cap.signed_area(&CurveContext::STRICT).unwrap().value,
-        Classification::Decided(None),
+        crate::support::under(&CurveContext::STRICT, || cap.signed_area())
+            .unwrap()
+            .value,
+        None,
     );
     assert_cap_round_offset(&cap);
 }
 
 fn assert_cap_round_offset(cap: &CurveRegion2) {
-    let offset = cap
-        .offset(
-            ratio(1, 10),
-            &OffsetCornerStyle2::Round,
-            &CurveContext::STRICT,
-        )
-        .expect("a convex rational cap has an exactly representable round offset");
+    let offset = crate::support::under(&CurveContext::STRICT, || {
+        cap.offset(ratio(1, 10), &OffsetCornerStyle2::Round)
+    })
+    .expect("a convex rational cap has an exactly representable round offset");
     assert_eq!(offset.certainty, CurveCertainty::Certified);
     assert_eq!(offset.value.boundary_loops().len(), 1);
 
@@ -88,12 +82,12 @@ fn assert_cap_round_offset(cap: &CurveRegion2) {
         ),
         (point(2, 3), RegionPointLocation::Outside),
     ] {
-        let location = offset
-            .value
-            .classify_point(&sample.clone().into(), &CurveContext::STRICT)
-            .unwrap();
+        let location = crate::support::under(&CurveContext::STRICT, || {
+            offset.value.classify_point(&sample.clone().into())
+        })
+        .unwrap();
         assert_eq!(location.certainty, CurveCertainty::Certified);
-        assert_eq!(location.value, Classification::Decided(expected));
+        assert_eq!(location.value, expected);
     }
 }
 
@@ -120,38 +114,31 @@ fn overlapping_material_rectangles() -> CurveRegion2 {
         &[rectangle(0, 3), rectangle(2, 5)],
         &[CurveRegionLoopRole::Material; 2],
         &[FillRule::NonZero; 2],
-        &CurveContext::STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 #[test]
 fn zero_offset_regularizes_overlapping_authored_material() {
     let region = overlapping_material_rectangles();
-    let result = region
-        .offset(
-            Real::zero(),
-            &OffsetCornerStyle2::Round,
-            &CurveContext::STRICT,
-        )
-        .unwrap();
+    let result = crate::support::under(&CurveContext::STRICT, || {
+        region.offset(Real::zero(), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
     assert_eq!(result.certainty, CurveCertainty::Certified);
     assert_eq!(result.value.boundary_loops().len(), 1);
     assert_eq!(
-        result
-            .value
-            .filled_area(&CurveContext::STRICT)
+        crate::support::under(&CurveContext::STRICT, || result.value.filled_area())
             .unwrap()
             .value,
-        Classification::Decided(Some(Real::from(10))),
+        Some(Real::from(10)),
     );
 
     #[cfg(feature = "dispatch-trace")]
     {
         hyperreal::dispatch_trace::reset();
         let replayed = hyperreal::dispatch_trace::with_recording(|| {
-            result.value.regularized_region(&CurveContext::STRICT)
+            crate::support::under(&CurveContext::STRICT, || result.value.regularized_region())
         })
         .unwrap();
         let trace = hyperreal::dispatch_trace::take_trace();
@@ -174,7 +161,7 @@ fn identical_and_empty_booleans_regularize_authored_winding() {
         (&region, &empty, [true, false, true, true]),
         (&empty, &region, [true, false, false, true]),
     ] {
-        let batch = first.boolean_regions(second, &policy).unwrap();
+        let batch = crate::support::under(&policy, || first.boolean_regions(second)).unwrap();
         assert_eq!(batch.certainty, CurveCertainty::Certified);
         for ((operation, result), nonempty) in [
             (BooleanOp::Union, batch.value.union()),
@@ -185,24 +172,26 @@ fn identical_and_empty_booleans_regularize_authored_winding() {
         .into_iter()
         .zip(nonempty_results)
         {
-            let single = first.boolean_region(second, operation, &policy).unwrap();
+            let single =
+                crate::support::under(&policy, || first.boolean_region(second, operation)).unwrap();
             assert_eq!(single.certainty, CurveCertainty::Certified);
             for result in [result, &single.value] {
                 assert_eq!(result.boundary_loops().len(), usize::from(nonempty));
                 assert_eq!(
-                    result.filled_area(&policy).unwrap().value,
-                    Classification::Decided(Some(Real::from(if nonempty { 10 } else { 0 }))),
-                );
-                assert_eq!(
-                    result
-                        .classify_point(&point(2, 1).into(), &policy)
+                    crate::support::under(&policy, || result.filled_area())
                         .unwrap()
                         .value,
-                    Classification::Decided(if nonempty {
+                    Some(Real::from(if nonempty { 10 } else { 0 })),
+                );
+                assert_eq!(
+                    crate::support::under(&policy, || result.classify_point(&point(2, 1).into()))
+                        .unwrap()
+                        .value,
+                    if nonempty {
                         RegionPointLocation::Inside
                     } else {
                         RegionPointLocation::Outside
-                    }),
+                    },
                 );
             }
         }
@@ -237,10 +226,8 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let sample = Point2::new(ratio(1, 2), ratio(3, 4));
     let source_witness = Point2::new(ratio(1, 3), ratio(49, 81));
     // This exact boundary witness is strictly less than 1/4 from sample:
@@ -250,23 +237,20 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
         ratio(5125, 104976)
     );
     assert_eq!(
-        region
-            .classify_point(&source_witness.clone().into(), &CurveContext::STRICT)
-            .unwrap()
-            .value,
-        Classification::Decided(RegionPointLocation::Boundary),
+        crate::support::under(&CurveContext::STRICT, || region
+            .classify_point(&source_witness.clone().into()))
+        .unwrap()
+        .value,
+        RegionPointLocation::Boundary,
     );
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
     #[cfg(feature = "dispatch-trace")]
     let _trace_guard = hyperreal::dispatch_trace::recording_scope();
-    let offset = region
-        .offset(
-            ratio(1, 4),
-            &OffsetCornerStyle2::Round,
-            &CurveContext::STRICT,
-        )
-        .unwrap();
+    let offset = crate::support::under(&CurveContext::STRICT, || {
+        region.offset(ratio(1, 4), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
     assert_eq!(offset.certainty, CurveCertainty::Certified);
     assert_eq!(offset.value.boundary_loops().len(), 1);
     #[cfg(feature = "dispatch-trace")]
@@ -285,12 +269,12 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
         Point2::new(ratio(1, 2), ratio(76, 100)),
     ] {
         assert_eq!(
-            offset
+            crate::support::under(&CurveContext::STRICT, || offset
                 .value
-                .classify_point(&sample.clone().into(), &CurveContext::STRICT)
-                .unwrap()
-                .value,
-            Classification::Decided(RegionPointLocation::Inside),
+                .classify_point(&sample.clone().into()))
+            .unwrap()
+            .value,
+            RegionPointLocation::Inside,
             "the raw fold and both incident faces belong to the regularized dilation",
         );
     }
@@ -321,10 +305,8 @@ fn authored_rational_boolean_operands_do_not_require_signed_area() {
         &[stripe_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let samples = [
         (Point2::new(ratio(5, 2), ratio(1, 2)), true, true),
         (Point2::new(ratio(5, 2), ratio(-1, 2)), false, true),
@@ -332,8 +314,7 @@ fn authored_rational_boolean_operands_do_not_require_signed_area() {
         (point(6, 6), false, false),
     ];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let batch = cap
-            .boolean_regions(&stripe, &policy)
+        let batch = crate::support::under(&policy, || cap.boolean_regions(&stripe))
             .expect("an exact Boolean boundary does not require a Green integral");
         assert_eq!(batch.certainty, CurveCertainty::Certified);
         for (operation, result) in [
@@ -342,7 +323,8 @@ fn authored_rational_boolean_operands_do_not_require_signed_area() {
             (BooleanOp::Difference, batch.value.difference()),
             (BooleanOp::Xor, batch.value.xor()),
         ] {
-            let single = cap.boolean_region(&stripe, operation, &policy).unwrap();
+            let single =
+                crate::support::under(&policy, || cap.boolean_region(&stripe, operation)).unwrap();
             assert_eq!(single.certainty, CurveCertainty::Certified);
             for (sample, in_cap, in_stripe) in &samples {
                 let inside = match operation {
@@ -358,11 +340,11 @@ fn authored_rational_boolean_operands_do_not_require_signed_area() {
                 };
                 for result in [result, &single.value] {
                     assert_eq!(
-                        result
-                            .classify_point(&sample.clone().into(), &policy)
-                            .unwrap()
-                            .value,
-                        Classification::Decided(expected),
+                        crate::support::under(&policy, || result
+                            .classify_point(&sample.clone().into()))
+                        .unwrap()
+                        .value,
+                        expected,
                         "{operation:?}, sample {sample:?}",
                     );
                 }

@@ -1,6 +1,7 @@
+mod support;
 use hypercurve::{
     Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveRegion2,
-    CurveString2, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
+    CurveString2, LineSeg2, Point2, Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -160,33 +161,34 @@ fn region_aabb_ignores_holes_outside_material() {
         BulgeVertex2::new(p(20, 6), s(0)),
     ])
     .unwrap();
-    let region = CurveRegion2::try_from_native_contours(vec![material], vec![hole], &policy())
-        .unwrap()
-        .into_value();
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_contours(vec![material], vec![hole])
+    })
+    .unwrap()
+    .into_value();
 
-    let Classification::Decided(bbox) = region.bounds(&policy()).unwrap().into_value() else {
-        panic!("region bbox should be decided");
-    };
+    let bbox = crate::support::under(&policy(), || region.bounds())
+        .unwrap()
+        .into_value()
+        .expect("a nonempty region has bounds");
     assert_bbox(&bbox, p(0, 0), p(10, 10));
     for point in [p(20, 4), p(22, 4)] {
         assert_eq!(
-            region
-                .classify_point(&point.clone().into(), &policy())
+            crate::support::under(&policy(), || region.classify_point(&point.clone().into()))
                 .unwrap()
                 .into_value(),
-            Classification::Decided(hypercurve::RegionPointLocation::Outside)
+            hypercurve::RegionPointLocation::Outside
         );
     }
 }
 
 #[test]
-fn empty_region_aabb_is_explicitly_unsupported() {
+fn empty_region_has_no_aabb() {
     assert_eq!(
-        CurveRegion2::empty()
-            .bounds(&policy())
+        crate::support::under(&policy(), || CurveRegion2::empty().bounds())
             .unwrap()
             .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        None
     );
 }
 

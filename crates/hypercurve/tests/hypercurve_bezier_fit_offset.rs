@@ -1,5 +1,4 @@
 mod support;
-
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierLineImageFitRelation,
     BezierParallelApproximationCurve2, BezierParallelVerificationOptions, BezierParameter2,
@@ -1490,40 +1489,43 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
             if reversed {
                 path = path.reversed(&policy).unwrap().into_value();
             }
-            let original = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                &[path],
-                &[CurveRegionLoopRole::Material],
-                &[FillRule::NonZero],
-                &policy,
-            )
+            let original = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[path],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                )
+            })
             .unwrap();
             assert_eq!(original.certainty, hypercurve::CurveCertainty::Certified);
             let original = original.into_value();
-            let first = original
-                .offset(q(1, 20), &OffsetCornerStyle2::Round, &policy)
-                .unwrap();
+            let first = crate::support::under(&policy, || {
+                original.offset(q(1, 20), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             assert_eq!(first.certainty, hypercurve::CurveCertainty::Certified);
-            let second = first
-                .value
-                .offset(q(1, 40), &OffsetCornerStyle2::Round, &policy)
-                .unwrap();
+            let second = crate::support::under(&policy, || {
+                first.value.offset(q(1, 40), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             assert_eq!(second.certainty, hypercurve::CurveCertainty::Certified);
-            let direct = original
-                .offset(q(3, 40), &OffsetCornerStyle2::Round, &policy)
-                .unwrap();
+            let direct = crate::support::under(&policy, || {
+                original.offset(q(3, 40), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             assert_eq!(direct.certainty, hypercurve::CurveCertainty::Certified);
-            let difference = second
-                .value
-                .boolean_region(&direct.value, hypercurve::BooleanOp::Xor, &policy)
-                .unwrap();
+            let difference = crate::support::under(&policy, || {
+                second
+                    .value
+                    .boolean_region(&direct.value, hypercurve::BooleanOp::Xor)
+            })
+            .unwrap();
             assert_eq!(difference.certainty, hypercurve::CurveCertainty::Certified);
             assert!(difference.value.is_empty());
 
-            let paths = second.value.boundary_paths(&policy).unwrap();
+            let paths = crate::support::under(&policy, || second.value.boundary_paths()).unwrap();
             assert_eq!(paths.certainty, hypercurve::CurveCertainty::Certified);
-            let Classification::Decided(paths) = paths.into_value() else {
-                panic!("the exact offset boundary must remain a path")
-            };
+            let paths = paths.value;
             assert_eq!(paths.len(), 1);
             assert!(
                 paths[0]
@@ -1531,12 +1533,13 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
                     .iter()
                     .any(|curve| curve.family() == hypercurve::CurveFamily2::AnalyticParallel)
             );
-            let restored = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                &paths,
-                &[CurveRegionLoopRole::Material],
-                &[FillRule::NonZero],
-                &policy,
-            )
+            let restored = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &paths,
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                )
+            })
             .unwrap();
             assert_eq!(restored.certainty, hypercurve::CurveCertainty::Certified);
             for (point, expected) in [
@@ -1550,22 +1553,24 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
                     hypercurve::RegionPointLocation::Boundary,
                 ),
             ] {
-                let location = restored
-                    .value
-                    .classify_point(&point.clone().into(), &policy)
-                    .unwrap();
+                let location = crate::support::under(&policy, || {
+                    restored.value.classify_point(&point.clone().into())
+                })
+                .unwrap();
                 assert_eq!(location.certainty, hypercurve::CurveCertainty::Certified);
-                assert_eq!(location.value, Classification::Decided(expected));
+                assert_eq!(location.value, expected);
             }
-            let cancelled = restored
-                .value
-                .offset(q(-3, 40), &OffsetCornerStyle2::Round, &policy)
-                .unwrap();
+            let cancelled = crate::support::under(&policy, || {
+                restored.value.offset(q(-3, 40), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             assert_eq!(cancelled.certainty, hypercurve::CurveCertainty::Certified);
-            let difference = cancelled
-                .value
-                .boolean_region(&original, hypercurve::BooleanOp::Xor, &policy)
-                .unwrap();
+            let difference = crate::support::under(&policy, || {
+                cancelled
+                    .value
+                    .boolean_region(&original, hypercurve::BooleanOp::Xor)
+            })
+            .unwrap();
             assert_eq!(difference.certainty, hypercurve::CurveCertainty::Certified);
             assert!(difference.value.is_empty());
         }
@@ -1580,37 +1585,37 @@ fn stationary_ph_inward_offsets_preserve_sets_through_boundary_paths() {
             if reversed {
                 path = path.reversed(&policy).unwrap().into_value();
             }
-            let original = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                &[path],
-                &[CurveRegionLoopRole::Material],
-                &[FillRule::NonZero],
-                &policy,
-            )
+            let original = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[path],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                )
+            })
             .unwrap();
             assert_eq!(original.certainty, hypercurve::CurveCertainty::Certified);
-            let first = original
-                .value
-                .offset(q(-1, 20), &OffsetCornerStyle2::Round, &policy)
-                .unwrap();
+            let first = crate::support::under(&policy, || {
+                original.value.offset(q(-1, 20), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             assert_eq!(first.certainty, hypercurve::CurveCertainty::Certified);
-            let second = first
-                .value
-                .offset(q(-1, 40), &OffsetCornerStyle2::Round, &policy)
-                .unwrap();
+            let second = crate::support::under(&policy, || {
+                first.value.offset(q(-1, 40), &OffsetCornerStyle2::Round)
+            })
+            .unwrap();
             assert_eq!(second.certainty, hypercurve::CurveCertainty::Certified);
             assert_eq!(second.value.boundary_loops().len(), 1);
-            let paths = second.value.boundary_paths(&policy).unwrap();
+            let paths = crate::support::under(&policy, || second.value.boundary_paths()).unwrap();
             assert_eq!(paths.certainty, hypercurve::CurveCertainty::Certified);
-            let Classification::Decided(paths) = paths.into_value() else {
-                panic!("the inward result must retain an exact boundary path")
-            };
+            let paths = paths.value;
             assert_eq!(paths.len(), 1);
-            let restored = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                &paths,
-                &[CurveRegionLoopRole::Material],
-                &[FillRule::NonZero],
-                &policy,
-            )
+            let restored = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &paths,
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                )
+            })
             .unwrap();
             assert_eq!(restored.certainty, hypercurve::CurveCertainty::Certified);
 
@@ -1646,11 +1651,12 @@ fn stationary_ph_inward_offsets_preserve_sets_through_boundary_paths() {
                         hypercurve::RegionPointLocation::Boundary,
                     ),
                 ] {
-                    let location = region
-                        .classify_point(&point.clone().into(), &policy)
-                        .unwrap();
+                    let location = crate::support::under(&policy, || {
+                        region.classify_point(&point.clone().into())
+                    })
+                    .unwrap();
                     assert_eq!(location.certainty, hypercurve::CurveCertainty::Certified);
-                    assert_eq!(location.value, Classification::Decided(expected));
+                    assert_eq!(location.value, expected);
                 }
             }
         }
@@ -1666,20 +1672,21 @@ fn curve_region_exact_offset_retains_analytic_parallel_arrangement() {
         Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
     ])
     .unwrap();
-    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        &policy(),
-    )
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
     .unwrap()
     .into_value();
-    let result = region
-        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy())
-        .unwrap()
-        .into_value();
-    assert!(!result.boundary_loops().is_empty());
-    assert!(result.has_algebraic_fragments());
+    let result = crate::support::under(&policy(), || {
+        region.offset(q(1, 10), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    assert!(!result.value.boundary_loops().is_empty());
+    assert!(result.value.has_algebraic_fragments());
 }
 
 #[test]
@@ -1691,19 +1698,20 @@ fn curve_region_authored_corner_stays_on_exact_offset_path() {
         Curve2::from(QuadraticBezier2::new(p(0, 2), p(-1, 1), p(0, 0))),
     ])
     .unwrap();
-    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[path],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::EvenOdd],
-        &policy(),
-    )
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
     .unwrap()
     .into_value();
-    let result = region
-        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy())
-        .unwrap()
-        .into_value();
-    assert!(result.has_algebraic_fragments());
+    let result = crate::support::under(&policy(), || {
+        region.offset(q(1, 10), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    assert!(result.value.has_algebraic_fragments());
 }
 
 proptest! {

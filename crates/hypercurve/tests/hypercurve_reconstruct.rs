@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
     PolylineReconstructionOptions, Real, Segment2,
@@ -204,33 +205,34 @@ fn profiles_for_recovery(
     holes: Vec<Contour2>,
     policy: &hypercurve::CurveContext,
 ) -> Vec<hypercurve::FiniteRegionProfile2> {
-    let region = hypercurve::CurveRegion2::try_from_native_contours(material, holes, policy)
-        .unwrap()
-        .into_value();
-    let projection = region
-        .project_to_finite_profiles(
+    let region = crate::support::under(policy, || {
+        hypercurve::CurveRegion2::try_from_native_contours(material, holes)
+    })
+    .unwrap()
+    .into_value();
+    let projection = crate::support::under(policy, || {
+        region.project_to_finite_profiles(
             &hypercurve::FiniteProjectionOptions::try_new(0.01).unwrap(),
-            policy,
         )
-        .unwrap();
-    let hypercurve::Classification::Decided(profiles) = projection.into_value() else {
-        panic!("rectangles have exact finite profiles");
-    };
-    profiles
+    })
+    .unwrap();
+
+    projection.into_value()
 }
 
 fn recover_profiles(
     profiles: &[hypercurve::FiniteRegionProfile2],
     policy: &hypercurve::CurveContext,
 ) -> hypercurve::CurveRegion2 {
-    let outcome = hypercurve::CurveRegion2::recover_from_finite_profiles(
-        profiles,
-        PolylineReconstructionOptions {
-            min_arc_points: 8,
-            ..PolylineReconstructionOptions::DEFAULT
-        },
-        policy,
-    )
+    let outcome = crate::support::under(policy, || {
+        hypercurve::CurveRegion2::recover_from_finite_profiles(
+            profiles,
+            PolylineReconstructionOptions {
+                min_arc_points: 8,
+                ..PolylineReconstructionOptions::DEFAULT
+            },
+        )
+    })
     .unwrap();
     assert_eq!(outcome.certainty, hypercurve::CurveCertainty::Certified);
     outcome.into_value()
@@ -238,7 +240,7 @@ fn recover_profiles(
 
 #[test]
 fn finite_profile_recovery_regularizes_overlaps_before_publication() {
-    use hypercurve::{Classification, CurveContext, OffsetCornerStyle2, RegionPointLocation};
+    use hypercurve::{CurveContext, OffsetCornerStyle2, RegionPointLocation};
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let mut profiles = profiles_for_recovery(
             vec![rectangle_for_recovery(0, 0, 4, 4)],
@@ -256,8 +258,9 @@ fn finite_profile_recovery_regularizes_overlaps_before_publication() {
             }
             let recovered = recover_profiles(&profiles, &policy);
             assert_eq!(recovered.len(), 1);
-            let Classification::Decided(Some(area)) =
-                recovered.filled_area(&policy).unwrap().into_value()
+            let Some(area) = crate::support::under(&policy, || recovered.filled_area())
+                .unwrap()
+                .into_value()
             else {
                 panic!("the rectangle has an exact area");
             };
@@ -274,17 +277,18 @@ fn finite_profile_recovery_regularizes_overlaps_before_publication() {
                 (7, RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    recovered
-                        .classify_point(&Point2::from_values(x, 2).into(), &policy)
-                        .unwrap()
-                        .into_value(),
-                    Classification::Decided(expected)
+                    crate::support::under(&policy, || recovered
+                        .classify_point(&Point2::from_values(x, 2).into()))
+                    .unwrap()
+                    .into_value(),
+                    expected
                 );
             }
-            let expanded = recovered
-                .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
-                .unwrap()
-                .into_value();
+            let expanded = crate::support::under(&policy, || {
+                recovered.offset(Real::one(), &OffsetCornerStyle2::Round)
+            })
+            .unwrap()
+            .into_value();
             for (x, expected) in [
                 (-2, RegionPointLocation::Outside),
                 (-1, RegionPointLocation::Boundary),
@@ -293,11 +297,11 @@ fn finite_profile_recovery_regularizes_overlaps_before_publication() {
                 (8, RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    expanded
-                        .classify_point(&Point2::from_values(x, 2).into(), &policy)
-                        .unwrap()
-                        .into_value(),
-                    Classification::Decided(expected)
+                    crate::support::under(&policy, || expanded
+                        .classify_point(&Point2::from_values(x, 2).into()))
+                    .unwrap()
+                    .into_value(),
+                    expected
                 );
             }
         }
@@ -306,7 +310,7 @@ fn finite_profile_recovery_regularizes_overlaps_before_publication() {
 
 #[test]
 fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
-    use hypercurve::{Classification, CurveContext, RegionPointLocation};
+    use hypercurve::{CurveContext, RegionPointLocation};
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let profiles = profiles_for_recovery(
             vec![
@@ -319,11 +323,14 @@ fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
         let recovered = recover_profiles(&profiles, &policy);
         assert_eq!(recovered.len(), 3);
         assert_eq!(
-            recovered.loop_role_counts(&policy).unwrap().into_value(),
-            Classification::Decided((2, 1))
+            crate::support::under(&policy, || recovered.loop_role_counts())
+                .unwrap()
+                .into_value(),
+            (2, 1)
         );
-        let Classification::Decided(Some(area)) =
-            recovered.filled_area(&policy).unwrap().into_value()
+        let Some(area) = crate::support::under(&policy, || recovered.filled_area())
+            .unwrap()
+            .into_value()
         else {
             panic!("nested rectangles have an exact area");
         };
@@ -341,11 +348,11 @@ fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
             (9, RegionPointLocation::Inside),
         ] {
             assert_eq!(
-                recovered
-                    .classify_point(&Point2::from_values(x, 5).into(), &policy)
-                    .unwrap()
-                    .into_value(),
-                Classification::Decided(expected)
+                crate::support::under(&policy, || recovered
+                    .classify_point(&Point2::from_values(x, 5).into()))
+                .unwrap()
+                .into_value(),
+                expected
             );
         }
         let mut filled_profiles = profiles;
@@ -356,7 +363,9 @@ fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
         ));
         let filled = recover_profiles(&filled_profiles, &policy);
         assert_eq!(filled.len(), 1);
-        let Classification::Decided(Some(area)) = filled.filled_area(&policy).unwrap().into_value()
+        let Some(area) = crate::support::under(&policy, || filled.filled_area())
+            .unwrap()
+            .into_value()
         else {
             panic!("the filled rectangle has an exact area");
         };
@@ -366,11 +375,11 @@ fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
         );
         for x in [2, 4, 5, 6, 8] {
             assert_eq!(
-                filled
-                    .classify_point(&Point2::from_values(x, 5).into(), &policy)
-                    .unwrap()
-                    .into_value(),
-                Classification::Decided(RegionPointLocation::Inside)
+                crate::support::under(&policy, || filled
+                    .classify_point(&Point2::from_values(x, 5).into()))
+                .unwrap()
+                .into_value(),
+                RegionPointLocation::Inside
             );
         }
     }
@@ -384,13 +393,10 @@ fn finite_profile_recovery_accepts_empty_input_with_certified_topology() {
     ] {
         let recovered = recover_profiles(&[], &policy);
         assert!(recovered.is_empty());
-        let offset = recovered
-            .offset(
-                Real::from(-1),
-                &hypercurve::OffsetCornerStyle2::Bevel,
-                &policy,
-            )
-            .unwrap();
+        let offset = crate::support::under(&policy, || {
+            recovered.offset(Real::from(-1), &hypercurve::OffsetCornerStyle2::Bevel)
+        })
+        .unwrap();
         assert_eq!(offset.certainty, hypercurve::CurveCertainty::Certified);
         assert!(offset.value.is_empty());
     }

@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 #[cfg(feature = "triangulation")]
 use hypercurve::triangulate_finite_rings;
 use hypercurve::{
@@ -116,13 +118,14 @@ fn main() {
     ])
     .expect("path is connected");
     trace("curve_region_path_stroke", || {
-        CurveRegion2::stroke_path(
-            &open_path,
-            r(1),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Round,
-            &policy,
-        )
+        crate::support::under(&policy, || {
+            CurveRegion2::stroke_path(
+                &open_path,
+                r(1),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+            )
+        })
     });
 
     let concave = Contour2::from_bulge_vertices(&[
@@ -142,41 +145,48 @@ fn main() {
         Ok::<_, CurveError>(evidence)
     });
 
-    let first =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
-            .expect("trace region is valid")
-            .into_value();
-    let second =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, -1, 6, 3)], &policy)
-            .expect("trace region is valid")
-            .into_value();
+    let first = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)])
+    })
+    .expect("trace region is valid")
+    .into_value();
+    let second = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, -1, 6, 3)])
+    })
+    .expect("trace region is valid")
+    .into_value();
     trace("region_boolean", || {
-        first.boolean_region(&second, BooleanOp::Union, &policy)
+        crate::support::under(&policy, || first.boolean_region(&second, BooleanOp::Union))
     });
 
-    let first_star = CurveRegion2::try_from_native_material_contours(
-        vec![star(64, (0.0, 0.0), (100.0, 72.0), 0.0)],
-        &policy,
-    )
+    let first_star = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![star(
+            64,
+            (0.0, 0.0),
+            (100.0, 72.0),
+            0.0,
+        )])
+    })
     .expect("trace star is valid")
     .into_value();
-    let second_star = CurveRegion2::try_from_native_material_contours(
-        vec![star(
+    let second_star = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![star(
             64,
             (18.0, 7.0),
             (96.0, 68.0),
             std::f64::consts::PI / 64.0,
-        )],
-        &policy,
-    )
+        )])
+    })
     .expect("trace star is valid")
     .into_value();
     trace("star64_region_boolean", || {
-        first_star.boolean_region(&second_star, BooleanOp::Intersection, &policy)
+        crate::support::under(&policy, || {
+            first_star.boolean_region(&second_star, BooleanOp::Intersection)
+        })
     });
 
     trace("region_containment", || {
-        first.classify_point(&p(1, 1).into(), &policy)
+        crate::support::under(&policy, || first.classify_point(&p(1, 1).into()))
     });
 
     #[cfg(feature = "triangulation")]

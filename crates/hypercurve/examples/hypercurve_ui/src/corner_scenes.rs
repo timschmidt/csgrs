@@ -189,13 +189,9 @@ impl CornerScene {
         let (minimum, maximum) = operation.amount_bounds();
         let amount = amount.clamp(minimum, maximum);
         let source_paths = curve_region_paths().expect("demo region paths must be valid");
-        let source_region = CurveRegion2::try_from_boundary_paths(
-            &source_paths,
-            hypercurve::FillRule::EvenOdd,
-            &CurveContext::STRICT,
-        )
-        .expect("demo CurveRegion2 must be valid")
-        .into_value();
+        let source_region =
+            CurveRegion2::try_from_boundary_paths(&source_paths, hypercurve::FillRule::EvenOdd)
+                .expect("demo CurveRegion2 must be valid");
         let source_display = display_region(&source_paths).expect("demo region must be drawable");
         Self {
             operation,
@@ -352,13 +348,9 @@ fn build_corner_result(
                 .map_err(|error| format!("boundary {boundary_index}: {error}"))
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let region = CurveRegion2::try_from_boundary_paths(
-        &result_paths,
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .map_err(string_error)?
-    .into_value();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&result_paths, hypercurve::FillRule::EvenOdd)
+            .map_err(string_error)?;
     let display = display_region(&result_paths)?;
     Ok(CornerRegionResult { region, display })
 }
@@ -517,10 +509,17 @@ fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), Stri
         (end, CurveParameterSide2::Left)
     };
     let tangent = curve
-        .derivative_at_side(parameter, side, &CurveContext::STRICT)
+        .derivative_at_side(
+            &hypercurve::CurveParameter2::from(parameter.clone()),
+            side,
+            &CurveContext::STRICT,
+        )
         .map_err(string_error)?
         .into_value();
-    Ok((tangent.dx().clone(), tangent.dy().clone()))
+    let (dx, dy) = tangent
+        .represented_coordinates()
+        .ok_or("fixture tangents need represented coordinates")?;
+    Ok((dx.clone(), dy.clone()))
 }
 
 fn corner_witness_for(

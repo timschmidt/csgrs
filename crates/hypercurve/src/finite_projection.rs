@@ -380,7 +380,15 @@ impl CurveRegion2 {
     /// this exact region, while the returned paths retain lines and native
     /// Bezier curves instead of segmenting them into chords.
     #[inline]
-    pub fn project_to_finite_curve_paths(
+    pub fn project_to_finite_curve_paths(&self) -> crate::ExactCurveResult<Vec<CurvePath2>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Evaluation,
+            self.project_to_finite_curve_paths_with_policy(&crate::policy::principal_context()),
+        )
+    }
+
+    /// [`Self::project_to_finite_curve_paths`] under an explicit predicate policy.
+    pub(crate) fn project_to_finite_curve_paths_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Vec<CurvePath2>>>> {
@@ -416,6 +424,20 @@ impl CurveRegion2 {
     /// exact predicates.
     #[inline]
     pub fn project_to_finite_profiles(
+        &self,
+        options: &FiniteProjectionOptions,
+    ) -> crate::ExactCurveResult<Vec<FiniteRegionProfile2>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Evaluation,
+            self.project_to_finite_profiles_with_policy(
+                options,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::project_to_finite_profiles`] under an explicit predicate policy.
+    pub(crate) fn project_to_finite_profiles_with_policy(
         &self,
         options: &FiniteProjectionOptions,
         policy: &CurveContext,
@@ -523,6 +545,20 @@ impl CurveRegion2 {
     /// containment when algebraic endpoints cannot inhabit [`Point2`].
     #[inline]
     pub fn project_to_finite_profiles_exact(
+        &self,
+        options: &FiniteProjectionOptions,
+    ) -> crate::ExactCurveResult<Vec<FiniteRegionProfile2>> {
+        crate::ExactCurveError::principal_query(
+            crate::CurveOperation2::Evaluation,
+            self.project_to_finite_profiles_exact_with_policy(
+                options,
+                &crate::policy::principal_context(),
+            ),
+        )
+    }
+
+    /// [`Self::project_to_finite_profiles_exact`] under an explicit predicate policy.
+    pub(crate) fn project_to_finite_profiles_exact_with_policy(
         &self,
         options: &FiniteProjectionOptions,
         policy: &CurveContext,
@@ -1755,7 +1791,7 @@ mod tests {
             .into_value();
 
         let strict = region
-            .project_to_finite_curve_paths(&CurveContext::STRICT)
+            .project_to_finite_curve_paths_with_policy(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(strict.certainty, crate::CurveCertainty::Certified);
         assert_eq!(
@@ -1763,7 +1799,7 @@ mod tests {
             Classification::Uncertain(crate::UncertaintyReason::Unsupported)
         );
         let approximate = region
-            .project_to_finite_curve_paths(&CurveContext::APPROXIMATE_512)
+            .project_to_finite_curve_paths_with_policy(&CurveContext::APPROXIMATE_512)
             .unwrap();
         assert_eq!(
             approximate.certainty,
@@ -1778,7 +1814,7 @@ mod tests {
 
     #[test]
     fn projects_higher_order_region_after_exact_role_assignment() {
-        let region = CurveRegion2::try_from_boundary_paths(
+        let region = CurveRegion2::try_from_boundary_paths_with_policy(
             &[cubic_cap()],
             crate::FillRule::EvenOdd,
             &CurveContext::STRICT,
@@ -1788,11 +1824,11 @@ mod tests {
         let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
         let policy = CurveContext::STRICT;
         let profiles = region
-            .project_to_finite_profiles(&options, &policy)
+            .project_to_finite_profiles_with_policy(&options, &policy)
             .unwrap()
             .into_value();
         let exact_profiles = region
-            .project_to_finite_profiles_exact(&options, &policy)
+            .project_to_finite_profiles_exact_with_policy(&options, &policy)
             .unwrap()
             .into_value();
         let Classification::Decided(profiles) = profiles else {
@@ -1821,7 +1857,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths(
+        let region = CurveRegion2::try_from_boundary_paths_with_policy(
             &[circle],
             crate::FillRule::EvenOdd,
             &CurveContext::STRICT,
@@ -1829,7 +1865,7 @@ mod tests {
         .unwrap()
         .into_value();
         let Classification::Decided(paths) = region
-            .project_to_finite_curve_paths(&CurveContext::STRICT)
+            .project_to_finite_curve_paths_with_policy(&CurveContext::STRICT)
             .unwrap()
             .into_value()
         else {

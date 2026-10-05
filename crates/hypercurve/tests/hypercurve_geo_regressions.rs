@@ -6,10 +6,11 @@
 //! clipping, or self-intersecting fill-rule behavior that `hypercurve` does not
 //! currently expose.
 
+mod support;
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, FillRule,
-    IntersectionKind, LineLineIntersection, LineSeg2, Point2, Real, RegionPointLocation,
+    BooleanOp, BulgeVertex2, Contour2, CurveContext, CurveRegion2, FillRule, IntersectionKind,
+    LineLineIntersection, LineSeg2, Point2, Real, RegionPointLocation,
 };
 
 type HPoint = Point2;
@@ -42,18 +43,18 @@ fn contour(coords: &[(f64, f64)]) -> HContour {
 }
 
 fn region_from_rings(materials: &[&[(f64, f64)]], holes: &[&[(f64, f64)]]) -> HRegion {
-    CurveRegion2::try_from_native_contours(
-        materials.iter().map(|ring| contour(ring)).collect(),
-        holes.iter().map(|ring| contour(ring)).collect(),
-        &policy(),
-    )
+    crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_contours(
+            materials.iter().map(|ring| contour(ring)).collect(),
+            holes.iter().map(|ring| contour(ring)).collect(),
+        )
+    })
     .unwrap()
     .into_value()
 }
 
-fn location(region: &HRegion, point: HPoint) -> Classification<RegionPointLocation> {
-    region
-        .classify_point(&point.clone().into(), &policy())
+fn location(region: &HRegion, point: HPoint) -> RegionPointLocation {
+    crate::support::under(&policy(), || region.classify_point(&point.clone().into()))
         .unwrap()
         .into_value()
 }
@@ -143,24 +144,24 @@ fn assert_boolean_samples_match_geo(
     let second_geo = geo_polygon(second);
     let expected = geo_boolean(&first_geo, &second_geo, op);
 
-    let result = first_region
-        .boolean_region(&second_region, op, &policy())
-        .unwrap()
-        .into_value();
+    let result = crate::support::under(&policy(), || {
+        first_region.boolean_region(&second_region, op)
+    })
+    .unwrap()
+    .into_value();
 
     for &(x, y) in samples {
         let expected_inside = expected.contains(&Point::new(x, y));
-        let actual = result
-            .classify_point(&p(x, y).into(), &policy())
+        let actual = crate::support::under(&policy(), || result.classify_point(&p(x, y).into()))
             .unwrap()
-            .into_value();
+            .value;
         assert_eq!(
             actual,
-            Classification::Decided(if expected_inside {
+            if expected_inside {
                 RegionPointLocation::Inside
             } else {
                 RegionPointLocation::Outside
-            }),
+            },
             "sample ({x}, {y}) differed for {op:?}"
         );
     }
@@ -297,19 +298,16 @@ fn geo_contains_boundary_and_hole_point_cases_match_region_classification() {
         &[&[(-1.0, 1.0), (1.0, 1.0), (1.0, -1.0), (-1.0, -1.0)]],
         &[],
     );
-    assert_eq!(
-        location(&square, p(0.0, 0.0)),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
+    assert_eq!(location(&square, p(0.0, 0.0)), RegionPointLocation::Inside);
     for point in [(-1.0, 1.0), (-1.0, 0.5), (-1.0, 0.0)] {
         assert_eq!(
             location(&square, p(point.0, point.1)),
-            Classification::Decided(RegionPointLocation::Boundary)
+            RegionPointLocation::Boundary
         );
     }
     assert_eq!(
         location(&square, p(-2.0, 0.0)),
-        Classification::Decided(RegionPointLocation::Outside)
+        RegionPointLocation::Outside
     );
 
     let triangle = region_from_rings(&[&[(-1.0, 0.0), (0.0, 1.0), (1.0, 0.0)]], &[]);
@@ -319,10 +317,7 @@ fn geo_contains_boundary_and_hole_point_cases_match_region_classification() {
         } else {
             RegionPointLocation::Outside
         };
-        assert_eq!(
-            location(&triangle, p(point.0, point.1)),
-            Classification::Decided(expected)
-        );
+        assert_eq!(location(&triangle, p(point.0, point.1)), expected);
     }
 
     let hollow_ccw_outer = region_from_rings(
@@ -334,14 +329,8 @@ fn geo_contains_boundary_and_hole_point_cases_match_region_classification() {
         &[&[(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]],
     );
     for hollow in [hollow_ccw_outer, hollow_cw_outer] {
-        assert_eq!(
-            location(&hollow, p(0.0, 0.0)),
-            Classification::Decided(RegionPointLocation::Outside)
-        );
-        assert_eq!(
-            location(&hollow, p(1.5, 0.0)),
-            Classification::Decided(RegionPointLocation::Inside)
-        );
+        assert_eq!(location(&hollow, p(0.0, 0.0)), RegionPointLocation::Outside);
+        assert_eq!(location(&hollow, p(1.5, 0.0)), RegionPointLocation::Inside);
     }
 }
 

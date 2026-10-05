@@ -1021,7 +1021,7 @@ mod tests {
     }
 
     fn native_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
-        CurveRegion2::try_from_native_contours(material, holes, &CurveContext::STRICT)
+        CurveRegion2::try_from_native_contours_with_policy(material, holes, &CurveContext::STRICT)
             .unwrap()
             .into_value()
     }
@@ -1035,7 +1035,7 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
             &[path],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
@@ -1138,7 +1138,7 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p(0, 2), p(0, 0)).unwrap()),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
@@ -1299,7 +1299,7 @@ mod tests {
             let point = representative_point(&fragment);
             assert!(matches!(
                 region
-                    .classify_point(&point.clone().into(), &CurveContext::STRICT)
+                    .classify_point_with_policy(&point.clone().into(), &CurveContext::STRICT)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside)
@@ -1659,7 +1659,7 @@ mod tests {
                             }],
                         )
                         .unwrap();
-                        let normalized = region.regularized_region(&policy).unwrap();
+                        let normalized = region.regularized_region_with_policy(&policy).unwrap();
                         assert_eq!(normalized.certainty, CurveCertainty::Certified);
                         for region in [&region, &normalized.value] {
                             for source in &sources {

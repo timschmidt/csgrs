@@ -1,3 +1,5 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -70,13 +72,8 @@ fn large_arc_region(arc_count: usize) -> CurveRegion2 {
         semicircle(start_x + 2, start_x, 0, true)
     }));
     let path = CurvePath2::try_new(curves).expect("benchmark arc boundary is connected");
-    CurveRegion2::try_from_boundary_paths(
-        &[path],
-        hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
-    )
-    .expect("benchmark arc region is closed")
-    .into_value()
+    CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+        .expect("benchmark arc region is closed")
 }
 
 fn bench_large_arcs() {
@@ -139,17 +136,16 @@ fn bench_large_arcs() {
 
     let region = large_arc_region(arc_count);
     let query = hypercurve::CurvePoint2::from(Point2::new(r(1), q(1, 2)));
-    let warm_location = region.classify_point(&query, &policy).unwrap();
+    let warm_location = crate::support::under(&policy, || region.classify_point(&query)).unwrap();
     let started = Instant::now();
     let mut containment_checksum = 0_usize;
     for _ in 0..iterations {
-        containment_checksum ^= black_box(
-            region
-                .classify_point(&query, &policy)
+        containment_checksum ^= black_box(usize::from(
+            crate::support::under(&policy, || region.classify_point(&query))
                 .unwrap()
                 .into_value()
-                .is_decided() as usize,
-        );
+                == hypercurve::RegionPointLocation::Inside,
+        ));
     }
     let elapsed = started.elapsed();
     println!(

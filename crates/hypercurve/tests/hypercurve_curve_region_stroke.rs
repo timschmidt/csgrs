@@ -1,10 +1,10 @@
-use hypercurve::CurveFamily2;
 mod support;
+use hypercurve::CurveFamily2;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext,
-    CurveError, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, OffsetCap, OffsetCornerStyle2,
-    Point2, QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveError,
+    CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -24,30 +24,14 @@ fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Curve2 {
 }
 
 fn location(region: &CurveRegion2, point: Point2) -> RegionPointLocation {
-    match region
-        .classify_point(&point.clone().into(), &CurveContext::STRICT)
-        .unwrap()
-        .value
-    {
-        Classification::Decided(location) => location,
-        Classification::Uncertain(reason) => panic!("point classification blocked: {reason:?}"),
-    }
+    region.classify_point(&point.clone().into()).unwrap()
 }
 
 #[test]
 fn exact_path_stroke_cap_styles_have_their_defined_extent() {
     let path = CurvePath2::try_new(vec![line(0, 0, 4, 0)]).unwrap();
-    let stroke = |cap| {
-        CurveRegion2::stroke_path(
-            &path,
-            s(1),
-            &OffsetCornerStyle2::Round,
-            cap,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value()
-    };
+    let stroke =
+        |cap| CurveRegion2::stroke_path(&path, s(1), &OffsetCornerStyle2::Round, cap).unwrap();
 
     let butt = stroke(OffsetCap::Butt);
     assert_eq!(
@@ -84,9 +68,7 @@ fn exact_path_stroke_cap_styles_have_their_defined_extent() {
 fn exact_path_stroke_corner_styles_share_the_region_offset_solver() {
     let path = CurvePath2::try_new(vec![line(0, 0, 4, 0), line(4, 0, 4, 4)]).unwrap();
     let stroke = |style: &OffsetCornerStyle2| {
-        CurveRegion2::stroke_path(&path, s(1), style, OffsetCap::Butt, &CurveContext::STRICT)
-            .unwrap()
-            .into_value()
+        CurveRegion2::stroke_path(&path, s(1), style, OffsetCap::Butt).unwrap()
     };
 
     let bevel = stroke(&OffsetCornerStyle2::Bevel);
@@ -110,9 +92,7 @@ fn exact_path_stroke_corner_styles_share_the_region_offset_solver() {
 fn exact_path_stroke_regularizes_a_parallel_reversal_corner() {
     let path = CurvePath2::try_new(vec![line(0, 0, 2, 0), line(2, 0, 1, 0)]).unwrap();
     let stroke = |style: &OffsetCornerStyle2| {
-        CurveRegion2::stroke_path(&path, s(1), style, OffsetCap::Butt, &CurveContext::STRICT)
-            .unwrap()
-            .into_value()
+        CurveRegion2::stroke_path(&path, s(1), style, OffsetCap::Butt).unwrap()
     };
     let round = stroke(&OffsetCornerStyle2::Round);
 
@@ -140,15 +120,9 @@ fn exact_path_stroke_regularizes_a_parallel_reversal_corner() {
     }
 
     let closed = CurvePath2::try_new(vec![line(0, 0, 2, 0), line(2, 0, 0, 0)]).unwrap();
-    let capsule = CurveRegion2::stroke_path(
-        &closed,
-        s(1),
-        &OffsetCornerStyle2::Round,
-        OffsetCap::Butt,
-        &CurveContext::STRICT,
-    )
-    .unwrap()
-    .into_value();
+    let capsule =
+        CurveRegion2::stroke_path(&closed, s(1), &OffsetCornerStyle2::Round, OffsetCap::Butt)
+            .unwrap();
     assert_eq!(
         location(&capsule, Point2::new(q(-1, 2), s(0))),
         RegionPointLocation::Inside
@@ -162,23 +136,12 @@ fn exact_path_stroke_regularizes_a_parallel_reversal_corner() {
 #[test]
 fn exact_path_stroke_is_invariant_to_a_collinear_partition() {
     let stroke = |path: CurvePath2| {
-        CurveRegion2::stroke_path(
-            &path,
-            s(1),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value()
+        CurveRegion2::stroke_path(&path, s(1), &OffsetCornerStyle2::Round, OffsetCap::Butt).unwrap()
     };
     let whole = stroke(CurvePath2::try_new(vec![line(0, 0, 4, 0)]).unwrap());
     let partitioned =
         stroke(CurvePath2::try_new(vec![line(0, 0, 2, 0), line(2, 0, 4, 0)]).unwrap());
-    let symmetric_difference = partitioned
-        .boolean_region(&whole, BooleanOp::Xor, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let symmetric_difference = partitioned.boolean_region(&whole, BooleanOp::Xor).unwrap();
     assert!(symmetric_difference.is_empty());
 }
 
@@ -188,13 +151,12 @@ fn path_stroke_requires_a_policy_positive_half_width() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for half_width in [s(0), s(-1)] {
             assert!(matches!(
-                CurveRegion2::stroke_path(
+                crate::support::under(&policy, || CurveRegion2::stroke_path(
                     &path,
                     half_width,
                     &OffsetCornerStyle2::Round,
-                    OffsetCap::Butt,
-                    &policy,
-                ),
+                    OffsetCap::Butt
+                )),
                 Err(ExactCurveError::Invalid {
                     cause: CurveError::InvalidOffsetOptions,
                     ..
@@ -205,23 +167,23 @@ fn path_stroke_requires_a_policy_positive_half_width() {
 
     let undecidable_zero = support::terminally_unresolved_zero();
     assert!(matches!(
-        CurveRegion2::stroke_path(
+        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
             &path,
             undecidable_zero.clone(),
             &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            &CurveContext::STRICT,
-        ),
+            OffsetCap::Butt)),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == hypercurve::UncertaintyReason::RealSign
     ));
     assert!(matches!(
-        CurveRegion2::stroke_path(
-            &path,
-            undecidable_zero,
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
+        crate::support::under(
             &CurveContext::APPROXIMATE_512,
+            || CurveRegion2::stroke_path(
+                &path,
+                undecidable_zero,
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Butt
+            )
         ),
         Err(ExactCurveError::Invalid {
             cause: CurveError::InvalidOffsetOptions,
@@ -234,13 +196,9 @@ fn path_stroke_requires_a_policy_positive_half_width() {
 fn self_crossing_source_is_regularized_instead_of_rejected() {
     let path =
         CurvePath2::try_new(vec![line(0, 0, 4, 4), line(4, 4, 0, 4), line(0, 4, 4, 0)]).unwrap();
-    let stroke = CurveRegion2::stroke_path(
-        &path,
-        q(1, 4),
-        &OffsetCornerStyle2::Round,
-        OffsetCap::Round,
-        &CurveContext::STRICT,
-    )
+    let stroke = crate::support::under(&CurveContext::STRICT, || {
+        CurveRegion2::stroke_path(&path, q(1, 4), &OffsetCornerStyle2::Round, OffsetCap::Round)
+    })
     .unwrap();
     assert_eq!(stroke.certainty, CurveCertainty::Certified);
     assert!(!stroke.value.is_empty());
@@ -259,17 +217,8 @@ fn closed_path_stroke_is_cyclic_and_does_not_apply_caps() {
         line(0, 4, 0, 0),
     ])
     .unwrap();
-    let stroke = |cap| {
-        CurveRegion2::stroke_path(
-            &path,
-            s(1),
-            &OffsetCornerStyle2::Round,
-            cap,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value()
-    };
+    let stroke =
+        |cap| CurveRegion2::stroke_path(&path, s(1), &OffsetCornerStyle2::Round, cap).unwrap();
     let butt = stroke(OffsetCap::Butt);
     assert_eq!(butt, stroke(OffsetCap::Round));
     assert_eq!(butt, stroke(OffsetCap::Square));
@@ -286,13 +235,9 @@ fn exact_path_stroke_handles_an_arc_parallel_radius_collapse() {
         CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
     )])
     .unwrap();
-    let stroke = CurveRegion2::stroke_path(
-        &path,
-        s(1),
-        &OffsetCornerStyle2::Round,
-        OffsetCap::Round,
-        &CurveContext::STRICT,
-    )
+    let stroke = crate::support::under(&CurveContext::STRICT, || {
+        CurveRegion2::stroke_path(&path, s(1), &OffsetCornerStyle2::Round, OffsetCap::Round)
+    })
     .unwrap();
     assert_eq!(stroke.certainty, CurveCertainty::Certified);
     assert_eq!(
@@ -311,17 +256,8 @@ fn curved_endpoint_caps_use_the_exact_one_sided_tangent() {
         CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1)).unwrap(),
     )])
     .unwrap();
-    let stroke = |cap| {
-        CurveRegion2::stroke_path(
-            &path,
-            q(1, 2),
-            &OffsetCornerStyle2::Round,
-            cap,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value()
-    };
+    let stroke =
+        |cap| CurveRegion2::stroke_path(&path, q(1, 2), &OffsetCornerStyle2::Round, cap).unwrap();
     let behind_start = Point2::new(q(-1, 4), q(-1, 4));
     assert_eq!(
         location(&stroke(OffsetCap::Butt), behind_start.clone()),
@@ -356,10 +292,8 @@ fn square_cap_uses_the_first_nonzero_endpoint_derivative() {
         s(1),
         &OffsetCornerStyle2::Round,
         OffsetCap::Square,
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     assert_eq!(
         location(&start_stroke, Point2::new(q(-1, 2), q(1, 2))),
         RegionPointLocation::Inside
@@ -376,10 +310,8 @@ fn square_cap_uses_the_first_nonzero_endpoint_derivative() {
         s(1),
         &OffsetCornerStyle2::Round,
         OffsetCap::Square,
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     assert_eq!(
         location(&end_stroke, Point2::new(q(9, 2), q(1, 2))),
         RegionPointLocation::Inside
@@ -407,13 +339,14 @@ fn nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame() {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let stroke_call = || {
-                CurveRegion2::stroke_path(
-                    &path,
-                    q(1, 4),
-                    &OffsetCornerStyle2::Round,
-                    OffsetCap::Square,
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    CurveRegion2::stroke_path(
+                        &path,
+                        q(1, 4),
+                        &OffsetCornerStyle2::Round,
+                        OffsetCap::Square,
+                    )
+                })
             };
             #[cfg(feature = "dispatch-trace")]
             let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
@@ -453,13 +386,9 @@ fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
     ))])
     .unwrap();
     let run = |policy| {
-        CurveRegion2::stroke_path(
-            &path,
-            q(1, 10),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            policy,
-        )
+        crate::support::under(policy, || {
+            CurveRegion2::stroke_path(&path, q(1, 10), &OffsetCornerStyle2::Round, OffsetCap::Butt)
+        })
     };
     let strict = run(&CurveContext::STRICT).unwrap();
     let approximate = run(&CurveContext::APPROXIMATE_512).unwrap();
@@ -472,13 +401,12 @@ fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
     }));
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(
-        CurveRegion2::stroke_path(
+        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
             &path,
             Real::zero(),
             &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            &CurveContext::STRICT,
-        ),
+            OffsetCap::Butt
+        )),
         Err(ExactCurveError::Invalid { .. })
     ));
 }
@@ -503,13 +431,14 @@ fn exact_path_stroke_splits_an_interior_source_cusp() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let stroke_call = || {
-            CurveRegion2::stroke_path(
-                &path,
-                q(1, 4),
-                &OffsetCornerStyle2::Round,
-                OffsetCap::Round,
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                CurveRegion2::stroke_path(
+                    &path,
+                    q(1, 4),
+                    &OffsetCornerStyle2::Round,
+                    OffsetCap::Round,
+                )
+            })
         };
         #[cfg(feature = "dispatch-trace")]
         let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
@@ -560,13 +489,14 @@ fn exact_path_stroke_preserves_an_even_multiplicity_stationary_source() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let stroke_call = || {
-            CurveRegion2::stroke_path(
-                &path,
-                q(1, 4),
-                &OffsetCornerStyle2::Round,
-                OffsetCap::Round,
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                CurveRegion2::stroke_path(
+                    &path,
+                    q(1, 4),
+                    &OffsetCornerStyle2::Round,
+                    OffsetCap::Round,
+                )
+            })
         };
         #[cfg(feature = "dispatch-trace")]
         let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
@@ -615,13 +545,14 @@ fn exact_path_stroke_splits_a_nonuniform_rational_source_cusp() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let stroke_call = || {
-            CurveRegion2::stroke_path(
-                &path,
-                q(1, 4),
-                &OffsetCornerStyle2::Round,
-                OffsetCap::Round,
-                &policy,
-            )
+            crate::support::under(&policy, || {
+                CurveRegion2::stroke_path(
+                    &path,
+                    q(1, 4),
+                    &OffsetCornerStyle2::Round,
+                    OffsetCap::Round,
+                )
+            })
         };
         #[cfg(feature = "dispatch-trace")]
         let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
@@ -660,13 +591,9 @@ fn rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies() {
     .into_value();
     let path = CurvePath2::try_new(vec![curve]).unwrap();
     let run = |policy| {
-        CurveRegion2::stroke_path(
-            &path,
-            q(1, 10),
-            &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            policy,
-        )
+        crate::support::under(policy, || {
+            CurveRegion2::stroke_path(&path, q(1, 10), &OffsetCornerStyle2::Round, OffsetCap::Butt)
+        })
         .unwrap()
     };
 
@@ -703,22 +630,17 @@ fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
         .unwrap()
         .into_value();
     assert!(matches!(
-        CurveRegion2::stroke_path(
+        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
             &path,
             q(1, 2),
             &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            &CurveContext::STRICT,
-        ),
+            OffsetCap::Butt
+        )),
         Err(ExactCurveError::Blocked(_))
     ));
-    let stroke = CurveRegion2::stroke_path(
-        &path,
-        q(1, 2),
-        &OffsetCornerStyle2::Round,
-        OffsetCap::Butt,
-        &CurveContext::APPROXIMATE_512,
-    )
+    let stroke = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        CurveRegion2::stroke_path(&path, q(1, 2), &OffsetCornerStyle2::Round, OffsetCap::Butt)
+    })
     .unwrap();
     assert_eq!(stroke.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(
@@ -748,22 +670,17 @@ fn path_stroke_obeys_the_approximate_512_closure_terminal() {
     ])
     .unwrap();
     assert!(matches!(
-        CurveRegion2::stroke_path(
+        crate::support::under(&CurveContext::STRICT, || CurveRegion2::stroke_path(
             &path,
             q(1, 2),
             &OffsetCornerStyle2::Round,
-            OffsetCap::Butt,
-            &CurveContext::STRICT,
-        ),
+            OffsetCap::Butt
+        )),
         Err(ExactCurveError::Blocked(_))
     ));
-    let stroke = CurveRegion2::stroke_path(
-        &path,
-        q(1, 2),
-        &OffsetCornerStyle2::Round,
-        OffsetCap::Butt,
-        &CurveContext::APPROXIMATE_512,
-    )
+    let stroke = crate::support::under(&CurveContext::APPROXIMATE_512, || {
+        CurveRegion2::stroke_path(&path, q(1, 2), &OffsetCornerStyle2::Round, OffsetCap::Butt)
+    })
     .unwrap();
     assert_eq!(stroke.certainty, CurveCertainty::Approximate512Consumed);
     assert!(!stroke.value.is_empty());

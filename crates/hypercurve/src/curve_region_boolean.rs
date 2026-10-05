@@ -1444,6 +1444,16 @@ impl CurveRegion2 {
         &self,
         other: &Self,
         operation: BooleanOp,
+    ) -> crate::ExactCurveResult<Self> {
+        self.boolean_region_with_policy(other, operation, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::boolean_region`] under an explicit predicate policy.
+    pub(crate) fn boolean_region_with_policy(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
@@ -1473,6 +1483,15 @@ impl CurveRegion2 {
     /// Computes all four exact regularized Booleans immediately while sharing
     /// intersection and split-topology work within this call.
     pub fn boolean_regions(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<CurveRegionBooleanResults2> {
+        self.boolean_regions_with_policy(other, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::boolean_regions`] under an explicit predicate policy.
+    pub(crate) fn boolean_regions_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1547,7 +1566,13 @@ impl CurveRegion2 {
     /// state on both local sides of each open fragment is classified. Fragments
     /// separating equal filled states are discarded; the remaining boundary is
     /// oriented with material on its left and traversed into closed loops.
-    pub fn regularized_region(
+    pub fn regularized_region(&self) -> crate::ExactCurveResult<Self> {
+        self.regularized_region_with_policy(&crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::regularized_region`] under an explicit predicate policy.
+    pub(crate) fn regularized_region_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
@@ -1590,6 +1615,15 @@ impl CurveRegion2 {
     /// Collects exact contacts and overlaps between regularized region boundaries.
     /// Authored winding and canceled seams are resolved before intersection.
     pub fn intersect_region(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<CurveRegionIntersectionResult2> {
+        self.intersect_region_with_policy(other, &crate::policy::principal_context())
+            .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::intersect_region`] under an explicit predicate policy.
+    pub(crate) fn intersect_region_with_policy(
         &self,
         other: &Self,
         policy: &CurveContext,

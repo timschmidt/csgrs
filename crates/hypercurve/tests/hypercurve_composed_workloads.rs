@@ -10,9 +10,10 @@
 //! Required exact operations must complete; a blocked operation is a failure,
 //! not a skipped case.
 
+mod support;
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
-    CurveFillet2, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveContext, CurveCornerMode2, CurveFillet2,
+    CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
     OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
     RegionPointLocation,
 };
@@ -150,10 +151,8 @@ fn seed_region(seed: &Seed) -> CurveRegion2 {
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 /// A square frame with a hole containing an island: three nesting levels.
@@ -171,17 +170,11 @@ fn nested_region(x: i16, y: i16, size: i16) -> CurveRegion2 {
         })
     };
     let frame = square(x, y, size)
-        .boolean_region(
-            &square(x + 2, y + 2, size - 4),
-            BooleanOp::Difference,
-            &STRICT,
-        )
-        .unwrap()
-        .into_value();
+        .boolean_region(&square(x + 2, y + 2, size - 4), BooleanOp::Difference)
+        .unwrap();
     frame
-        .boolean_region(&square(x + 4, y + 4, size - 8), BooleanOp::Union, &STRICT)
+        .boolean_region(&square(x + 4, y + 4, size - 8), BooleanOp::Union)
         .unwrap()
-        .into_value()
 }
 
 #[derive(Clone, Debug)]
@@ -259,19 +252,13 @@ fn inside(region: &CurveRegion2, point: &CurvePoint2) -> Result<Option<bool>, Te
     if region.is_empty() {
         return Ok(Some(false));
     }
-    let location = region
-        .classify_point(point, &STRICT)
+    let location = crate::support::under(&STRICT, || region.classify_point(point))
         .map_err(|error| TestCaseError::fail(format!("classification failed: {error}")))?
         .into_value();
     Ok(match location {
-        Classification::Decided(RegionPointLocation::Inside) => Some(true),
-        Classification::Decided(RegionPointLocation::Outside) => Some(false),
-        Classification::Decided(RegionPointLocation::Boundary) => None,
-        Classification::Uncertain(reason) => {
-            return Err(TestCaseError::fail(format!(
-                "rational sample classification was uncertain: {reason:?}"
-            )));
-        }
+        RegionPointLocation::Inside => Some(true),
+        RegionPointLocation::Outside => Some(false),
+        RegionPointLocation::Boundary => None,
     })
 }
 
@@ -280,22 +267,18 @@ fn assert_round_trip(label: &str, region: &CurveRegion2) -> Result<(), TestCaseE
     if region.is_empty() {
         return Ok(());
     }
-    let Classification::Decided(paths) = region
-        .boundary_paths(&STRICT)
+    let paths = crate::support::under(&STRICT, || region.boundary_paths())
         .map_err(|error| TestCaseError::fail(format!("{label}: boundary export: {error}")))?
-        .into_value()
-    else {
-        return Err(TestCaseError::fail(format!(
-            "{label}: boundary export uncertain"
-        )));
-    };
-    let rebuilt = CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero, &STRICT)
-        .map_err(|error| TestCaseError::fail(format!("{label}: reconstruction: {error}")))?
         .into_value();
-    let difference = rebuilt
-        .boolean_region(region, BooleanOp::Xor, &STRICT)
-        .map_err(|error| TestCaseError::fail(format!("{label}: round-trip xor: {error}")))?
-        .into_value();
+    let rebuilt = crate::support::under(&STRICT, || {
+        CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero)
+    })
+    .map_err(|error| TestCaseError::fail(format!("{label}: reconstruction: {error}")))?
+    .into_value();
+    let difference =
+        crate::support::under(&STRICT, || rebuilt.boolean_region(region, BooleanOp::Xor))
+            .map_err(|error| TestCaseError::fail(format!("{label}: round-trip xor: {error}")))?
+            .into_value();
     prop_assert!(
         difference.is_empty(),
         "{label}: exported boundary rebuilt a different set"
@@ -332,8 +315,11 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
             Step::Boolean(a, b, op) => {
                 let (first, second) = (pick(a), pick(b));
                 let op = boolean_op(op);
-                let result =
-                    required(&label, first.boolean_region(&second, op, &STRICT))?.into_value();
+                let result = required(
+                    &label,
+                    crate::support::under(&STRICT, || first.boolean_region(&second, op)),
+                )?
+                .into_value();
                 for point in &points {
                     let (Some(left), Some(right), Some(actual)) = (
                         inside(&first, point)?,
@@ -364,8 +350,11 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
                     _ => OffsetCornerStyle2::Miter { limit: integer(4) },
                 };
                 let outward = distance > Real::zero();
-                let result =
-                    required(&label, source.offset(distance, &style, &STRICT))?.into_value();
+                let result = required(
+                    &label,
+                    crate::support::under(&STRICT, || source.offset(distance, &style)),
+                )?
+                .into_value();
                 // Dilation contains the source and erosion is contained in it.
                 for point in &points {
                     let (Some(before), Some(after)) =
@@ -389,22 +378,24 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
                 }
                 let vertex = usize::from(vertex) % count;
                 let solutions = if matches!(step, Step::Fillet(..)) {
-                    source.fillet_loop_vertex(
-                        0,
-                        vertex,
-                        &CurveFillet2::new(fraction(1, 4)),
-                        CurveCornerMode2::TrimOnly,
-                        &STRICT,
-                    )
+                    crate::support::under(&STRICT, || {
+                        source.fillet_loop_vertex(
+                            0,
+                            vertex,
+                            &CurveFillet2::new(fraction(1, 4)),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    })
                 } else {
-                    source.chamfer_loop_vertex_by_setbacks(
-                        0,
-                        vertex,
-                        fraction(1, 4),
-                        fraction(1, 4),
-                        CurveCornerMode2::TrimOnly,
-                        &STRICT,
-                    )
+                    crate::support::under(&STRICT, || {
+                        source.chamfer_loop_vertex_by_setbacks(
+                            0,
+                            vertex,
+                            fraction(1, 4),
+                            fraction(1, 4),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    })
                 };
                 // A corner may have no admissible solution (for example a
                 // smooth join or a setback beyond a short edge); that is a
@@ -440,15 +431,16 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
                 let (dx, dy) = (fraction(x, 2), fraction(y, 2));
                 let result = required(
                     &label,
-                    source.transform_affine(
-                        &Real::one(),
-                        &Real::zero(),
-                        &Real::zero(),
-                        &Real::one(),
-                        &dx,
-                        &dy,
-                        &STRICT,
-                    ),
+                    crate::support::under(&STRICT, || {
+                        source.transform_affine(
+                            &Real::one(),
+                            &Real::zero(),
+                            &Real::zero(),
+                            &Real::one(),
+                            &dx,
+                            &dy,
+                        )
+                    }),
                 )?
                 .into_value();
                 for point in points.iter().take(27) {
@@ -487,15 +479,16 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
                 let m11 = &scale * integer(cos);
                 let result = required(
                     &label,
-                    source.transform_affine(
-                        &m00,
-                        &m01,
-                        &m10,
-                        &m11,
-                        &Real::zero(),
-                        &Real::zero(),
-                        &STRICT,
-                    ),
+                    crate::support::under(&STRICT, || {
+                        source.transform_affine(
+                            &m00,
+                            &m01,
+                            &m10,
+                            &m11,
+                            &Real::zero(),
+                            &Real::zero(),
+                        )
+                    }),
                 )?
                 .into_value();
                 for point in points.iter().take(27) {
@@ -614,16 +607,15 @@ fn inward_bevel_band_of_a_quadratic_nurbs_seed_regularizes() {
         weight: 5,
     });
     let eroded = region
-        .offset(fraction(-1, 4), &OffsetCornerStyle2::Bevel, &STRICT)
-        .unwrap()
-        .into_value();
+        .offset(fraction(-1, 4), &OffsetCornerStyle2::Bevel)
+        .unwrap();
     assert!(!eroded.is_empty());
     assert!(
-        eroded
-            .boolean_region(&region, BooleanOp::Difference, &STRICT)
-            .unwrap()
-            .into_value()
-            .is_empty()
+        crate::support::under(&STRICT, || eroded
+            .boolean_region(&region, BooleanOp::Difference))
+        .unwrap()
+        .into_value()
+        .is_empty()
     );
 }
 
@@ -643,9 +635,8 @@ fn round_offset_of_a_nurbs_rational_seed_round_trips() {
         weight: 2,
     });
     let dilated = region
-        .offset(fraction(1, 2), &OffsetCornerStyle2::Round, &STRICT)
-        .unwrap()
-        .into_value();
+        .offset(fraction(1, 2), &OffsetCornerStyle2::Round)
+        .unwrap();
     assert_round_trip("round offset", &dilated).unwrap();
 }
 
@@ -968,20 +959,18 @@ fn repeated_inward_round_offset_of_a_quadratic_seed_completes() {
     };
     let region = seed_region(&seed);
     let once = region
-        .offset(fraction(-1, 4), &OffsetCornerStyle2::Round, &STRICT)
-        .unwrap()
-        .into_value();
+        .offset(fraction(-1, 4), &OffsetCornerStyle2::Round)
+        .unwrap();
     let twice = once
-        .offset(fraction(-1, 4), &OffsetCornerStyle2::Round, &STRICT)
-        .unwrap()
-        .into_value();
+        .offset(fraction(-1, 4), &OffsetCornerStyle2::Round)
+        .unwrap();
     assert!(!twice.is_empty());
     assert!(
-        twice
-            .boolean_region(&once, BooleanOp::Difference, &STRICT)
-            .unwrap()
-            .into_value()
-            .is_empty()
+        crate::support::under(&STRICT, || twice
+            .boolean_region(&once, BooleanOp::Difference))
+        .unwrap()
+        .into_value()
+        .is_empty()
     );
 }
 
@@ -1004,18 +993,15 @@ fn repeated_round_erosion_composes_with_a_single_erosion() {
     });
     let quarter = |region: &CurveRegion2| {
         region
-            .offset(fraction(-1, 4), &OffsetCornerStyle2::Round, &STRICT)
+            .offset(fraction(-1, 4), &OffsetCornerStyle2::Round)
             .unwrap()
-            .into_value()
     };
     let twice = quarter(&quarter(&region));
     let half = region
-        .offset(fraction(-1, 2), &OffsetCornerStyle2::Round, &STRICT)
-        .unwrap()
-        .into_value();
+        .offset(fraction(-1, 2), &OffsetCornerStyle2::Round)
+        .unwrap();
     assert!(
-        twice
-            .boolean_region(&half, BooleanOp::Xor, &STRICT)
+        crate::support::under(&STRICT, || twice.boolean_region(&half, BooleanOp::Xor))
             .unwrap()
             .into_value()
             .is_empty()
@@ -1093,9 +1079,8 @@ fn translated_union_with_algebraic_contacts_round_trips() {
         },
     ];
     let union = seed_region(&seeds[0])
-        .boolean_region(&seed_region(&seeds[1]), BooleanOp::Union, &STRICT)
-        .unwrap()
-        .into_value();
+        .boolean_region(&seed_region(&seeds[1]), BooleanOp::Union)
+        .unwrap();
     assert_round_trip("union", &union).unwrap();
     for (label, tx) in [("identity", Real::zero()), ("shifted", fraction(1, 2))] {
         let moved = union
@@ -1106,10 +1091,8 @@ fn translated_union_with_algebraic_contacts_round_trips() {
                 &Real::one(),
                 &tx,
                 &Real::zero(),
-                &STRICT,
             )
-            .unwrap()
-            .into_value();
+            .unwrap();
         assert_round_trip(label, &moved).unwrap();
     }
 }

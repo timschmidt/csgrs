@@ -1,7 +1,8 @@
+mod support;
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, CurveString2,
-    EndpointTangent2, FillRule, LineLineIntersection, LineSeg2, Point2, Real, Segment2,
-    SegmentKind, SymbolicDependencyMask, ZeroKnowledge,
+    BulgeVertex2, Contour2, CurveContext, CurveRegion2, CurveString2, EndpointTangent2, FillRule,
+    LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
+    ZeroKnowledge,
 };
 
 fn r(value: i32) -> Real {
@@ -119,13 +120,14 @@ fn region_facts_preserve_all_line_exact_grid_shape() {
         FillRule::NonZero,
     )
     .unwrap();
-    let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy())
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_material_contours(vec![contour])
+    })
+    .unwrap()
+    .into_value();
+    let facts = crate::support::under(&policy(), || region.structural_facts())
         .unwrap()
         .into_value();
-    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
-    else {
-        panic!("a native exact region must retain structural facts");
-    };
 
     assert_eq!(region.boundary_loops()[0].len(), 4);
     assert_eq!(facts.material_contour_count, 1);
@@ -138,11 +140,10 @@ fn region_facts_preserve_all_line_exact_grid_shape() {
     assert!(facts.has_decided_region_box);
 
     assert_eq!(
-        region
-            .classify_point(&p(1, 1).into(), &policy())
+        crate::support::under(&policy(), || region.classify_point(&p(1, 1).into()))
             .unwrap()
             .into_value(),
-        Classification::Decided(hypercurve::RegionPointLocation::Inside)
+        hypercurve::RegionPointLocation::Inside
     );
 }
 

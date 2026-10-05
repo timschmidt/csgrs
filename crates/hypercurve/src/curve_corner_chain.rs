@@ -4170,7 +4170,7 @@ mod tests {
                 } else {
                     source
                 };
-                let region = CurveRegion2::try_from_boundary_paths(
+                let region = CurveRegion2::try_from_boundary_paths_with_policy(
                     &[source],
                     crate::FillRule::EvenOdd,
                     &policy,
@@ -4178,7 +4178,7 @@ mod tests {
                 .unwrap()
                 .into_value();
                 let outcome = region
-                    .fillet_loop_vertex(
+                    .fillet_loop_vertex_with_policy(
                         0,
                         if reversed { 2 } else { 1 },
                         &crate::CurveFillet2::new(q(2, 5)),
@@ -4208,7 +4208,7 @@ mod tests {
                     ] {
                         let point = Point2::new(q(279, 260) + q(shift, 10400), q(5501, 5200));
                         let classification = candidate
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap();
                         assert_eq!(classification.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(

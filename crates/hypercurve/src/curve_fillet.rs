@@ -2906,7 +2906,7 @@ mod tests {
         curves.push(Curve2::from_retained_fragment(
             crate::BezierSplitFragment2::AlgebraicChord(closing),
         ));
-        crate::CurveRegion2::try_from_boundary_paths(
+        crate::CurveRegion2::try_from_boundary_paths_with_policy(
             &[CurvePath2::try_new(curves).unwrap()],
             crate::FillRule::EvenOdd,
             policy,
@@ -3093,17 +3093,24 @@ mod tests {
                             {
                                 let region = closed_region(edited, &policy);
                                 let difference = region
-                                    .boolean_regions(&closed_region(&witness, &policy), &policy)
+                                    .boolean_regions_with_policy(
+                                        &closed_region(&witness, &policy),
+                                        &policy,
+                                    )
                                     .unwrap();
                                 assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                                 assert!(difference.value.xor().is_empty());
                                 let offset = region
-                                    .offset(q(1, 100), &crate::OffsetCornerStyle2::Bevel, &policy)
+                                    .offset_with_policy(
+                                        q(1, 100),
+                                        &crate::OffsetCornerStyle2::Bevel,
+                                        &policy,
+                                    )
                                     .unwrap();
                                 assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
                                 let outside = offset
                                     .value
-                                    .classify_point(&p(10, 10).into(), &policy)
+                                    .classify_point_with_policy(&p(10, 10).into(), &policy)
                                     .unwrap();
                                 assert_eq!(outside.certainty, crate::CurveCertainty::Certified);
                                 assert_eq!(
@@ -3453,7 +3460,10 @@ mod tests {
                                 crate::CurveCertainty::Certified
                             );
                             let difference = closed_region(edited, &policy)
-                                .boolean_regions(&closed_region(&witness, &policy), &policy)
+                                .boolean_regions_with_policy(
+                                    &closed_region(&witness, &policy),
+                                    &policy,
+                                )
                                 .unwrap();
                             assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                             assert!(difference.value.xor().is_empty());
@@ -3621,7 +3631,10 @@ mod tests {
                                     same(&pair[0].end(), &pair[1].start(), &policy);
                                 }
                                 let difference = closed_region(edited, &policy)
-                                    .boolean_regions(&closed_region(&witness, &policy), &policy)
+                                    .boolean_regions_with_policy(
+                                        &closed_region(&witness, &policy),
+                                        &policy,
+                                    )
                                     .unwrap();
                                 assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                                 assert!(difference.value.xor().is_empty());
@@ -4228,7 +4241,7 @@ mod tests {
                 curves.push(Curve2::from_retained_fragment(
                     crate::BezierSplitFragment2::AlgebraicChord(closing),
                 ));
-                let result = crate::CurveRegion2::try_from_boundary_paths(
+                let result = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                     &[CurvePath2::try_new(curves).unwrap()],
                     crate::FillRule::EvenOdd,
                     &policy,
@@ -4326,7 +4339,7 @@ mod tests {
                         }
                         let edited_region = region(edited);
                         let difference = edited_region
-                            .boolean_regions(&expected_region, &policy)
+                            .boolean_regions_with_policy(&expected_region, &policy)
                             .unwrap();
                         assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                         assert!(difference.value.xor().is_empty());
@@ -4359,7 +4372,7 @@ mod tests {
                 panic!("a retained center")
             };
             let region = |path: &CurvePath2| {
-                let region = crate::CurveRegion2::try_from_boundary_paths(
+                let region = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                     std::slice::from_ref(path),
                     crate::FillRule::EvenOdd,
                     &policy,
@@ -4404,7 +4417,9 @@ mod tests {
                     assert_eq!(result.value.candidate_count(), 1);
                     let edited = &result.value.solutions()[0];
                     let edited_region = region(edited);
-                    let difference = edited_region.boolean_regions(&expected, &policy).unwrap();
+                    let difference = edited_region
+                        .boolean_regions_with_policy(&expected, &policy)
+                        .unwrap();
                     assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                     assert!(difference.value.xor().is_empty());
                     // A remote endpoint is never an incident extension. This
@@ -4428,18 +4443,25 @@ mod tests {
                         assert_eq!(chamfered.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(chamfered.value.candidate_count(), 1);
                         let chamfered = region(&chamfered.value.solutions()[0]);
-                        let clipped = chamfered.boolean_regions(&expected, &policy).unwrap();
+                        let clipped = chamfered
+                            .boolean_regions_with_policy(&expected, &policy)
+                            .unwrap();
                         assert_eq!(clipped.certainty, crate::CurveCertainty::Certified);
                         assert!(clipped.value.difference().is_empty());
                         assert!(!clipped.value.xor().is_empty());
                         eprintln!("selected-circle seam: offset");
                         let expanded = chamfered
-                            .offset(q(1, 32), &crate::OffsetCornerStyle2::Round, &policy)
+                            .offset_with_policy(
+                                q(1, 32),
+                                &crate::OffsetCornerStyle2::Round,
+                                &policy,
+                            )
                             .unwrap();
                         assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
                         assert!(!expanded.value.is_empty());
-                        let contained =
-                            chamfered.boolean_regions(&expanded.value, &policy).unwrap();
+                        let contained = chamfered
+                            .boolean_regions_with_policy(&expanded.value, &policy)
+                            .unwrap();
                         assert_eq!(contained.certainty, crate::CurveCertainty::Certified);
                         assert!(contained.value.difference().is_empty());
                         assert!(!contained.value.xor().is_empty());
@@ -4596,7 +4618,7 @@ mod tests {
                                 }
                                 Classification::Uncertain(reason) => panic!("closure: {reason:?}"),
                             }
-                            let outcome = crate::CurveRegion2::try_from_boundary_paths(
+                            let outcome = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                                 &[CurvePath2::try_new(curves).unwrap()],
                                 crate::FillRule::EvenOdd,
                                 &policy,
@@ -4610,7 +4632,7 @@ mod tests {
                             outcome.value
                         };
                         let difference = region(edited, "edited")
-                            .boolean_regions(&region(&witness, "witness"), &policy)
+                            .boolean_regions_with_policy(&region(&witness, "witness"), &policy)
                             .unwrap();
                         assert_eq!(
                             difference.certainty,
@@ -4710,7 +4732,7 @@ mod tests {
                             .unwrap()
                             .into(),
                         );
-                        crate::CurveRegion2::try_from_boundary_paths(
+                        crate::CurveRegion2::try_from_boundary_paths_with_policy(
                             &[CurvePath2::try_new(curves).unwrap()],
                             crate::FillRule::EvenOdd,
                             &policy,
@@ -4719,7 +4741,7 @@ mod tests {
                         .value
                     };
                     let difference = region(&path)
-                        .boolean_regions(&region(edited), &policy)
+                        .boolean_regions_with_policy(&region(edited), &policy)
                         .unwrap();
                     assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                     assert!(difference.value.xor().is_empty());
@@ -5279,14 +5301,17 @@ mod tests {
             let closed = CurvePath2::try_new_with_policy(curves, &policy)
                 .unwrap()
                 .value;
-            let source = crate::CurveRegion2::try_from_boundary_paths(
+            let source = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                 &[closed],
                 crate::FillRule::EvenOdd,
                 &policy,
             )
             .unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
-            let source = source.value.regularized_region(&policy).unwrap();
+            let source = source
+                .value
+                .regularized_region_with_policy(&policy)
+                .unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
             let source = source.value;
             let mut edited = Vec::new();
@@ -5301,7 +5326,7 @@ mod tests {
                     corners += 1;
                     let mut request = CurveFillet2::new(q(1, 128));
                     assert!(matches!(
-                        source.fillet_loop_vertex(
+                        source.fillet_loop_vertex_with_policy(
                             loop_index,
                             vertex,
                             &request,
@@ -5315,7 +5340,7 @@ mod tests {
                     ));
                     request.contacts[0] = Some(CurveFilletContact2::Parameter(parameter.clone()));
                     let selected = source
-                        .fillet_loop_vertex(
+                        .fillet_loop_vertex_with_policy(
                             loop_index,
                             vertex,
                             &request,
@@ -5326,9 +5351,11 @@ mod tests {
                     assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                     for region in selected.value.into_solutions() {
                         assert!(!region.is_empty());
-                        let normalized = region.regularized_region(&policy).unwrap();
+                        let normalized = region.regularized_region_with_policy(&policy).unwrap();
                         assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
-                        let boolean = region.boolean_regions(&normalized.value, &policy).unwrap();
+                        let boolean = region
+                            .boolean_regions_with_policy(&normalized.value, &policy)
+                            .unwrap();
                         assert_eq!(boolean.certainty, crate::CurveCertainty::Certified);
                         assert!(boolean.value.xor().is_empty());
                         // Continue through the other corner and set operations
@@ -5355,7 +5382,7 @@ mod tests {
                                 "the semicircle's two rational charts retain their common apex",
                             );
                         let chamfered = region
-                            .chamfer_loop_vertex_by_setbacks(
+                            .chamfer_loop_vertex_by_setbacks_with_policy(
                                 arc_loop,
                                 arc_vertex,
                                 q(1, 4096),
@@ -5369,7 +5396,11 @@ mod tests {
                             panic!("one exact circular-seam chamfer");
                         };
                         let offset = chamfered
-                            .offset(q(1, 4096), &crate::OffsetCornerStyle2::Round, &policy)
+                            .offset_with_policy(
+                                q(1, 4096),
+                                &crate::OffsetCornerStyle2::Round,
+                                &policy,
+                            )
                             .unwrap();
                         assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
                         let vertices = [
@@ -5391,14 +5422,17 @@ mod tests {
                                 .collect(),
                         )
                         .unwrap();
-                        let clip = crate::CurveRegion2::try_from_boundary_paths(
+                        let clip = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                             &[clip],
                             crate::FillRule::EvenOdd,
                             &policy,
                         )
                         .unwrap();
                         assert_eq!(clip.certainty, crate::CurveCertainty::Certified);
-                        let clipped = offset.value.boolean_regions(&clip.value, &policy).unwrap();
+                        let clipped = offset
+                            .value
+                            .boolean_regions_with_policy(&clip.value, &policy)
+                            .unwrap();
                         assert_eq!(clipped.certainty, crate::CurveCertainty::Certified);
                         assert!(!clipped.value.intersection().is_empty());
                         assert!(!clipped.value.difference().is_empty());
@@ -5789,14 +5823,17 @@ mod stationary_family_composition_regression {
             let closed = CurvePath2::try_new_with_policy(curves, &policy)
                 .unwrap()
                 .value;
-            let source = crate::CurveRegion2::try_from_boundary_paths(
+            let source = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                 &[closed],
                 crate::FillRule::EvenOdd,
                 &policy,
             )
             .unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
-            let source = source.value.regularized_region(&policy).unwrap();
+            let source = source
+                .value
+                .regularized_region_with_policy(&policy)
+                .unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
             let source = source.value;
             let mut edited = Vec::new();
@@ -5811,7 +5848,7 @@ mod stationary_family_composition_regression {
                     corners += 1;
                     let mut request = CurveFillet2::new(q(1, 128));
                     assert!(matches!(
-                        source.fillet_loop_vertex(
+                        source.fillet_loop_vertex_with_policy(
                             loop_index,
                             vertex,
                             &request,
@@ -5825,7 +5862,7 @@ mod stationary_family_composition_regression {
                     ));
                     request.contacts[0] = Some(CurveFilletContact2::Parameter(parameter.clone()));
                     let selected = source
-                        .fillet_loop_vertex(
+                        .fillet_loop_vertex_with_policy(
                             loop_index,
                             vertex,
                             &request,
@@ -5836,9 +5873,11 @@ mod stationary_family_composition_regression {
                     assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
                     for region in selected.value.into_solutions() {
                         assert!(!region.is_empty());
-                        let normalized = region.regularized_region(&policy).unwrap();
+                        let normalized = region.regularized_region_with_policy(&policy).unwrap();
                         assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
-                        let boolean = region.boolean_regions(&normalized.value, &policy).unwrap();
+                        let boolean = region
+                            .boolean_regions_with_policy(&normalized.value, &policy)
+                            .unwrap();
                         assert_eq!(boolean.certainty, crate::CurveCertainty::Certified);
                         assert!(boolean.value.xor().is_empty());
                         // Continue through the other corner and set operations
@@ -5865,7 +5904,7 @@ mod stationary_family_composition_regression {
                                 "the semicircle's two rational charts retain their common apex",
                             );
                         let chamfered = region
-                            .chamfer_loop_vertex_by_setbacks(
+                            .chamfer_loop_vertex_by_setbacks_with_policy(
                                 arc_loop,
                                 arc_vertex,
                                 q(1, 4096),
@@ -5879,7 +5918,11 @@ mod stationary_family_composition_regression {
                             panic!("one exact circular-seam chamfer");
                         };
                         let offset = chamfered
-                            .offset(q(1, 4096), &crate::OffsetCornerStyle2::Round, &policy)
+                            .offset_with_policy(
+                                q(1, 4096),
+                                &crate::OffsetCornerStyle2::Round,
+                                &policy,
+                            )
                             .unwrap();
                         assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
                         let vertices = [
@@ -5901,14 +5944,17 @@ mod stationary_family_composition_regression {
                                 .collect(),
                         )
                         .unwrap();
-                        let clip = crate::CurveRegion2::try_from_boundary_paths(
+                        let clip = crate::CurveRegion2::try_from_boundary_paths_with_policy(
                             &[clip],
                             crate::FillRule::EvenOdd,
                             &policy,
                         )
                         .unwrap();
                         assert_eq!(clip.certainty, crate::CurveCertainty::Certified);
-                        let clipped = offset.value.boolean_regions(&clip.value, &policy).unwrap();
+                        let clipped = offset
+                            .value
+                            .boolean_regions_with_policy(&clip.value, &policy)
+                            .unwrap();
                         assert_eq!(clipped.certainty, crate::CurveCertainty::Certified);
                         assert!(!clipped.value.intersection().is_empty());
                         assert!(!clipped.value.difference().is_empty());

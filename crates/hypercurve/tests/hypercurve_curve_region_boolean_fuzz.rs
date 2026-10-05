@@ -1,5 +1,6 @@
 #[path = "../benches/common/pathological.rs"]
 mod pathological_fixture;
+mod support;
 
 use std::collections::HashSet;
 
@@ -245,10 +246,8 @@ fn generated_region(specification: &GeneratedRegion) -> CurveRegion2 {
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
     .expect("outward graph curves form a simple exact region")
-    .into_value()
 }
 
 fn generated_region_strategy() -> impl Strategy<Value = GeneratedRegion> {
@@ -319,8 +318,7 @@ fn exact_boolean_results(
     compare_individual_calls: bool,
 ) -> Result<(), String> {
     let policy = CurveContext::STRICT;
-    let evidence = first
-        .intersect_region(second, &policy)
+    let evidence = crate::support::under(&policy, || first.intersect_region(second))
         .map_err(|error| format!("{label}: exact intersection failed: {error}"))?
         .value;
     if !evidence.blockers().is_empty() {
@@ -329,11 +327,11 @@ fn exact_boolean_results(
             evidence.blockers()
         ));
     }
-    let batch = first.boolean_regions(second, &policy).map_err(|error| {
+    let batch = crate::support::under(&policy, || first.boolean_regions(second)).map_err(|error| {
         let immediate = BOOLEAN_OPERATIONS.map(|operation| {
             (
                 operation,
-                first.boolean_region(second, operation, &policy).err(),
+                crate::support::under(&policy, || first.boolean_region(second, operation)).err(),
             )
         });
         let contacts = evidence
@@ -359,15 +357,17 @@ fn exact_boolean_results(
     .value;
     if compare_individual_calls {
         for operation in BOOLEAN_OPERATIONS {
-            let immediate = first
-                .boolean_region(second, operation, &policy)
-                .map_err(|error| {
-                    format!("{label}: immediate {operation:?} failed after batch success: {error}")
-                })?
-                .value;
+            let immediate =
+                crate::support::under(&policy, || first.boolean_region(second, operation))
+                    .map_err(|error| {
+                        format!(
+                            "{label}: immediate {operation:?} failed after batch success: {error}"
+                        )
+                    })?
+                    .value;
             if &immediate != batch.region(operation)
-                && !immediate
-                    .boolean_region(batch.region(operation), BooleanOp::Xor, &policy)
+                && !crate::support::under(&policy, || immediate
+                    .boolean_region(batch.region(operation), BooleanOp::Xor))
                     .map_err(|error| {
                         format!(
                             "{label}: exact {operation:?} differential failed after structural mismatch: {error}"
@@ -451,20 +451,13 @@ fn retired_algebraic_polyline_case() -> RetiredFailureCase {
 
     RetiredFailureCase {
         failure: RetiredFailure::AlgebraicPolylineContacts,
-        first: CurveRegion2::try_from_boundary_paths(
-            &[first_path],
-            hypercurve::FillRule::EvenOdd,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value(),
+        first: CurveRegion2::try_from_boundary_paths(&[first_path], hypercurve::FillRule::EvenOdd)
+            .unwrap(),
         second: CurveRegion2::try_from_boundary_paths(
             &[second_path],
             hypercurve::FillRule::EvenOdd,
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value(),
+        .unwrap(),
     }
 }
 
@@ -498,17 +491,13 @@ fn retired_uniform_weight_area_case() -> RetiredFailureCase {
         first: CurveRegion2::try_from_boundary_paths(
             &[generated_path(&line_region)],
             hypercurve::FillRule::EvenOdd,
-            &CurveContext::STRICT,
         )
-        .expect("retired line region is valid")
-        .into_value(),
+        .expect("retired line region is valid"),
         second: CurveRegion2::try_from_boundary_paths(
             &[generated_path(&rational_region)],
             hypercurve::FillRule::EvenOdd,
-            &CurveContext::STRICT,
         )
-        .expect("retired uniform-weight rational region is valid")
-        .into_value(),
+        .expect("retired uniform-weight rational region is valid"),
     }
 }
 
@@ -836,10 +825,8 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
     .unwrap()
-    .into_value()
 }
 
 fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
@@ -880,10 +867,8 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
         &[capsule, via],
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
         &[FillRule::NonZero, FillRule::NonZero],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     RetiredFailureCase {
         failure: RetiredFailure::SignedCompoundCircularSubtraction,
         first,
@@ -895,10 +880,8 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
                 &fraction(1, 5),
                 &Real::zero(),
                 &Real::zero(),
-                &CurveContext::STRICT,
             )
-            .unwrap()
-            .into_value(),
+            .unwrap(),
     }
 }
 
@@ -925,10 +908,11 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
         weight_numerator: 1,
         weight_denominator: 1,
     });
-    let first = horizontal
-        .boolean_region(&vertical, BooleanOp::Union, &CurveContext::STRICT)
-        .unwrap()
-        .value;
+    let first = crate::support::under(&CurveContext::STRICT, || {
+        horizontal.boolean_region(&vertical, BooleanOp::Union)
+    })
+    .unwrap()
+    .value;
     RetiredFailureCase {
         failure: RetiredFailure::ThermalSpokeCircularSubtraction,
         first,
@@ -940,10 +924,8 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
                 &fraction(1, 5),
                 &Real::zero(),
                 &Real::zero(),
-                &CurveContext::STRICT,
             )
-            .unwrap()
-            .into_value(),
+            .unwrap(),
     }
 }
 
@@ -960,23 +942,21 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
     let source = CurveRegion2::try_from_boundary_paths(
         &[CurvePath2::try_new(curves).unwrap()],
         hypercurve::FillRule::EvenOdd,
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let policy = CurveContext::STRICT;
-    let transformed = source
-        .transform_affine(
+    let transformed = crate::support::under(&policy, || {
+        source.transform_affine(
             &Real::zero(),
             &-Real::one(),
             &Real::one(),
             &Real::zero(),
             &integer(7),
             &integer(1),
-            &policy,
         )
-        .unwrap()
-        .into_value();
+    })
+    .unwrap()
+    .into_value();
     RetiredFailureCase {
         failure: RetiredFailure::TransformedDegreeElevatedLineImage,
         first: transformed,
@@ -1030,18 +1010,18 @@ fn retired_circular_line_endpoint_case() -> RetiredFailureCase {
 
 fn retired_distinct_circular_conic_contacts_case() -> RetiredFailureCase {
     let policy = CurveContext::STRICT;
-    let translated = exact_circle_region(1, false)
-        .transform_affine(
+    let translated = crate::support::under(&policy, || {
+        exact_circle_region(1, false).transform_affine(
             &Real::one(),
             &Real::zero(),
             &Real::zero(),
             &Real::one(),
             &integer(4),
             &Real::zero(),
-            &policy,
         )
-        .unwrap()
-        .into_value();
+    })
+    .unwrap()
+    .into_value();
     RetiredFailureCase {
         failure: RetiredFailure::DistinctCircularConicContacts,
         first: exact_circle_region(0, false),
@@ -1139,10 +1119,8 @@ fn authored_loop_semantics_support_reversed_nonuniform_rational_regions() {
         std::slice::from_ref(&forward_path),
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let reversed_path = forward_path
         .reversed(&CurveContext::STRICT)
         .unwrap()
@@ -1151,10 +1129,8 @@ fn authored_loop_semantics_support_reversed_nonuniform_rational_regions() {
         &[reversed_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     exact_boolean_results(
         "oppositely oriented nonuniform rational regions",
         &forward,
@@ -1209,9 +1185,8 @@ fn assert_selected_family_pair_contact(
     second_family: u8,
 ) {
     let evidence = first
-        .intersect_region(second, &CurveContext::STRICT)
-        .expect("the deterministic family fixture has exact contact evidence")
-        .into_value();
+        .intersect_region(second)
+        .expect("the deterministic family fixture has exact contact evidence");
     let exercised_carrier_pairs = evidence
         .contacts()
         .iter()
@@ -1240,9 +1215,8 @@ fn deterministic_transverse_curve_family_pair_matrix_completes() {
         let first = deterministic_family_region(first_family);
         for second_family in 0_u8..8 {
             let second = deterministic_family_region(second_family)
-                .transform_similarity(&quarter_turn, &CurveContext::STRICT)
-                .expect("the exact family fixture remains a valid region after rotation")
-                .into_value();
+                .transform_similarity(&quarter_turn)
+                .expect("the exact family fixture remains a valid region after rotation");
 
             let label =
                 format!("deterministic transverse family pair {first_family}/{second_family}");
@@ -1272,9 +1246,8 @@ fn deterministic_endpoint_curve_family_pair_matrix_completes() {
         let first = deterministic_family_region(first_family);
         for second_family in 0_u8..8 {
             let second = deterministic_family_region(second_family)
-                .transform_similarity(&quarter_turn, &CurveContext::STRICT)
-                .expect("the exact endpoint fixture remains a valid region after rotation")
-                .into_value();
+                .transform_similarity(&quarter_turn)
+                .expect("the exact endpoint fixture remains a valid region after rotation");
             let label =
                 format!("deterministic endpoint family pair {first_family}/{second_family}");
             assert_selected_family_pair_contact(
@@ -1402,10 +1375,8 @@ fn tangent_family_region(family: u8, material_above: bool, outer_y: i16) -> Curv
         &[CurvePath2::try_new(curves).expect("the tangent fixture boundary is connected")],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &CurveContext::STRICT,
     )
     .expect("the tangent fixture bounds a simple exact region")
-    .into_value()
 }
 
 #[test]
@@ -1415,10 +1386,10 @@ fn deterministic_tangent_curve_family_pair_matrix_completes() {
         for second_family in 0_u8..8 {
             let second = tangent_family_region(second_family, false, -8);
             let label = format!("deterministic tangent family pair {first_family}/{second_family}");
-            let evidence = first
-                .intersect_region(&second, &CurveContext::STRICT)
-                .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
-                .into_value();
+            let evidence =
+                crate::support::under(&CurveContext::STRICT, || first.intersect_region(&second))
+                    .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
+                    .into_value();
             if first_family == 0 && second_family == 0 {
                 assert!(
                     evidence.overlaps().iter().any(|overlap| {
@@ -1471,10 +1442,10 @@ fn deterministic_coincident_curve_family_images_complete() {
         let first = tangent_family_region(first_family, true, 8);
         let second = tangent_family_region(second_family, true, 10);
         let label = format!("deterministic coincident family image {first_family}/{second_family}");
-        let evidence = first
-            .intersect_region(&second, &CurveContext::STRICT)
-            .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
-            .into_value();
+        let evidence =
+            crate::support::under(&CurveContext::STRICT, || first.intersect_region(&second))
+                .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
+                .into_value();
         assert!(
             evidence.overlaps().iter().any(|overlap| {
                 if first_family == 0 {

@@ -1,3 +1,4 @@
+mod support;
 use hypercurve::{
     CircularArc2, Classification, ContourPointLocation, Curve2, CurveCertainty, CurveContext,
     CurveCornerMode2, CurveCornerSolutions2, CurveFamily2, CurvePath2, CurvePoint2, CurveRegion2,
@@ -53,11 +54,12 @@ fn boundary_admission_rejects_disconnected_spline_spans() {
             assert_same_point(&path.start(), &path.end(), &policy);
             for error in [
                 path.boundary_loop(&policy).unwrap_err(),
-                CurveRegion2::try_from_boundary_paths(
-                    std::slice::from_ref(&path),
-                    hypercurve::FillRule::EvenOdd,
-                    &policy,
-                )
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths(
+                        std::slice::from_ref(&path),
+                        hypercurve::FillRule::EvenOdd,
+                    )
+                })
                 .unwrap_err(),
             ] {
                 assert!(matches!(
@@ -270,11 +272,9 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
                 &edited.curves().last().unwrap().end(),
                 &policy,
             );
-            let source = CurveRegion2::try_from_boundary_paths(
-                &[edited],
-                hypercurve::FillRule::EvenOdd,
-                &policy,
-            )
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&[edited], hypercurve::FillRule::EvenOdd)
+            })
             .unwrap();
             assert_eq!(source.certainty, CurveCertainty::Certified);
             let corners = [
@@ -294,17 +294,14 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
                     .collect(),
             )
             .unwrap();
-            let cutter = CurveRegion2::try_from_boundary_paths(
-                &[cutter],
-                hypercurve::FillRule::EvenOdd,
-                &policy,
-            )
+            let cutter = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&[cutter], hypercurve::FillRule::EvenOdd)
+            })
             .unwrap();
             assert_eq!(cutter.certainty, CurveCertainty::Certified);
-            let booleans = source
-                .value
-                .boolean_regions(&cutter.value, &policy)
-                .unwrap();
+            let booleans =
+                crate::support::under(&policy, || source.value.boolean_regions(&cutter.value))
+                    .unwrap();
             assert_eq!(booleans.certainty, CurveCertainty::Certified);
             let booleans = booleans.value;
             for (region, expected) in [
@@ -317,17 +314,18 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
                     .into_iter()
                     .zip(expected)
                 {
-                    let location = region
-                        .classify_point(&query.clone().into(), &policy)
-                        .unwrap();
+                    let location = crate::support::under(&policy, || {
+                        region.classify_point(&query.clone().into())
+                    })
+                    .unwrap();
                     assert_eq!(location.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         location.value,
-                        Classification::Decided(if inside {
+                        if inside {
                             RegionPointLocation::Inside
                         } else {
                             RegionPointLocation::Outside
-                        })
+                        }
                     );
                 }
             }
@@ -571,12 +569,13 @@ fn check_major_arc_fillet(clockwise: bool) {
 fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
     use hypercurve::{FillRule, HomogeneousControl2, OffsetCornerStyle2, RationalBezier2};
     let admit = |path, policy: &CurveContext| {
-        let admitted = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[path],
-            &[hypercurve::CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            policy,
-        )
+        let admitted = crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path],
+                &[hypercurve::CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
         .unwrap();
         assert_eq!(admitted.certainty, CurveCertainty::Certified);
         admitted.into_value()
@@ -587,11 +586,11 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
             (Point2::new(q(-1, 2), q(1, 2)), RegionPointLocation::Outside),
         ] {
-            let result = region
-                .classify_point(&point.clone().into(), policy)
-                .unwrap();
+            let result =
+                crate::support::under(policy, || region.classify_point(&point.clone().into()))
+                    .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
-            assert_eq!(result.value, Classification::Decided(expected));
+            assert_eq!(result.value, expected);
         }
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -666,34 +665,35 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
                 .unwrap(),
                 &policy,
             );
-            let results = material.boolean_regions(&rectangle, &policy).unwrap();
+            let results =
+                crate::support::under(&policy, || material.boolean_regions(&rectangle)).unwrap();
             assert_eq!(results.certainty, CurveCertainty::Certified);
             let clipped = results.value.intersection();
             check(clipped, &policy);
             for fillet in [false, true] {
                 let regions = if fillet {
-                    let outcome = clipped
-                        .fillet_loop_vertex(
+                    let outcome = crate::support::under(&policy, || {
+                        clipped.fillet_loop_vertex(
                             0,
                             1,
                             &hypercurve::CurveFillet2::new(q(1, 8)),
                             CurveCornerMode2::TrimOnly,
-                            &policy,
                         )
-                        .unwrap();
+                    })
+                    .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     outcome.value.into_solutions()
                 } else {
-                    let outcome = clipped
-                        .chamfer_loop_vertex_by_setbacks(
+                    let outcome = crate::support::under(&policy, || {
+                        clipped.chamfer_loop_vertex_by_setbacks(
                             0,
                             1,
                             q(1, 8),
                             q(1, 8),
                             CurveCornerMode2::TrimOnly,
-                            &policy,
                         )
-                        .unwrap();
+                    })
+                    .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     match outcome.value {
                         CurveCornerSolutions2::Unique(region) => vec![region],
@@ -706,14 +706,15 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
                 assert!(!regions.is_empty());
                 for edited in regions {
                     check(&edited, &policy);
-                    let displaced = edited
-                        .offset(q(1, 32), &OffsetCornerStyle2::Round, &policy)
-                        .unwrap();
+                    let displaced = crate::support::under(&policy, || {
+                        edited.offset(q(1, 32), &OffsetCornerStyle2::Round)
+                    })
+                    .unwrap();
                     assert_eq!(displaced.certainty, CurveCertainty::Certified);
-                    let replay = displaced
-                        .value
-                        .boolean_regions(&rectangle, &policy)
-                        .unwrap();
+                    let replay = crate::support::under(&policy, || {
+                        displaced.value.boolean_regions(&rectangle)
+                    })
+                    .unwrap();
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     check(replay.value.intersection(), &policy);
                     // Exercise every result of the shared arrangement, including
@@ -749,11 +750,12 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
                         .into_iter()
                         .zip(expected)
                         {
-                            let location = region
-                                .classify_point(&point.clone().into(), &policy)
-                                .unwrap();
+                            let location = crate::support::under(&policy, || {
+                                region.classify_point(&point.clone().into())
+                            })
+                            .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
-                            assert_eq!(location.value, Classification::Decided(expected));
+                            assert_eq!(location.value, expected);
                         }
                     }
                 }

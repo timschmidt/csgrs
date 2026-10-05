@@ -1,5 +1,7 @@
 #[path = "common/pathological.rs"]
 mod pathological_fixture;
+#[path = "../tests/support/mod.rs"]
+mod support;
 
 use std::env;
 use std::hint::black_box;
@@ -151,7 +153,7 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     let mut topology_point_classification_count = 0_usize;
 
     for cell in &dataset.cells {
-        match cell.source.boolean_regions(&cell.rotated, &policy) {
+        match crate::support::under(&policy, || cell.source.boolean_regions(&cell.rotated)) {
             Ok(results) => {
                 let results = results.value;
                 completed_pair_count += 1;
@@ -202,11 +204,10 @@ fn benchmark_booleans(dataset: &NativeDataset) {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ] {
-            match cell.source_projection.boolean_region(
-                &cell.rotated_projection,
-                operation,
-                &policy,
-            ) {
+            match crate::support::under(&policy, || {
+                cell.source_projection
+                    .boolean_region(&cell.rotated_projection, operation)
+            }) {
                 Ok(region) => {
                     projection_decided += 1;
                     projection_checksum ^= region.value.len();

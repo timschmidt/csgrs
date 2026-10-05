@@ -109,18 +109,11 @@ fn finite_region_profile_triangulates_material_with_owned_hole() {
     let region = CurveRegion2::try_from_native_contours(
         vec![rectangle(0, 0, 6, 6)],
         vec![rectangle(2, 2, 4, 4)],
-        &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
+    .unwrap();
     let profiles = region
-        .project_to_finite_profiles(
-            &FiniteProjectionOptions::try_new(1.0e-3).unwrap(),
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value()
-        .expect_decided("rectangle hole ownership should be decided");
+        .project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-3).unwrap())
+        .unwrap();
 
     assert_eq!(profiles.len(), 1);
     assert_eq!(profiles[0].holes().len(), 1);
@@ -131,17 +124,4 @@ fn finite_region_profile_triangulates_material_with_owned_hole() {
         .into_value();
     assert!(!triangles.is_empty());
     assert!((signed_area(&triangles).abs() - 32.0).abs() < 1.0e-9);
-}
-
-trait ExpectDecided<T> {
-    fn expect_decided(self, message: &str) -> T;
-}
-
-impl<T> ExpectDecided<T> for hypercurve::Classification<T> {
-    fn expect_decided(self, message: &str) -> T {
-        match self {
-            Self::Decided(value) => value,
-            Self::Uncertain(reason) => panic!("{message}: {reason:?}"),
-        }
-    }
 }

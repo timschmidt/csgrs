@@ -6,8 +6,9 @@
 //! the cases that map directly to `hypercurve`'s current region model: closed
 //! material contours, hole contours, and boolean membership semantics.
 
+mod support;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, Point2, Real,
+    BooleanOp, BulgeVertex2, Contour2, CurveContext, CurveRegion2, Point2, Real,
     RegionPointLocation,
 };
 
@@ -44,23 +45,23 @@ fn rectangle((xmin, ymin, xmax, ymax): Rect) -> HContour {
 }
 
 fn region(materials: &[Rect], holes: &[Rect]) -> HRegion {
-    CurveRegion2::try_from_native_contours(
-        materials.iter().copied().map(rectangle).collect(),
-        holes.iter().copied().map(rectangle).collect(),
-        &policy(),
-    )
+    crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_contours(
+            materials.iter().copied().map(rectangle).collect(),
+            holes.iter().copied().map(rectangle).collect(),
+        )
+    })
     .unwrap()
     .into_value()
 }
 
 fn inside(region: &HRegion, x: f64, y: f64) -> bool {
-    match region
-        .classify_point(&p(x, y).into(), &policy())
+    match crate::support::under(&policy(), || region.classify_point(&p(x, y).into()))
         .unwrap()
         .into_value()
     {
-        Classification::Decided(RegionPointLocation::Inside) => true,
-        Classification::Decided(RegionPointLocation::Outside) => false,
+        RegionPointLocation::Inside => true,
+        RegionPointLocation::Outside => false,
         other => panic!("sample ({x}, {y}) should avoid boundaries, got {other:?}"),
     }
 }
@@ -82,15 +83,13 @@ fn assert_boolean_samples(
     expected_holes: usize,
     samples: &[(f64, f64)],
 ) -> HRegion {
-    let result = first
-        .boolean_region(second, op, &policy())
+    let result = crate::support::under(&policy(), || first.boolean_region(second, op))
         .unwrap()
         .into_value();
 
-    let Classification::Decided(native) = result
-        .native_contours_fast_path(&policy())
+    let Some(native) = crate::support::under(&policy(), || result.native_contours_fast_path())
         .unwrap()
-        .into_value()
+        .value
     else {
         panic!("expected native line topology for PR #59 {op:?}");
     };

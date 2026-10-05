@@ -339,6 +339,19 @@ impl CurveRegion2 {
     pub fn recover_from_finite_profiles(
         profiles: &[FiniteRegionProfile2],
         options: PolylineReconstructionOptions,
+    ) -> crate::ExactCurveResult<Self> {
+        Self::recover_from_finite_profiles_with_policy(
+            profiles,
+            options,
+            &crate::policy::principal_context(),
+        )
+        .map(crate::CurveOutcome::into_value)
+    }
+
+    /// [`Self::recover_from_finite_profiles`] under an explicit predicate policy.
+    pub(crate) fn recover_from_finite_profiles_with_policy(
+        profiles: &[FiniteRegionProfile2],
+        options: PolylineReconstructionOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         let mut material_contours = Vec::with_capacity(profiles.len());
@@ -353,7 +366,7 @@ impl CurveRegion2 {
             }
         }
 
-        Self::try_from_native_contours(material_contours, hole_contours, policy)
+        Self::try_from_native_contours_with_policy(material_contours, hole_contours, policy)
     }
 }
 

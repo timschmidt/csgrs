@@ -1659,14 +1659,7 @@ fn exact_points_equal(
 }
 
 fn remap_nurbs_operation(error: ExactCurveError, operation: CurveOperation2) -> ExactCurveError {
-    match error {
-        ExactCurveError::Invalid { family, cause, .. } => {
-            ExactCurveError::invalid(operation, family, cause)
-        }
-        ExactCurveError::Blocked(blocker) => {
-            ExactCurveError::blocked(operation, blocker.family(), blocker.reason())
-        }
-    }
+    error.with_operation(operation)
 }
 
 fn matching_nurbs_derivatives(

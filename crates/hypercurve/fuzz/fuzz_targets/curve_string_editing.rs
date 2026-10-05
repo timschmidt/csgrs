@@ -51,9 +51,9 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<CurveRegion
     )
     .ok()
     .and_then(|contour| {
-        CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+        CurveRegion2::try_from_native_material_contours(vec![contour])
             .ok()
-            .map(|outcome| outcome.into_value())
+            .map(|outcome| outcome)
     })
 }
 

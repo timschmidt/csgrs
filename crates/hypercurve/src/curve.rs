@@ -7095,7 +7095,7 @@ mod tests {
                     && blocker.reason() == crate::UncertaintyReason::RealSign
         ));
 
-        let strict_region = crate::CurveRegion2::try_from_boundary_paths(
+        let strict_region = crate::CurveRegion2::try_from_boundary_paths_with_policy(
             std::slice::from_ref(&path),
             crate::FillRule::EvenOdd,
             &CurveContext::STRICT,
@@ -7107,7 +7107,7 @@ mod tests {
                 if blocker.operation() == CurveOperation2::Construction
                     && blocker.reason() == crate::UncertaintyReason::RealSign
         ));
-        let approximate_region = crate::CurveRegion2::try_from_boundary_paths(
+        let approximate_region = crate::CurveRegion2::try_from_boundary_paths_with_policy(
             std::slice::from_ref(&path),
             crate::FillRule::EvenOdd,
             &CurveContext::APPROXIMATE_512,

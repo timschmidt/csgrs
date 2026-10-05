@@ -1,9 +1,11 @@
+#[path = "../tests/support/mod.rs"]
+mod support;
 use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, Real, RegionPointLocation,
+    Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2, QuadraticBezier2,
+    Real, RegionPointLocation,
 };
 
 fn q(numerator: i32, denominator: i32) -> Real {
@@ -42,21 +44,18 @@ fn bench_lens(name: &str, a: i32, b: i32, iterations: u32) {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let region = CurveRegion2::try_from_boundary_paths(
-            black_box(std::slice::from_ref(&path)),
-            FillRule::EvenOdd,
-            &policy,
-        )
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                black_box(std::slice::from_ref(&path)),
+                FillRule::EvenOdd,
+            )
+        })
         .expect("the tangent lens is admitted")
         .into_value();
-        let location = region
-            .classify_point(black_box(&inside), &policy)
+        let location = crate::support::under(&policy, || region.classify_point(black_box(&inside)))
             .expect("classification completes")
             .value;
-        assert_eq!(
-            location,
-            Classification::Decided(RegionPointLocation::Inside)
-        );
+        assert_eq!(location, RegionPointLocation::Inside);
         checksum += black_box(region.len());
     }
     let elapsed = started.elapsed();

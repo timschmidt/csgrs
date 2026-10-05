@@ -79,7 +79,7 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
                 panic!("the independent oblique fillet path must close exactly");
             };
             curves.push(closing.into());
-            CurveRegion2::try_from_boundary_paths(
+            CurveRegion2::try_from_boundary_paths_with_policy(
                 &[CurvePath2::try_new(curves).unwrap()],
                 crate::FillRule::EvenOdd,
                 &policy,
@@ -90,7 +90,7 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
         let expected = closed_region(&witness);
         let offset_distance = &radius * q(1, 100);
         let expected_offset = expected
-            .offset(offset_distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
+            .offset_with_policy(offset_distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
             .unwrap();
         assert_eq!(expected_offset.certainty, CurveCertainty::Certified);
         let chord = dense_chord_normal_chord(
@@ -218,21 +218,21 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
                             );
                         }
                         let region = closed_region(edited);
-                        let difference = region.boolean_regions(&expected, &policy)
+                        let difference = region.boolean_regions_with_policy(&expected, &policy)
                             .unwrap_or_else(|error| panic!(
                                 "oblique fillet Boolean: {error}; retained={retained}, reversed={reversed}, mode={mode:?}, selection={selection}"
                             ));
                         assert_eq!(difference.certainty, CurveCertainty::Certified);
                         assert!(difference.value.xor().is_empty());
                         if selection == 0 {
-                            let offset = region.offset(offset_distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
+                            let offset = region.offset_with_policy(offset_distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
                                 .unwrap_or_else(|error| panic!(
                                     "oblique fillet offset: {error}; retained={retained}, reversed={reversed}, mode={mode:?}"
                                 ));
                             assert_eq!(offset.certainty, CurveCertainty::Certified);
                             let difference = offset
                                 .value
-                                .boolean_regions(&expected_offset.value, &policy)
+                                .boolean_regions_with_policy(&expected_offset.value, &policy)
                                 .unwrap_or_else(|error| panic!(
                                     "oblique fillet offset Boolean: {error}; retained={retained}, reversed={reversed}, mode={mode:?}"
                                 ));
@@ -8063,7 +8063,7 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
         )
         .unwrap();
         let intersections = retained_region
-            .intersect_region(&rational_region, &policy)
+            .intersect_region_with_policy(&rational_region, &policy)
             .unwrap();
         assert_eq!(intersections.certainty, CurveCertainty::Certified);
         assert!(
@@ -8087,7 +8087,7 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
             }));
         }
         let booleans = retained_region
-            .boolean_regions(&rational_region, &policy)
+            .boolean_regions_with_policy(&rational_region, &policy)
             .unwrap();
         assert_eq!(booleans.certainty, CurveCertainty::Certified);
         assert!(!booleans.value.union().is_empty());
@@ -12935,7 +12935,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let mapped_cap_offset_work = || {
-            mapped_cap.offset(
+            mapped_cap.offset_with_policy(
                 (Real::one() / Real::from(8_i8)).unwrap(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -13423,7 +13423,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         )
         .unwrap();
         let rational_evidence = cusp_region
-            .intersect_region(&rational_region, &policy)
+            .intersect_region_with_policy(&rational_region, &policy)
             .expect("a rational coincident circle must publish selected overlap evidence")
             .into_value();
         assert!(rational_evidence.blockers().is_empty());
@@ -13465,7 +13465,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             Classification::Decided(true),
         );
         let rational_booleans = cusp_region
-            .boolean_regions(&rational_region, &policy)
+            .boolean_regions_with_policy(&rational_region, &policy)
             .expect("the rational coincident circle must regularize")
             .into_value();
         assert!(!rational_booleans.union().is_empty());
@@ -13474,7 +13474,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         assert!(!rational_booleans.xor().is_empty());
 
         let partial_rational_evidence = partial_cusp_region
-            .intersect_region(&rational_region, &policy)
+            .intersect_region_with_policy(&rational_region, &policy)
             .expect("a shortened cusp must clip the rational circle component")
             .into_value();
         assert!(partial_rational_evidence.blockers().is_empty());
@@ -13495,13 +13495,13 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             Classification::Decided(true),
         );
         let partial_rational_booleans = partial_cusp_region
-            .boolean_regions(&rational_region, &policy)
+            .boolean_regions_with_policy(&rational_region, &policy)
             .expect("the clipped rational circle component must regularize")
             .into_value();
         assert!(!partial_rational_booleans.union().is_empty());
         assert!(!partial_rational_booleans.intersection().is_empty());
         let swapped_rational_evidence = rational_region
-            .intersect_region(&partial_cusp_region, &policy)
+            .intersect_region_with_policy(&partial_cusp_region, &policy)
             .expect("rational component clipping must be operand-order independent")
             .into_value();
         assert!(swapped_rational_evidence.blockers().is_empty());
@@ -13556,7 +13556,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         )
         .unwrap();
         let cross_field_rational_evidence = cross_field_cusp_region
-            .intersect_region(&rational_region, &policy)
+            .intersect_region_with_policy(&rational_region, &policy)
             .expect("a mapped rational cusp cut must survive a rebuilt rational map")
             .into_value();
         assert!(cross_field_rational_evidence.blockers().is_empty());
@@ -13575,7 +13575,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             Classification::Decided(true),
         );
         let cross_field_rational_booleans = cross_field_cusp_region
-            .boolean_regions(&rational_region, &policy)
+            .boolean_regions_with_policy(&rational_region, &policy)
             .expect("the rebuilt rational cross-field overlap must regularize")
             .into_value();
         assert!(!cross_field_rational_booleans.union().is_empty());
@@ -13765,7 +13765,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let parallel_mapped_cap_offset_work = || {
-            parallel_mapped_cap.offset(
+            parallel_mapped_cap.offset_with_policy(
                 (Real::one() / Real::from(8_i8)).unwrap(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -13927,7 +13927,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let nested_mixed_offset_work = || {
-            nested_mixed_cap.offset(
+            nested_mixed_cap.offset_with_policy(
                 (Real::one() / Real::from(8_i8)).unwrap(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -14063,7 +14063,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         )
         .unwrap();
         let correlated_mixed_offset = correlated_mixed_cap
-            .offset(
+            .offset_with_policy(
                 (Real::one() / Real::from(8_i8)).unwrap(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -14077,7 +14077,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         );
         let correlated_mixed_reoffset = correlated_mixed_offset
             .value
-            .offset(
+            .offset_with_policy(
                 (Real::one() / Real::from(16_i8)).unwrap(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -14254,7 +14254,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         );
 
         let cross_field_parallel_evidence = cross_field_cusp_region
-            .intersect_region(&parallel_region, &policy)
+            .intersect_region_with_policy(&parallel_region, &policy)
             .expect("a rational-authored cusp cut must clip an analytic overlap")
             .into_value();
         assert!(cross_field_parallel_evidence.blockers().is_empty());
@@ -14271,18 +14271,18 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             Classification::Decided(true),
         );
         let cross_field_parallel_booleans = cross_field_cusp_region
-            .boolean_regions(&parallel_region, &policy)
+            .boolean_regions_with_policy(&parallel_region, &policy)
             .expect("the rational-to-analytic cross-field overlap must regularize")
             .into_value();
         assert!(!cross_field_parallel_booleans.union().is_empty());
         assert!(!cross_field_parallel_booleans.intersection().is_empty());
         let swapped_cross_field_parallel_evidence = parallel_region
-            .intersect_region(&cross_field_cusp_region, &policy)
+            .intersect_region_with_policy(&cross_field_cusp_region, &policy)
             .expect("cross-field clipping must be operand-order independent")
             .into_value();
         assert!(swapped_cross_field_parallel_evidence.blockers().is_empty());
         let evidence = cusp_region
-            .intersect_region(&parallel_region, &policy)
+            .intersect_region_with_policy(&parallel_region, &policy)
             .unwrap()
             .into_value();
         assert!(evidence.blockers().is_empty());
@@ -14295,7 +14295,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             1,
         );
         let booleans = cusp_region
-            .boolean_regions(&parallel_region, &policy)
+            .boolean_regions_with_policy(&parallel_region, &policy)
             .expect("the selected cusp/parallel overlap must enter the Boolean arrangement")
             .into_value();
         assert!(!booleans.union().is_empty());
@@ -14304,7 +14304,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         assert!(!booleans.xor().is_empty());
 
         let clipped_evidence = partial_cusp_region
-            .intersect_region(&parallel_region, &policy)
+            .intersect_region_with_policy(&parallel_region, &policy)
             .expect("an exact cusp-side cut must clip the shared circle component")
             .into_value();
         assert!(clipped_evidence.blockers().is_empty());
@@ -14342,14 +14342,14 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             Classification::Decided(true),
         );
         let partial_booleans = partial_cusp_region
-            .boolean_regions(&parallel_region, &policy)
+            .boolean_regions_with_policy(&parallel_region, &policy)
             .expect("the clipped cusp/parallel overlap must regularize")
             .into_value();
         assert!(!partial_booleans.union().is_empty());
         assert!(!partial_booleans.intersection().is_empty());
 
         let swapped_evidence = parallel_region
-            .intersect_region(&partial_cusp_region, &policy)
+            .intersect_region_with_policy(&partial_cusp_region, &policy)
             .expect("cusp/parallel clipping must be operand-order independent")
             .into_value();
         assert!(swapped_evidence.blockers().is_empty());
@@ -14409,7 +14409,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         )
         .unwrap();
         let reversed_clipped_evidence = partial_cusp_region
-            .intersect_region(&reversed_parallel_region, &policy)
+            .intersect_region_with_policy(&reversed_parallel_region, &policy)
             .expect("partial clipping must transport through analytic-source reversal")
             .into_value();
         assert!(reversed_clipped_evidence.blockers().is_empty());
@@ -14437,7 +14437,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             Classification::Decided(true),
         );
         let cross_field_reversed_evidence = cross_field_cusp_region
-            .intersect_region(&reversed_parallel_region, &policy)
+            .intersect_region_with_policy(&reversed_parallel_region, &policy)
             .expect("a mapped rational cusp cut must transport through analytic reversal")
             .into_value();
         assert!(cross_field_reversed_evidence.blockers().is_empty());
@@ -14455,7 +14455,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         );
 
         let reversed_evidence = cusp_region
-            .intersect_region(&reversed_parallel_region, &policy)
+            .intersect_region_with_policy(&reversed_parallel_region, &policy)
             .expect("the full reversed overlap must retain corresponding endpoints")
             .into_value();
         assert!(reversed_evidence.blockers().is_empty());
@@ -17154,7 +17154,7 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let offset_work = || {
-                    cap.offset(
+                    cap.offset_with_policy(
                         (Real::one() / Real::from(8_i8)).unwrap(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -17184,7 +17184,7 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                     assert_eq!(
                         offset
                             .value
-                            .classify_point(&point.clone().into(), &policy)
+                            .classify_point_with_policy(&point.clone().into(), &policy)
                             .unwrap()
                             .value,
                         Classification::Decided(expected),
@@ -17903,7 +17903,7 @@ fn algebraic_cusp_semicircle_reoffsets_pair_mapped_lens() {
                 hyperreal::dispatch_trace::reset();
                 let offset_distance = (Real::one() / Real::from(8_i8))?;
                 let offset_work = || {
-                    lens.offset(
+                    lens.offset_with_policy(
                         offset_distance.clone(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -18293,7 +18293,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 hyperreal::dispatch_trace::reset();
                 let offset_distance = (Real::one() / Real::from(8_i8))?;
                 let offset_work = || {
-                    cap.offset(
+                    cap.offset_with_policy(
                         offset_distance.clone(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -18416,7 +18416,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![CurveBoundaryInteriorSide2::Left],
                 )?;
                 let reversed_offset = reversed_cap
-                    .offset(
+                    .offset_with_policy(
                         offset_distance,
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -18550,7 +18550,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let common_offset_work = || {
-                    common_cap.offset(
+                    common_cap.offset_with_policy(
                         (Real::one() / Real::from(8_i8)).unwrap(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -18573,7 +18573,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let common_reoffset_work = || {
-                    common_offset.value.offset(
+                    common_offset.value.offset_with_policy(
                         (Real::one() / Real::from(16_i8)).unwrap(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -18717,7 +18717,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let offset_work = || {
-                    cap.offset(
+                    cap.offset_with_policy(
                         (Real::one() / Real::from(8_i8)).unwrap(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -18771,7 +18771,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let reoffset_work = || {
-                    offset.value.offset(
+                    offset.value.offset_with_policy(
                         (Real::one() / Real::from(16_i8)).unwrap(),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
@@ -19921,7 +19921,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
         )
         .unwrap();
         let unsplit = unsplit_source
-            .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
+            .offset_with_policy(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
             .unwrap();
         let published_circles = unsplit
             .value
@@ -19938,7 +19938,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             !circle.certified_tangent_endpoint(true) && !circle.certified_tangent_endpoint(false)
         }));
         let transformed_unsplit = unsplit_source
-            .transform_affine(
+            .transform_affine_with_policy(
                 &Real::zero(),
                 &Real::from(-2_i8),
                 &Real::from(2_i8),
@@ -19949,7 +19949,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             )
             .unwrap()
             .into_value()
-            .offset(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
+            .offset_with_policy(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
             .unwrap();
 
         for (fragments, filled_side) in [
@@ -19967,7 +19967,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             )
             .unwrap();
             let expanded = source
-                .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
                 .expect("an internal mapped circle partition must re-offset exactly");
             assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
             let expanded_fragments = expanded.value.boundary_loops()[0].fragments();
@@ -19987,7 +19987,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             assert_eq!(
                 expanded
                     .value
-                    .classify_point(
+                    .classify_point_with_policy(
                         &Point2::new(Real::zero(), -(Real::one() + &half)).into(),
                         &policy,
                     )
@@ -19997,7 +19997,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             );
 
             let transformed = source
-                .transform_affine(
+                .transform_affine_with_policy(
                     &Real::zero(),
                     &Real::from(-2_i8),
                     &Real::from(2_i8),
@@ -20036,7 +20036,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             assert!(Arc::ptr_eq(mapped_parameters[0], mapped_parameters[1]));
             let transformed_expanded = transformed
                 .value
-                .offset(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
                 .expect("the transformed mapped partition must re-offset exactly");
             assert_eq!(
                 transformed_expanded.certainty,
@@ -20053,7 +20053,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
             assert_eq!(
                 transformed_expanded
                     .value
-                    .classify_point(
+                    .classify_point_with_policy(
                         &Point2::new(Real::from(8_i8), Real::from(-3_i8)).into(),
                         &policy,
                     )
@@ -20227,19 +20227,19 @@ fn benchmark_correlated_circle_partition_offset_driver() {
         "unsplit" | "transform_unsplit" => Some(region("unsplit")),
         "transformed_mapped" | "transformed_disabled" => Some(
             region("mapped")
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .unwrap()
                 .into_value(),
         ),
         "transformed_exact_partition" => Some(
             region("exact")
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .unwrap()
                 .into_value(),
         ),
         "transformed_unsplit" => Some(
             region("unsplit")
-                .transform_similarity(&transform, &policy)
+                .transform_similarity_with_policy(&transform, &policy)
                 .unwrap()
                 .into_value(),
         ),
@@ -20265,7 +20265,7 @@ fn benchmark_correlated_circle_partition_offset_driver() {
         "mapped" | "exact_partition" | "unsplit" => source
             .as_ref()
             .unwrap()
-            .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
+            .offset_with_policy(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
             .map_or(0, |result| {
                 result
                     .value
@@ -20277,7 +20277,7 @@ fn benchmark_correlated_circle_partition_offset_driver() {
         "transformed_mapped" | "transformed_exact_partition" | "transformed_unsplit" => source
             .as_ref()
             .unwrap()
-            .offset(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
+            .offset_with_policy(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
             .map_or(0, |result| {
                 result
                     .value
@@ -20289,7 +20289,7 @@ fn benchmark_correlated_circle_partition_offset_driver() {
         "transform_mapped" | "transform_exact_partition" | "transform_unsplit" => source
             .as_ref()
             .unwrap()
-            .transform_similarity(&transform, &policy)
+            .transform_similarity_with_policy(&transform, &policy)
             .map_or(0, |result| {
                 result
                     .value
@@ -20652,7 +20652,7 @@ fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
     let prebuilt_parallel_cap = parallel_cap();
     let prebuilt_two_parallel_cap = two_parallel_cap();
     let offset_cap = |cap: &CurveRegion2| {
-        cap.offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+        cap.offset_with_policy(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
             .ok()
             .map(|result| {
                 result
@@ -20665,7 +20665,7 @@ fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
     };
     let operation = || match mode.as_str() {
         "exact_offset" => cap
-            .offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+            .offset_with_policy(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
             .map_or(0, |result| {
                 result
                     .value
@@ -20853,7 +20853,7 @@ fn benchmark_pair_mapped_lens_offset_driver() {
     let distance = (Real::one() / Real::from(8_i8)).unwrap();
     let offset = |region: &CurveRegion2| {
         region
-            .offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+            .offset_with_policy(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
             .ok()
             .map(|result| {
                 result
@@ -21080,7 +21080,7 @@ fn benchmark_nested_chord_mapped_cap_offset_driver() {
     let distance = (Real::one() / Real::from(8_i8)).unwrap();
     let offset = |region: &CurveRegion2| {
         region
-            .offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+            .offset_with_policy(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
             .ok()
             .map(|result| {
                 result
@@ -21269,7 +21269,7 @@ fn benchmark_independent_oblique_chord_cap_offset_driver() {
     let second_distance = (Real::one() / Real::from(16_i8)).unwrap();
     let first_offset = |region: &CurveRegion2| {
         region
-            .offset(
+            .offset_with_policy(
                 first_distance.clone(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -21279,7 +21279,7 @@ fn benchmark_independent_oblique_chord_cap_offset_driver() {
     };
     let second_offset = |region: &CurveRegion2| {
         region
-            .offset(
+            .offset_with_policy(
                 second_distance.clone(),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
@@ -22504,19 +22504,19 @@ fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
         );
         assert_eq!(
             region
-                .classify_point(&inside.clone().into(), &policy)
+                .classify_point_with_policy(&inside.clone().into(), &policy)
                 .map(crate::CurveOutcome::into_value),
             Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
         );
         assert_eq!(
             region
-                .classify_point(&outside.clone().into(), &policy)
+                .classify_point_with_policy(&outside.clone().into(), &policy)
                 .map(crate::CurveOutcome::into_value),
             Ok(Classification::Decided(crate::RegionPointLocation::Outside)),
         );
         assert_eq!(
             region
-                .classify_point(&boundary_point.clone().into(), &policy)
+                .classify_point_with_policy(&boundary_point.clone().into(), &policy)
                 .map(crate::CurveOutcome::into_value),
             Ok(Classification::Decided(
                 crate::RegionPointLocation::Boundary
@@ -22611,12 +22611,12 @@ fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
         }
 
         let regularized = region
-            .regularized_region(&policy)
+            .regularized_region_with_policy(&policy)
             .expect("the retained cusp/diameter loop must regularize")
             .into_value();
         assert_eq!(
             regularized
-                .classify_point(&inside.clone().into(), &policy)
+                .classify_point_with_policy(&inside.clone().into(), &policy)
                 .map(crate::CurveOutcome::into_value),
             Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
         );
@@ -22694,7 +22694,7 @@ fn curve_region_boolean_clips_correlated_partial_cusp_overlaps() {
         let second_region = segment_region(second, second_start.clone(), second_end.clone());
 
         let intersections = first_region
-            .intersect_region(&second_region, &policy)
+            .intersect_region_with_policy(&second_region, &policy)
             .unwrap()
             .into_value();
         assert!(intersections.is_complete(), "{intersections:?}");
@@ -22724,7 +22724,7 @@ fn curve_region_boolean_clips_correlated_partial_cusp_overlaps() {
         }
 
         let booleans = first_region
-            .boolean_regions(&second_region, &policy)
+            .boolean_regions_with_policy(&second_region, &policy)
             .unwrap()
             .into_value();
         assert!(!booleans.intersection().is_empty());
@@ -22911,7 +22911,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
         )
         .unwrap();
         let regularized = region
-            .regularized_region(&policy)
+            .regularized_region_with_policy(&policy)
             .expect("the simple general cusp topology must regularize")
             .into_value();
         assert_eq!(regularized.boundary_loops().len(), 1);
@@ -22945,7 +22945,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
                 .collect(),
         )
         .unwrap();
-        let container = crate::CurveRegion2::try_from_boundary_paths(
+        let container = crate::CurveRegion2::try_from_boundary_paths_with_policy(
             &[square],
             crate::FillRule::EvenOdd,
             &policy,
@@ -22953,7 +22953,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
         .unwrap()
         .into_value();
         let booleans = region
-            .boolean_regions(&container, &policy)
+            .boolean_regions_with_policy(&container, &policy)
             .expect("the all-algebraic cusp loop must classify against an affine region")
             .into_value();
         assert!(booleans.intersection().has_algebraic_fragments());
@@ -26775,7 +26775,7 @@ fn rank_independent_chord_normal_circle_partitions_folded_rational_overlap() {
                 (&cap_region, &circle_region)
             };
             let result = first
-                .boolean_regions(second, &policy)
+                .boolean_regions_with_policy(second, &policy)
                 .expect("the general represented overlap must complete all Booleans")
                 .into_value();
             assert!(!result.union().is_empty());
@@ -26825,7 +26825,7 @@ fn assert_rank_independent_chord_normal_circle_overlap_completes_public_booleans
     };
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
-    let intersection_work = || first.intersect_region(second, &policy);
+    let intersection_work = || first.intersect_region_with_policy(second, &policy);
     #[cfg(feature = "dispatch-trace")]
     let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
     #[cfg(not(feature = "dispatch-trace"))]
@@ -26848,7 +26848,7 @@ fn assert_rank_independent_chord_normal_circle_overlap_completes_public_booleans
     );
 
     let result = first
-        .boolean_regions(second, &policy)
+        .boolean_regions_with_policy(second, &policy)
         .expect("the represented rational-circle overlap must complete all Booleans")
         .into_value();
     assert!(!result.union().is_empty());
@@ -30906,8 +30906,9 @@ fn recursively_pair_radial_cap_offsets_exactly() {
             let round = matches!(style, crate::OffsetCornerStyle2::Round);
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let offset_work =
-                || cap.offset((Real::one() / Real::from(8_i8)).unwrap(), &style, &policy);
+            let offset_work = || {
+                cap.offset_with_policy((Real::one() / Real::from(8_i8)).unwrap(), &style, &policy)
+            };
             #[cfg(feature = "dispatch-trace")]
             let offset = hyperreal::dispatch_trace::with_recording(offset_work);
             #[cfg(not(feature = "dispatch-trace"))]
@@ -31268,7 +31269,7 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
     debug_stage("arrangement-start");
-    let arrangement_work = || chord_region.intersect_region(&rational_region, &policy);
+    let arrangement_work = || chord_region.intersect_region_with_policy(&rational_region, &policy);
     #[cfg(feature = "dispatch-trace")]
     let arrangement = hyperreal::dispatch_trace::with_recording(arrangement_work);
     #[cfg(not(feature = "dispatch-trace"))]
@@ -31295,7 +31296,7 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
 
     debug_stage("booleans-start");
     let booleans = chord_region
-        .boolean_regions(&rational_region, &policy)
+        .boolean_regions_with_policy(&rational_region, &policy)
         .expect("the local recursive contact must enter all CurveRegion2 Booleans");
     debug_stage("booleans-complete");
     assert_eq!(booleans.certainty, CurveCertainty::Certified);
@@ -31328,7 +31329,7 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
     hyperreal::dispatch_trace::reset();
     debug_stage("reoffset-start");
     let reoffset_work = || {
-        reentry.offset(
+        reentry.offset_with_policy(
             (Real::one() / Real::from(100_i8)).unwrap(),
             &OffsetCornerStyle2::Bevel,
             &policy,
@@ -35493,7 +35494,7 @@ fn nested_independent_cusp_disks_complete_all_region_booleans() {
         let inner = disk(first);
         let outer = disk(second);
         let booleans = inner
-            .boolean_regions(&outer, &policy)
+            .boolean_regions_with_policy(&outer, &policy)
             .expect("independent selected-field disks must complete one Boolean topology")
             .into_value();
         assert_eq!(booleans.topology_point_classification_count(), 2);
@@ -46496,10 +46497,10 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
 
             let distance = (Real::one() / Real::from(10_i8)).unwrap();
             let split_offset = split_region
-                .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(distance.clone(), &OffsetCornerStyle2::Round, &policy)
                 .expect("selected Boolean-only cuts must offset through the retained carrier");
             let unsplit_offset = unsplit_region
-                .offset(distance, &OffsetCornerStyle2::Round, &policy)
+                .offset_with_policy(distance, &OffsetCornerStyle2::Round, &policy)
                 .expect("the equivalent unsplit retained carrier must offset");
             assert_eq!(split_offset.certainty, CurveCertainty::Certified);
             assert_eq!(split_offset.certainty, unsplit_offset.certainty);
@@ -46513,12 +46514,12 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
                 assert_eq!(
                     split_offset
                         .value
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                         .value,
                     unsplit_offset
                         .value
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                         .value,
                 );
@@ -48211,7 +48212,7 @@ fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
         .unwrap();
         let setback = (Real::one() / Real::from(16_i8)).unwrap();
         let chamfers = region
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
                 0,
                 setback.clone(),
@@ -49350,14 +49351,14 @@ fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_compone
         ] {
             let distance = (Real::one() / Real::from(10_i8)).unwrap();
             let selected_offset = selected_region
-                .offset(distance.clone(), &style, &policy)
+                .offset_with_policy(distance.clone(), &style, &policy)
                 .unwrap_or_else(|error| {
                     panic!(
                         "a selected analytic overlap must offset through its true carrier switches: policy={policy:?}, style={style:?}, error={error:?}"
                     )
                 });
             let reference_offset = reference_region
-                .offset(distance, &style, &policy)
+                .offset_with_policy(distance, &style, &policy)
                 .expect("the equivalent retained circle must offset");
             assert_eq!(selected_offset.certainty, CurveCertainty::Certified);
             assert_eq!(selected_offset.certainty, reference_offset.certainty);
@@ -49369,12 +49370,12 @@ fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_compone
                 assert_eq!(
                     selected_offset
                         .value
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                         .value,
                     reference_offset
                         .value
-                        .classify_point(&point.clone().into(), &policy)
+                        .classify_point_with_policy(&point.clone().into(), &policy)
                         .unwrap()
                         .value,
                 );
@@ -49457,7 +49458,7 @@ fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_compone
         )
         .unwrap();
         let evidence = selected_region
-            .intersect_region(&analytic_region, &policy)
+            .intersect_region_with_policy(&analytic_region, &policy)
             .expect("a selected analytic carrier must re-enter overlap clipping")
             .into_value();
         assert!(evidence.blockers().is_empty());
@@ -49470,7 +49471,7 @@ fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_compone
                     .is_retained_scalar()
         }));
         let booleans = selected_region
-            .boolean_regions(&analytic_region, &policy)
+            .boolean_regions_with_policy(&analytic_region, &policy)
             .expect("a selected analytic carrier must re-enter Boolean topology")
             .into_value();
         assert!(!booleans.union().is_empty());
@@ -51050,7 +51051,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let transverse_offset_work = || {
-            transverse_region.offset(
+            transverse_region.offset_with_policy(
                 (Real::one() / Real::from(10_i8)).unwrap(),
                 &OffsetCornerStyle2::Round,
                 &policy,
@@ -51123,7 +51124,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
         }
         let setback = (Real::one() / Real::from(100_i8)).unwrap();
         let fillet = transverse_region
-            .fillet_loop_vertex(
+            .fillet_loop_vertex_with_policy(
                 0,
                 1,
                 &crate::CurveFillet2::new(setback.clone()),
@@ -51139,7 +51140,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
         assert_eq!({ fillet.value.solutions().len() }, 3);
 
         let chamfer = transverse_region
-            .chamfer_loop_vertex_by_setbacks(
+            .chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
                 1,
                 setback.clone(),
@@ -51409,7 +51410,7 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
         .unwrap();
 
         let evidence = selected_region
-            .intersect_region(&target_region, &policy)
+            .intersect_region_with_policy(&target_region, &policy)
             .expect("a selected circle must intersect a genuinely analytic region")
             .into_value();
         assert!(evidence.blockers().is_empty());
@@ -51419,7 +51420,7 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
         }));
 
         let booleans = selected_region
-            .boolean_regions(&target_region, &policy)
+            .boolean_regions_with_policy(&target_region, &policy)
             .expect("selected-fiber analytic contacts must complete Boolean topology")
             .into_value();
         assert!(!booleans.union().is_empty());
@@ -51579,7 +51580,7 @@ fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
         .unwrap();
 
         let evidence = selected_region
-            .intersect_region(&rational_region, &policy)
+            .intersect_region_with_policy(&rational_region, &policy)
             .expect("selected-fiber circle overlaps must publish complete evidence")
             .into_value();
         assert!(evidence.blockers().is_empty());
@@ -51595,7 +51596,7 @@ fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
         }));
 
         let result = selected_region
-            .boolean_regions(&rational_region, &policy)
+            .boolean_regions_with_policy(&rational_region, &policy)
             .expect("selected-fiber circle overlaps must complete Boolean topology")
             .into_value();
         assert!(!result.union().is_empty());
@@ -51751,7 +51752,7 @@ fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
         .unwrap();
 
         let evidence = selected_region
-            .intersect_region(&analytic_region, &policy)
+            .intersect_region_with_policy(&analytic_region, &policy)
             .expect("selected-fiber analytic overlaps must publish complete evidence")
             .into_value();
         assert!(evidence.blockers().is_empty());
@@ -51767,7 +51768,7 @@ fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
         }));
 
         let result = selected_region
-            .boolean_regions(&analytic_region, &policy)
+            .boolean_regions_with_policy(&analytic_region, &policy)
             .expect("selected-fiber analytic overlaps must complete Boolean topology")
             .into_value();
         assert!(!result.union().is_empty());

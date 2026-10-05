@@ -1,5 +1,4 @@
 mod support;
-
 use hypercurve::{
     CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2, CurvePath2, LineSeg2,
     Point2, Real, UncertaintyReason,

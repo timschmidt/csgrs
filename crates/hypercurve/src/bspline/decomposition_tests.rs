@@ -284,12 +284,22 @@ fn extracted_bspline_spans_feed_unified_region_area() {
             .to_vec(),
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
-    let region =
-        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
-            .unwrap()
-            .into_value();
+    let region = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
-    assert!(decided(region.signed_area(&policy()).unwrap().into_value()) == Some(q(88, 3)));
+    assert!(
+        decided(
+            region
+                .signed_area_with_policy(&policy())
+                .unwrap()
+                .into_value()
+        ) == Some(q(88, 3))
+    );
 }
 
 #[test]
@@ -518,12 +528,23 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
             .native_subcurves(&policy()),
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
-    let region =
-        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
-            .unwrap()
-            .into_value();
+    let region = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
-    assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
+    assert!(
+        decided(
+            region
+                .signed_area_with_policy(&policy())
+                .unwrap()
+                .into_value()
+        )
+        .is_some()
+    );
 }
 
 #[test]
@@ -672,10 +693,21 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
             .native_subcurves(&policy()),
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
-    let region =
-        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
-            .unwrap()
-            .into_value();
+    let region = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
-    assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
+    assert!(
+        decided(
+            region
+                .signed_area_with_policy(&policy())
+                .unwrap()
+                .into_value()
+        )
+        .is_some()
+    );
 }
