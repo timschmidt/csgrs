@@ -3,8 +3,8 @@
 use std::fmt;
 
 use hypercurve::{
-    CircularArc2, Curve2, CurveContext, CurveFamily2, CurveGeometry2, LineSeg2,
-    Point2 as CurvePoint2, RationalBezier2, RationalQuadraticBezier2,
+    CircularArc2, Curve2, CurveFamily2, CurveGeometry2, LineSeg2, Point2 as CurvePoint2,
+    RationalBezier2, RationalQuadraticBezier2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use serde::{Deserialize, Serialize};
@@ -194,11 +194,9 @@ impl RawModel {
                             Some(period) => hypercurve::SplinePeriodicity2::Periodic { period },
                             None => hypercurve::SplinePeriodicity2::NonPeriodic,
                         },
-                        &CurveContext::STRICT,
                     )
                     .map_err(GeometryError::from)
-                    .map_err(BuildError::from)?
-                    .into_value();
+                    .map_err(BuildError::from)?;
                     builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
                 }
             }
@@ -1339,10 +1337,8 @@ mod tests {
                 Real::one(),
             ],
             SplinePeriodicity2::NonPeriodic,
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value();
+        .unwrap();
         let periodic = NurbsCurve2::try_new_periodic(
             2,
             vec![
@@ -1353,10 +1349,8 @@ mod tests {
             ],
             vec![r(1), r(2), r(3), r(4)],
             (0..=4).map(r).collect(),
-            &CurveContext::STRICT,
         )
-        .unwrap()
-        .into_value();
+        .unwrap();
         assert!(finite.affine_control_points().is_none());
         for source in [finite, periodic] {
             let mut builder = ModelBuilder::new();
@@ -1380,14 +1374,8 @@ mod tests {
             assert_eq!(restored.parameter_domain(), source.parameter_domain());
             if source.periodicity().is_periodic() {
                 assert_eq!(
-                    restored
-                        .point_at_wrapped(&r(5), &CurveContext::STRICT)
-                        .unwrap()
-                        .into_value(),
-                    source
-                        .point_at(&r(1), &CurveContext::STRICT)
-                        .unwrap()
-                        .into_value()
+                    restored.point_at_wrapped(&r(5)).unwrap(),
+                    source.point_at(&r(1)).unwrap()
                 );
             }
             assert_eq!(rebuilt.to_json().unwrap(), json);
