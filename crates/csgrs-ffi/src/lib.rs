@@ -1132,7 +1132,9 @@ fn create_graphics_mesh<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CGr
 fn create_region_profiles<F: Family>(
     region: &CurveRegionOf<F>,
 ) -> FfiResult<F::CRegionProfiles> {
-    let profiles = region.region_profiles()?;
+    let profiles = region
+        .region_profiles(&csgrs::GeometryContext::STRICT)?
+        .into_value();
     let mut points = Vec::new();
     let mut ring_offsets = vec![0];
     let mut region_offsets = vec![0];
@@ -1703,7 +1705,12 @@ macro_rules! export_family {
             ffi_status(|| {
                 let region =
                     <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
-                let mesh = region.extrude(<$family as Family>::scalar_to_adapter(height)?)?;
+                let mesh = region
+                    .extrude(
+                        <$family as Family>::scalar_to_adapter(height)?,
+                        &csgrs::GeometryContext::STRICT,
+                    )?
+                    .into_value();
                 unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
@@ -1717,8 +1724,12 @@ macro_rules! export_family {
             ffi_status(|| {
                 let region =
                     <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
-                let mesh =
-                    region.extrude_vector(<$family as Family>::vec3_to_adapter(direction)?)?;
+                let mesh = region
+                    .extrude_vector(
+                        <$family as Family>::vec3_to_adapter(direction)?,
+                        &csgrs::GeometryContext::STRICT,
+                    )?
+                    .into_value();
                 unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
@@ -1733,10 +1744,13 @@ macro_rules! export_family {
             ffi_status(|| {
                 let region =
                     <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
-                let mesh = region.revolve(
-                    <$family as Family>::scalar_to_adapter(angle_degrees)?,
-                    segments,
-                )?;
+                let mesh = region
+                    .revolve(
+                        <$family as Family>::scalar_to_adapter(angle_degrees)?,
+                        segments,
+                        &csgrs::GeometryContext::STRICT,
+                    )?
+                    .into_value();
                 unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
