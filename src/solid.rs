@@ -2091,7 +2091,7 @@ pub fn flatten_with_context(
         return Ok(region);
     }
     let decisions = GeometryDecisions::new(context);
-    let policy = decisions.curve_policy();
+    let _policy = decisions.curve_policy();
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
@@ -2121,18 +2121,15 @@ pub fn flatten_with_context(
         }
         let contour = Contour2::from_real_ring(&points)
             .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-        let region = decisions.consume_curve(
-            CurveRegion2::try_from_native_material_contours(vec![contour], policy)
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-        );
+        let region = decisions
+            .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
         output = if output.is_empty() {
             region
         } else {
-            decisions.consume_curve(
-                output
-                    .boolean_region(&region, CurveBooleanOp::Union, policy)
-                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-            )
+            decisions
+                .exact_curve(|| output.boolean_region(&region, CurveBooleanOp::Union))
+                .map_err(|error| ValidationError::Geometry(error.to_string()))?
         };
     }
     let output = decisions.finish(output);
@@ -2280,7 +2277,7 @@ pub fn slice_z_with_context(
         chains.push(chain);
     }
 
-    let policy = decisions.curve_policy();
+    let _policy = decisions.curve_policy();
     let mut region = if coplanar_triangles.is_empty() {
         CurveRegion2::empty()
     } else {
@@ -2302,18 +2299,15 @@ pub fn slice_z_with_context(
         if closed {
             let contour = Contour2::from_real_ring(&points)
                 .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-            let loop_region = decisions.consume_curve(
-                CurveRegion2::try_from_native_material_contours(vec![contour], policy)
-                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-            );
+            let loop_region = decisions
+                .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
+                .map_err(|error| ValidationError::Geometry(error.to_string()))?;
             region = if region.is_empty() {
                 loop_region
             } else {
-                decisions.consume_curve(
-                    region
-                        .boolean_region(&loop_region, CurveBooleanOp::Union, policy)
-                        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-                )
+                decisions
+                    .exact_curve(|| region.boolean_region(&loop_region, CurveBooleanOp::Union))
+                    .map_err(|error| ValidationError::Geometry(error.to_string()))?
             };
         } else {
             let Ok(wire) = CurveString2::from_real_point_iter(points) else {

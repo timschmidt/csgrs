@@ -10,7 +10,7 @@ use crate::wasm::{
     real_from_js_named, real_to_js,
 };
 use crate::{GeometryCertainty, GeometryOutcome, TriangleMesh};
-use hypercurve::{Contour2, CurveCertainty, CurveContext, CurveOutcome, CurveRegion2};
+use hypercurve::{Contour2, CurveCertainty, CurveOutcome, CurveRegion2};
 use hyperlattice::Real;
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use serde::{Deserialize, Serialize};
@@ -128,12 +128,22 @@ impl GeometryMeshResultJs {
     }
 }
 
-const fn boolean_policy(approximate_512: bool) -> CurveContext {
-    if approximate_512 {
-        CurveContext::APPROXIMATE_512
+/// Runs an exact region operation, inside [`hypercurve::provisional`] when
+/// the caller authorizes the 512-bit terminal, and reports its certainty.
+fn region_result(
+    approximate_512: bool,
+    operation: impl FnOnce() -> hypercurve::ExactCurveResult<CurveRegion2>,
+) -> Result<CurveBooleanResultJs, JsValue> {
+    let (region, certainty) = if approximate_512 {
+        let provisional = hypercurve::provisional(operation);
+        let certainty = provisional.certainty();
+        (provisional.into_unverified(), certainty)
     } else {
-        CurveContext::STRICT
-    }
+        (operation(), CurveCertainty::Certified)
+    };
+    region
+        .map(|region| CurveBooleanResultJs { region, certainty })
+        .map_err(js_error)
 }
 
 #[wasm_bindgen]
@@ -165,13 +175,9 @@ impl CurveRegionJs {
                 holes.push(Contour2::from_real_ring(&hole).map_err(js_error)?);
             }
         }
-        CurveRegion2::try_from_native_contours(
-            materials,
-            holes,
-            &geometry_context(approximate_512).curve_policy(),
-        )
-        .map(Into::into)
-        .map_err(js_error)
+        region_result(approximate_512, || {
+            CurveRegion2::try_from_native_contours(materials, holes)
+        })
     }
 
     #[wasm_bindgen(js_name = toRegionProfiles)]
@@ -263,11 +269,10 @@ impl CurveRegionJs {
         other: &Self,
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
-        let policy = boolean_policy(approximate_512);
-        self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Union, &policy)
-            .map(Into::into)
-            .map_err(js_error)
+        region_result(approximate_512, || {
+            self.inner
+                .boolean_region(&other.inner, hypercurve::BooleanOp::Union)
+        })
     }
 
     pub fn difference(
@@ -275,11 +280,10 @@ impl CurveRegionJs {
         other: &Self,
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
-        let policy = boolean_policy(approximate_512);
-        self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Difference, &policy)
-            .map(Into::into)
-            .map_err(js_error)
+        region_result(approximate_512, || {
+            self.inner
+                .boolean_region(&other.inner, hypercurve::BooleanOp::Difference)
+        })
     }
 
     pub fn intersection(
@@ -287,11 +291,10 @@ impl CurveRegionJs {
         other: &Self,
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
-        let policy = boolean_policy(approximate_512);
-        self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection, &policy)
-            .map(Into::into)
-            .map_err(js_error)
+        region_result(approximate_512, || {
+            self.inner
+                .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection)
+        })
     }
 
     pub fn xor(
@@ -299,11 +302,10 @@ impl CurveRegionJs {
         other: &Self,
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
-        let policy = boolean_policy(approximate_512);
-        self.inner
-            .boolean_region(&other.inner, hypercurve::BooleanOp::Xor, &policy)
-            .map(Into::into)
-            .map_err(js_error)
+        region_result(approximate_512, || {
+            self.inner
+                .boolean_region(&other.inner, hypercurve::BooleanOp::Xor)
+        })
     }
 
     pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {

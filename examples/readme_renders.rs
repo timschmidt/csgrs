@@ -9,8 +9,8 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hypercurve::{
-    Classification, CurveContext, CurveOutcome, CurvePath2, CurveRegion2, CurveString2,
-    FiniteProjectionOptions, FiniteRegionProfile2, Point2,
+    CurveContext, CurvePath2, CurveRegion2, CurveString2, FiniteProjectionOptions,
+    FiniteRegionProfile2, Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use image::{GrayImage, Luma, Rgba, RgbaImage};
@@ -501,20 +501,12 @@ fn render_curve(name: &str, region: &CurveRegion2) {
         .expect("README curve chord error is positive");
     // Material/hole ownership and edge identity are decided on CurveRegion2
     // before the finite raster projection is created.
-    let profiles = expect_decided(
-        region
-            .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
-            .expect("project exact CurveRegion2 profiles")
-            .into_value(),
-        "exact CurveRegion2 profile topology",
-    );
-    let edge_paths = expect_decided(
-        region
-            .project_to_finite_curve_paths(&CurveContext::STRICT)
-            .expect("project exact CurveRegion2 edge paths")
-            .into_value(),
-        "exact CurveRegion2 edge topology",
-    );
+    let profiles = region
+        .project_to_finite_profiles_exact(&projection)
+        .expect("project exact CurveRegion2 profiles");
+    let edge_paths = region
+        .project_to_finite_curve_paths()
+        .expect("project exact CurveRegion2 edge paths");
     let Some(bounds) = curve_bounds(&profiles) else {
         save_image(name, &image);
         return;
@@ -547,10 +539,7 @@ fn render_curve(name: &str, region: &CurveRegion2) {
 }
 
 fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
-    if let Ok(Classification::Decided(native)) = region
-        .native_contours_fast_path(&CurveContext::STRICT)
-        .map(CurveOutcome::into_value)
-    {
+    if let Ok(Some(native)) = region.native_contours_fast_path() {
         return native
             .material_contours()
             .iter()
@@ -713,15 +702,6 @@ fn render_mesh(name: &str, mesh: &TriangleMesh) {
         draw_vertex_3d(&mut image, &depth_buffer, raster[index], radius, depth_bias);
     }
     save_image(name, &image);
-}
-
-fn expect_decided<T>(classification: Classification<T>, context: &str) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => {
-            panic!("{context} was uncertain: {reason:?}")
-        },
-    }
 }
 
 fn project_edge_paths(

@@ -484,7 +484,7 @@ fn gerber_context_reaches_aperture_composition_and_projection() {
 #[test]
 fn gerber_boundary_contours_preserve_nested_parity_and_roundtrip() {
     use csgrs::io::gerber;
-    use hypercurve::{Classification, CurveContext, Point2, RegionPointLocation};
+    use hypercurve::{Point2, RegionPointLocation};
     let source = b"%FSLAX46Y46*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nG36*\nX0Y0D02*\nX10000000Y0D01*\nX10000000Y10000000D01*\nX0Y10000000D01*\nX0Y0D01*\nX2000000Y2000000D02*\nX8000000Y2000000D01*\nX8000000Y8000000D01*\nX2000000Y8000000D01*\nX2000000Y2000000D01*\nG37*\nM02*\n";
     for context in [GeometryContext::STRICT, APPROXIMATE] {
         let imported = gerber::import_gerber_with_context(source, &context).unwrap();
@@ -500,13 +500,9 @@ fn gerber_boundary_contours_preserve_nested_parity_and_roundtrip() {
             ] {
                 assert_eq!(
                     region
-                        .classify_point(
-                            &Point2::from_values(x, y).into(),
-                            &CurveContext::STRICT
-                        )
-                        .unwrap()
-                        .into_value(),
-                    Classification::Decided(expected)
+                        .classify_point(&Point2::from_values(x, y).into())
+                        .unwrap(),
+                    expected
                 );
             }
         }

@@ -13,14 +13,6 @@ pub enum CurveBooleanError {
     ExactCurve(#[from] ExactCurveError),
 }
 
-/// Failure to construct a native curve-region offset.
-#[derive(Clone, Debug, thiserror::Error, PartialEq, Eq)]
-pub enum CurveOffsetError {
-    /// Hypercurve rejected an exact curve-region offset operation.
-    #[error(transparent)]
-    ExactCurve(#[from] ExactCurveError),
-}
-
 /// Validation failure in a CSG feature constructor.
 #[derive(Debug, Clone, thiserror::Error, PartialEq)]
 #[non_exhaustive]

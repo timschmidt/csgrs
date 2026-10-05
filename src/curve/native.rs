@@ -8,13 +8,11 @@ use crate::context::GeometryDecisions;
 use crate::errors::{CurveBooleanError, ValidationError};
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
-#[cfg(feature = "offset")]
-use hypercurve::OffsetCornerStyle2;
 use hypercurve::{
-    BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveOutcome,
-    CurvePath2, CurveRegion2, CurveString2, ExactCurveResult, FinitePolyline2,
-    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2,
-    QuadraticBezier2, RationalBezier2, RegionPointLocation,
+    BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2,
+    CurveString2, ExactCurveResult, FinitePolyline2, FiniteProjectionOptions,
+    FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2,
+    RationalBezier2, RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -39,10 +37,8 @@ fn region_from_ring(points: &[[Real; 2]]) -> CurveRegion2 {
     let Ok(contour) = Contour2::from_real_ring(points) else {
         return CurveRegion2::empty();
     };
-    let region =
-        CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
-            .map(CurveOutcome::into_value)
-            .unwrap_or_else(|_| CurveRegion2::empty());
+    let region = CurveRegion2::try_from_native_material_contours(vec![contour])
+        .unwrap_or_else(|_| CurveRegion2::empty());
     REGION_RING_CACHE.with_borrow_mut(|entries| {
         const CAPACITY: usize = 64;
         if entries.len() == CAPACITY {
@@ -95,12 +91,8 @@ fn ring_with(
     decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, CurveBooleanError> {
     let contour = Contour2::from_real_ring(points)?;
-    Ok(
-        decisions.consume_curve(CurveRegion2::try_from_native_material_contours(
-            vec![contour],
-            decisions.curve_policy(),
-        )?),
-    )
+    Ok(decisions
+        .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))?)
 }
 
 fn rectangle_with(
@@ -163,15 +155,16 @@ fn translate_with(
     y: Real,
     decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, CurveBooleanError> {
-    Ok(decisions.consume_curve(region.transform_affine(
-        &Real::one(),
-        &Real::zero(),
-        &Real::zero(),
-        &Real::one(),
-        &x,
-        &y,
-        decisions.curve_policy(),
-    )?))
+    Ok(decisions.exact_curve(|| {
+        region.transform_affine(
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &x,
+            &y,
+        )
+    })?)
 }
 
 fn sampled_ellipse(radius_x: Real, radius_y: Real, segments: usize) -> CurveRegion2 {
@@ -382,13 +375,9 @@ pub fn polygon_with_context(
     let decisions = GeometryDecisions::new(context);
     let contour = Contour2::from_real_ring(points)
         .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-    let region = decisions.consume_curve(
-        CurveRegion2::try_from_native_material_contours(
-            vec![contour],
-            decisions.curve_policy(),
-        )
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let region = decisions
+        .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
     Ok(decisions.finish(region))
 }
 
@@ -756,13 +745,9 @@ pub fn keyhole(
         Real::zero(),
         &decisions,
     )?;
-    let region = decisions.consume_curve(
-        circle_with(circle_radius, segments, &decisions)?.boolean_region(
-            &handle,
-            BooleanOp::Union,
-            decisions.curve_policy(),
-        )?,
-    );
+    let operand = circle_with(circle_radius, segments, &decisions)?;
+    let region =
+        decisions.exact_curve(|| operand.boolean_region(&handle, BooleanOp::Union))?;
     Ok(decisions.finish(region))
 }
 
@@ -805,11 +790,8 @@ pub fn reuleaux(
         )?;
         result = Some(match result {
             None => disk,
-            Some(current) => decisions.consume_curve(current.boolean_region(
-                &disk,
-                BooleanOp::Intersection,
-                decisions.curve_policy(),
-            )?),
+            Some(current) => decisions
+                .exact_curve(|| current.boolean_region(&disk, BooleanOp::Intersection))?,
         });
     }
     Ok(decisions.finish(result.unwrap_or_else(empty)))
@@ -833,13 +815,9 @@ pub fn ring(
         return Ok(decisions.finish(empty()));
     };
     let inner = circle_with(inner_radius.clone(), segments, &decisions)?;
-    let region = decisions.consume_curve(
-        circle_with(inner_radius + thickness, segments, &decisions)?.boolean_region(
-            &inner,
-            BooleanOp::Difference,
-            decisions.curve_policy(),
-        )?,
-    );
+    let operand = circle_with(inner_radius + thickness, segments, &decisions)?;
+    let region =
+        decisions.exact_curve(|| operand.boolean_region(&inner, BooleanOp::Difference))?;
     Ok(decisions.finish(region))
 }
 
@@ -966,11 +944,8 @@ pub fn crescent(
         Real::zero(),
         &decisions,
     )?;
-    let region = decisions.consume_curve(outer.boolean_region(
-        &inner,
-        BooleanOp::Difference,
-        decisions.curve_policy(),
-    )?);
+    let region =
+        decisions.exact_curve(|| outer.boolean_region(&inner, BooleanOp::Difference))?;
     Ok(decisions.finish(region))
 }
 
@@ -1038,12 +1013,9 @@ pub fn circle_with_keyway(
         key_y,
         &decisions,
     )?;
+    let operand = circle_with(radius, segments, &decisions)?;
     let region =
-        decisions.consume_curve(circle_with(radius, segments, &decisions)?.boolean_region(
-            &cutter,
-            BooleanOp::Difference,
-            decisions.curve_policy(),
-        )?);
+        decisions.exact_curve(|| operand.boolean_region(&cutter, BooleanOp::Difference))?;
     Ok(decisions.finish(region))
 }
 
@@ -1069,12 +1041,9 @@ pub fn circle_with_flat(
         -flat_distance,
         &decisions,
     )?;
+    let operand = circle_with(radius, segments, &decisions)?;
     let region =
-        decisions.consume_curve(circle_with(radius, segments, &decisions)?.boolean_region(
-            &clip,
-            BooleanOp::Intersection,
-            decisions.curve_policy(),
-        )?);
+        decisions.exact_curve(|| operand.boolean_region(&clip, BooleanOp::Intersection))?;
     Ok(decisions.finish(region))
 }
 
@@ -1103,12 +1072,9 @@ pub fn circle_with_two_flats(
         -flat_distance,
         &decisions,
     )?;
+    let operand = circle_with(radius, segments, &decisions)?;
     let region =
-        decisions.consume_curve(circle_with(radius, segments, &decisions)?.boolean_region(
-            &clip,
-            BooleanOp::Intersection,
-            decisions.curve_policy(),
-        )?);
+        decisions.exact_curve(|| operand.boolean_region(&clip, BooleanOp::Intersection))?;
     Ok(decisions.finish(region))
 }
 
@@ -1803,14 +1769,14 @@ pub fn bezier_region_with_context(
             )));
         },
     }
-    let region = decisions.consume_curve(
-        CurveRegion2::try_from_boundary_paths(
-            std::slice::from_ref(&path),
-            hypercurve::FillRule::EvenOdd,
-            decisions.curve_policy(),
-        )
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let region = decisions
+        .exact_curve(|| {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
     Ok(decisions.finish(region))
 }
 
@@ -1992,19 +1958,6 @@ pub fn hilbert_strings_with_context(
     Ok(decisions.finish(strings.ok_or(ValidationError::InvalidArguments)?))
 }
 
-/// Exact regularized offset of a native filled region.
-#[cfg(feature = "offset")]
-pub fn offset(
-    input: &CurveRegion2,
-    distance: Real,
-    corner_style: &OffsetCornerStyle2,
-    policy: &CurveContext,
-) -> Result<CurveOutcome<CurveRegion2>, crate::errors::CurveOffsetError> {
-    input
-        .offset(distance, corner_style, policy)
-        .map_err(Into::into)
-}
-
 /// Triangulates a filled region as a flat native triangle surface.
 pub fn try_triangulate(
     input: &CurveRegion2,
@@ -2071,16 +2024,10 @@ fn try_finite_profiles_with(
 ) -> Result<Vec<FiniteRegionProfile2>, ValidationError> {
     let options = FiniteProjectionOptions::try_new(1.0e-3)
         .expect("positive finite projection tolerance");
-    match decisions.consume_curve(
-        input
-            .project_to_finite_profiles_exact(&options, decisions.curve_policy())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    ) {
-        Classification::Decided(profiles) => Ok(profiles),
-        Classification::Uncertain(reason) => Err(ValidationError::Geometry(format!(
-            "finite curve projection is uncertain: {reason:?}"
-        ))),
-    }
+    let profiles = decisions
+        .exact_curve(|| input.project_to_finite_profiles_exact(&options))
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    Ok(profiles)
 }
 
 /// Linear extrusion that reports invalid or uncertain geometry.
@@ -2859,17 +2806,18 @@ pub fn try_transformed_with_context(
 ) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
     let decisions = GeometryDecisions::new(context);
 
-    input
-        .transform_affine(
-            &matrix.0[0][0],
-            &matrix.0[0][1],
-            &matrix.0[1][0],
-            &matrix.0[1][1],
-            &matrix.0[0][3],
-            &matrix.0[1][3],
-            decisions.curve_policy(),
-        )
-        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
+    decisions
+        .exact_curve(|| {
+            input.transform_affine(
+                &matrix.0[0][0],
+                &matrix.0[0][1],
+                &matrix.0[1][0],
+                &matrix.0[1][1],
+                &matrix.0[0][3],
+                &matrix.0[1][3],
+            )
+        })
+        .map(|region| decisions.finish(region))
 }
 
 pub fn transformed(input: &CurveRegion2, matrix: &Matrix4) -> CurveRegion2 {
@@ -2895,17 +2843,18 @@ pub fn try_translated_with_context(
 ) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
     let decisions = GeometryDecisions::new(context);
 
-    input
-        .transform_affine(
-            &Real::one(),
-            &Real::zero(),
-            &Real::zero(),
-            &Real::one(),
-            &x,
-            &y,
-            decisions.curve_policy(),
-        )
-        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
+    decisions
+        .exact_curve(|| {
+            input.transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &x,
+                &y,
+            )
+        })
+        .map(|region| decisions.finish(region))
 }
 
 pub fn translated(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
@@ -2929,17 +2878,18 @@ pub fn try_rotated_with_context(
     let radians = (z_degrees * Real::pi() / Real::from(180_u16)).expect("180 is nonzero");
     let cosine = radians.clone().cos();
     let sine = radians.sin();
-    input
-        .transform_affine(
-            &cosine,
-            &(-sine.clone()),
-            &sine,
-            &cosine,
-            &Real::zero(),
-            &Real::zero(),
-            decisions.curve_policy(),
-        )
-        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
+    decisions
+        .exact_curve(|| {
+            input.transform_affine(
+                &cosine,
+                &(-sine.clone()),
+                &sine,
+                &cosine,
+                &Real::zero(),
+                &Real::zero(),
+            )
+        })
+        .map(|region| decisions.finish(region))
 }
 
 pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
@@ -2961,17 +2911,18 @@ pub fn try_scaled_with_context(
 ) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
     let decisions = GeometryDecisions::new(context);
 
-    input
-        .transform_affine(
-            &x,
-            &Real::zero(),
-            &Real::zero(),
-            &y,
-            &Real::zero(),
-            &Real::zero(),
-            decisions.curve_policy(),
-        )
-        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
+    decisions
+        .exact_curve(|| {
+            input.transform_affine(
+                &x,
+                &Real::zero(),
+                &Real::zero(),
+                &y,
+                &Real::zero(),
+                &Real::zero(),
+            )
+        })
+        .map(|region| decisions.finish(region))
 }
 
 pub fn scaled(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
@@ -2997,20 +2948,13 @@ pub fn contains_xy_with_context(
     if input.is_empty() {
         return Ok(decisions.finish(None));
     }
-    let classification = decisions.consume_curve(
-        input
-            .classify_point(&Point2::new(x, y).into(), decisions.curve_policy())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let classification = decisions
+        .exact_curve(|| input.classify_point(&Point2::new(x, y).into()))
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
     let inside = match classification {
-        Classification::Decided(RegionPointLocation::Inside) => Some(true),
-        Classification::Decided(RegionPointLocation::Outside) => Some(false),
-        Classification::Decided(RegionPointLocation::Boundary) => None,
-        Classification::Uncertain(reason) => {
-            return Err(ValidationError::Geometry(format!(
-                "curve point classification is uncertain: {reason:?}"
-            )));
-        },
+        RegionPointLocation::Inside => Some(true),
+        RegionPointLocation::Outside => Some(false),
+        RegionPointLocation::Boundary => None,
     };
     Ok(decisions.finish(inside))
 }
@@ -3030,22 +2974,16 @@ pub fn try_bounding_box_with_context(
     if input.is_empty() {
         return Ok(decisions.finish(Aabb::origin()));
     }
-    let classification = decisions.consume_curve(
-        input
-            .bounds(decisions.curve_policy())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
-    let bounds = match classification {
-        Classification::Decided(bounds) => Aabb::new(
-            Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
-            Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
-        ),
-        Classification::Uncertain(reason) => {
-            return Err(ValidationError::Geometry(format!(
-                "curve bounds are uncertain: {reason:?}"
-            )));
-        },
+    let Some(bounds) = decisions
+        .exact_curve(|| input.bounds())
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?
+    else {
+        return Ok(decisions.finish(Aabb::origin()));
     };
+    let bounds = Aabb::new(
+        Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
+        Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
+    );
     Ok(decisions.finish(bounds))
 }
 
@@ -3113,13 +3051,11 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p3, terminal_p0).unwrap()),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths(
-            &[path],
-            hypercurve::FillRule::EvenOdd,
-            &CurveContext::APPROXIMATE_512,
-        )
-        .unwrap()
-        .into_value();
+        let region = hypercurve::provisional(|| {
+            CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+        })
+        .into_unverified()
+        .unwrap();
 
         let strict = try_finite_profiles(&region, &GeometryContext::STRICT).unwrap();
         assert_eq!(strict.certainty, crate::GeometryCertainty::Certified);
@@ -3290,9 +3226,8 @@ mod tests {
         let left = square(Real::from(2_u8));
         let right = rectangle(Real::from(1_u8), Real::from(3_u8));
         let union: CurveRegion2 = left
-            .boolean_region(&right, BooleanOp::Union, &CurveContext::STRICT)
-            .expect("region union")
-            .into_value();
+            .boolean_region(&right, BooleanOp::Union)
+            .expect("region union");
         assert!(!union.is_empty());
     }
 
@@ -3515,16 +3450,8 @@ mod tests {
         let pitch_line = Real::zero();
         let root = -(Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero");
         let rack = cycloidal_rack(Real::one(), teeth, Real::zero(), 8);
-        let paths = match rack
-            .boundary_paths(&CurveContext::STRICT)
-            .expect("cycloidal rack exact boundary")
-            .into_value()
-        {
-            Classification::Decided(paths) => paths,
-            Classification::Uncertain(reason) => {
-                panic!("cycloidal rack edge topology is uncertain: {reason:?}")
-            },
-        };
+        let paths = rack.boundary_paths().expect("cycloidal rack exact boundary");
+        let paths = paths;
         assert_eq!(paths.len(), 1, "rack must have one closed boundary");
 
         let curves = paths[0].curves();
@@ -3539,7 +3466,7 @@ mod tests {
                         .compare_coordinate(
                             &witness,
                             hypercurve::Axis2::Y,
-                            &CurveContext::STRICT,
+                            &hypercurve::CurveContext::STRICT,
                         )
                         .expect("finite rack coordinate order")
                         .into_value()
@@ -3602,16 +3529,9 @@ mod tests {
             ("involute rack", involute),
             ("cycloidal rack", cycloidal_rack_profile),
         ] {
-            let profiles = match region
-                .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
-                .unwrap_or_else(|error| panic!("{name} profile projection failed: {error}"))
-                .into_value()
-            {
-                Classification::Decided(profiles) => profiles,
-                Classification::Uncertain(reason) => {
-                    panic!("{name} profile topology is uncertain: {reason:?}")
-                },
-            };
+            let profiles = region
+                .project_to_finite_profiles_exact(&projection)
+                .unwrap_or_else(|error| panic!("{name} profile projection failed: {error}"));
             assert_eq!(
                 profiles.len(),
                 1,
@@ -3621,16 +3541,10 @@ mod tests {
                 profiles[0].holes().is_empty(),
                 "{name} must not acquire holes from a self-intersecting boundary"
             );
-            let paths = match region
-                .boundary_paths(&CurveContext::STRICT)
-                .unwrap_or_else(|error| panic!("{name} exact boundary failed: {error}"))
-                .into_value()
-            {
-                Classification::Decided(paths) => paths,
-                Classification::Uncertain(reason) => {
-                    panic!("{name} edge topology is uncertain: {reason:?}")
-                },
-            };
+            let paths = region
+                .boundary_paths()
+                .unwrap_or_else(|error| panic!("{name} exact boundary failed: {error}"));
+            let paths = paths;
             assert_eq!(
                 paths.len(),
                 1,

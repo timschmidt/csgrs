@@ -274,13 +274,8 @@ fn main() {
         || {
             let result = black_box(
                 curved_region
-                    .boolean_region(
-                        &disjoint,
-                        hypercurve::BooleanOp::Union,
-                        &CurveContext::STRICT,
-                    )
-                    .unwrap()
-                    .into_value(),
+                    .boolean_region(&disjoint, hypercurve::BooleanOp::Union)
+                    .unwrap(),
             );
             Measurement::new(1, result.len() as u64, result.len() as u64)
         },
