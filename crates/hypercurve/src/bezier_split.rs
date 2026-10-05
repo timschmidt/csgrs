@@ -30,6 +30,7 @@ use crate::bezier_offset::{
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::rational_bezier_general::project_homogeneous;
+use crate::selected_scalar::SelectedScalar2;
 use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierEndpoint, BezierParallel2,
@@ -52,21 +53,21 @@ pub struct CurveParameter2 {
 
 #[derive(Clone, Debug)]
 enum CurveParameterData2 {
-    Bezier(BezierParameter2),
-    SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
-    RecursiveProjective(BezierRecursiveProjectiveParameter2),
+    Scalar(SelectedScalar2),
     AlgebraicChord(BezierAlgebraicChordParameter2),
-    AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2),
-    /// Parameter on the other oriented half of the same supporting circle.
-    /// This is transient corner-extension evidence; rebuilt fragments retain
-    /// their own ordinary `AlgebraicCusp` carrier domain.
-    AlgebraicCuspComplement(BezierAlgebraicCuspSemicircleParameter2),
+    /// A cut on an algebraic cusp semicircle. `complement` marks a transient
+    /// corner-extension cut on the other oriented half of the same supporting
+    /// circle; rebuilt fragments retain their own ordinary carrier domain.
+    AlgebraicCusp {
+        parameter: BezierAlgebraicCuspSemicircleParameter2,
+        complement: bool,
+    },
 }
 
 impl PartialEq for CurveParameter2 {
     fn eq(&self, other: &Self) -> bool {
         match (&self.data, &other.data) {
-            (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
+            (CurveParameterData2::Scalar(first), CurveParameterData2::Scalar(second)) => {
                 first == second
             }
             (
@@ -74,21 +75,15 @@ impl PartialEq for CurveParameter2 {
                 CurveParameterData2::AlgebraicChord(second),
             ) => first == second,
             (
-                CurveParameterData2::AlgebraicCusp(first),
-                CurveParameterData2::AlgebraicCusp(second),
-            ) => first.shares_exact_evidence(second),
-            (
-                CurveParameterData2::AlgebraicCuspComplement(first),
-                CurveParameterData2::AlgebraicCuspComplement(second),
-            ) => first.shares_exact_evidence(second),
-            (
-                CurveParameterData2::SelectedFiber(first),
-                CurveParameterData2::SelectedFiber(second),
-            ) => first == second,
-            (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::RecursiveProjective(second),
-            ) => first == second,
+                CurveParameterData2::AlgebraicCusp {
+                    parameter: first,
+                    complement: first_complement,
+                },
+                CurveParameterData2::AlgebraicCusp {
+                    parameter: second,
+                    complement: second_complement,
+                },
+            ) => first_complement == second_complement && first.shares_exact_evidence(second),
             _ => false,
         }
     }
@@ -102,13 +97,17 @@ impl From<Real> for CurveParameter2 {
 
 impl From<BezierParameter2> for CurveParameter2 {
     fn from(parameter: BezierParameter2) -> Self {
-        Self {
-            data: CurveParameterData2::Bezier(parameter),
-        }
+        Self::from_selected_scalar(SelectedScalar2::Bezier(parameter))
     }
 }
 
 impl CurveParameter2 {
+    const fn from_selected_scalar(scalar: SelectedScalar2) -> Self {
+        Self {
+            data: CurveParameterData2::Scalar(scalar),
+        }
+    }
+
     /// Replays a scalar polynomial in this parameter's existing exact field.
     /// Point-ordered chord and circle charts require their geometric authority.
     pub(crate) fn polynomial_sign(
@@ -117,27 +116,17 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<hyperreal::RealSign>> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => {
-                crate::bezier_parameter::signed_coefficients_at_parameter(
-                    coefficients,
-                    parameter,
-                    policy,
-                )
-            }
-            CurveParameterData2::SelectedFiber(parameter) => parameter.predicate_sign(
-                &hypersolve::BivariatePolynomial::new(vec![coefficients.to_vec()]),
-                policy,
-            ),
-            CurveParameterData2::RecursiveProjective(parameter) => {
-                parameter.polynomial_sign(coefficients, policy)
-            }
+            CurveParameterData2::Scalar(scalar) => scalar.polynomial_sign(coefficients, policy),
             _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         }
     }
 
     pub(crate) fn from_algebraic_cusp(parameter: BezierAlgebraicCuspSemicircleParameter2) -> Self {
         Self {
-            data: CurveParameterData2::AlgebraicCusp(parameter),
+            data: CurveParameterData2::AlgebraicCusp {
+                parameter,
+                complement: false,
+            },
         }
     }
 
@@ -145,22 +134,21 @@ impl CurveParameter2 {
         parameter: BezierAlgebraicCuspSemicircleParameter2,
     ) -> Self {
         Self {
-            data: CurveParameterData2::AlgebraicCuspComplement(parameter),
+            data: CurveParameterData2::AlgebraicCusp {
+                parameter,
+                complement: true,
+            },
         }
     }
 
     pub(crate) fn from_selected_fiber(parameter: BezierAlgebraicSelectedFiberParameter2) -> Self {
-        Self {
-            data: CurveParameterData2::SelectedFiber(parameter),
-        }
+        Self::from_selected_scalar(SelectedScalar2::SelectedFiber(parameter))
     }
 
     pub(crate) fn from_recursive_projective(
         parameter: BezierRecursiveProjectiveParameter2,
     ) -> Self {
-        Self {
-            data: CurveParameterData2::RecursiveProjective(parameter),
-        }
+        Self::from_selected_scalar(SelectedScalar2::RecursiveProjective(parameter))
     }
 
     pub(crate) fn transported_recursive_line_identity(
@@ -169,11 +157,11 @@ impl CurveParameter2 {
         transform: &Similarity2,
     ) -> Self {
         match self.data {
-            CurveParameterData2::RecursiveProjective(parameter) => Self {
-                data: CurveParameterData2::RecursiveProjective(
+            CurveParameterData2::Scalar(SelectedScalar2::RecursiveProjective(parameter)) => {
+                Self::from_recursive_projective(
                     parameter.transported_line_identity(line, transform),
-                ),
-            },
+                )
+            }
             data => Self { data },
         }
     }
@@ -186,7 +174,7 @@ impl CurveParameter2 {
         chord_location: BezierRecursiveChordContactLocation2,
     ) -> Self {
         match self.data {
-            CurveParameterData2::RecursiveProjective(parameter) => {
+            CurveParameterData2::Scalar(SelectedScalar2::RecursiveProjective(parameter)) => {
                 Self::from_recursive_projective(parameter.with_chord_rational_tangent_identity(
                     chord,
                     source,
@@ -208,13 +196,8 @@ impl CurveParameter2 {
     /// algebraic-chord or cusp cut.
     pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => Some(parameter),
-            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
-                None
-            }
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
+            CurveParameterData2::Scalar(SelectedScalar2::Bezier(parameter)) => Some(parameter),
+            _ => None,
         }
     }
 
@@ -222,38 +205,34 @@ impl CurveParameter2 {
     /// Absence of this view does not limit the parameter's exact meaning.
     pub fn scalar(&self) -> Option<&Real> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => parameter.scalar(),
-            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
-                None
-            }
+            CurveParameterData2::Scalar(scalar) => scalar.scalar(),
             CurveParameterData2::AlgebraicChord(_) => None,
-            CurveParameterData2::AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2::Exact(
-                parameter,
-            )) => Some(parameter),
-            CurveParameterData2::AlgebraicCusp(
-                BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
-            ) => None,
-            CurveParameterData2::AlgebraicCuspComplement(
-                BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
-            ) => Some(parameter),
-            CurveParameterData2::AlgebraicCuspComplement(
-                BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
-            ) => None,
+            CurveParameterData2::AlgebraicCusp {
+                parameter: BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
+                ..
+            } => Some(parameter),
+            CurveParameterData2::AlgebraicCusp {
+                parameter: BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
+                ..
+            } => None,
         }
     }
 
     /// Returns true for a compact local cut on an algebraic cusp semicircle.
     pub const fn is_algebraic_cusp(&self) -> bool {
-        matches!(
-            self.data,
-            CurveParameterData2::AlgebraicCusp(_) | CurveParameterData2::AlgebraicCuspComplement(_)
-        )
+        matches!(self.data, CurveParameterData2::AlgebraicCusp { .. })
     }
 
     /// Returns true when this transient corner cut lies on the other half of
     /// an algebraic cusp circle's authored parameter chart.
     pub(crate) const fn is_algebraic_cusp_complement(&self) -> bool {
-        matches!(self.data, CurveParameterData2::AlgebraicCuspComplement(_))
+        matches!(
+            self.data,
+            CurveParameterData2::AlgebraicCusp {
+                complement: true,
+                ..
+            }
+        )
     }
 
     /// Returns true for a correlated exact point parameter on an algebraic chord.
@@ -265,7 +244,9 @@ impl CurveParameter2 {
     pub(crate) const fn is_retained_scalar(&self) -> bool {
         matches!(
             self.data,
-            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_)
+            CurveParameterData2::Scalar(
+                SelectedScalar2::SelectedFiber(_) | SelectedScalar2::RecursiveProjective(_)
+            )
         )
     }
 
@@ -273,7 +254,9 @@ impl CurveParameter2 {
         &self,
     ) -> Option<&BezierAlgebraicSelectedFiberParameter2> {
         match &self.data {
-            CurveParameterData2::SelectedFiber(parameter) => Some(parameter),
+            CurveParameterData2::Scalar(SelectedScalar2::SelectedFiber(parameter)) => {
+                Some(parameter)
+            }
             _ => None,
         }
     }
@@ -282,31 +265,24 @@ impl CurveParameter2 {
         &self,
     ) -> Option<&BezierRecursiveProjectiveParameter2> {
         match &self.data {
-            CurveParameterData2::RecursiveProjective(parameter) => Some(parameter),
+            CurveParameterData2::Scalar(SelectedScalar2::RecursiveProjective(parameter)) => {
+                Some(parameter)
+            }
             _ => None,
         }
     }
 
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
         match &self.data {
-            CurveParameterData2::AlgebraicCusp(parameter)
-            | CurveParameterData2::AlgebraicCuspComplement(parameter) => Some(parameter),
-            CurveParameterData2::Bezier(_) | CurveParameterData2::AlgebraicChord(_) => None,
-            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
-                None
-            }
+            CurveParameterData2::AlgebraicCusp { parameter, .. } => Some(parameter),
+            _ => None,
         }
     }
 
     pub(crate) fn as_algebraic_chord(&self) -> Option<&BezierAlgebraicChordParameter2> {
         match &self.data {
             CurveParameterData2::AlgebraicChord(parameter) => Some(parameter),
-            CurveParameterData2::Bezier(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
-            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
-                None
-            }
+            _ => None,
         }
     }
 
@@ -317,66 +293,36 @@ impl CurveParameter2 {
     ) -> CurveResult<Classification<Ordering>> {
         match (&self.data, &other.data) {
             (
-                CurveParameterData2::AlgebraicCusp(first)
-                | CurveParameterData2::AlgebraicCuspComplement(first),
-                CurveParameterData2::Bezier(BezierParameter2::Exact(second)),
-            ) => first.order_to_real(second, policy),
+                CurveParameterData2::AlgebraicCusp { parameter, .. },
+                CurveParameterData2::Scalar(SelectedScalar2::Bezier(BezierParameter2::Exact(
+                    second,
+                ))),
+            ) => parameter.order_to_real(second, policy),
             (
-                CurveParameterData2::Bezier(BezierParameter2::Exact(first)),
-                CurveParameterData2::AlgebraicCusp(second)
-                | CurveParameterData2::AlgebraicCuspComplement(second),
-            ) => Ok(second.order_to_real(first, policy)?.map(Ordering::reverse)),
-            (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
-                first.cmp_by_refinement_with_policy(second, policy)
+                CurveParameterData2::Scalar(SelectedScalar2::Bezier(BezierParameter2::Exact(
+                    first,
+                ))),
+                CurveParameterData2::AlgebraicCusp { parameter, .. },
+            ) => Ok(parameter
+                .order_to_real(first, policy)?
+                .map(Ordering::reverse)),
+            (CurveParameterData2::Scalar(first), CurveParameterData2::Scalar(second)) => {
+                first.cmp_by_refinement(second, policy)
             }
             (
                 CurveParameterData2::AlgebraicChord(first),
                 CurveParameterData2::AlgebraicChord(second),
             ) => first.cmp_by_refinement(second, policy),
             (
-                CurveParameterData2::AlgebraicCusp(first),
-                CurveParameterData2::AlgebraicCusp(second),
-            ) => first.cmp_by_refinement(second, policy),
-            (
-                CurveParameterData2::AlgebraicCuspComplement(first),
-                CurveParameterData2::AlgebraicCuspComplement(second),
-            ) => first.cmp_by_refinement(second, policy),
-            (
-                CurveParameterData2::SelectedFiber(first),
-                CurveParameterData2::SelectedFiber(second),
-            ) => first.cmp_by_refinement(second, policy),
-            (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::RecursiveProjective(second),
-            ) => first.cmp_by_refinement(second, policy),
-            (CurveParameterData2::SelectedFiber(first), CurveParameterData2::Bezier(second)) => {
-                first.cmp_bezier_parameter(second, policy)
-            }
-            (CurveParameterData2::Bezier(first), CurveParameterData2::SelectedFiber(second)) => {
-                Ok(second
-                    .cmp_bezier_parameter(first, policy)?
-                    .map(Ordering::reverse))
-            }
-            (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::Bezier(second),
-            ) => first.cmp_bezier_parameter(second, policy),
-            (
-                CurveParameterData2::Bezier(first),
-                CurveParameterData2::RecursiveProjective(second),
-            ) => Ok(second
-                .cmp_bezier_parameter(first, policy)?
-                .map(Ordering::reverse)),
-            (
-                CurveParameterData2::SelectedFiber(first),
-                CurveParameterData2::RecursiveProjective(second),
-            ) => Ok(second
-                .cmp_selected_fiber_parameter(first, policy)?
-                .map(Ordering::reverse)),
-            (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::SelectedFiber(second),
-            ) => first.cmp_selected_fiber_parameter(second, policy),
+                CurveParameterData2::AlgebraicCusp {
+                    parameter: first,
+                    complement: first_complement,
+                },
+                CurveParameterData2::AlgebraicCusp {
+                    parameter: second,
+                    complement: second_complement,
+                },
+            ) if first_complement == second_complement => first.cmp_by_refinement(second, policy),
             _ => Err(CurveError::Topology(
                 "cannot compare parameters from distinct carrier domains".into(),
             )),
@@ -429,16 +375,12 @@ impl CurveParameter2 {
 
     pub(crate) fn unit_complement(&self) -> Option<Self> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => Some(Self::from(parameter.unit_complement())),
-            CurveParameterData2::SelectedFiber(parameter) => {
-                Some(Self::from_selected_fiber(parameter.unit_complement()))
+            CurveParameterData2::Scalar(scalar) => {
+                Some(Self::from_selected_scalar(scalar.unit_complement()))
             }
-            CurveParameterData2::RecursiveProjective(parameter) => {
-                Some(Self::from_recursive_projective(parameter.unit_complement()))
+            CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
+                None
             }
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
@@ -447,19 +389,10 @@ impl CurveParameter2 {
     /// representative values.
     pub(crate) fn finite_envelope_bounds(&self) -> Option<(&Real, &Real)> {
         match &self.data {
-            CurveParameterData2::Bezier(BezierParameter2::Exact(parameter)) => {
-                Some((parameter, parameter))
+            CurveParameterData2::Scalar(scalar) => Some(scalar.isolating_bounds()),
+            CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
+                None
             }
-            CurveParameterData2::Bezier(BezierParameter2::Algebraic(parameter)) => {
-                Some((parameter.interval().start(), parameter.interval().end()))
-            }
-            CurveParameterData2::SelectedFiber(parameter) => Some(parameter.isolating_bounds()),
-            CurveParameterData2::RecursiveProjective(parameter) => {
-                Some(parameter.isolating_bounds())
-            }
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
@@ -470,20 +403,10 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => Ok(Classification::Decided(Self::from(
-                parameter
-                    .clone()
-                    .refined_isolating_interval(refinement_steps, policy),
-            ))),
-            CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
+            CurveParameterData2::Scalar(scalar) => Ok(scalar
                 .refined(refinement_steps, policy)?
-                .map(Self::from_selected_fiber)),
-            CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
-                .refined(refinement_steps, policy)?
-                .map(Self::from_recursive_projective)),
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => {
+                .map(Self::from_selected_scalar)),
+            CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -498,18 +421,10 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => Ok(parameter
+            CurveParameterData2::Scalar(scalar) => Ok(scalar
                 .affine_image_unbounded(scale, offset, policy)?
-                .map(Self::from)),
-            CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
-                .affine_image_unbounded(scale, offset, policy)?
-                .map(Self::from_selected_fiber)),
-            CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
-                .affine_image_unbounded(scale, offset, policy)?
-                .map(Self::from_recursive_projective)),
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => {
+                .map(Self::from_selected_scalar)),
+            CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -524,18 +439,10 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => Ok(parameter
+            CurveParameterData2::Scalar(scalar) => Ok(scalar
                 .projective_image_unbounded(numerator, denominator, policy)?
-                .map(Self::from)),
-            CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
-                .projective_image_unbounded(numerator, denominator, policy)?
-                .map(Self::from_selected_fiber)),
-            CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
-                .projective_image_unbounded(numerator, denominator, policy)?
-                .map(Self::from_recursive_projective)),
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => {
+                .map(Self::from_selected_scalar)),
+            CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -549,18 +456,10 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => {
-                Ok(Classification::Decided(parameter.clone()))
+            CurveParameterData2::Scalar(scalar) => {
+                scalar.promoted_bezier_parameter_complete(policy)
             }
-            CurveParameterData2::SelectedFiber(parameter) => {
-                parameter.promoted_bezier_parameter_complete(policy)
-            }
-            CurveParameterData2::RecursiveProjective(parameter) => {
-                parameter.promoted_bezier_parameter_complete(policy)
-            }
-            CurveParameterData2::AlgebraicChord(_)
-            | CurveParameterData2::AlgebraicCusp(_)
-            | CurveParameterData2::AlgebraicCuspComplement(_) => {
+            CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -596,91 +495,34 @@ impl CurveParameter2 {
             )));
         }
         match (&self.data, &other.data) {
-            (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
+            (CurveParameterData2::Scalar(first), CurveParameterData2::Scalar(second)) => {
                 first.strict_scalar_between_ordered(second, policy)
             }
             (
-                CurveParameterData2::AlgebraicCusp(first),
-                CurveParameterData2::AlgebraicCusp(second),
-            ) => first.strict_scalar_between(second, policy),
-            (
-                CurveParameterData2::AlgebraicCuspComplement(first),
-                CurveParameterData2::AlgebraicCuspComplement(second),
-            ) => first.strict_scalar_between(second, policy),
-            (
-                CurveParameterData2::SelectedFiber(first),
-                CurveParameterData2::SelectedFiber(second),
-            ) => first.strict_scalar_between_ordered(second, policy),
-            (
-                CurveParameterData2::Bezier(_)
-                | CurveParameterData2::SelectedFiber(_)
-                | CurveParameterData2::RecursiveProjective(_),
-                CurveParameterData2::Bezier(_)
-                | CurveParameterData2::SelectedFiber(_)
-                | CurveParameterData2::RecursiveProjective(_),
-            ) => {
-                // A scalar gap needs separated enclosures, not a common
-                // coefficient field or a global polynomial for either cut.
-                // Keep each endpoint under its native refinement authority.
-                let mut refinement_steps = 0_usize;
-                loop {
-                    let first = match self.refined_for_finite_envelope(refinement_steps, policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let second =
-                        match other.refined_for_finite_envelope(refinement_steps, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
-                    let (_, first_upper) = first
-                        .finite_envelope_bounds()
-                        .expect("native scalar refinement retains finite bounds");
-                    let (second_lower, _) = second
-                        .finite_envelope_bounds()
-                        .expect("native scalar refinement retains finite bounds");
-                    if compare_reals(first_upper, second_lower, &CurveContext::STRICT)
-                        == Some(Ordering::Less)
-                    {
-                        return Ok(Classification::Decided(scalar_in_open_interval(
-                            first_upper,
-                            second_lower,
-                        )));
-                    }
-                    refinement_steps = refinement_steps
-                        .checked_mul(2)
-                        .and_then(|steps| steps.checked_add(1))
-                        .ok_or_else(|| {
-                            CurveError::Topology("finite scalar separation overflow".into())
-                        })?;
-                }
+                CurveParameterData2::AlgebraicCusp {
+                    parameter: first,
+                    complement: first_complement,
+                },
+                CurveParameterData2::AlgebraicCusp {
+                    parameter: second,
+                    complement: second_complement,
+                },
+            ) if first_complement == second_complement => {
+                first.strict_scalar_between(second, policy)
             }
             (CurveParameterData2::AlgebraicChord(_), _)
             | (_, CurveParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
                 "an algebraic chord cut has no represented scalar midpoint".into(),
             )),
-            (CurveParameterData2::Bezier(_), CurveParameterData2::AlgebraicCusp(_))
-            | (CurveParameterData2::Bezier(_), CurveParameterData2::AlgebraicCuspComplement(_))
-            | (CurveParameterData2::AlgebraicCusp(_), CurveParameterData2::Bezier(_))
-            | (CurveParameterData2::AlgebraicCuspComplement(_), CurveParameterData2::Bezier(_))
-            | (
-                CurveParameterData2::AlgebraicCusp(_),
-                CurveParameterData2::AlgebraicCuspComplement(_),
-            )
-            | (
-                CurveParameterData2::AlgebraicCuspComplement(_),
-                CurveParameterData2::AlgebraicCusp(_),
+            (
+                CurveParameterData2::Scalar(SelectedScalar2::Bezier(_))
+                | CurveParameterData2::AlgebraicCusp { .. },
+                CurveParameterData2::Scalar(SelectedScalar2::Bezier(_))
+                | CurveParameterData2::AlgebraicCusp { .. },
             ) => Err(CurveError::Topology(
                 "cannot separate parameters from distinct carrier domains".into(),
             )),
-            (CurveParameterData2::SelectedFiber(_), _)
-            | (_, CurveParameterData2::SelectedFiber(_))
-            | (CurveParameterData2::RecursiveProjective(_), _)
-            | (_, CurveParameterData2::RecursiveProjective(_)) => Err(CurveError::Topology(
+            _ => Err(CurveError::Topology(
                 "retained-scalar separation requires a shared local authority".into(),
             )),
         }

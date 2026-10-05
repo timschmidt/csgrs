@@ -80,6 +80,7 @@ mod region_nesting;
 #[cfg(test)]
 mod region_pipeline_tests;
 mod segment;
+mod selected_scalar;
 mod self_intersect;
 mod spline_periodic;
 mod split;
