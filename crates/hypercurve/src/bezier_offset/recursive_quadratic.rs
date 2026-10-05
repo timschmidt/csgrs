@@ -375,6 +375,17 @@ pub(super) fn recursive_quadratic_parallel_candidate_evaluation(
         }
     }
     let parent = embedding.field.clone();
+    // A target field may already own this speed as a generator; a second
+    // copy would make the tower reducible and its coefficients explode.
+    if let Some(speed) = parent.retained_positive_square_root(&speed_squared) {
+        return Ok(Classification::Decided(Some(
+            BezierRecursiveQuadraticParallelEvaluation2 {
+                embedding,
+                speed_field: parent,
+                speed,
+            },
+        )));
+    }
     let speed_field = parent.extension(speed_squared).ok_or_else(|| {
         CurveError::Topology("a recursive parallel speed could not extend its target field".into())
     })?;

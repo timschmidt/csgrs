@@ -1432,6 +1432,48 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         self.sign_at_real(&self.coefficients, parameter, policy)
     }
 
+    /// Chooses a split point of an isolating bracket and its exact defining
+    /// sign. A midpoint that lies extremely close to the root defeats
+    /// certified interval evaluation and forces the complete tower sign. The
+    /// quarter points are tried first through interval signs only, since at
+    /// least one of the three candidates lies a quarter-width from the root;
+    /// the complete sign at the midpoint remains the fallback.
+    fn bracket_split(
+        &self,
+        lower: &Real,
+        upper: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(Real, RealSign)>> {
+        let width = (upper - lower) / Real::from(4_u8);
+        let midpoint = ((lower + upper) / Real::from(2_u8))?;
+        // A stored zero at the midpoint is an exact root: collapse there
+        // through the complete sign, which recognizes it immediately.
+        let midpoint_value = self.value_at_real(&self.coefficients, &midpoint);
+        if let Ok(width) = width
+            && !midpoint_value
+                .as_ref()
+                .is_some_and(RecursiveQuadraticValue::is_coefficientwise_stored_zero)
+        {
+            let candidates = [lower + &width, upper - &width];
+            if let Some(sign) = midpoint_value.and_then(|value| value.bounded_interval_sign(0..=64))
+            {
+                return Ok(Classification::Decided((midpoint, sign)));
+            }
+            for candidate in candidates {
+                if let Some(sign) = self
+                    .value_at_real(&self.coefficients, &candidate)
+                    .and_then(|value| value.bounded_interval_sign(0..=64))
+                {
+                    return Ok(Classification::Decided((candidate, sign)));
+                }
+            }
+        }
+        Ok(match self.defining_sign_at_real(&midpoint, policy)? {
+            Classification::Decided(sign) => Classification::Decided((midpoint, sign)),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
+    }
+
     pub(super) fn refined_parameter(
         &self,
         parameter: &BezierRecursiveProjectiveParameter2,
@@ -1472,9 +1514,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             if lower == upper {
                 break;
             }
-            let midpoint = ((&lower + &upper) / Real::from(2_u8))?;
-            let midpoint_sign = match self.defining_sign_at_real(&midpoint, &strict)? {
-                Classification::Decided(sign) => sign,
+            let (midpoint, midpoint_sign) = match self.bracket_split(&lower, &upper, &strict)? {
+                Classification::Decided(split) => split,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -4419,6 +4460,53 @@ impl BezierRecursiveProjectiveParameter2 {
         Ok(Some((root, order)))
     }
 
+    /// Orders this value against a native algebraic root from the sign of
+    /// the root's defining polynomial at this value, in this value's field.
+    ///
+    /// When the polynomial has nonzero values of opposite signs at the ends
+    /// of the root's isolating interval, its single distinct root there has
+    /// odd multiplicity and the polynomial changes sign exactly at it. For a
+    /// value whose enclosure lies strictly inside that interval, the
+    /// polynomial's sign then decides the order without promoting either
+    /// value to a global algebraic parameter. `None` means the preconditions
+    /// or the strict sign are unavailable.
+    fn order_by_simple_root_sign(
+        &self,
+        root: &BezierAlgebraicParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<std::cmp::Ordering>> {
+        let strict = CurveContext::STRICT;
+        let (lower, upper) = (root.interval().start(), root.interval().end());
+        if compare_reals(lower, &self.data.lower, &strict) != Some(std::cmp::Ordering::Less)
+            || compare_reals(&self.data.upper, upper, &strict) != Some(std::cmp::Ordering::Less)
+        {
+            return Ok(None);
+        }
+        let polynomial = root.polynomial();
+        let (Some(lower_sign), Some(upper_sign)) = (
+            crate::classify::real_sign(&polynomial.evaluate(lower), &strict),
+            crate::classify::real_sign(&polynomial.evaluate(upper), &strict),
+        ) else {
+            return Ok(None);
+        };
+        if lower_sign == RealSign::Zero || upper_sign == RealSign::Zero || lower_sign == upper_sign
+        {
+            return Ok(None);
+        }
+        let Classification::Decided(sign) = policy
+            .strict_predicate_pass(|| self.polynomial_sign(polynomial.coefficients(), policy))?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(if sign == RealSign::Zero {
+            std::cmp::Ordering::Equal
+        } else if sign == lower_sign {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
+        }))
+    }
+
     pub(crate) fn cmp_bezier_parameter(
         &self,
         other: &BezierParameter2,
@@ -4539,6 +4627,12 @@ impl BezierRecursiveProjectiveParameter2 {
             }
             if policy.has_bounded_exact_predicate_budget() && refinement_steps >= 8 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
+            if refinement_steps == 15
+                && !is_other_root
+                && let Some(order) = selected.order_by_simple_root_sign(selection, policy)?
+            {
+                return Ok(Classification::Decided(order));
             }
             if refinement_steps == 15 || refinement_steps >= 512 {
                 // Equal formulas can require radical-sheet replay even when
