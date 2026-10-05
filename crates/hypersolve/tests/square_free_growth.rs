@@ -19,16 +19,18 @@ fn wide_repeated_factors_preserve_the_exact_square_free_scale() {
             polynomial = product;
         }
     }
+    // A negative rational scale must not survive into the primitive result.
     let scale = Rational::fraction(-5, 7).unwrap();
     let input = polynomial
         .into_iter()
         .map(|coefficient| Real::new(Rational::from_bigint(coefficient) * &scale))
         .collect();
-    // Dividing by the monic gcd retains the input leading coefficient.
-    let expected_scale = &scale * Rational::from_bigint(b.pow(11) * d.pow(7));
+    // Rational input discards its common denominator and integer content, so
+    // the square-free part is the primitive product of the two distinct
+    // factors. It keeps the sign of the input's negative leading coefficient.
     let expected = [&a * &c, &a * &d + &b * &c, &b * &d]
         .into_iter()
-        .map(|coefficient| Real::new(Rational::from_bigint(coefficient) * &expected_scale))
+        .map(|coefficient| Real::new(Rational::from_bigint(-coefficient)))
         .collect::<Vec<_>>();
     assert_eq!(
         square_free_part(input, PredicatePolicy::STRICT),
