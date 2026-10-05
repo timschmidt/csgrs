@@ -15,6 +15,7 @@ use std::{
 };
 
 use hyperlattice::Point2;
+use hyperlimit::PredicatePolicy;
 use hyperpath::{
     LinePathSegment, PcbTrace, PcbViaStack, SpecctraRoute, SweptLineSegment, TraceLayer,
     ViaDrillIntent,
@@ -215,7 +216,7 @@ impl RoutingProblemReport {
 
         let boundary = layout
             .outline
-            .boundary_geometry(&hypercurve::CurveContext::STRICT)
+            .boundary_geometry(PredicatePolicy::STRICT)
             .map_err(|error| TscircuitRoutingError::InvalidGeometry(error.to_string()))?;
         let (bounds_min, bounds_max) = boundary.exterior_bounds();
         if !is_axis_aligned_rectangle(&layout.outline.exterior) {

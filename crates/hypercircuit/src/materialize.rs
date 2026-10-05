@@ -14,9 +14,8 @@ use csgrs::curve;
 use csgrs::solid::{self, SolidExt};
 use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
-    CircularArc2, Contour2, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, ExactCurveError, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2,
-    Point2 as CurvePoint2,
+    CircularArc2, Contour2, Curve2, CurveCertainty, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    ExactCurveError, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
 };
 use hyperlattice::Point2;
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
@@ -67,20 +66,13 @@ impl MaterializationContext {
 
 struct MaterializationDecisions {
     predicates: PredicatePolicy,
-    curves: CurveContext,
     certainty: Cell<GeometryCertainty>,
 }
 
 impl MaterializationDecisions {
     fn new(context: &MaterializationContext) -> Self {
-        let predicates = context.predicate_policy();
         Self {
-            predicates,
-            curves: if predicates == PredicatePolicy::APPROXIMATE_512 {
-                CurveContext::APPROXIMATE_512
-            } else {
-                CurveContext::STRICT
-            },
+            predicates: context.predicate_policy(),
             certainty: Cell::new(GeometryCertainty::Certified),
         }
     }
@@ -107,14 +99,10 @@ impl MaterializationDecisions {
     }
 
     /// Runs principal exact Hypercurve operations under this materialization's
-    /// curve policy: directly under STRICT, and otherwise inside
-    /// [`hypercurve::provisional`], recording any approximate terminal they
-    /// consumed.
+    /// predicate policy through [`hypercurve::evaluate_under`], recording any
+    /// approximate terminal they consumed.
     fn exact_curve<T>(&self, operation: impl FnOnce() -> T) -> T {
-        if self.curves == CurveContext::STRICT {
-            return operation();
-        }
-        let provisional = hypercurve::provisional(operation);
+        let provisional = hypercurve::evaluate_under(self.predicates, operation);
         self.observe_curve(provisional.certainty());
         provisional.into_unverified()
     }
@@ -128,14 +116,14 @@ impl MaterializationDecisions {
 
     fn boundary_operation<T>(
         &self,
-        mut evaluate: impl FnMut(&CurveContext) -> Result<T, BoardBoundaryGeometryError>,
+        mut evaluate: impl FnMut(PredicatePolicy) -> Result<T, BoardBoundaryGeometryError>,
     ) -> Result<T, BoardBoundaryGeometryError> {
-        if self.curves != CurveContext::APPROXIMATE_512 {
-            return evaluate(&self.curves);
+        if self.predicates != PredicatePolicy::APPROXIMATE_512 {
+            return evaluate(self.predicates);
         }
-        match evaluate(&CurveContext::STRICT) {
+        match evaluate(PredicatePolicy::STRICT) {
             Ok(value) => Ok(value),
-            Err(error) if error.is_policy_blocked() => evaluate(&self.curves).inspect(|_| {
+            Err(error) if error.is_policy_blocked() => evaluate(self.predicates).inspect(|_| {
                 self.observe(GeometryCertainty::Approximate512Consumed);
             }),
             Err(error) => Err(error),

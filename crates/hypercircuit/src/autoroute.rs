@@ -9,8 +9,9 @@ use std::cmp::{Ordering, Reverse};
 use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 use std::fmt::{Display, Formatter};
 
-use hypercurve::{Classification, CurveContext};
+use hypercurve::Classification;
 use hyperlattice::Point2;
+use hyperlimit::PredicatePolicy;
 use hyperlimit::{
     RingPointLocation, SegmentIntersection, classify_point_ring_even_odd,
     classify_segment_intersection,
@@ -608,7 +609,7 @@ impl PcbLayout {
             .map_err(NegotiatedRouterError::InvalidProblem)?;
         let boundary = self
             .outline
-            .boundary_geometry(&hypercurve::CurveContext::STRICT)
+            .boundary_geometry(PredicatePolicy::STRICT)
             .map_err(|error| NegotiatedRouterError::InvalidBoardBoundary(error.to_string()))?;
         let (board_min, board_max) = boundary.exterior_bounds();
         let coarse_pitch = policy.route_policy.grid_pitch.clone()
@@ -947,10 +948,7 @@ pub(crate) fn placement_pin_access_report(
             return report;
         }
     };
-    let boundary = match layout
-        .outline
-        .boundary_geometry(&hypercurve::CurveContext::STRICT)
-    {
+    let boundary = match layout.outline.boundary_geometry(PredicatePolicy::STRICT) {
         Ok(boundary) => boundary,
         Err(error) => {
             report
@@ -1304,7 +1302,7 @@ impl Grid {
     ) -> Result<Self, NegotiatedRouterError> {
         let boundary = layout
             .outline
-            .boundary_geometry(&hypercurve::CurveContext::STRICT)
+            .boundary_geometry(PredicatePolicy::STRICT)
             .map_err(|error| NegotiatedRouterError::InvalidBoardBoundary(error.to_string()))?;
         let (min, max) = boundary.exterior_bounds();
         let (
@@ -4770,7 +4768,7 @@ fn point_is_legal(
     layer: Option<TraceLayer>,
 ) -> Option<bool> {
     match boundary
-        .contains_disc(point, radius.clone(), &CurveContext::STRICT)
+        .contains_disc(point, radius.clone(), PredicatePolicy::STRICT)
         .ok()?
     {
         Classification::Decided(true) => {}
@@ -4800,7 +4798,7 @@ fn segment_is_legal(
     layer: TraceLayer,
 ) -> Option<bool> {
     match boundary
-        .contains_segment(start, end, radius.clone(), &CurveContext::STRICT)
+        .contains_segment(start, end, radius.clone(), PredicatePolicy::STRICT)
         .ok()?
     {
         Classification::Decided(true) => {}

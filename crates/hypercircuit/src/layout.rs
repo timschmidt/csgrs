@@ -13,11 +13,12 @@ use std::{
 };
 
 use hypercurve::{
-    Aabb2 as CurveAabb2, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
-    LineSeg2, OffsetCornerStyle2, Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
+    Aabb2 as CurveAabb2, CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2,
+    CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule, LineSeg2,
+    OffsetCornerStyle2, Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
 };
 use hyperlattice::Point2;
+use hyperlimit::PredicatePolicy;
 use hyperpath::{
     CubicBezier, ExplicitCircularArc, LinePathSegment, LinePathSegmentError, NetId as RoutingNetId,
     PcbTrace, PcbViaStack, SpecctraRoute, SpecctraRouteArc, SpecctraRouteBezier, SweptLineSegment,
@@ -423,7 +424,7 @@ impl BoardBoundaryGeometry {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Classification<RegionPointLocation>, BoardBoundaryGeometryError> {
         match under_policy(policy, || {
             self.region
@@ -446,7 +447,7 @@ impl BoardBoundaryGeometry {
     pub fn inset(
         &self,
         clearance: Real,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Classification<Self>, BoardBoundaryGeometryError> {
         let region = match under_policy(policy, || {
             self.region
@@ -495,7 +496,7 @@ impl BoardBoundaryGeometry {
         &self,
         point: &Point2,
         clearance: Real,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Classification<bool>, BoardBoundaryGeometryError> {
         if let Some(decision) =
             self.contains_disc_against_native_primitives(point, &clearance, policy)?
@@ -517,7 +518,7 @@ impl BoardBoundaryGeometry {
         &self,
         point: &Point2,
         clearance: &Real,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Option<Classification<bool>>, BoardBoundaryGeometryError> {
         match self.classify_point(point, policy)? {
             Classification::Decided(RegionPointLocation::Inside) => {}
@@ -568,7 +569,7 @@ impl BoardBoundaryGeometry {
         start: &Point2,
         end: &Point2,
         clearance: Real,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Classification<bool>, BoardBoundaryGeometryError> {
         if let Some(decision) =
             self.contains_segment_against_native_primitives(start, end, &clearance, policy)?
@@ -630,7 +631,7 @@ impl BoardBoundaryGeometry {
         start: &Point2,
         end: &Point2,
         clearance: &Real,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Option<Classification<bool>>, BoardBoundaryGeometryError> {
         if self.contour_paths.iter().any(|contour| {
             contour.curves().iter().any(|curve| {
@@ -715,7 +716,7 @@ impl BoardBoundaryGeometry {
         &self,
         min: &Point2,
         max: &Point2,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<Classification<bool>, BoardBoundaryGeometryError> {
         let corners = [
             Point2::new(min.x.clone(), min.y.clone()),
@@ -801,7 +802,7 @@ fn curve_point_in_closed_box(
 fn point_line_segment_distance_squared(
     point: &CurvePoint2,
     line: &LineSeg2,
-    _policy: &CurveContext,
+    _policy: PredicatePolicy,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let dx = line.end().x() - line.start().x();
     let dy = line.end().y() - line.start().y();
@@ -832,7 +833,7 @@ fn point_line_segment_distance_squared(
 fn point_arc_distance_squared(
     point: &CurvePoint2,
     arc: &CircularArc2,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let radial = point.distance_squared(arc.center());
     match radial.predicate_cmp(&Real::zero()) {
@@ -876,7 +877,7 @@ fn point_arc_distance_squared(
 fn line_line_segment_distance_squared(
     first: &LineSeg2,
     second: &LineSeg2,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let distances = [
         point_line_segment_distance_squared(first.start(), second, policy)?,
@@ -890,7 +891,7 @@ fn line_line_segment_distance_squared(
 fn line_arc_distance_squared(
     line: &LineSeg2,
     arc: &CircularArc2,
-    policy: &CurveContext,
+    policy: PredicatePolicy,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let center_projection = closest_point_on_line_segment(arc.center(), line)?;
     match center_projection {
@@ -1045,7 +1046,7 @@ impl BoardOutline {
     /// Builds the canonical exact exterior-minus-cutouts query carrier.
     pub fn boundary_geometry(
         &self,
-        policy: &CurveContext,
+        policy: PredicatePolicy,
     ) -> Result<BoardBoundaryGeometry, BoardBoundaryGeometryError> {
         let mut contour_paths = Vec::with_capacity(1 + self.cutouts.len());
         contour_paths.push(board_contour_curve_path(&self.exterior, "board exterior")?);
@@ -3700,10 +3701,6 @@ fn is_non_negative(value: &Real) -> bool {
 
 /// Runs a principal exact Hypercurve operation under `policy`: directly under
 /// STRICT, and otherwise inside [`hypercurve::provisional`].
-fn under_policy<T>(policy: &CurveContext, operation: impl FnOnce() -> T) -> T {
-    if *policy == CurveContext::STRICT {
-        operation()
-    } else {
-        hypercurve::provisional(operation).into_unverified()
-    }
+fn under_policy<T>(policy: PredicatePolicy, operation: impl FnOnce() -> T) -> T {
+    hypercurve::evaluate_under(policy, operation).into_unverified()
 }

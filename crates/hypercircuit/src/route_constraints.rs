@@ -9,10 +9,11 @@ use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
-use hypercurve::{Classification, CurveContext};
+use hypercurve::Classification;
 #[cfg(feature = "geometry")]
 use hypercurve::{CurveRegion2, RegionPointLocation};
 use hyperlattice::Point2;
+use hyperlimit::PredicatePolicy;
 use hyperlimit::{
     RingPointLocation, SegmentIntersection, classify_point_ring_even_odd,
     classify_segment_intersection,
@@ -1762,7 +1763,7 @@ fn tuning_synthesis_candidates(
     let mut candidates = Vec::new();
     let boundary = layout
         .outline
-        .boundary_geometry(&hypercurve::CurveContext::STRICT)
+        .boundary_geometry(PredicatePolicy::STRICT)
         .map_err(|_| PhaseTuningSynthesisIssue::IndeterminateBoardBoundary(net.clone()))?;
     let mut indeterminate_boundary = false;
     for route in layout.routes.iter().filter(|route| &route.net == net) {
@@ -1809,7 +1810,7 @@ fn tuning_synthesis_candidates(
                             &pair[0],
                             &pair[1],
                             route_radius.clone(),
-                            &CurveContext::STRICT,
+                            PredicatePolicy::STRICT,
                         )
                         .ok()?
                     {

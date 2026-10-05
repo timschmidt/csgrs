@@ -3,8 +3,9 @@
 use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 
-use hypercurve::{Classification, CurveContext};
+use hypercurve::Classification;
 use hyperlattice::Point2;
+use hyperlimit::PredicatePolicy;
 use hyperlimit::{RingPointLocation, classify_point_ring_even_odd};
 use hyperreal::Real;
 
@@ -71,10 +72,7 @@ impl PcbLayout {
     pub fn realize_stitching_vias(&self) -> ZoneStitchingReport {
         let mut report = ZoneStitchingReport::default();
         let mut occupied = self.vias.clone();
-        let board_boundary = self
-            .outline
-            .boundary_geometry(&hypercurve::CurveContext::STRICT)
-            .ok();
+        let board_boundary = self.outline.boundary_geometry(PredicatePolicy::STRICT).ok();
         for zone in &self.zones {
             let Some(policy) = &zone.stitching else {
                 continue;
@@ -213,7 +211,7 @@ fn candidate_status(
         return CandidateStatus::Indeterminate;
     };
     match board_boundary
-        .contains_disc(center, boundary_radius.clone(), &CurveContext::STRICT)
+        .contains_disc(center, boundary_radius.clone(), PredicatePolicy::STRICT)
         .ok()
     {
         Some(Classification::Decided(true)) => {}
