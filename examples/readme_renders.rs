@@ -568,9 +568,8 @@ fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]
     let mut polylines = paths
         .iter()
         .map(|path| {
-            path.project_to_finite_polyline(&projection, &CurveContext::STRICT)
+            path.project_to_finite_polyline(&projection)
                 .expect("project exact open CurvePath2")
-                .into_value()
                 .points()
                 .to_vec()
         })
@@ -711,9 +710,8 @@ fn project_edge_paths(
     paths
         .iter()
         .map(|path| {
-            path.project_to_finite_polyline(projection, &CurveContext::STRICT)
+            path.project_to_finite_polyline(projection)
                 .expect("rasterize exact CurveRegion2 edge path")
-                .into_value()
                 .points()
                 .to_vec()
         })
