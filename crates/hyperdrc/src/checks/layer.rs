@@ -10,7 +10,7 @@
 
 use std::collections::BTreeMap;
 
-use hypercurve::{CurveContext, CurveRegion2, LineLineIntersection, LineSeg2};
+use hypercurve::{CurveRegion2, LineLineIntersection, LineSeg2};
 use hyperlimit::{Point2, SegmentIntersection, Sign, compare_reals};
 
 use crate::PREDICATE_POLICY;
@@ -4032,10 +4032,7 @@ fn ring_segment_intersection_with_grid(
         hypercurve::Point2::new(d.x, d.y),
     )
     .ok()?;
-    match segment_a
-        .intersect_line(&segment_b, &CurveContext::STRICT)
-        .ok()?
-    {
+    match segment_a.intersect_line(&segment_b).ok()? {
         LineLineIntersection::Point { point, kind, .. } => {
             if matches!(kind, hypercurve::IntersectionKind::Endpoint) {
                 return None;
