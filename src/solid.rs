@@ -2091,7 +2091,6 @@ pub fn flatten_with_context(
         return Ok(region);
     }
     let decisions = GeometryDecisions::new(context);
-    let _policy = decisions.curve_policy();
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
@@ -2277,7 +2276,6 @@ pub fn slice_z_with_context(
         chains.push(chain);
     }
 
-    let _policy = decisions.curve_policy();
     let mut region = if coplanar_triangles.is_empty() {
         CurveRegion2::empty()
     } else {

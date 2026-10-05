@@ -10,8 +10,9 @@ use crate::wasm::{
     real_from_js_named, real_to_js,
 };
 use crate::{GeometryCertainty, GeometryOutcome, TriangleMesh};
-use hypercurve::{Contour2, CurveCertainty, CurveOutcome, CurveRegion2};
+use hypercurve::{Contour2, CurveCertainty, CurveRegion2};
 use hyperlattice::Real;
+use hyperlimit::PredicatePolicy;
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
@@ -70,15 +71,6 @@ impl From<CurveRegion2> for CurveRegionJs {
     }
 }
 
-impl From<CurveOutcome<CurveRegion2>> for CurveBooleanResultJs {
-    fn from(outcome: CurveOutcome<CurveRegion2>) -> Self {
-        Self {
-            region: outcome.value,
-            certainty: outcome.certainty,
-        }
-    }
-}
-
 impl From<GeometryOutcome<CurveRegion2>> for CurveBooleanResultJs {
     fn from(outcome: GeometryOutcome<CurveRegion2>) -> Self {
         Self {
@@ -134,13 +126,14 @@ fn region_result(
     approximate_512: bool,
     operation: impl FnOnce() -> hypercurve::ExactCurveResult<CurveRegion2>,
 ) -> Result<CurveBooleanResultJs, JsValue> {
-    let (region, certainty) = if approximate_512 {
-        let provisional = hypercurve::provisional(operation);
-        let certainty = provisional.certainty();
-        (provisional.into_unverified(), certainty)
+    let policy = if approximate_512 {
+        PredicatePolicy::APPROXIMATE_512
     } else {
-        (operation(), CurveCertainty::Certified)
+        PredicatePolicy::STRICT
     };
+    let provisional = hypercurve::evaluate_under(policy, operation);
+    let certainty = provisional.certainty();
+    let region = provisional.into_unverified();
     region
         .map(|region| CurveBooleanResultJs { region, certainty })
         .map_err(js_error)

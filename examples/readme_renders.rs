@@ -1205,20 +1205,12 @@ mod tests {
             BulgeVertex2::new(left.clone(), Real::one()),
         ])
         .expect("two exact semicircles form a closed contour");
-        let region = CurveRegion2::try_from_native_material_contours(
-            vec![contour],
-            &CurveContext::STRICT,
-        )
-        .expect("promote exact circular contour")
-        .into_value();
+        let region = CurveRegion2::try_from_native_material_contours(vec![contour])
+            .expect("promote exact circular contour");
 
-        let projected_paths = expect_decided(
-            region
-                .project_to_finite_curve_paths(&CurveContext::STRICT)
-                .expect("project circular boundary")
-                .into_value(),
-            "circular boundary projection",
-        );
+        let projected_paths = region
+            .project_to_finite_curve_paths()
+            .expect("project circular boundary");
         let projected_vertices = projected_paths
             .iter()
             .map(|path| path.curves().len())
