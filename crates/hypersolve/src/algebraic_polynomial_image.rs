@@ -35,7 +35,8 @@ use crate::resultant::{
     quotient_ring_resultant_polynomial, resultant_exact_rational_polynomials_value,
 };
 use crate::root_isolation::{
-    IsolatedRootInterval, certify_algebraic_image_interval, square_free_part,
+    AlgebraicImageEnclosure, IsolatedRootInterval, certify_algebraic_image_interval,
+    square_free_part,
 };
 
 const MAX_SYLVESTER_DIMENSION: usize = 8;
@@ -239,7 +240,6 @@ pub fn transform_algebraic_root_polynomial_image(
         &root.interval,
         &image,
         &polynomial_coefficients,
-        policy,
     ) else {
         return polynomial_image_report(
             AlgebraicRootPolynomialImageStatus::ImageIsolationFailed,
@@ -400,22 +400,16 @@ fn primitive_integer_image_relation(image_polynomial: &[Real]) -> Option<(Vec<Re
 fn polynomial_image_interval(
     interval: &IsolatedRootInterval,
     image_polynomial: &[Real],
-) -> Option<IsolatedRootInterval> {
-    let first = evaluate_rational_polynomial(image_polynomial, &interval.lower)?;
-    let second = evaluate_rational_polynomial(image_polynomial, &interval.upper)?;
-    let mut endpoints = [first, second];
-    sort_exact_rational_reals(&mut endpoints)?;
-    let [lower, upper] = endpoints;
-    let exact_root = match &interval.exact_root {
-        Some(root) => Some(evaluate_rational_polynomial(image_polynomial, root)?),
-        None => None,
-    };
-    Some(IsolatedRootInterval {
-        lower,
-        upper,
-        exact_root,
-        distinct_root_count: interval.distinct_root_count,
-    })
+) -> Option<AlgebraicImageEnclosure> {
+    if let Some(root) = &interval.exact_root {
+        return Some(AlgebraicImageEnclosure::point(
+            evaluate_rational_polynomial(image_polynomial, root)?,
+        ));
+    }
+    AlgebraicImageEnclosure::monotone(
+        evaluate_rational_polynomial(image_polynomial, &interval.lower)?,
+        evaluate_rational_polynomial(image_polynomial, &interval.upper)?,
+    )
 }
 
 fn certified_polynomial_image_interval(
@@ -423,14 +417,12 @@ fn certified_polynomial_image_interval(
     source_interval: &IsolatedRootInterval,
     image_polynomial: &[Real],
     resultant_polynomial: &[Real],
-    policy: PredicatePolicy,
 ) -> Option<IsolatedRootInterval> {
     let derivative = derivative_coefficients(image_polynomial)?;
     certify_algebraic_image_interval(
         source_polynomial,
         source_interval,
         resultant_polynomial,
-        policy,
         |source_interval| {
             polynomial_image_enclosure(source_interval, image_polynomial, &derivative)
         },
@@ -441,7 +433,7 @@ fn polynomial_image_enclosure(
     interval: &IsolatedRootInterval,
     image_polynomial: &[Real],
     derivative: &[Real],
-) -> Option<IsolatedRootInterval> {
+) -> Option<AlgebraicImageEnclosure> {
     if interval.exact_root.is_some()
         || certify_polynomial_interval_sign(derivative, interval)
             .is_some_and(|sign| sign != Ordering::Equal)
@@ -455,11 +447,11 @@ fn polynomial_image_enclosure(
             upper: interval.upper.clone(),
         },
     )?;
-    Some(IsolatedRootInterval {
+    Some(AlgebraicImageEnclosure {
         lower: image.lower,
         upper: image.upper,
-        exact_root: None,
-        distinct_root_count: 1,
+        lower_included: true,
+        upper_included: true,
     })
 }
 
@@ -633,23 +625,6 @@ fn rational_sign(value: &Rational) -> Ordering {
     }
 }
 
-fn sort_exact_rational_reals(values: &mut [Real]) -> Option<()> {
-    for index in 1..values.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            let ordering = values[cursor]
-                .exact_rational_ref()?
-                .partial_cmp(values[cursor - 1].exact_rational_ref()?)?;
-            if ordering != Ordering::Less {
-                break;
-            }
-            values.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    Some(())
-}
-
 fn sort_rationals(values: &mut [Rational]) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
@@ -709,6 +684,61 @@ mod tests {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
             },
+        }
+    }
+
+    #[test]
+    fn polynomial_images_preserve_closed_and_reversed_endpoint_ownership() {
+        for (polynomial, lower, upper, image, expected) in [
+            // H=x^2-x^3, P=2*H*(H-1/2). The only source root in (1/2,1] is 1.
+            (
+                vec![
+                    real(0),
+                    real(0),
+                    real(-1),
+                    real(1),
+                    real(2),
+                    real(-4),
+                    real(2),
+                ],
+                fraction(1, 2),
+                real(1),
+                vec![real(0), real(0), real(1), real(-1)],
+                real(0),
+            ),
+            // Squaring maps the owned -1 to the closed lower bound and the
+            // excluded -2 to the open upper bound of [1,4).
+            (
+                vec![real(2), real(3), real(1)],
+                real(-2),
+                real(-1),
+                vec![real(0), real(0), real(1)],
+                real(1),
+            ),
+        ] {
+            let source = AlgebraicRootRepresentation {
+                polynomial_coefficients: polynomial,
+                interval: IsolatedRootInterval {
+                    lower,
+                    upper,
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                ..sqrt_two_positive()
+            };
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                let report = transform_algebraic_root_polynomial_image(&source, &image, policy);
+                assert_eq!(
+                    report.status,
+                    AlgebraicRootPolynomialImageStatus::Transformed
+                );
+                let result = report.representation.unwrap();
+                assert!(result.exact_point_witness() == Some(&expected));
+                assert_eq!(
+                    validate_algebraic_root_representation(&result, PredicatePolicy::STRICT).status,
+                    AlgebraicRootValidationStatus::Valid
+                );
+            }
         }
     }
 

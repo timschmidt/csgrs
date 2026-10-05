@@ -51,9 +51,9 @@ use crate::integer_interpolation::{
 use crate::interval::rational_interval_product;
 use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
 use crate::root_isolation::{
-    ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS, ALGEBRAIC_IMAGE_REFINEMENT_STEPS, IsolatedRootInterval,
-    IsolatedRootRefinementStatus, RootIsolationConfig, certify_algebraic_image_interval,
-    polynomial_div_rem, polynomial_vanishes_at_owned_root,
+    ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS, ALGEBRAIC_IMAGE_REFINEMENT_STEPS, AlgebraicImageEnclosure,
+    IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
+    certify_algebraic_image_interval, polynomial_div_rem, polynomial_vanishes_at_owned_root,
     refine_isolated_univariate_polynomial_interval, square_free_part,
 };
 
@@ -1057,7 +1057,6 @@ fn direct_rational_image_representation(
         &direct_map.denominator,
         derivative_numerator,
         &polynomial_coefficients,
-        policy,
     )?;
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
@@ -1323,27 +1322,15 @@ fn rational_image_interval(
     numerator: &[Real],
     denominator: &[Real],
     policy: PredicatePolicy,
-) -> Option<IsolatedRootInterval> {
+) -> Option<AlgebraicImageEnclosure> {
     if let Some(root) = interval.exact_root.as_ref() {
         let value = evaluate_rational_polynomial(numerator, denominator, root, policy)?;
-        return Some(IsolatedRootInterval {
-            lower: value.clone(),
-            upper: value.clone(),
-            exact_root: Some(value),
-            distinct_root_count: 1,
-        });
+        return Some(AlgebraicImageEnclosure::point(value));
     }
-    let first = evaluate_rational_polynomial(numerator, denominator, &interval.lower, policy)?;
-    let second = evaluate_rational_polynomial(numerator, denominator, &interval.upper, policy)?;
-    let mut endpoints = [first, second];
-    sort_reals_exact(&mut endpoints, policy)?;
-    let [lower, upper] = endpoints;
-    Some(IsolatedRootInterval {
-        lower,
-        upper,
-        exact_root: None,
-        distinct_root_count: interval.distinct_root_count,
-    })
+    AlgebraicImageEnclosure::monotone(
+        evaluate_rational_polynomial(numerator, denominator, &interval.lower, policy)?,
+        evaluate_rational_polynomial(numerator, denominator, &interval.upper, policy)?,
+    )
 }
 
 fn certified_rational_image_interval(
@@ -1352,20 +1339,18 @@ fn certified_rational_image_interval(
     denominator: &[Real],
     derivative_numerator: &[Real],
     image_polynomial: &[Real],
-    policy: PredicatePolicy,
 ) -> Option<IsolatedRootInterval> {
     certify_algebraic_image_interval(
         &root.polynomial_coefficients,
         &root.interval,
         image_polynomial,
-        policy,
         |source_interval| {
             rational_image_enclosure(
                 source_interval,
                 numerator,
                 denominator,
                 derivative_numerator,
-                policy,
+                PredicatePolicy::STRICT,
             )
         },
     )
@@ -1377,7 +1362,7 @@ fn rational_image_enclosure(
     denominator: &[Real],
     derivative_numerator: &[Real],
     policy: PredicatePolicy,
-) -> Option<IsolatedRootInterval> {
+) -> Option<AlgebraicImageEnclosure> {
     if interval.exact_root.is_some() {
         return rational_image_interval(interval, numerator, denominator, policy);
     }
@@ -1407,11 +1392,11 @@ fn rational_image_enclosure(
         },
         policy,
     )?;
-    Some(IsolatedRootInterval {
+    Some(AlgebraicImageEnclosure {
         lower: quotient.lower,
         upper: quotient.upper,
-        exact_root: None,
-        distinct_root_count: 1,
+        lower_included: true,
+        upper_included: true,
     })
 }
 
@@ -1870,6 +1855,45 @@ mod tests {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
             },
+        }
+    }
+
+    #[test]
+    fn rational_image_preserves_a_closed_lower_image_root() {
+        // N=x^2-x^3, D=1+x; P=N*(4*N-D). The selected source root is 1,
+        // whose image is zero, rather than the foreign eliminant root 1/4.
+        let source = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![
+                real(0),
+                real(0),
+                real(-1),
+                real(0),
+                real(5),
+                real(-8),
+                real(4),
+            ],
+            interval: IsolatedRootInterval {
+                lower: fraction(1, 2),
+                upper: real(1),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_two_positive()
+        };
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = transform_algebraic_root_rational_image(
+                &source,
+                &[real(0), real(0), real(1), real(-1)],
+                &[real(1), real(1)],
+                policy,
+            );
+            assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
+            let result = report.representation.unwrap();
+            assert!(result.exact_point_witness() == Some(&real(0)));
+            assert_eq!(
+                validate_algebraic_root_representation(&result, PredicatePolicy::STRICT).status,
+                AlgebraicRootValidationStatus::Valid
+            );
         }
     }
 

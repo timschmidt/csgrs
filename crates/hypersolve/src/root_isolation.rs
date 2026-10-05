@@ -2216,12 +2216,13 @@ pub(crate) fn polynomial_vanishes_at_owned_root(
     if gcd.len() <= 1 {
         return Some(false);
     }
-    polynomial_has_one_distinct_root_with_upper_ownership(
+    polynomial_has_one_distinct_root_with_ownership(
         &gcd,
         &interval.lower,
         &interval.upper,
         policy,
-        UpperEndpointOwnership::Included,
+        false,
+        true,
     )
 }
 
@@ -2239,29 +2240,16 @@ pub fn polynomial_has_one_distinct_root_in_open_interval(
     upper: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    polynomial_has_one_distinct_root_with_upper_ownership(
-        polynomial,
-        lower,
-        upper,
-        policy,
-        UpperEndpointOwnership::Excluded,
-    )
+    polynomial_has_one_distinct_root_with_ownership(polynomial, lower, upper, policy, false, false)
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-enum UpperEndpointOwnership {
-    /// Count roots in `(lower, upper)`.
-    Excluded,
-    /// Count roots in `(lower, upper]`.
-    Included,
-}
-
-fn polynomial_has_one_distinct_root_with_upper_ownership(
+fn polynomial_has_one_distinct_root_with_ownership(
     polynomial: &[Real],
     lower: &Real,
     upper: &Real,
     policy: PredicatePolicy,
-    upper_ownership: UpperEndpointOwnership,
+    lower_included: bool,
+    upper_included: bool,
 ) -> Option<bool> {
     if compare_reals(lower, upper, policy).value()? != Ordering::Less {
         return Some(false);
@@ -2272,6 +2260,8 @@ fn polynomial_has_one_distinct_root_with_upper_ownership(
     let upper_sign = compare_reals(&upper_value, &Real::zero(), policy).value()?;
     let root_at_lower = lower_sign == Ordering::Equal;
     let root_at_upper = upper_sign == Ordering::Equal;
+    let endpoint_roots =
+        usize::from(lower_included && root_at_lower) + usize::from(upper_included && root_at_upper);
     if !root_at_lower && !root_at_upper && polynomial.len() <= 3 && lower_sign != upper_sign {
         return Some(true);
     }
@@ -2288,9 +2278,7 @@ fn polynomial_has_one_distinct_root_with_upper_ownership(
     {
         let open_root_count =
             usize::from(!root_at_lower && !root_at_upper && lower_sign != upper_sign);
-        let root_count = open_root_count.checked_add(usize::from(
-            upper_ownership == UpperEndpointOwnership::Included && root_at_upper,
-        ))?;
+        let root_count = open_root_count.checked_add(endpoint_roots)?;
         return Some(root_count == 1);
     }
     let variations = polynomial_interval_bernstein_variations(
@@ -2303,9 +2291,7 @@ fn polynomial_has_one_distinct_root_with_upper_ownership(
         policy,
     )?;
     if variations <= 1 {
-        let root_count = variations.checked_add(usize::from(
-            upper_ownership == UpperEndpointOwnership::Included && root_at_upper,
-        ))?;
+        let root_count = variations.checked_add(endpoint_roots)?;
         return Some(root_count == 1);
     }
     if let [constant, linear, quadratic] = polynomial
@@ -2339,18 +2325,14 @@ fn polynomial_has_one_distinct_root_with_upper_ownership(
         )?
     };
     if variations <= 1 {
-        let root_count = variations.checked_add(usize::from(
-            upper_ownership == UpperEndpointOwnership::Included && root_at_upper,
-        ))?;
+        let root_count = variations.checked_add(endpoint_roots)?;
         return Some(root_count == 1);
     }
     let sturm = UnivariateSturmSequence::new(&square_free, policy)?;
     let half_open_root_count = sturm_count(&sturm, lower, upper, policy)?;
-    let root_count = if upper_ownership == UpperEndpointOwnership::Included {
-        half_open_root_count
-    } else {
-        half_open_root_count.checked_sub(usize::from(root_at_upper))?
-    };
+    let root_count = half_open_root_count
+        .checked_sub(usize::from(!upper_included && root_at_upper))?
+        .checked_add(usize::from(lower_included && root_at_lower))?;
     Some(root_count == 1)
 }
 
@@ -2535,25 +2517,65 @@ fn exact_rational_polynomial_derivative_interval_excludes_zero(
     Some(range_lower.is_positive() || range_upper.is_negative())
 }
 
+/// A finite image enclosure, before any root count has been certified.
+/// Unlike a selected-root isolator, it may own either, both, or neither endpoint.
+#[derive(Clone)]
+pub(crate) struct AlgebraicImageEnclosure {
+    pub lower: Real,
+    pub upper: Real,
+    pub lower_included: bool,
+    pub upper_included: bool,
+}
+
+impl AlgebraicImageEnclosure {
+    pub(crate) fn point(value: Real) -> Self {
+        Self {
+            lower: value.clone(),
+            upper: value,
+            lower_included: true,
+            upper_included: true,
+        }
+    }
+
+    /// Map the endpoints of `(lower, upper]` under a certified monotone map.
+    pub(crate) fn monotone(first: Real, second: Real) -> Option<Self> {
+        Some(
+            match compare_reals(&first, &second, PredicatePolicy::STRICT).value()? {
+                Ordering::Less => Self {
+                    lower: first,
+                    upper: second,
+                    lower_included: false,
+                    upper_included: true,
+                },
+                Ordering::Greater => Self {
+                    lower: second,
+                    upper: first,
+                    lower_included: true,
+                    upper_included: false,
+                },
+                Ordering::Equal => Self::point(first),
+            },
+        )
+    }
+}
+
 /// Refines one represented source root until its conservative image enclosure
 /// contains one distinct root of the exact image polynomial.
 ///
-/// Positive-width image intervals use the isolator's `(lower, upper]`
-/// ownership convention. Exact image witnesses instead own their point: they
-/// must lie within the supplied closed bounds and exactly annihilate the
-/// nonconstant, policy-trimmed image polynomial, after which the result is
-/// canonicalized to a point interval. Failed ordinary enclosures trigger at
-/// most eight bounded source refinements; invalid exact evidence fails closed.
+/// Construction is strict. Endpoint ownership belongs to the enclosure and
+/// is checked before producing a selected-root `(lower, upper]` isolator.
+/// An owned endpoint root becomes an exact point. An excluded upper root is
+/// refined away before that endpoint can become included in the output.
 pub(crate) fn certify_algebraic_image_interval<F>(
     source_polynomial: &[Real],
     source_interval: &IsolatedRootInterval,
     image_polynomial: &[Real],
-    policy: PredicatePolicy,
     mut enclosure: F,
 ) -> Option<IsolatedRootInterval>
 where
-    F: FnMut(&IsolatedRootInterval) -> Option<IsolatedRootInterval>,
+    F: FnMut(&IsolatedRootInterval) -> Option<AlgebraicImageEnclosure>,
 {
+    let policy = PredicatePolicy::STRICT;
     let image_polynomial = trim_polynomial_slice(image_polynomial, policy)?;
     if image_polynomial.len() <= 1 {
         return None;
@@ -2561,32 +2583,60 @@ where
     let mut refined_source_interval = None;
     for round in 0..=ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
         let current_source_interval = refined_source_interval.as_ref().unwrap_or(source_interval);
-        if let Some(mut image_interval) = enclosure(current_source_interval) {
-            if let Some(root) = image_interval.exact_root.take() {
-                let lower_ordering = compare_reals(&root, &image_interval.lower, policy).value()?;
-                let upper_ordering = compare_reals(&root, &image_interval.upper, policy).value()?;
-                if lower_ordering == Ordering::Less
-                    || upper_ordering == Ordering::Greater
-                    || sign_at(image_polynomial, &root, policy)? != Ordering::Equal
-                {
-                    return None;
+        if let Some(image) = enclosure(current_source_interval) {
+            let point = match compare_reals(&image.lower, &image.upper, policy).value()? {
+                Ordering::Greater => return None,
+                Ordering::Equal => {
+                    if !image.lower_included
+                        || !image.upper_included
+                        || sign_at(image_polynomial, &image.lower, policy)? != Ordering::Equal
+                    {
+                        return None;
+                    }
+                    true
                 }
-                image_interval.lower = root.clone();
-                image_interval.upper = root.clone();
-                image_interval.exact_root = Some(root);
-                image_interval.distinct_root_count = 1;
-                return Some(image_interval);
-            }
-            if polynomial_has_one_distinct_root_with_upper_ownership(
-                image_polynomial,
-                &image_interval.lower,
-                &image_interval.upper,
-                policy,
-                UpperEndpointOwnership::Included,
-            ) == Some(true)
+                Ordering::Less => false,
+            };
+            if point
+                || polynomial_has_one_distinct_root_with_ownership(
+                    image_polynomial,
+                    &image.lower,
+                    &image.upper,
+                    policy,
+                    image.lower_included,
+                    image.upper_included,
+                ) == Some(true)
             {
-                image_interval.distinct_root_count = 1;
-                return Some(image_interval);
+                let exact_root = if point
+                    || (image.lower_included
+                        && sign_at(image_polynomial, &image.lower, policy)? == Ordering::Equal)
+                {
+                    Some(image.lower.clone())
+                } else if image.upper_included
+                    && sign_at(image_polynomial, &image.upper, policy)? == Ordering::Equal
+                {
+                    Some(image.upper.clone())
+                } else {
+                    None
+                };
+                if let Some(root) = exact_root {
+                    return Some(IsolatedRootInterval {
+                        lower: root.clone(),
+                        upper: root.clone(),
+                        exact_root: Some(root),
+                        distinct_root_count: 1,
+                    });
+                }
+                if image.upper_included
+                    || sign_at(image_polynomial, &image.upper, policy)? != Ordering::Equal
+                {
+                    return Some(IsolatedRootInterval {
+                        lower: image.lower,
+                        upper: image.upper,
+                        exact_root: None,
+                        distinct_root_count: 1,
+                    });
+                }
             }
         }
         if round == ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
@@ -3841,7 +3891,7 @@ mod tests {
     }
 
     #[test]
-    fn algebraic_image_admission_uses_half_open_ownership_and_replays_exact_witnesses() {
+    fn algebraic_image_admission_preserves_enclosure_endpoints_and_exact_points() {
         let source_polynomial = [real(-1), Real::one()];
         let source_interval = IsolatedRootInterval {
             lower: Real::zero(),
@@ -3849,23 +3899,51 @@ mod tests {
             exact_root: None,
             distinct_root_count: 1,
         };
-        let candidate = IsolatedRootInterval {
+        let candidate = AlgebraicImageEnclosure {
             lower: Real::zero(),
             upper: Real::one(),
-            exact_root: None,
-            distinct_root_count: 0,
+            lower_included: false,
+            upper_included: true,
         };
-
         let lower_endpoint_and_interior = [Real::zero(), real(-1), real(2)];
         let accepted = certify_algebraic_image_interval(
             &source_polynomial,
             &source_interval,
             &lower_endpoint_and_interior,
-            PredicatePolicy::STRICT,
             |_| Some(candidate.clone()),
         )
-        .expect("the excluded lower endpoint does not add an owned root");
+        .expect("the excluded lower root does not add an owned root");
         assert_eq!(accepted.distinct_root_count, 1);
+        let closed = AlgebraicImageEnclosure {
+            lower_included: true,
+            ..candidate.clone()
+        };
+        assert!(
+            certify_algebraic_image_interval(
+                &source_polynomial,
+                &source_interval,
+                &lower_endpoint_and_interior,
+                |_| Some(closed.clone()),
+            )
+            .is_none(),
+            "a closed enclosure must count the lower root too"
+        );
+        let half = Real::average_pair(&Real::zero(), &Real::one());
+        let reversed = AlgebraicImageEnclosure {
+            lower: Real::zero(),
+            upper: half.clone(),
+            lower_included: true,
+            upper_included: false,
+        };
+        let exact = certify_algebraic_image_interval(
+            &source_polynomial,
+            &source_interval,
+            &lower_endpoint_and_interior,
+            |_| Some(reversed.clone()),
+        )
+        .unwrap();
+        assert_eq!(exact.exact_root, Some(Real::zero()));
+        assert_eq!(exact.lower, exact.upper);
 
         let upper_endpoint_and_interior = [Real::one(), real(-3), real(2)];
         assert!(
@@ -3873,57 +3951,102 @@ mod tests {
                 &source_polynomial,
                 &source_interval,
                 &upper_endpoint_and_interior,
-                PredicatePolicy::STRICT,
                 |_| Some(candidate.clone()),
             )
             .is_none(),
-            "the included upper endpoint makes the owned interval nonunit"
+            "the included upper endpoint makes the enclosure nonunit"
         );
-
-        let half = Real::average_pair(&Real::zero(), &Real::one());
-        let valid_witness = IsolatedRootInterval {
-            exact_root: Some(half.clone()),
-            ..candidate.clone()
-        };
         let exact = certify_algebraic_image_interval(
             &source_polynomial,
             &source_interval,
-            &[real(-1), real(2)],
-            PredicatePolicy::STRICT,
-            |_| Some(valid_witness.clone()),
+            &upper_endpoint_and_interior,
+            |source| {
+                Some(if source.exact_root.is_some() {
+                    AlgebraicImageEnclosure::point(half.clone())
+                } else {
+                    AlgebraicImageEnclosure {
+                        upper_included: false,
+                        ..candidate.clone()
+                    }
+                })
+            },
         )
-        .expect("a valid exact image witness should be accepted");
-        assert_eq!(exact.lower, half);
-        assert_eq!(exact.lower, exact.upper);
-        assert_eq!(exact.exact_root, Some(exact.lower.clone()));
-        assert!(
-            certify_algebraic_image_interval(
-                &source_polynomial,
-                &source_interval,
-                &[Real::zero()],
-                PredicatePolicy::STRICT,
-                |_| Some(valid_witness.clone()),
-            )
-            .is_none(),
-            "an exact witness cannot turn the zero polynomial into an isolated root"
+        .unwrap();
+        assert_eq!(
+            exact.exact_root,
+            Some(half.clone()),
+            "an excluded upper root must not become included in the stored isolator"
         );
-
-        for stale_root in [real(2), Real::average_pair(&Real::zero(), &half)] {
-            let stale = IsolatedRootInterval {
-                exact_root: Some(stale_root),
-                ..candidate.clone()
-            };
+        for value in [real(2), Real::average_pair(&Real::zero(), &half)] {
             assert!(
                 certify_algebraic_image_interval(
                     &source_polynomial,
                     &source_interval,
                     &[real(-1), real(2)],
-                    PredicatePolicy::STRICT,
-                    |_| Some(stale.clone()),
+                    |_| Some(AlgebraicImageEnclosure::point(value.clone())),
                 )
                 .is_none(),
-                "outside and nonvanishing exact witnesses must fail closed"
+                "an exact point must annihilate the image polynomial"
             );
+        }
+        assert!(
+            certify_algebraic_image_interval(
+                &source_polynomial,
+                &source_interval,
+                &[Real::zero()],
+                |_| Some(AlgebraicImageEnclosure::point(half.clone())),
+            )
+            .is_none(),
+            "a point cannot turn the zero polynomial into an isolated root"
+        );
+        assert!(
+            certify_algebraic_image_interval(
+                &source_polynomial,
+                &source_interval,
+                &[real(-1), real(2)],
+                |_| Some(AlgebraicImageEnclosure {
+                    lower_included: false,
+                    ..AlgebraicImageEnclosure::point(half.clone())
+                }),
+            )
+            .is_none(),
+            "a singleton missing either endpoint is empty"
+        );
+    }
+
+    #[test]
+    fn distinct_root_counts_include_each_owned_endpoint_once() {
+        for (coefficients, lower_root, upper_root, interior) in [
+            (vec![real(0), real(1)], true, false, 0),
+            (vec![real(-1), real(1)], false, true, 0),
+            (vec![real(0), real(-1), real(1)], true, true, 0),
+            (vec![real(0), real(1), real(-3), real(2)], true, true, 1),
+            (
+                vec![real(0), real(0), real(1), real(-2), real(1)],
+                true,
+                true,
+                0,
+            ),
+            (vec![real(1), real(-4), real(4)], false, false, 1),
+        ] {
+            for lower_included in [false, true] {
+                for upper_included in [false, true] {
+                    let count = interior
+                        + usize::from(lower_included && lower_root)
+                        + usize::from(upper_included && upper_root);
+                    assert_eq!(
+                        polynomial_has_one_distinct_root_with_ownership(
+                            &coefficients,
+                            &Real::zero(),
+                            &Real::one(),
+                            PredicatePolicy::STRICT,
+                            lower_included,
+                            upper_included,
+                        ),
+                        Some(count == 1)
+                    );
+                }
+            }
         }
     }
 
@@ -4046,12 +4169,12 @@ mod tests {
                 Some(expected_open)
             );
             prop_assert_eq!(
-                polynomial_has_one_distinct_root_with_upper_ownership(
+                polynomial_has_one_distinct_root_with_ownership(
                     &polynomial,
                     &lower,
                     &upper,
                     PredicatePolicy::STRICT,
-                    UpperEndpointOwnership::Included,
+                    false, true,
                 ),
                 Some(expected_half_open)
             );
