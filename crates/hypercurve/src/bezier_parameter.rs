@@ -3199,9 +3199,55 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
         unreachable!("an exact parameter always has a scalar view");
     };
     let interval = parameter.interval();
+    if let Some(sign) =
+        rational_horner_interval_strict_sign(coefficients, interval.start(), interval.end())
+    {
+        return Ok(Some(sign));
+    }
     let restricted =
         polynomial_restrict_to_interval(coefficients, interval.start(), interval.end());
     univariate_unit_interval_strict_bernstein_sign(&restricted, policy)
+}
+
+/// A strict sign of a rational polynomial over a rational interval from an
+/// exact interval Horner enclosure. It is looser than the Bernstein hull but
+/// needs no basis change, so it settles comfortably separated values without
+/// restricting wide coefficients to the interval. `None` when the enclosure
+/// meets zero or an input is not an exact rational.
+fn rational_horner_interval_strict_sign(
+    coefficients: &[Real],
+    lower: &Real,
+    upper: &Real,
+) -> Option<RealSign> {
+    let lower = lower.exact_rational_ref()?;
+    let upper = upper.exact_rational_ref()?;
+    let (leading, rest) = coefficients.split_last()?;
+    let leading = leading.exact_rational_ref()?;
+    let (mut low, mut high) = (leading.clone(), leading.clone());
+    for coefficient in rest.iter().rev() {
+        let coefficient = coefficient.exact_rational_ref()?;
+        let products = [&low * lower, &low * upper, &high * lower, &high * upper];
+        let mut minimum = products[0].clone();
+        let mut maximum = products[0].clone();
+        for product in &products[1..] {
+            if *product < minimum {
+                minimum = product.clone();
+            }
+            if *product > maximum {
+                maximum = product.clone();
+            }
+        }
+        low = minimum + coefficient;
+        high = maximum + coefficient;
+    }
+    let zero = HyperRational::zero();
+    if low > zero {
+        Some(RealSign::Positive)
+    } else if high < zero {
+        Some(RealSign::Negative)
+    } else {
+        None
+    }
 }
 
 /// Encloses a polynomial value over one retained parameter interval with
