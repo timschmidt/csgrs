@@ -1557,11 +1557,6 @@ pub(crate) fn dense_sign_at_two_selected_roots(
 /// own roots before the Sturm-Tarski chain of its defining polynomial.
 const TWO_ROOT_ISOLATION_BISECTIONS: usize = 64;
 
-/// Bisection at which an unseparated predicate is tested for an exact zero
-/// at the selected root. The rational norm test is cheap next to Bernstein
-/// subdivision over the wide coefficients of a narrow bracket.
-const TWO_ROOT_ZERO_TEST_BISECTION: usize = 0;
-
 /// Whether a rational polynomial is square-free with exactly one real root.
 /// `None` means a coefficient or count was not exactly decided.
 fn modulus_has_single_real_root(modulus: &[Real]) -> Option<bool> {
@@ -1763,30 +1758,23 @@ fn predicate_sign_by_isolation(
     if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal || lower_sign == upper_sign {
         return None;
     }
+    // These predicates often vanish at the root, where no bracket can
+    // separate them. The selected root is the defining polynomial's only
+    // root in this bracket, so a common divisor with a root here proves that
+    // zero; one without proves a nonzero value that halving must separate.
+    // The test is cheap next to a Bernstein basis change over wide
+    // coefficients on a narrow bracket, so it runs first.
+    match predicate_vanishes_at_isolated_root(predicate, variable, &lower, &upper, field) {
+        Some(true) => return Some(Ordering::Equal),
+        Some(false) => {}
+        None => return None,
+    }
     let mut context = LocalFieldContext { field };
     let mut controls =
         power_to_bernstein_on_interval(predicate, &lower, &upper, &mut context).ok()??;
-    for bisection in 0..TWO_ROOT_ISOLATION_BISECTIONS {
+    for _ in 0..TWO_ROOT_ISOLATION_BISECTIONS {
         if let Some(sign) = bernstein_common_strict_sign(&controls, &mut context).ok()? {
             return Some(sign);
-        }
-        if bisection == TWO_ROOT_ZERO_TEST_BISECTION {
-            // Controls that do not separate often mean the predicate
-            // vanishes at the root. The selected root is
-            // the defining polynomial's only root in this bracket, so a
-            // common divisor with a root here proves that zero; one without
-            // proves a nonzero value that further halving must separate.
-            match predicate_vanishes_at_isolated_root(
-                predicate,
-                variable,
-                &lower,
-                &upper,
-                context.field,
-            ) {
-                Some(true) => return Some(Ordering::Equal),
-                Some(false) => {}
-                None => return None,
-            }
         }
         let midpoint = Real::average_pair(&lower, &upper);
         let midpoint_sign = defining_sign(&midpoint)?;
