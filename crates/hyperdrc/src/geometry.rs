@@ -1,0 +1,879 @@
+//! Geometry constructors used by parsers and checks.
+//!
+//! The module exposes exact Hypercurve-backed regions plus explicit finite
+//! report projections. Primitive construction and report conversion stay
+//! separate from topology decisions.
+
+mod primitives;
+mod region;
+mod source_units;
+mod types;
+mod violations;
+
+pub use primitives::{
+    arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
+    polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
+};
+pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
+pub use source_units::{
+    ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,
+};
+pub use types::{Coord, LineString, MultiPolygon, Polygon, Rect};
+#[cfg(test)]
+pub use violations::multipolygon_to_shapes;
+pub use violations::multipolygon_to_shapes_scalar;
+pub(crate) use violations::{
+    balanced_scalar_sum, multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar,
+};
+
+pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
+    hyperreal::Real::try_from(value)
+        .expect("DRC geometry distances must be finite before exact lifting")
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+
+    use super::{
+        Coord, LineString, MultiPolygon, Polygon, arc_line_polygons, bezier_line_polygons,
+        chamfered_rect_polygon, circle_polygon, empty_profile, line_polygon,
+        multipolygon_to_shapes, polygon_from_points, polygon_to_profile, polygons_to_profile,
+        rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
+    };
+    use crate::{LayerMetadata, PcbRegionExt};
+
+    const EPS: f64 = 1.0e-9;
+
+    fn assert_close(left: f64, right: f64) {
+        let tolerance = (left.abs().max(right.abs()).max(1.0)) * EPS;
+        assert!(
+            (left - right).abs() <= tolerance,
+            "{left} was not within {tolerance} of {right}"
+        );
+    }
+
+    fn assert_point_close(left: Coord<f64>, right: [f64; 2]) {
+        assert_close(left.x, right[0]);
+        assert_close(left.y, right[1]);
+    }
+
+    fn assert_ring_closed(polygon: &Polygon<f64>) {
+        assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+        for hole in polygon.interiors() {
+            assert_eq!(hole.0.first(), hole.0.last());
+        }
+    }
+
+    fn distance(left: Coord<f64>, right: Coord<f64>) -> f64 {
+        let dx = right.x - left.x;
+        let dy = right.y - left.y;
+        (dx * dx + dy * dy).sqrt()
+    }
+
+    fn segment_length_sum(polygons: &[Polygon<f64>]) -> f64 {
+        polygons
+            .iter()
+            .map(|polygon| distance(polygon.exterior().0[0], polygon.exterior().0[1]))
+            .sum()
+    }
+
+    fn signed_area(polygon: &Polygon<f64>) -> f64 {
+        polygon
+            .exterior()
+            .0
+            .windows(2)
+            .map(|window| window[0].x * window[1].y - window[1].x * window[0].y)
+            .sum::<f64>()
+            / 2.0
+    }
+
+    #[test]
+    fn profile_constructors_preserve_metadata_and_geometry() {
+        let square = polygon_from_points(vec![[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0]]);
+        let triangle = polygon_from_points(vec![[10.0, 0.0], [11.0, 0.0], [10.0, 1.0]]);
+        let single = polygon_to_profile(
+            square.clone(),
+            Some(LayerMetadata {
+                name: "single".to_string(),
+            }),
+        );
+        let many = polygons_to_profile(
+            vec![square.clone(), triangle],
+            Some(LayerMetadata {
+                name: "many".to_string(),
+            }),
+        );
+        let empty = empty_profile(Some(LayerMetadata {
+            name: "empty".to_string(),
+        }));
+
+        assert_eq!(single.metadata().as_ref().unwrap().name, "single");
+        assert_eq!(many.metadata().as_ref().unwrap().name, "many");
+        assert_eq!(empty.metadata().as_ref().unwrap().name, "empty");
+        assert_eq!(single.to_multipolygon().0.len(), 1);
+        assert_eq!(many.to_multipolygon().0.len(), 2);
+        assert!(empty.to_multipolygon().0.is_empty());
+        assert_close(
+            single.to_multipolygon().unsigned_area(),
+            square.unsigned_area(),
+        );
+    }
+
+    #[test]
+    fn profile_constructors_promote_input_bounds_once_for_exact_broad_phases() {
+        let region = polygons_to_profile(vec![rect_polygon([3.0, -2.0], [4.0, 6.0], 0.0)], None);
+        let bounds = region
+            .exact_bounds()
+            .expect("finite input polygons should retain promoted exact bounds");
+
+        assert_eq!(bounds[0], crate::scalar::scalar("1"));
+        assert_eq!(bounds[1], crate::scalar::scalar("-5"));
+        assert_eq!(bounds[2], crate::scalar::scalar("5"));
+        assert_eq!(bounds[3], crate::scalar::scalar("1"));
+    }
+
+    #[test]
+    fn profile_constructors_accept_empty_polygon_lists_without_losing_metadata() {
+        let region = polygons_to_profile(
+            Vec::new(),
+            Some(LayerMetadata {
+                name: "empty multi".to_string(),
+            }),
+        );
+
+        assert_eq!(region.metadata().as_ref().unwrap().name, "empty multi");
+        assert!(region.to_multipolygon().0.is_empty());
+    }
+
+    #[test]
+    fn line_polygon_rejects_degenerate_inputs() {
+        assert!(line_polygon([0.0, 0.0], [0.0, 0.0], 1.0).is_none());
+        assert!(line_polygon([0.0, 0.0], [1.0, 0.0], 0.0).is_none());
+        assert!(line_polygon([0.0, 0.0], [1.0, 0.0], -1.0).is_none());
+    }
+
+    #[test]
+    fn line_polygon_rejects_non_finite_coordinates() {
+        assert!(line_polygon([f64::NAN, 0.0], [1.0, 0.0], 0.1).is_none());
+        assert!(line_polygon([0.0, f64::INFINITY], [1.0, 0.0], 0.1).is_none());
+        assert!(line_polygon([0.0, 0.0], [f64::NEG_INFINITY, 0.0], 0.1).is_none());
+        assert!(line_polygon([0.0, 0.0], [1.0, 0.0], f64::NAN).is_none());
+    }
+
+    #[test]
+    fn line_polygon_builds_expected_horizontal_rectangle() {
+        let polygon = line_polygon([0.0, 0.0], [2.0, 0.0], 0.5).unwrap();
+
+        assert_ring_closed(&polygon);
+        assert_close(polygon.unsigned_area(), 1.0);
+        assert_point_close(polygon.exterior().0[0], [0.0, 0.25]);
+        assert_point_close(polygon.exterior().0[1], [2.0, 0.25]);
+        assert_point_close(polygon.exterior().0[2], [2.0, -0.25]);
+        assert_point_close(polygon.exterior().0[3], [0.0, -0.25]);
+    }
+
+    #[test]
+    fn line_polygon_builds_expected_vertical_rectangle() {
+        let polygon = line_polygon([1.0, 1.0], [1.0, 3.0], 0.4).unwrap();
+
+        assert_ring_closed(&polygon);
+        assert_close(polygon.unsigned_area(), 0.8);
+        assert_point_close(polygon.exterior().0[0], [0.8, 1.0]);
+        assert_point_close(polygon.exterior().0[1], [0.8, 3.0]);
+        assert_point_close(polygon.exterior().0[2], [1.2, 3.0]);
+        assert_point_close(polygon.exterior().0[3], [1.2, 1.0]);
+    }
+
+    #[test]
+    fn line_polygon_area_is_length_times_width_for_diagonal_trace() {
+        let polygon = line_polygon([-1.0, -1.0], [2.0, 3.0], 0.25).unwrap();
+
+        assert_close(polygon.unsigned_area(), 5.0 * 0.25);
+    }
+
+    #[test]
+    fn line_polygon_survives_tiny_nonzero_segments() {
+        let polygon = line_polygon([1.0, -1.0], [1.0 + 1.0e-12, -1.0], 0.25).unwrap();
+
+        assert_ring_closed(&polygon);
+        assert!(polygon.unsigned_area().is_finite());
+        assert!(
+            polygon
+                .exterior()
+                .0
+                .iter()
+                .all(|coord| coord.x.is_finite() && coord.y.is_finite())
+        );
+    }
+
+    #[test]
+    fn reversed_line_polygon_covers_same_area() {
+        let forward = line_polygon([0.0, 0.0], [2.0, 3.0], 0.7).unwrap();
+        let reverse = line_polygon([2.0, 3.0], [0.0, 0.0], 0.7).unwrap();
+
+        assert_close(forward.unsigned_area(), reverse.unsigned_area());
+    }
+
+    #[test]
+    fn polygon_from_points_closes_open_ring() {
+        let polygon = polygon_from_points(vec![[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]);
+
+        assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+    }
+
+    #[test]
+    fn polygon_from_points_does_not_duplicate_closed_ring() {
+        let polygon = polygon_from_points(vec![[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 0.0]]);
+
+        assert_eq!(polygon.exterior().0.len(), 4);
+        assert_ring_closed(&polygon);
+    }
+
+    #[test]
+    fn polygon_from_points_accepts_empty_and_single_point_inputs() {
+        let empty = polygon_from_points(Vec::new());
+        let single = polygon_from_points(vec![[2.0, 3.0]]);
+
+        assert!(empty.exterior().0.is_empty());
+        assert_eq!(single.exterior().0.len(), 1);
+        assert_close(empty.unsigned_area(), 0.0);
+        assert_close(single.unsigned_area(), 0.0);
+    }
+
+    #[test]
+    fn polygon_from_points_rejects_non_finite_coordinates() {
+        let nan = polygon_from_points(vec![[0.0, 0.0], [f64::NAN, 1.0], [1.0, 1.0]]);
+        let inf = polygon_from_points(vec![[0.0, 0.0], [1.0, f64::INFINITY], [2.0, 2.0]]);
+
+        assert!(nan.exterior().0.is_empty());
+        assert_eq!(nan.unsigned_area(), 0.0);
+        assert!(inf.exterior().0.is_empty());
+        assert_eq!(inf.unsigned_area(), 0.0);
+    }
+
+    #[test]
+    fn trapezoid_polygon_applies_kicad_rect_delta_offsets() {
+        let polygon = trapezoid_polygon([0.0, 0.0], [2.0, 1.0], [0.2, 0.1], 0.0);
+
+        assert_ring_closed(&polygon);
+        assert_close(polygon.unsigned_area(), 2.0);
+        assert_point_close(polygon.exterior().0[0], [-1.1, 0.7]);
+        assert_point_close(polygon.exterior().0[1], [1.1, 0.3]);
+        assert_point_close(polygon.exterior().0[2], [0.9, -0.7]);
+        assert_point_close(polygon.exterior().0[3], [-0.9, -0.3]);
+    }
+
+    #[test]
+    fn trapezoid_polygon_rotates_and_rejects_invalid_inputs() {
+        let rotated = trapezoid_polygon([1.0, 2.0], [2.0, 1.0], [0.0, 0.0], 90.0);
+        let invalid = trapezoid_polygon([0.0, 0.0], [2.0, 1.0], [f64::NAN, 0.0], 0.0);
+
+        assert_ring_closed(&rotated);
+        assert_close(rotated.unsigned_area(), 2.0);
+        assert!(invalid.exterior().0.is_empty());
+    }
+
+    #[test]
+    fn circle_polygon_enforces_minimum_segment_count() {
+        let polygon = circle_polygon([2.0, -3.0], 4.0, 3);
+
+        assert_eq!(polygon.exterior().0.len(), 17);
+        assert_ring_closed(&polygon);
+        assert_point_close(polygon.exterior().0[0], [6.0, -3.0]);
+        assert!(polygon.unsigned_area() < std::f64::consts::PI * 16.0);
+    }
+
+    #[test]
+    fn circle_polygon_zero_radius_is_closed_zero_area_polygon() {
+        let polygon = circle_polygon([2.0, -3.0], 0.0, 16);
+
+        assert_ring_closed(&polygon);
+        assert_close(polygon.unsigned_area(), 0.0);
+        assert!(
+            polygon
+                .exterior()
+                .0
+                .iter()
+                .all(|coord| coord.x == 2.0 && coord.y == -3.0)
+        );
+    }
+
+    #[test]
+    fn circle_polygon_normalizes_invalid_segment_counts() {
+        let zero = circle_polygon([0.0, 0.0], 1.0, 0);
+        let huge = circle_polygon([1.0, 1.0], 1.0, 1_000_000);
+
+        assert_eq!(zero.exterior().0.len(), 17);
+        assert!(huge.exterior().0.len() > 1000);
+    }
+
+    #[test]
+    fn circle_polygon_negative_radius_flips_winding_but_not_area() {
+        let positive = circle_polygon([0.0, 0.0], 2.0, 32);
+        let negative = circle_polygon([0.0, 0.0], -2.0, 32);
+
+        assert_ring_closed(&negative);
+        assert_close(positive.unsigned_area(), negative.unsigned_area());
+        assert_close(signed_area(&positive), signed_area(&negative));
+        assert_point_close(negative.exterior().0[0], [-2.0, 0.0]);
+    }
+
+    #[test]
+    fn circle_polygon_rejects_non_finite_inputs() {
+        let non_finite_center = circle_polygon([f64::NAN, 0.0], 4.0, 16);
+        let non_finite_radius = circle_polygon([0.0, 0.0], f64::INFINITY, 16);
+
+        assert_eq!(non_finite_center.exterior().0.len(), 0);
+        assert_eq!(non_finite_radius.exterior().0.len(), 0);
+        assert_eq!(non_finite_center.unsigned_area(), 0.0);
+        assert_eq!(non_finite_radius.unsigned_area(), 0.0);
+    }
+
+    #[test]
+    fn rect_polygon_axis_aligned_corners_are_centered() {
+        let polygon = rect_polygon([10.0, -5.0], [4.0, 2.0], 0.0);
+
+        assert_ring_closed(&polygon);
+        assert_close(polygon.unsigned_area(), 8.0);
+        assert_point_close(polygon.exterior().0[0], [8.0, -6.0]);
+        assert_point_close(polygon.exterior().0[1], [12.0, -6.0]);
+        assert_point_close(polygon.exterior().0[2], [12.0, -4.0]);
+        assert_point_close(polygon.exterior().0[3], [8.0, -4.0]);
+    }
+
+    #[test]
+    fn rect_polygon_handles_right_angle_rotation() {
+        let polygon = rect_polygon([1.0, 2.0], [4.0, 2.0], 90.0);
+
+        assert_close(polygon.unsigned_area(), 8.0);
+        assert_point_close(polygon.exterior().0[0], [2.0, 0.0]);
+        assert_point_close(polygon.exterior().0[1], [2.0, 4.0]);
+        assert_point_close(polygon.exterior().0[2], [0.0, 4.0]);
+        assert_point_close(polygon.exterior().0[3], [0.0, 0.0]);
+    }
+
+    #[test]
+    fn rect_polygon_rejects_non_finite_inputs() {
+        let bad_center = rect_polygon([f64::NAN, 0.0], [2.0, 2.0], 0.0);
+        let bad_size = rect_polygon([0.0, 0.0], [f64::INFINITY, 2.0], 0.0);
+        let bad_angle = rect_polygon([0.0, 0.0], [2.0, 2.0], f64::NAN);
+
+        assert_eq!(bad_center.unsigned_area(), 0.0);
+        assert!(bad_center.exterior().0.is_empty());
+        assert_eq!(bad_size.unsigned_area(), 0.0);
+        assert!(bad_size.exterior().0.is_empty());
+        assert!(bad_angle.exterior().0.is_empty());
+        assert_eq!(bad_angle.unsigned_area(), 0.0);
+    }
+
+    #[test]
+    fn rect_polygon_uses_absolute_size_without_clipping_sign() {
+        let reversed = rect_polygon([1.0, 1.0], [-3.0, -5.0], 15.0);
+
+        assert_close(reversed.unsigned_area(), 15.0);
+    }
+
+    #[test]
+    fn rect_polygon_zero_or_signed_dimensions_have_predictable_area() {
+        let zero_width = rect_polygon([0.0, 0.0], [0.0, 2.0], 35.0);
+        let signed_width = rect_polygon([0.0, 0.0], [-4.0, 2.0], 0.0);
+        let signed_height = rect_polygon([0.0, 0.0], [4.0, -2.0], 0.0);
+
+        assert_ring_closed(&zero_width);
+        assert_close(zero_width.unsigned_area(), 0.0);
+        assert_close(signed_width.unsigned_area(), 8.0);
+        assert_close(signed_height.unsigned_area(), 8.0);
+        assert!(signed_area(&signed_width).is_sign_negative());
+        assert!(signed_area(&signed_height).is_sign_negative());
+    }
+
+    #[test]
+    fn rounded_rect_polygon_approximates_kicad_roundrect_area() {
+        let polygon = rounded_rect_polygon([0.0, 0.0], [2.0, 1.0], 0.25, 0.0, 8);
+        let ideal_area = 2.0 - (4.0 - std::f64::consts::PI) * 0.25 * 0.25;
+
+        assert_ring_closed(&polygon);
+        assert!(
+            polygon.exterior().0.len()
+                > rect_polygon([0.0, 0.0], [2.0, 1.0], 0.0).exterior().0.len()
+        );
+        assert!((polygon.unsigned_area() - ideal_area).abs() < 0.003);
+        assert!(
+            polygon
+                .exterior()
+                .0
+                .iter()
+                .all(|coord| coord.x.is_finite() && coord.y.is_finite())
+        );
+    }
+
+    #[test]
+    fn rounded_rect_polygon_clamps_radius_and_handles_rotation() {
+        let polygon = rounded_rect_polygon([1.0, -2.0], [1.0, 1.0], 10.0, 45.0, 12);
+
+        assert_ring_closed(&polygon);
+        assert!(polygon.unsigned_area() > 0.76);
+        assert!(polygon.unsigned_area() < 0.79);
+        assert!(
+            polygon
+                .exterior()
+                .0
+                .iter()
+                .all(|coord| coord.x.is_finite() && coord.y.is_finite())
+        );
+    }
+
+    #[test]
+    fn rounded_rect_polygon_zero_radius_degenerates_to_rectangle() {
+        let rounded = rounded_rect_polygon([3.0, 4.0], [2.0, 5.0], 0.0, 15.0, 8);
+        let rectangle = rect_polygon([3.0, 4.0], [2.0, 5.0], 15.0);
+
+        assert_eq!(rounded.exterior().0, rectangle.exterior().0);
+        assert_close(rounded.unsigned_area(), rectangle.unsigned_area());
+    }
+
+    #[test]
+    fn chamfered_rect_polygon_cuts_selected_corners() {
+        let polygon =
+            chamfered_rect_polygon([0.0, 0.0], [2.0, 1.0], 0.2, [true, false, true, false], 0.0);
+
+        assert_ring_closed(&polygon);
+        assert_close(polygon.unsigned_area(), 1.96);
+        assert_point_close(polygon.exterior().0[0], [-0.8, -0.5]);
+        assert_point_close(polygon.exterior().0[1], [1.0, -0.5]);
+        assert_point_close(polygon.exterior().0[2], [1.0, 0.3]);
+        assert_point_close(polygon.exterior().0[3], [0.8, 0.5]);
+        assert_point_close(polygon.exterior().0[5], [-1.0, -0.3]);
+    }
+
+    #[test]
+    fn chamfered_rect_polygon_falls_back_or_rejects_invalid_inputs() {
+        let rectangle = rect_polygon([0.0, 0.0], [2.0, 1.0], 30.0);
+        let unselected = chamfered_rect_polygon([0.0, 0.0], [2.0, 1.0], 0.2, [false; 4], 30.0);
+        let zero = chamfered_rect_polygon([0.0, 0.0], [2.0, 1.0], 0.0, [true; 4], 30.0);
+        let invalid = chamfered_rect_polygon([0.0, 0.0], [2.0, 1.0], f64::NAN, [true; 4], 0.0);
+
+        assert_eq!(unselected.exterior().0, rectangle.exterior().0);
+        assert_eq!(zero.exterior().0, rectangle.exterior().0);
+        assert!(invalid.exterior().0.is_empty());
+    }
+
+    #[test]
+    fn rounded_rect_polygon_rejects_non_finite_inputs() {
+        let bad_center = rounded_rect_polygon([f64::NAN, 0.0], [2.0, 1.0], 0.1, 0.0, 8);
+        let bad_size = rounded_rect_polygon([0.0, 0.0], [2.0, f64::INFINITY], 0.1, 0.0, 8);
+        let bad_radius = rounded_rect_polygon([0.0, 0.0], [2.0, 1.0], f64::NAN, 0.0, 8);
+        let bad_angle = rounded_rect_polygon([0.0, 0.0], [2.0, 1.0], 0.1, f64::NAN, 8);
+
+        assert!(bad_center.exterior().0.is_empty());
+        assert!(bad_size.exterior().0.is_empty());
+        assert!(bad_radius.exterior().0.is_empty());
+        assert!(bad_angle.exterior().0.is_empty());
+    }
+
+    #[test]
+    fn transform_polygon_moves_exterior_and_holes() {
+        let polygon = Polygon::new(
+            LineString(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 4.0, y: 0.0 },
+                Coord { x: 4.0, y: 4.0 },
+                Coord { x: 0.0, y: 4.0 },
+                Coord { x: 0.0, y: 0.0 },
+            ]),
+            vec![LineString(vec![
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 2.0 },
+                Coord { x: 1.0, y: 2.0 },
+                Coord { x: 1.0, y: 1.0 },
+            ])],
+        );
+
+        let transformed = transform_polygon(&polygon, [10.0, 20.0], 90.0);
+
+        assert_ring_closed(&transformed);
+        assert_close(polygon.unsigned_area(), transformed.unsigned_area());
+        assert_point_close(transformed.exterior().0[1], [10.0, 24.0]);
+        assert_eq!(transformed.interiors().len(), 1);
+        assert_point_close(transformed.interiors()[0].0[0], [9.0, 21.0]);
+    }
+
+    #[test]
+    fn transform_polygon_identity_keeps_coordinates() {
+        let polygon = rect_polygon([3.0, -4.0], [2.0, 6.0], 33.0);
+        let transformed = transform_polygon(&polygon, [0.0, 0.0], 0.0);
+
+        assert_eq!(polygon.exterior().0.len(), transformed.exterior().0.len());
+        for (left, right) in polygon.exterior().0.iter().zip(&transformed.exterior().0) {
+            assert_point_close(*right, [left.x, left.y]);
+        }
+    }
+
+    #[test]
+    fn transform_polygon_full_rotation_only_translates() {
+        let polygon = rect_polygon([0.0, 0.0], [2.0, 4.0], 0.0);
+        let transformed = transform_polygon(&polygon, [5.0, -7.0], 720.0);
+
+        assert_point_close(transformed.exterior().0[0], [4.0, -9.0]);
+        assert_point_close(transformed.exterior().0[1], [6.0, -9.0]);
+        assert_point_close(transformed.exterior().0[2], [6.0, -5.0]);
+        assert_point_close(transformed.exterior().0[3], [4.0, -5.0]);
+    }
+
+    #[test]
+    fn transform_polygon_is_noop_for_invalid_angle() {
+        let polygon = rect_polygon([0.0, 0.0], [2.0, 3.0], 0.0);
+        let transformed = transform_polygon(&polygon, [1.0, 2.0], f64::NAN);
+
+        assert_eq!(polygon.exterior().0, transformed.exterior().0);
+        assert!(
+            transformed
+                .exact_construction_error()
+                .is_some_and(|detail| detail.contains("non-finite"))
+        );
+    }
+
+    #[test]
+    fn transform_polygon_rejects_invalid_transform_inputs_without_panic() {
+        let polygon = rect_polygon([0.0, 0.0], [2.0, 2.0], 0.0);
+
+        for transformed in [
+            transform_polygon(&polygon, [f64::INFINITY, 0.0], 30.0),
+            transform_polygon(&polygon, [0.0, 0.0], f64::INFINITY),
+        ] {
+            assert_eq!(transformed, polygon);
+            assert!(
+                transformed
+                    .exact_construction_error()
+                    .is_some_and(|detail| detail.contains("non-finite"))
+            );
+        }
+    }
+
+    #[test]
+    fn arc_with_zero_angle_produces_no_valid_segments() {
+        let polygons = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 0.0, 0.1, 8);
+
+        assert!(polygons.is_empty());
+    }
+
+    #[test]
+    fn arc_line_polygons_enforces_minimum_segment_count() {
+        let polygons = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 90.0, 0.1, 1);
+
+        assert_eq!(polygons.len(), 4);
+        assert!(polygons.iter().all(|polygon| {
+            polygon.exterior().0.len() == 5
+                && polygon.exterior().0.first() == polygon.exterior().0.last()
+        }));
+    }
+
+    #[test]
+    fn arc_line_polygons_have_expected_chord_area_sum() {
+        let polygons = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 180.0, 0.25, 8);
+        let expected_area = segment_length_sum(&polygons) * 0.25;
+        let total_area = polygons.iter().map(Polygon::unsigned_area).sum::<f64>();
+
+        assert_eq!(polygons.len(), 8);
+        assert_close(total_area, expected_area);
+    }
+
+    #[test]
+    fn arc_line_polygons_support_clockwise_and_full_circle_arcs() {
+        let clockwise = arc_line_polygons([0.0, 0.0], [1.0, 0.0], -90.0, 0.1, 4);
+        let full_circle = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 360.0, 0.1, 16);
+
+        assert_eq!(clockwise.len(), 4);
+        assert_eq!(full_circle.len(), 16);
+        assert!(clockwise[0].exterior().0[0].x > 1.0);
+        assert!(clockwise[0].exterior().0[0].y < 0.0);
+        let final_radius = distance(full_circle[15].exterior().0[1], Coord { x: 0.0, y: 0.0 });
+        assert!(final_radius > 0.94 && final_radius < 1.06);
+        assert!(clockwise.iter().chain(&full_circle).all(|polygon| {
+            polygon.unsigned_area().is_finite()
+                && polygon.exterior().0.first() == polygon.exterior().0.last()
+        }));
+    }
+
+    #[test]
+    fn arc_line_polygons_reject_invalid_inputs_without_geometry() {
+        let bad_center = arc_line_polygons([f64::NAN, 0.0], [1.0, 0.0], 90.0, 0.1, 12);
+        let bad_width = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 90.0, f64::NAN, 12);
+        let bad_angle = arc_line_polygons([0.0, 0.0], [1.0, 0.0], f64::NAN, 0.1, 12);
+
+        assert!(bad_center.is_empty());
+        assert!(bad_width.is_empty());
+        assert!(bad_angle.is_empty());
+    }
+
+    #[test]
+    fn arc_line_polygons_reject_invalid_width_or_zero_radius() {
+        assert!(arc_line_polygons([0.0, 0.0], [1.0, 0.0], 90.0, 0.0, 8).is_empty());
+        assert!(arc_line_polygons([0.0, 0.0], [0.0, 0.0], 90.0, 0.1, 8).is_empty());
+    }
+
+    #[test]
+    fn arc_line_polygons_rejects_zero_radius_centered_start() {
+        let polygons = arc_line_polygons([5.0, 5.0], [5.0, 5.0], 90.0, 0.1, 16);
+
+        assert!(polygons.is_empty());
+    }
+
+    #[test]
+    fn bezier_line_polygons_samples_cubic_curve_as_strokes() {
+        let polygons =
+            bezier_line_polygons(&[[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]], 0.1, 8);
+        let total_area = polygons.iter().map(Polygon::unsigned_area).sum::<f64>();
+
+        assert_eq!(polygons.len(), 8);
+        assert!(total_area > 0.19);
+        assert!(total_area < 0.21);
+        assert!(
+            polygons
+                .iter()
+                .all(|polygon| polygon.exterior().0.first() == polygon.exterior().0.last())
+        );
+    }
+
+    #[test]
+    fn bezier_line_polygons_accepts_connected_cubic_spans() {
+        let polygons = bezier_line_polygons(
+            &[
+                [0.0, 0.0],
+                [0.0, 1.0],
+                [1.0, 1.0],
+                [1.0, 0.0],
+                [1.0, -1.0],
+                [2.0, -1.0],
+                [2.0, 0.0],
+            ],
+            0.05,
+            4,
+        );
+
+        assert_eq!(polygons.len(), 8);
+        assert!(
+            polygons
+                .iter()
+                .all(|polygon| polygon.unsigned_area().is_finite())
+        );
+    }
+
+    #[test]
+    fn bezier_line_polygons_rejects_underdefined_or_invalid_inputs() {
+        assert!(bezier_line_polygons(&[[0.0, 0.0], [1.0, 0.0]], 0.1, 8).is_empty());
+        assert!(
+            bezier_line_polygons(
+                &[[0.0, 0.0], [f64::NAN, 1.0], [1.0, 1.0], [1.0, 0.0]],
+                0.1,
+                8
+            )
+            .is_empty()
+        );
+        assert!(
+            bezier_line_polygons(&[[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]], 0.0, 8)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn multipolygon_to_shapes_filters_by_strict_min_area_and_preserves_holes() {
+        let small = polygon_from_points(vec![[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
+        let with_hole = Polygon::new(
+            LineString(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 4.0, y: 0.0 },
+                Coord { x: 4.0, y: 4.0 },
+                Coord { x: 0.0, y: 4.0 },
+                Coord { x: 0.0, y: 0.0 },
+            ]),
+            vec![LineString(vec![
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 2.0 },
+                Coord { x: 1.0, y: 2.0 },
+                Coord { x: 1.0, y: 1.0 },
+            ])],
+        );
+        let shapes = multipolygon_to_shapes(&MultiPolygon(vec![small, with_hole]), 1.0);
+
+        assert_eq!(shapes.len(), 1);
+        assert_close(shapes[0].area, 15.0);
+        assert_eq!(shapes[0].holes.len(), 1);
+        assert_eq!(shapes[0].exterior.first(), shapes[0].exterior.last());
+        assert_eq!(shapes[0].holes[0].first(), shapes[0].holes[0].last());
+    }
+
+    #[test]
+    fn multipolygon_to_shapes_handles_empty_and_negative_thresholds() {
+        let empty = multipolygon_to_shapes(&MultiPolygon(vec![]), 0.0);
+        let zero_area = polygon_from_points(vec![[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]]);
+        let unit = polygon_from_points(vec![[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
+
+        assert!(empty.is_empty());
+        assert_eq!(
+            multipolygon_to_shapes(&MultiPolygon(vec![zero_area]), -1.0e-9).len(),
+            1
+        );
+        assert_eq!(
+            multipolygon_to_shapes(&MultiPolygon(vec![unit]), -1.0).len(),
+            1
+        );
+    }
+
+    proptest! {
+        #[test]
+        fn generated_circles_have_positive_finite_area(
+            x in -1000.0f64..1000.0,
+            y in -1000.0f64..1000.0,
+            radius in 0.001f64..1000.0,
+            segments in 3usize..128,
+        ) {
+            let polygon = circle_polygon([x, y], radius, segments);
+            let area = polygon.unsigned_area();
+            prop_assert!(area.is_finite());
+            prop_assert!(area > 0.0);
+            prop_assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+        }
+
+        #[test]
+        fn generated_circles_keep_vertices_on_radius(
+            x in -1000.0f64..1000.0,
+            y in -1000.0f64..1000.0,
+            radius in 0.001f64..1000.0,
+            segments in 3usize..128,
+        ) {
+            let polygon = circle_polygon([x, y], radius, segments);
+            for coord in polygon.exterior().0.iter().take(polygon.exterior().0.len() - 1) {
+                let dx = coord.x - x;
+                let dy = coord.y - y;
+                prop_assert!(((dx * dx + dy * dy).sqrt() - radius).abs() <= radius.max(1.0) * 1.0e-9);
+            }
+        }
+
+        #[test]
+        fn generated_rectangles_have_expected_area(
+            x in -1000.0f64..1000.0,
+            y in -1000.0f64..1000.0,
+            width in 0.001f64..1000.0,
+            height in 0.001f64..1000.0,
+            angle in -360.0f64..360.0,
+        ) {
+            let polygon = rect_polygon([x, y], [width, height], angle);
+            prop_assert!((polygon.unsigned_area() - width * height).abs() < (width * height).max(1.0) * 1.0e-9);
+        }
+
+        #[test]
+        fn generated_rectangles_with_signed_dimensions_have_absolute_area(
+            x in -1000.0f64..1000.0,
+            y in -1000.0f64..1000.0,
+            width in -1000.0f64..1000.0,
+            height in -1000.0f64..1000.0,
+            angle in -720.0f64..720.0,
+        ) {
+            let polygon = rect_polygon([x, y], [width, height], angle);
+            let expected_area = (width * height).abs();
+            prop_assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+            prop_assert!((polygon.unsigned_area() - expected_area).abs() <= expected_area.max(1.0) * 1.0e-9);
+        }
+
+        #[test]
+        fn generated_rounded_rectangles_have_bounded_area(
+            x in -1000.0f64..1000.0,
+            y in -1000.0f64..1000.0,
+            width in 0.001f64..1000.0,
+            height in 0.001f64..1000.0,
+            radius in 0.0f64..1000.0,
+            angle in -720.0f64..720.0,
+            segments in 0usize..32,
+        ) {
+            let polygon = rounded_rect_polygon([x, y], [width, height], radius, angle, segments);
+            let area = polygon.unsigned_area();
+
+            prop_assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+            prop_assert!(area.is_finite());
+            prop_assert!(area >= 0.0);
+            prop_assert!(area <= width * height + (width * height).max(1.0) * 1.0e-9);
+        }
+
+        #[test]
+        fn generated_lines_have_expected_area(
+            start_x in -1000.0f64..1000.0,
+            start_y in -1000.0f64..1000.0,
+            dx in -1000.0f64..1000.0,
+            dy in -1000.0f64..1000.0,
+            width in 0.001f64..1000.0,
+        ) {
+            prop_assume!(dx.abs() > 1.0e-6 || dy.abs() > 1.0e-6);
+            let start = [start_x, start_y];
+            let end = [start_x + dx, start_y + dy];
+            let polygon = line_polygon(start, end, width).unwrap();
+            let expected_area = (dx * dx + dy * dy).sqrt() * width;
+
+            prop_assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+            prop_assert!((polygon.unsigned_area() - expected_area).abs() <= expected_area.max(1.0) * 1.0e-9);
+        }
+
+        #[test]
+        fn generated_arcs_return_one_polygon_per_nonzero_chord(
+            center_x in -1000.0f64..1000.0,
+            center_y in -1000.0f64..1000.0,
+            radius in 0.001f64..1000.0,
+            angle in -720.0f64..720.0,
+            width in 0.001f64..100.0,
+            requested_segments in 0usize..64,
+        ) {
+            prop_assume!(angle.abs() > 1.0e-6);
+            let segments = requested_segments.max(4);
+            let polygons = arc_line_polygons(
+                [center_x, center_y],
+                [center_x + radius, center_y],
+                angle,
+                width,
+                requested_segments,
+            );
+
+            prop_assert_eq!(polygons.len(), segments);
+            for polygon in polygons {
+                prop_assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+                prop_assert!(polygon.unsigned_area().is_finite());
+                prop_assert!(polygon.unsigned_area() > 0.0);
+            }
+        }
+
+        #[test]
+        fn polygon_from_points_always_closes_nonempty_open_rings(
+            points in prop::collection::vec((-1000.0f64..1000.0, -1000.0f64..1000.0), 2..32)
+        ) {
+            let polygon = polygon_from_points(points.into_iter().map(|(x, y)| [x, y]).collect());
+
+            prop_assert_eq!(polygon.exterior().0.first(), polygon.exterior().0.last());
+        }
+
+        #[test]
+        fn transform_preserves_polygon_area(angle in -360.0f64..360.0, x in -100.0f64..100.0, y in -100.0f64..100.0) {
+            let polygon = rect_polygon([0.0, 0.0], [3.0, 2.0], 0.0);
+            let transformed = transform_polygon(&polygon, [x, y], angle);
+            prop_assert!((polygon.unsigned_area() - transformed.unsigned_area()).abs() < 1.0e-9);
+        }
+
+        #[test]
+        fn transform_preserves_edge_lengths(
+            width in 0.001f64..1000.0,
+            height in 0.001f64..1000.0,
+            original_angle in -360.0f64..360.0,
+            transform_angle in -360.0f64..360.0,
+            x in -1000.0f64..1000.0,
+            y in -1000.0f64..1000.0,
+        ) {
+            let polygon = rect_polygon([0.0, 0.0], [width, height], original_angle);
+            let transformed = transform_polygon(&polygon, [x, y], transform_angle);
+
+            for (left, right) in polygon.exterior().0.windows(2).zip(transformed.exterior().0.windows(2)) {
+                prop_assert!((distance(left[0], left[1]) - distance(right[0], right[1])).abs() <= width.max(height).max(1.0) * 1.0e-9);
+            }
+        }
+    }
+}

@@ -1,0 +1,240 @@
+//! KiCad board-graphics parsing.
+//!
+//! Board graphics are used for physical outlines and manufacturing features,
+//! not electrical copper. Keeping them separate makes the main loader easier to
+//! scan and keeps arc/outline reconstruction in one place.
+
+use hyperlimit::{Point2, point2_equal};
+
+use crate::PREDICATE_POLICY;
+use crate::geometry::{
+    Polygon, arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon,
+    polygon_from_points,
+};
+use crate::sexp::Sexp;
+
+use super::{
+    ParsedPoint2, arcs::arc_center_start_angle_source, points_from_pts, polygons_from_pts,
+    stroke_width, xy_from_child, xy_from_child_source,
+};
+
+pub(super) fn parse_graphics(
+    root: &Sexp,
+    edge_polygons: &mut Vec<Polygon<f64>>,
+    panel_polygons: &mut Vec<Polygon<f64>>,
+) {
+    let mut edge_lines = Vec::new();
+
+    for line in root.named_children("gr_line") {
+        let Some(start) = xy_from_child_source(line, "start") else {
+            continue;
+        };
+        let Some(end) = xy_from_child_source(line, "end") else {
+            continue;
+        };
+        let width = stroke_width(line, 0.05);
+        if is_edge_cuts(line) {
+            edge_lines.push(EdgeLine { start, end });
+        } else if is_panel_layer(line)
+            && let Some(polygon) = line_polygon(start.approximate, end.approximate, width.max(0.01))
+        {
+            panel_polygons.push(polygon);
+        }
+    }
+
+    if let Some(outline) = closed_polygon_from_lines(&edge_lines) {
+        edge_polygons.push(outline);
+    } else {
+        for line in edge_lines {
+            if let Some(polygon) = line_polygon(line.start.approximate, line.end.approximate, 0.05)
+            {
+                edge_polygons.push(polygon);
+            }
+        }
+    }
+
+    for rect in root.named_children("gr_rect") {
+        let Some(start) = xy_from_child(rect, "start") else {
+            continue;
+        };
+        let Some(end) = xy_from_child(rect, "end") else {
+            continue;
+        };
+        let polygon = polygon_from_points(vec![start, [end[0], start[1]], end, [start[0], end[1]]]);
+        if is_edge_cuts(rect) {
+            edge_polygons.push(polygon);
+        } else if is_panel_layer(rect) {
+            panel_polygons.push(polygon);
+        }
+    }
+
+    for circle in root.named_children("gr_circle") {
+        let Some(center) = xy_from_child(circle, "center") else {
+            continue;
+        };
+        let Some(end) = xy_from_child(circle, "end") else {
+            continue;
+        };
+        let radius = distance(center, end);
+        let polygon = circle_polygon(center, radius, 64);
+        if is_edge_cuts(circle) {
+            edge_polygons.push(polygon);
+        } else if is_panel_layer(circle) {
+            panel_polygons.push(polygon);
+        }
+    }
+
+    for poly in root.named_children("gr_poly") {
+        let polygons = polygons_from_pts(poly);
+        if polygons.is_empty() {
+            continue;
+        }
+        if is_edge_cuts(poly) {
+            log::trace!(
+                "parsed KiCad Edge.Cuts polygon graphics: count={}",
+                polygons.len()
+            );
+            edge_polygons.extend(polygons);
+        } else if is_panel_layer(poly) {
+            log::trace!(
+                "parsed KiCad panel polygon graphics: count={}",
+                polygons.len()
+            );
+            panel_polygons.extend(polygons);
+        }
+    }
+
+    for arc in root.named_children("gr_arc") {
+        let Some(center) =
+            xy_from_child_source(arc, "start").or_else(|| xy_from_child_source(arc, "center"))
+        else {
+            continue;
+        };
+        let Some(mid) = xy_from_child_source(arc, "mid") else {
+            continue;
+        };
+        let Some(end) = xy_from_child_source(arc, "end") else {
+            continue;
+        };
+        let width = stroke_width(arc, 0.05).max(0.01);
+        let Some((arc_center, start, angle)) = arc_center_start_angle_source(&center, &mid, &end)
+        else {
+            continue;
+        };
+        let polygons = arc_line_polygons(arc_center, start, angle, width, 24);
+        if is_edge_cuts(arc) {
+            edge_polygons.extend(polygons);
+        } else if is_panel_layer(arc) {
+            panel_polygons.extend(polygons);
+        }
+    }
+
+    for curve_name in ["bezier", "gr_curve"] {
+        for curve in root.named_children(curve_name) {
+            let points = points_from_pts(curve);
+            let width = stroke_width(curve, 0.05).max(0.01);
+            let polygons = bezier_line_polygons(&points, width, 24);
+            if polygons.is_empty() {
+                continue;
+            }
+            if is_edge_cuts(curve) {
+                log::trace!(
+                    "parsed KiCad Edge.Cuts Bezier graphics: control_points={} segments={}",
+                    points.len(),
+                    polygons.len()
+                );
+                edge_polygons.extend(polygons);
+            } else if is_panel_layer(curve) {
+                log::trace!(
+                    "parsed KiCad panel Bezier graphics: control_points={} segments={}",
+                    points.len(),
+                    polygons.len()
+                );
+                panel_polygons.extend(polygons);
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct EdgeLine {
+    start: ParsedPoint2,
+    end: ParsedPoint2,
+}
+
+fn closed_polygon_from_lines(lines: &[EdgeLine]) -> Option<Polygon<f64>> {
+    let first = lines.first()?;
+    let mut remaining = lines[1..].to_vec();
+    let mut points = vec![first.start.clone(), first.end.clone()];
+
+    while !remaining.is_empty() {
+        let current = points.last()?;
+        // KiCad Edge.Cuts commonly arrives as unordered line segments. We stitch
+        // exact endpoint matches before falling back to stroked line geometry.
+        let (index, next) = remaining.iter().enumerate().find_map(|(index, line)| {
+            if same_point(current, &line.start) {
+                Some((index, line.end.clone()))
+            } else if same_point(current, &line.end) {
+                Some((index, line.start.clone()))
+            } else {
+                None
+            }
+        })?;
+
+        points.push(next);
+        remaining.remove(index);
+    }
+
+    if points.len() >= 4 && same_point(&points[0], points.last()?) {
+        Some(polygon_from_points(
+            points.into_iter().map(|point| point.approximate).collect(),
+        ))
+    } else {
+        None
+    }
+}
+
+fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
+    // Outline stitching changes imported topology before board-level checks
+    // run, so endpoint equality must be exact after lifting finite parser
+    // coordinates. Decimal KiCad tokens carry exact `Real` values and
+    // shared-denominator facts. Route equality through `hyperlimit` rather than
+    // a local tolerance.
+    let left = exact_point(left);
+    let right = exact_point(right);
+    point2_equal(&left, &right, PREDICATE_POLICY)
+        .value()
+        .unwrap_or(false)
+}
+
+fn exact_point(point: &ParsedPoint2) -> Point2 {
+    Point2::new(point.exact[0].clone(), point.exact[1].clone())
+}
+
+fn is_edge_cuts(item: &Sexp) -> bool {
+    item.named_child("layer")
+        .and_then(|layer| layer.atom_at(1))
+        .is_some_and(|layer| layer == "Edge.Cuts")
+}
+
+fn is_panel_layer(item: &Sexp) -> bool {
+    item.named_child("layer")
+        .and_then(|layer| layer.atom_at(1))
+        .is_some_and(|layer| {
+            layer.contains("Panel")
+                || layer.contains("VScore")
+                || layer.contains("V-Score")
+                || layer.contains("TabRoute")
+                || layer.contains("Tab.Route")
+                || layer.contains("Castellated")
+                || layer.contains("Castellation")
+                || layer.contains("EdgePlating")
+                || layer.contains("Edge.Plating")
+        })
+}
+
+fn distance(start: [f64; 2], end: [f64; 2]) -> f64 {
+    let dx = end[0] - start[0];
+    let dy = end[1] - start[1];
+    (dx * dx + dy * dy).sqrt()
+}
