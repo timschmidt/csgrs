@@ -9,7 +9,7 @@ use std::error::Error;
 use std::fmt::Debug;
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
-use core2::io::Cursor;
+use std::io::Cursor;
 
 #[cfg(feature = "dxf-io")]
 use dxf::Drawing;
