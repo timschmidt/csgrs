@@ -8162,6 +8162,27 @@ fn rational_point_evidence_at_parameter(
 /// Recursive and selected-fiber parameters remain zero-distance analytic
 /// points so their defining field, branch, and parameter identity survive
 /// later finite-chord and Boolean predicates.
+/// Point evidence for a retained contact parameter. Bezier and exact scalar
+/// parameters keep exact coordinate evidence; other field values keep their
+/// zero-distance analytic source map instead of a global promotion.
+fn contact_point_evidence_at_region_parameter(
+    source: &RationalBezier2,
+    parameter: &CurveParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurvePoint2>> {
+    if let Some(parameter) = parameter.as_bezier_parameter() {
+        return rational_point_evidence_at_parameter(source, parameter, policy);
+    }
+    if let Some(value) = parameter.scalar() {
+        return rational_point_evidence_at_parameter(
+            source,
+            &BezierParameter2::Exact(value.clone()),
+            policy,
+        );
+    }
+    rational_point_evidence_at_region_parameter(source, parameter, policy)
+}
+
 fn rational_point_evidence_at_region_parameter(
     source: &RationalBezier2,
     parameter: &CurveParameter2,

@@ -163,13 +163,23 @@ pub(super) fn rational_mapped_cusp_scalar_value(
         // until a caller needs that scalar projection.
         return Ok(Classification::Decided(None));
     };
-    let other_parameter =
-        match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+    // Only an exact scalar is ever projected here. A carried scalar answers
+    // directly; otherwise promotion is what discovers that a field value is
+    // exactly rational, so it remains the complete fallback.
+    let other_parameter = match contact.other_parameter.as_bezier_parameter() {
+        Some(parameter) => parameter.clone(),
+        None => match contact.other_parameter.scalar() {
+            Some(value) => BezierParameter2::Exact(value.clone()),
+            None => {
+                match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
-        };
+        },
+    };
     if let Some(value) = map
         .data
         .parameter_cache

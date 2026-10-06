@@ -6285,17 +6285,9 @@ other => return match other {
                 )));
             }
         }
-        let rational_parameter =
-            match promote_curve_region_bezier_parameter(&rational_contact.other_parameter, policy)?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
-                }
-            };
-        let point = match rational_point_evidence_at_parameter(
+        let point = match contact_point_evidence_at_region_parameter(
             &rational_map.data.curve,
-            &rational_parameter,
+            &rational_contact.other_parameter,
             policy,
         )? {
             Classification::Decided(point) => point,
@@ -7768,7 +7760,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         range: &CurveParameterRange2,
         target_reversed_from_pair_carrier: bool,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
         if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "cusp-pair parameter map was replayed under a different predicate policy".into(),
@@ -7815,12 +7807,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             {
                 continue;
             }
-            match promote_curve_region_bezier_parameter(&candidate.other_parameter, policy)? {
-                Classification::Decided(parameter) => parameters.push(parameter),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            parameters.push(candidate.other_parameter);
         }
         Ok(Classification::Decided(parameters))
     }
@@ -7852,7 +7839,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         };
         let mut points = Vec::with_capacity(parameters.len());
         for parameter in parameters {
-            match rational_point_evidence_at_parameter(target, &parameter, policy)? {
+            match contact_point_evidence_at_region_parameter(target, &parameter, policy)? {
                 Classification::Decided(point) => points.push(point),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

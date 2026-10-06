@@ -3752,7 +3752,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     }
                 };
                 return retain_unique_overlap_parameter(
-                    curve_region_parameters_from_bezier(candidates),
+                    candidates,
                     &self.other_range,
                     self.map_reversed,
                     true,
