@@ -146,6 +146,40 @@ pub(super) fn promote_curve_region_bezier_parameter(
     policy.strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))
 }
 
+/// Signs a bivariate predicate at a native cusp parameter and a retained
+/// region parameter. A selected fiber defined over that same cusp parameter
+/// signs the predicate in its own field; other parameters are promoted to the
+/// global authority, correlated through `incidence` when the pair shares one.
+pub(super) fn bivariate_sign_at_cusp_and_region_parameter(
+    predicate: &BivariatePolynomial,
+    cusp_parameter: &BezierParameter2,
+    other: &CurveParameter2,
+    incidence: Option<&BivariatePolynomial>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    if let BezierParameter2::Algebraic(cusp) = cusp_parameter
+        && let Some(fiber) = other.as_selected_fiber()
+        && fiber.retains_parameter(cusp)
+        && let decided @ Classification::Decided(_) = fiber.predicate_sign(predicate, policy)?
+    {
+        return Ok(decided);
+    }
+    let other = match promote_curve_region_bezier_parameter(other, policy)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    match incidence {
+        Some(incidence) => algebraic_selected_correlated_predicate_sign(
+            incidence,
+            predicate,
+            cusp_parameter,
+            &other,
+            policy,
+        ),
+        None => signed_bivariate_at_parameter_pair(predicate, cusp_parameter, &other, policy),
+    }
+}
+
 pub(super) fn rational_mapped_cusp_scalar_value(
     map: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,

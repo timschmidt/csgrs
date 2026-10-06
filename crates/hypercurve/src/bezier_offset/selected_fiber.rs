@@ -124,6 +124,12 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         let _ = self.data.representations.bezier.set(parameter);
     }
 
+    /// Whether this fiber is defined over exactly `parameter`, so a predicate
+    /// in (that parameter, this root) signs in this fiber's own field.
+    pub(super) fn retains_parameter(&self, parameter: &BezierAlgebraicParameter2) -> bool {
+        self.data.authority.data.retained_parameter == *parameter
+    }
+
     /// Returns the represented scalar when exact fiber isolation recovered one.
     pub(crate) fn represented_value(&self) -> Option<&Real> {
         self.data.root.exact_root.as_ref()

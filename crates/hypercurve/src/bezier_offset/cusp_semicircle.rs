@@ -5936,24 +5936,13 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 Some(incidence.as_ref())
             }
         };
-        let other_parameter =
-            match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        if let Some(incidence) = correlated_incidence {
-            algebraic_selected_correlated_predicate_sign(
-                incidence,
-                &predicate,
-                cusp_parameter,
-                &other_parameter,
-                policy,
-            )
-        } else {
-            signed_bivariate_at_parameter_pair(&predicate, cusp_parameter, &other_parameter, policy)
-        }
+        bivariate_sign_at_cusp_and_region_parameter(
+            &predicate,
+            cusp_parameter,
+            &contact.other_parameter,
+            correlated_incidence,
+            policy,
+        )
     }
 
     /// Replays one exact linear combination of the selected-circle tangent
@@ -6274,13 +6263,18 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             });
         }
-        let other_parameter =
-            match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+        // Only branches without an in-field predicate need the global
+        // promotion of the contact parameter.
+        macro_rules! promoted_other {
+            () => {
+                match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
             };
+        }
         let sign = match &self.data.system {
             BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField {
                 cusp_parameter,
@@ -6306,22 +6300,13 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                             radius_squared_denominator,
                             &radial_coefficient,
                         );
-                        if let Some(incidence) = correlated_incidence {
-                            algebraic_selected_correlated_predicate_sign(
-                                incidence,
-                                &predicate,
-                                cusp_parameter,
-                                &other_parameter,
-                                policy,
-                            )?
-                        } else {
-                            signed_bivariate_at_parameter_pair(
-                                &predicate,
-                                cusp_parameter,
-                                &other_parameter,
-                                policy,
-                            )?
-                        }
+                        bivariate_sign_at_cusp_and_region_parameter(
+                            &predicate,
+                            cusp_parameter,
+                            &contact.other_parameter,
+                            correlated_incidence,
+                            policy,
+                        )?
                     }
                     BezierAlgebraicCuspSemicircleRationalDiameter2::ParallelNormal {
                         coordinate,
@@ -6342,7 +6327,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                                 &expression,
                                 speed_squared,
                                 cusp_parameter,
-                                &other_parameter,
+                                &promoted_other!(),
                                 policy,
                             )?
                         } else {
@@ -6350,7 +6335,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                                 &expression,
                                 speed_squared,
                                 cusp_parameter,
-                                &other_parameter,
+                                &promoted_other!(),
                                 policy,
                             )?
                         }
@@ -6386,7 +6371,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                     discriminant,
                     &first_cusp_parameter,
                     &second_cusp_parameter,
-                    &other_parameter,
+                    &promoted_other!(),
                     *branch,
                     policy,
                 )?
@@ -6397,7 +6382,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                 system,
             } => system.diameter_parameter_sign(
-                &other_parameter,
+                &promoted_other!(),
                 &denominator,
                 &radial_coefficient,
                 policy,
@@ -6406,7 +6391,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 represented_circle_diameter_predicate_sign(
                     frame,
                     &self.data.curve,
-                    &other_parameter,
+                    &promoted_other!(),
                     &radial_coefficient,
                     &denominator,
                     &self.data.parameter_cache,
