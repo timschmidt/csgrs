@@ -1,0 +1,348 @@
+//! Report-bearing preview sampling adapters.
+//!
+//! Primitive-float samples are display and adapter data, not exact topology.
+//! This module makes that boundary explicit: values are lowered through
+//! `Real::to_f32_lossy`/`Real::to_f64_lossy`, reports count failed lowerings,
+//! records exact sign buckets before lowering, and keeps topology status
+//! preview-only. Approximate values can be useful views, but they do not certify
+//! combinatorial decisions.
+
+use core::cmp::Ordering;
+
+use hyperlimit::{Point3, PredicateOutcome};
+use hyperreal::Real;
+
+use crate::expr::{SdfCoordinate, SdfExpr};
+use crate::policy::{
+    compare_reals_for_construction as compare_reals, compare_reals_for_final_decision,
+};
+use crate::status::SdfMetricStatus;
+
+/// Primitive scalar precision requested from a preview sampler.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SdfSamplingPrecision {
+    /// Lower values to `f32`.
+    F32,
+    /// Lower values to `f64`.
+    F64,
+}
+
+/// Whether sampled values may be used as topology evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SdfSampleTopologyStatus {
+    /// Preview values are explicitly not topology evidence.
+    PreviewOnly,
+    /// Exact replay accepted the samples for a specific downstream purpose.
+    CertifiedReplay,
+    /// The adapter could not establish topology status.
+    Unknown,
+}
+
+/// One lossy preview sample.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SdfPreviewSample {
+    /// Query point.
+    pub point: Point3,
+    /// Lowered scalar value as `f64` storage.
+    ///
+    /// `F32` samples are widened after `Real::to_f32_lossy` so reports can
+    /// store one scalar field while preserving the requested precision.
+    pub value: Option<f64>,
+}
+
+/// Report returned by preview sampling.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SdfSamplingReport {
+    /// Requested primitive precision.
+    pub precision: SdfSamplingPrecision,
+    /// Metric claim of the source expression before scalar lowering.
+    pub metric_status: SdfMetricStatus,
+    /// Whether the samples may be consumed as topology evidence.
+    pub topology_status: SdfSampleTopologyStatus,
+    /// Number of query points.
+    pub sample_count: usize,
+    /// Number of samples that could not be lowered to a finite primitive float.
+    pub non_finite_count: usize,
+    /// Number of retained scalar values certified negative before lowering.
+    pub negative_count: usize,
+    /// Number of retained scalar values certified zero before lowering.
+    pub zero_count: usize,
+    /// Number of retained scalar values certified positive before lowering.
+    pub positive_count: usize,
+    /// Number of retained scalar signs that could not be certified.
+    pub unknown_sign_count: usize,
+    /// Lowered sample records.
+    pub samples: Vec<SdfPreviewSample>,
+}
+
+impl SdfSamplingReport {
+    /// Validate sample counts and preview-topology labeling.
+    ///
+    /// This is a structural audit only. Preview samples remain lossy adapter
+    /// data even when the report is internally consistent.
+    pub fn is_self_consistent(&self) -> bool {
+        self.sample_count == self.samples.len()
+            && self.non_finite_count
+                == self
+                    .samples
+                    .iter()
+                    .filter(|sample| sample.value.is_none())
+                    .count()
+            && self.negative_count + self.zero_count + self.positive_count + self.unknown_sign_count
+                == self.sample_count
+            && matches!(self.topology_status, SdfSampleTopologyStatus::PreviewOnly)
+    }
+}
+
+/// Axis-aligned exact preview grid.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SdfPreviewGrid {
+    /// Exact origin of grid index `(0, 0, 0)`.
+    pub origin: Point3,
+    /// Exact per-axis step between adjacent samples.
+    pub step: Point3,
+    /// Number of samples on each axis.
+    pub dimensions: [u32; 3],
+}
+
+impl SdfPreviewGrid {
+    /// Construct an exact preview grid.
+    pub const fn new(origin: Point3, step: Point3, dimensions: [u32; 3]) -> Self {
+        Self {
+            origin,
+            step,
+            dimensions,
+        }
+    }
+
+    /// Return the total number of grid points, validating dimensions.
+    pub fn point_count(&self) -> Result<usize, SdfGridSamplingError> {
+        if self.dimensions.contains(&0) {
+            return Err(SdfGridSamplingError::EmptyDimension);
+        }
+        let count = self
+            .dimensions
+            .iter()
+            .try_fold(1_u64, |acc, dimension| {
+                acc.checked_mul(u64::from(*dimension))
+            })
+            .ok_or(SdfGridSamplingError::TooManySamples)?;
+        usize::try_from(count).map_err(|_| SdfGridSamplingError::TooManySamples)
+    }
+
+    /// Return all exact grid points in z-major, then y, then x-fast order.
+    pub fn points(&self) -> Result<Vec<Point3>, SdfGridSamplingError> {
+        let mut points = Vec::with_capacity(self.point_count()?);
+        let xs = axis_coordinates(&self.origin.x, &self.step.x, self.dimensions[0]);
+        let ys = axis_coordinates(&self.origin.y, &self.step.y, self.dimensions[1]);
+        let zs = axis_coordinates(&self.origin.z, &self.step.z, self.dimensions[2]);
+        for z in &zs {
+            for y in &ys {
+                for x in &xs {
+                    points.push(Point3::new(x.clone(), y.clone(), z.clone()));
+                }
+            }
+        }
+        Ok(points)
+    }
+}
+
+fn axis_coordinates(origin: &Real, step: &Real, count: u32) -> Vec<Real> {
+    (0..count)
+        .map(|index| origin + &(step * &Real::from(index)))
+        .collect()
+}
+
+/// Input validation error for preview-grid sampling.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SdfGridSamplingError {
+    /// At least one grid dimension is zero.
+    EmptyDimension,
+    /// The requested grid point count overflows host memory indexing.
+    TooManySamples,
+}
+
+/// Report returned by regular-grid preview sampling.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SdfGridSamplingReport {
+    /// Exact grid frame that generated the query points.
+    pub grid: SdfPreviewGrid,
+    /// Point-sampling report over generated grid points.
+    pub samples: SdfSamplingReport,
+}
+
+impl SdfGridSamplingReport {
+    /// Validate that the grid point count matches the contained sampling report.
+    pub fn is_self_consistent(&self) -> bool {
+        self.grid.point_count().ok() == Some(self.samples.sample_count)
+            && self.samples.is_self_consistent()
+    }
+}
+
+pub(crate) fn sample_expr_points_preview<'a, I>(
+    expr: &SdfExpr,
+    points: I,
+    precision: SdfSamplingPrecision,
+    metric_status: SdfMetricStatus,
+) -> SdfSamplingReport
+where
+    I: IntoIterator<Item = &'a Point3>,
+{
+    let mut samples = Vec::new();
+    let mut non_finite_count = 0_usize;
+    let mut sign_counts = SdfSampleSignCounts::default();
+    for point in points {
+        let exact_value = scalar_expr_point(expr, point);
+        sign_counts.add(exact_value.as_ref());
+        let value = exact_value.as_ref().and_then(|value| match precision {
+            SdfSamplingPrecision::F32 => value.to_f32_lossy().map(f64::from),
+            SdfSamplingPrecision::F64 => value.to_f64_lossy(),
+        });
+        if value.is_none() {
+            non_finite_count += 1;
+        }
+        samples.push(SdfPreviewSample {
+            point: point.clone(),
+            value,
+        });
+    }
+    SdfSamplingReport {
+        precision,
+        metric_status,
+        topology_status: SdfSampleTopologyStatus::PreviewOnly,
+        sample_count: samples.len(),
+        non_finite_count,
+        negative_count: sign_counts.negative,
+        zero_count: sign_counts.zero,
+        positive_count: sign_counts.positive,
+        unknown_sign_count: sign_counts.unknown,
+        samples,
+    }
+}
+
+#[derive(Default)]
+struct SdfSampleSignCounts {
+    negative: usize,
+    zero: usize,
+    positive: usize,
+    unknown: usize,
+}
+
+impl SdfSampleSignCounts {
+    fn add(&mut self, value: Option<&Real>) {
+        let Some(value) = value else {
+            self.unknown += 1;
+            return;
+        };
+        match compare_reals_for_final_decision(value, &Real::zero()) {
+            PredicateOutcome::Decided {
+                value: Ordering::Less,
+                ..
+            } => self.negative += 1,
+            PredicateOutcome::Decided {
+                value: Ordering::Equal,
+                ..
+            } => self.zero += 1,
+            PredicateOutcome::Decided {
+                value: Ordering::Greater,
+                ..
+            } => self.positive += 1,
+            PredicateOutcome::Unknown { .. } => self.unknown += 1,
+        }
+    }
+}
+
+pub(crate) fn sample_expr_grid_preview(
+    expr: &SdfExpr,
+    grid: SdfPreviewGrid,
+    precision: SdfSamplingPrecision,
+    metric_status: SdfMetricStatus,
+) -> Result<SdfGridSamplingReport, SdfGridSamplingError> {
+    let points = grid.points()?;
+    let samples = sample_expr_points_preview(expr, points.iter(), precision, metric_status);
+    Ok(SdfGridSamplingReport { grid, samples })
+}
+
+pub(crate) fn scalar_expr_point(expr: &SdfExpr, point: &Point3) -> Option<Real> {
+    match expr {
+        SdfExpr::Constant(value) => Some(value.clone()),
+        SdfExpr::Coordinate(axis) => Some(match axis {
+            SdfCoordinate::X => point.x.clone(),
+            SdfCoordinate::Y => point.y.clone(),
+            SdfCoordinate::Z => point.z.clone(),
+        }),
+        SdfExpr::Linear {
+            coefficients,
+            offset,
+        } => {
+            let x = &coefficients.0[0] * &point.x;
+            let y = &coefficients.0[1] * &point.y;
+            let z = &coefficients.0[2] * &point.z;
+            Some(&(&(&x + &y) + &z) + offset)
+        }
+        SdfExpr::Primitive(primitive) => primitive.scalar_value(point),
+        SdfExpr::Union(left, right) => {
+            let left = scalar_expr_point(left, point)?;
+            let right = scalar_expr_point(right, point)?;
+            choose_min(left, right)
+        }
+        SdfExpr::Intersection(left, right) => {
+            let left = scalar_expr_point(left, point)?;
+            let right = scalar_expr_point(right, point)?;
+            choose_max(left, right)
+        }
+        SdfExpr::Add(left, right) => {
+            Some(&scalar_expr_point(left, point)? + &scalar_expr_point(right, point)?)
+        }
+        SdfExpr::Sub(left, right) => {
+            Some(&scalar_expr_point(left, point)? - &scalar_expr_point(right, point)?)
+        }
+        SdfExpr::Mul(left, right) => {
+            Some(&scalar_expr_point(left, point)? * &scalar_expr_point(right, point)?)
+        }
+        SdfExpr::Abs(inner) => {
+            let value = scalar_expr_point(inner, point)?;
+            match compare_reals(&value, &Real::zero()) {
+                PredicateOutcome::Decided {
+                    value: Ordering::Less,
+                    ..
+                } => Some(-&value),
+                PredicateOutcome::Decided { .. } => Some(value),
+                PredicateOutcome::Unknown { .. } => None,
+            }
+        }
+        SdfExpr::Sqrt(inner) => scalar_expr_point(inner, point)?.sqrt().ok(),
+        SdfExpr::Sin(inner) => Some(scalar_expr_point(inner, point)?.sin()),
+        SdfExpr::Cos(inner) => Some(scalar_expr_point(inner, point)?.cos()),
+        SdfExpr::Tan(inner) => scalar_expr_point(inner, point)?.tan().ok(),
+        SdfExpr::Complement(inner) => scalar_expr_point(inner, point).map(|value| -&value),
+        SdfExpr::Offset { child, amount } => {
+            scalar_expr_point(child, point).map(|value| &value - amount)
+        }
+        SdfExpr::Transform { child, transform } => {
+            scalar_expr_point(child, &transform.inverse_point(point))
+        }
+    }
+}
+
+pub(crate) fn choose_min(left: Real, right: Real) -> Option<Real> {
+    match compare_reals(&left, &right) {
+        PredicateOutcome::Decided {
+            value: Ordering::Greater,
+            ..
+        } => Some(right),
+        PredicateOutcome::Decided { .. } => Some(left),
+        PredicateOutcome::Unknown { .. } => None,
+    }
+}
+
+pub(crate) fn choose_max(left: Real, right: Real) -> Option<Real> {
+    match compare_reals(&left, &right) {
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            ..
+        } => Some(right),
+        PredicateOutcome::Decided { .. } => Some(left),
+        PredicateOutcome::Unknown { .. } => None,
+    }
+}

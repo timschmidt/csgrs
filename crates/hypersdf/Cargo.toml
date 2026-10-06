@@ -1,0 +1,33 @@
+[package]
+name = "hypersdf"
+version = "0.2.0"
+edition = "2024"
+description = "Exact-aware signed-distance and implicit-field carriers for the Hyper stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hypersdf"
+readme = "README.md"
+keywords = ["sdf", "implicit", "geometry", "exact", "voxel"]
+categories = ["mathematics", "graphics", "algorithms"]
+
+[dependencies]
+fast-surface-nets = "0.2.1"
+# Cargo uses these paths in the workspace and retains the version requirements
+# in the published manifest.
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hypervoxel = { version = "0.3.0", path = "../hypervoxel", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
+[[bench]]
+name = "classification"
+harness = false
+
+[features]
+default = []
+dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+hypervoxel-adapter = ["dep:hypervoxel"]
