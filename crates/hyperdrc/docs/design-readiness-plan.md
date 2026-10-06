@@ -1,0 +1,1855 @@
+# HyperDRC Design Readiness Plan
+
+This project starts as a command line Gerber and KiCad checker built on
+[CSGRS](https://github.com/timschmidt/csgrs) region geometry. Gerber input
+covers layer-level polygon checks. KiCad input
+adds net, drill, pad, via, track, zone, and board-outline context for richer
+readiness checks. Excellon drill files are supported as an industry-standard
+sidecar input where possible.
+
+## Numerical Backbone Policy
+
+HyperDRC should inherit the workspace numerical policy: geometry through
+[Hyperreal](https://github.com/timschmidt/hyperreal),
+[CSGRS](https://github.com/timschmidt/csgrs),
+[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/hyperlimit) is the primary
+computational backbone for checks that affect geometry, clearance, topology,
+or readiness decisions.
+
+f64 support is allowed only at explicit edges for Gerber/KiCad/Excellon parser
+interop, external CLI/library calls, reports, serialization, and language
+bindings. Those boundaries must be named and documented as exact lifting, lossy
+approximation, rejected input, or lossy export. f64 parser values may be used as
+input records, but they should be lifted before core geometry decisions.
+
+## Semantic Boundary and Porting Notes
+
+HyperDRC should own parser integration, board/layer/net metadata, rule
+configuration, readiness-check orchestration, violation grouping, waiver
+governance, trace output, and user-facing reports. It should not own scalar
+arithmetic, vector/matrix kernels, exact predicates, curve booleans,
+triangulation topology, or CSG internals.
+
+During the future exact port, keep
+[CSGRS](https://github.com/timschmidt/csgrs) as the legacy geometry provider
+until its own migration is scheduled. New exact geometry should flow through
+the hyper stack instead: scalar facts in
+[Hyperreal](https://github.com/timschmidt/hyperreal), object-level algebra facts
+in [Hyperlattice](https://github.com/timschmidt/hyperlattice), exact predicates
+in [Hyperlimit](https://github.com/timschmidt/hyperlimit), curve/region
+operations in [Hypercurve](https://github.com/timschmidt/hypercurve), and
+triangulation in [Hypertri](https://github.com/timschmidt/hypertri).
+
+Parser and domain facts are still valuable and should be carried as metadata:
+source units/grid, layer/net, aperture primitive, pad/via kind, drill plating,
+axis alignment, rectangular/circular pad shape, transform, polygon source,
+board-outline role, and manufacturability-rule provenance. Those facts can
+select faster exact kernels or broad phases after lifting coordinates, but they
+should not become primitive-float geometry decisions.
+
+## Implemented Checks
+
+- `mask-island-keepout`: treat each closed polygon or multipolygon island in a
+  layer as the target island, offset that island and the remaining mask geometry
+  by the requested keepout distance, intersect the two offset regions, and report
+  the resulting coordinates as a violation when a non-empty shape remains.
+  Island-neighbor selection uses a layer polygon spatial index before exact
+  expanded-island intersection review.
+- `copper-overlap`: intersect one copper layer with another copper layer and
+  report overlapping geometry that may create unintended capacitance. When
+  IPC-D-356 net points are loaded, overlap regions with one net are downgraded
+  to review warnings with same-net evidence, while missing or mixed net evidence
+  remains an error.
+- `board-edge-clearance`: erode the board outline by the requested clearance,
+  subtract that allowed region from copper, and report any remaining copper.
+- `board-outline-cutout-clearance`: detect nested board outlines that represent
+  cutouts and report subject geometry that enters those regions within the
+  configured clearance.
+- `board-outline-sanity`: warn when an explicit board outline layer or KiCad
+  `Edge.Cuts` data has no closed polygon area.
+- `board-outline-fragments`: warn when an explicit board outline layer or KiCad
+  `Edge.Cuts` data parses to multiple disconnected outline regions.
+- `board-outline-self-intersection-readiness`: report explicit board-outline
+  and parsed KiCad `Edge.Cuts` contours that self-intersect.
+- `board-outline-notch-readiness`: report sharp inside-corners in outline
+  contours that are likely below router capability.
+- `board-outline-duplicate-readiness`: flag duplicate board-outline contours that
+  typically indicate accidental overlap or double-exported profile geometry.
+- `board-outline-nesting-readiness`: flag nested board-outline contours where
+  one contour is fully contained by another, which can indicate malformed profile
+  structure.
+- `paste-overhang`: subtract paired copper, optionally expanded by a tolerance,
+  from paste apertures. Copper candidates use a layer polygon spatial index
+  before exact expanded-copper subtraction.
+- `paste-aperture-coverage`: subtract paste apertures from paired copper and
+  report copper that does not have paste coverage. Paste candidates use the
+  layer polygon spatial index before exact copper/paste subtraction.
+- `paste-aperture-ratio`: compare paste area over each paired copper island
+  against configured minimum and maximum paste-to-copper ratios. Candidate paste
+  apertures use a layer polygon spatial index before exact copper/paste
+  intersection and ratio review.
+- `thermal-pad-paste-windowpane-readiness`: warn when a large copper island has
+  one high-coverage paste aperture instead of a split or reduced windowpane
+  pattern. Paste apertures use the layer polygon spatial index before exact
+  copper/paste intersection.
+- `stencil-area-ratio-readiness`: warn when explicit paste apertures have low
+  estimated IPC-7525-style area ratio for the configured stencil thickness.
+- `paste-aperture-aspect-ratio-readiness`: warn when paste apertures have high
+  aspect ratio, calling out stencil release and paste slumping risk.
+- `tombstone-paste-imbalance-readiness`: warn when neighboring similarly sized
+  copper pads have a large paste-ratio mismatch that can increase tombstoning
+  risk. Candidate pad centers and per-pad paste apertures use spatial broad
+  phases before exact ratio review.
+- `paste-via-exposure-readiness`: warn when explicit paste apertures overlap
+  parsed KiCad via drill openings so via fill, cap, tent, or stencil keepout
+  intent is reviewed before assembly. Paste apertures use the layer polygon
+  spatial index before exact via-opening intersection.
+- `minimum-paste-aperture`: warn when explicit paste layers contain apertures
+  whose minimum bounding dimension is below the configured minimum width.
+- `paste-aperture-spacing`: warn when apertures on an explicit paste layer are
+  closer than the configured minimum width, catching stencil bridge risk.
+  Aperture-neighbor selection uses a layer polygon spatial index before exact
+  offset/intersection review.
+- `paste-mask-alignment`: join explicit paste/copper and copper/mask pairs by
+  their shared copper layer and warn when paste extends outside the matching
+  solder mask opening. Mask-opening candidates use the layer polygon spatial
+  index before exact paste-minus-mask subtraction.
+- `exposed-copper`: intersect paired copper and solder mask opening geometry.
+  Mask-opening candidates use the layer polygon spatial index before exact
+  intersection review.
+- `solder-mask-opening-coverage`: subtract solder mask openings from paired
+  copper and report copper that would remain covered by mask. Mask-opening
+  candidates use the layer polygon spatial index before exact subtraction.
+- `solder-mask-opening-ratio-readiness`: compare paired solder-mask opening
+  area against each copper island and warn when the opening-to-copper ratio is
+  outside the configured range, giving NSMD/SMD and BGA mask-opening growth a
+  flattened-Gerber review gate.
+- `solder-mask-annular-ring-readiness`: expand each paired copper island by the
+  configured mask annular-ring relief and warn when nearby solder-mask openings
+  do not cover that process allowance. Mask-opening candidates use the layer
+  polygon spatial index before exact expanded-copper subtraction.
+- `solder-mask-expansion`: subtract copper expanded by the configured clearance
+  from paired solder mask openings and warn on excessive opening growth. Copper
+  candidates use the layer polygon spatial index before exact expanded-copper
+  subtraction.
+- `solder-mask-overlap-clearance`: expand paired solder mask openings by the
+  configured clearance, subtract the intentional opening, and warn on covered
+  copper in that vulnerable band. Mask-opening candidates use the layer polygon
+  spatial index before exact offset-ring intersection.
+- `solder-mask-board-edge-clearance`: warn when explicit mask-opening layers
+  fall outside the board outline eroded by the configured clearance.
+- `solder-mask-opening-spacing`: warn when openings on an explicit mask layer
+  are closer than the configured minimum mask bridge width. Opening-neighbor
+  selection uses the layer polygon spatial index before exact expanded-opening
+  intersection review.
+- `silkscreen-overlap`: intersect silkscreen with explicitly paired blocker
+  geometry such as copper, paste, or mask openings. Blocker candidates use the
+  layer polygon spatial index before exact intersection review.
+- `silkscreen-clearance`: expand explicitly paired blocker geometry by the
+  configured clearance and warn when silkscreen falls inside that clipping
+  region. Blocker candidates use the layer polygon spatial index before exact
+  expanded-blocker intersection review.
+- `silkscreen-board-edge-clearance`: warn when explicit silkscreen layers fall
+  outside the board outline eroded by the configured clearance.
+- `waiver-governance`: warn when waiver entries are underspecified. Scope
+  checks require at least one of `id`, `check`, `layers`, or `message_contains`;
+  metadata checks require non-empty `reason`, `owner`, `review_date`, `source`,
+  and `geometry_hash`; review dates must be valid ISO `YYYY-MM-DD` dates that
+  have not expired.
+- `silkscreen-min-width`: approximate thin silkscreen strokes and text geometry
+  by eroding and re-growing silkscreen with half the requested minimum width.
+- `silkscreen-text-height-readiness`: warn when disconnected silkscreen islands
+  have an apparent bounding height below the configured minimum text/marking
+  height, giving flattened Gerber legend and polarity marks a basic legibility
+  review gate even when source text semantics are unavailable.
+- `min-copper-neck`: approximate thin copper features by eroding and re-growing
+  copper with half the requested minimum width, then reporting removed geometry.
+- `solder-mask-sliver`: approximate thin solder mask webs by eroding and
+  re-growing mask geometry with half the requested minimum mask web width.
+- `minimum-mask-opening`: warn when explicit mask-opening layers contain
+  openings whose minimum bounding dimension is below the configured mask width.
+- `acid-trap`: report copper polygon vertices whose angle is below a configured
+  threshold. Board-context trace-junction candidates use a copper spatial index
+  before exact same-net overlap and angle review.
+- `layer-sanity`: report empty polygon geometry, missing bounds, malformed
+  contours, optional maximum-area excursions, tiny polygon islands at or below
+  the configured reportable-area threshold, skinny polygon islands below the
+  configured feature-width threshold, duplicate polygon islands within one
+  layer, and duplicate layer geometry that can indicate polarity, layer-role,
+  stale-output, or double-export problems.
+- `copper-balance`: compare selected Gerber copper layers or parsed KiCad
+  copper layers and warn when largest-to-smallest copper area exceeds a
+  configured ratio.
+- `mechanical-layer-geometry`: warn when polygon geometry appears on layers
+  whose names look mechanical, fabrication, ECO, margin, or user-defined.
+- `annular-ring`: compare KiCad plated drill diameter against nearby same-net
+  copper and report rings below the configured threshold.
+- `annular-ring-tolerance`: warn when a plated KiCad drill nominally passes the
+  configured annular ring but fails after subtracting the configured
+  registration tolerance.
+- `plating-intent`: warn when a KiCad NPTH drill has nearby copper or when a
+  plated drill has no nearby same-net pad or via copper. Copper candidates use
+  the shared spatial broad phase before exact net, pad/via kind, and center
+  distance review.
+- `routed-slot-readiness`: warn when KiCad non-plated mechanical drill
+  diameters are below the configured minimum width, as an initial routed cutter
+  manufacturability signal until exact routed-slot geometry is preserved.
+- `castellation-intent`: warn when a plated KiCad drill hole crosses the board
+  outline, so castellated-hole or plated-edge intent can be reviewed. Trace
+  output records plated-hole and exact outline-difference counts.
+- `castellation-hole-readiness`: warn when a plated KiCad drill hole crossing
+  the board outline is below the configured minimum castellation diameter. Trace
+  output records undersized plated-hole and exact outline-difference counts.
+- `via-in-pad-readiness`: warn when KiCad via copper overlaps a same-net pad on
+  the same layer, so fill, tenting, and paste treatment can be reviewed. Pad
+  candidates use the shared copper spatial index before exact CSG overlap.
+- `drill-to-copper-clearance`: offset KiCad and Excellon drill holes by a
+  configured clearance and intersect against other-net KiCad copper. Selected
+  copper now uses the shared spatial broad phase before exact keepout/copper CSG
+  intersection so sparse drill fields stay bounded. Trace output records broad
+  drill/copper candidates and exact keepout intersections.
+- `board-outline-drill-clearance`: offset KiCad and Excellon drill holes by
+  their radius plus the configured drill clearance and report keepout area that
+  is not contained by the KiCad board outline. Axis-aligned rectangular board
+  outlines use an analytic circle-containment fast path before exact CSG
+  difference so large inset drill tables stay bounded.
+- `drill-spacing`: compare KiCad and Excellon drill edge-to-edge clearance and
+  report holes closer than the configured drill clearance. Drill centers use a
+  spatial broad phase before exact edge-gap review so large sparse drill tables
+  avoid all-pairs scans. Trace output records broad candidate pairs and exact
+  edge-gap checks.
+- `drill-aspect-ratio`: compare finished board thickness against KiCad and
+  Excellon drill diameters and warn when the configured aspect-ratio limit is
+  exceeded.
+- `drill-table-consistency`: compare nearby KiCad, Excellon, and IPC-D-356
+  drill records and warn when sidecar drill diameters conflict. Cross-source
+  center matching uses spatial indexes before exact diameter-difference review,
+  with trace output separating KiCad/Excellon and Excellon/IPC-D-356 candidate
+  matches from exact diameter checks.
+- `excellon-readiness`: validate Excellon sidecars for unit declarations, tool
+  table integrity, unknown-tool/undefined-tool drill hits, and malformed hit
+  lines before downstream drill spacing and consistency checks consume geometry.
+  Batch readiness also reviews duplicate drill geometry, drill-diameter
+  outliers, unsupported unit-like declarations, and filename-declared
+  plated/non-plated split conflicts.
+- `copper-width-readiness`: warn when parsed KiCad copper features on selected
+  layers have a minimum bounding width below the configured threshold. Trace
+  output records selected and measured feature counts for sparse fixture triage.
+- `copper-net-intent`: warn when parsed KiCad copper still has no net after
+  native board parsing and IPC-D-356 annotation. Trace output records selected
+  feature and violation counts after layer filtering.
+- `teardrop-readiness`: warn when a narrow KiCad same-net segment enters a pad
+  or via on the same layer below the configured minimum width. Pad/via anchors
+  use the shared copper spatial index before exact segment-entry overlap.
+- `thermal-relief-readiness`: warn when KiCad same-net pad or via copper
+  intersects a copper zone on the same layer, so direct plane connections and
+  thermal-relief intent can be reviewed before fabrication. Same-net zones use
+  the shared copper spatial broad phase before exact intersection.
+- `plane-clearance-readiness`: warn when KiCad non-plated mechanical holes
+  intersect copper zones on selected layers, so antipad and pour-clearance
+  intent can be reviewed. Zone candidates use the shared copper spatial index
+  before exact drill-keepout overlap review.
+- `board-edge-exposure`: warn when parsed KiCad copper extends outside the
+  parsed board outline, so edge plating, castellations, and copper pullback can
+  be reviewed. Rectangular board outlines use shared analytic bounds checks to
+  skip interior copper before exact feature/outline CSG difference.
+- `high-speed-edge-readiness`: warn when likely high-speed KiCad copper is
+  inside the configured board-edge clearance band. Rectangular board outlines
+  use the shared strict edge-band bounds check before exact difference review.
+- `edge-copper-pullback-readiness`: warn when non-edge-intent copper intrudes into
+  the board-edge clearance band, catching accidental near-edge traces and
+  planes. Rectangular board outlines use the same shared edge-band bounds check
+  before exact difference and boundary-distance fallback.
+- `high-voltage-edge-readiness`: warn when likely high-voltage KiCad copper is
+  inside the configured board-edge clearance band. Rectangular board outlines
+  use the shared strict edge-band bounds check before exact difference review.
+- `edge-stitching-readiness`: warn when likely high-speed or RF/antenna copper is
+  near the board edge without nearby parsed ground stitch vias. Stitch-via
+  centers use a point spatial index before exact center-distance review.
+- `controlled-impedance-readiness`: warn when likely high-speed KiCad nets span
+  multiple selected copper layers without a parsed same-net via transition.
+- `differential-pair-readiness`: warn when likely differential-pair KiCad nets
+  are missing their mate or put pair sides on different selected copper layers.
+- `differential-pair-spacing-readiness`: warn when likely differential-pair
+  KiCad copper sides are farther apart than the configured review threshold.
+  Same-layer opposite-side candidates use the shared copper spatial broad phase
+  before exact boundary-distance review, with exact nearest-distance fallback
+  when no close side exists.
+- `differential-pair-width-readiness`: warn when inferred differential-pair
+  segments are below the width review threshold or have side-width imbalance.
+- `differential-pair-neckdown-readiness`: warn when inferred differential-pair
+  segments stay below the width threshold longer than the neck-down limit.
+- `differential-pair-skew-readiness`: warn when inferred differential-pair sides
+  have approximate parsed segment-length skew above the review threshold.
+- `differential-pair-via-proximity-readiness`: warn when an inferred
+  differential-pair layer-change via lacks a nearby opposite-side via.
+  Opposite-side via centers use a point spatial index before exact
+  center-distance review.
+- `differential-pair-via-return-readiness`: warn when inferred differential-pair
+  layer-change vias lack nearby parsed ground stitching vias. Ground-stitching
+  via centers use a point spatial index before exact center-distance review.
+- `differential-pair-via-symmetry-readiness`: warn when one side of a likely
+  differential pair has an asymmetric via count or via layer set.
+- `differential-pair-return-readiness`: warn when likely differential-pair
+  copper has no parsed same-layer ground copper inside the guard/return review
+  distance. Same-layer ground candidates use the shared copper spatial index
+  before exact guard-distance review.
+- `reference-plane-readiness`: warn when likely high-speed KiCad nets are
+  present without a parsed ground zone on selected copper layers. Trace output
+  records feature, net, selected-layer, and violation counts for fixture
+  triage.
+- `reference-plane-void-readiness`: warn when likely high-speed KiCad copper
+  does not overlap parsed ground-zone coverage on selected copper layers.
+  Ground-zone candidates use the shared copper spatial broad phase before exact
+  feature-minus-reference-plane subtraction.
+- `split-plane-crossing-readiness`: warn when likely high-speed KiCad segments
+  cross between separated same-layer ground-zone islands. Ground-zone candidates
+  use the shared copper spatial broad phase before exact distance and
+  feature-minus-ground review.
+- `return-path-proximity-readiness`: warn when likely high-speed KiCad segment
+  or pad copper is too far from parsed same-layer ground copper. Same-layer
+  ground candidates use the shared copper spatial index before exact
+  return-distance review.
+- `orphaned-zone-readiness`: warn when a KiCad copper zone has no parsed
+  same-net pad, via, or segment anchor within the configured net clearance.
+  Anchor candidates use the shared copper spatial broad phase before exact
+  zone-contact or boundary-distance review.
+- `same-net-island-readiness`: warn when one net appears as disconnected
+  copper islands on the same selected layer. Same-net connectivity uses the
+  shared copper spatial index before exact overlap/distance review.
+- `same-net-drill-break-readiness`: warn when non-plated KiCad or Excellon drill
+  keepouts cut through netted trace or zone copper. Routed copper candidates use
+  the shared spatial broad phase before exact CSG intersection.
+- `return-path-readiness`: warn when likely high-speed KiCad via transitions do
+  not have a parsed ground stitching via within the configured net clearance.
+  Ground-stitch centers use a point spatial index before exact center-distance
+  review.
+- `high-current-readiness`: warn when likely power KiCad nets span multiple
+  selected copper layers with fewer than two parsed same-net vias. Trace output
+  records likely high-current feature and net counts before applying the via
+  redundancy rule.
+- `power-via-array-readiness`: warn when likely power KiCad vias are isolated
+  from the rest of their same-net via array. Same-net via centers use a point
+  spatial index before exact pitch review.
+- `power-via-return-readiness`: warn when likely high-current KiCad vias have
+  no nearby parsed same-layer ground return copper. Ground-return candidates use
+  the shared copper spatial broad phase before exact boundary-distance review,
+  with broad candidate and exact return-distance counters in trace output.
+- `thermal-via-readiness`: warn when likely power or thermal KiCad zones have
+  too few parsed same-net vias. Same-layer via candidates use the shared copper
+  spatial broad phase before exact zone/via contact review.
+- `thermal-via-distribution-readiness`: warn when a likely thermal/power zone
+  has enough same-net vias by count, but their maximum spread is below the
+  configured heat-spreading review distance. Via-field spread is computed from
+  a convex-hull diameter pass instead of all-pairs via distances, and candidate
+  vias are bucketed before exact same-net zone anchoring.
+- `power-plane-readiness`: warn when likely power KiCad nets have no parsed
+  same-net copper zone on selected layers. Trace output records likely
+  high-current feature and net counts before zone-intent filtering.
+- `high-current-neck-readiness`: warn when likely power KiCad nets have copper
+  neck widths below the preferred power width. Trace output records selected,
+  high-current, and measured feature counts for sparse fixture triage.
+- `power-pad-entry-readiness`: warn when likely high-current pads lack local
+  same-net pour support, parallel vias, or a sufficiently wide entry segment.
+  Local support candidates use the shared copper spatial broad phase before
+  exact same-net distance review, with trace counters for broad supports and
+  exact support-distance checks.
+- `voltage-clearance-readiness`: warn when likely high-voltage KiCad nets are
+  close to different-net copper using an expanded net-clearance threshold.
+  Different-net candidates use the shared layer-aware grid before exact
+  clearance geometry review. Trace output records broad candidate and exact
+  clearance-pair counts.
+- `protective-earth-spacing-readiness`: warn when likely high-voltage KiCad
+  copper is close to protective earth, chassis, or shield copper. Protective
+  candidates are indexed by layer before exact PE/chassis clearance review, with
+  broad candidate and exact-pair counts in trace output.
+- `surge-protection-keepout-readiness`: warn when ordinary unrelated copper
+  crowds likely MOV, GDT, spark-gap, TVS, or fuse copper. Neighbor copper uses
+  the same grid broad phase before exact keepout review. Trace output separates
+  broad candidates from exact keepout pairs.
+- `sensitive-net-spacing-readiness`: warn when likely analog, RF, or sensor
+  KiCad nets are close to likely noisy power, switching, motor, or high-speed
+  nets. Noisy-net candidates use the shared layer-aware grid before exact
+  offset/intersection review, with exact-pair counts in trace output.
+- `sensitive-return-readiness`: warn when likely analog, RF, or sensor KiCad
+  nets have no parsed same-layer ground copper nearby. Ground candidates use an
+  indexed same-layer lookup before exact ground-touch review. Trace output
+  records broad ground candidates and exact guard checks.
+- `mixed-signal-partition-readiness`: warn when likely analog, RF, or sensor
+  copper is near likely digital/control copper without a nearby same-layer
+  ground guard. Digital and ground candidates are both grid-indexed before the
+  exact proximity and guard predicates run, and trace output separates digital
+  candidate, exact digital-pair, guard candidate, and exact guard-check counts.
+- `rf-keepout-readiness`: warn when likely RF or antenna KiCad nets are close
+  to non-ground copper on the same selected layer. Same-layer copper candidates
+  use the shared grid broad phase before exact offset/intersection review. Trace
+  output records broad candidate and exact-pair counts.
+- `antenna-copper-keepout-readiness`: warn when likely antenna KiCad nets have
+  any other same-layer copper, including ground copper, inside a stricter
+  copper-free-region review distance. It uses the same broad-phase grid to keep
+  sparse antenna/copper fields bounded, with exact-pair counts in trace output.
+- `rf-via-fence-readiness`: warn when likely RF or antenna KiCad copper has no
+  parsed same-layer ground via inside the configured via-fence review distance.
+  Ground-via lookup is indexed by layer before the center-distance check. Trace
+  output records candidate via and exact distance-check counts.
+- `chassis-stitching-readiness`: warn when likely chassis or shield KiCad nets
+  have no parsed ground stitching via nearby. Ground-stitch centers use a point
+  spatial index before exact bonding-distance review.
+- `gold-finger-readiness`: warn when likely gold-finger or edge-connector KiCad
+  nets contain via copper on selected layers. Trace output records selected
+  feature, inferred finger feature, and finger-via counts after layer filtering.
+- `gold-finger-edge-readiness`: warn when likely gold-finger copper is not near
+  the board edge where card-edge contacts and beveling are expected. Trace
+  output records selected, inferred finger, and measured feature counts after
+  outline and layer filtering.
+- `gold-finger-spacing-readiness`: warn when neighboring likely gold-finger
+  contacts are closer than the configured finger spacing. Contact candidates use
+  the shared copper spatial broad phase before exact spacing geometry review.
+- `gold-finger-drill-keepout-readiness`: warn when likely gold-finger copper
+  intersects KiCad or Excellon drill/mechanical keepouts. Drill keepout review
+  uses the same copper broad phase before exact keepout intersection.
+- `component-edge-clearance-readiness`: warn when parsed KiCad component pads
+  sit inside the configured board-edge assembly clearance band, skipping likely
+  edge connectors and fiducials. Simple rectangular board outlines now reject
+  clearly interior pad bounds before exact boundary-distance review, with trace
+  counters for skipped interior pads and exact edge checks.
+- `component-hole-clearance-readiness`: warn when parsed KiCad component pads
+  intersect a clearance band around non-plated KiCad or Excellon mechanical
+  holes, slots, screw holes, standoffs, or chassis keepouts. Pad candidates use
+  a grid lookup around each circular drill keepout before exact intersection
+  review, keeping large sparse mechanical/pad fields bounded. Trace output
+  records mechanical-hole, pad, bucket, candidate, and violation counts.
+- `component-spacing-readiness`: warn when large same-side KiCad pad proxies sit
+  closer than the configured assembly spacing, giving an initial component
+  courtyard/body clearance review signal before full courtyard parsing exists.
+  Dense pad fields use same-layer grid candidate generation before exact
+  polygon-distance review so large assemblies remain bounded. Trace output
+  records broad-phase candidate, exact-pair, and violation counts.
+- `connector-rework-clearance-readiness`: warn when likely connector pads have
+  neighboring non-same-net pads inside the configured hand-solder/rework
+  clearance band. Connector-neighbor selection uses same-layer grid candidate
+  generation before exact polygon-gap review so sparse connector-heavy boards do
+  not require every connector pad to compare against every other pad. Trace
+  output records connector, candidate, exact-pair, and violation counts.
+- `pad-pair-asymmetry-readiness`: warn when neighboring small pads on the same
+  layer have a large copper-area mismatch that can increase tombstoning or
+  passive placement risk. Candidate pad pairs use the same grid broad phase as
+  component spacing before area-ratio and exact gap checks. Trace output
+  records broad-phase candidate, exact measured, and violation counts.
+- `connector-return-path-readiness`: warn when likely connector edge-rate nets
+  sit near the board edge without nearby same-layer ground return copper. Ground
+  return candidates use the shared copper spatial index before exact same-layer
+  center-distance review.
+- `decoupling-proximity-readiness`: warn when likely power pads or vias have no
+  parsed same-layer ground copper nearby, giving decoupling loop-area and return
+  proximity an early review signal. Same-layer ground candidates use the shared
+  copper spatial index before exact center-distance review.
+- `esd-protection-readiness`: warn when likely edge connector nets sit near the
+  board edge without parsed ESD, chassis, or ground protection copper nearby.
+  Protection candidates use an indexed same-layer center-radius lookup. Trace
+  output records edge candidates, protection candidates, and exact protection
+  checks.
+- `esd-return-path-readiness`: warn when likely ESD, TVS, or transient clamp
+  copper has no nearby same-layer ground or chassis return copper. Ground and
+  chassis return candidates are indexed by layer before distance review, with
+  exact return-check counts exposed in trace output.
+- `switch-node-keepout-readiness`: warn when likely switching, boot, gate,
+  motor, or PWM nodes are close to non-ground neighboring copper on the same
+  selected layer. Same-layer neighbors use the shared copper spatial index
+  before exact offset/intersection review. Trace output records broad candidate
+  and exact keepout-pair counts.
+- `inductor-copper-keepout-readiness`: warn when likely inductor or switching
+  power nets have any other same-layer copper, including ground copper, inside a
+  stricter copper-free-region review distance. Sparse power-stage fields use the
+  same grid broad phase before exact copper-free-region review, with exact-pair
+  counts in trace output.
+- `testpoint-coverage-readiness`: warn when likely critical KiCad nets have no
+  matching IPC-D-356 test record, giving production test coverage an early
+  sidecar-driven review signal. Critical-net features are grouped by normalized
+  IPC-D-356 net name before reporting, and trace counters expose parsed points,
+  covered nets, required features, and missing-net counts for fixture smoke
+  runs.
+- `testpoint-accessibility-readiness`: warn when IPC-D-356 testpoints have no
+  parsed probe diameter, undersized probe diameter, tight probe-to-probe
+  spacing, insufficient board-edge fixture clearance, missing access-side
+  metadata, missing soldermask-access metadata, soldermask-covered access, or
+  contradictory SMD/both-side access hints, and when top/bottom IPC-D-356 access
+  conflicts with nearby same-net KiCad pad/via side. Dense probe spacing uses a
+  grid broad phase before exact edge-spacing review, and KiCad side-parity
+  copper uses the shared copper spatial index before exact net/side/distance
+  review so large fixture sidecars stay bounded during full check runs.
+- `testpoint-copper-clearance-readiness`: warn when an IPC-D-356 testpoint
+  probe keepout intersects unrelated selected KiCad copper, catching fixture
+  short and unreliable-contact review risks. Selected copper now uses the
+  shared copper spatial index before exact probe-keepout/copper CSG
+  intersection so sparse fixture/copper fields stay bounded. Trace output
+  records broad copper candidates and exact keepout-pair counts.
+- `tooling-hole-readiness`: warn when parsed KiCad or Excellon drill data has
+  fewer than two likely non-plated tooling holes, or when tooling candidates sit
+  inside the fixture edge-clearance review band. Drill candidates are filtered
+  by plating and finished diameter before exact outline-distance review, with
+  trace counters for sparse drill-table behavior.
+- `mouse-bite-readiness`: warn when likely small non-plated mouse-bite drills
+  have undersized diameters or nearest-neighbor spacing outside the expected
+  perforation range. Drill-center neighbors use a point spatial index before
+  exact spacing review so sparse routed-tab rows stay bounded.
+- `fiducial-readiness`: infer likely unnetted circular fiducial pads and warn
+  when populated copper sides have fewer than two or when candidates sit inside
+  the configured edge-clearance review band. Simple rectangular board outlines
+  reject clearly interior fiducial bounds before exact boundary-distance review,
+  and trace counters expose candidate, rejection, and exact edge-check counts.
+- `local-fiducial-readiness`: warn when dense fine-pitch pad clusters do not
+  have at least two likely local fiducials nearby on the same side. Fiducial
+  candidates use the layer-aware copper spatial index before exact center
+  distance review. Trace output separates broad fiducial candidates from exact
+  distance checks.
+- `fiducial-keepout-readiness`: warn when same-layer KiCad copper intrudes into
+  the configured optical keepout around likely fiducial targets. Blocker
+  selection uses a bounding-circle grid query before exact offset/intersection
+  review, keeping fiducial checks bounded on sparse assembly fields. Trace
+  output records broad blocker candidates and exact keepout pairs.
+- `dense-pad-escape-readiness`: warn when dense fine-pitch pad clusters have no
+  parsed nearby via escape, so BGA/QFN/fine-pitch breakout strategy is reviewed.
+  The same check path also reports `dense-pad-via-spacing-readiness` when
+  nearby vias are inside the configured pad/via spacing review threshold. Escape
+  and spacing via candidates use the shared broad phase before exact distance
+  and pad-clearance review. Dense pad/via spacing also indexes each dense pad
+  cluster before exact pad/via boundary-distance review.
+  `dense-pad-mask-bridge-readiness` now also reports dense pad clusters whose
+  nearest copper spacing is below the configured mask-web review threshold.
+  Mask-web pad candidates use the same copper spatial broad phase before exact
+  boundary-distance review. Trace output records broad via/fiducial/pad
+  candidates and exact distance or clearance checks for these dense-pad paths.
+- `selective-wave-solder-keepout-readiness`: warn when likely through-hole
+  solder process features sit too close to neighboring pads for wave/selective
+  solder pallet, solder-thief, or masking review. Neighbor pads are selected
+  through the same circular grid query used by mechanical-hole keepout review
+  before exact keepout intersection. Trace output records drill, pad, bucket,
+  candidate, exact-pair, and violation counts.
+- `press-fit-keepout-readiness`: warn when likely press-fit connector holes sit
+  too close to neighboring pads for insertion-tool and deformation-clearance
+  review. Press-fit drill candidates use the same grid broad phase so sparse
+  connector fields avoid all-pad scans, with candidate and exact-pair trace
+  counters exposed by the shared process-keepout helper.
+- `conformal-coating-keepout-readiness`: warn when likely contacts,
+  testpoints, or fiducials have neighboring pads inside a no-coat keepout band.
+  Neighboring pad candidates use the assembly feature grid before exact
+  keepout/pad intersection review. Trace output records no-coat feature, pad,
+  bucket, candidate, exact-pair, and violation counts.
+- `thermal-pad-via-readiness`: warn when large ground or power pads that look
+  like exposed thermal pads have no parsed same-net via in pad. Same-layer vias
+  use the shared copper spatial broad phase before exact pad/via intersection.
+  Trace output records candidate-via and exact same-net via-intersection counts.
+- `thermal-copper-area-readiness`: warn when likely heat or power pads, vias, or
+  traces have no parsed same-net copper zone nearby for heat spreading and
+  current return. Same-net zones use the shared layer-aware center-radius index
+  before the heat-spreading support decision.
+- `hot-component-spacing-readiness`: warn when likely hot pads or zones sit close
+  to neighboring non-ground copper, calling out derating and placement review.
+  Neighbor candidates are grid-indexed before exact spacing geometry review, and
+  trace output separates broad-phase candidates from exact spacing pairs.
+- `thermal-mechanical-keepout-readiness`: warn when likely hot copper sits inside
+  the keepout around non-plated mechanical holes, standoffs, screws, chassis, or
+  heatsink clearance features. Hot-feature candidates use the shared broad phase
+  before exact circular keepout intersection. Trace output records candidate and
+  exact keepout-intersection pair counts.
+- `mounting-hole-grounding-readiness`: warn when likely large non-plated
+  mounting holes have no parsed nearby ground or chassis copper, so chassis
+  bonding versus isolation intent is explicit before release. Ground/chassis
+  candidates use the shared copper spatial index before exact center-distance
+  review, and trace output separates broad candidates from distance checks.
+- `mounting-hole-copper-keepout-readiness`: warn when non-ground copper enters a
+  circular keepout around likely large non-plated mounting holes, catching screw,
+  washer, standoff, and chassis-clearance review gaps. Candidate copper uses the
+  shared copper spatial index before exact keepout overlap review. Trace output
+  records broad candidate and exact keepout-pair counts.
+- `mounting-hole-edge-clearance-readiness`: warn when a likely mounting-hole
+  screw/washer keepout extends beyond the parsed board outline. Rectangular
+  outlines skip exact CSG difference for holes whose circular keepout is fully
+  contained by the board rectangle.
+- `mounting-hole-plating-intent-readiness`: warn when a large plated
+  mounting-style hole lacks a parsed ground/chassis net or nearby bonding
+  copper. Bonding-copper candidates use the shared copper spatial index before
+  exact center-distance review, with broad and exact distance counters in trace
+  output.
+- `mounting-hole-distribution-readiness`: warn when parsed hardware-style holes
+  are single-point or clustered below the mounting distribution review spacing.
+- `mounting-hole-spacing-readiness`: warn when likely hardware-hole edge-to-edge
+  spacing is below the configured mechanical review spacing. Hardware-hole
+  candidates use the drill spatial broad phase before exact edge-gap review.
+  Trace output records spatial candidate and exact edge-spacing pair counts.
+- `panel-feature-outline-readiness`: warn when parsed KiCad panel, route,
+  V-score, tab, or rail graphics have no board outline for registration or sit
+  farther from the outline than the panel-feature review distance. Trace output
+  records parsed panel-feature and exact outline-distance counts so decorative
+  mechanical artwork and true panelization geometry can be triaged separately.
+- `edge-plating-intent-readiness`: warn when selected KiCad copper reaches or
+  crosses the board outline in a way that should be paired with explicit
+  edge-plating, castellation, bevel, or copper-pullback fabrication intent.
+  Rectangular outlines use an AABB edge-proximity classifier before falling back
+  to exact boundary distance for general outlines.
+- `castellation-pitch-readiness`: warn when plated edge-hole candidates have
+  edge-to-edge spacing below the configured castellation pitch review distance.
+  Rectangular board outlines use an analytic circle-to-edge classifier; general
+  outlines fall back to exact outline boundary distance. Plated edge-hole
+  candidates are then spatially indexed before exact pitch review, with broad
+  candidate and exact edge-spacing pair counters in trace output.
+- `different-net-spacing`: offset same-layer KiCad copper features by a
+  configured clearance and report different-net proximity. Same-layer copper
+  candidates use the shared spatial broad phase before exact offset/intersection
+  review so large sparse routed fields avoid all-pairs CSG.
+- `layer-registration-tolerance`: compare KiCad copper layers with an offset
+  tolerance to identify features vulnerable to registration shifts. Cross-layer
+  feature pairs use the shared spatial broad phase before exact
+  offset/intersection review, keeping sparse layer stacks bounded.
+- `panelization-clearance`: check copper against KiCad panel graphics, KiCad
+  NPTH drills, and Excellon drill hits. Copper/blocker pairs use an AABB broad
+  phase before exact intersection or boundary-distance review.
+- `ipc356-coverage`: warn when IPC-D-356 electrical test records do not have
+  nearby parsed KiCad copper. Test-record and copper centers use a spatial
+  index before exact tolerance matching.
+- `ipc356-drill-diameter`: warn when IPC-D-356 drill diameter records conflict
+  with nearby parsed KiCad drill diameters. Drill centers are indexed before
+  exact diameter comparison, and IPC-D-356 drill diameter recovery only applies
+  to nearby parsed drills.
+- `stackup-readiness`: compare configured copper-layer count, copper layer
+  names, copper weights, finished thickness, and dielectric/core/prepreg
+  thickness metadata against parsed KiCad copper layers.
+- `net-constraint-readiness`: apply exact-name, wildcard, inherited, and
+  rectangular region-scoped net classes for minimum width, current-carrying
+  width, clearance, voltage-clearance, layer-count, via-count, reference-plane,
+  and impedance-control handoff review.
+- `file-manifest-readiness`: warn when a Gerber package is missing recognizable
+  copper, board outline, drill data, or matching solder mask layers, and warn on
+  duplicate core manufacturing roles. It now also:
+  - flags missing or duplicate BOM, centroid, fab-drawing, assembly-drawing, and
+    readme artifacts, plus netlist and rout-drawing artifacts, using named
+    `package_profile` defaults (`full-production`, `fabrication-only`,
+    `assembly-only`, or `electrical-test`) plus configurable
+    `required_artifacts` overrides so workflows can differ without losing
+    duplicate detection;
+  - flags missing same-side solder mask, solder paste, and silkscreen companion
+    layers whenever matching copper layers are detected, using the same
+    `package_profile` defaults plus configurable `required_layers` overrides
+    for partial handoffs;
+  - validates duplicated companion roles;
+  - flags orphaned side outputs, inner copper without both outer copper layers,
+    odd recognized copper layer counts, one-copper packages that also contain
+    opposite-side outputs, paste outputs without a same-side solder mask
+    companion, and Gerber filenames whose side tokens conflict with their
+    inferred role;
+  - checks Gerber-recognized copper layer counts against KiCad-declared copper
+    layer counts and optional order-declared layer-count metadata;
+  - warns when filenames appear to mix project/job names, revision tags, or
+    generated-date tags across Gerbers and package artifacts;
+  - warns when generated-date tags are older than the current freshness window
+    or later than the run date, with the freshness window configurable from the
+    rule deck or CLI; and
+  - warns when package filenames include stale/archive tokens such as backup,
+    old, previous, or obsolete.
+- `production-artifact-readiness`: validate common BOM, centroid, netlist,
+  README, fabrication drawing, assembly drawing, and rout drawing sidecars for
+  required headers, BOM quantity/refdes agreement, duplicate reference
+  designators, malformed placement coordinates/rotations, invalid side values,
+  duplicate pin/net assignments, reference parity between
+  purchase/placement/netlist artifacts, missing README revision/manufacturing
+  notes, BOM compliance/traceability/source-control evidence for sensitive
+  rows, package-level polarity/pin-1 and MSL handling handoffs, polarized
+  same-package orientation consistency, centroid placement
+  unit/origin/rotation-convention handoff, non-empty drawing files, common
+  drawing extensions, and role-specific drawing filename tokens.
+
+## Supported Inputs
+
+- Gerber RS-274X through `csgrs` `gerber-io`.
+- Gerber directories, converter-produced Gerber directories, and ZIP/TAR/TGZ
+  package archives. Archive inputs are extracted into a temporary workspace and
+  recursively discovered before flowing through the same layer and sidecar
+  pipeline. Converter backends shell out to TransJLC to normalize common EDA
+  Gerber packages into JLCEDA/JLCPCB-style Gerber names, or to KiCad CLI to
+  export Gerber, Excellon drill, IPC-D-356, DRC JSON, position/centroid, and
+  optional DXF/SVG/PDF review drawing plus IPC-2581, ODB++, STEP, GLB, PLY, and
+  statistics handoff files from `.kicad_pcb` sources, before loading generated
+  files through the same layer and sidecar pipelines.
+- KiCad `.kicad_pcb` S-expression files for common board objects: nets, pads,
+  oval, trapezoid, rounded-rectangle, and chamfered roundrect pads, oval/rectangular drill
+  declarations with offset drill centers, common custom pad primitives
+  including explicit unfilled rectangle/circle/polygon strokes, arc and Bezier
+  strokes plus text bounding proxies, board-declared copper layer expansion for
+  `"*.Cu"` pad/via/footprint-graphics wildcards, copper-layer footprint
+  graphics including Bezier/curve aliases, tracks, vias, zones, `Edge.Cuts`
+  lines/arcs/rectangles/circles/polygons/Bezier strokes, panel graphics, and
+  both legacy `(width ...)` and newer `(stroke (width ...))` graphical width
+  declarations.
+- Excellon drill files with common `METRIC`/`INCH` tool definitions and drill
+  hit coordinates, `M48`/`%`/`M30` program-structure markers, `M71`/`M72` unit
+  commands, unit-declaration summary counters, tool-table summary counters,
+  unsupported unit-like declaration diagnostics, routed-command summary counters, drill-hit and drill-geometry summary counters, and
+  filename-derived PTH/NPTH plating intent for sidecar drill features.
+- IPC-D-356 electrical test netlists with common test records. Parsed records can
+  annotate nearby KiCad copper and drills by net name, and common loose metadata
+  tokens can carry access-side, feature-type, and soldermask hints into
+  testpoint-accessibility checks. Report-level record-code and metadata-summary
+  counts now preserve recognized `317`/`327`/`367` test-record evidence,
+  access-side coverage, feature-class coverage, soldermask-access coverage, and
+  net-name, reference/pin, diameter-field, coordinate-envelope, and parser
+  issue-category coverage for future dialect-specific validation.
+
+## Remaining Checks Requiring Deeper Inputs
+
+- Full KiCad custom pad primitive semantics, especially subtractive primitive
+  booleans and glyph-accurate text rendering beyond the currently approximated
+  roundrect/chamfered pad outlines, custom pad fill/stroke
+  rectangle/circle/polygon handling, custom pad arc/Bezier/text primitives, and
+  copper-layer footprint graphics and board/panel polygons.
+- Broader IPC-D-356 fixed-column field semantics, plus deeper cross-checks that
+  combine parsed record-code counts, metadata-summary coverage, per-point
+  access-side, feature-type, soldermask flags, net-name summaries,
+  reference/pin summaries, diameter-field summaries, and parser issue summaries
+  with explicit fixture declarations and mask-opening geometry.
+- ODB++ or IPC-2581 ingestion for richer manufacturing stackup and fabrication
+  rules.
+- Fabricator-specific rule decks, class-based constraints, and board stackup
+  tolerances.
+
+## Research-Derived Readiness Backlog
+
+The backlog below combines PCB fabricator DRC/DFM guidance, KiCad preflight
+concepts, and assembly-oriented DFA review items. Each item should eventually
+have one failing fixture, one passing fixture, and a rule-deck configuration
+example before it is considered production-ready.
+
+### Data Model and Rule Deck Foundations
+
+- Unit model: preserve source units, normalize internal distances, and report
+  both source and normalized units. Avoid comparing mil/mm thresholds against
+  untagged parser output.
+- Board stackup model: layer count, copper weight, dielectric/core/prepreg
+  thickness, material family, surface finish, soldermask process/color, target
+  IPC class, fabricator profile, and initial fabrication capability threshold
+  libraries are implemented for readiness review, including laminate dielectric
+  constant, loss tangent, Tg metadata/range checks, and first-pass
+  single-ended outer-layer microstrip and centered stripline impedance estimates
+  for complete stackups. Remaining stackup work:
+  asymmetric-stripline/coupled/coplanar/vendor-tuned impedance solving and
+  richer vendor-specific capability decks.
+- Net-class model: exact-name and simple wildcard net-class config is
+  implemented for minimum width, current-carrying width, minimum clearance,
+  voltage-class clearance, maximum layer count, minimum via-count,
+  maximum via-count, explicit differential-pair side/spacing rules,
+  approximate parsed copper length/skew limits, reference-plane intent, and
+  inherited class defaults with optional rectangular region scopes, plus
+  impedance-control target/tolerance metadata review and first-pass
+  single-ended outer-layer microstrip and centered stripline target comparison
+  when stackup data supports it. Clearance checks now use the shared copper
+  spatial broad phase before exact geometry distance, and configured
+  differential-pair spacing uses the same broad phase before exact side-to-side
+  polygon distance. Multi-parent inheritance reports conflicting inherited
+  scalar defaults while preserving first-parent precedence.
+  Remaining net-class work: true routed pair length/skew extraction, actual
+  asymmetric-stripline/coupled/coplanar impedance solving, polygonal/named board
+  region models beyond rectangular class scopes.
+- Manufacturing capability profiles: initial `prototype-fab`, `standard-fab`,
+  `advanced-fab`, vendor-style JLCPCB, PCBWay, and Eurocircuits service classes,
+  and custom JSON threshold decks are implemented for stackup review, including
+  optional material-property windows. Profiles can separate hard minimum/maximum
+  bounds, preferred service bounds, and cost-escalation review thresholds.
+- Assembly profile: prototype SMT, production SMT, double-sided SMT,
+  fixture-focused, hand-assembly, selective-solder, wave-solder, press-fit, and
+  conformal-coating threshold profiles are implemented for component clearance,
+  connector rework, testpoint access, tooling, mouse-bite, fiducial, and
+  dense-pad escape checks plus process-specific solder, press-fit, and coating
+  keepout checks. Initial artifact checks also infer dense, array, and
+  fine-pitch BOM rows and require release notes to carry reflow-profile or
+  oven-recipe handoff language. Remaining profile work: richer
+  process-specific keepout geometry.
+- Mechanical model: routed outline, V-score lines, mouse bites, tabs, slots,
+  cutouts, countersinks, castellations, plated edges, bevels, tooling holes,
+  fiducials, keepout zones, stiffeners, and enclosure constraints. Initial KiCad
+  checks now review likely large NPTH mounting holes for nearby ground/chassis
+  bonding evidence, non-ground copper keepout intrusion, edge clearance, plating
+  intent, and hole-field distribution. Distribution span uses convex-hull
+  reduction and rotating calipers before comparing the review threshold.
+- BOM/position model: component outlines, package classes, rotations, heights,
+  polarity marks, fiducials, centroid files, assembly-side data, and alternate
+  parts.
+- File manifest model: expected copper/mask/paste/silk/drill/fab/drawing files,
+  BOM/centroid/netlist/readme/assembly/rout artifacts, generated timestamp, source
+  EDA, board revision, order parameters, and declared layer count. Initial role
+  inference
+  and missing/duplicate core-file checks are implemented by
+  `file-manifest-readiness`, including named package profiles and configurable
+  production-artifact and layer-role requirements.
+
+### Fabrication Geometry Checks
+
+- Minimum copper feature width by layer, copper weight, and service class.
+  Initial KiCad checks warn when selected copper features have a minimum
+  bounding width below the configured threshold.
+- Copper spacing matrix: trace-to-trace, trace-to-pad, trace-to-via,
+  pad-to-pad, pad-to-via, via-to-via, copper-to-hole, copper-to-slot,
+  copper-to-cutout, and copper-to-board-edge.
+- Voltage-aware clearance: compare net voltage classes against internal,
+  external-coated, external-uncoated, slot, and creepage/clearance rules.
+  Initial KiCad checks warn when likely high-voltage nets are close to
+  different-net copper using an expanded net-clearance threshold. Config-driven
+  net classes can also set explicit `min_voltage_clearance` values that are
+  applied to same-layer different-net copper.
+- Annular ring with tolerance: compute nominal, worst-case drill-wander, and
+  registration-adjusted ring for vias, component holes, press-fit holes, and
+  plated slots. Initial KiCad checks warn when nominal annular ring passes but
+  the registration-adjusted ring fails the configured minimum.
+- Drill aspect ratio: board thickness divided by finished drill diameter, with
+  separate thresholds for standard through holes, microvias, blind vias, buried
+  vias, and backdrills. Initial through-hole style checks are implemented for
+  KiCad and Excellon drill features with configurable board thickness and
+  maximum aspect ratio.
+- Drill table consistency: compare Excellon tools, KiCad drill declarations,
+  IPC-D-356 drill data, fabrication drawing notes, and order metadata. Initial
+  sidecar consistency checks compare nearby KiCad/Excellon and Excellon/IPC-D-
+  356 drill records.
+- Plated versus non-plated intent: detect copper pads around NPTH holes,
+  missing pad stacks around PTH holes, ambiguous slot plating, and NPTH copper
+  clearance violations. Initial KiCad checks warn on NPTH drills with nearby
+  copper and plated drills without nearby same-net pad or via copper.
+- Routed slot geometry: exact obround/rectangular slot outlines, slot width,
+  slot end radius, slot-to-copper spacing, slot-to-slot spacing, and minimum
+  routed cutter diameter. Initial KiCad checks warn when non-plated mechanical
+  drill diameters are below the configured minimum width.
+- Board outline validity: duplicate outlines, nested cutouts, outline-to-hole
+  tolerance, and router-access validation.
+  Initial outline-fragment checks warn when the parsed outline has multiple
+  disconnected regions. Initial outline self-intersection, duplicate, nesting,
+  and notch checks report self-crossing contours, duplicate/nested contours, and
+  sharp router-bottleneck corners.
+- Copper balance: layer copper area, local copper density, plane void islands,
+  sparse inner layers, high copper imbalance across the stack, and bow/twist
+  risk flags. Initial layer-area imbalance checks are implemented for KiCad
+  copper layers and explicitly selected Gerber copper layers. Initial
+  `local-copper-density-readiness` windows now warn when one copper layer is
+  locally dense while another selected copper layer is sparse in the same
+  region, and the local window check is independently selectable from
+  `copper-balance` for release profiles that want separate global and local
+  copper-density gates.
+- Isolated copper: floating copper islands, unconnected pours, orphaned zone
+  remnants, and copper slivers below etchable area. Initial KiCad net-intent
+  checks warn on parsed copper that remains unnetted after optional IPC-D-356
+  annotation, and warn when a parsed zone has no same-net pad, via, or segment
+  anchor within the configured net clearance. They also warn when a single net
+  appears as disconnected copper islands on the same selected layer.
+- Acid traps: acute polygon vertices, acute trace junctions, narrow wedge voids,
+  and trapped etchant pockets inside plane pours. Initial polygon-vertex checks
+  are implemented for flattened copper, and `acid-trap-trace-junction` now
+  warns on acute same-net KiCad segment junctions before segment identity is
+  lost in layer flattening. Trace-junction candidate pairs use a spatial broad
+  phase before exact same-net overlap and angle review. Polygon-level and
+  trace-junction acid-trap checks are independently selectable so board-context
+  junction review can be enabled without changing flattened Gerber checks.
+- Teardrop recommendations: narrow trace-to-pad and trace-to-via junctions below
+  a configured width or annular-ring margin. Initial KiCad checks warn when
+  narrow same-net segment geometry enters pads or vias.
+- Thermal relief: starved thermals, missing thermal spokes where required,
+  excessive spoke width for solderability, asymmetric reliefs, and direct plane
+  connections on hand-soldered through-hole pads. Initial KiCad checks warn
+  when same-net pads or vias intersect copper zones so the plane connection
+  style can be reviewed.
+- Plane clearances: antipad size on inner layers, missing clearance pads for
+  through-hole pins, copper pour clearance around mechanical holes, and shorts
+  from insufficient antipads. Initial KiCad checks warn when non-plated
+  mechanical holes intersect copper zones on selected layers.
+- Mounting-hole and chassis readiness: screw/washer/standoff copper keepouts,
+  explicit chassis bonding, intentional isolation, enclosure clearance, and
+  large NPTH classification. Initial KiCad checks infer likely large non-plated
+  mounting holes and warn when they lack nearby ground/chassis copper or when
+  non-ground copper enters the configured keepout region. They also warn when
+  mounting-hole keepouts breach the board outline, when large plated
+  mounting-style holes lack ground/chassis bonding evidence, and when parsed
+  hardware-style holes are single-point, clustered, or too tightly spaced
+  edge-to-edge.
+- Board edge exposure: exposed copper at routed edges, unintentional edge
+  plating, copper too close to V-score, copper too close to tab routes, and
+  missing edge-plating declarations when copper intentionally reaches an edge.
+  Initial KiCad checks warn when copper geometry extends outside the parsed
+  board outline, and warn when likely high-speed or high-voltage copper enters
+  the configured board-edge clearance band. Initial mechanical checks also warn
+  when selected copper reaches or crosses the board outline in a way that should
+  be paired with edge-plating, castellation, bevel, or copper-pullback release
+  intent.
+- Gold fingers: finger width/spacing, bevel keepout, mask opening, plating
+  finish requirement, no vias/text/silk/paste on fingers, and consistent finger
+  length. Initial KiCad checks warn when likely gold-finger or edge-connector
+  nets contain via copper, when likely finger copper is away from the board
+  edge, when finger spacing is tight, and when finger copper intersects drill or
+  mechanical keepouts.
+- Castellations and half holes: minimum hole diameter, annular ring, edge
+  registration, plating intent, pad pitch, and copper pullback around routed
+  board edge. Initial KiCad checks warn when plated drill holes cross the board
+  outline, warn when those crossing plated holes are below the configured
+  minimum diameter, and now warn when neighboring plated edge-hole candidates
+  have tight edge-to-edge spacing below the castellation pitch review distance.
+- High-current copper: trace width, neck-down length, via array current sharing,
+  copper pour bottlenecks, thermal vias, and connector/pad current-density
+  warnings. Initial KiCad checks warn when likely power nets change layers with
+  fewer than two parsed same-net vias, and warn when likely power-net copper
+  necks fall below the preferred power width, and warn when those likely power
+  nets have no parsed same-net copper zone on selected layers. They also warn
+  when likely power vias are isolated from the rest of their same-net via array,
+  when likely high-current vias lack nearby same-layer ground return copper,
+  when likely high-current pads have weak local entry copper, and when likely
+  power or thermal zones have too few same-net vias.
+- Controlled impedance readiness: impedance-rule presence, stackup completeness,
+  reference-plane continuity, coplanar ground spacing, return-path voids, and
+  layer-change via stitching. Initial KiCad checks warn when likely high-speed
+  nets span multiple selected copper layers without a parsed same-net via
+  transition, and warn when likely high-speed via transitions lack a nearby
+  parsed ground stitching via. They also warn when likely high-speed nets are
+  present without a parsed ground zone on selected copper layers, and when
+  likely high-speed copper does not overlap parsed ground-zone coverage.
+  Config-driven net classes can require reference-plane and impedance-control
+  handoff metadata, including target impedance and tolerance values, for exact
+  nets or wildcard groups. When stackup data is complete, they also compare
+  parsed outer-layer single-ended traces against a first-pass microstrip
+  estimate and centered inner-layer single-ended traces against a first-pass
+  stripline estimate.
+- Differential pair constraints: exact configured net classes can declare
+  `differential_pair`, `differential_role`, pair spacing bounds, and pair-skew
+  limits. Initial
+  checks verify both sides are present, side layer sets agree, and same-layer
+  copper spacing is inside the configured range. KiCad geometry checks also warn
+  when pair-side copper lacks nearby same-layer ground copper for guard/return
+  intent. Configured length/skew checks use parsed segment exterior-edge
+  estimates; full routed length/skew extraction is still future work.
+
+### Solder Mask, Paste, and Finish Checks
+
+- Solder mask expansion: mask opening larger than copper pad by the selected
+  process margin; flag mask-on-pad and excessive exposure. Initial paired
+  copper/mask checks warn when openings exceed the configured clearance around
+  copper and when opening-to-copper area ratios fall outside the configured
+  mask-definition review range.
+- Solder mask web/sliver: residual mask dam width between pads, vias, and
+  openings; classify by mask process and color where known. Initial explicit
+  mask-layer checks warn when neighboring openings leave less than the
+  configured mask bridge width, and paired copper/mask checks now warn when the
+  opening does not provide the configured mask annular-ring relief around copper.
+- Mask overlap clearance: copper track or plane too close to mask opening to
+  remain reliably covered. Initial paired copper/mask checks warn when covered
+  copper falls within the configured mask-opening clearance band.
+- Minimum mask opening: openings too small to resolve in the selected mask
+  process. Initial explicit mask-layer checks flag openings whose minimum
+  bounding dimension is below the configured mask width.
+- Mask-to-board-edge behavior: required pullback near routed edges, V-scores,
+  panel tabs, and specified exposed-edge areas. Initial explicit mask-layer
+  checks warn when openings violate the configured board-edge clearance.
+- Via tenting/filling: vias under components, exposed vias in pads, tented-via
+  intent versus mask openings, plugged/capped/fill requirements, and mismatch
+  between design and order notes. Initial KiCad checks warn when same-net via
+  copper overlaps pad copper on the same layer.
+- BGA mask rules: NSMD/SMD consistency, mask bridge width, opening ratio, escape
+  via proximity, dogbone geometry, and via-in-pad treatment. Initial explicit
+  copper/mask layer checks warn on out-of-range opening-to-copper area ratios,
+  while dense-pad board-context checks cover bridge and via spacing proxies.
+- Paste reduction/expansion: paste aperture area ratio versus copper, per-pad
+  paste overrides, excessive paste on thermal pads, and missing paste on SMD
+  pads. Initial paired-layer island ratio checks are implemented with
+  configurable minimum and maximum paste-to-copper area ratios, thermal-pad
+  windowpane review, and neighboring-pad paste imbalance review.
+- Stencil manufacturability: aperture minimum width, aperture area ratio,
+  aspect ratio, home-plate apertures, windowpane thermal pads, fine-pitch bridge
+  risk, and tombstoning imbalance on two-terminal parts. Initial explicit paste
+  layer checks flag apertures whose minimum bounding dimension is below the
+  configured minimum width, apertures whose spacing is below that width, and
+  apertures with high aspect ratio or low estimated area ratio for the
+  configured stencil thickness.
+- Paste-to-mask/copper alignment: paste outside mask opening, paste outside pad,
+  paste over vias, paste bridging between adjacent pads, and paste aperture
+  slivers below stencil process capability. Initial explicit triple checks warn
+  when paste extends outside the solder mask opening associated with the same
+  copper layer, and KiCad-plus-paste checks warn when paste overlaps parsed via
+  openings.
+- Surface finish compatibility: ENIG/ENEPIG/hard gold/HASL constraints for
+  fine-pitch, press-fit, gold fingers, wire bonding, and high-voltage creepage.
+  Initial README/order-note checks warn when edge contacts lack hard/electrolytic
+  gold or ENEPIG intent, when HASL is paired with fine-pitch or array-package
+  assembly language, and when press-fit or wire-bond language lacks compatible
+  surface-finish context.
+
+### Silkscreen, Legend, and Marking Checks
+
+- Legend line width and text height by fabrication capability. Initial
+  flattened-layer checks warn on thin silkscreen strokes and on disconnected
+  legend/marking islands below the configured apparent text-height threshold.
+- Silkscreen overlap with exposed copper, mask openings, paste, vias, holes,
+  slots, board edges, V-score, tab routes, and gold fingers. Initial explicit
+  silkscreen plus board-outline clearance checks are implemented.
+- Silkscreen clipping risk: legend too close to mask cutbacks or pads where the
+  fabricator will clip text fragments. Initial explicit silkscreen/blocker
+  pairs warn when legend geometry falls within the configured clearance.
+- Bottom-side mirroring and side intent for silkscreen text.
+- Polarity and pin-1 indicators present and visible for polarized parts,
+  connectors, ICs, diodes, LEDs, electrolytics, and batteries. Initial
+  production artifact checks infer likely polarized rows from refdes/package
+  text and require README orientation-review language plus an assembly drawing
+  artifact for visible pin-1/polarity marks.
+- Reference designator completeness, duplicate refdes detection, refdes outside
+  board outline, unreadable refdes, and assembly drawing consistency. Initial
+  production artifact checks flag duplicate BOM/centroid references and
+  BOM/centroid/netlist reference mismatches.
+- Fabrication marking checks: date code, UL mark, impedance coupon label,
+  serialization, revision text, and customer-required markings in allowed zones.
+  Initial README checks require a fabrication drawing artifact and explicit
+  allowed-zone, label-location, silkscreen/legend-location, or fab-drawing
+  marking callout language when release notes request those markings.
+- Fiducial label and keepout clarity: global/local fiducials not covered by
+  silk, mask, copper clutter, or components.
+
+### Assembly and DFA Checks
+
+- Component-to-component clearance using courtyard, body, and height data.
+  Initial KiCad checks now warn when large same-side pad proxies sit closer than
+  the configured assembly spacing, which is a conservative review signal until
+  true courtyard/body geometry is modeled. Initial BOM/README checks also
+  require tall populated components to have mechanical-height/keepout handoff
+  language and an assembly drawing artifact.
+- Component-to-board-edge clearance for pick-and-place, depanelization, clamps,
+  rework, and hand soldering. Initial KiCad checks warn when parsed component
+  pads sit inside the board-edge assembly clearance band. The threshold is now
+  resolved through `assembly_profile` and `assembly` rule-deck overrides.
+- Component-to-hole/slot/mechanical clearance for screws, standoffs, chassis,
+  keepout volumes, and connector mating envelopes. Initial KiCad/Excellon checks
+  warn when component pads intersect the configured non-plated mechanical-hole
+  clearance band. The threshold is now resolved through `assembly_profile` and
+  `assembly` rule-deck overrides.
+- Orientation consistency for polarized packages and same-package arrays.
+  Initial production artifact checks group likely polarized references by BOM
+  value/footprint and warn when the centroid places the group at multiple
+  rotations.
+- Tombstoning risk: asymmetric pad sizes, thermal imbalance, paste imbalance,
+  copper imbalance, and unequal trace connections on small passives. Initial
+  KiCad checks warn when neighboring small pads have asymmetric copper area, and
+  explicit paste checks warn when neighboring pad paste ratios are imbalanced.
+- Fine-pitch bridging risk: pad pitch, paste aperture spacing, mask dam absence,
+  and soldermask-defined/NSMD mismatch.
+- QFN/DFN thermal pad rules: paste windowpane, via-in-pad fill/tent intent,
+  solder voiding risk, and exposed pad copper balance. Initial KiCad checks warn
+  when large likely thermal pads have no parsed same-net via in pad, and initial
+  BOM/README checks require reflow-profile handoff language for dense packages.
+- BGA assembly risk: pitch class, escape route feasibility, dogbone via size,
+  microvia requirements, soldermask web, inspection accessibility, and X-ray
+  requirement flag. Initial KiCad checks warn when dense fine-pitch pad clusters
+  have no parsed nearby escape via, and BOM/README checks require X-ray, AOI, or
+  inspection handoff notes for likely BGA/CSP/LGA rows.
+- Connector/rework access: soldering iron access, cable insertion direction,
+  latch clearance, mating height, and keepout zones. Initial KiCad checks warn
+  when likely connector pads have tight neighboring pads that may block rework
+  access.
+- Test point readiness: minimum probe diameter, soldermask opening, net
+  coverage, side accessibility, spacing, height clearance, and no soldermask or
+  silkscreen obstruction. Initial KiCad/IPC-D-356 checks warn when likely
+  critical nets have no matching IPC-D-356 test record, and warn on IPC-D-356
+  testpoint diameter, spacing, edge-clearance, missing/covered soldermask access,
+  missing or contradictory access-side fixture-access risks, and access-side
+  hints that disagree with nearby same-net KiCad pad/via side. They now also
+  warn when an IPC-D-356 probe keepout intersects unrelated selected KiCad
+  copper. IPC-D-356 net annotation, coverage, and drill-diameter cross-checks
+  use point/drill spatial indexes before exact tolerance matching. Probe
+  diameter, spacing, copper-clearance, and edge-clearance thresholds are
+  assembly-profile driven.
+- BOM, centroid, netlist, README, and drawing readiness: required columns,
+  manufacturer/supplier metadata, lifecycle/status review, broader lifecycle-risk
+  vocabulary, approved alternate coverage, same-as-primary alternate detection,
+  value/footprint coverage, optional unit-cost/price sanity, procurement
+  consistency across
+  manufacturer/supplier/lifecycle fields, placeholder release metadata,
+  semicolon- and whitespace-delimited sidecar tables, quantity/refdes agreement,
+  zero-quantity population intent, assembly/build variant handoff, grouped
+  reference expansion, DNP/DNI
+  placement parity handling, empty component/placement/netlist sidecars, unusual
+  reference designators, duplicate reference designators, conflicting MPN
+  value/footprint and procurement metadata,
+  polarity/MSL/component-height handoff metadata, tall-component height/keepout
+  README and assembly-drawing handoff, malformed placement coordinates,
+  unusually large placement coordinates, centroid/netlist
+  placeholder metadata, out-of-range rotations, invalid side values, duplicate
+  centroid coordinates,
+  duplicate pin-to-net assignments, repeated netlist rows, one-pin net review,
+  BOM/centroid assembly-side, value, footprint, and rotation parity, conflicting
+  centroid value/footprint/rotation metadata, release revision notes, drawing
+  role naming, text sidecar naming/extensions, drawing file size, placeholder
+  drawing detection, order-parameter intent, contradictory order notes including
+  conflicting finish, mask, thickness, copper-weight, and via-treatment values,
+  conflicting layer-count, coating, programming, and test-fixture values,
+  panel/rout drawing parity, BOM/centroid double-sided assembly handoff evidence,
+  BOM-driven through-hole solder, BGA/CSP/LGA inspection, polarized pin-1/
+  polarity drawing and README handoff, polarized same-package centroid rotation
+  consistency, dense-package reflow-profile handoff, tall-component
+  height/keepout handoff, low-standoff flux-cleanliness handoff,
+  press-fit process/fab/assembly drawing handoff, programmable-device handoff
+  evidence, firmware traceability, programming method, functional-test
+  acceptance criteria, serialization/barcode handoff, fabrication marking-zone
+  drawing parity, packaging/ESD/moisture notes, release preflight evidence,
+  surface-finish compatibility notes for edge contacts, fine-pitch packages,
+  press-fit hardware, and wire bonding,
+  selective/wave solder and conformal-coating process notes,
+  fab/assembly drawing parity for special fabrication and assembly handoffs,
+  release revision/date consistency, DNP/DNI placement conflicts, and package
+  parity between purchase, placement, and netlist files. Initial CSV/TSV,
+  semicolon/whitespace table, common JSON array/object table extraction,
+  XLS/XLSX/XLSM/XLSB/ODS first-populated-sheet extraction, text, and
+  path/metadata checks are implemented by
+  `production-artifact-readiness`.
+- Fiducials: global/local count, symmetry, copper diameter, mask opening,
+  keepout, edge clearance, and side coverage. Initial KiCad checks infer likely
+  unnetted circular fiducial pads and warn on low count or edge-clearance risk,
+  warn when same-layer copper intrudes into the fiducial optical keepout, and
+  warn when dense fine-pitch pad clusters have too few nearby local fiducials.
+- Panel fiducials/tooling: panel-level fiducials, tooling holes, rails, bad-board
+  marks, breakaway tabs, mouse bite hole size/spacing, and V-score residual web.
+  Initial KiCad/Excellon checks warn when likely non-plated tooling holes are
+  missing or too close to the board edge for fixture access, and when likely
+  mouse-bite drills have suspect diameter or spacing.
+- Double-sided assembly: heavy parts on second side, reflow shadowing, adhesive
+  requirements, and through-hole/wave conflicts. Initial artifact checks require
+  README handoff evidence and an assembly drawing when centroid data or release
+  notes indicate bottom-side placements.
+- Selective or wave solder readiness: component side, solder thieves, keepouts,
+  orientation, shadowing, and thermal relief around through-hole pins. Initial
+  README checks require selective/wave process notes when through-hole, wave, or
+  selective assembly is mentioned, and BOM-driven checks require process handoff
+  when populated rows look through-hole or hand-soldered. Initial KiCad geometry
+  checks now flag neighboring pads inside keepout bands around likely
+  through-hole solder features.
+- Press-fit readiness: compliant-pin finished-hole tolerance, insertion force,
+  push-out force, insertion tooling, support fixtures, and drawing handoff.
+  Initial BOM/README checks infer press-fit/compliant-pin rows and require
+  process-control language plus fabrication and assembly drawing artifacts.
+- Wire-bond and chip-on-board readiness: bondable surface finish, pad plating,
+  die attach, bond map, loop height, pull-test criteria, and drawing handoff.
+  Initial BOM/README checks infer likely wire-bond, bare-die, and
+  chip-on-board rows and require process-control language plus fabrication and
+  assembly drawing artifacts.
+- Moisture/cleanliness/coating: conformal coating keepouts, no-clean flux risk
+  under low-standoff packages, and unmasked test pads in coated areas. Initial
+  BOM/README checks require MSL metadata for likely moisture-sensitive packages
+  and package-level README dry-pack/bake/desiccant/humidity-card handling notes,
+  low-standoff no-clean flux/cleanliness/residue/ionic-contamination handoff
+  notes, plus coating keepout/cleanliness notes when conformal coating is
+  mentioned; KiCad geometry checks now flag neighboring pads inside no-coat
+  feature keepout bands.
+
+### Electrical and Functional Validation Checks
+
+- Netlist parity: schematic-to-PCB net consistency, missing nets, extra copper
+  islands, unconnected pads, and intentional no-connect handling.
+- Same-net continuity: broken traces, missing zone refill, unstitched plane
+  islands, disconnected thermal spokes, and trace severed by holes or slots.
+  Initial KiCad checks warn when a net appears as disconnected copper islands
+  on the same selected layer and when non-plated drill/slot keepouts intersect
+  netted routed copper as a pre-test continuity risk. Drill-break keepout CSG is
+  constructed lazily after the copper spatial broad phase returns a nearby
+  routed candidate, so sparse drill tables do not pay exact geometry cost.
+- Different-net shorts: copper overlap with net awareness, inner-layer antipad
+  shorts, drill breakout shorts, and paste/mask-induced assembly short risk.
+  Initial KiCad checks now flag same-layer copper overlap between different
+  named nets as a pre-test isolation risk.
+- Differential pairs: pair membership, skew, intra-pair spacing, width,
+  neck-downs, pair-to-pair spacing, layer-change symmetry, and reference plane
+  continuity. Initial KiCad checks infer common pair suffixes and warn when one
+  side is missing, the pair sides occupy different selected copper layers, or
+  the nearest parsed pair-side spacing exceeds the configured review threshold,
+  when approximate parsed segment widths fall below the review threshold or pair
+  sides are width-imbalanced, when a narrow parsed segment exceeds the neck-down
+  length limit, when approximate parsed segment-length skew exceeds the review
+  threshold, when layer-change vias are not physically paired or lack nearby
+  ground stitching vias, when separate inferred pairs run inside the pair-to-pair
+  spacing review threshold, and when pair-side copper lacks nearby same-layer
+  ground guard/return copper. Pair-to-pair spacing now uses the shared copper
+  spatial broad phase before exact boundary-distance review so sparse
+  differential fields stay bounded.
+- High-speed return paths: reference-plane void crossings, split-plane
+  crossings, missing stitching vias at layer changes, and loop-area excursions.
+  Initial KiCad checks warn on likely high-speed copper outside parsed
+  ground-zone coverage, likely high-speed segments crossing separated ground
+  islands, likely high-speed copper too far from same-layer ground return, and
+  likely high-speed vias without nearby ground stitching.
+- Power integrity: decoupling capacitor proximity/orientation, plane neck-downs,
+  via count per rail, high-current bottlenecks, and starved regulator thermal
+  pads. Initial KiCad checks warn on likely power nets without same-net copper
+  zones, narrow power copper, sparse layer-change vias, isolated via-array
+  members, and power pads or vias without nearby same-layer ground return copper.
+  Thermal via count and thermal-via distribution are independently selectable
+  readiness gates so release profiles can distinguish absolute via starvation
+  from uneven heat-spreading coverage.
+- Analog/digital/RF segregation: region keepouts, noisy-net proximity, guard
+  traces, via fences, antenna keepouts, and copper-free regions under inductors
+  or antennas. Initial KiCad checks warn when likely analog, RF, or sensor nets
+  run close to likely noisy power, switching, motor, or high-speed nets; when
+  those sensitive nets lack nearby same-layer ground copper; when likely analog,
+  RF, or sensor copper runs near digital/control copper without a nearby ground
+  guard; when likely RF or antenna nets are close to non-ground copper; when
+  likely antenna nets have same-layer copper inside a stricter copper-free-region
+  review distance; and when likely RF or antenna copper lacks a nearby same-layer
+  ground via fence.
+  Initial power-converter checks also expose switch-node keepout and inductor
+  copper-free-region review as separate gates, so noisy-node clearance and
+  inductor body copper policy can be tuned independently.
+- ESD/safety: creepage and clearance by voltage class, slot barriers, spark-gap
+  geometry, protective earth spacing, fuse/MOV keepouts, and high-voltage
+  silkscreen warnings. Initial KiCad checks warn when likely high-voltage nets
+  are close to other nets, close to protective earth/chassis copper, or enter
+  the board-edge clearance band, and when likely edge connector nets lack
+  nearby ESD/chassis/ground protection copper or likely TVS/ESD clamp copper
+  lacks nearby same-layer ground/chassis return. ESD protection proximity and
+  ESD return-path loop review are independently selectable checks. They also
+  warn when ordinary unrelated copper crowds likely MOV, GDT, spark-gap, TVS,
+  or fuse copper.
+  Configured net classes can now carry explicit voltage-clearance requirements.
+- Thermal validation: thermal via arrays, copper area under heat-generating
+  parts, thermal relief versus heat spreading, hot component spacing, and
+  heatsink/mechanical keepouts. Initial KiCad checks warn when likely thermal
+  pads lack via-in-pad support, when likely power or thermal zones have too few
+  vias or a clustered via field, when likely heat or power features lack nearby
+  same-net copper zone area, when likely hot features crowd neighboring
+  non-ground copper, and when hot copper enters non-plated mechanical-hole
+  keepouts. Initial BOM/README checks infer likely heat-dissipating rows such
+  as exposed-pad regulators, power modules, high-power LEDs, MOSFETs, and
+  heatsinked assemblies and require thermal validation language plus an assembly
+  drawing artifact for heatsink, airflow, keepout, or thermal-interface review.
+- EMC readiness: edge-rate nets near board edge, connector return pins, chassis
+  stitching, ground moat mistakes, cable shield connection intent, switching-node
+  copper keepouts, and loop antenna risk. Initial KiCad checks warn when likely
+  chassis or shield nets lack nearby parsed ground stitching vias, when likely
+  connector edge-rate nets sit near the board edge without nearby same-layer
+  ground return copper, when likely switching nodes are close to non-ground
+  neighboring copper, and when likely inductor or switch-node copper has any
+  same-layer copper inside a stricter copper-free-region review distance.
+
+### Manufacturing File and Pre-Production Workflow Checks
+
+- File completeness: expected copper, soldermask, paste, silkscreen, drill,
+  rout, fab drawing, assembly drawing, centroid, BOM, netlist, and readme files.
+  `--gerber-dir` now discovers common drill, IPC-D-356, BOM, centroid, netlist,
+  README, fabrication drawing, assembly drawing, and rout/panel sidecars in the
+  same package directory and preserves them in report provenance. Required
+  sidecars are configurable with `required_artifacts`, and required layer roles
+  are configurable with `required_layers`.
+- Layer count parity: declared order layer count, stackup, Gerber set, KiCad
+  stackup, and filename conventions agree. Initial manifest checks now compare
+  conservative filename layer-count tags such as `4layer` or `4L` with the
+  recognized Gerber copper-role count and report conflicting filename tags.
+- Layer role inference: Gerber X2 attributes, file extensions, JLC-style names,
+  KiCad names, and explicit CLI role overrides resolve to a coherent stack.
+  Initial filename side-token conflict checks are implemented in
+  `file-manifest-readiness`; it now prefers Gerber X2 `.FileFunction`
+  attributes when present so opaque filenames can still satisfy copper,
+  soldermask, paste, silkscreen, and profile/outline package requirements.
+  Parser diagnostics also validate the consumed `.FileFunction` role forms so
+  copper layers carry layer/side fields and side-specific companion layers carry
+  top/bottom side evidence. Manifest readiness now warns when only part of a
+  Gerber set carries `.FileFunction` role evidence.
+- Polarity and mirroring: negative planes, bottom-layer mirroring, text
+  orientation, drill origin, and coordinate origin consistency. Initial Gerber
+  X2 `.FilePolarity=Negative` detection now warns when a recognized copper
+  layer uses negative image polarity and needs CAM review, and manifest
+  readiness reports partial FilePolarity evidence plus mixed copper polarity
+  evidence across X2-attributed copper layers. X2 `.Part` now
+  reports partial or mixed single-board, array, fabrication-panel, coupon, or
+  other package intent across Gerber layers. Initial X2
+  `.SameCoordinates` handling now reports partial alignment evidence and mixed
+  alignment identifiers across a Gerber package. X2 `.CreationDate` now feeds
+  mixed/stale/future generated-output review for opaque filenames, and X2
+  `.GenerationSoftware`/`.ProjectId` report partial or mixed output and
+  project/revision provenance evidence. X2 `.MD5` values are parsed and
+  syntax-validated, and manifest checks report partial checksum-evidence
+  coverage across Gerber layers.
+- Drill file checks: plated/non-plated split, duplicate drill files, missing
+  tools, unsupported units/zeros, route slots versus drill hits, program
+  structure markers, unit-declaration summaries, tool-table summaries,
+  routed-command summaries, drill-hit summaries, drill-geometry summaries, and tool diameter outliers. Initial implementation now covers missing/duplicate tools,
+  `METRIC`/`INCH` plus `M71`/`M72` units, unsupported unit-like declarations,
+  tool-unit sequencing, explicit zero-suppression declarations, unresolved tool
+  hits, malformed coordinate records, routed-slot command diagnostics, and
+  duplicate drill-geometry, drill-diameter outlier detection, and
+  filename-declared plated/non-plated split conflict detection via
+  `excellon-readiness`.
+- Gerber sanity: empty layers, tiny aperture flashes, unbounded fills, huge
+  areas, malformed regions, duplicate layers, stale plot files, and mixed
+  revisions. Initial layer sanity now reports empty/unbounded/malformed layers,
+  area excursions, tiny aperture-flash candidates, hairline/sliver islands, and
+  duplicate islands within one layer as well as effectively duplicate geometry
+  across the checked layer set. Structured Gerber parser diagnostics now also
+  preserve standard `%ADD...*%` aperture definitions and `Dnn` aperture-use
+  evidence, then report malformed, duplicate, conflicting, or undefined D-code
+  usage before geometry loading hides the original aperture-table evidence.
+  Interpolation mode changes from `G01`/`G02`/`G03` and quadrant mode changes
+  from `G74`/`G75` are preserved alongside raw `D01`/`D02`/`D03`
+  coordinate-operation evidence so line/arc/move/flash semantics remain visible
+  after geometry flattening. `%TD...*%` attribute-delete commands are preserved
+  as parser evidence for future object-scope lifetime checks. Image transform
+  commands from `%LM/%LR/%LS` are preserved so mirror/rotation/scale state
+  remains visible after geometry flattening. Image polarity changes from `%LP...*%` are also
+  preserved so clear-polarity geometry remains visible in parser evidence after
+  flattened geometry loses the command stream. Region-mode transitions from
+  `G36*`/`G37*` are preserved with nested, unmatched-end, and
+  unterminated-region diagnostics before filled contours are flattened into
+  polygons. Step-and-repeat transitions from
+  `%SR...*%` are preserved with malformed, nested, unmatched-end, and
+  unterminated-repeat diagnostics before repeated geometry loses its command
+  provenance. Aperture macro definitions from `%AM...*%` are preserved with
+  malformed, duplicate, and conflicting-definition diagnostics so custom
+  aperture templates remain visible before `%ADD` expansion and geometry
+  flattening. Manifest readiness now warns when Gerber image unit or
+  coordinate-format declarations are mixed across layers, or when only part of a
+  package declares them.
+- Order-parameter parity: board thickness, copper weight, soldermask color,
+  surface finish, impedance, castellations, edge plating, via fill, controlled
+  depth, and panelization options match file content.
+- Revision consistency: board revision appears consistently in fab drawing,
+  silkscreen, README, filename, BOM, placement file, and source metadata.
+  Initial manifest checks compare recognizable project/job prefixes, revision
+  tags, and generated-date tags across Gerber and sidecar filenames and warn on
+  stale/archive filename tokens. They also flag generated-date tags that are
+  stale or later than the current run date, using configurable freshness days.
+- Preflight sequence: refill zones, run EDA DRC/ERC, generate fresh fabrication
+  outputs, reload outputs into independent viewer/parser, run HyperDRC, generate
+  overlay artifacts, review waiver diff, and archive exact submitted package.
+  Initial README artifact checks now require overlay-artifact evidence and
+  waiver/baseline diff review language alongside the earlier DRC/ERC, zone
+  refill, output generation, viewer reload, HyperDRC, waiver review, and archive
+  evidence.
+- Waiver governance: require reason, owner, expiry/review date, source link,
+  unchanged geometry hash, and non-expired ISO review dates for production
+  waivers.
+- CI gating: fail on errors, warn on fabricator-cost escalations, attach SVG and
+  GeoJSON artifacts, compare active findings against a saved baseline, and block
+  stale generated outputs. Initial generated-date freshness warnings are
+  implemented in `file-manifest-readiness` and can be tuned by
+  `generated_date_stale_days` or `--generated-date-stale-days`.
+- Engineering review packet: checklist summary, stackup, rule deck, plots,
+  DRC/ERC reports, BOM/centroid checks, and open manufacturing questions.
+  Initial production artifact checks now validate those evidence categories when
+  a README claims an engineering, manufacturing, release, or design review
+  packet is present.
+
+### Data Sources to Consider Next
+
+- Gerber image setup and X2/X3 attributes for units, coordinate format, layer
+  role, net, component, and aperture intent. Initial parser evidence now covers
+  `%MO...*%`, `%FS...*%`, `%LP...*%`, `%ADD...*%`, `.AperFunction`, `.N`,
+  `.C`, and `.P` attributes with structured diagnostics for common malformed
+  declarations.
+- Additional IPC-D-356 dialect fields and cross-source validation of parsed
+  record-code counts, access-side, feature-type, soldermask, net-name, and
+  drill-diameter fields.
+- KiCad board setup: net classes, constraints, custom DRC rules, stackup,
+  differential pair settings, pad properties, via properties, zones, component
+  footprints, 3D/body boxes, and fabrication output settings.
+- Pick-and-place and BOM files for assembly-side, package, refdes, value,
+  population, rotation, and centroid consistency.
+- Fabrication and assembly drawings, parsed initially as metadata sidecars or
+  structured JSON notes.
+- ODB++ or IPC-2581 for richer stackup, components, nets, drill spans, materials,
+  and manufacturing intents.
+
+## Test Ideas From Fabrication DRC Guidance
+
+Fabrication-facing guidance from PCBWay, JLCPCB, Eurocircuits, KiCad, Sierra
+Circuits, and other DFM references should be turned into small synthetic
+Gerber/KiCad fixtures with one clear violation and one matching non-violation.
+
+### Existing-check regression fixtures
+
+- Implemented in unit tests: 3 mil minimum trace-width violation coverage, 6 mil
+  preferred trace pass coverage,
+  KiCad via annular-ring fail/pass coverage, pad-to-via, via-to-via,
+  trace-to-trace, trace-to-pad, trace-to-via, hole-to-trace, hole-to-hole,
+  conservative slot-to-slot, and slot-like drill-to-trace spacing coverage,
+  acute same-net KiCad trace-junction acid-trap coverage,
+  0.20 mm board-edge trace
+  clearance, pad-crossing-outline coverage, oversized solder-mask opening
+  coverage, undersized/missing paste and solder-mask opening coverage,
+  solder-mask opening-ratio and annular-ring relief coverage,
+  silkscreen-over-pad/blocker and silkscreen-over-V-score coverage, thin
+  silkscreen stroke and text-height coverage,
+  Excellon/NPTH-style panel drill clearance coverage, tab-route, V-score,
+  castellated, and edge-plating panel-layer recognition coverage, same-net
+  plated drill clearance suppression, same-net NPTH drill-to-trace clearance
+  coverage, layer-sanity empty/bounds/area coverage,
+  layer-registration tolerance coverage, IPC-D-356 missing-copper coverage, and
+  IPC-D-356 drill net/diameter recovery and conflict coverage, KiCad
+  oval/rectangular drill parsing coverage, no-input rejection coverage, missing
+  Gerber/KiCad/Excellon/IPC-D-356 file coverage, and mechanical/user layer
+  geometry, board-outline sanity, duplicate explicit layer-pair rejection, and
+  duplicate explicit layer-role validation coverage, including
+  all-layers-as-silkscreen rejection and board-outline versus explicit
+  copper/mask/silkscreen role conflict rejection.
+- Remaining spacing refinements: add exact routed slot-to-slot and plated-slot
+  fixtures once slots preserve exact routed geometry and plated-slot semantics.
+- Remaining drill/open-circuit fixtures: add through-hole containment fixtures
+  where a drill cuts through a same-net trace so future open-circuit logic has
+  expected behavior captured.
+- Remaining paste and mask opening geometry: add per-pad paste exemptions once
+  KiCad pad attributes are preserved through rule checks.
+- Remaining silkscreen manufacturability: add fixtures for mirrored bottom
+  silkscreen and slot geometry drawn on silkscreen once silkscreen side/text
+  semantics are modeled.
+- Remaining panelization features: add richer plated-half-hole and edge-plating
+  copper treatment once side-plating semantics are modeled separately from
+  generic panel graphics.
+- Remaining layer sanity and file completeness: add CLI/app-level fixtures for
+  missing layer-order metadata and ambiguous one-layer versus two-layer inputs.
+- Remaining IPC-D-356 coverage: add more fixed-column dialect variants and
+  cross-check parsed access-side, feature-type, and soldermask flags against
+  KiCad pad side, explicit soldermask openings, and fixture-side declarations.
+
+### Future-rule fixture backlog
+
+- Power and ground trace sizing: fixtures with named power nets whose trace
+  widths differ from a configured per-net or net-class minimum.
+- Differential pair and critical signal constraints: fixtures for pair length
+  mismatch, intra-pair spacing violations, missing/insufficient guard traces,
+  and asymmetric-stripline/coupled/coplanar impedance targets beyond the current
+  stackup/net-class microstrip/centered-stripline and differential-pair spacing
+  checks.
+- Region separation rules: fixtures that intentionally mix analog/digital,
+  input/output, high-frequency/low-frequency, or high-power/low-power placement
+  zones, plus follow-on fixtures for named or polygonal regions beyond the
+  current rectangular net-class scopes.
+- Gold fingers and beveling: fixtures for no gold-finger design despite order
+  metadata, missing mask opening on fingers, copper/text on fingers, and bevel
+  keepout violations.
+- BGA-specific checks: initial fixtures cover via escape, pad/via spacing at
+  dense pitch, and copper-derived solder-mask bridge risk. Remaining fixtures
+  should add BGA pad opening examples once explicit mask openings are available.
+- NPTH and slot semantics: fixtures that distinguish cutouts, round holes,
+  oval slots, rectangle slots, NPTH holes, plated slots, and route slots drawn on
+  the wrong layer.
+- Soldermask process fixtures: LDI versus conventional/PI mask examples with
+  different minimum web, mask annular ring, and mask-overlap clearances.
+- Voltage clearance fixtures: same geometry passing at low voltage and failing
+  at high voltage, with internal/external layer variants and optional coating.
+- Aspect-ratio fixtures: board thickness and drill diameter combinations that
+  pass/fail standard via, microvia, blind via, and through-hole limits.
+- Copper-balance fixtures: large pour imbalance is covered, and initial local
+  density fixtures cover dense copper regions near sparse opposite-side
+  geometry. Remaining fixtures should add isolated local density islands on
+  larger multi-window boards.
+- Board-outline fixtures: unordered outlines, self-crossing outlines, duplicate
+  outlines, tiny route notches, nested cutouts, and route slots touching copper.
+- File-package fixtures: stale generated Gerber files, missing paste/mask/drill
+  files, mismatched declared layer count, duplicate layers, mixed units, and
+  mismatched revision strings.
+- DFA fixtures: component courtyard collisions, component too close to edge,
+  missing global fiducials, testpoint spacing failures, QFN thermal pad paste
+  overfill, and via-in-pad without fill/cap metadata.
+- Electrical-readiness fixtures: missing zone refill, unconnected copper island,
+  split-plane crossing, differential-pair skew, missing return stitching via,
+  and high-current bottleneck.
+
+## Implemented Reporting
+
+- Stable violation IDs derived from check name, layer names, island index, and
+  rounded coordinates.
+- Text, JSON, JSON Lines, GeoJSON, SARIF, GitHub Actions annotation, HTML, and
+  JUnit XML output.
+- SVG violation overlays for quick local or CI artifact review.
+- Severity on each violation.
+- Structured parser diagnostics separated from active DRC violations. Excellon
+  reports contribute unit/tool/coordinate diagnostics and IPC-D-356 reports
+  contribute malformed recognized-record diagnostics plus recognized
+  `317`/`327`/`367` record-code counts. Initial Gerber metadata
+  diagnostics now report missing, duplicate, conflicting, or structurally
+  non-standard X2 file attributes used by manifest role, provenance, and
+  alignment checks, plus common malformed Gerber `%MO...*%`/`%FS...*%` image
+  setup, `G01`/`G02`/`G03` interpolation, `G74`/`G75` quadrant mode,
+  `%LP...*%` image polarity, `G36*`/`G37*` region mode, `%SR...*%`
+  step-and-repeat, `%AM...*%` aperture macros, `%ADD...*%` aperture definitions, undefined `Dnn` aperture selections, X2/X3
+  `.AperFunction`, net-name `.N`, component-refdes `.C`, and component-pin `.P`
+  intent forms.
+- Structured JSON input manifest entries with adapter, role, path,
+  conversion-origin provenance, and Gerber source/normalized unit context when
+  declared.
+- JSON waiver files that suppress findings by ID, check name, layers, or message
+  text, with governance warnings for incomplete, malformed, or expired
+  production-review metadata. `waiver-governance` is a default and explicitly
+  selectable readiness check; governance findings are appended after waiver
+  matching so a waiver file cannot suppress warnings about itself. Waived
+  finding details are retained in the report model for review sinks while active
+  finding counts and CI gates continue to use non-waived findings.
+- Compact JSON CI summaries with error, warning, waiver, and per-check counts.
+- Gerber violation overlays for direct review in board or CAM viewers. The
+  initial `--gerber-overlay` sink emits active finding polygons as RS-274X
+  regions and point-only findings as circular flashes in millimeter units.
+  The `--gerber-keepout-overlay` sink emits a separate generated Gerber keepout
+  review layer with larger point markers.
+- Excellon-style marker overlays for drill-map review. The `--excellon-overlay`
+  sink emits active finding locations as review drill hits and polygon-only
+  findings as approximate center markers.
+- DXF violation overlays for CAD and mechanical review. The `--dxf-overlay`
+  sink emits active finding polygon rings as closed lightweight polylines and
+  point-only findings as circles.
+- PDF violation overlays for document-centric review packets. The
+  `--pdf-overlay` sink emits a single-page PDF with active finding polygons and
+  circular point markers.
+- JSON rule configuration with CLI overrides for clearance thresholds, area
+  thresholds, and KiCad copper layer selection.
+
+## Reporting Roadmap
+
+- Parser diagnostics have expanded beyond Excellon, IPC-D-356, and initial
+  Gerber image setup/X2 metadata into broader Gerber image syntax, KiCad CLI DRC
+  JSON, BOM/centroid/netlist table parsing, and converter adapter output
+  manifests. Spreadsheet diagnostics now flag formula cells, defined names,
+  VBA/macro projects, hidden sheets, non-worksheet sheets, multiple populated
+  sheets, empty sheets, explicit BOM/centroid/netlist sheet selection,
+  same-header multi-sheet row merging, merged regions, native Excel tables, custom number
+  formats, cell styles, conditional formatting, data validations, autofilters,
+  cell error values, hyperlinks, comments, drawing objects, embedded media, and
+  charts, pivot tables, and date/time conversion caveats.
+  Remaining work: diagnostics from a future typed/lossless native KiCad parser
+  and deeper workbook extraction beyond sidecar-readiness diagnostics. Nested
+  JSON sidecar dialects are now searched recursively for common table arrays and
+  nested object cells are flattened into dotted column names.
+
+## Input Roadmap
+
+- Infer layer roles from file extensions and X2 attributes. The app now fills
+  missing board-outline, copper, mask, silkscreen, paste-pair, mask-pair, and
+  silkscreen/blocker selections from standard Gerber extensions, KiCad-style
+  layer names, common package names, and X2 `.FileFunction` values. Explicit CLI
+  layer-role flags remain authoritative for ambiguous packages.
+- Accept explicit layer-role flags for ambiguous files. Initial flags are present
+  for board outline, copper, paste/copper pairs, copper/mask pairs, and
+  silkscreen/blocker pairs.
+- Expand the implemented assembly, stackup, and net-class project config
+  sections with package-specific assembly classes, length, routed via-span,
+  impedance-target, material property ranges, and fabrication-class threshold
+  constraints.
+- Add IPC-356 netlist ingestion so copper overlap can distinguish intended from
+  unintended coupling. IPC-D-356 point nets now classify Gerber copper-overlap
+  findings as same-net review warnings versus missing/mixed-net overlap errors.
+- Add IPC-2581 and ODB++ importers if licensing and available crate support make
+  that practical.
+- Preserve Gerber units and report normalized units explicitly. Initial parser
+  evidence now preserves `%MO...*%` units and `%FS...*%` coordinate format for
+  loaded Gerber layers, reports malformed or repeated setup commands as
+  structured parser diagnostics, and feeds package-level mixed/partial
+  unit-format warnings through `file-manifest-readiness`.
+
+## IO Sources and Sinks Roadmap
+
+The project should treat IO as a set of adapters around a shared internal board
+and layer model. Direct Rust crates are preferable for deterministic CI behavior,
+but command-line adapters are still valuable when an EDA tool already provides a
+well-maintained exporter.
+
+### Highest-Value Sources
+
+- KiCad native files via `kiutils-rs` or `kiutils_kicad`: replace or augment the
+  hand-rolled KiCad parser with a typed, lossless KiCad API. Useful inputs:
+  `.kicad_pcb`, `.kicad_pro`, `.kicad_dru`, `.kicad_sch`, `.kicad_mod`,
+  symbol/footprint library tables, and worksheet/title-block files. This would
+  unlock native net classes, custom DRC rules, stackup, title/revision data,
+  footprint metadata, pad properties, and schematic/PCB parity checks.
+- KiCad CLI as a conversion/check backend: initial `--converter kicad-cli`
+  support shells out to `kicad-cli pcb export gerbers` and
+  `kicad-cli pcb export drill --format excellon` for `.kicad_pcb` inputs, and
+  also writes a CSV `positions.pos` file with `kicad-cli pcb export pos` and an
+  IPC-D-356 sidecar with `kicad-cli pcb export ipcd356`. KiCad CLI DRC is
+  captured with `kicad-cli pcb drc --format json`, and report entries are
+  surfaced as HyperDRC diagnostics. It tracks the generated Gerber directory as
+  converted provenance and recursively discovers converted drill, IPC-D-356, and
+  centroid sidecars so Excellon, drill-readiness, electrical-test, placement,
+  and artifact checks can consume them. Optional `--kicad-cli-review-exports`
+  support writes DXF, SVG, and PDF drawing sidecars through KiCad CLI for
+  fabrication/assembly review checks. Optional `--kicad-cli-handoff-exports`
+  support writes IPC-2581, ODB++, STEP, GLB, PLY, and JSON statistics handoff
+  files. IPC-2581 XML, GenCAD text, boundary-scan, flying-probe, AOI/ICT,
+  ODB++ package outputs, KiCad JSON statistics, STEP/STEPZ files, and mesh
+  handoff outputs are discovered as manufacturing handoff sidecars. IPC-2581,
+  GenCAD, KiCad statistics JSON, STEP text, mechanical mesh files, and
+  test/inspection reports get lightweight parser-evidence diagnostics, including
+  common KiCad statistics layer, track, via, zone, and filled-zone key evidence,
+  while ODB++ is preserved as provenance until a full importer is practical.
+  This is the fastest path to high fidelity for formats that KiCad already owns.
+- Gerber X2/X3 and Gerber job files through `gerber_parser` / `gerber-types`:
+  mine attributes for layer role, net/component metadata, file function,
+  polarity, aperture intent, board profile, drill map, and job-level manifest
+  data. Keep `csgrs` for geometry if it remains best for boolean operations,
+  but use parser-level metadata to reduce manual layer-role flags.
+- Gerber package libraries through Gerbonara as an optional Python adapter:
+  useful for robust folder-level file-role inference across real-world CAD
+  packages from KiCad, Altium, Eagle, Allegro, gEDA, Fritzing, PADS, and
+  Target3001. Rust can drive this through a command-line or Python subprocess
+  bridge if direct Rust coverage is insufficient.
+- GenCAD sidecars: obvious GenCAD filenames/extensions are discovered as
+  manufacturing handoff sidecars, and lightweight section diagnostics summarize
+  board, component, part, signal, route, and test/fixture sections plus basic
+  component, part, signal, route, and testpoint record counts, unique
+  component/part/signal/testpoint IDs, and coordinate-bearing records. Remaining
+  work: replace this evidence pass with a full `gencad`-crate-backed importer
+  for geometry, package, net, route, and fixture semantics.
+- DXF/DWG mechanical data via `dxf` or `acadrust`: DXF/DXB/DWG/ACIS/SAT
+  fabrication, assembly, and rout/panel sidecars are discovered by filename role.
+  DXF text drawings get lightweight section/entity parser-evidence diagnostics
+  for common outline, note, dimension, insert, arc, circle, line, polyline, and
+  LWPOLYLINE content, plus layer, color, coordinate-pair, and rough XY bounds
+  evidence. Binary DWG/ACIS/SAT drawings are retained in the input manifest with
+  an explicit not-yet-imported diagnostic. Remaining work: import enclosures,
+  panel drawings, mechanical keepouts, board outlines, slots, fab notes, and
+  assembly fixture constraints through `dxf`/`acadrust` geometry models after
+  license and stability review.
+- SVG drawings via `usvg`: SVG fabrication, assembly, and rout/panel sidecars
+  are discovered by filename role and parsed for lightweight XML element
+  evidence, including paths, basic shapes, text, images, uses, groups, root
+  width/height/viewBox declarations, IDs, classes, inline styles, transforms,
+  and external/reference links. Remaining work: replace the evidence pass with
+  `usvg` import of
+  laser/mechanical outlines, vendor templates, board-edge graphics, and review
+  annotations so CSS, inherited attributes, basic shapes, and path commands are
+  normalized into check geometry.
+- BOM and placement files via `csv`, `serde`, and `calamine`: CSV/TSV/text
+  sidecars, common JSON array/object tables, and first-populated-sheet
+  XLS/XLSX/XLSM/XLSB/ODS workbooks are converted into the common artifact-table
+  pipeline for BOMs, centroid files, AVL/AML sheets, and assembly notes;
+  additional populated workbook sheets with matching normalized headers are
+  merged into the extracted table rows, and `--bom-sheet`, `--centroid-sheet`,
+  and `--netlist-sheet` select named workbook tabs before merging selected
+  sheets by normalized header union, preserving dissimilar auxiliary columns.
+  Nested
+  JSON objects are searched recursively for common table arrays, and nested
+  object cells are flattened into dotted column names. Workbook diagnostics flag
+  formula cells, defined names, VBA/macro projects, hidden sheets,
+  non-worksheet sheets, multiple populated sheets, empty sheets, merged regions,
+  native Excel tables, custom number formats, cell styles, conditional
+  formatting, data validations, autofilters, cell error values, hyperlinks,
+  comments, drawing objects, embedded media, charts, pivot tables, and date/time
+  conversion caveats. Centroid parsing recognizes generic, KiCad `.pos`,
+  Altium placement CSV, and JLCPCB CPL header/side-value schemas. Remaining
+  work: preserving native table objects, styles, and workbook layout semantics
+  beyond extracted cell values; formula cells are retained as ignored
+  `# hyperdrc-workbook-formula` metadata comments in extracted text.
+  This supports refdes
+  completeness, DNP variants, centroid sanity, side/rotation checks, and
+  manufacturer order-parameter parity.
+- ZIP/TAR/TGZ package ingestion via Rust archive crates: `--package-archive`
+  accepts manufacturer upload packages directly, unpacks them to a run-scoped
+  temporary workspace, recursively detects Gerber/drill/BOM/PNP/drawing roles,
+  rejects path-traversal entries, and preserves archive provenance in the
+  structured input manifest.
+
+### Medium-Value or Specialized Sources
+
+- IPC-2581 / IPC-DPMX through XML parsing: IPC-2581 is an open, bidirectional
+  PCB design/manufacturing exchange format and includes fabrication and assembly
+  information. There does not appear to be a mature Rust-native parser today,
+  but it is XML, so an incremental parser using `quick-xml`, `roxmltree`, or
+  `xml-rs` is realistic. Initial `quick-xml` evidence diagnostics summarize
+  root/section presence plus common named layer, net, refdes, package, drill,
+  coordinate, unit, material, and thickness attributes, including unique
+  material names and thickness values where present. Existing web tooling such
+  as BoardUI can serve as a reference for object modeling.
+- ODB++ through external services or adapters: ODB++ is data-rich and widely
+  used for CAM/assembly, but the format is proprietary. Options include parsing
+  a practical subset, driving KiCad's ODB++ exporter, using an external
+  extractor, or integrating a service such as OdbDesign. Initial package-tree
+  evidence inspects ODB++ ZIP/TAR/TGZ/directory handoffs for matrix, step,
+  layer, features, profile, netlist, component/EDA, and drill/tool path
+  families without importing proprietary semantics, and bounded text-payload
+  evidence summarizes matrix, feature, profile, netlist, component, and
+  drill-tool record counts when readable. Note licensing risk: OdbDesign is AGPL
+  for the open-source edition, so use it as a subprocess or optional service
+  only if license constraints are acceptable.
+- STEP/STEPZ for enclosure and mechanical validation: KiCad CLI exports and
+  package STEP/STP/STEPZ files are discovered as manufacturing handoff
+  sidecars. Plain STEP files get lightweight product, assembly, solid, face,
+  shell, curve, placement, unit, shape-representation, dimension, and tolerance
+  evidence diagnostics. Remaining work: replace the evidence pass with
+  OCCT-based tooling, `ruststep`, or `vcad` depending on whether the goal is
+  metadata, B-rep geometry, or simple collision envelopes. Rust-native STEP
+  support exists but may be limited for full AP242 assembly/GD&T workflows; OCCT
+  remains the mature path through C++ or external tools.
+- 3D mesh formats: STL, OBJ, PLY, GLB/glTF, and U3D package files are discovered
+  as manufacturing handoff sidecars and reported as mechanical handoff evidence
+  with file-size provenance. STL, OBJ, PLY, GLB, and glTF files get lightweight
+  header/entity summaries for triangles, vertices, faces, materials, mesh
+  counts, glTF buffer-view/accessor/primitive counts, declared GLB length where
+  applicable, and rough vertex bounds for readable ASCII STL, OBJ, and ASCII PLY
+  payloads. Rust has `stl_io`, glTF ecosystem crates, and `vcad` export paths;
+  these are best treated as visualization or approximate mechanical-clearance
+  sinks rather than authoritative CAD inputs until geometry import is added.
+- PDF/PostScript/HPGL: useful mostly as human review sinks or fab-drawing
+  sources. PDF, PS/EPS, PLT, and HPGL/HPG drawing files with fabrication,
+  assembly, or rout/panel filenames are discovered and checked as drawing
+  artifacts. Initial parser-evidence diagnostics summarize PDF headers/object
+  markers, stream/font/XObject/text/media-box markers, PostScript/EPS bounding
+  boxes and drawing commands, and HPGL/plotter command usage. Direct semantic
+  extraction is weak; prefer producing PDFs from structured report/overlay data
+  and using PDF parsing only for rough metadata or text-note extraction.
+- Image inputs: PNG/TIFF renderings from Gerber, KiCad, or vendor viewers can be
+  used for visual regression tests, ML-assisted review, or review overlays.
+  Package images with render, preview, screenshot, viewer, visual, raster, or
+  image filenames are discovered as manufacturing handoff sidecars. PNG, JPEG,
+  TIFF, BMP, and WebP files get header-only width, height, pixel-count, and
+  aspect-ratio diagnostics both as visual handoff files and as drawing sidecars.
+  They should not be the source of truth for dimensional checks.
+- Pick-and-place variants and assembly drawings: many CMs require only refdes,
+  X, Y, rotation, and side for centroid data. Generic centroid tables plus
+  common KiCad `.pos`, Altium CSV, and JLCPCB CPL header/side-value schemas are
+  recognized in the artifact-table pipeline.
+- Test and inspection formats: IPC-D-356 is parsed directly, and IPC-2581 XML,
+  GenCAD text, boundary-scan netlists, flying-probe reports, AOI/ICT placement
+  exports, bed-of-nails fixture formats, plus ODB++ packages are discovered as
+  manufacturing handoff sidecars with readiness diagnostics. SVF/JTAG-style
+  boundary-scan files get command summaries, and delimited tester/inspection
+  reports get table, column, coordinate, result, probe, net, and refdes evidence
+  diagnostics, including pass/fail/open/short result counts where a result
+  column is available. Remaining work: replace these evidence passes with
+  vendor-specific DFT/test importers.
+- Vendor/order APIs: JLCPCB, PCBWay, Eurocircuits, DigiKey, Mouser, Octopart,
+  Nexar, and internal PLM/ERP APIs could provide capabilities, stackup options,
+  BOM availability, lifecycle status, pricing, and order-parameter parity. Keep
+  these behind optional network-enabled adapters and cache results for CI.
+
+### Highest-Value Sinks
+
+- Gerber/Excellon output: initial Gerber violation overlays are implemented for
+  active finding polygons and point flashes, and initial Excellon-style marker
+  overlays are implemented for drill-map review. Generated Gerber keepout-layer
+  export is also implemented for active finding regions and larger point
+  markers.
+- KiCad markers or rule areas: `--kicad-marker-output` writes a standalone
+  KiCad `.kicad_pcb` review-marker companion with active error and warning
+  polygons, point circles, and labels on generated user layers.
+  `--kicad-marker-merge-output` writes a separate copy of the first input KiCad
+  board with HyperDRC user layers and marker graphics inserted, so the original
+  project is not mutated. Remaining work: richer typed/lossless KiCad editing
+  for zones, rule areas, and project-level generated artifacts.
+- KiCad `.kicad_dru`: `--kicad-dru-output` generates an initial custom-rule
+  file from resolved HyperDRC thresholds for copper clearance, track width,
+  annular ring, silkscreen clearance, board-edge clearance, and hole clearance
+  so designers can catch simple issues earlier in KiCad.
+  `--kicad-dru-merge-input` plus `--kicad-dru-merge-output` writes a copy of an
+  existing project rule file with stale HyperDRC rules replaced and custom rules
+  preserved. Remaining work: translate richer readiness checks that have no
+  direct KiCad custom-rule equivalent.
+- IPC-D-356 output: `--ipc356-review-output` emits an annotated electrical-test
+  review companion with IPC-D-356 source summaries, per-net test-access counts,
+  soldermask/access-side evidence, and active drill/net/test-related HyperDRC
+  findings. It also emits a stable key-value `DIFF_*` comment block with source
+  counts plus active and waived drill/net/test-related findings for downstream
+  scripts; both human and machine finding records include explicit
+  `GEOMETRY_HASH` fields for waiver and baseline joins. Remaining work: emit a
+  full replacement IPC-D-356 netlist once expected test access can be generated
+  from native board semantics.
+- IPC-2581 or ODB++ export: `--ipc2581-review-output` emits an IPC-2581-style
+  XML manufacturing review companion with embedded HyperDRC DRC/DFM annotations,
+  locations, region summaries with area, vertex, hole, and bounding-box
+  attributes, explicit geometry-hash attributes, and waived-review context.
+  Remaining work: generate a full IPC-2581 replacement package or ODB++ package
+  with embedded fabrication objects once library/tool support matures.
+- GenCAD output: `--gencad-review-output` emits a GenCAD-style review companion
+  with sectioned HyperDRC summary data, IPC-D-356-derived net names, component
+  references, testpoint/testpin records, and active/waived
+  DFT/fixture/manufacturing findings for test engineering tooling, including
+  explicit geometry-hash fields, finding point coordinates plus polygon and area
+  counts. Remaining work: emit a full GenCAD replacement/export once route,
+  package, and fixture semantics are available from a richer importer.
+- DXF/SVG/PDF overlays: SVG, initial DXF, and initial single-page PDF overlays
+  are implemented for human-review artifacts across mechanical, fab, assembly,
+  and document-review workflows.
+- HTML report bundle: initial self-contained HTML output is implemented with an
+  embedded SVG overlay, source manifest, summary table, finding cards, and
+  layer toggles that filter both finding cards and overlay geometry. Active and
+  waived finding cards can also be filtered independently. Finding cards expose
+  the stable geometry hash as visible text and a `data-geometry-hash` attribute
+  for review and waiver workflows.
+- SARIF/JUnit/GitHub annotations: SARIF output is implemented with stable
+  finding IDs, a `geometryHash` property/fingerprint alias, and PCB geometry
+  properties; GitHub Actions annotation output is implemented for CI log
+  annotations; JUnit XML output is implemented for CI systems with test-report
+  publishers. GitHub and JUnit messages also include explicit geometry-hash
+  labels so CI logs line up with waiver and structured report terminology.
+- JSON Lines / SQLite / Arrow / Parquet: JSON Lines output is implemented for
+  streaming analytics, `--sqlite-report` writes a queryable SQLite database,
+  `--arrow-report` writes an Arrow IPC file, and `--parquet-report` writes a
+  Parquet file with summary, input, diagnostic, active finding, waived finding,
+  and geometry JSON columns. JSON Lines emits active and waived finding records
+  with explicit `geometry_hash` fields, and SQLite stores `geometry_hash` as a
+  first-class indexed finding column. Arrow and Parquet expose the same
+  `geometry_hash` column in their shared finding schema.
+  These structured sinks support analysis across many boards, vendors,
+  revisions, and rule decks.
+- Waiver and baseline update sinks: proposed waiver stubs, active-finding
+  baselines, and baseline diff JSON are implemented for controlled production
+  exceptions and release drift review. Waiver governance reports expired review
+  dates as a first-class default check. Waiver stubs and baselines now carry a
+  deterministic `hyperdrc-geometry-v1` fingerprint derived from check, layers,
+  island, polygons, and point locations rather than diagnostic wording.
+
+### Adapter Architecture Notes
+
+- Keep `IoAdapter` boundaries explicit: `discover`, `read`, `convert`, `write`,
+  and `capabilities`. A format may support only one operation.
+- Separate semantic richness from geometry richness. A Gerber may have excellent
+  polygon geometry but poor design intent; KiCad/IPC-2581/ODB++ may carry nets,
+  components, stackup, and manufacturing intent.
+- Preserve provenance for every loaded object: source file, adapter, layer,
+  units, original identifier, and transformation history. Initial report-level
+  provenance is implemented for direct Gerbers, Gerber directories, converted
+  Gerbers, KiCad boards, Excellon drills, IPC-D-356 netlists, explicit
+  pre-production sidecars, Gerber-directory-discovered sidecars, and waivers.
+  Converted Gerber source records also carry the converter input hash and
+  command/version transformation history into JSON and structured report inputs.
+- Treat external tools as hermetic conversion steps with captured command line,
+  version output, stdout/stderr, input hash, and output manifest. Initial
+  converter outputs now retain command lines, exit status, bounded
+  stdout/stderr, an explicit converter `--version` probe, a deterministic
+  input-tree hash, and a sorted generated-file manifest; adapter diagnostics
+  also report missing, unreadable, or empty generated Gerber directories, while
+  KiCad CLI DRC JSON entries are surfaced as report diagnostics.
+- Prefer optional Cargo features for heavy or license-sensitive integrations:
+  `io-kicad-typed`, `io-dxf`, `io-svg`, `io-xlsx`, `io-gencad`,
+  `io-ipc2581`, `io-step`, and `io-archives`.
+- Provide fixture corpora by adapter: tiny synthetic files for unit tests, plus
+  opt-in real-world packages for integration tests.
+
+## Research Sources
+
+- KiCad PCB Editor documentation: DRC should be run before generating
+  manufacturing files, with zone refill and board/schematic parity checks
+  considered part of preflight; KiCad also documents DFM-oriented DRC classes
+  such as board-edge and hole clearances.
+- PCBWay DRC and layout guidance: common checks include minimum line width,
+  spacing between traces/pads/vias, via size, power/ground trace sizing,
+  critical-signal routing, differential-pair/guard-trace constraints, and
+  analog/digital/high-power/high-frequency separation.
+- JLCPCB/TransJLC ecosystem: TransJLC normalizes Gerber packages from common
+  EDAs to JLCEDA/JLCPCB-style naming; JLCPCB capability discussions emphasize
+  via diameter, via hole size, and annular-ring interpretation.
+- Eurocircuits PCB Checker and tolerances: DRC compares measured values against
+  configured track, isolation, and annular-ring limits; DFM adds plating index,
+  copper area, solderpaste surface, exposed copper, and fiducial-like pad
+  information. Their tolerances also highlight bow/twist, drill tolerances,
+  hole-to-hole, NPTH-to-copper, soldermask web/opening/overlap, legend, edge
+  clearance, slot width, and profile tolerance.
+- Eurocircuits soldermask guidance: soldermask openings are usually negative
+  data and larger than copper pads; mask annular ring, mask segment/web, mask
+  overlap clearance, minimum opening, via tenting/filling, NPTH mask openings,
+  and board-outline mask behavior all affect manufacturability.
+- Sierra Circuits DFM/DFA guidance: annular-ring breakout, drill spacing,
+  via-in-pad filling/capping, solder wicking, component footprint correctness,
+  and soldermask bridge sizes are common production-delay causes.
+- General DFM references: checklist themes repeatedly include trace/space,
+  annular ring, aspect ratio, soldermask/paste alignment, silkscreen clipping,
+  component spacing, thermal relief, copper balance, test points, fiducials,
+  documentation completeness, and pre-production review packets.
+- KiCad CLI documentation: exposes useful source/sink conversions for Gerber,
+  Excellon, DRC, DXF, GenCAD, IPC-D-356, IPC-2581, ODB++, PDF, position files,
+  statistics, STEP, SVG, and 3D formats.
+- Rust IO ecosystem notes: `kiutils-rs`/`kiutils_kicad` cover typed/lossless
+  KiCad files; `gerber_parser` covers Gerber parsing with `gerber-types`;
+  `gencad` parses GenCAD; `dxf` reads/writes DXF/DXB; `acadrust` targets
+  DXF/DWG/ACIS; `usvg` parses SVG; `calamine` reads Excel/OpenDocument
+  spreadsheets; `ruststep` and `vcad` are possible STEP/CAD paths.

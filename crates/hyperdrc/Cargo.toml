@@ -1,0 +1,69 @@
+[package]
+name = "hyperdrc"
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.95.0"
+license = "MIT"
+description = "Command line design readiness checks for printed circuit board Gerber files"
+readme = "README.md"
+repository = "https://github.com/timschmidt/hyperdrc"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["pcb", "drc", "dfm", "gerber", "kicad"]
+exclude = [
+    "docs/CPArti FPGA dev board.zip",
+    "docs/HVP109A.zip",
+]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+anyhow = "1.0"
+arrow-array = "57.3.0"
+arrow-ipc = "57.3.0"
+arrow-schema = "57.3.0"
+clap = { version = "4.5", features = ["derive"] }
+csgrs = { version = "0.23.0", path = "../csgrs", default-features = false, features = ["curve", "gerber-io", "offset"] }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+flate2 = "1.0"
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+hypercurve = { version = "0.3.1", path = "../hypercurve" }
+hyperpath = { version = "0.3.0", path = "../hyperpath" }
+hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
+log = "0.4"
+libc = "0.2"
+parquet = { version = "57.3.1", default-features = false, features = ["arrow"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10.9"
+tar = "0.4"
+zip = { version = "2.2", default-features = false, features = ["deflate"] }
+calamine = "0.35.0"
+quick-xml = "0.39.4"
+rusqlite = { version = "0.39.0", features = ["bundled"] }
+
+[dev-dependencies]
+proptest = "1.6"
+
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypermesh = { path = "../hypermesh" }
+hyperphysics = { path = "../hyperphysics" }
+hyperreal = { path = "../hyperreal" }
+hypersolve = { path = "../hypersolve" }
+hypertri = { path = "../hypertri" }
+
+[[bench]]
+name = "parser_geometry_smoke"
+harness = false
+
+[[bench]]
+name = "fixture_smoke"
+harness = false
+
+[[bench]]
+name = "spatial_index_audit"
+harness = false

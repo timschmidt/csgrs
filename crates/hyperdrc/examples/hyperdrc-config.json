@@ -1,0 +1,177 @@
+{
+  "keepout": 0.15,
+  "clearance": 0.25,
+  "paste_tolerance": 0.0,
+  "min_width": 0.15,
+  "min_mask_width": 0.1,
+  "min_solder_mask_opening_area_ratio": 1.0,
+  "max_solder_mask_opening_area_ratio": 3.0,
+  "min_solder_mask_annular_ring": 0.05,
+  "min_silkscreen_text_height": 0.8,
+  "acid_trap_angle": 30.0,
+  "annular_ring": 0.15,
+  "drill_clearance": 0.25,
+  "net_clearance": 0.15,
+  "registration_tolerance": 0.1,
+  "panel_clearance": 0.5,
+  "ipc356_tolerance": 0.1,
+  "min_area": 1.0e-9,
+  "max_layer_area": null,
+  "generated_date_stale_days": 90,
+  "package_profile": "full-production",
+  "required_artifacts": {
+    "bom": true,
+    "centroid": true,
+    "netlist": true,
+    "fab_drawing": true,
+    "assembly_drawing": true,
+    "readme": true,
+    "rout_drawing": true
+  },
+  "required_layers": {
+    "board_outline": true,
+    "drill_data": true,
+    "top_mask": true,
+    "bottom_mask": true,
+    "top_paste": true,
+    "bottom_paste": true,
+    "top_silkscreen": true,
+    "bottom_silkscreen": true
+  },
+  "assembly_profile": "production-smt",
+  "assembly": {
+    "component_edge_clearance": 0.5,
+    "component_hole_clearance": 0.5,
+    "connector_rework_clearance": 0.5,
+    "testpoint_min_diameter": 0.15,
+    "testpoint_min_spacing": 0.6,
+    "testpoint_edge_clearance": 0.5,
+    "dense_pad_pitch": 0.8,
+    "dense_pad_via_search_radius": 1.5,
+    "selective_solder_keepout": 0.75,
+    "wave_solder_keepout": 1.0,
+    "press_fit_keepout": 1.25,
+    "conformal_coating_keepout": 0.75
+  },
+  "kicad_copper_layers": ["F.Cu", "B.Cu"],
+  "stackup": {
+    "copper_layer_count": 2,
+    "finished_thickness": 1.6,
+    "impedance_controlled": true,
+    "material_family": "FR-4",
+    "material_dielectric_constant": 4.2,
+    "material_loss_tangent": 0.018,
+    "material_tg_c": 150.0,
+    "surface_finish": "enig",
+    "soldermask_process": "LPI",
+    "soldermask_color": "green",
+    "target_ipc_class": "IPC Class 2",
+    "fabricator_profile": "prototype-fab",
+    "fabrication_capability": {
+      "max_copper_layers": 4,
+      "min_finished_thickness": 0.6,
+      "max_finished_thickness": 2.4,
+      "min_copper_weight_oz": 0.5,
+      "max_copper_weight_oz": 2.0,
+      "min_dielectric_thickness": 0.05,
+      "max_loss_tangent": 0.025,
+      "min_tg_c": 130.0
+    },
+    "layers": [
+      {
+        "name": "F.Cu",
+        "kind": "copper",
+        "copper_weight_oz": 1.0
+      },
+      {
+        "name": "Core",
+        "kind": "core",
+        "dielectric_thickness": 1.5
+      },
+      {
+        "name": "B.Cu",
+        "kind": "copper",
+        "copper_weight_oz": 1.0
+      }
+    ]
+  },
+  "net_classes": [
+    {
+      "name": "controlled signal defaults",
+      "min_width": 0.12,
+      "min_clearance": 0.12,
+      "max_layer_count": 2,
+      "min_via_count": 1,
+      "requires_reference_plane": true,
+      "requires_impedance_control": true,
+      "target_impedance_ohms": 90.0,
+      "impedance_tolerance_ohms": 10.0,
+      "min_pair_spacing": 0.12,
+      "max_pair_spacing": 0.22,
+      "max_pair_skew": 0.15
+    },
+    {
+      "name": "power",
+      "nets": ["VBUS"],
+      "net_patterns": ["PWR_*"],
+      "regions": [
+        {
+          "name": "power-entry",
+          "min_x": 0.0,
+          "min_y": 0.0,
+          "max_x": 60.0,
+          "max_y": 40.0,
+          "layers": ["F.Cu", "B.Cu"]
+        }
+      ],
+      "min_width": 0.5,
+      "min_clearance": 0.25,
+      "max_layer_count": 2,
+      "min_via_count": 2,
+      "min_current_width": 0.75,
+      "min_voltage_clearance": 0.5,
+      "requires_reference_plane": true,
+      "requires_impedance_control": false,
+      "target_impedance_ohms": 50.0,
+      "impedance_tolerance_ohms": 5.0,
+      "max_via_count": 4,
+      "max_length": 75.0
+    },
+    {
+      "name": "usb positive",
+      "extends": ["controlled signal defaults"],
+      "nets": ["USB_D+"],
+      "min_width": 0.12,
+      "min_clearance": 0.12,
+      "max_layer_count": 2,
+      "min_via_count": 1,
+      "requires_reference_plane": true,
+      "requires_impedance_control": true,
+      "target_impedance_ohms": 90.0,
+      "impedance_tolerance_ohms": 10.0,
+      "differential_pair": "usb",
+      "differential_role": "positive",
+      "min_pair_spacing": 0.12,
+      "max_pair_spacing": 0.22,
+      "max_pair_skew": 0.15
+    },
+    {
+      "name": "usb negative",
+      "extends": ["controlled signal defaults"],
+      "nets": ["USB_D-"],
+      "min_width": 0.12,
+      "min_clearance": 0.12,
+      "max_layer_count": 2,
+      "min_via_count": 1,
+      "requires_reference_plane": true,
+      "requires_impedance_control": true,
+      "target_impedance_ohms": 90.0,
+      "impedance_tolerance_ohms": 10.0,
+      "differential_pair": "usb",
+      "differential_role": "negative",
+      "min_pair_spacing": 0.12,
+      "max_pair_spacing": 0.22,
+      "max_pair_skew": 0.15
+    }
+  ]
+}
