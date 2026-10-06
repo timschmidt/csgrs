@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "status": "proof_milestone_not_acceptance",
+  "proof_commit": "6fcf0670756b32f9efdf7cd20011572191508a35",
+  "runtime_reference": "8c7484915da3f39d6a6754c7411277b2809cb467",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "verification_units": 351,
+  "production_contracts": 51,
+  "model_theorems": 59,
+  "open_obligation_groups": 13,
+  "no_cheating": true,
+  "source_hashes_checked": 111,
+  "new_theorems": [
+    "B\u00e9zout identity",
+    "Euclid product divisibility",
+    "Coprimality of products",
+    "Coprimality of exact quotients",
+    "Unique signed canonical fractions",
+    "Normalization idempotence",
+    "Canonical parts characterize equivalence"
+  ],
+  "erasure": {
+    "runtime_reference": "8c7484915da3f39d6a6754c7411277b2809cb467",
+    "command": [
+      "cargo",
+      "+nightly",
+      "rustc",
+      "--locked",
+      "--lib",
+      "--no-default-features",
+      "--",
+      "-Zunpretty=expanded"
+    ],
+    "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1"
+    },
+    "exit_code": 0,
+    "seconds": 0.29355907440185547,
+    "source_overlay": "src/verified/fraction.rs",
+    "overlay_sha256": "9c0dd3fefdb823b275887bed7a77ae410867dbd66c90fa0cf2c1dc59d0bab4ba",
+    "runtime_source_prefix_unchanged": true,
+    "reference_sha256": "94c09ed65d256689bb9b7d5965e114c64868e61876dd74214bdc6738d0727f0f",
+    "expanded_sha256": "94c09ed65d256689bb9b7d5965e114c64868e61876dd74214bdc6738d0727f0f",
+    "byte_identical_expanded_rust": true,
+    "note": "Only cfg-gated proof material was appended to the shared fraction source; rational_model.rs and scope/docs are verifier-only. The temporary matched-path overlay was restored afterward."
+  },
+  "runtime_qualification": "benchmarks/checkpoints/2026-09-17-verus-fraction.json",
+  "limits": [
+    "These mathematical results do not yet verify the native cross-cancellation loop or Rational equality implementations.",
+    "Normal expansion identity was checked for the existing no-default-feature comparison configuration; the new shared proof block is gated only by verus_keep_ghost.",
+    "The full proof, runtime/downstream performance and source-bound baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-coprime-proof.tar.gz",
+    "bytes": 249252,
+    "sha256": "7e6b83be82c0c33cdbc5b50f9fec420c5e23397df0a0901aee8e0359819ad920",
+    "files": 8
+  }
+}

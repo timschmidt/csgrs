@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "status": "bound_propagation_milestone_not_full_verification_or_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "2f4a433311b7f27c0ffbf44acff37735db30cbc7",
+  "runtime_qualification_revision": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+  "verification": {
+    "units": 563,
+    "production_contracts": 94,
+    "functions": 86,
+    "constants": 8,
+    "model_theorems": 107,
+    "source_hashes": 130,
+    "all_hashes_match_commit": true,
+    "entire_target": true,
+    "no_cheating": true,
+    "open_obligation_groups": 13
+  },
+  "new_contracts": [
+    "BoundInfo::square",
+    "BoundInfo::multiply",
+    "BoundInfo::add"
+  ],
+  "new_denotation_lemmas": [
+    "Square preserves valid nonzero/sign bounds.",
+    "Product preserves valid nonzero/sign bounds.",
+    "Distinct real binades strictly order absolute magnitudes.",
+    "Addition preserves valid bounds; opposite-sign dominance requires distinct exact binades."
+  ],
+  "runtime_body_changes": "Equivalent primitive matches replace bool combinators and derived Sign equality in the three included operations. No extra runtime state, removed branch, stronger input precondition or weakened known result is introduced. Full typed contracts cover all stored states, including absent exponents and signed overflow. Runtime performance and resources still require measurement.",
+  "guards": {
+    "fresh_bound_mutations_rejected": 54,
+    "new_cases": 16,
+    "acceptance_tests_passed": 10,
+    "prior_unchanged_kernel_cache_public_guards": 119,
+    "prior_artifact": "benchmarks/checkpoints/2026-09-17-verus-certified-planning.json",
+    "note": "The guarded kernel, cache and public-carrier sources are byte-identical to89c89e2. No fresh combined173-case run is claimed."
+  },
+  "ordinary_validation": {
+    "all_passed": true,
+    "runs": [
+      {
+        "label": "candidate",
+        "step": "directed-regressions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "certified_planning_tests",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 5.080593109130859
+      },
+      {
+        "label": "candidate",
+        "step": "default-all-targets",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--all-targets"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 186.2883105278015
+      },
+      {
+        "label": "candidate",
+        "step": "all-feature-all-targets",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--all-features",
+          "--all-targets"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 192.185875415802
+      },
+      {
+        "label": "candidate",
+        "step": "representations",
+        "command": [
+          "bash",
+          "scripts/representation_coverage.sh"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 10.413655519485474
+      },
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 6.407770395278931
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.30854082107543945
+      }
+    ],
+    "counts": {
+      "default": {
+        "passed_tests": 802,
+        "benchmark_fixtures": 1271
+      },
+      "all-feature": {
+        "passed_tests": 905,
+        "benchmark_fixtures": 1447
+      }
+    },
+    "directed_precision_and_tolerance_tests": 4
+  },
+  "failed_attempts": [
+    "The first direct proof attempt encountered Verus unsupported syntax for an or-pattern with a match guard. An equivalent nested condition verifies; raw diagnostics are retained."
+  ],
+  "limits": [
+    "Real denotation lemmas require valid incoming bounds; production construction, caller, cache and graph invariants are not yet proved.",
+    "Inexact magnitude estimates have no accuracy guarantee and cannot justify precision or tolerance decisions.",
+    "The unchanged predicate and precision repair tests pass, but the consuming kernels and comparison algorithm still need whole-body refinement proofs.",
+    "Frozen fuzz, release/WASM/coverage/resource and pinned consumer qualification for the final runtime are running separately.",
+    "All thirteen proof groups and fixed-baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-bound-composition.tar.gz",
+    "bytes": 638548,
+    "files": 209,
+    "sha256": "1607f95357c3486b3b361c306804f0d342d79ec14921f2f4939d0276248cf1f5"
+  }
+}

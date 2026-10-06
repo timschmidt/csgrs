@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc fd2c4a301551a517077e57342d4f1b1382341ecd1c9a3f45b117710a7584d083 # shrinks to rational = Rational { sign: Minus, numerator: 4606, denominator: 19529 }

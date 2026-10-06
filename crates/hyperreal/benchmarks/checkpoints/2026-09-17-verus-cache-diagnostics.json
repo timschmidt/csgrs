@@ -1,0 +1,671 @@
+{
+  "schema": 1,
+  "status": "investigation_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "runtime_candidate": "8c7484915da3f39d6a6754c7411277b2809cb467",
+  "earlier_runtime_candidate": "598f05944573133ae98e6c444fd9c26797ef49a2",
+  "native_original": [
+    {
+      "case": "pi_pow_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": -0.13099065628988105,
+        "cycles:u": -0.004584354831488335,
+        "instructions:u": -1.46773255771393e-06,
+        "branches:u": -1.0398892524854375e-06,
+        "branch-misses:u": -10.4782593631293
+      },
+      "paired_cycles_change_percent": [
+        -1.6416161668026064,
+        0.11632020996987791,
+        -1.9497843557313876,
+        31.45923342210095,
+        -0.004097900263411169,
+        -0.005070809399565501
+      ]
+    },
+    {
+      "case": "pi_pow_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.529355641989937,
+        "cycles:u": 0.30044514174220605,
+        "instructions:u": 3.394948322466007e-06,
+        "branches:u": 1.7352499526168685e-05,
+        "branch-misses:u": 11.680534326106372
+      },
+      "paired_cycles_change_percent": [
+        -0.8843311319815195,
+        1.0191275757479579,
+        -1.0512828160718302,
+        1.911372715886972,
+        -0.2976234481858353,
+        0.8985137316702474
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.3172168904221728,
+        "cycles:u": 0.2375392802263454,
+        "instructions:u": 5.204468850328325e-06,
+        "branches:u": 1.2872871302249678e-05,
+        "branch-misses:u": -1.5049685552833592
+      },
+      "paired_cycles_change_percent": [
+        -0.38090677354417624,
+        1.1248114621592142,
+        -1.4529344697308377,
+        1.2410372930074853,
+        -0.7735822131651471,
+        0.855985333996867
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.08381708663039444,
+        "cycles:u": -0.11084838651562179,
+        "instructions:u": 7.745315555585108e-07,
+        "branches:u": 1.65740299984396e-05,
+        "branch-misses:u": 7.369672691323326
+      },
+      "paired_cycles_change_percent": [
+        0.4789908052012404,
+        -0.895236492099305,
+        -0.6624941894582626,
+        1.5572303167186163,
+        -0.5517317482520157,
+        0.3300349752207721
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": -0.08347061211189111,
+        "cycles:u": -0.0010022698799794227,
+        "instructions:u": 8.839707632546379e-07,
+        "branches:u": 3.966556405554655e-06,
+        "branch-misses:u": 2.7567701899591235
+      },
+      "paired_cycles_change_percent": [
+        0.9490407930740297,
+        -0.3025035331726045,
+        -0.019934893364959017,
+        0.01793035360500017,
+        -0.6407127510304145,
+        0.22472520703498144
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": 15.508150110350494,
+        "cycles:u": 15.054698119010945,
+        "instructions:u": 1.865938326073291e-06,
+        "branches:u": 6.141495978440048e-06,
+        "branch-misses:u": 2.769441871200218
+      },
+      "paired_cycles_change_percent": [
+        13.923751814410279,
+        15.112641462696619,
+        14.400722779210962,
+        16.253220945231472,
+        14.996754775325272,
+        16.475753540364458
+      ]
+    }
+  ],
+  "native_inline_experiment": [
+    {
+      "case": "pi_pow_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.6383645181205044,
+        "cycles:u": 0.5935207554875532,
+        "instructions:u": 2.6022855093010833e-06,
+        "branches:u": 3.9809912477650755e-06,
+        "branch-misses:u": 9.582534694928203
+      },
+      "paired_cycles_change_percent": [
+        -0.9476657723244353,
+        2.3642023912707755,
+        2.0814336288196733,
+        1.3330199951560262,
+        -0.14597848418091974,
+        -0.57347281281932
+      ]
+    },
+    {
+      "case": "pi_pow_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": 2.1639683204773497,
+        "cycles:u": 1.6152052816534868,
+        "instructions:u": -0.9581579324134948,
+        "branches:u": -2.520907752105761,
+        "branch-misses:u": 26.60493320383075
+      },
+      "paired_cycles_change_percent": [
+        1.9341284541493753,
+        1.7294241980942315,
+        27.998538018425933,
+        1.1911505565447955,
+        0.558976742854389,
+        1.500986365212742
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.37940936160066885,
+        "cycles:u": 0.14740552599128431,
+        "instructions:u": 3.035152906782912e-06,
+        "branches:u": 1.0973593866925313e-05,
+        "branch-misses:u": 2.1283363269771205
+      },
+      "paired_cycles_change_percent": [
+        0.06608352245849325,
+        -0.22205956836695018,
+        -0.3819427982793111,
+        2.5017996045295643,
+        0.22872752952407538,
+        1.4788344893196692
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -14.954622772859983,
+        "cycles:u": -15.632896497679592,
+        "instructions:u": -3.7781882272159226,
+        "branches:u": -7.791906592625364,
+        "branch-misses:u": -10.309443502028977
+      },
+      "paired_cycles_change_percent": [
+        -16.621212691494158,
+        -14.598208568449355,
+        -16.13161599216969,
+        -16.27274407755972,
+        -15.134177003189498,
+        -13.81037446439054
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 13.667379494737542,
+        "cycles:u": 14.543606090635587,
+        "instructions:u": 7.739744178891783e-07,
+        "branches:u": 4.266548070397391e-06,
+        "branch-misses:u": -1.6900432992618675
+      },
+      "paired_cycles_change_percent": [
+        29.83613604157076,
+        14.110561550042998,
+        14.667772525130719,
+        14.506294702194179,
+        14.580917479076994,
+        13.714230118923322
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -43.331184027310485,
+        "cycles:u": -43.11870836357603,
+        "instructions:u": -35.99881367025811,
+        "branches:u": -33.33242203922521,
+        "branch-misses:u": -20.80752172161256
+      },
+      "paired_cycles_change_percent": [
+        -43.016368017958904,
+        -43.29092342345212,
+        -43.0049005737409,
+        -43.15583554488588,
+        -43.08158118226619,
+        -43.72791445424538
+      ]
+    }
+  ],
+  "criterion_inline_experiment": [
+    {
+      "case": "real_representation_prepared/hyperreal_cached_f64/tan_pi",
+      "label": "fraction",
+      "median_paired_mean_change_percent": 11.784112279970238,
+      "paired_mean_change_percent": [
+        61.297124935700296,
+        11.76364250072286,
+        -3.160044071242485,
+        -17.285593469266345,
+        11.804582059217616,
+        14.03517644280996
+      ],
+      "paired_mean_intervals_overlap": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_cached_f64/tan_pi",
+      "label": "inline",
+      "median_paired_mean_change_percent": -38.033503145185975,
+      "paired_mean_change_percent": [
+        -28.70744447979481,
+        -36.843537622550635,
+        -40.341934202863584,
+        -54.57598942592546,
+        -38.690395623322985,
+        -37.37661066704897
+      ],
+      "paired_mean_intervals_overlap": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi",
+      "label": "fraction",
+      "median_paired_mean_change_percent": -0.341641782592883,
+      "paired_mean_change_percent": [
+        2.8455179809538267,
+        3.2470519271384557,
+        0.279122595076009,
+        -3.8396428181855846,
+        -2.3313867420805434,
+        -0.9624061602617751
+      ],
+      "paired_mean_intervals_overlap": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi",
+      "label": "inline",
+      "median_paired_mean_change_percent": -10.981905157017614,
+      "paired_mean_change_percent": [
+        -10.968594105482799,
+        -7.993936324227491,
+        -9.58200156873772,
+        -11.693927179841236,
+        -12.867222237855913,
+        -10.995216208552428
+      ],
+      "paired_mean_intervals_overlap": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi_pow",
+      "label": "fraction",
+      "median_paired_mean_change_percent": 4.1850190826427935,
+      "paired_mean_change_percent": [
+        6.908442557356875,
+        3.720155525954816,
+        4.070626990120307,
+        5.568892850162888,
+        4.29941117516528,
+        3.4095903786797166
+      ],
+      "paired_mean_intervals_overlap": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi_pow",
+      "label": "inline",
+      "median_paired_mean_change_percent": 2.4552812712433147,
+      "paired_mean_change_percent": [
+        3.7595036731203235,
+        2.2232228034025248,
+        2.6873397390841047,
+        5.615192100173694,
+        -1.2033802964661833,
+        -0.8357185944352419
+      ],
+      "paired_mean_intervals_overlap": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_clone/pi_pow",
+      "label": "fraction",
+      "median_paired_mean_change_percent": 0.18575950369243976,
+      "paired_mean_change_percent": [
+        0.04551948937394634,
+        1.9354903073839136,
+        -1.537224215043198,
+        0.3259995180109332,
+        -0.5466779096760521,
+        2.145251924920455
+      ],
+      "paired_mean_intervals_overlap": [
+        true,
+        true,
+        false,
+        true,
+        true,
+        false
+      ]
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_clone/pi_pow",
+      "label": "inline",
+      "median_paired_mean_change_percent": 0.4073015540599578,
+      "paired_mean_change_percent": [
+        -0.818558910488576,
+        0.6288189305503566,
+        -0.13054843582066544,
+        0.7032427957042175,
+        0.185784177569559,
+        0.9150788785139419
+      ],
+      "paired_mean_intervals_overlap": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_f64/tan_pi",
+      "label": "fraction",
+      "median_paired_mean_change_percent": 0.07026949954109796,
+      "paired_mean_change_percent": [
+        -0.17665203835230958,
+        2.786726697026687,
+        -7.025831046237274,
+        5.300533279399144,
+        -2.1880596939834462,
+        0.3171910374345055
+      ],
+      "paired_mean_intervals_overlap": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        true
+      ]
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_f64/tan_pi",
+      "label": "inline",
+      "median_paired_mean_change_percent": 1.2473368685380626,
+      "paired_mean_change_percent": [
+        1.21325063925235,
+        1.281423097823775,
+        -6.256500043183955,
+        2.3307580004885198,
+        -0.9112879781560723,
+        2.203500569480199
+      ],
+      "paired_mean_intervals_overlap": [
+        true,
+        true,
+        true,
+        false,
+        true,
+        false
+      ]
+    }
+  ],
+  "assembly_observation": {
+    "function": "AtomicPrimitiveApproxCache::get",
+    "bytes": 55,
+    "identical_instruction_bytes": true,
+    "start_address_mod_64": {
+      "baseline": 0,
+      "598f059": 0,
+      "8c74849": 48
+    },
+    "interpretation": "Identical out-of-line accessor instructions cross a cache-line boundary only in the fraction probe. Placement may contribute to extra cycles; this observation does not establish it as the sole cause."
+  },
+  "consumer_followups": {
+    "consumer": "hypercurve",
+    "revision": "8228394f174be2ae607694682defb167f030f540",
+    "records": [
+      {
+        "label": "baseline",
+        "hyperreal_revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "consumer": "hypercurve",
+        "step": "tests-all-remaining-6",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "900s",
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--no-fail-fast",
+          "--",
+          "--test-threads=2",
+          "--skip",
+          "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+          "--skip",
+          "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+          "--skip",
+          "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+          "--skip",
+          "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+          "--skip",
+          "radical_parallel_cusp_offsets_exactly_under_both_policies",
+          "--skip",
+          "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+        ],
+        "exit_code": 124,
+        "seconds": 900.0066902637482,
+        "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/tests-all-remaining-6.stdout",
+        "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/tests-all-remaining-6.stderr",
+        "timeout_seconds": 900
+      },
+      {
+        "label": "baseline",
+        "hyperreal_revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "consumer": "hypercurve",
+        "step": "isolated-slow-5",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "120s",
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--test",
+          "hypercurve_analytic_parallel_region",
+          "radical_parallel_cusp_offsets_exactly_under_both_policies",
+          "--",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 124,
+        "seconds": 120.00576591491699,
+        "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/isolated-slow-5.stdout",
+        "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/isolated-slow-5.stderr",
+        "timeout_seconds": 120
+      },
+      {
+        "label": "baseline",
+        "hyperreal_revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "consumer": "hypercurve",
+        "step": "isolated-slow-6",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "120s",
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--test",
+          "hypercurve_analytic_parallel_region",
+          "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+          "--",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 101,
+        "seconds": 98.23579096794128,
+        "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/isolated-slow-6.stdout",
+        "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/isolated-slow-6.stderr",
+        "timeout_seconds": 120
+      },
+      {
+        "label": "candidate",
+        "hyperreal_revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "consumer": "hypercurve",
+        "step": "tests-all-remaining-6",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "900s",
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--no-fail-fast",
+          "--",
+          "--test-threads=2",
+          "--skip",
+          "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+          "--skip",
+          "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+          "--skip",
+          "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+          "--skip",
+          "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+          "--skip",
+          "radical_parallel_cusp_offsets_exactly_under_both_policies",
+          "--skip",
+          "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+        ],
+        "exit_code": 124,
+        "seconds": 900.0067784786224,
+        "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/consumers/hypercurve/tests-all-remaining-6.stdout",
+        "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/consumers/hypercurve/tests-all-remaining-6.stderr",
+        "timeout_seconds": 900
+      },
+      {
+        "label": "candidate",
+        "hyperreal_revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "consumer": "hypercurve",
+        "step": "isolated-slow-5",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "120s",
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--test",
+          "hypercurve_analytic_parallel_region",
+          "radical_parallel_cusp_offsets_exactly_under_both_policies",
+          "--",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 124,
+        "seconds": 120.00596880912781,
+        "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/consumers/hypercurve/isolated-slow-5.stdout",
+        "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/consumers/hypercurve/isolated-slow-5.stderr",
+        "timeout_seconds": 120
+      },
+      {
+        "label": "candidate",
+        "hyperreal_revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "consumer": "hypercurve",
+        "step": "isolated-slow-6",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "120s",
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--test",
+          "hypercurve_analytic_parallel_region",
+          "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+          "--",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 101,
+        "seconds": 96.59599113464355,
+        "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/consumers/hypercurve/isolated-slow-6.stdout",
+        "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/consumers/hypercurve/isolated-slow-6.stderr",
+        "timeout_seconds": 120
+      }
+    ],
+    "interpretation": "Both pinned variants time out in remaining-six (900 seconds) and radical cusp (120 seconds); both fail retained mixed fillet with Blocked(Boolean,RationalBezier,Predicate) at analytic_parallel_region.rs:247. These are failures, not passes. Live Hypercurve was not edited."
+  },
+  "limits": [
+    "Experiments are based on 8c74849; neither inline overlay nor direct cache snapshot is accepted by this checkpoint.",
+    "Focused timings do not establish baseline parity across the repository; the full proof and source-bound acceptance remain pending.",
+    "No owned compilation, tests or profilers ran during native timing. Host frequency, thermals, ASLR and unrelated activity remain uncontrolled.",
+    "The initial software-counter parser failure is retained and excluded from the restarted balanced run."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-cache-diagnostics.tar.gz",
+    "bytes": 290653,
+    "files": 1013,
+    "sha256": "257b8d2ada4559b57f22b9ff1bc83240b967fbd16751548b6f8d6a9ff9857106"
+  }
+}

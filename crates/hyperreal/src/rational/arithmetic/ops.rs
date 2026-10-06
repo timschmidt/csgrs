@@ -1,0 +1,1643 @@
+use core::ops::*;
+
+impl Rational {
+    /// Evaluate an exactly divisible integer cross difference.
+    ///
+    /// Computes `(self * right - subtract_left * subtract_right) / divisor`
+    /// without constructing intermediate rationals. Returns `None` unless all
+    /// five operands are exact integers, the divisor is nonzero, and the
+    /// resulting integer numerator is exactly divisible by it.
+    pub fn checked_exact_integer_cross_difference_quotient(
+        &self,
+        right: &Self,
+        subtract_left: &Self,
+        subtract_right: &Self,
+        divisor: &Self,
+    ) -> Option<Self> {
+        let left = self.canonicalized_ref();
+        let right = right.canonicalized_ref();
+        let subtract_left = subtract_left.canonicalized_ref();
+        let subtract_right = subtract_right.canonicalized_ref();
+        let divisor = divisor.canonicalized_ref();
+        if left.denominator != *ONE.deref()
+            || right.denominator != *ONE.deref()
+            || subtract_left.denominator != *ONE.deref()
+            || subtract_right.denominator != *ONE.deref()
+            || divisor.denominator != *ONE.deref()
+            || divisor.sign == NoSign
+        {
+            return None;
+        }
+
+        let first_sign = left.sign * right.sign;
+        let second_sign = subtract_left.sign * subtract_right.sign;
+        let first = if first_sign == NoSign {
+            BigUint::ZERO
+        } else {
+            Self::multiply_magnitudes(
+                "integer-cross-difference-first",
+                &left.numerator,
+                &right.numerator,
+            )
+        };
+        let second = if second_sign == NoSign {
+            BigUint::ZERO
+        } else {
+            Self::multiply_magnitudes(
+                "integer-cross-difference-second",
+                &subtract_left.numerator,
+                &subtract_right.numerator,
+            )
+        };
+        let (sign, numerator) = if first_sign == NoSign {
+            (-second_sign, second)
+        } else if second_sign == NoSign {
+            (first_sign, first)
+        } else if first_sign != second_sign {
+            (first_sign, first + second)
+        } else {
+            match first.cmp(&second) {
+                core::cmp::Ordering::Greater => (first_sign, first - second),
+                core::cmp::Ordering::Equal => return Some(Self::zero()),
+                core::cmp::Ordering::Less => (-first_sign, second - first),
+            }
+        };
+        if sign == NoSign {
+            return Some(Self::zero());
+        }
+        if divisor.numerator.is_one() {
+            crate::trace_dispatch!(
+                "rational",
+                "integer-cross-difference",
+                "unit-divisor"
+            );
+            return Some(Self::from_integer_magnitude(
+                sign * divisor.sign,
+                numerator,
+            ));
+        }
+        use num::Integer as _;
+        let (quotient, remainder) = numerator.div_rem(&divisor.numerator);
+        if !remainder.is_zero() {
+            return None;
+        }
+        let sign = sign * divisor.sign;
+        crate::trace_dispatch!(
+            "rational",
+            "integer-cross-difference",
+            "exact-divisible"
+        );
+        Some(Self::from_integer_magnitude(sign, quotient))
+    }
+
+    /// Subtract an integer scaled by a signed machine word.
+    ///
+    /// Computes `self - subtractand * scale` directly on integer magnitudes,
+    /// without constructing and reducing an intermediate rational product.
+    /// Returns `None` unless both rational operands are exact integers.
+    pub fn checked_exact_integer_scaled_difference(
+        &self,
+        subtractand: &Self,
+        scale: i64,
+    ) -> Option<Self> {
+        let left = self.canonicalized_ref();
+        let subtractand = subtractand.canonicalized_ref();
+        if left.denominator != *ONE.deref() || subtractand.denominator != *ONE.deref() {
+            return None;
+        }
+
+        let scale_sign = match scale.cmp(&0) {
+            core::cmp::Ordering::Less => Minus,
+            core::cmp::Ordering::Equal => NoSign,
+            core::cmp::Ordering::Greater => Plus,
+        };
+        let right_sign = subtractand.sign * scale_sign;
+        if right_sign == NoSign {
+            return Some(self.clone());
+        }
+        let right = &subtractand.numerator * scale.unsigned_abs();
+        let (sign, numerator) = if left.sign == NoSign {
+            (-right_sign, right)
+        } else if left.sign != right_sign {
+            (left.sign, left.numerator.clone() + right)
+        } else {
+            match left.numerator.cmp(&right) {
+                core::cmp::Ordering::Greater => {
+                    (left.sign, left.numerator.clone() - right)
+                }
+                core::cmp::Ordering::Equal => return Some(Self::zero()),
+                core::cmp::Ordering::Less => (-right_sign, right - &left.numerator),
+            }
+        };
+        crate::trace_dispatch!(
+            "rational",
+            "integer-scaled-difference",
+            "signed-word-scale"
+        );
+        Some(Self::from_integer_magnitude(sign, numerator))
+    }
+
+    /// Divide two integers when their quotient is also an integer.
+    ///
+    /// Returns `None` for fractional inputs, a zero divisor, or a nonzero
+    /// remainder. This avoids constructing and reducing an intermediate
+    /// rational in fraction-free elimination and other exactly-divisible
+    /// integer recurrences.
+    pub fn checked_exact_integer_quotient(&self, divisor: &Self) -> Option<Self> {
+        let dividend = self.canonicalized_ref();
+        let divisor = divisor.canonicalized_ref();
+        if dividend.denominator != *ONE.deref()
+            || divisor.denominator != *ONE.deref()
+            || divisor.sign == NoSign
+        {
+            return None;
+        }
+        if dividend.sign == NoSign {
+            return Some(Self::zero());
+        }
+        use num::Integer as _;
+        let (quotient, remainder) = dividend.numerator.div_rem(&divisor.numerator);
+        if !remainder.is_zero() {
+            return None;
+        }
+        let sign = if dividend.sign == divisor.sign {
+            Plus
+        } else {
+            Minus
+        };
+        crate::trace_dispatch!("rational", "integer-quotient", "exact-divisible");
+        Some(Self::from_integer_magnitude(sign, quotient))
+    }
+
+    /// Return the exact arithmetic mean of two rationals.
+    ///
+    /// This delays canonical reduction until after both the addition and the
+    /// division by two. It is equivalent to `(left + right) / 2`, but avoids
+    /// materializing and reducing the intermediate sum.
+    pub fn average_pair(left: &Self, right: &Self) -> Self {
+        // The restricted final GCD below requires coprime input parts.
+        let left = left.canonicalized_ref();
+        let right = right.canonicalized_ref();
+        if left.sign == right.sign
+            && left.numerator == right.numerator
+            && left.denominator == right.denominator
+        {
+            crate::trace_dispatch!("rational", "average_pair", "equal");
+            return left.clone();
+        }
+
+        if let (
+            Some(left_numerator),
+            Some(left_denominator),
+            Some(right_numerator),
+            Some(right_denominator),
+        ) = (
+            left.numerator.to_u128(),
+            left.denominator.to_u128(),
+            right.numerator.to_u128(),
+            right.denominator.to_u128(),
+        ) {
+            let (left_scale, right_scale) =
+                if left_denominator.is_power_of_two()
+                    && right_denominator.is_power_of_two()
+                {
+                    let left_shift = left_denominator.trailing_zeros();
+                    let right_shift = right_denominator.trailing_zeros();
+                    let common_shift = left_shift.max(right_shift);
+                    (
+                        1_u128 << (common_shift - left_shift),
+                        1_u128 << (common_shift - right_shift),
+                    )
+                } else {
+                    let divisor =
+                        Self::gcd_word(left_denominator, right_denominator);
+                    (
+                        right_denominator / divisor,
+                        left_denominator / divisor,
+                    )
+                };
+            if let (Some(left_magnitude), Some(right_magnitude), Some(denominator)) = (
+                left_numerator.checked_mul(left_scale),
+                right_numerator.checked_mul(right_scale),
+                left_denominator
+                    .checked_mul(left_scale)
+                    .and_then(|denominator| denominator.checked_mul(2)),
+            ) {
+                let totals = (|| {
+                    let mut positive = 0_u128;
+                    let mut negative = 0_u128;
+                    for (sign, magnitude) in [
+                        (left.sign, left_magnitude),
+                        (right.sign, right_magnitude),
+                    ] {
+                        match sign {
+                            Plus => {
+                                positive = positive.checked_add(magnitude)?;
+                            }
+                            Minus => {
+                                negative = negative.checked_add(magnitude)?;
+                            }
+                            NoSign => {}
+                        }
+                    }
+                    Some((positive, negative))
+                })();
+                if let Some((positive, negative)) = totals {
+                    crate::trace_dispatch!("rational", "average_pair", "word-sized");
+                    return Self::from_word_magnitude_difference(
+                        positive,
+                        negative,
+                        denominator,
+                    );
+                }
+            }
+        }
+
+        let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
+            &left.denominator,
+            &right.denominator,
+        );
+        trace_rational_gcd!(
+            &left.denominator,
+            &right.denominator,
+            &common_denominator
+        );
+        let left_scale = &right.denominator / &common_denominator;
+        let right_scale = &left.denominator / &common_denominator;
+        let denominator = (&left.denominator * &left_scale) << 1_usize;
+        let left_magnitude = &left.numerator * &left_scale;
+        let right_magnitude = &right.numerator * &right_scale;
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for (sign, magnitude) in [
+            (left.sign, left_magnitude),
+            (right.sign, right_magnitude),
+        ] {
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        crate::trace_dispatch!("rational", "average_pair", "arbitrary-precision");
+        let (sign, numerator) = match positive.cmp(&negative) {
+            Ordering::Greater => (Plus, positive - negative),
+            Ordering::Less => (Minus, negative - positive),
+            Ordering::Equal => return Self::zero(),
+        };
+
+        // With reduced inputs and g = gcd(b, d), the cross-sum numerator is
+        // coprime to b/g and d/g. Only factors of 2g can therefore cancel
+        // from the mean's denominator 2*lcm(b, d). Restricting reduction to
+        // that proven divisor avoids a second GCD over the much wider LCM.
+        let possible_divisor = &common_denominator << 1_usize;
+        trace_rational_temporary!();
+        Self::from_parts_raw(sign, numerator, denominator)
+            .reduce_with_possible_divisor(&possible_divisor)
+    }
+
+    fn from_reduced_word_sum(
+        left_sign: Sign,
+        left: u128,
+        right_sign: Sign,
+        right: u128,
+        denominator: u128,
+    ) -> Option<Self> {
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for (sign, magnitude) in [(left_sign, left), (right_sign, right)] {
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        match positive.cmp(&negative) {
+            core::cmp::Ordering::Greater => Some(Self::from_reduced_word_parts(
+                Plus,
+                positive - negative,
+                denominator,
+            )),
+            core::cmp::Ordering::Less => Some(Self::from_reduced_word_parts(
+                Minus,
+                negative - positive,
+                denominator,
+            )),
+            core::cmp::Ordering::Equal => Some(Self::zero()),
+        }
+    }
+
+    fn add_sub_words(&self, other: &Self, subtract: bool) -> Option<Self> {
+        let left_denominator = self.denominator.to_u128()?;
+        let right_denominator = other.denominator.to_u128()?;
+        let right_sign = if subtract { -other.sign } else { other.sign };
+
+        if right_denominator == 1 {
+            let right = other
+                .numerator
+                .to_u128()?
+                .checked_mul(left_denominator)?;
+            return Self::from_reduced_word_sum(
+                self.sign,
+                self.numerator.to_u128()?,
+                right_sign,
+                right,
+                left_denominator,
+            );
+        }
+        if left_denominator == 1 {
+            let left = self
+                .numerator
+                .to_u128()?
+                .checked_mul(right_denominator)?;
+            return Self::from_reduced_word_sum(
+                self.sign,
+                left,
+                right_sign,
+                other.numerator.to_u128()?,
+                right_denominator,
+            );
+        }
+
+        let (left_scale, right_scale, denominator) =
+            if left_denominator.is_power_of_two()
+                && right_denominator.is_power_of_two()
+            {
+                let left_shift = left_denominator.trailing_zeros();
+                let right_shift = right_denominator.trailing_zeros();
+                let common_shift = left_shift.max(right_shift);
+                (
+                    1_u128 << (common_shift - left_shift),
+                    1_u128 << (common_shift - right_shift),
+                    1_u128 << common_shift,
+                )
+            } else {
+                let divisor =
+                    Self::gcd_word(left_denominator, right_denominator);
+                (
+                    right_denominator / divisor,
+                    left_denominator / divisor,
+                    left_denominator
+                        .checked_mul(right_denominator / divisor)?,
+                )
+            };
+        let left = self.numerator.to_u128()?.checked_mul(left_scale)?;
+        let right = other.numerator.to_u128()?.checked_mul(right_scale)?;
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for (sign, magnitude) in [(self.sign, left), (right_sign, right)] {
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    fn add_sub_wide_dyadic(&self, other: &Self, subtract: bool) -> Option<Self> {
+        let left_shift = self.dyadic_denominator_shift_if_reduced()?;
+        let right_shift = other.dyadic_denominator_shift_if_reduced()?;
+        let denominator_shift = left_shift.max(right_shift);
+        let mut left = self.numerator.clone();
+        let mut right = other.numerator.clone();
+        let left_alignment = usize::try_from(denominator_shift - left_shift).ok()?;
+        let right_alignment = usize::try_from(denominator_shift - right_shift).ok()?;
+        if left_alignment != 0 {
+            left <<= left_alignment;
+        }
+        if right_alignment != 0 {
+            right <<= right_alignment;
+        }
+
+        let right_sign = if subtract { -other.sign } else { other.sign };
+        let (sign, mut numerator) = if self.sign == right_sign {
+            (self.sign, left + right)
+        } else {
+            match left.cmp(&right) {
+                Ordering::Greater => (self.sign, left - right),
+                Ordering::Less => (right_sign, right - left),
+                Ordering::Equal => return Some(Self::zero()),
+            }
+        };
+
+        // Unequal reduced dyadic scales align an odd numerator with an even
+        // one, so their result is already reduced. Equal scales may expose a
+        // shared power of two, which is removed with shifts alone.
+        let common_shift = if left_shift == right_shift {
+            numerator
+                .trailing_zeros()
+                .expect("nonzero dyadic sum has trailing zeros")
+                .min(denominator_shift)
+        } else {
+            0
+        };
+        if common_shift != 0 {
+            numerator >>= usize::try_from(common_shift).ok()?;
+        }
+        let result_denominator_shift = denominator_shift - common_shift;
+        if result_denominator_shift < u64::from(u128::BITS)
+            && let Some(magnitude) = numerator.to_u128()
+        {
+            return Some(Self::from_reduced_word_parts(
+                sign,
+                magnitude,
+                1_u128 << result_denominator_shift,
+            ));
+        }
+
+        let mut denominator = if left_shift >= right_shift {
+            self.denominator.clone()
+        } else {
+            other.denominator.clone()
+        };
+        if common_shift != 0 {
+            denominator >>= usize::try_from(common_shift).ok()?;
+        }
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(sign, numerator, denominator))
+    }
+
+    #[inline]
+    fn word_parts_provably_reduced(numerator: u128, denominator: u128) -> bool {
+        denominator == 1
+            || numerator == 1
+            || (denominator.is_power_of_two() && numerator & 1 == 1)
+            || (numerator.is_power_of_two() && denominator & 1 == 1)
+    }
+
+    fn mul_div_words(&self, other: &Self, divide: bool) -> Option<Self> {
+        let mut left_numerator = self.numerator.to_u128()?;
+        let mut left_denominator = self.denominator.to_u128()?;
+        let (mut right_numerator, mut right_denominator) = if divide {
+            (other.denominator.to_u128()?, other.numerator.to_u128()?)
+        } else {
+            (other.numerator.to_u128()?, other.denominator.to_u128()?)
+        };
+        let inputs_provably_reduced = Self::word_parts_provably_reduced(
+            left_numerator,
+            left_denominator,
+        ) && Self::word_parts_provably_reduced(right_numerator, right_denominator);
+
+        if !divide
+            && left_denominator.is_power_of_two()
+            && right_denominator.is_power_of_two()
+        {
+            // Reduced dyadic operands need only power-of-two cancellation.
+            // Avoid even binary-GCD loops for the imported-f64 products that
+            // dominate exact mesh construction.
+            let mut denominator_shift =
+                left_denominator.trailing_zeros() + right_denominator.trailing_zeros();
+            let left_cancel = left_numerator.trailing_zeros().min(denominator_shift);
+            left_numerator >>= left_cancel;
+            denominator_shift -= left_cancel;
+            let right_cancel = right_numerator.trailing_zeros().min(denominator_shift);
+            right_numerator >>= right_cancel;
+            denominator_shift -= right_cancel;
+            if denominator_shift >= u128::BITS {
+                return None;
+            }
+            let numerator = left_numerator.checked_mul(right_numerator)?;
+            let denominator = 1_u128 << denominator_shift;
+            return Some(Self::from_reduced_word_parts(
+                self.sign * other.sign,
+                numerator,
+                denominator,
+            ));
+        }
+
+        if !divide
+            && left_denominator.is_power_of_two() != right_denominator.is_power_of_two()
+        {
+            let (mut dyadic_numerator, dyadic_denominator, mut general_numerator, mut general_denominator) =
+                if left_denominator.is_power_of_two() {
+                    (
+                        left_numerator,
+                        left_denominator,
+                        right_numerator,
+                        right_denominator,
+                    )
+                } else {
+                    (
+                        right_numerator,
+                        right_denominator,
+                        left_numerator,
+                        left_denominator,
+                    )
+                };
+            let mut denominator_shift = dyadic_denominator.trailing_zeros();
+
+            // Raw internal rationals are not required to be canonical. Strip
+            // the only possible factor from the dyadic operand and fully
+            // reduce the general operand before cross-cancelling them.
+            let internal_power_cancel = dyadic_numerator.trailing_zeros().min(denominator_shift);
+            dyadic_numerator >>= internal_power_cancel;
+            denominator_shift -= internal_power_cancel;
+            let internal_general = if general_numerator.is_power_of_two()
+                && general_denominator & 1 == 1
+            {
+                1
+            } else {
+                Self::gcd_word(general_numerator, general_denominator)
+            };
+            general_numerator /= internal_general;
+            general_denominator /= internal_general;
+
+            let power_cancel = general_numerator.trailing_zeros().min(denominator_shift);
+            general_numerator >>= power_cancel;
+            denominator_shift -= power_cancel;
+
+            let cross = if dyadic_numerator <= u128::from(u64::MAX) {
+                // Binary64-derived dyadic numerators fit one word. Reduce the opposing wide
+                // denominator once before the binary GCD so coprime vector
+                // scales do not take a long u128 subtraction schedule.
+                Self::gcd_word(
+                    dyadic_numerator,
+                    general_denominator % dyadic_numerator,
+                )
+            } else {
+                Self::gcd_word(dyadic_numerator, general_denominator)
+            };
+            dyadic_numerator /= cross;
+            general_denominator /= cross;
+            let numerator = dyadic_numerator.checked_mul(general_numerator)?;
+            let denominator_scale = 1_u128.checked_shl(denominator_shift)?;
+            let denominator = general_denominator.checked_mul(denominator_scale)?;
+            crate::trace_dispatch!("rational", "mul", "word-dyadic-general-cross-cancel");
+            return Some(Self::from_reduced_word_parts(
+                self.sign * other.sign,
+                numerator,
+                denominator,
+            ));
+        }
+
+        let cross = Self::gcd_word(left_numerator, right_denominator);
+        left_numerator /= cross;
+        right_denominator /= cross;
+        let cross = Self::gcd_word(right_numerator, left_denominator);
+        right_numerator /= cross;
+        left_denominator /= cross;
+
+        let numerator = left_numerator.checked_mul(right_numerator)?;
+        let denominator = left_denominator.checked_mul(right_denominator)?;
+        let sign = self.sign * other.sign;
+        if inputs_provably_reduced {
+            crate::trace_dispatch!("rational", "mul-div", "proven-reduced-word-product");
+            return Some(Self::from_reduced_word_parts(
+                sign,
+                numerator,
+                denominator,
+            ));
+        }
+        let (positive, negative) = if sign == Minus {
+            (0, numerator)
+        } else {
+            (numerator, 0)
+        };
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    fn mul_wide_with_dyadic_denominator(&self, other: &Self) -> Option<Self> {
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return None;
+        }
+        let left_dyadic = self.is_dyadic();
+        let right_dyadic = other.is_dyadic();
+        if !left_dyadic && !right_dyadic {
+            return None;
+        }
+
+        if left_dyadic && right_dyadic {
+            let mut denominator_shift = self
+                .denominator
+                .trailing_zeros()?
+                .checked_add(other.denominator.trailing_zeros()?)?;
+            let left_cancel = self.numerator.trailing_zeros()?.min(denominator_shift);
+            denominator_shift -= left_cancel;
+            let right_cancel = other.numerator.trailing_zeros()?.min(denominator_shift);
+            denominator_shift -= right_cancel;
+            let left_cancel = usize::try_from(left_cancel).ok()?;
+            let right_cancel = usize::try_from(right_cancel).ok()?;
+            let denominator_shift = usize::try_from(denominator_shift).ok()?;
+            let left_numerator = &self.numerator >> left_cancel;
+            let right_numerator = &other.numerator >> right_cancel;
+            let numerator = Self::multiply_magnitudes(
+                "multiplication-wide-dyadic",
+                &left_numerator,
+                &right_numerator,
+            );
+            let denominator = BigUint::one() << denominator_shift;
+            crate::trace_dispatch!("rational", "mul", "wide-dyadic-cross-cancel");
+            trace_rational_temporary!();
+            return Some(Self::from_parts_raw(
+                self.sign * other.sign,
+                numerator,
+                denominator,
+            ));
+        }
+
+        // Reduce raw internal parts, cancel the opposing power of two with
+        // shifts, then cancel the remaining cross pair before either wide
+        // product is formed.
+        let (dyadic, general) = if left_dyadic {
+            (self, other)
+        } else {
+            (other, self)
+        };
+        let mut denominator_shift = dyadic.denominator.trailing_zeros()?;
+        let dyadic_internal_cancel = dyadic.numerator.trailing_zeros()?.min(denominator_shift);
+        denominator_shift -= dyadic_internal_cancel;
+        let dyadic_internal_cancel = usize::try_from(dyadic_internal_cancel).ok()?;
+        let dyadic_numerator = &dyadic.numerator >> dyadic_internal_cancel;
+
+        let internal_general = if Self::is_power_of_two(&general.numerator)
+            && general.denominator.bit(0)
+        {
+            BigUint::one()
+        } else {
+            let divisor = Self::gcd_magnitudes_with_mixed_width_fast_path(
+                &general.numerator,
+                &general.denominator,
+            );
+            trace_rational_gcd!(&general.numerator, &general.denominator, &divisor);
+            divisor
+        };
+        let general_numerator = &general.numerator / &internal_general;
+        let general_denominator = &general.denominator / &internal_general;
+        let numerator_shift = general_numerator.trailing_zeros()?;
+        let power_cancel = denominator_shift.min(numerator_shift);
+        let remaining_denominator_shift = denominator_shift - power_cancel;
+        let power_cancel = usize::try_from(power_cancel).ok()?;
+        let remaining_denominator_shift = usize::try_from(remaining_denominator_shift).ok()?;
+
+        let cross = Self::gcd_magnitudes(&dyadic_numerator, &general_denominator);
+        let dyadic_numerator = dyadic_numerator / &cross;
+        let general_denominator = general_denominator / &cross;
+        let general_numerator = general_numerator >> power_cancel;
+        let numerator = Rational::multiply_magnitudes(
+            "multiplication-dyadic-general",
+            &dyadic_numerator,
+            &general_numerator,
+        );
+        let denominator = general_denominator << remaining_denominator_shift;
+        crate::trace_dispatch!("rational", "mul", "dyadic-general-cross-cancel");
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(
+            self.sign * other.sign,
+            numerator,
+            denominator,
+        ))
+    }
+
+    fn mul_wide_dyadic_with_word_numerators(&self, other: &Self) -> Option<Self> {
+        let mut denominator_shift = self
+            .dyadic_denominator_shift_if_reduced()?
+            .checked_add(other.dyadic_denominator_shift_if_reduced()?)?;
+        let mut left_numerator = self.numerator.to_u128()?;
+        let mut right_numerator = other.numerator.to_u128()?;
+        let left_cancel = u64::from(left_numerator.trailing_zeros()).min(denominator_shift);
+        left_numerator >>= left_cancel;
+        denominator_shift -= left_cancel;
+        let right_cancel = u64::from(right_numerator.trailing_zeros()).min(denominator_shift);
+        right_numerator >>= right_cancel;
+        denominator_shift -= right_cancel;
+        let numerator = left_numerator.checked_mul(right_numerator)?;
+        let sign = self.sign * other.sign;
+
+        if denominator_shift < u64::from(u128::BITS) {
+            let denominator = 1_u128 << denominator_shift;
+            crate::trace_dispatch!(
+                "rational",
+                "mul",
+                "wide-dyadic-word-numerators-word-result"
+            );
+            return Some(Self::from_reduced_word_parts(sign, numerator, denominator));
+        }
+
+        let denominator_shift = usize::try_from(denominator_shift).ok()?;
+        crate::trace_dispatch!("rational", "mul", "wide-dyadic-word-numerators");
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(
+            sign,
+            BigUint::from(numerator),
+            BigUint::one() << denominator_shift,
+        ))
+    }
+
+    #[inline]
+    fn retained_product(&self, other: &Self) -> Option<Self> {
+        if let Some(cached) = self.product_cache.get()
+            && cached.other.as_ref().is_some_and(|cached_other| {
+                std::ptr::eq(cached_other.as_ptr(), Arc::as_ptr(&other.0))
+            })
+        {
+            crate::trace_dispatch!("rational", "mul", "retained-product");
+            return Some(cached.result.clone());
+        }
+        self.retained_secondary_product(other)
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn retained_secondary_product(&self, other: &Self) -> Option<Self> {
+        let cached = self.linear_cache.get()?;
+        let other_ptr = Arc::as_ptr(&other.0);
+        let matches = |entry: &CachedRationalLinearEntry| {
+            entry.kind == CachedRationalLinearKind::Product
+                && std::ptr::eq(entry.other.as_ptr(), other_ptr)
+        };
+        let entry = if matches(&cached.primary) {
+            Some(&cached.primary)
+        } else if cached.secondary.get().is_some_and(matches) {
+            cached.secondary.get()
+        } else {
+            cached.tertiary.get().filter(|entry| matches(entry))
+        }?;
+        crate::trace_dispatch!("rational", "mul", "retained-secondary-product");
+        Some(entry.result.clone())
+    }
+
+    #[inline]
+    pub(crate) fn retained_primary_self_product_state(&self) -> Option<bool> {
+        if self.is_one() || self.is_minus_one() {
+            return Some(true);
+        }
+        let primary = self.product_cache.get()?;
+        Some(primary.other.as_ref().is_some_and(|other| {
+            std::ptr::eq(other.as_ptr(), Arc::as_ptr(&self.0))
+        }))
+    }
+
+    #[inline]
+    pub(crate) fn has_retained_self_product(&self) -> bool {
+        if self.is_one() || self.is_minus_one() {
+            return true;
+        }
+        let Some(primary) = self.product_cache.get() else {
+            return false;
+        };
+        let self_ptr = Arc::as_ptr(&self.0);
+        if primary
+            .other
+            .as_ref()
+            .is_some_and(|other| std::ptr::eq(other.as_ptr(), self_ptr))
+        {
+            return true;
+        }
+        let Some(cached) = self.linear_cache.get() else {
+            return false;
+        };
+        let matches = |entry: &CachedRationalLinearEntry| {
+            entry.kind == CachedRationalLinearKind::Product
+                && std::ptr::eq(entry.other.as_ptr(), self_ptr)
+        };
+        matches(&cached.primary)
+            || cached.secondary.get().is_some_and(matches)
+            || cached.tertiary.get().is_some_and(matches)
+    }
+
+    #[inline]
+    pub(crate) fn admit_conflicted_self_dot_once(&self) -> bool {
+        !self.observe_retained_fact(RETAINED_SELF_DOT_CONFLICT_ATTEMPTED)
+    }
+
+    fn retain_product_pair(&self, other: &Self, result: &Self) {
+        if !self.is_internally_unreduced()
+            && self
+                .product_cache
+                .set(CachedRationalProduct {
+                    other: Some(Arc::downgrade(&other.0)),
+                    result: result.clone(),
+                })
+                .is_ok()
+        {
+            return;
+        }
+        if !other.is_internally_unreduced()
+            && other
+                .product_cache
+                .set(CachedRationalProduct {
+                    other: Some(Arc::downgrade(&self.0)),
+                    result: result.clone(),
+                })
+                .is_ok()
+        {
+            return;
+        }
+        if !Self::retain_linear(self, other, CachedRationalLinearKind::Product, result)
+        {
+            let _ = Self::retain_linear(
+                other,
+                self,
+                CachedRationalLinearKind::Product,
+                result,
+            );
+        }
+    }
+
+    #[inline(always)]
+    fn retained_linear(
+        owner: &Self,
+        other: &Self,
+        kind: CachedRationalLinearKind,
+        _path: &'static str,
+    ) -> Option<Self> {
+        let cached = owner.linear_cache.get()?;
+        let other_ptr = Arc::as_ptr(&other.0);
+        if cached.primary.kind == kind
+            && std::ptr::eq(cached.primary.other.as_ptr(), other_ptr)
+        {
+            crate::trace_dispatch!("rational", "linear", _path);
+            return Some(cached.primary.result.clone());
+        }
+        let secondary = cached.secondary.get()?;
+        if secondary.kind == kind && std::ptr::eq(secondary.other.as_ptr(), other_ptr) {
+            crate::trace_dispatch!("rational", "linear", _path);
+            return Some(secondary.result.clone());
+        }
+        let tertiary = cached.tertiary.get()?;
+        (tertiary.kind == kind && std::ptr::eq(tertiary.other.as_ptr(), other_ptr)).then(|| {
+            crate::trace_dispatch!("rational", "linear", _path);
+            tertiary.result.clone()
+        })
+    }
+
+    #[inline]
+    fn retained_sum(&self, other: &Self) -> Option<Self> {
+        Self::retained_linear(self, other, CachedRationalLinearKind::Sum, "retained-sum")
+            .or_else(|| {
+                Self::retained_linear(
+                    other,
+                    self,
+                    CachedRationalLinearKind::Sum,
+                    "retained-sum",
+                )
+            })
+    }
+
+    #[inline]
+    fn retained_difference(&self, other: &Self) -> Option<Self> {
+        Self::retained_linear(
+            self,
+            other,
+            CachedRationalLinearKind::OwnerMinusOther,
+            "retained-difference",
+        )
+        .or_else(|| {
+            Self::retained_linear(
+                other,
+                self,
+                CachedRationalLinearKind::OtherMinusOwner,
+                "retained-difference",
+            )
+        })
+    }
+
+    #[inline]
+    fn retain_linear(
+        owner: &Self,
+        other: &Self,
+        kind: CachedRationalLinearKind,
+        result: &Self,
+    ) -> bool {
+        if let Some(cached) = owner.linear_cache.get() {
+            let primary_placeholder = cached.primary.kind.is_primary_placeholder();
+            // Avoid cloning the result and touching both Arc counters when
+            // every eligible write-once slot is already occupied.
+            if cached.secondary.get().is_some()
+                && (!primary_placeholder || cached.tertiary.get().is_some())
+            {
+                return false;
+            }
+            let entry = CachedRationalLinearEntry {
+                other: Arc::downgrade(&other.0),
+                kind,
+                result: result.clone(),
+            };
+            if primary_placeholder {
+                return cached
+                    .secondary
+                    .set(entry)
+                    .or_else(|entry| cached.tertiary.set(entry))
+                    .is_ok();
+            }
+            return cached.secondary.set(entry).is_ok();
+        }
+        owner
+            .linear_cache
+            .set(Box::new(CachedRationalArithmetic {
+                primary: CachedRationalLinearEntry {
+                    other: Arc::downgrade(&other.0),
+                    kind,
+                    result: result.clone(),
+                },
+                secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction: OnceLock::new(),
+            }))
+            .is_ok()
+    }
+
+    #[inline]
+    pub(crate) fn has_arithmetic_reuse_evidence(&self) -> bool {
+        // A shared value may have been cloned only for ownership. Admit a
+        // binary linear cache after an arithmetic observation, or immediately
+        // when another retained arithmetic result already proves reuse.
+        if self.product_cache.get().is_some()
+            || self.linear_cache.get().is_some()
+            || self.retained_fact(RETAINED_LINEAR_REUSE_SEEN)
+        {
+            return true;
+        }
+        crate::trace_dispatch!("rational", "arithmetic-reuse", "first-observation");
+        self.retain_fact(RETAINED_LINEAR_REUSE_SEEN);
+        false
+    }
+
+    #[inline]
+    fn has_linear_reuse_evidence(&self) -> bool {
+        self.has_arithmetic_reuse_evidence()
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn retain_sum_pair(&self, other: &Self, result: &Self) {
+        let self_shared = self.has_linear_reuse_evidence();
+        let other_shared = other.has_linear_reuse_evidence();
+        if !self_shared && !other_shared {
+            return;
+        }
+        if self_shared
+            && Self::retain_linear(self, other, CachedRationalLinearKind::Sum, result)
+        {
+            return;
+        }
+        if other_shared {
+            let _ = Self::retain_linear(other, self, CachedRationalLinearKind::Sum, result);
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn retain_difference_pair(&self, other: &Self, result: &Self) {
+        let self_shared = self.has_linear_reuse_evidence();
+        let other_shared = other.has_linear_reuse_evidence();
+        if !self_shared && !other_shared {
+            return;
+        }
+        if self_shared
+            && Self::retain_linear(
+            self,
+            other,
+            CachedRationalLinearKind::OwnerMinusOther,
+            result,
+        )
+        {
+            return;
+        }
+        if other_shared {
+            let _ = Self::retain_linear(
+                other,
+                self,
+                CachedRationalLinearKind::OtherMinusOwner,
+                result,
+            );
+        }
+    }
+}
+
+impl Rational {
+    // Keep generic operator adapters from cloning this exact core into every consumer.
+    #[inline(never)]
+    fn add_ref(&self, other: &Self) -> Self {
+        use std::cmp::Ordering::*;
+
+        if self.sign == NoSign {
+            return other.clone();
+        }
+        if other.sign == NoSign {
+            return self.clone();
+        }
+        // The word and restricted-GCD kernels publish reduced results, so
+        // they must consume the cached canonical view of lazy ratios.
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref().add_ref(other.canonicalized_ref());
+        }
+        if self.is_one() {
+            if other.is_one() {
+                return Self::new(2);
+            }
+            return other.add_one();
+        }
+        if other.is_one() {
+            return self.add_one();
+        }
+        if let Some(result) = self.retained_sum(other) {
+            return result;
+        }
+        if let Some(result) = self.add_sub_words(other, false) {
+            crate::trace_dispatch!("rational", "add", "word-sized");
+            self.retain_sum_pair(other, &result);
+            return result;
+        }
+        if let Some(result) = self.add_sub_wide_dyadic(other, false) {
+            crate::trace_dispatch!("rational", "add", "wide-dyadic");
+            self.retain_sum_pair(other, &result);
+            return result;
+        }
+        let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
+            &self.denominator,
+            &other.denominator,
+        );
+        trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
+        let left_scale = &other.denominator / &common_denominator;
+        let right_scale = &self.denominator / &common_denominator;
+        let denominator = &self.denominator * &left_scale;
+        let a = &self.numerator * &left_scale;
+        let b = &other.numerator * &right_scale;
+        let (sign, numerator) = match (self.sign, other.sign) {
+            (Plus, Plus) => (Plus, a + b),
+            (Minus, Minus) => (Minus, a + b),
+            (x, y) => match a.cmp(&b) {
+                Greater => (x, a - b),
+                Equal => {
+                    let result = Self::zero();
+                    self.retain_sum_pair(other, &result);
+                    return result;
+                }
+                Less => (y, b - a),
+            },
+        };
+        trace_rational_temporary!();
+        let result = Self::from_parts_raw(sign, numerator, denominator)
+            .reduce_with_possible_divisor(&common_denominator);
+        self.retain_sum_pair(other, &result);
+        result
+    }
+}
+
+impl<T: AsRef<Rational>> Add<T> for &Rational {
+    type Output = Rational;
+
+    fn add(self, other: T) -> Self::Output {
+        self.add_ref(other.as_ref())
+    }
+}
+
+impl<T: AsRef<Rational>> Add<T> for Rational {
+    type Output = Self;
+
+    fn add(self, other: T) -> Self {
+        &self + other.as_ref()
+    }
+}
+
+impl Rational {
+    #[inline]
+    fn negation_from_entry(entry: &CachedRationalLinearEntry) -> Option<Self> {
+        match entry.kind {
+            CachedRationalLinearKind::StrongNegationPlaceholder => Some(entry.result.clone()),
+            CachedRationalLinearKind::WeakNegationPlaceholder => entry.other.upgrade().map(Self),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    fn retained_negation(&self) -> Option<Self> {
+        let cached = self.linear_cache.get()?;
+        if let Some(result) = Self::negation_from_entry(&cached.primary) {
+            return Some(result);
+        }
+        if let Some(result) = cached
+            .tertiary
+            .get()
+            .and_then(Self::negation_from_entry)
+        {
+            return Some(result);
+        }
+        cached
+            .quaternary
+            .get()
+            .and_then(Self::negation_from_entry)
+            .or_else(|| cached.quinary.get().and_then(Self::negation_from_entry))
+    }
+
+    fn retain_negation_entry(&self, negation: CachedRationalUnary) -> bool {
+        if let Some(cached) = self.linear_cache.get() {
+            if cached.primary.kind.is_negation_placeholder() {
+                return false;
+            }
+            let entry = match negation {
+                CachedRationalUnary::Strong(negation) => CachedRationalLinearEntry {
+                    other: std::sync::Weak::new(),
+                    kind: CachedRationalLinearKind::StrongNegationPlaceholder,
+                    result: negation,
+                },
+                CachedRationalUnary::Weak(negation) => CachedRationalLinearEntry {
+                    other: negation,
+                    kind: CachedRationalLinearKind::WeakNegationPlaceholder,
+                    result: RATIONAL_ZERO.clone(),
+                },
+            };
+            if cached.primary.kind.is_primary_placeholder() {
+                return cached
+                    .quaternary
+                    .set(entry)
+                    .or_else(|entry| cached.quinary.set(entry))
+                    .is_ok();
+            }
+            return cached
+                .tertiary
+                .set(entry)
+                .or_else(|entry| cached.quaternary.set(entry))
+                .or_else(|entry| cached.quinary.set(entry))
+                .is_ok();
+        }
+
+        let (kind, other, placeholder) = match negation {
+            CachedRationalUnary::Strong(negation) => (
+                CachedRationalLinearKind::StrongNegationPlaceholder,
+                std::sync::Weak::new(),
+                negation,
+            ),
+            CachedRationalUnary::Weak(negation) => (
+                CachedRationalLinearKind::WeakNegationPlaceholder,
+                negation,
+                RATIONAL_ZERO.clone(),
+            ),
+        };
+        self.linear_cache
+            .set(Box::new(CachedRationalArithmetic {
+                primary: CachedRationalLinearEntry {
+                    other,
+                    kind,
+                    result: placeholder,
+                },
+                secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction: OnceLock::new(),
+            }))
+            .is_ok()
+    }
+
+    #[cold]
+    fn retain_negation_pair(&self, negation: &Self) {
+        let _ = negation
+            .retain_negation_entry(CachedRationalUnary::Weak(Arc::downgrade(&self.0)));
+        let _ = self.retain_negation_entry(CachedRationalUnary::Strong(negation.clone()));
+    }
+}
+
+impl Neg for &Rational {
+    type Output = Rational;
+
+    #[inline]
+    fn neg(self) -> Self::Output {
+        if self.sign == NoSign {
+            return self.clone();
+        }
+        if self.is_internally_unreduced() {
+            return Self::Output::from_parts_raw_unreduced(
+                -self.sign,
+                self.numerator.clone(),
+                self.denominator.clone(),
+            );
+        }
+        if self.is_one() {
+            return Self::Output::minus_one();
+        }
+        if self.is_minus_one() {
+            return Self::Output::one();
+        }
+        if let Some(result) = self.retained_negation() {
+            crate::trace_dispatch!("rational", "neg", "retained");
+            return result;
+        }
+        trace_rational_temporary!();
+        let result = Self::Output::from_parts_raw(
+            -self.sign,
+            self.numerator.clone(),
+            self.denominator.clone(),
+        );
+        self.retain_negation_pair(&result);
+        result
+    }
+}
+
+impl Neg for Rational {
+    type Output = Self;
+
+    #[inline]
+    fn neg(mut self) -> Self {
+        if self.sign == NoSign {
+            return self;
+        }
+        if self.is_one() {
+            return Self::minus_one();
+        }
+        if self.is_minus_one() {
+            return Self::one();
+        }
+        if let Some(result) = self.retained_negation() {
+            crate::trace_dispatch!("rational", "neg", "retained");
+            return result;
+        }
+        if let Some(data) = Arc::get_mut(&mut self.0) {
+            data.sign = -data.sign;
+            // Unary negation changes the cache key represented by this node.
+            // A unique owner can reuse the BigUint allocation, but any locally
+            // retained arithmetic results describe the old sign and must go.
+            data.product_cache.take();
+            data.linear_cache.clear();
+            data.retained_facts.fetch_and(
+                !RETAINED_REUSE_MASK,
+                std::sync::atomic::Ordering::Relaxed,
+            );
+            return self;
+        }
+        -&self
+    }
+}
+
+impl Rational {
+    // Keep generic operator adapters from cloning this exact core into every consumer.
+    #[inline(never)]
+    fn subtract_ref(&self, other: &Self) -> Self {
+        use std::cmp::Ordering::*;
+
+        if other.sign == NoSign {
+            return self.clone();
+        }
+        if self.sign == NoSign {
+            return -other;
+        }
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref().subtract_ref(other.canonicalized_ref());
+        }
+        if other.is_one() {
+            return self.subtract_one();
+        }
+        if self.is_one() {
+            return -other.subtract_one();
+        }
+        if let Some(result) = self.retained_difference(other) {
+            return result;
+        }
+        if let Some(result) = self.add_sub_words(other, true) {
+            crate::trace_dispatch!("rational", "sub", "word-sized");
+            self.retain_difference_pair(other, &result);
+            return result;
+        }
+        if let Some(result) = self.add_sub_wide_dyadic(other, true) {
+            crate::trace_dispatch!("rational", "sub", "wide-dyadic");
+            self.retain_difference_pair(other, &result);
+            return result;
+        }
+        let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
+            &self.denominator,
+            &other.denominator,
+        );
+        trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
+        let left_scale = &other.denominator / &common_denominator;
+        let right_scale = &self.denominator / &common_denominator;
+        let denominator = &self.denominator * &left_scale;
+        let a = &self.numerator * &left_scale;
+        let b = &other.numerator * &right_scale;
+        let (sign, numerator) = match (self.sign, other.sign) {
+            (Plus, Minus) => (Plus, a + b),
+            (Minus, Plus) => (Minus, a + b),
+            (x, y) => match a.cmp(&b) {
+                Greater => (x, a - b),
+                Equal => {
+                    let result = Self::zero();
+                    self.retain_difference_pair(other, &result);
+                    return result;
+                }
+                Less => (-y, b - a),
+            },
+        };
+        trace_rational_temporary!();
+        let result = Self::from_parts_raw(sign, numerator, denominator)
+            .reduce_with_possible_divisor(&common_denominator);
+        self.retain_difference_pair(other, &result);
+        result
+    }
+}
+
+impl<T: AsRef<Rational>> Sub<T> for &Rational {
+    type Output = Rational;
+
+    fn sub(self, other: T) -> Self::Output {
+        self.subtract_ref(other.as_ref())
+    }
+}
+
+impl<T: AsRef<Rational>> Sub<T> for Rational {
+    type Output = Self;
+
+    fn sub(self, other: T) -> Self {
+        &self - other.as_ref()
+    }
+}
+
+impl<T: AsRef<Rational>> Mul<T> for &Rational {
+    type Output = Rational;
+
+    fn mul(self, other: T) -> Self::Output {
+        let other = other.as_ref();
+        let sign = self.sign * other.sign;
+        if sign == NoSign {
+            return Self::Output::zero();
+        }
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref() * other.canonicalized_ref();
+        }
+        if self.is_one() {
+            return other.clone();
+        }
+        if other.is_one() {
+            return self.clone();
+        }
+        if self.is_minus_one() {
+            return -other;
+        }
+        if other.is_minus_one() {
+            return -self;
+        }
+        if let Some(result) = self
+            .retained_product(other)
+            .or_else(|| other.retained_product(self))
+        {
+            return result;
+        }
+        if self.numerator == other.denominator && self.denominator == other.numerator {
+            return if sign == Minus {
+                Self::Output::minus_one()
+            } else {
+                Self::Output::one()
+            };
+        }
+        if let Some(result) = self.mul_div_words(other, false) {
+            crate::trace_dispatch!("rational", "mul", "word-sized");
+            self.retain_product_pair(other, &result);
+            return result;
+        }
+        if let Some(result) = self.mul_wide_dyadic_with_word_numerators(other) {
+            self.retain_product_pair(other, &result);
+            return result;
+        }
+        if let Some(result) = self.mul_wide_with_dyadic_denominator(other) {
+            self.retain_product_pair(other, &result);
+            return result;
+        }
+        let numerator = Rational::multiply_magnitudes(
+            "multiplication-numerator",
+            &self.numerator,
+            &other.numerator,
+        );
+        let denominator = Rational::multiply_magnitudes(
+            "multiplication-denominator",
+            &self.denominator,
+            &other.denominator,
+        );
+        trace_rational_temporary!();
+        let result = Self::Output::maybe_reduce(Self::Output::from_parts_raw(
+            sign,
+            numerator,
+            denominator,
+        ));
+        self.retain_product_pair(other, &result);
+        result
+    }
+}
+
+impl<T: AsRef<Rational>> Mul<T> for Rational {
+    type Output = Self;
+
+    fn mul(self, other: T) -> Self {
+        &self * other.as_ref()
+    }
+}
+
+impl<T: AsRef<Rational>> MulAssign<T> for Rational {
+    fn mul_assign(&mut self, other: T) {
+        *self = &*self * other.as_ref();
+    }
+}
+
+const BALANCED_PRODUCT_CHUNK: usize = 512;
+
+#[inline]
+fn balanced_product_pair(left: &Rational, right: &Rational, traced: &mut bool) -> Rational {
+    if !*traced {
+        crate::trace_dispatch!("rational", "product", "balanced-pairwise");
+        *traced = true;
+    }
+    left * right
+}
+
+fn reduce_rational_product_chunk(
+    factors: &mut Vec<Rational>,
+    traced: &mut bool,
+) -> Option<Rational> {
+    while factors.len() > 1 {
+        let length = factors.len();
+        let mut read = 0;
+        let mut write = 0;
+        while read + 1 < length {
+            let product = balanced_product_pair(&factors[read], &factors[read + 1], traced);
+            factors[write] = product;
+            read += 2;
+            write += 1;
+        }
+        if read < length {
+            if read != write {
+                factors.swap(read, write);
+            }
+            write += 1;
+        }
+        factors.truncate(write);
+    }
+    factors.pop()
+}
+
+fn push_rational_product_partial(
+    partials: &mut Vec<Option<Rational>>,
+    mut product: Rational,
+    traced: &mut bool,
+) {
+    let mut level = 0;
+    loop {
+        if level == partials.len() {
+            partials.push(Some(product));
+            return;
+        }
+        if let Some(left) = partials[level].take() {
+            product = balanced_product_pair(&left, &product, traced);
+            level += 1;
+        } else {
+            partials[level] = Some(product);
+            return;
+        }
+    }
+}
+
+fn balanced_rational_product<I>(iter: I) -> Rational
+where
+    I: Iterator<Item = Rational>,
+{
+    let initial_chunk_capacity = iter.size_hint().0.min(BALANCED_PRODUCT_CHUNK);
+    let mut chunk = Vec::new();
+    let mut pending_factor = None;
+    // Slot n holds either no value or a product of 2^n full chunks. Chunking
+    // keeps the hot inner tree contiguous while retaining only O(log n)
+    // partial products and at most 512 original factors.
+    let mut partials: Vec<Option<Rational>> = Vec::new();
+    let mut has_zero = false;
+    let mut traced = false;
+
+    for factor in iter {
+        if has_zero {
+            continue;
+        }
+        if factor.is_zero() {
+            pending_factor = None;
+            chunk.clear();
+            partials.clear();
+            has_zero = true;
+            continue;
+        }
+        if factor.is_one() {
+            continue;
+        }
+        if chunk.capacity() == 0 {
+            let Some(first) = pending_factor.take() else {
+                pending_factor = Some(factor);
+                continue;
+            };
+            chunk = Vec::with_capacity(initial_chunk_capacity.max(2));
+            chunk.push(first);
+        }
+        chunk.push(factor);
+        if chunk.len() == BALANCED_PRODUCT_CHUNK {
+            let product = reduce_rational_product_chunk(&mut chunk, &mut traced)
+                .expect("a full product chunk is nonempty");
+            push_rational_product_partial(&mut partials, product, &mut traced);
+        }
+    }
+
+    if has_zero {
+        return Rational::zero();
+    }
+    if let Some(factor) = pending_factor {
+        return factor;
+    }
+
+    if let Some(product) = reduce_rational_product_chunk(&mut chunk, &mut traced) {
+        push_rational_product_partial(&mut partials, product, &mut traced);
+    }
+
+    // Low-to-high merging combines the short trailing blocks before the
+    // largest leading block, avoiding a final long chain for non-powers of 2.
+    let mut result = None;
+    for leading in partials.into_iter().flatten() {
+        result = Some(match result {
+            Some(trailing) => balanced_product_pair(&trailing, &leading, &mut traced),
+            None => leading,
+        });
+    }
+    result.unwrap_or_else(Rational::one)
+}
+
+impl std::iter::Product for Rational {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        balanced_rational_product(iter)
+    }
+}
+
+impl<'a> std::iter::Product<&'a Rational> for Rational {
+    fn product<I: Iterator<Item = &'a Rational>>(iter: I) -> Self {
+        balanced_rational_product(iter.cloned())
+    }
+}
+
+impl<T: AsRef<Rational>> Div<T> for &Rational {
+    type Output = Rational;
+
+    fn div(self, other: T) -> Self::Output {
+        let other = other.as_ref();
+        assert_ne!(other.numerator, BigUint::ZERO);
+        let sign = self.sign * other.sign;
+        if sign == NoSign {
+            return Self::Output::zero();
+        }
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref() / other.canonicalized_ref();
+        }
+        if other.is_one() {
+            return self.clone();
+        }
+        if other.is_minus_one() {
+            return -self;
+        }
+        if self.numerator == other.numerator && self.denominator == other.denominator {
+            return if sign == Minus {
+                Self::Output::minus_one()
+            } else {
+                Self::Output::one()
+            };
+        }
+        if let Some(result) = self.mul_div_words(other, true) {
+            crate::trace_dispatch!("rational", "div", "word-sized");
+            return result;
+        }
+        if self.numerator == other.denominator && self.denominator == other.numerator {
+            trace_rational_temporary!();
+            return Self::Output::maybe_reduce(Self::Output::from_parts_raw(
+                sign,
+                Rational::multiply_magnitudes(
+                    "division-reciprocal-numerator",
+                    &self.numerator,
+                    &self.numerator,
+                ),
+                Rational::multiply_magnitudes(
+                    "division-reciprocal-denominator",
+                    &self.denominator,
+                    &self.denominator,
+                ),
+            ));
+        }
+        let numerator = Rational::multiply_magnitudes(
+            "division-cross-numerator",
+            &self.numerator,
+            &other.denominator,
+        );
+        let denominator = Rational::multiply_magnitudes(
+            "division-cross-denominator",
+            &self.denominator,
+            &other.numerator,
+        );
+        trace_rational_temporary!();
+        Self::Output::maybe_reduce(Self::Output::from_parts_raw(sign, numerator, denominator))
+    }
+}
+
+impl<T: AsRef<Rational>> Div<T> for Rational {
+    type Output = Self;
+
+    fn div(self, other: T) -> Self {
+        &self / other.as_ref()
+    }
+}

@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "status": "proof_milestone_not_acceptance",
+  "proof_commit": "1113b627c5c4f4cb40cc3acc463ed041ca9bae34",
+  "runtime_reference": "8c7484915da3f39d6a6754c7411277b2809cb467",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "verification_units": 361,
+  "production_contracts": 51,
+  "model_theorems": 65,
+  "open_obligation_groups": 13,
+  "no_cheating": true,
+  "source_hashes_checked": 111,
+  "new_theorems": [
+    "Positive factor products",
+    "Unit factor products",
+    "Exact factor division preserves each containing prefix",
+    "Cross-cancellation preserves the complete product fraction",
+    "Coprimality of all prefixes against a fixed denominator",
+    "Pairwise cross-coprimality implies coprime products, including zero numerators"
+  ],
+  "erasure": {
+    "runtime_reference": "8c7484915da3f39d6a6754c7411277b2809cb467",
+    "command": [
+      "cargo",
+      "+nightly",
+      "rustc",
+      "--locked",
+      "--lib",
+      "--no-default-features",
+      "--",
+      "-Zunpretty=expanded"
+    ],
+    "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1"
+    },
+    "exit_code": 0,
+    "seconds": 0.3107593059539795,
+    "source_overlay": "src/verified/fraction.rs",
+    "overlay_sha256": "e64a08b22dd67c16643e1c4133ea7a840b49ed685688ddf436c080e597929582",
+    "runtime_source_prefix_unchanged": true,
+    "reference_sha256": "94c09ed65d256689bb9b7d5965e114c64868e61876dd74214bdc6738d0727f0f",
+    "expanded_sha256": "94c09ed65d256689bb9b7d5965e114c64868e61876dd74214bdc6738d0727f0f",
+    "byte_identical_expanded_rust": true
+  },
+  "limits": [
+    "The production cross-cancellation loops and caller preconditions still require refinement proofs.",
+    "A final product that fits does not imply all intermediate prefixes fit when a later factor is zero.",
+    "The full proof and empirical baseline acceptance remain incomplete; performance regressions are tracked in the cache diagnostics checkpoint."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-factor-proof.tar.gz",
+    "bytes": 248562,
+    "sha256": "d5c2a74c28f4a285590f3fef5173fb36a4ad3877a4bb6d4b991806be2841e3e1",
+    "files": 8
+  }
+}

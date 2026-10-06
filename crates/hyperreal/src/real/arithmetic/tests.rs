@@ -1,0 +1,2772 @@
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::mem::size_of;
+
+    #[test]
+    fn radical_magnitude_facts_follow_signed_binary_scales() {
+        for (radicand, root_msd) in [(2, 0), (3, 0), (5, 1), (7, 1)] {
+            let root = Real::from(radicand).sqrt().unwrap();
+            for shift in -8_i32..=8 {
+                let scale = if shift >= 0 {
+                    Rational::new(1_i64 << shift)
+                } else {
+                    Rational::fraction(1, 1_u64 << -shift).unwrap()
+                };
+                for scale in [scale.clone(), -scale] {
+                    let expected_sign = if scale.sign() == Sign::Minus {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    };
+                    let value = &root * &Real::new(scale);
+                    let facts = value.structural_facts();
+                    assert_eq!(facts.sign, Some(expected_sign));
+                    assert_eq!(facts.magnitude, Some(MagnitudeBits {
+                        msd: root_msd + shift,
+                        exact_msd: true,
+                    }));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn radical_magnitude_facts_preserve_lazy_and_wide_scales() {
+        let root = Real::from(2).sqrt().unwrap();
+        for common_bits in [0_usize, 129, 257, 1025] {
+            let common = (BigUint::from(1_u8) << common_bits) + 1_u8;
+            for (numerator, denominator, msd, exact_msd) in [
+                (1_u8, 1_u8, 0, true),
+                (2, 1, 1, true),
+                (1, 2, -1, true),
+                (3, 2, 0, false),
+                (2, 3, -1, false),
+                (5, 4, 0, false),
+            ] {
+                for sign in [Sign::Plus, Sign::Minus] {
+                    // Keep lazy storage intact rather than having multiplication
+                    // canonicalize the test input before the facts query.
+                    let mut value = root.clone();
+                    value.rational = Rational::from_parts_raw_unreduced(
+                        sign, &common * numerator, &common * denominator,
+                    );
+                    let facts = value.structural_facts();
+                    assert_eq!(facts.sign, Some(if sign == Sign::Plus {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    }));
+                    assert_eq!(facts.magnitude, Some(MagnitudeBits { msd, exact_msd }));
+                }
+            }
+        }
+        for shift in [-257_i32, 257] {
+            let power = BigUint::from(1_u8) << shift.unsigned_abs() as usize;
+            let (numerator, denominator) = if shift > 0 {
+                (power, BigUint::from(1_u8))
+            } else {
+                (BigUint::from(1_u8), power)
+            };
+            let mut value = root.clone();
+            value.rational = Rational::from_parts_raw_unreduced(Sign::Plus, numerator, denominator);
+            assert_eq!(value.structural_facts().magnitude, Some(MagnitudeBits {
+                msd: shift, exact_msd: true,
+            }));
+        }
+    }
+
+    #[test]
+    fn operations_work_on_refs() {
+        let a = Real::new(Rational::new(2));
+        let b = Real::new(Rational::new(3));
+        let c = Real::new(Rational::new(6));
+        assert_eq!(&a * &b, c.clone());
+        assert_eq!(&c / &b, Ok(a.clone()));
+        assert_eq!(&c - &a, Real::new(Rational::new(4)));
+        assert_eq!(-&c, Real::new(Rational::new(-6)));
+        assert_eq!(&a + &b, Real::new(Rational::new(5)));
+    }
+
+    #[test]
+    fn structural_negation_query_certifies_shared_exact_bases() {
+        let rational = Real::new(Rational::fraction(7, 11).unwrap());
+        let pi = Real::from(3_i8) * Real::pi();
+        let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+        let opaque = Real::one().sin();
+
+        for value in [&rational, &pi, &sqrt_two, &opaque] {
+            assert!(value.is_structural_negation_of(&(-value)));
+            assert!((-value).is_structural_negation_of(value));
+            assert!(!value.is_structural_negation_of(value));
+        }
+        assert!(Real::zero().is_structural_negation_of(&Real::zero()));
+        assert!(!Real::pi().is_structural_negation_of(&Real::e()));
+    }
+
+    #[test]
+    fn average_pair_preserves_exact_and_symbolic_fast_paths() {
+        let left = Real::new(Rational::fraction(-7, 12).unwrap());
+        let right = Real::new(Rational::fraction(11, 18).unwrap());
+        assert_eq!(
+            Real::average_pair(&left, &right),
+            Real::new(Rational::average_pair(
+                left.exact_rational_ref().unwrap(),
+                right.exact_rational_ref().unwrap(),
+            ))
+        );
+
+        let pi_third = &Real::pi() * &Real::new(Rational::fraction(1, 3).unwrap());
+        let five_pi_thirds = &Real::pi() * &Real::new(Rational::fraction(5, 3).unwrap());
+        assert_eq!(
+            Real::average_pair(&pi_third, &five_pi_thirds),
+            Real::pi()
+        );
+        assert_eq!(
+            Real::average_pair(&Real::zero(), &Real::pi()),
+            &Real::pi() * &Real::new(rationals::HALF.clone())
+        );
+
+        let mixed = Real::average_pair(&Real::pi(), &Real::e());
+        let expanded = ((&Real::pi() + &Real::e()) / Real::from(2_u8)).unwrap();
+        assert_eq!(mixed, expanded);
+        let width = Real::new(Rational::fraction(7, 11).unwrap());
+        for center in [Real::one().sin(), Real::from(3).ln().unwrap()] {
+            let mean = Real::average_pair(&(&center - &width), &(&center + &width));
+            assert_eq!((&mean - &center).certified_sign_until(0).sign(), Some(RealSign::Zero));
+            assert_eq!((&center - &mean).certified_sign_until(0).sign(), Some(RealSign::Zero));
+            assert_eq!((-&mean + &center).certified_sign_until(0).sign(), Some(RealSign::Zero));
+        }
+    }
+
+    #[test]
+    fn same_basis_assignments_match_borrowed_arithmetic() {
+        let mut exact = Real::new(Rational::fraction(5, 7).unwrap());
+        let exact_rhs = Real::new(Rational::fraction(11, 13).unwrap());
+        let expected_sum = &exact + &exact_rhs;
+        exact += &exact_rhs;
+        assert_eq!(exact, expected_sum);
+
+        let expected_difference = &exact - &exact_rhs;
+        exact -= &exact_rhs;
+        assert_eq!(exact, expected_difference);
+
+        let expected_product = &exact * &exact_rhs;
+        exact *= &exact_rhs;
+        assert_eq!(exact, expected_product);
+
+        exact *= Real::zero();
+        assert_eq!(exact, Real::zero());
+
+        let mut symbolic = Real::from(2_i32) * Real::pi();
+        let symbolic_rhs = Real::from(3_i32) * Real::pi();
+        let expected_symbolic = &symbolic + &symbolic_rhs;
+        symbolic += &symbolic_rhs;
+        assert_eq!(symbolic, expected_symbolic);
+
+        let expected_scaled_symbolic = &symbolic * &exact_rhs;
+        symbolic *= &exact_rhs;
+        assert_eq!(symbolic, expected_scaled_symbolic);
+
+        let cancellation_rhs = symbolic.clone();
+        symbolic -= &cancellation_rhs;
+        assert_eq!(symbolic, Real::zero());
+    }
+
+    #[test]
+    fn layout_sizes() {
+        const MAX_REAL_SIZE: usize = 48;
+
+        assert!(
+            size_of::<Real>() <= MAX_REAL_SIZE,
+            "Real grew to {} bytes",
+            size_of::<Real>()
+        );
+        assert!(
+            size_of::<Rational>() <= 8,
+            "Rational grew to {} bytes",
+            size_of::<Rational>()
+        );
+        assert!(
+            size_of::<RationalLinearForm4Filter>() <= 32,
+            "RationalLinearForm4Filter grew to {} bytes",
+            size_of::<RationalLinearForm4Filter>()
+        );
+        assert!(
+            size_of::<RationalLinearForm4Query>() <= 32,
+            "RationalLinearForm4Query grew to {} bytes",
+            size_of::<RationalLinearForm4Query>()
+        );
+        assert!(
+            size_of::<crate::ExactDyadicLineParameters2>() <= 80,
+            "ExactDyadicLineParameters2 grew to {} bytes",
+            size_of::<crate::ExactDyadicLineParameters2>()
+        );
+        assert!(
+            size_of::<crate::ExactDyadicLinePoint2>() <= 160,
+            "ExactDyadicLinePoint2 grew to {} bytes",
+            size_of::<crate::ExactDyadicLinePoint2>()
+        );
+        assert!(
+            size_of::<crate::ExactDyadicWideLineParameters2>() <= 128,
+            "ExactDyadicWideLineParameters2 grew to {} bytes",
+            size_of::<crate::ExactDyadicWideLineParameters2>()
+        );
+        assert!(
+            size_of::<crate::ExactDyadicWideLinePoint2>() <= 176,
+            "ExactDyadicWideLinePoint2 grew to {} bytes",
+            size_of::<crate::ExactDyadicWideLinePoint2>()
+        );
+        assert!(
+            size_of::<Class>() <= 16,
+            "Class grew to {} bytes",
+            size_of::<Class>()
+        );
+        assert!(
+            size_of::<AtomicPrimitiveApproxCache>() <= 8,
+            "atomic primitive cache grew to {} bytes",
+            size_of::<AtomicPrimitiveApproxCache>()
+        );
+        assert!(
+            size_of::<PrimitiveApproxCache>() <= 16,
+            "PrimitiveApproxCache grew to {} bytes",
+            size_of::<PrimitiveApproxCache>()
+        );
+        assert!(
+            size_of::<ConstProductClass>() <= 16,
+            "ConstProductClass grew to {} bytes",
+            size_of::<ConstProductClass>()
+        );
+        assert!(
+            size_of::<ConstOffsetClass>() <= 24,
+            "ConstOffsetClass grew to {} bytes",
+            size_of::<ConstOffsetClass>()
+        );
+        assert!(
+            size_of::<ConstProductSqrtClass>() <= 24,
+            "ConstProductSqrtClass grew to {} bytes",
+            size_of::<ConstProductSqrtClass>()
+        );
+        assert!(
+            size_of::<LnAffineClass>() <= 16,
+            "LnAffineClass grew to {} bytes",
+            size_of::<LnAffineClass>()
+        );
+        assert!(
+            size_of::<LnProductClass>() <= 16,
+            "LnProductClass grew to {} bytes",
+            size_of::<LnProductClass>()
+        );
+    }
+
+    #[test]
+    fn rational_storage_class_is_a_conservative_exact_cost_fact() {
+        let multi_limb = Rational::new(2)
+            .powi(128_i64.into())
+            .expect("positive integer powers remain rational");
+        let very_large = Rational::new(2)
+            .powi(5_000_i64.into())
+            .expect("positive integer powers remain rational");
+        assert_eq!(Rational::zero().storage_class(), RationalStorageClass::Zero);
+        assert_eq!(
+            Rational::fraction(7, 11).unwrap().storage_class(),
+            RationalStorageClass::WordSized
+        );
+        assert_eq!(multi_limb.storage_class(), RationalStorageClass::MultiLimb);
+        assert_eq!(very_large.storage_class(), RationalStorageClass::VeryLarge);
+    }
+
+    #[test]
+    fn aggregate_helpers_keep_values_in_real_space() {
+        let values = [Real::from(1_i32), Real::from(3_i32), Real::from(5_i32)];
+
+        assert_eq!(Real::sum_refs(values.iter()), Real::from(9_i32));
+        assert_eq!(Real::mean(&values), Some(Real::from(3_i32)));
+        assert_eq!(
+            Real::affine(&Real::from(1_i32), &Real::from(2_i32), &Real::from(3_i32)),
+            Real::from(7_i32)
+        );
+
+        let stddev = Real::sample_stddev(&values).unwrap();
+        assert_eq!(stddev, Real::from(4_i32).sqrt().unwrap());
+    }
+
+    #[test]
+    fn long_symbolic_sums_enclose_an_independent_dyadic_reference() {
+        const TERMS: usize = BALANCED_REAL_SUM_THRESHOLD + 1;
+        const REFERENCE_BITS: usize = 384;
+        const RESULT_PRECISION: i32 = -256;
+
+        let values: Vec<_> = (2..TERMS + 2)
+            .map(|value| {
+                Real::from(u64::try_from(value).expect("test term fits u64"))
+                    .sqrt()
+                    .expect("positive integer has a square root")
+            })
+            .collect();
+
+        // floor(sqrt(n) * 2^k) and its successor independently bracket every
+        // term using only exact integer arithmetic.
+        let mut lower_numerator = BigUint::from(0_u8);
+        let mut upper_numerator = BigUint::from(0_u8);
+        for value in 2..TERMS + 2 {
+            let scaled_radicand = BigUint::from(value) << (2 * REFERENCE_BITS);
+            let floor = scaled_radicand.sqrt();
+            lower_numerator += &floor;
+            upper_numerator += floor + BigUint::from(1_u8);
+        }
+        let denominator = BigUint::from(1_u8) << REFERENCE_BITS;
+        let reference_lower = Rational::from_bigint_fraction(
+            BigInt::from(lower_numerator),
+            denominator.clone(),
+        )
+        .expect("dyadic denominator is nonzero");
+        let reference_upper =
+            Rational::from_bigint_fraction(BigInt::from(upper_numerator), denominator)
+                .expect("dyadic denominator is nonzero");
+
+        let candidates = [
+            Real::sum_refs(values.iter()),
+            Real::sum_owned(values.clone()),
+            values.iter().sum(),
+            values.clone().into_iter().sum(),
+        ];
+        for candidate in candidates {
+            let [lower, upper] = candidate
+                .certified_rational_interval(RESULT_PRECISION)
+                .expect("unaborted sum has a certified interval");
+            assert!(lower <= reference_lower);
+            assert!(upper >= reference_upper);
+        }
+    }
+
+    #[test]
+    fn long_homogeneous_sums_collapse_to_the_exact_rational() {
+        const TERMS: usize = 1_024;
+
+        let rationals: Vec<_> = (0..TERMS)
+            .map(|index| {
+                let magnitude = i64::try_from(index % 97 + 1).expect("small numerator fits i64");
+                let numerator = if index % 2 == 0 {
+                    magnitude
+                } else {
+                    -magnitude
+                };
+                let denominator =
+                    u64::try_from(1_009 + 2 * index).expect("test denominator fits u64");
+                Rational::fraction(numerator, denominator).expect("nonzero denominator")
+            })
+            .collect();
+        let expected = rationals
+            .iter()
+            .fold(Rational::zero(), |sum, value| sum + value);
+        let values: Vec<_> = rationals.into_iter().map(Real::new).collect();
+
+        let candidates = [
+            Real::sum_refs(values.iter()),
+            Real::sum_owned(values.clone()),
+            values.iter().sum(),
+            values.into_iter().sum(),
+        ];
+        for candidate in candidates {
+            assert_eq!(candidate.exact_rational(), Some(expected.clone()));
+        }
+    }
+
+    #[test]
+    fn long_homogeneous_symbolic_sums_preserve_one_scaled_basis() {
+        const TERMS: usize = 1_024;
+
+        let basis = Real::from(2_u8)
+            .sqrt()
+            .expect("positive integer has a square root");
+        let expected = Real::from(u64::try_from(TERMS).expect("test size fits u64")) * &basis;
+        let values = vec![basis; TERMS];
+        let candidates = [
+            Real::sum_refs(values.iter()),
+            Real::sum_owned(values.clone()),
+            values.iter().sum(),
+            values.into_iter().sum(),
+        ];
+
+        for candidate in candidates {
+            assert!(candidate.same_symbolic_basis(&expected));
+            assert_eq!(candidate.rational, expected.rational);
+        }
+    }
+
+    #[test]
+    fn product_sum_helpers_preserve_exact_geometry_kernels() {
+        assert_eq!(
+            Real::mul_add(&Real::from(2_i32), &Real::from(3_i32), &Real::from(4_i32)),
+            Real::from(10_i32)
+        );
+        assert_eq!(
+            Real::mul_add(&Real::zero(), &Real::pi(), &Real::from(4_i32)),
+            Real::from(4_i32)
+        );
+        assert_eq!(
+            Real::diff_of_products(
+                &Real::from(2_i32),
+                &Real::from(5_i32),
+                &Real::from(3_i32),
+                &Real::from(4_i32),
+            ),
+            Real::from(-2_i32)
+        );
+        let left = [
+            Real::new(Rational::fraction(1, 2).unwrap()),
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::new(Rational::fraction(1, 5).unwrap()),
+            Real::new(Rational::fraction(1, 7).unwrap()),
+            Real::new(Rational::fraction(1, 11).unwrap()),
+        ];
+        let right = [
+            Real::new(Rational::fraction(2, 3).unwrap()),
+            Real::new(Rational::fraction(3, 5).unwrap()),
+            Real::new(Rational::fraction(5, 7).unwrap()),
+            Real::new(Rational::fraction(7, 11).unwrap()),
+            Real::new(Rational::fraction(11, 13).unwrap()),
+        ];
+        let expected = left
+            .iter()
+            .zip(&right)
+            .map(|(l, r)| l * r)
+            .fold(Real::zero(), |sum, term| &sum + &term);
+        assert_eq!(Real::sum_products(&left, &right).unwrap(), expected);
+        assert_eq!(
+            Real::sum_products(&left[..2], &right[..3]),
+            Err(Problem::ParseError)
+        );
+    }
+
+    fn exact_affine_det2_sign(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> RealSign {
+        let [ax, ay] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy] = c.map(|value| value.exact_rational().unwrap());
+        let determinant = (bx - &ax) * (cy - &ay) - (by - ay) * (cx - ax);
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    #[test]
+    fn dominant_affine_cross_axis_word_path_is_exact() {
+        let rational = |numerator, denominator| {
+            Real::new(Rational::fraction(numerator, denominator).unwrap())
+        };
+        let a = [rational(7, 11), rational(-5, 13), rational(2, 17)];
+        let b = [
+            &a[0] + &rational(1, 2),
+            a[1].clone(),
+            a[2].clone(),
+        ];
+        let c = [
+            a[0].clone(),
+            &a[1] + &rational(2, 3),
+            &a[2] + &rational(3, 5),
+        ];
+
+        assert_eq!(
+            Real::exact_rational_dominant_affine_cross_axis(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+            ),
+            Some((2, RealSign::Positive))
+        );
+        assert_eq!(
+            Real::exact_rational_dominant_affine_cross_axis(
+                [&a[0], &a[1], &a[2]],
+                [&a[0], &a[1], &a[2]],
+                [&c[0], &c[1], &c[2]],
+            ),
+            None
+        );
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut random_real = || {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let numerator = i64::try_from((state >> 32) % 101).unwrap() - 50;
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let denominator = (state >> 32) % 19 + 1;
+            Real::new(Rational::fraction(numerator, denominator).unwrap())
+        };
+        for _ in 0..256 {
+            let points: [[Real; 3]; 3] =
+                core::array::from_fn(|_| core::array::from_fn(|_| random_real()));
+            let rationals = points.each_ref().map(|point| {
+                point
+                    .each_ref()
+                    .map(|value| value.exact_rational_ref().unwrap())
+            });
+            let ab: [Rational; 3] =
+                core::array::from_fn(|axis| rationals[1][axis] - rationals[0][axis]);
+            let ac: [Rational; 3] =
+                core::array::from_fn(|axis| rationals[2][axis] - rationals[0][axis]);
+            let components = [
+                Rational::signed_product_sum2(
+                    [true, false],
+                    [[&ab[1], &ac[2]], [&ab[2], &ac[1]]],
+                ),
+                Rational::signed_product_sum2(
+                    [true, false],
+                    [[&ab[2], &ac[0]], [&ab[0], &ac[2]]],
+                ),
+                Rational::signed_product_sum2(
+                    [true, false],
+                    [[&ab[0], &ac[1]], [&ab[1], &ac[0]]],
+                ),
+            ];
+            let squares = components.each_ref().map(|value| value * value);
+            let mut axis = 0;
+            for candidate in 1..3 {
+                if squares[candidate] > squares[axis] {
+                    axis = candidate;
+                }
+            }
+            let expected = if components[axis].is_positive() {
+                Some((axis, RealSign::Positive))
+            } else if components[axis].is_negative() {
+                Some((axis, RealSign::Negative))
+            } else {
+                None
+            };
+            assert_eq!(
+                Real::exact_rational_dominant_affine_cross_axis(
+                    points[0].each_ref(),
+                    points[1].each_ref(),
+                    points[2].each_ref(),
+                ),
+                expected
+            );
+        }
+    }
+
+    fn exact_linear_form3_sign(coefficients: [&Real; 4], point: [&Real; 3]) -> RealSign {
+        let [a, b, c, d] = coefficients.map(|value| value.exact_rational().unwrap());
+        let [x, y, z] = point.map(|value| value.exact_rational().unwrap());
+        let value = a * x + b * y + c * z + d;
+        if value.is_positive() {
+            RealSign::Positive
+        } else if value.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    fn exact_affine_det3_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+    ) -> RealSign {
+        let [ax, ay, az] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by, bz] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy, cz] = c.map(|value| value.exact_rational().unwrap());
+        let [dx, dy, dz] = d.map(|value| value.exact_rational().unwrap());
+        let adx = ax - &dx;
+        let bdx = bx - &dx;
+        let cdx = cx - dx;
+        let ady = ay - &dy;
+        let bdy = by - &dy;
+        let cdy = cy - dy;
+        let adz = az - &dz;
+        let bdz = bz - &dz;
+        let cdz = cz - dz;
+        let determinant = adz * (&bdx * &cdy - &cdx * &bdy)
+            + bdz * (&cdx * &ady - &adx * &cdy)
+            + cdz * (adx * bdy - bdx * ady);
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    fn exact_incircle2d_sign(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+        d: [&Real; 2],
+    ) -> RealSign {
+        let [ax, ay] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy] = c.map(|value| value.exact_rational().unwrap());
+        let [dx, dy] = d.map(|value| value.exact_rational().unwrap());
+        let adx = ax - &dx;
+        let bdx = bx - &dx;
+        let cdx = cx - dx;
+        let ady = ay - &dy;
+        let bdy = by - &dy;
+        let cdy = cy - dy;
+        let alift = &adx * &adx + &ady * &ady;
+        let blift = &bdx * &bdx + &bdy * &bdy;
+        let clift = &cdx * &cdx + &cdy * &cdy;
+        let determinant = alift * (&bdx * &cdy - &cdx * &bdy)
+            + blift * (&cdx * &ady - &adx * &cdy)
+            + clift * (adx * bdy - bdx * ady);
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    fn exact_insphere3d_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+        e: [&Real; 3],
+    ) -> RealSign {
+        let [ax, ay, az] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by, bz] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy, cz] = c.map(|value| value.exact_rational().unwrap());
+        let [dx, dy, dz] = d.map(|value| value.exact_rational().unwrap());
+        let [ex, ey, ez] = e.map(|value| value.exact_rational().unwrap());
+        let aex = ax - &ex;
+        let bex = bx - &ex;
+        let cex = cx - &ex;
+        let dex = dx - ex;
+        let aey = ay - &ey;
+        let bey = by - &ey;
+        let cey = cy - &ey;
+        let dey = dy - ey;
+        let aez = az - &ez;
+        let bez = bz - &ez;
+        let cez = cz - &ez;
+        let dez = dz - ez;
+        let ab = &aex * &bey - &bex * &aey;
+        let bc = &bex * &cey - &cex * &bey;
+        let cd = &cex * &dey - &dex * &cey;
+        let da = &dex * &aey - &aex * &dey;
+        let ac = &aex * &cey - &cex * &aey;
+        let bd = &bex * &dey - &dex * &bey;
+        let abc = &aez * &bc - &bez * &ac + &cez * &ab;
+        let bcd = &bez * &cd - &cez * &bd + &dez * &bc;
+        let cda = &cez * &da + &dez * &ac + &aez * &cd;
+        let dab = &dez * &ab + &aez * &bd + &bez * &da;
+        let alift = &aex * &aex + &aey * &aey + &aez * &aez;
+        let blift = &bex * &bex + &bey * &bey + &bez * &bez;
+        let clift = &cex * &cex + &cey * &cey + &cez * &cez;
+        let dlift = &dex * &dex + &dey * &dey + &dez * &dez;
+        let determinant = dlift * abc - clift * dab + blift * cda - alift * bcd;
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    #[test]
+    fn certified_affine_det2_sign_only_returns_exact_signs() {
+        let positive = [
+            Real::try_from(0.25_f64).unwrap(),
+            Real::try_from(-0.5_f64).unwrap(),
+        ];
+        let right = [
+            Real::try_from(2.0_f64).unwrap(),
+            Real::try_from(-0.5_f64).unwrap(),
+        ];
+        let above = [
+            Real::try_from(0.25_f64).unwrap(),
+            Real::try_from(1.5_f64).unwrap(),
+        ];
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&positive[0], &positive[1]],
+                [&right[0], &right[1]],
+                [&above[0], &above[1]],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&positive[0], &positive[1]],
+                [&above[0], &above[1]],
+                [&right[0], &right[1]],
+            ),
+            Some(RealSign::Negative),
+        );
+
+        let collinear = [Real::from(3_i32), Real::from(3_i32)];
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&positive[0], &positive[1]],
+                [&collinear[0], &collinear[1]],
+                [&collinear[0], &collinear[1]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&third, &positive[1]],
+                [&right[0], &right[1]],
+                [&above[0], &above[1]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&Real::pi(), &positive[1]],
+                [&right[0], &right[1]],
+                [&above[0], &above[1]],
+            ),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&Real::zero(), &Real::zero()],
+                [&huge, &Real::zero()],
+                [&Real::zero(), &huge],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn certified_affine_det2_sign_bounds_subnormal_products_absolutely() {
+        let zero = Real::zero();
+        let min_normal = Real::try_from(f64::MIN_POSITIVE).unwrap();
+        let one = Real::one();
+        let small = Real::try_from(2.0_f64.powi(-100)).unwrap();
+
+        // The first product underflows into the subnormal range, but the
+        // normal aggregate bound dominates its absolute rounding error.
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&zero, &zero],
+                [&min_normal, &one],
+                [&one, &small],
+            ),
+            Some(RealSign::Negative),
+        );
+
+        // When the aggregate itself is subnormal, the filter stays
+        // inconclusive and leaves the decision to the exact fallback.
+        let half = Real::try_from(0.5_f64).unwrap();
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&zero, &zero],
+                [&min_normal, &zero],
+                [&zero, &half],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn linear_form3_filter_only_returns_exact_signs() {
+        let coefficients = [
+            Real::from(2_i32),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let positive = [Real::from(4_i32), Real::zero(), Real::zero()];
+        let negative = [Real::zero(), Real::zero(), Real::zero()];
+        let boundary = [Real::one(), Real::zero(), Real::one()];
+        let coefficient_refs = [
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ];
+        let filter =
+            LinearForm3Filter::from_reals(coefficient_refs).expect("dyadic coefficients should fit");
+        for point in [&positive, &negative] {
+            let point_refs = [&point[0], &point[1], &point[2]];
+            assert_eq!(
+                filter.sign(point_refs),
+                Some(exact_linear_form3_sign(coefficient_refs, point_refs)),
+            );
+        }
+        assert_eq!(
+            filter.sign([&boundary[0], &boundary[1], &boundary[2]]),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert!(
+            LinearForm3Filter::from_reals([
+                &third,
+                &coefficients[1],
+                &coefficients[2],
+                &coefficients[3],
+            ])
+            .is_none(),
+        );
+        assert_eq!(
+            filter.sign([&Real::pi(), &positive[1], &positive[2]]),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        let huge_filter = LinearForm3Filter::from_reals([
+            &huge,
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("finite dyadic coefficients should fit");
+        assert_eq!(
+            huge_filter.sign([&huge, &positive[1], &positive[2]]),
+            None,
+        );
+    }
+
+    #[test]
+    fn rational_linear_form4_filter_preserves_exact_signs() {
+        let third = Rational::fraction(1, 3).unwrap();
+        let coefficients = [
+            Real::new(third),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let filter = RationalLinearForm4Filter::from_reals([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("finite rational coefficients should fit");
+        let zero = Rational::zero();
+        let three = Rational::new(3);
+        let positive = Rational::new(66);
+        let negative = Rational::new(60);
+        let boundary = Rational::new(63);
+        assert_eq!(
+            filter.sign_rationals([
+                &positive,
+                &zero,
+                &zero,
+                &three,
+            ]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            filter.sign_rationals([
+                &negative,
+                &zero,
+                &zero,
+                &three,
+            ]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            filter.sign_rationals([
+                &boundary,
+                &zero,
+                &zero,
+                &three,
+            ]),
+            None,
+        );
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign(
+                [
+                    &coefficients[0],
+                    &coefficients[1],
+                    &coefficients[2],
+                    &coefficients[3],
+                ],
+                [&positive, &zero, &zero, &three],
+            ),
+            Some(RealSign::Positive),
+        );
+
+        let positive_query =
+            RationalLinearForm4Query::from_rationals([
+                &positive,
+                &zero,
+                &zero,
+                &three,
+            ])
+            .expect("finite rational query should fit");
+        assert_eq!(
+            filter.sign(&positive_query),
+            Some(RealSign::Positive),
+        );
+        let negative_query =
+            RationalLinearForm4Query::from_rationals([
+                &negative,
+                &zero,
+                &zero,
+                &three,
+            ])
+            .expect("finite rational query should fit");
+        assert_eq!(
+            filter.sign(&negative_query),
+            Some(RealSign::Negative),
+        );
+        let boundary_query =
+            RationalLinearForm4Query::from_rationals([
+                &boundary,
+                &zero,
+                &zero,
+                &three,
+            ])
+            .expect("finite rational query should fit");
+        assert_eq!(filter.sign(&boundary_query), None);
+
+        let affine_query =
+            RationalLinearForm4Query::from_affine_point3([
+                &positive,
+                &zero,
+                &zero,
+            ])
+            .expect("finite affine rational query should fit");
+        let affine_coefficients = [
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::zero(),
+            Real::zero(),
+            Real::from(-21_i32),
+        ];
+        let affine_filter =
+            RationalLinearForm4Filter::from_reals([
+                &affine_coefficients[0],
+                &affine_coefficients[1],
+                &affine_coefficients[2],
+                &affine_coefficients[3],
+            ])
+            .expect("finite affine coefficients should fit");
+        assert_eq!(
+            affine_filter.sign(&affine_query),
+            Some(RealSign::Positive),
+        );
+    }
+
+    #[test]
+    fn rational_linear_form4_filter_exposes_positive_scale_normalization() {
+        let coefficients = [
+            Real::from(3_i32),
+            Real::from(-4_i32),
+            Real::from(12_i32),
+            Real::from(7_i32),
+        ];
+        let filter = RationalLinearForm4Filter::from_reals([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("small integer coefficients should fit");
+
+        assert_eq!(
+            filter.normalized_coefficients(),
+            [0.375, -0.5, 1.5, 0.875],
+        );
+    }
+
+    #[test]
+    fn rational_linear_form4_relative_conversion_normalizes_minimum_normal() {
+        let minimum = Real::try_from(f64::MIN_POSITIVE).unwrap();
+        let minimum_rational = minimum.exact_rational_ref().unwrap();
+        assert!(Real::exact_rational_real_f64_with_error(&minimum).is_none());
+
+        let zero = Real::zero();
+        let zero_rational = zero.exact_rational_ref().unwrap();
+        let filter = RationalLinearForm4Filter::from_reals([
+            &minimum,
+            &zero,
+            &zero,
+            &zero,
+        ])
+        .expect("relative normalization rescales the minimum normal");
+        let query = RationalLinearForm4Query::from_rationals([
+            minimum_rational,
+            zero_rational,
+            zero_rational,
+            zero_rational,
+        ])
+        .expect("relative normalization rescales the minimum normal");
+        assert_eq!(filter.coefficients, [1.0, 0.0, 0.0, 0.0]);
+        assert_eq!(query.values, [1.0, 0.0, 0.0, 0.0]);
+        assert_eq!(filter.sign(&query), Some(RealSign::Positive));
+
+        let subnormal = Real::try_from(f64::from_bits(1)).unwrap();
+        assert!(RationalLinearForm4Query::from_rationals([
+            subnormal.exact_rational_ref().unwrap(),
+            zero_rational,
+            zero_rational,
+            zero_rational,
+        ])
+        .is_none());
+    }
+
+    #[test]
+    fn rational_linear_form4_normalization_handles_every_normal_exponent() {
+        fn reference(mut values: [f64; 4]) -> Option<[f64; 4]> {
+            const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;
+            const MIN_NORMAL_MAGNITUDE_BITS: u64 = f64::MIN_POSITIVE.to_bits();
+            let max_magnitude_bits = values
+                .iter()
+                .map(|value| value.to_bits() & i64::MAX as u64)
+                .max()
+                .unwrap_or(0);
+            if max_magnitude_bits == 0 {
+                return Some(values);
+            }
+            let scale_bits = max_magnitude_bits & EXPONENT_MASK;
+            if scale_bits == 0 || scale_bits == EXPONENT_MASK {
+                return None;
+            }
+            let inverse_scale = 1.0 / f64::from_bits(scale_bits);
+            for value in &mut values {
+                let was_nonzero = value.to_bits() << 1 != 0;
+                *value *= inverse_scale;
+                let magnitude_bits = value.to_bits() & i64::MAX as u64;
+                if was_nonzero && magnitude_bits < MIN_NORMAL_MAGNITUDE_BITS {
+                    return None;
+                }
+            }
+            Some(values)
+        }
+
+        for exponent in 1..=2046_u64 {
+            let scale = f64::from_bits(exponent << 52);
+            for span in [0, 1, 499, 500, 501, 511, 512, 1022, 2045] {
+                let lane_exponent = exponent.saturating_sub(span).max(1);
+                let lane = f64::from_bits(
+                    (lane_exponent << 52)
+                        | [0, 1, 1_u64 << 51, (1_u64 << 52) - 1]
+                            [(span % 4) as usize],
+                );
+                let values = [scale, -lane, 0.0, -0.0];
+                assert_eq!(
+                    Real::normalize_rational_linear_form4_values(values),
+                    reference(values),
+                    "normal exponent {exponent}, span {span}",
+                );
+            }
+        }
+        for values in [
+            [f64::INFINITY, 1.0, 0.0, 0.0],
+            [f64::NAN, 1.0, 0.0, 0.0],
+        ] {
+            assert_eq!(
+                Real::normalize_rational_linear_form4_values(values),
+                reference(values),
+            );
+        }
+        for values in [
+            [f64::MIN_POSITIVE, f64::from_bits(1), -0.0, 0.0],
+            [
+                f64::MIN_POSITIVE,
+                f64::from_bits((1_u64 << 52) - 1),
+                0.0,
+                0.0,
+            ],
+            [f64::MAX, f64::from_bits(1), 0.0, -0.0],
+        ] {
+            assert_eq!(
+                Real::normalize_rational_linear_form4_values(values),
+                reference(values),
+            );
+        }
+    }
+
+    #[test]
+    fn rational_linear_form4_filter_rejects_unsafe_f64_ranges() {
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [1.0, 2.0, 3.0, 4.0],
+                [1.0; 4],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [f64::MAX, 0.0, 0.0, 0.0],
+                [2.0, 0.0, 0.0, 0.0],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [f64::MIN_POSITIVE, 0.0, 0.0, 0.0],
+                [0.5, 0.0, 0.0, 0.0],
+            ),
+            None,
+        );
+
+        let twice_minimum = 2.0 * f64::MIN_POSITIVE;
+        let adjacent = f64::from_bits(twice_minimum.to_bits() - 1);
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [twice_minimum, -adjacent, 0.0, 0.0],
+                [1.0; 4],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn rational_linear_form4_segment_intersection_enclosure_contains_exact_coordinates() {
+        fn support(coefficients: &[Rational; 4], point: &[Rational; 3]) -> Rational {
+            Rational::signed_product_sum(
+                [true; 4],
+                [
+                    [&coefficients[0], &point[0]],
+                    [&coefficients[1], &point[1]],
+                    [&coefficients[2], &point[2]],
+                    [&coefficients[3], Rational::one_ref()],
+                ],
+            )
+        }
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut certified = 0_usize;
+        for _ in 0..20_000 {
+            let mut next_rational = || {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 2_000_001).unwrap() - 1_000_000;
+                let denominator = state.rotate_left(29) % 1_000_003 + 1;
+                Rational::fraction(numerator, denominator).unwrap()
+            };
+            let coefficients: [Rational; 4] = core::array::from_fn(|_| next_rational());
+            if coefficients[..3].iter().all(Rational::is_zero) {
+                continue;
+            }
+            let first: [Rational; 3] = core::array::from_fn(|_| next_rational());
+            let second: [Rational; 3] = core::array::from_fn(|_| next_rational());
+            let first_support = support(&coefficients, &first);
+            let second_support = support(&coefficients, &second);
+            if !((first_support.is_positive() && second_support.is_negative())
+                || (first_support.is_negative() && second_support.is_positive()))
+            {
+                continue;
+            }
+
+            let coefficient_reals = coefficients.clone().map(Real::new);
+            let Some(filter) = RationalLinearForm4Filter::from_reals([
+                &coefficient_reals[0],
+                &coefficient_reals[1],
+                &coefficient_reals[2],
+                &coefficient_reals[3],
+            ]) else {
+                continue;
+            };
+            let Some(first_query) = RationalLinearForm4Query::from_affine_point3([
+                &first[0], &first[1], &first[2],
+            ]) else {
+                continue;
+            };
+            let Some(second_query) = RationalLinearForm4Query::from_affine_point3([
+                &second[0],
+                &second[1],
+                &second[2],
+            ]) else {
+                continue;
+            };
+            let axis = (state as usize) % 3;
+            let Some(enclosure) = filter.segment_intersection_coordinate_enclosure(
+                &first_query,
+                &second_query,
+                axis,
+            ) else {
+                continue;
+            };
+            let numerator = Rational::signed_product_sum(
+                [true, false],
+                [
+                    [&first_support, &second[axis]],
+                    [&second_support, &first[axis]],
+                ],
+            );
+            let denominator = &first_support - &second_support;
+            let exact = &numerator / &denominator;
+            let exact_enclosure = exact.to_f64_enclosure().unwrap();
+            assert!(
+                enclosure[0] <= exact_enclosure[0] && enclosure[1] >= exact_enclosure[1],
+                "{enclosure:?} does not contain {exact_enclosure:?}"
+            );
+            certified += 1;
+        }
+        assert!(certified > 4_000, "only {certified} crossings certified");
+    }
+
+    #[test]
+    fn rational_linear_form4_segment_intersection_enclosure_declines_every_unsafe_boundary() {
+        let coefficients = [Real::zero(), Real::one(), Real::zero(), Real::zero()];
+        let filter = RationalLinearForm4Filter::from_reals([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .unwrap();
+        let point = |x: i64, y: i64| {
+            let [x, y, zero] = [Rational::new(x), Rational::new(y), Rational::zero()];
+            RationalLinearForm4Query::from_affine_point3([&x, &y, &zero]).unwrap()
+        };
+        let positive = point(3, 1);
+        let negative = point(-5, -1);
+        let on_plane = point(7, 0);
+        let same_side = point(11, 2);
+
+        let enclosure = filter
+            .segment_intersection_coordinate_enclosure(&positive, &negative, 0)
+            .expect("a finite proper crossing is certifiable");
+        assert!(enclosure[0] <= -1.0 && enclosure[1] >= -1.0);
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(&positive, &negative, 3)
+                .is_none()
+        );
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(&positive, &same_side, 0)
+                .is_none()
+        );
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(&positive, &on_plane, 0)
+                .is_none()
+        );
+
+        let positive_overflow = RationalLinearForm4Query {
+            values: [f64::MAX, 1.0, 0.0, 1.0],
+        };
+        let negative_overflow = RationalLinearForm4Query {
+            values: [f64::MAX, -1.0, 0.0, 1.0],
+        };
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(
+                    &positive_overflow,
+                    &negative_overflow,
+                    0,
+                )
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn rational_line2_filter_preserves_exact_signs() {
+        let retained_numerator = (BigUint::from(1_u8) << 96_usize) + BigUint::from(1_u8);
+        let retained_denominator = (BigUint::from(1_u8) << 80_usize) + BigUint::from(3_u8);
+        let retained = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Sign::Plus, retained_numerator),
+            retained_denominator,
+        )
+        .unwrap();
+        assert!(!retained.has_relative_f64_filter_view());
+        let prewarmed_real = Real::from(retained.clone());
+        let prewarmed_view = prewarmed_real
+            .to_f64_lossy()
+            .expect("stable rational should have a generic lossy view");
+        let retained_real = Real::from(retained.clone());
+        let first_view = Real::exact_rational_real_f64_with_error(&retained_real)
+            .expect("ordinary rational should support a relative filter view");
+        assert!(retained.has_relative_f64_filter_view());
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&retained_real),
+            Some(first_view)
+        );
+        assert!(retained.has_relative_f64_filter_view());
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&retained_real),
+            Some(first_view)
+        );
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&prewarmed_real),
+            Some(first_view),
+            "shared eligibility must certify an independently prewarmed Real cache"
+        );
+        assert_eq!(prewarmed_view, first_view.0);
+
+        let concurrent_numerator = (BigUint::from(1_u8) << 112_usize) + BigUint::from(5_u8);
+        let concurrent_denominator = (BigUint::from(1_u8) << 93_usize) + BigUint::from(7_u8);
+        let concurrent = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Sign::Plus, concurrent_numerator),
+            concurrent_denominator,
+        )
+        .unwrap();
+        let concurrent_reals = (0..8)
+            .map(|_| Real::from(concurrent.clone()))
+            .collect::<Vec<_>>();
+        std::thread::scope(|scope| {
+            for value in &concurrent_reals {
+                scope.spawn(move || {
+                    for _ in 0..64 {
+                        assert!(Real::exact_rational_real_f64_with_error(value).is_some());
+                    }
+                });
+            }
+        });
+        assert!(concurrent.has_relative_f64_filter_view());
+
+        let huge_numerator = (BigUint::from(1_u8) << 2048_usize) + BigUint::from(1_u8);
+        let huge_denominator = &huge_numerator + BigUint::from(2_u8);
+        let huge = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Sign::Plus, huge_numerator),
+            huge_denominator,
+        )
+        .unwrap();
+        let huge_real = Real::from(huge.clone());
+        assert!(huge_real.to_f64_lossy().is_some());
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&huge_real),
+            None,
+            "a generic lossy cache entry is not certified predicate evidence"
+        );
+        assert!(!huge.has_relative_f64_filter_view());
+
+        let zero = Rational::zero();
+        let third = Rational::fraction(1, 3).unwrap();
+        let two_thirds = Rational::fraction(2, 3).unwrap();
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        let zero_real = Real::from(zero.clone());
+        let third_real = Real::from(third.clone());
+        let two_thirds_real = Real::from(two_thirds.clone());
+        let one_real = Real::from(one.clone());
+        let two_real = Real::from(two.clone());
+        let three_real = Real::from(three.clone());
+        let line = RationalLine2Filter::from_reals(
+            [&zero_real, &zero_real],
+            [&third_real, &two_thirds_real],
+        )
+        .expect("finite rational line should construct");
+        assert_eq!(
+            line.sign_reals([&one_real, &three_real]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            line.sign_reals([&two_real, &three_real]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(line.sign_reals([&one_real, &two_real]), None);
+        assert_eq!(
+            Real::certified_rational_line2_sign(
+                [&zero_real, &zero_real],
+                [&third_real, &two_thirds_real],
+                [&one_real, &three_real],
+            ),
+            Some(RealSign::Positive),
+        );
+
+        let height = Rational::new(9);
+        let from = RationalPoint3Query::from_rationals([&zero, &zero, &height])
+            .expect("finite rational point should construct");
+        let to = RationalPoint3Query::from_rationals([&third, &two_thirds, &height])
+            .expect("finite rational point should construct");
+        let projected = RationalLine2Filter::from_point3(&from, &to, [0, 1])
+            .expect("distinct valid axes should construct");
+        let positive = RationalPoint3Query::from_rationals([&one, &three, &height])
+            .expect("finite rational point should construct");
+        let negative = RationalPoint3Query::from_rationals([&two, &three, &height])
+            .expect("finite rational point should construct");
+        let boundary = RationalPoint3Query::from_rationals([&one, &two, &height])
+            .expect("finite rational point should construct");
+        assert_eq!(
+            projected.sign_point3(&positive, [0, 1]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            projected.sign_point3(&negative, [0, 1]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(projected.sign_point3(&boundary, [0, 1]), None);
+        assert_eq!(
+            projected.sign_point3_pair([&positive, &negative], [0, 1]),
+            [Some(RealSign::Positive), Some(RealSign::Negative)],
+        );
+        assert_eq!(
+            projected.sign_point3_pair([&boundary, &positive], [0, 1]),
+            [None, Some(RealSign::Positive)],
+        );
+        assert!(RationalLine2Filter::from_point3(&from, &to, [1, 1]).is_none());
+        assert!(projected.sign_point3(&positive, [0, 3]).is_none());
+        assert_eq!(
+            projected.sign_point3_pair([&positive, &negative], [0, 3]),
+            [None, None],
+        );
+
+        assert_eq!(core::mem::size_of::<RationalPoint3Query>(), 48);
+        let supplied_bounds = [[-1.0, -0.5], [2.0, 2.0_f64.next_up()], [-3.0, 4.0]];
+        let bounded = RationalPoint3Query::from_certified_enclosures(supplied_bounds)
+            .expect("finite certified point bounds should construct");
+        for (axis, [lower, upper]) in supplied_bounds.into_iter().enumerate() {
+            let retained = bounded.certified_enclosure(axis);
+            assert!(retained[0] <= lower);
+            assert!(retained[1] >= upper);
+        }
+        let least_subnormal = f64::from_bits(1);
+        let subnormal = RationalPoint3Query::from_certified_enclosures([
+            [0.0, least_subnormal],
+            [0.0, 0.0],
+            [-0.0, 0.0],
+        ])
+        .expect("a finite subnormal-width enclosure should remain representable");
+        let retained = subnormal.certified_enclosure(0);
+        assert!(retained[0] <= 0.0 && retained[1] >= least_subnormal);
+        assert!(RationalPoint3Query::from_certified_enclosures([
+            [-f64::MAX, f64::MAX],
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ])
+        .is_none());
+
+        let enclosed = |point: [&Rational; 3]| {
+            RationalPoint3Query::from_certified_enclosures(
+                point.map(|coordinate| coordinate.to_f64_enclosure().unwrap()),
+            )
+            .expect("finite rational enclosures should construct")
+        };
+        let enclosed_from = enclosed([&zero, &zero, &height]);
+        let enclosed_to = enclosed([&third, &two_thirds, &height]);
+        let enclosed_line =
+            RationalLine2Filter::from_point3(&enclosed_from, &enclosed_to, [0, 1]).unwrap();
+        assert_eq!(
+            enclosed_line.sign_point3(&enclosed([&one, &three, &height]), [0, 1]),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            enclosed_line.sign_point3(&enclosed([&two, &three, &height]), [0, 1]),
+            Some(RealSign::Negative)
+        );
+        assert_eq!(
+            enclosed_line.sign_point3(&enclosed([&one, &two, &height]), [0, 1]),
+            None
+        );
+        assert!(
+            RationalPoint3Query::from_certified_enclosures([
+                [1.0, 0.0],
+                [0.0, 0.0],
+                [0.0, 0.0],
+            ])
+            .is_none()
+        );
+        assert!(
+            RationalPoint3Query::from_certified_enclosures([
+                [0.0, f64::INFINITY],
+                [0.0, 0.0],
+                [0.0, 0.0],
+            ])
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn certified_enclosure_line_filter_matches_exact_randomized_rationals() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let mut certified = 0_u32;
+        for _ in 0..20_000 {
+            let rationals: [Rational; 9] = core::array::from_fn(|_| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 2_000_001).unwrap() - 1_000_000;
+                let denominator = state.rotate_left(23) % 1_000_003 + 1;
+                Rational::fraction(numerator, denominator).unwrap()
+            });
+            let query = |offset: usize| {
+                RationalPoint3Query::from_certified_enclosures([
+                    rationals[offset].to_f64_enclosure().unwrap(),
+                    rationals[offset + 1].to_f64_enclosure().unwrap(),
+                    rationals[offset + 2].to_f64_enclosure().unwrap(),
+                ])
+                .unwrap()
+            };
+            let a_query = query(0);
+            let b_query = query(3);
+            let c_query = query(6);
+            let filter = RationalLine2Filter::from_point3(&a_query, &b_query, [0, 1]).unwrap();
+            let Some(filtered) = filter.sign_point3(&c_query, [0, 1]) else {
+                continue;
+            };
+            let values = rationals.clone().map(Real::from);
+            assert_eq!(
+                filtered,
+                exact_affine_det2_sign(
+                    [&values[0], &values[1]],
+                    [&values[3], &values[4]],
+                    [&values[6], &values[7]],
+                )
+            );
+            certified += 1;
+        }
+        assert!(certified > 10_000, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_linear_form3_filter_only_returns_exact_signs() {
+        let coefficients = [
+            Real::from(2_i32),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let positive = [Real::from(4_i32), Real::zero(), Real::zero()];
+        let negative = [Real::zero(), Real::zero(), Real::zero()];
+        let boundary = [Real::one(), Real::zero(), Real::one()];
+        let coefficient_refs = [
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ];
+
+        for point in [&positive, &negative] {
+            let point_refs = [&point[0], &point[1], &point[2]];
+            assert_eq!(
+                Real::certified_linear_form3_sign(coefficient_refs, point_refs),
+                Some(exact_linear_form3_sign(coefficient_refs, point_refs)),
+            );
+        }
+        assert_eq!(
+            Real::certified_linear_form3_sign(
+                coefficient_refs,
+                [&boundary[0], &boundary[1], &boundary[2]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_linear_form3_sign(
+                [
+                    &third,
+                    &coefficients[1],
+                    &coefficients[2],
+                    &coefficients[3],
+                ],
+                [&positive[0], &positive[1], &positive[2]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn linear_form3_filter_matches_exact_randomized_values() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..20_000 {
+            let mut coordinates = [0.0_f64; 7];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 201 + 923) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let coefficients = [&values[0], &values[1], &values[2], &values[3]];
+            let point = [&values[4], &values[5], &values[6]];
+            let filter = LinearForm3Filter::from_reals(coefficients)
+                .expect("finite dyadic coefficients should fit");
+            if let Some(filtered) = filter.sign(point) {
+                assert_eq!(
+                    filtered,
+                    exact_linear_form3_sign(coefficients, point),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 10_000, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn affine_det2_filter_matches_one_shot_filter() {
+        let a = [Real::try_from(-1.0_f64).unwrap(), Real::try_from(-1.0_f64).unwrap()];
+        let b = [Real::try_from(1.0_f64).unwrap(), Real::try_from(1.0_f64).unwrap()];
+        let filter = AffineDet2Filter::from_reals([&a[0], &a[1]], [&b[0], &b[1]])
+            .expect("dyadic fixed points should fit");
+
+        for c in [
+            [Real::try_from(0.25_f64).unwrap(), Real::try_from(0.5_f64).unwrap()],
+            [Real::try_from(0.25_f64).unwrap(), Real::try_from(0.25_f64).unwrap()],
+            [Real::try_from(0.5_f64).unwrap(), Real::try_from(0.25_f64).unwrap()],
+        ] {
+            assert_eq!(
+                filter.sign([&c[0], &c[1]]),
+                Real::certified_affine_det2_sign(
+                    [&a[0], &a[1]],
+                    [&b[0], &b[1]],
+                    [&c[0], &c[1]],
+                )
+            );
+        }
+
+        let retained = AffineDet2Filter::from_f64(
+            [-1.0, -1.0],
+            [1.0, 1.0],
+        )
+        .expect("normal exact-dyadic direction should fit");
+        assert_eq!(
+            retained.signs_exact_dyadic_f64([[0.25, 0.5], [0.5, 0.25]]),
+            (Some(RealSign::Positive), Some(RealSign::Negative)),
+        );
+        assert!(
+            AffineDet2Filter::from_f64(
+                [-f64::MAX, 0.0],
+                [f64::MAX, 0.0],
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn affine_det2_pair_filter_matches_one_shot_directions() {
+        fn point(value: &[Real; 2]) -> [&Real; 2] {
+            [&value[0], &value[1]]
+        }
+
+        let first = [
+            [Real::try_from(-2.0_f64).unwrap(), Real::try_from(-1.0_f64).unwrap()],
+            [Real::try_from(3.0_f64).unwrap(), Real::try_from(2.0_f64).unwrap()],
+        ];
+        for second in [
+            [
+                [Real::try_from(-1.0_f64).unwrap(), Real::try_from(2.0_f64).unwrap()],
+                [Real::try_from(2.0_f64).unwrap(), Real::try_from(-2.0_f64).unwrap()],
+            ],
+            [
+                [Real::try_from(-2.0_f64).unwrap(), Real::try_from(3.0_f64).unwrap()],
+                [Real::try_from(3.0_f64).unwrap(), Real::try_from(6.0_f64).unwrap()],
+            ],
+        ] {
+            let filter = AffineDet2PairFilter::from_reals(
+                point(&first[0]),
+                point(&first[1]),
+                point(&second[0]),
+                point(&second[1]),
+            )
+            .expect("dyadic segment endpoints should fit");
+            assert_eq!(
+                filter.first_signs(),
+                (
+                    Real::certified_affine_det2_sign(
+                        point(&first[0]),
+                        point(&first[1]),
+                        point(&second[0]),
+                    ),
+                    Real::certified_affine_det2_sign(
+                        point(&first[0]),
+                        point(&first[1]),
+                        point(&second[1]),
+                    ),
+                ),
+            );
+            assert_eq!(
+                filter.second_signs(),
+                (
+                    Real::certified_affine_det2_sign(
+                        point(&second[0]),
+                        point(&second[1]),
+                        point(&first[0]),
+                    ),
+                    Real::certified_affine_det2_sign(
+                        point(&second[0]),
+                        point(&second[1]),
+                        point(&first[1]),
+                    ),
+                ),
+            );
+        }
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert!(
+            AffineDet2PairFilter::from_reals(
+                [&third, &first[0][1]],
+                [&first[1][0], &first[1][1]],
+                [&first[0][0], &first[0][1]],
+                [&first[1][0], &first[1][1]],
+            )
+            .is_none()
+        );
+
+        let retained = AffineDet2PairFilter::from_f64(
+            [[-2.0, -1.0], [3.0, 2.0]],
+            [[-1.0, 2.0], [2.0, -2.0]],
+        );
+        assert_eq!(
+            retained.first_signs(),
+            (Some(RealSign::Positive), Some(RealSign::Negative))
+        );
+        assert_eq!(
+            AffineDet2PairFilter::from_f64(
+                [[0.0, 0.0], [1.0, 1.0]],
+                [[f64::INFINITY, 0.0], [0.0, 1.0]],
+            )
+            .first_signs(),
+            (None, Some(RealSign::Positive))
+        );
+    }
+
+    #[test]
+    fn affine_det2_exact_word_filter_handles_unrelated_denominators() {
+        let a = [
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::new(Rational::fraction(2, 5).unwrap()),
+        ];
+        let b = [
+            Real::new(Rational::fraction(7, 11).unwrap()),
+            Real::new(Rational::fraction(-3, 7).unwrap()),
+        ];
+        let filter = AffineDet2ExactWordFilter::from_reals(
+            [&a[0], &a[1]],
+            [&b[0], &b[1]],
+        )
+        .expect("small exact rationals should fit the word filter");
+
+        for c in [
+            [Real::zero(), Real::zero()],
+            [Real::one(), Real::zero()],
+            [
+                Real::new(Rational::fraction(5, 13).unwrap()),
+                Real::new(Rational::fraction(17, 19).unwrap()),
+            ],
+            a.clone(),
+            b.clone(),
+        ] {
+            let c_refs = [&c[0], &c[1]];
+            let query = AffineDet2ExactWordQuery::from_reals(c_refs)
+                .expect("small exact-rational query should fit the word carrier");
+            let expected = Some(exact_affine_det2_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                c_refs,
+            ));
+            assert_eq!(filter.sign_query(&query), expected);
+            assert_eq!(
+                filter.sign(c_refs),
+                expected,
+            );
+        }
+
+        assert_eq!(filter.sign([&Real::pi(), &Real::zero()]), None);
+        assert!(AffineDet2ExactWordQuery::from_reals([&Real::pi(), &Real::zero()]).is_none());
+    }
+
+    #[test]
+    fn affine_det2_exact_word_filter_matches_randomized_rationals() {
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        for _ in 0..20_000 {
+            let mut values = Vec::with_capacity(6);
+            for _ in 0..6 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 1001).unwrap() - 500;
+                let denominator = (state.rotate_left(19) % 97) + 1;
+                values.push(Real::new(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                ));
+            }
+            let a = [&values[0], &values[1]];
+            let b = [&values[2], &values[3]];
+            let c = [&values[4], &values[5]];
+            let filter = AffineDet2ExactWordFilter::from_reals(a, b)
+                .expect("small randomized rationals should fit the word filter");
+            assert_eq!(
+                filter.sign(c),
+                Some(exact_affine_det2_sign(a, b, c)),
+                "values={values:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn certified_affine_det2_sign_matches_exact_randomized_determinants() {
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..20_000 {
+            let mut coordinates = [0.0_f64; 6];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 1_801 + 100) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1]];
+            let b = [&values[2], &values[3]];
+            let c = [&values[4], &values[5]];
+            let filtered = Real::certified_affine_det2_sign(a, b, c);
+            assert_eq!(
+                Real::certified_affine_det2_sign_exact_dyadic_f64(
+                    [coordinates[0], coordinates[1]],
+                    [coordinates[2], coordinates[3]],
+                    [coordinates[4], coordinates[5]],
+                ),
+                filtered,
+            );
+            if let Some(filtered) = filtered {
+                assert_eq!(filtered, exact_affine_det2_sign(a, b, c));
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 1_000, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_affine_det3_sign_only_returns_exact_signs() {
+        let a = [Real::zero(), Real::zero(), Real::zero()];
+        let b = [Real::one(), Real::zero(), Real::zero()];
+        let c = [Real::zero(), Real::one(), Real::zero()];
+        let d = [Real::zero(), Real::zero(), Real::one()];
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&c[0], &c[1], &c[2]],
+                [&b[0], &b[1], &b[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&a[0], &a[1], &a[2]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&third, &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&Real::pi(), &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&huge, &b[1], &b[2]],
+                [&c[0], &huge, &c[2]],
+                [&d[0], &d[1], &huge],
+            ),
+            None,
+        );
+
+        // Products in this determinant underflow in a primitive view. The
+        // exact determinant is positive, so the filter must defer rather than
+        // report the negative sign produced by unchecked primitive arithmetic.
+        let underflowing = [
+            0.293_308_562_306_798_3,
+            0.000_117_695_530_075_658_08,
+            5.014_598_122_862_727e236,
+            -1.707_596_861_323_451_8e-218,
+            2.549_579_668_395_940_3e-273,
+            5.756_438_810_906_876e-276,
+            -9.235_605_227_468_39e-106,
+            6.262_889_985_948_481e-131,
+            -7.969_424_444_885_476e131,
+            -2.619_996_137_683_515e-251,
+            -4.296_141_750_179_595_6e-221,
+            -1.775_889_244_141_220_4e-69,
+        ]
+        .map(|value| Real::try_from(value).unwrap());
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&underflowing[0], &underflowing[1], &underflowing[2]],
+                [&underflowing[3], &underflowing[4], &underflowing[5]],
+                [&underflowing[6], &underflowing[7], &underflowing[8]],
+                [&underflowing[9], &underflowing[10], &underflowing[11]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn affine_det3_filter_matches_one_shot_filter() {
+        let a = [Real::zero(), Real::zero(), Real::zero()];
+        let b = [Real::one(), Real::zero(), Real::zero()];
+        let c = [Real::zero(), Real::one(), Real::zero()];
+        let filter = AffineDet3Filter::from_reals(
+            [&a[0], &a[1], &a[2]],
+            [&b[0], &b[1], &b[2]],
+            [&c[0], &c[1], &c[2]],
+        )
+        .expect("dyadic fixed points should fit");
+
+        for d in [
+            [Real::zero(), Real::zero(), Real::one()],
+            [Real::zero(), Real::zero(), Real::zero()],
+            [Real::zero(), Real::zero(), Real::from(-1_i32)],
+        ] {
+            assert_eq!(
+                filter.sign([&d[0], &d[1], &d[2]]),
+                Real::certified_affine_det3_sign(
+                    [&a[0], &a[1], &a[2]],
+                    [&b[0], &b[1], &b[2]],
+                    [&c[0], &c[1], &c[2]],
+                    [&d[0], &d[1], &d[2]],
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn exact_rational_det3_word_sign_matches_randomized_rationals() {
+        let mut state = 0x8b8b_8b8b_35e2_91f3_u64;
+        let zero = [Real::zero(), Real::zero(), Real::zero()];
+        for _ in 0..10_000 {
+            let mut values = Vec::with_capacity(9);
+            for _ in 0..9 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 101).unwrap() - 50;
+                let denominator = (state.rotate_left(19) % 23) + 1;
+                values.push(Real::new(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                ));
+            }
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            assert_eq!(
+                Real::exact_rational_det3_word_sign(a, b, c),
+                Some(exact_affine_det3_sign(
+                    a,
+                    b,
+                    c,
+                    [&zero[0], &zero[1], &zero[2]],
+                )),
+                "values={values:?}",
+            );
+        }
+
+        assert_eq!(
+            Real::exact_rational_det3_word_sign(
+                [&Real::pi(), &zero[1], &zero[2]],
+                [&zero[0], &zero[1], &zero[2]],
+                [&zero[0], &zero[1], &zero[2]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn affine_det3_exact_word_filter_matches_randomized_rationals() {
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        for _ in 0..10_000 {
+            let mut values = Vec::with_capacity(12);
+            for _ in 0..12 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 101).unwrap() - 50;
+                let denominator = (state.rotate_left(23) % 23) + 1;
+                values.push(Real::new(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                ));
+            }
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            let d = [&values[9], &values[10], &values[11]];
+            let filter = AffineDet3ExactWordFilter::from_reals(a, b, c)
+                .expect("small randomized rationals should fit the word filter");
+            assert_eq!(
+                filter.sign(d),
+                Some(exact_affine_det3_sign(a, b, c, d)),
+                "values={values:?}",
+            );
+            assert_eq!(
+                Real::exact_rational_affine_det3_word_sign(a, b, c, d),
+                Some(exact_affine_det3_sign(a, b, c, d)),
+                "values={values:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn certified_affine_det3_sign_matches_exact_randomized_determinants() {
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..10_000 {
+            let mut coordinates = [0.0_f64; 12];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 1_801 + 100) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            let d = [&values[9], &values[10], &values[11]];
+            if let Some(filtered) = Real::certified_affine_det3_sign(a, b, c, d) {
+                assert_eq!(
+                    filtered,
+                    exact_affine_det3_sign(a, b, c, d),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 500, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_incircle2_sign_only_returns_exact_signs() {
+        let a = [Real::one(), Real::zero()];
+        let b = [Real::zero(), Real::one()];
+        let c = [Real::from(-1_i32), Real::zero()];
+        let inside = [Real::zero(), Real::zero()];
+        let outside = [Real::zero(), Real::from(-2_i32)];
+        assert_eq!(
+            Real::certified_incircle2_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_incircle2_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&outside[0], &outside[1]],
+            ),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            Real::certified_incircle2_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&a[0], &a[1]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_incircle2_sign(
+                [&third, &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_incircle2_sign(
+                [&Real::pi(), &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        assert_eq!(
+            Real::certified_incircle2_sign(
+                [&huge, &a[1]],
+                [&b[0], &huge],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn incircle2_filter_matches_one_shot_filter() {
+        let a = [Real::one(), Real::zero()];
+        let b = [Real::zero(), Real::one()];
+        let c = [Real::from(-1_i32), Real::zero()];
+        let filter = Incircle2Filter::from_reals(
+            [&a[0], &a[1]],
+            [&b[0], &b[1]],
+            [&c[0], &c[1]],
+        )
+        .expect("dyadic fixed points should construct a filter");
+
+        for d in [
+            [Real::zero(), Real::zero()],
+            [Real::zero(), Real::from(-2_i32)],
+            [Real::one(), Real::zero()],
+        ] {
+            assert_eq!(
+                filter.sign([&d[0], &d[1]]),
+                Real::certified_incircle2_sign(
+                    [&a[0], &a[1]],
+                    [&b[0], &b[1]],
+                    [&c[0], &c[1]],
+                    [&d[0], &d[1]],
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn certified_incircle2_sign_matches_exact_randomized_determinants() {
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..20_000 {
+            let mut coordinates = [0.0_f64; 8];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 1_201 + 400) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1]];
+            let b = [&values[2], &values[3]];
+            let c = [&values[4], &values[5]];
+            let d = [&values[6], &values[7]];
+            if let Some(filtered) = Real::certified_incircle2_sign(a, b, c, d) {
+                assert_eq!(
+                    filtered,
+                    exact_incircle2d_sign(a, b, c, d),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 500, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_insphere3_sign_only_returns_exact_signs() {
+        let a = [Real::one(), Real::zero(), Real::zero()];
+        let b = [Real::zero(), Real::one(), Real::zero()];
+        let c = [Real::zero(), Real::zero(), Real::one()];
+        let d = [Real::from(-1_i32), Real::zero(), Real::zero()];
+        let inside = [Real::zero(), Real::zero(), Real::zero()];
+        let outside = [Real::zero(), Real::from(-2_i32), Real::zero()];
+        for point in [&inside, &outside] {
+            let a_refs = [&a[0], &a[1], &a[2]];
+            let b_refs = [&b[0], &b[1], &b[2]];
+            let c_refs = [&c[0], &c[1], &c[2]];
+            let d_refs = [&d[0], &d[1], &d[2]];
+            let point_refs = [&point[0], &point[1], &point[2]];
+            assert_eq!(
+                Real::certified_insphere3_sign(a_refs, b_refs, c_refs, d_refs, point_refs),
+                Some(exact_insphere3d_sign(
+                    a_refs, b_refs, c_refs, d_refs, point_refs,
+                )),
+            );
+        }
+        assert_eq!(
+            Real::certified_insphere3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+                [&a[0], &a[1], &a[2]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_insphere3_sign(
+                [&third, &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+                [&inside[0], &inside[1], &inside[2]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_insphere3_sign(
+                [&Real::pi(), &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+                [&inside[0], &inside[1], &inside[2]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn insphere3_filter_matches_one_shot_filter() {
+        let a = [Real::one(), Real::zero(), Real::zero()];
+        let b = [Real::zero(), Real::one(), Real::zero()];
+        let c = [Real::zero(), Real::zero(), Real::one()];
+        let d = [Real::from(-1_i32), Real::zero(), Real::zero()];
+        let filter = Insphere3Filter::from_reals(
+            [&a[0], &a[1], &a[2]],
+            [&b[0], &b[1], &b[2]],
+            [&c[0], &c[1], &c[2]],
+            [&d[0], &d[1], &d[2]],
+        )
+        .expect("dyadic fixed points should construct a filter");
+
+        for e in [
+            [Real::zero(), Real::zero(), Real::zero()],
+            [Real::zero(), Real::from(-2_i32), Real::zero()],
+            [Real::one(), Real::zero(), Real::zero()],
+        ] {
+            assert_eq!(
+                filter.sign([&e[0], &e[1], &e[2]]),
+                Real::certified_insphere3_sign(
+                    [&a[0], &a[1], &a[2]],
+                    [&b[0], &b[1], &b[2]],
+                    [&c[0], &c[1], &c[2]],
+                    [&d[0], &d[1], &d[2]],
+                    [&e[0], &e[1], &e[2]],
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn certified_insphere3_sign_matches_exact_randomized_determinants() {
+        let mut state = 0x510e_527f_ade6_82d1_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..10_000 {
+            let mut coordinates = [0.0_f64; 15];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 801 + 600) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            let d = [&values[9], &values[10], &values[11]];
+            let e = [&values[12], &values[13], &values[14]];
+            if let Some(filtered) = Real::certified_insphere3_sign(a, b, c, d, e) {
+                assert_eq!(
+                    filtered,
+                    exact_insphere3d_sign(a, b, c, d, e),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 250, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn polynomial_helpers_preserve_evaluation_forms() {
+        let coeffs = [Real::from(1_i32), Real::from(2_i32), Real::from(3_i32)];
+        assert_eq!(Real::eval_poly(&coeffs, &Real::from(2_i32)), Real::from(17_i32));
+        assert_eq!(Real::eval_poly(&[], &Real::from(2_i32)), Real::zero());
+
+        let numerator = [Real::one(), Real::one()];
+        let denominator = [Real::one(), Real::from(-1_i32)];
+        assert_eq!(
+            Real::eval_rational_poly(&numerator, &denominator, &Real::from(2_i32)),
+            Ok(Real::from(-3_i32))
+        );
+        assert_eq!(
+            Real::eval_rational_poly(&[Real::one()], &[Real::from(-2_i32), Real::one()], &Real::from(2_i32)),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
+    fn polynomial_evaluation_retains_nested_quadratic_root_certificates() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let quarter = Real::new(Rational::fraction(1, 4).unwrap());
+        let alpha = half.clone().sqrt().unwrap();
+        let delta = (&alpha + &quarter).sqrt().unwrap();
+        let epsilon = Real::new(Rational::from_bigint_fraction(
+            BigInt::from(1_u8), BigUint::from(1_u8) << 600_usize,
+        ).unwrap());
+        for (scale_index, scale) in [Real::one(), Real::from(-3_i8), Real::pi(), -Real::pi()].into_iter().enumerate() {
+            let coefficients = [-&alpha * &scale, scale.clone(), scale];
+            for (root_index, root) in [-&half - &delta, -&half + &delta].into_iter().enumerate() {
+                let value = Real::eval_poly(&coefficients, &root);
+                assert_eq!(
+                    value.certified_sign_until(-512).sign(),
+                    Some(RealSign::Zero),
+                    "root={root_index}, scale={scale_index}",
+                );
+                for (direction, displacement) in [-&epsilon, epsilon.clone()].into_iter().enumerate() {
+                    let sign = if (root_index == 0) ^ (scale_index % 2 == 1) ^ (direction == 0) {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    };
+                    assert_eq!(
+                        Real::eval_poly(&coefficients, &(&root + displacement))
+                            .certified_sign_until(-1024).sign(),
+                        Some(sign),
+                        "root={root_index}, scale={scale_index}, direction={direction}",
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_evaluation_retains_reconstructed_quadratic_midpoints() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let alpha = half.clone().sqrt().unwrap();
+        let delta = (&alpha + &half * &half).sqrt().unwrap();
+        let epsilon = Real::new(Rational::from_bigint_fraction(
+            BigInt::from(1_u8), BigUint::from(1_u8) << 600_usize,
+        ).unwrap());
+        for (root_index, root) in [-&half - &delta, -&half + &delta].into_iter().enumerate() {
+            for width in [
+                Real::new(Rational::fraction(1, 8).unwrap()),
+                Real::new(Rational::fraction(2, 7).unwrap()),
+            ] {
+                let lower = &root - &width;
+                let upper = &root + &width;
+                for midpoint in [
+                    Real::average_pair(&lower, &upper),
+                    Real::average_pair(&upper, &lower),
+                    &half * &lower + &half * &upper,
+                    Real::mul_add(&half, &lower, &(&half * &upper)),
+                ] {
+                    assert_eq!(
+                        (&midpoint - &root).certified_sign_until(-512).sign(),
+                        Some(RealSign::Zero),
+                    );
+                    for (scale_index, scale) in [Real::one(), Real::pi(), -Real::pi()].into_iter().enumerate() {
+                        let coefficients = [-&alpha * &scale, scale.clone(), scale];
+                        assert_eq!(
+                            Real::eval_poly(&coefficients, &midpoint)
+                                .certified_sign_until(-512).sign(),
+                            Some(RealSign::Zero),
+                        );
+                        for (direction, displacement) in [-&epsilon, epsilon.clone()].into_iter().enumerate() {
+                            let sign = if (root_index == 0) ^ (scale_index == 2) ^ (direction == 0) {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            };
+                            assert_eq!(
+                                Real::eval_poly(&coefficients, &(&midpoint + displacement))
+                                    .certified_sign_until(-1024).sign(),
+                                Some(sign),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_evaluation_preserves_factored_root_cancellation() {
+        let mut reference_certificates = 0;
+        for (root_index, root) in [
+            Real::pi(),
+            Real::e(),
+            Real::from(2_i8).sqrt().unwrap(),
+            Real::one().sin(),
+            Real::from(3_i8).ln().unwrap(),
+        ].into_iter().enumerate() {
+            for (leading_index, leading) in [Real::one(), Real::pi(), -Real::pi()].into_iter().enumerate() {
+                for (linear_index, linear) in [Real::one(), Real::pi()].into_iter().enumerate() {
+                    // (t - root) * (leading*t + linear).
+                    let coefficients = [
+                        -&linear * &root,
+                        &linear - &leading * &root,
+                        leading.clone(),
+                    ];
+                    let fused = Real::mul_add(&Real::mul_add(&leading, &root, &coefficients[1]), &root, &coefficients[0]);
+                    let actual = Real::eval_poly(&coefficients, &root);
+                    let actual_sign = actual.certified_sign_until(-512).sign();
+                    assert!(matches!(actual_sign, None | Some(RealSign::Zero)));
+                    // An alternate quadratic form must not discard a zero
+                    // certificate available in the original fused expression.
+                    if fused.certified_sign_until(-512).sign() == Some(RealSign::Zero) {
+                        reference_certificates += 1;
+                        assert_eq!(actual_sign, Some(RealSign::Zero), "case={root_index},{leading_index},{linear_index}");
+                    }
+                }
+            }
+        }
+        assert!(reference_certificates >= 13);
+    }
+
+    #[test]
+    fn polynomial_evaluation_matches_independent_rational_power_sum() {
+        let to_gmp = |value: &Rational| {
+            let numerator = BigInt::from_biguint(value.sign(), value.numerator().clone());
+            format!("{numerator}/{}", value.denominator()).parse::<rug::Rational>().unwrap()
+        };
+        let tiny = Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(3_u8) << 600_usize).unwrap();
+        for count in [0, 1, 3, 9, 33, 65] {
+            let coefficients = (0..count).map(|index| {
+                let magnitude = (BigInt::from(index * 37 + 1) << (index % 3 * 130)) - BigInt::from(index * 5);
+                Rational::from_bigint_fraction(
+                    if index % 2 == 0 { magnitude } else { -magnitude },
+                    BigUint::from(index as u32 * 2 + 1),
+                ).unwrap()
+            }).collect::<Vec<_>>();
+            let reals = coefficients.iter().cloned().map(Real::new).collect::<Vec<_>>();
+            let oracle_coefficients = coefficients.iter().map(to_gmp).collect::<Vec<_>>();
+            for x in [Rational::new(-3), Rational::new(-1), Rational::zero(), Rational::one(), Rational::fraction(1, 3).unwrap(), Rational::fraction(-2, 7).unwrap(), tiny.clone()] {
+                let oracle_x = to_gmp(&x);
+                let mut expected = rug::Rational::new();
+                let mut power = rug::Rational::from(1);
+                for coefficient in &oracle_coefficients {
+                    let mut term = coefficient.clone();
+                    term *= &power;
+                    expected += term;
+                    power *= &oracle_x;
+                }
+                let actual = Real::eval_poly(&reals, &Real::new(x));
+                let expected_sign = match expected.cmp(&rug::Rational::new()) {
+                    std::cmp::Ordering::Less => RealSign::Negative,
+                    std::cmp::Ordering::Equal => RealSign::Zero,
+                    std::cmp::Ordering::Greater => RealSign::Positive,
+                };
+                assert_eq!(actual.immediate_sign(), Some(expected_sign));
+                assert_eq!((&actual + Real::one()) - &actual, Real::one());
+                assert_eq!(to_gmp(actual.exact_rational_ref().unwrap()), expected, "count={count}");
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_evaluation_retains_rational_scale_and_cancelled_suffixes() {
+        let to_gmp = |value: &Rational| {
+            let numerator = BigInt::from_biguint(value.sign(), value.numerator().clone());
+            format!("{numerator}/{}", value.denominator())
+                .parse::<rug::Rational>()
+                .unwrap()
+        };
+        for bits in [0_usize, 129, 513] {
+            let magnitude = (BigInt::from(1_u8) << bits) + BigInt::from(3_u8);
+            let denominator = (BigUint::from(1_u8) << (bits + 1)) + BigUint::from(7_u8);
+            for sign in [-1_i32, 1] {
+                let numerator = &magnitude * sign;
+                let x =
+                    Rational::from_bigint_fraction(numerator.clone(), denominator.clone()).unwrap();
+                for count in [2, 16, 64] {
+                    // At x=p/q every adjacent pair q*x-p vanishes. Preserve
+                    // the independently chosen residual and coefficient scale,
+                    // including zeros beyond the actual polynomial degree.
+                    let mut coefficients = vec![Rational::fraction(-7, 11).unwrap()];
+                    for _ in 0..count / 2 {
+                        coefficients.push(Rational::from_bigint(-&numerator));
+                        coefficients.push(Rational::from_unsigned_integer(denominator.clone()));
+                    }
+                    coefficients.extend([Rational::zero(), Rational::zero()]);
+                    for scale in [Rational::one(), Rational::fraction(-13, 17).unwrap()] {
+                        let coefficients = coefficients
+                            .iter()
+                            .map(|value| value * &scale)
+                            .collect::<Vec<_>>();
+                        let mut power = rug::Rational::from(1);
+                        let mut expected = rug::Rational::new();
+                        let oracle_x = to_gmp(&x);
+                        for coefficient in &coefficients {
+                            let mut term = to_gmp(coefficient);
+                            term *= &power;
+                            expected += term;
+                            power *= &oracle_x;
+                        }
+                        let residual = &Rational::fraction(-7, 11).unwrap() * &scale;
+                        assert_eq!(expected, to_gmp(&residual));
+                        for lazy in [false, true] {
+                            let retain = |value: &Rational| {
+                                let mut real = Real::new(value.clone());
+                                if lazy && !value.is_zero() {
+                                    let common =
+                                        (BigUint::from(1_u8) << 257_usize) + BigUint::from(1_u8);
+                                    real.rational = Rational::from_parts_raw_unreduced(
+                                        value.sign(),
+                                        value.numerator() * &common,
+                                        value.denominator() * common,
+                                    );
+                                }
+                                real
+                            };
+                            let reals = coefficients.iter().map(retain).collect::<Vec<_>>();
+                            let actual = Real::eval_poly(&reals, &retain(&x));
+                            // Reentry must preserve canonical payload queries,
+                            // not just numeric equality after GMP normalizes.
+                            let successor = &actual + Real::one();
+                            let successor = successor.exact_rational_ref().unwrap();
+                            let expected_successor = &residual + Rational::one();
+                            assert_eq!(successor.numerator(), expected_successor.numerator());
+                            assert_eq!(successor.denominator(), expected_successor.denominator());
+                            assert_eq!(
+                                to_gmp(actual.exact_rational_ref().unwrap()),
+                                expected,
+                                "bits={bits}, sign={sign}, count={count}, lazy={lazy}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        let wide = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1024_usize));
+        assert_eq!(Real::eval_poly(&[], &wide), Real::zero());
+        assert_eq!(
+            Real::eval_poly(&vec![Real::zero(); 65], &wide),
+            Real::zero()
+        );
+        assert_eq!(
+            Real::eval_poly(&[Real::from(7), Real::zero()], &wide),
+            Real::from(7)
+        );
+    }
+
+    #[test]
+    fn polynomial_evaluation_keeps_horner_for_ill_conditioned_nonroots() {
+        let scale = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 2_000_usize));
+        let x = (Real::one().sin() / (&scale * &scale)).unwrap();
+        let coefficients = [Real::one(), Real::from(-2_i8) * scale * Real::pi(), Real::one()];
+        assert_eq!(Real::eval_poly(&coefficients, &x).certified_sign_until(-64).sign(), Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn polynomial_evaluation_preserves_endpoint_and_zero_leading_forms() {
+        let coefficients = [
+            Real::pi(),
+            Real::e(),
+            Real::from(2_i8).sqrt().unwrap(),
+            Real::from(3_i8).ln().unwrap(),
+            Real::from(5_i8).sqrt().unwrap(),
+        ];
+        assert_eq!(Real::eval_poly(&coefficients, &Real::zero()), coefficients[0]);
+        assert_eq!(Real::eval_poly(&coefficients, &Real::one()), Real::sum_refs(&coefficients));
+        let x = Real::from(2_i8).sqrt().unwrap();
+        assert_eq!(Real::eval_poly(&[], &x), Real::zero());
+        assert_eq!(Real::eval_poly(&[Real::pi()], &x), Real::pi());
+        assert_eq!(
+            Real::eval_poly(&[Real::pi(), Real::one(), Real::zero()], &x),
+            &x + Real::pi()
+        );
+    }
+
+    #[test]
+    fn long_polynomial_evaluation_matches_exact_even_odd_decomposition() {
+        let coefficients = (0_i32..129)
+            .map(|index| Real::from(index % 7 - 3))
+            .collect::<Vec<_>>();
+        let root_two = Real::from(2_i32).sqrt().unwrap();
+
+        #[cfg(feature = "dispatch-trace")]
+        crate::dispatch_trace::reset();
+        #[cfg(feature = "dispatch-trace")]
+        let actual = crate::dispatch_trace::with_recording(|| {
+            Real::eval_poly(&coefficients, &root_two)
+        });
+        #[cfg(not(feature = "dispatch-trace"))]
+        let actual = Real::eval_poly(&coefficients, &root_two);
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = crate::dispatch_trace::take_trace();
+            assert_eq!(
+                trace.path_count("real", "polynomial", "eval-poly-balanced"),
+                1,
+            );
+        }
+
+        let mut even = Rational::zero();
+        let mut odd = Rational::zero();
+        let mut power = Rational::one();
+        for pair in coefficients.chunks(2) {
+            even = &even + &(pair[0].exact_rational_ref().unwrap() * &power);
+            if let Some(coefficient) = pair.get(1) {
+                odd = &odd + &(coefficient.exact_rational_ref().unwrap() * &power);
+            }
+            power = &power * &Rational::new(2_i64);
+        }
+        let expected = Real::new(even) + Real::new(odd) * root_two;
+        assert_eq!(
+            actual.certified_eq_until(&expected, -256).as_bool(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn certified_integer_helpers_make_discontinuous_decisions() {
+        let seven_thirds = Real::new(Rational::fraction(7, 3).unwrap());
+        assert_eq!(seven_thirds.floor_certified(), Ok(BigInt::from(2_i32)));
+        assert_eq!(seven_thirds.ceil_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(seven_thirds.trunc_certified(), Ok(BigInt::from(2_i32)));
+        assert_eq!(seven_thirds.round_certified(), Ok(BigInt::from(2_i32)));
+        assert_eq!(
+            seven_thirds.fract_certified().unwrap(),
+            Real::new(Rational::fraction(1, 3).unwrap())
+        );
+
+        let negative_seven_thirds = Real::new(Rational::fraction(-7, 3).unwrap());
+        assert_eq!(
+            negative_seven_thirds.floor_certified(),
+            Ok(BigInt::from(-3_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.ceil_certified(),
+            Ok(BigInt::from(-2_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.trunc_certified(),
+            Ok(BigInt::from(-2_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.round_certified(),
+            Ok(BigInt::from(-2_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.fract_certified().unwrap(),
+            Real::new(Rational::fraction(-1, 3).unwrap())
+        );
+
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap()).round_certified(),
+            Ok(BigInt::from(1_i32))
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(-1, 2).unwrap()).round_certified(),
+            Ok(BigInt::from(-1_i32))
+        );
+
+        assert_eq!(Real::pi().floor_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(Real::pi().ceil_certified(), Ok(BigInt::from(4_i32)));
+        assert_eq!(Real::pi().trunc_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(Real::pi().round_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(
+            Real::pi().fract_certified().unwrap(),
+            Real::pi() - Real::from(3_i32)
+        );
+
+        assert_eq!(
+            Real::from(-7_i32)
+                .rem_euclid_certified(&Real::from(3_i32))
+                .unwrap(),
+            Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::pi()
+                .rem_euclid_certified(&Real::from(2_i32))
+                .unwrap(),
+            Real::pi() - Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::from(7_i32).rem_euclid_certified(&Real::zero()),
+            Err(Problem::NotANumber)
+        );
+        assert_eq!(
+            Real::from(7_i32).rem_euclid_certified(&Real::from(-3_i32)),
+            Err(Problem::NotANumber)
+        );
+    }
+
+    #[test]
+    fn hypot_helpers_preserve_exact_lengths() {
+        assert_eq!(
+            Real::hypot2(&Real::from(3_i32), &Real::from(4_i32)).unwrap(),
+            Real::from(5_i32)
+        );
+        assert_eq!(
+            Real::hypot3(&Real::from(2_i32), &Real::from(3_i32), &Real::from(6_i32)).unwrap(),
+            Real::from(7_i32)
+        );
+
+        assert_eq!(
+            Real::hypot2(&Real::zero(), &Real::from(-11_i32)).unwrap(),
+            Real::from(11_i32)
+        );
+        assert_eq!(
+            Real::hypot3(&Real::zero(), &Real::zero(), &(-Real::pi())).unwrap(),
+            Real::pi()
+        );
+        assert_eq!(
+            Real::hypot_minus(&Real::from(3_i32), &Real::from(4_i32)).unwrap(),
+            Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::hypot_minus(&Real::from(-3_i32), &Real::from(4_i32)).unwrap(),
+            Real::from(8_i32)
+        );
+        assert_eq!(
+            Real::hypot_minus(&Real::zero(), &Real::from(-7_i32)).unwrap(),
+            Real::from(7_i32)
+        );
+        assert!(Real::hypot_minus(&Real::from(7_i32), &Real::zero())
+            .unwrap()
+            .definitely_zero());
+        assert_eq!(
+            Real::hypot_minus(&Real::from(-7_i32), &Real::zero()).unwrap(),
+            Real::from(14_i32)
+        );
+    }
+
+    #[test]
+    fn abs_and_angle_conversions_preserve_exact_real_structure() {
+        assert_eq!(Real::from(-7_i32).abs(), Real::from(7_i32));
+        assert_eq!((-Real::pi()).abs(), Real::pi());
+        assert_eq!(Real::zero().abs(), Real::zero());
+
+        assert_eq!(Real::from(180_i32).to_radians(), Real::pi());
+        assert_eq!(Real::pi().to_degrees(), Real::from(180_i32));
+        assert_eq!(
+            Real::from(45_i32).to_radians().to_degrees(),
+            Real::from(45_i32)
+        );
+    }
+}

@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "status": "deep_consumer_comparison_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "consumer_pins": {
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hyperlimit": "d64c3b897e2832e879b01e53e46c57260d071d4c",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hypercurve": "8228394f174be2ae607694682defb167f030f540",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+    "hypergraphics": "75219dede7a2387ab30c84664b1293ec71d736d2"
+  },
+  "deep": {
+    "historical_command_records": 13,
+    "latest_outcomes": 12,
+    "baseline": {
+      "pass": 4,
+      "fail": 2
+    },
+    "candidate": {
+      "pass": 3,
+      "fail": 3
+    },
+    "hypertri_feature_powersets": {
+      "check_configurations_each": 256,
+      "test_configurations_each": 256,
+      "all_pass": true
+    },
+    "coverage": {
+      "hyperlattice": "Both fail on another unlicensed Symbolica instance; no locks or unrelated processes were modified.",
+      "hyperlimit": {
+        "production_lines": 10849,
+        "baseline_hits": 10797,
+        "candidate_hits": 10798
+      },
+      "hypertri": {
+        "production_lines": 6600,
+        "baseline_hits": 6271,
+        "candidate_hits": 6268,
+        "required_percent": 95,
+        "candidate_gate_passed": false,
+        "missing_lines": "src/types.rs:326-328 count unknown zero-status edges.",
+        "diagnostic": "The frozen 22-form square probe reports four unknown edges for baseline ConstProductSqrt and four known axis-aligned edges for the candidate. The other 21 summaries agree; every reported zero/nonzero answer matches the authored translation geometry. A separate sine triangle still exercises unknown outcomes."
+      },
+      "hypersolve": "Both fail the same certification benchmark representation assertion; partial coverage is not a completed pass."
+    }
+  },
+  "hypersolve_fixture": {
+    "input": "1 / (4 + 2 alpha), alpha^2=1/2, 2/3<alpha<3/4",
+    "expected": "(1/2) / (2 + alpha)",
+    "returned_both": "(2 - alpha) / 7 with denominator 1",
+    "independent_oracle": "Exact Python Fraction polynomial multiplication modulo 2 alpha^2-1 proves equality.",
+    "paired_diagnostic_commands_passed": 2,
+    "production_consumer_changes": false
+  },
+  "traces": {
+    "commands_exited_zero": 10,
+    "stdout_summary_pairs": 47,
+    "hyperlattice": "Four workload trace assertions pass on each revision, but report suppression omitted the counts. Supplemental capture remains pending."
+  },
+  "diagnostic_limit": "The first probe incorrectly used structural PartialEq as semantic equality and failed on an integer-valued computable expression. Its source, driver and log are retained. The corrected probe checks only the known zero/nonzero certificates against independent authored edge differences and records unknowns.",
+  "quota_recovery": "The initial baseline powerset stopped at configuration125/256 due the51490MiB per-user tmpfs quota. Damaged isolated-checkout files and failed restoration were retained, owned idle build caches removed, the checkout repaired and the whole test powerset rerun. Coverage moved to a workspace target. No failure is relabeled a pass.",
+  "limits": [
+    "Original failures remain recorded; isolated fixture supplements are running and are not included as passes here.",
+    "Coverage report directories may contain incidental reports from earlier consumers because the shared target was copied. Only command-specific completed reports support the stated counts.",
+    "Long Hypercurve cases and native performance comparisons remain pending. Live Hypercurve is untouched.",
+    "The full proof and baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-deep.tar.gz",
+    "files": 187,
+    "bytes": 13599781,
+    "sha256": "978dec4525c3e312e26f2ae6ff1a3df36c1632f55baf55e327ca989505746202"
+  }
+}

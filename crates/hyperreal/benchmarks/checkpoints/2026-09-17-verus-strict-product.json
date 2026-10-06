@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "status": "conditional_strict_error_model_milestone_not_implementation_proof",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "0d056afbadfd006bd8be984c917f2c2e0da326e5",
+  "runtime_reference": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+  "verification": {
+    "units": 610,
+    "production_contracts": 94,
+    "model_theorems": 118,
+    "source_hashes": 130,
+    "all_match_commit": true,
+    "no_cheating": true,
+    "entire_target": true,
+    "open_obligation_groups": 13
+  },
+  "changes": [
+    "Asymmetric pre-rounding product error is strictly below half a unit when the sampled other operand lies inside its open magnitude bound.",
+    "The complete asymmetric mathematical schedule then has error strictly below one unit after rounding.",
+    "Two strict one-unit operand approximations separated by at least two integers certify strict real ordering.",
+    "Explicit exact-zero and positive/negative halfway checks retain the signed-rounding convention and stabilize its mutation diagnostics."
+  ],
+  "guards": {
+    "fresh_product_and_order_mutations_rejected": 10,
+    "new_cases": 3,
+    "attempted_assumption_bypass_rejected": true,
+    "acceptance_and_dependency_tests": 10,
+    "full_combined_suite_rerun": false,
+    "failed_preparations_preserved": "One mutation run reached a resource limit. An initial compute proof could not unfold the opaque power definition. Both failed logs are retained; the final proof and all ten arithmetic rejections pass with no resource-limit acceptance."
+  },
+  "runtime": {
+    "all_production_manifest_lock_bytes_unchanged": true,
+    "proof_only_change": true
+  },
+  "limits": [
+    "Every input error and magnitude condition remains an explicit mathematical premise. All production callers must still establish it.",
+    "The order theorem deliberately requires strict input bounds; inclusive one-unit bounds alone do not certify the two-integer comparison gap. No empirical wrong-order counterexample is asserted here.",
+    "BigInt operations, graph and cache denotations, finite precision arithmetic and other open obligations remain unverified.",
+    "The frozen runtime allocation experiment remains unadopted and separately measured. Baseline acceptance remains pending."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-strict-product.tar.gz",
+    "files": 182,
+    "bytes": 308630,
+    "sha256": "65309c11055db6f91701ceed8c17bf42b5ccfe535d35c54522b22d61368586af"
+  }
+}

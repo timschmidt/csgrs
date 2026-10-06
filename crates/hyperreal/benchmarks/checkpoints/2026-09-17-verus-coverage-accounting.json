@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "status": "coverage_accounting_correction_not_proof_or_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "script_sha256": "591104def7e062863f11dc4803d33d90dfd1ecffc334eeb7f4c3dd41998260ca",
+  "fixture_check": {
+    "passed": true,
+    "production_lines": 2,
+    "hit": 1,
+    "missed": 1,
+    "covers": [
+      "named inline test module",
+      "module named tests",
+      "dedicated test-only source",
+      "uncovered production line"
+    ]
+  },
+  "comparisons": {
+    "baseline_classification_repaired": {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "original_report": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline-audit-repair/coverage-matrix.log",
+      "original_report_sha256": "601437a287d2aa5fb5e8cd7d43793ac9252fc1b55221e6f057c28a20f14f8bb1",
+      "excluded_rows": {
+        "src/computable/approximation.rs": {
+          "lines": 26,
+          "hit": 26,
+          "missed": 0
+        },
+        "src/computable/approximation/e_plan_tests.rs": {
+          "lines": 88,
+          "hit": 88,
+          "missed": 0
+        },
+        "src/computable/node/cache_rescale_tests.rs": {
+          "lines": 105,
+          "hit": 105,
+          "missed": 0
+        },
+        "src/computable/node/exp_relation_reuse_tests.rs": {
+          "lines": 124,
+          "hit": 124,
+          "missed": 0
+        },
+        "src/computable/node/exp_relation_tests.rs": {
+          "lines": 195,
+          "hit": 195,
+          "missed": 0
+        },
+        "src/computable/node/fractional_separation_tests.rs": {
+          "lines": 122,
+          "hit": 122,
+          "missed": 0
+        },
+        "src/computable/node/linear_demand_tests.rs": {
+          "lines": 174,
+          "hit": 174,
+          "missed": 0
+        }
+      },
+      "corrected_totals": {
+        "lines": 27357,
+        "hit": 24871,
+        "missed": 2486,
+        "percent": 90.91274628065943
+      },
+      "excluded_source_sha256": {
+        "src/computable/approximation.rs": "1be083d5bf5f47ae86e87169b94db8eb8acd6e4dbeeea3e4ba1e384ba109e0f0",
+        "src/computable/approximation/e_plan_tests.rs": "c439a7e066493e7ee613dcb38f695f75bfd35897eaf0a2ff1b3c16fa755395d7",
+        "src/computable/node/cache_rescale_tests.rs": "699c725764121e771a693c5cd9090f654442e40f15156c70e53ccc3c70572a0a",
+        "src/computable/node/exp_relation_reuse_tests.rs": "7fe615354bb3c857b98fe67949ec8196d0f871b450ba3ca12d86aec287395790",
+        "src/computable/node/exp_relation_tests.rs": "409f9fdc3522eb120665687e97047422c1394cd4dbded51311d4ec423101d7cd",
+        "src/computable/node/fractional_separation_tests.rs": "a6aafd580f1afd4de6bd5e26a7f741a5bda9f3148cca61f7254c00737e883e26",
+        "src/computable/node/linear_demand_tests.rs": "33e292ab9fbee54c0f04f38435732997d6e49e407db79d33bb33b87856c39816"
+      }
+    },
+    "precision_candidate": {
+      "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+      "original_report": "/tmp/hyperreal-verus-baseline-scmfudw9/certified-planning-complete/validation/coverage-matrix.stdout",
+      "original_report_sha256": "4cc98e4cfd885a045637c6c6ef93d6e80fddcfccbf59809929606582d5c92d03",
+      "excluded_rows": {
+        "src/computable/approximation.rs": {
+          "lines": 26,
+          "hit": 26,
+          "missed": 0
+        },
+        "src/computable/approximation/e_plan_tests.rs": {
+          "lines": 88,
+          "hit": 88,
+          "missed": 0
+        },
+        "src/computable/node/cache_rescale_tests.rs": {
+          "lines": 105,
+          "hit": 105,
+          "missed": 0
+        },
+        "src/computable/node/certified_planning_tests.rs": {
+          "lines": 74,
+          "hit": 74,
+          "missed": 0
+        },
+        "src/computable/node/exp_relation_reuse_tests.rs": {
+          "lines": 124,
+          "hit": 124,
+          "missed": 0
+        },
+        "src/computable/node/exp_relation_tests.rs": {
+          "lines": 195,
+          "hit": 195,
+          "missed": 0
+        },
+        "src/computable/node/fractional_separation_tests.rs": {
+          "lines": 122,
+          "hit": 122,
+          "missed": 0
+        },
+        "src/computable/node/linear_demand_tests.rs": {
+          "lines": 174,
+          "hit": 174,
+          "missed": 0
+        },
+        "src/computable/node/magnitude_boundary_tests.rs": {
+          "lines": 74,
+          "hit": 74,
+          "missed": 0
+        },
+        "src/computable/node/precision_boundary_tests.rs": {
+          "lines": 37,
+          "hit": 37,
+          "missed": 0
+        }
+      },
+      "corrected_totals": {
+        "lines": 27734,
+        "hit": 25202,
+        "missed": 2532,
+        "percent": 90.87041176894786
+      },
+      "excluded_source_sha256": {
+        "src/computable/approximation.rs": "d37ef53677fa4fa94772db67483c280e19e82d393a799ff77d4838956559835d",
+        "src/computable/approximation/e_plan_tests.rs": "c439a7e066493e7ee613dcb38f695f75bfd35897eaf0a2ff1b3c16fa755395d7",
+        "src/computable/node/cache_rescale_tests.rs": "699c725764121e771a693c5cd9090f654442e40f15156c70e53ccc3c70572a0a",
+        "src/computable/node/certified_planning_tests.rs": "d8cfb824f602b149d3f3aa79995e5d2c43dde2e8949525351d3495bb23533a60",
+        "src/computable/node/exp_relation_reuse_tests.rs": "7fe615354bb3c857b98fe67949ec8196d0f871b450ba3ca12d86aec287395790",
+        "src/computable/node/exp_relation_tests.rs": "409f9fdc3522eb120665687e97047422c1394cd4dbded51311d4ec423101d7cd",
+        "src/computable/node/fractional_separation_tests.rs": "a6aafd580f1afd4de6bd5e26a7f741a5bda9f3148cca61f7254c00737e883e26",
+        "src/computable/node/linear_demand_tests.rs": "33e292ab9fbee54c0f04f38435732997d6e49e407db79d33bb33b87856c39816",
+        "src/computable/node/magnitude_boundary_tests.rs": "f3d0aae47eede2e04cfa7f74fefc663074e59008507cced54118af1e1675c883",
+        "src/computable/node/precision_boundary_tests.rs": "f9a54c8f26f74ac2a55a281763bc87b470639725ab5352a14e25fbf5c0aeba91"
+      }
+    }
+  },
+  "method": "Subtract only fully test-only executable file rows from the preserved physical-line reports. approximation.rs contains imports/includes followed by test modules; its executable lines are all tests. Dedicated *_tests.rs files are cfg(test)-gated directly or by their parent module. No workload was rerun and no original result was overwritten.",
+  "limits": [
+    "The baseline completed coverage uses the previously preserved classification-only repair for exact_quadratic_normal_form; its original inventory failure remains a failure. The script follows the repository convention that inline cfg(test) modules trail production code. Coverage remains supplementary and is not a formal proof percentage.",
+    "The first correction attempt selected the original failing baseline log and correctly could not derive a completed coverage report; its diagnostic and passing parser fixture are preserved.",
+    "Original reports and prior checkpoints remain unchanged; this correction supersedes their production-only line counts for the two listed revisions.",
+    "The later bound-composition candidate requires a fresh corrected coverage run."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-coverage-accounting.tar.gz",
+    "bytes": 64034,
+    "files": 42,
+    "sha256": "6cc4391ca3833e962605c6ffca9fad36a83b4c8e3d8b7b7a84186330367da41c"
+  }
+}

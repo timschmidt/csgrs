@@ -1,0 +1,405 @@
+{
+  "schema": 1,
+  "status": "fixed_input_build_and_replay_milestone_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "baseline_build_evidence": "benchmarks/checkpoints/2026-09-17-verus-consumer-fixed-inputs.json",
+  "candidate": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "consumers": {
+    "hyperlattice": {
+      "revision": "53427ce89f8c82c016e69a04e035787e2753adc8",
+      "source_hashes": {
+        "benches/retained_fuzz.rs": "1b6804168300dfa2624dc0f9f25b4b26d0090a93716bc00014be0492d8ed7fec",
+        "benches/support/retained_fuzz.rs": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062",
+        "promoted_slow_offenders.txt": "fffc96ff681db166d6f0ed45cc79d472289e274face57a199198d031d6f41002",
+        "fuzz/Cargo.toml": "1d6050fb3f55358f96df419bb80bb0e9e9dd2147d94a048bde7f683d1b45dcac",
+        "Cargo.toml": "f2e6f9d051560b5550e4326c354f96e65af66b38117743f7fa05fb2548df229d",
+        "Cargo.lock": "5028a9aaa4a26c4e96736fb4ba236c9a0476a7de1b78c67df165ea2093f9d290"
+      },
+      "overlay_hashes": {
+        "benches/retained_fuzz.rs": "3102d1ba114cff6071b7e402012062a6e9c49a8986b08d4dc5dbc12dd55e519e",
+        "benches/support/retained_fuzz.rs": "bae0bc2ac16a23ca3cfbe34586f024adc20cdcb12e1f57879eb175d3119d119b"
+      },
+      "patch_sha256": "7970251daffe81413c2dc903facd6222b65c0abce3c047c9922a004f502ff5f6",
+      "ordered_cases_sha256": "349f59a45a89e7f61587dd84517c398c7559362302f2980b088f82aa0d45b570",
+      "cases": 100,
+      "criterion_rows": 101
+    },
+    "hyperlimit": {
+      "revision": "d64c3b897e2832e879b01e53e46c57260d071d4c",
+      "source_hashes": {
+        "benches/retained_fuzz.rs": "8db5430913257bfcee01c8140d13a341f12ba61ee04f7ff0c699b383c497903d",
+        "benches/support/retained_fuzz.rs": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062",
+        "promoted_slow_offenders.txt": "f5004e462ada2e3ac2a618f7fdff9c8ee2f92acdad29144bb0cb73101e11401e",
+        "fuzz/Cargo.toml": "d750994738b20539268368a551fd5b8ac1f4f544fe1866c9d1a6c29805f89168",
+        "Cargo.toml": "0c5b6e7b3d7460898971309d06d8b5c2f75b3d04d410fbc11df0ed1c671c4d6c",
+        "Cargo.lock": "4cf83bb216a16c47b2894d748a7ef52ab22c9f6460e67ece710b6195130fe73f"
+      },
+      "overlay_hashes": {
+        "benches/retained_fuzz.rs": "f38e1cfb8ac16a017e2a75c04235b1f66647818593aa697761189ceeb8db4dfb",
+        "benches/support/retained_fuzz.rs": "bae0bc2ac16a23ca3cfbe34586f024adc20cdcb12e1f57879eb175d3119d119b"
+      },
+      "patch_sha256": "256e1958e194a76fc82629f1c851a34d251a95b221cb571e2d3166c14c12098c",
+      "ordered_cases_sha256": "d9d905f84916c129b421e69aa524bed6779c75cfe67325504d6922632b5d6bc5",
+      "cases": 100,
+      "criterion_rows": 101
+    },
+    "hypertri": {
+      "revision": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "source_hashes": {
+        "benches/retained_fuzz.rs": "80339d88eecbf1e2618c1f5ad261fb94475c73bddf1d95356dc1a33537ec9d52",
+        "benches/support/retained_fuzz.rs": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062",
+        "promoted_slow_offenders.txt": "ab80cf88810d848f61850eaca2dff6eb8d94cb33da6eaa16bbceb63a804de0de",
+        "fuzz/Cargo.toml": "84e6e24b743aa5ab003b55c8e5b93fbbc759c65a986d143bd4b8e1510ef94a25",
+        "Cargo.toml": "12188eae885cdd8a203ed8335551fa3e73f3a18d010b080873ef879017fa3498",
+        "Cargo.lock": "359e116bfe5613b39b1b7da550c9bfdba7e26d84d8a83db234347bfceecf11a8"
+      },
+      "overlay_hashes": {
+        "benches/retained_fuzz.rs": "c07a099fdaa555b5812fe872a058e8ba824ad737731ad606643ee295188654d8",
+        "benches/support/retained_fuzz.rs": "bae0bc2ac16a23ca3cfbe34586f024adc20cdcb12e1f57879eb175d3119d119b"
+      },
+      "patch_sha256": "502478bb72b51f0b9b42fc8290536a3d64497ef4711005b4a0912caa00bc61d5",
+      "ordered_cases_sha256": "484e86e0f3fbb2b8f0e948f88c7e7737cae8ed9413ba76bd9bd5544d28d743db",
+      "cases": 100,
+      "criterion_rows": 101
+    },
+    "hypersolve": {
+      "revision": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+      "source_hashes": {
+        "benches/retained_fuzz.rs": "02cfb5d83b193845eacc70beb0cefa4854ab95d896ebfa5529b7dd7bea7f2685",
+        "benches/support/retained_fuzz.rs": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062",
+        "promoted_slow_offenders.txt": "4bf76834701998bf50565a272002bd59d89e17dc86028ba2e0ee4338ee393847",
+        "fuzz/Cargo.toml": "eb93223be244ef781d03c4dcbd328693ae2ba328b6c68d181641559267f1f5b2",
+        "Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+        "Cargo.lock": "a3bd1655b3b08ac34afd084b1c74392c107a06a243672180f2d3a986ff442e43"
+      },
+      "overlay_hashes": {
+        "benches/retained_fuzz.rs": "f7a7055c9121f33f8cdc930fee57eced919bcea145700ee978bd3f270c89f696",
+        "benches/support/retained_fuzz.rs": "bae0bc2ac16a23ca3cfbe34586f024adc20cdcb12e1f57879eb175d3119d119b"
+      },
+      "patch_sha256": "cec91b9f781926e1e5e394053c3471aaf600171a9ebc8767458594a5d114baad",
+      "ordered_cases_sha256": "8eace1c0ccdb8c80ea75f3c0cbd8b0d345a48f65468cb4a455ae083d17ef40ac",
+      "cases": 100,
+      "criterion_rows": 101
+    }
+  },
+  "ordered_inputs_per_variant": 400,
+  "successful_candidate_builds": 4,
+  "successful_candidate_fixture_replays": 4,
+  "criterion_rows_per_replay": 101,
+  "freeze_switch": {
+    "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1"
+  },
+  "method": "The candidate uses the same pinned source paths, lockfiles, compiler, benchmark-only overlay and 400 stored seeds in their stored order as the previously qualified fixed-baseline builds. Those unchanged baseline binaries and evidence are reused. The explicit freeze mode bypasses adaptive promotion and permits Criterion test/list mode. Normal adaptive behavior remains when the switch is absent.",
+  "runs": [
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hyperlattice",
+      "consumer_revision": "53427ce89f8c82c016e69a04e035787e2753adc8",
+      "step": "build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--bench",
+        "retained_fuzz",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hyperlattice",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 10.440154075622559
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hyperlattice",
+      "step": "fixtures",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "900s",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-consumer-fixed-builds/candidate/hyperlattice/retained_fuzz",
+        "--test"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hyperlattice",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.028993844985961914,
+      "binary_sha256": "bd5f8d32f9d1073a55455a95ca0e64381d5dc19da2cec926e708548342d421e6",
+      "testing_rows": 101,
+      "expected_rows": 101
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hyperlimit",
+      "consumer_revision": "d64c3b897e2832e879b01e53e46c57260d071d4c",
+      "step": "build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--bench",
+        "retained_fuzz",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hyperlimit",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 11.945372819900513
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hyperlimit",
+      "step": "fixtures",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "900s",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-consumer-fixed-builds/candidate/hyperlimit/retained_fuzz",
+        "--test"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hyperlimit",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.03171277046203613,
+      "binary_sha256": "073d6dbde36170c2cab783862bf2a3f6efc517cfa7e137e327869df8f6ab87dd",
+      "testing_rows": 101,
+      "expected_rows": 101
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hypertri",
+      "consumer_revision": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "step": "build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--bench",
+        "retained_fuzz",
+        "--no-run",
+        "--message-format=json",
+        "--features",
+        "all-algorithms,runtime-select,f64-interop"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hypertri",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 6.046476364135742
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hypertri",
+      "step": "fixtures",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "900s",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-consumer-fixed-builds/candidate/hypertri/retained_fuzz",
+        "--test"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hypertri",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.045058488845825195,
+      "binary_sha256": "f18c720e8bb37b729398fbc1ed1ca6f564b98df537b56639906c0ed1fc22c0b3",
+      "testing_rows": 101,
+      "expected_rows": 101
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hypersolve",
+      "consumer_revision": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+      "step": "build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--bench",
+        "retained_fuzz",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hypersolve",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 14.616912364959717
+    },
+    {
+      "label": "candidate",
+      "hyperreal_revision": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+      "consumer": "hypersolve",
+      "step": "fixtures",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "900s",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-consumer-fixed-builds/candidate/hypersolve/retained_fuzz",
+        "--test"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/hypersolve",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_NET_OFFLINE": "true",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "HYPERREAL_BASELINE_FREEZE_PROMOTED": "1",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERCURVE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERMESH_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.032372236251831055,
+      "binary_sha256": "c4f98a0c9f8bda7e1342dce0b15970491ea4b86cd3033c5c7f99fb0af4a33645",
+      "testing_rows": 101,
+      "expected_rows": 101
+    }
+  ],
+  "restoration": {
+    "hyperreal_revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+    "pinned_consumers_clean": true
+  },
+  "limits": [
+    "No native timing or performance acceptance is inferred from fixture durations.",
+    "This supplement does not replace all ordinary consumer tests, feature matrices, fuzz targets, benchmarks or coverage.",
+    "Live consumer worktrees, including concurrently edited Hypercurve, were not modified. Hypercurve is not one of these four patched harnesses.",
+    "The aggregate score replays the same 100 inputs again; it does not represent 100 additional independent cases."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-fixed-inputs.tar.gz",
+    "bytes": 52498,
+    "files": 37,
+    "sha256": "4c4f798296648c15a860b703ffb48287c7764452f495e9c81076141bdaa36498"
+  }
+}

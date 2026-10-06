@@ -1,0 +1,369 @@
+{
+  "schema": 1,
+  "status": "diagnostic_only_unadopted_prototype",
+  "related_experiment": "benchmarks/checkpoints/2026-09-17-verus-anchor-experiments.json",
+  "runs": [
+    {
+      "label": "baseline",
+      "command": [
+        "valgrind",
+        "--tool=massif",
+        "--stacks=yes",
+        "--time-unit=B",
+        "--detailed-freq=1",
+        "--max-snapshots=100",
+        "--peak-inaccuracy=0",
+        "--threshold=0.01",
+        "--depth=40",
+        "--massif-out-file=/tmp/hyperreal-verus-baseline-scmfudw9/metadata-profile-runtime/massif.out",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-profile-runtime/allocation_profile",
+        "64"
+      ],
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-profile-runtime",
+      "exit_code": 0,
+      "seconds": 1.1171460151672363,
+      "binary_sha256": "eea0efe23844c5509c65339138997141c935b96fae99a3f7194d6042dde7ce7d",
+      "native_timing": false
+    },
+    {
+      "label": "experiment",
+      "command": [
+        "valgrind",
+        "--tool=massif",
+        "--stacks=yes",
+        "--time-unit=B",
+        "--detailed-freq=1",
+        "--max-snapshots=100",
+        "--peak-inaccuracy=0",
+        "--threshold=0.01",
+        "--depth=40",
+        "--massif-out-file=/tmp/hyperreal-verus-baseline-scmfudw9/metadata-profile-runtime/massif.out",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-profile-runtime/allocation_profile",
+        "64"
+      ],
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/metadata-profile-runtime",
+      "exit_code": 0,
+      "seconds": 1.1313371658325195,
+      "binary_sha256": "2125853dfeadc53c2ba211585f22795a89e29688140c6cae7169c33b40bdcb47",
+      "native_timing": false
+    }
+  ],
+  "allocation_site_comparison": {
+    "rows": [
+      {
+        "allocation_site": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+        "baseline": 120,
+        "experiment": 120,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<&num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul",
+        "baseline": 8,
+        "experiment": 8,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<alloc::raw_vec::RawVecInner>::finish_grow",
+        "baseline": 608,
+        "experiment": 576,
+        "difference": -32
+      },
+      {
+        "allocation_site": "<hyperreal::computable::approximation::SharedConstant>::approximate",
+        "baseline": 216,
+        "experiment": 216,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::ApproximationCache>::at_precision",
+        "baseline": 24,
+        "experiment": 0,
+        "difference": -24
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::ApproximationCache>::store",
+        "baseline": 1288,
+        "experiment": 1344,
+        "difference": 56
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::add",
+        "baseline": 432,
+        "experiment": 432,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::approx_signal",
+        "baseline": 528,
+        "experiment": 568,
+        "difference": 40
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::integer",
+        "baseline": 432,
+        "experiment": 432,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::inverse",
+        "baseline": 72,
+        "experiment": 72,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::ln",
+        "baseline": 8,
+        "experiment": 8,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::negate",
+        "baseline": 72,
+        "experiment": 72,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::one",
+        "baseline": 72,
+        "experiment": 72,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::prescaled_ln",
+        "baseline": 72,
+        "experiment": 72,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::rational",
+        "baseline": 232,
+        "experiment": 232,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::shared_constant",
+        "baseline": 648,
+        "experiment": 648,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::computable::node::Computable>::shift_left",
+        "baseline": 144,
+        "experiment": 144,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+        "baseline": 120,
+        "experiment": 120,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+        "baseline": 120,
+        "experiment": 120,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+        "baseline": 112,
+        "experiment": 112,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::extract_square",
+        "baseline": 8,
+        "experiment": 8,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced",
+        "baseline": 224,
+        "experiment": 224,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced",
+        "baseline": 312,
+        "experiment": 312,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::inverse",
+        "baseline": 240,
+        "experiment": 240,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::retain_inverse_entry",
+        "baseline": 704,
+        "experiment": 704,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::retain_negation_entry",
+        "baseline": 176,
+        "experiment": 176,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<hyperreal::rational::arithmetic::Rational>::retain_square_reduction",
+        "baseline": 176,
+        "experiment": 176,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<num_bigint::bigint::BigInt as num_traits::identities::One>::one",
+        "baseline": 8,
+        "experiment": 8,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<num_bigint::biguint::BigUint as num_traits::identities::One>::one",
+        "baseline": 8,
+        "experiment": 8,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+        "baseline": 448,
+        "experiment": 448,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::stdout::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+        "baseline": 1024,
+        "experiment": 1024,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<core::cell::RefCell<hyperreal::dispatch_trace::TraceState>, ()>>::get_or_init_slow::<hyperreal::dispatch_trace::TRACE_STATE::__rust_std_internal_init_fn>",
+        "baseline": 32,
+        "experiment": 32,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::E::__rust_std_internal_init_fn>",
+        "baseline": 32,
+        "experiment": 32,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN2::__rust_std_internal_init_fn>",
+        "baseline": 32,
+        "experiment": 32,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN3::__rust_std_internal_init_fn>",
+        "baseline": 32,
+        "experiment": 32,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::ONE_PLUS_LN2::__rust_std_internal_init_fn>",
+        "baseline": 48,
+        "experiment": 48,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::PI::__rust_std_internal_init_fn>",
+        "baseline": 32,
+        "experiment": 32,
+        "difference": 0
+      },
+      {
+        "allocation_site": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::PI_MINUS_THREE::__rust_std_internal_init_fn>",
+        "baseline": 56,
+        "experiment": 56,
+        "difference": 0
+      },
+      {
+        "allocation_site": "alloc::boxed::box_new_uninit",
+        "baseline": 288,
+        "experiment": 288,
+        "difference": 0
+      },
+      {
+        "allocation_site": "hyperreal::computable::approximation::ln",
+        "baseline": 24,
+        "experiment": 80,
+        "difference": 56
+      },
+      {
+        "allocation_site": "in 1 place, below massif's threshold (0.01%)",
+        "baseline": 0,
+        "experiment": 0,
+        "difference": 0
+      },
+      {
+        "allocation_site": "in 59 places, all below massif's threshold (0.01%)",
+        "baseline": 0,
+        "experiment": 0,
+        "difference": 0
+      },
+      {
+        "allocation_site": "in 63 places, all below massif's threshold (0.01%)",
+        "baseline": 0,
+        "experiment": 0,
+        "difference": 0
+      },
+      {
+        "allocation_site": "num_bigint::biguint::division::div_rem_core",
+        "baseline": 0,
+        "experiment": 32,
+        "difference": 32
+      },
+      {
+        "allocation_site": "num_bigint::biguint::division::div_rem_ref",
+        "baseline": 24,
+        "experiment": 24,
+        "difference": 0
+      },
+      {
+        "allocation_site": "num_bigint::biguint::multiplication::mul3",
+        "baseline": 56,
+        "experiment": 224,
+        "difference": 168
+      },
+      {
+        "allocation_site": "num_bigint::biguint::shift::biguint_shl2",
+        "baseline": 32,
+        "experiment": 104,
+        "difference": 72
+      },
+      {
+        "allocation_site": "std::sys::pal::unix::stack_overflow::thread_info::set_current_info",
+        "baseline": 548,
+        "experiment": 548,
+        "difference": 0
+      }
+    ],
+    "note": "Groups are immediate children of the Rust allocator at each variant combined peak. Different peak times and inlining can move or split sites; this does not isolate causal source changes."
+  },
+  "limits": [
+    "These detailed call trees reproduce the measured combined peak, but variants peak at different execution points. They do not isolate the causal source change.",
+    "The retained72byte combined increase remains unresolved. Native timing and full verification are still pending.",
+    "No production source or live Hypercurve was changed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-anchor-peak-diagnostics.tar.gz",
+    "files": 11,
+    "bytes": 2027809,
+    "sha256": "37e3d7f6d96d2eaea415ac226a1ff854ee3ec0e3eef9b6db7f5f638cdd0336fd"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "status": "proof_milestone_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "49f2b8f516e00e096221b1fd9b7d5839c3b0ad4a",
+  "runtime_revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+  "verification": {
+    "units": 431,
+    "production_contracts": 56,
+    "model_theorems": 87,
+    "source_hashes": 116,
+    "all_source_hashes_match_commit": true,
+    "entire_proof_target": true,
+    "no_cheating": true,
+    "open_obligation_groups": 13
+  },
+  "new_model_theorems": [
+    "real_approximation_model::binary_unit_positive",
+    "real_approximation_model::binary_unit_composes",
+    "real_approximation_model::integer_plan_denotes_real",
+    "real_approximation_model::negation_preserves_error",
+    "real_approximation_model::binary_offset_preserves_error",
+    "real_approximation_model::addition_with_guard_bits_preserves_error",
+    "real_approximation_model::cache_coarsening_preserves_real_error",
+    "real_approximation_model::near_integer_is_adjacent",
+    "real_approximation_model::separated_approximation_certifies_sign"
+  ],
+  "negative_guards": {
+    "incorrect_executables": 79,
+    "incorrect_models": 6,
+    "assumption_bypass_rejected": true,
+    "acceptance_guard_tests": 7
+  },
+  "runtime_identity": {
+    "source_and_cargo_inputs_unchanged_from": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+    "tests_unchanged": true,
+    "fresh_runtime_build": false,
+    "expanded_runtime_sha256": "96fff475be69d3f42577159e47aa1eff33d94af7744e5a245f4b20e226b41285",
+    "runtime_evidence": "benchmarks/checkpoints/2026-09-17-verus-precision-resources.json"
+  },
+  "limits": [
+    "These are compositional mathematical results over exact real numbers and input approximation error bounds. They do not establish those bounds for the production expression graph.",
+    "BigInt operations, caller precision arithmetic, constant/transcendental denotations, domain validity, abort behavior, concurrency and convergence remain unproved. All 13 full-implementation obligation groups remain open.",
+    "Initial missing integer-to-real algebraic bridges and product-negation rewrites produced failed proof trials; these are retained as failures. The official 431-unit source-bound proof supplies qualifying evidence.",
+    "Current native timing and broader pinned-consumer assessment remain pending; the resource differences remain unresolved."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.tar.gz",
+    "bytes": 38553,
+    "files": 24,
+    "sha256": "ae045b3a4e6c47222cc4cafdfdbf47e11d0b3325ffec399b5a054d499c0f0bad"
+  }
+}

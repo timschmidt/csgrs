@@ -1,0 +1,564 @@
+{
+  "schema": 1,
+  "status": "peak_attribution_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+  "native_timing": false,
+  "profiles": [
+    {
+      "configuration": "magnitude-peak-attribution",
+      "label": "baseline",
+      "heap": 9892,
+      "allocator_extra": 2572,
+      "stack": 12432,
+      "combined_peak": 24896,
+      "profile_sha256": "88f4deecdfa16e39540893f8b806cb123d46b9f5322ce755431f1bf92e87210d"
+    },
+    {
+      "configuration": "magnitude-peak-attribution",
+      "label": "candidate",
+      "heap": 10052,
+      "allocator_extra": 2588,
+      "stack": 12432,
+      "combined_peak": 25072,
+      "profile_sha256": "edc07901bff76cd908340b5a03eb7effa64f60f402eff96b740230d7e542db6e"
+    },
+    {
+      "configuration": "magnitude-peak-attribution-v2",
+      "label": "baseline",
+      "heap": 9892,
+      "allocator_extra": 2572,
+      "stack": 12432,
+      "combined_peak": 24896,
+      "profile_sha256": "771cc63f9135b461a9e05355c5b296796bf5b3e46c086ff8d9a14c1b29666348"
+    },
+    {
+      "configuration": "magnitude-peak-attribution-v2",
+      "label": "candidate",
+      "heap": 10052,
+      "allocator_extra": 2588,
+      "stack": 12432,
+      "combined_peak": 25072,
+      "profile_sha256": "9cae55096d35a069841f4bec0e94c0d16c3a13fff04ffec925031b5382e17290"
+    }
+  ],
+  "immediate_allocation_caller_groups": [
+    {
+      "caller": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+      "baseline_bytes": 120,
+      "candidate_bytes": 120,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<&num_bigint::bigint::BigInt as core::ops::arith::Mul<num_bigint::bigint::BigInt>>::mul",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<&num_bigint::bigint::BigInt as core::ops::arith::Mul>::mul",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<&num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul",
+      "baseline_bytes": 8,
+      "candidate_bytes": 8,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<alloc::raw_vec::RawVecInner>::finish_grow",
+      "baseline_bytes": 608,
+      "candidate_bytes": 608,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<alloc::vec::Vec<u64> as core::clone::Clone>::clone",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::approximation::SharedConstant>::approximate",
+      "baseline_bytes": 216,
+      "candidate_bytes": 216,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::ApproximationCache>::at_precision",
+      "baseline_bytes": 24,
+      "candidate_bytes": 24,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::ApproximationCache>::get",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::ApproximationCache>::store",
+      "baseline_bytes": 1288,
+      "candidate_bytes": 1400,
+      "delta_bytes": 112
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::add",
+      "baseline_bytes": 432,
+      "candidate_bytes": 432,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::approx_signal",
+      "baseline_bytes": 528,
+      "candidate_bytes": 576,
+      "delta_bytes": 48
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::exact_sign",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::exp",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::integer",
+      "baseline_bytes": 432,
+      "candidate_bytes": 432,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::inverse",
+      "baseline_bytes": 72,
+      "candidate_bytes": 72,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::ln",
+      "baseline_bytes": 8,
+      "candidate_bytes": 8,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::multiply",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::negate",
+      "baseline_bytes": 72,
+      "candidate_bytes": 72,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::one",
+      "baseline_bytes": 72,
+      "candidate_bytes": 72,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::pi_acos_linear_form",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::pi_atan_linear_form",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::power_of_two_rational",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::prescaled_exp",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::prescaled_ln",
+      "baseline_bytes": 72,
+      "candidate_bytes": 72,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::rational",
+      "baseline_bytes": 232,
+      "candidate_bytes": 232,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::rational_offset_parts",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::shared_constant",
+      "baseline_bytes": 648,
+      "candidate_bytes": 648,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::shift_left",
+      "baseline_bytes": 144,
+      "candidate_bytes": 144,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::sqrt",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::sqrt_squarefree_rational",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::computable::node::Computable>::square",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+      "baseline_bytes": 120,
+      "candidate_bytes": 120,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+      "baseline_bytes": 120,
+      "candidate_bytes": 120,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+      "baseline_bytes": 112,
+      "candidate_bytes": 112,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::add_one",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::extract_square",
+      "baseline_bytes": 8,
+      "candidate_bytes": 8,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced",
+      "baseline_bytes": 224,
+      "candidate_bytes": 224,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced",
+      "baseline_bytes": 312,
+      "candidate_bytes": 312,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::inverse",
+      "baseline_bytes": 240,
+      "candidate_bytes": 240,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::retain_inverse_entry",
+      "baseline_bytes": 704,
+      "candidate_bytes": 704,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::retain_linear",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::retain_negation_entry",
+      "baseline_bytes": 176,
+      "candidate_bytes": 176,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::retain_square_reduction",
+      "baseline_bytes": 176,
+      "candidate_bytes": 176,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::rational::arithmetic::Rational>::to_big_integer",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::real::arithmetic::Class>::make_const_product",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::real::arithmetic::Class>::make_const_product_sqrt",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::real::arithmetic::Class>::make_ln_product",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<num_bigint::bigint::BigInt as core::ops::arith::Add<&num_bigint::bigint::BigInt>>::add",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<num_bigint::bigint::BigInt as num_traits::identities::One>::one",
+      "baseline_bytes": 8,
+      "candidate_bytes": 8,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<num_bigint::bigint::BigInt>::pow",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<num_bigint::biguint::BigUint as core::ops::arith::Mul<&num_bigint::biguint::BigUint>>::mul",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<num_bigint::biguint::BigUint as num_traits::identities::One>::one",
+      "baseline_bytes": 8,
+      "candidate_bytes": 8,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<num_bigint::biguint::BigUint as num_traits::pow::Pow<u32>>::pow",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "baseline_bytes": 448,
+      "candidate_bytes": 448,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::stdout::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "baseline_bytes": 1024,
+      "candidate_bytes": 1024,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<core::cell::RefCell<hyperreal::dispatch_trace::TraceState>, ()>>::get_or_init_slow::<hyperreal::dispatch_trace::TRACE_STATE::__rust_std_internal_init_fn>",
+      "baseline_bytes": 32,
+      "candidate_bytes": 32,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::E::__rust_std_internal_init_fn>",
+      "baseline_bytes": 32,
+      "candidate_bytes": 32,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN2::__rust_std_internal_init_fn>",
+      "baseline_bytes": 32,
+      "candidate_bytes": 32,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN3::__rust_std_internal_init_fn>",
+      "baseline_bytes": 32,
+      "candidate_bytes": 32,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::ONE_PLUS_LN2::__rust_std_internal_init_fn>",
+      "baseline_bytes": 48,
+      "candidate_bytes": 48,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::PI::__rust_std_internal_init_fn>",
+      "baseline_bytes": 32,
+      "candidate_bytes": 32,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "<std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::PI_MINUS_THREE::__rust_std_internal_init_fn>",
+      "baseline_bytes": 56,
+      "candidate_bytes": 56,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "_IO_doallocbuf",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "alloc::boxed::box_new_uninit",
+      "baseline_bytes": 288,
+      "candidate_bytes": 288,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "hyperreal::computable::approximation::chudnovsky_binary_split",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "hyperreal::computable::approximation::e_binary_split",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "hyperreal::computable::approximation::inverse",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "hyperreal::computable::approximation::ln",
+      "baseline_bytes": 24,
+      "candidate_bytes": 24,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "hyperreal::computable::approximation::pi",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "hyperreal::computable::approximation::sqrt_constant",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "num_bigint::biguint::division::div_rem_core",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "num_bigint::biguint::division::div_rem_ref",
+      "baseline_bytes": 24,
+      "candidate_bytes": 24,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "num_bigint::biguint::multiplication::mul3",
+      "baseline_bytes": 56,
+      "candidate_bytes": 56,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "num_bigint::biguint::shift::biguint_shl2",
+      "baseline_bytes": 32,
+      "candidate_bytes": 32,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "num_bigint::biguint::shift::biguint_shr2",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "pthread_attr_setaffinity_np@@GLIBC_2.32",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "pthread_getattr_np@@GLIBC_2.32",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "std::env::args_os",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "std::rt::lang_start_internal",
+      "baseline_bytes": 0,
+      "candidate_bytes": 0,
+      "delta_bytes": 0
+    },
+    {
+      "caller": "std::sys::pal::unix::stack_overflow::thread_info::set_current_info",
+      "baseline_bytes": 548,
+      "candidate_bytes": 548,
+      "delta_bytes": 0
+    }
+  ],
+  "method": "Same executablepath/argv/cwd/environment. Bounded10snapshots,detailedfreq1000,depth24,zeropeakinaccuracy. Firstthreshold0.1profilegroupedsmallallocations;secondthreshold0profileattributesallpeakheapbytes.",
+  "finding": "The160byteheapincrease decomposes into112bytes allocated throughApproximationCache::store and48bytes throughComputable::approx_signal. Allocatorbookkeeping increases16bytes;stackpeak isunchanged.",
+  "limits": [
+    "Allocationcaller attribution doesnot byitself isolatewhichsourcechange changedlifetime.",
+    "Whole-processpeak includeswarmupandprocesscaches. Per-casemeasurements subtractthewarmedstartinglive-bytecount andarenotabsoluteprocesspeaks.",
+    "The176bytecombinedincrease remains a resourceassessmentitem. Full memoryparity isnotestablished."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-magnitude-peak.tar.gz",
+    "bytes": 161287,
+    "files": 21,
+    "sha256": "c6e56d161c38cf123e53e3ab493efa6ac9cbc3a182ecd747d8d7c392a636bc42"
+  }
+}

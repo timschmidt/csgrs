@@ -1,0 +1,1054 @@
+{
+  "schema": 1,
+  "status": "exactness_repair_not_final_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+  "problem": "Bit lengths were narrowed before subtraction, and real binade indices were added without checking their combined range. Debug builds could panic; release builds could certify an incorrect exponent.",
+  "repair": "Retain full-width bit lengths and alignment shifts, reuse the shifted comparison for the binary-scale certificate, and apply the computable offset before checked i32 conversion. Return no magnitude when the final exponent cannot fit.",
+  "verification_units": 375,
+  "production_contracts": 55,
+  "model_theorems": 66,
+  "open_groups": 13,
+  "no_cheating": true,
+  "source_hashes": {
+    "src/computable/approximation/arithmetic_kernels.rs": "edde03cb1586cc4fd6f8fb5a98fefc68c26e27b1235d013c55a63bad1cd207d0",
+    "src/computable/approximation/constants.rs": "2b93f0f44a2f2ee6b7368ce1ef43f672a3fe7169527d077b769e5776b98c6397",
+    "src/computable/approximation/dispatch.rs": "d29552a56c7a0b7b66faf3f73e415cb4d3e7fde5d23e9d4c8b8001bc3f1390e4",
+    "src/computable/approximation/e_plan_tests.rs": "c439a7e066493e7ee613dcb38f695f75bfd35897eaf0a2ff1b3c16fa755395d7",
+    "src/computable/approximation/exp_sqrt.rs": "8cd59dcc8923ccc0a7bdaf289773b951868f86c27ffcb2723af6489962c394f2",
+    "src/computable/approximation/inverse_hyperbolic.rs": "dd28f60617c20bbf0a35ba9d2261726f349e52035f30b7d011a3a26858c25e43",
+    "src/computable/approximation/inverse_trig.rs": "a4ee2646773a3cc1f7a934a7cf6dbf8cf6ef614e102123abb6d8595160f5bed1",
+    "src/computable/approximation/logarithms.rs": "eb05426db39726dfc3b5e5e121850656fe7e6fd03c6bade0fe0533779319952b",
+    "src/computable/approximation/representation.rs": "c18e32769063a4afb47c77f67591c31572ca28afcead8a3172073305f6bf54e8",
+    "src/computable/approximation/statistics.rs": "7ea93b6099b0d2dd9e7ac51c8c7dc20f42fb1fa7dc62896b25ebebbe0a8faa3d",
+    "src/computable/approximation/trig.rs": "52ef2bfad7e8823b2966f2613bee335231ca72af2626a1fa403a01a02f888fa0",
+    "src/computable/approximation.rs": "1be083d5bf5f47ae86e87169b94db8eb8acd6e4dbeeea3e4ba1e384ba109e0f0",
+    "src/computable/constants.rs": "85fb1a0f88654e990f6c4a9bf5eda3392db04f9b3f54f31207ca5d3206eba8a4",
+    "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+    "src/computable/mod.rs": "7680b7dc9c127292d1a5f2f9e93aa797fa39faf87ae0a5fdbd2e16aa2f548d49",
+    "src/computable/node/algebra.rs": "308a2657870c79f5968a484ead9baa1713febd759f8018f7f5117698e784d4af",
+    "src/computable/node/approximation_queries.rs": "81b4a2fcb2303d35634a4c2f8136c5f968d43112303302bccd4a2cc6fe24a297",
+    "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+    "src/computable/node/cache_rescale_tests.rs": "699c725764121e771a693c5cd9090f654442e40f15156c70e53ccc3c70572a0a",
+    "src/computable/node/exp_relation.rs": "f9f4cb450f83b91b94ba813c721a4410cba18bf9cec62c4c3e3468c62b106df2",
+    "src/computable/node/exp_relation_reuse.rs": "49e099199c7c86f7a3c24e7b61b1743d85867863ec1f8b2356a0a09d7e762dcd",
+    "src/computable/node/exp_relation_reuse_tests.rs": "7fe615354bb3c857b98fe67949ec8196d0f871b450ba3ca12d86aec287395790",
+    "src/computable/node/exp_relation_tests.rs": "409f9fdc3522eb120665687e97047422c1394cd4dbded51311d4ec423101d7cd",
+    "src/computable/node/exp_trig.rs": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d",
+    "src/computable/node/fractional_separation_tests.rs": "a6aafd580f1afd4de6bd5e26a7f741a5bda9f3148cca61f7254c00737e883e26",
+    "src/computable/node/linear_demand_tests.rs": "33e292ab9fbee54c0f04f38435732997d6e49e407db79d33bb33b87856c39816",
+    "src/computable/node/logarithms.rs": "9874420245a129a67ab7e38fd2a87befa0bf418dcafa9b3f177600b30a2eb971",
+    "src/computable/node/primitive_constructors.rs": "7261b2977216ed8dfee272a16d3a16ca679456ce88f4f7160f780f2bbb0b5a21",
+    "src/computable/node/representation.rs": "6901ebf2795947942eea4356b0031fa2a5794187f79e30c076e5c6a01351d940",
+    "src/computable/node/roots_inverse_hyperbolic.rs": "ec631190625f987238bf7d1f76a2f9e88633f42671c0e1870e63ad28f65282ae",
+    "src/computable/node/scale.rs": "c020c7c953c8e2b78b967ed2dca62f42329c8465b5d8d8652439dbc185fc33e6",
+    "src/computable/node/structural_analysis.rs": "12211dbda97ae24c55ba6d086b71a285f4cbd48675d567578dfd5bf55e76975b",
+    "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+    "src/computable/node.rs": "1ec53cf4d939461b1928fba6223ae96fb80779da3673b5f93bfc4d400f7ee57e",
+    "src/dispatch_trace.rs": "3707c3b0c61ae8aca19c8f15eb435c5942ca806f609ae4fbf288ae16f22de126",
+    "src/lib.rs": "f1af2439d8aa378158232aed89263d5816021bf65e1f306fe2469e209b32a542",
+    "src/main.rs": "154c1a1483327a41c06565a266274d86af36fab6ce24377413ce53377477714e",
+    "src/problem.rs": "5013551212b204189718104cea5a03924b6427c9c199aa17cb151caa1cbf37e5",
+    "src/rational/arithmetic/aggregate_products.rs": "c99e5f239f4d63533420775cc032b285a811239f56c1e309d724dac157c3c07f",
+    "src/rational/arithmetic/algorithm_dispatch.rs": "d792bbfba44c09db2d174078a7a43f90c3fc91a71ad5da29eb4d2f4ad2310aa5",
+    "src/rational/arithmetic/as_ref.rs": "6ab3b9bfed2d24687d7b682a05bafaa57443feaa370e0cfc8f09f73d69d6fe61",
+    "src/rational/arithmetic/barrett_division.rs": "8e25f57908690d4312ed288a0604e4c947ce9347a550beb4261e54714f150e5d",
+    "src/rational/arithmetic/comparison.rs": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+    "src/rational/arithmetic/construction.rs": "847be7dcc52f5b2affe37aca4a0a8ab9876d31c589b09642fcab653497eae7e7",
+    "src/rational/arithmetic/format_parse.rs": "650f92e47f72f9e6e55a9c599b14406da4a3eff341c11fb2528fafdf051d8d92",
+    "src/rational/arithmetic/ntt_multiplication.rs": "307de84e93811bb77569abe1fb91a6e3fb6b32bcb6795af1144a88324da7cc3b",
+    "src/rational/arithmetic/ops.rs": "cc7a03c09fc48be552defcf659e83df6e3274dec2baf0ef5161c192c33424783",
+    "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+    "src/rational/arithmetic/representation.rs": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+    "src/rational/arithmetic/squares_powers.rs": "3105cea7ca98cae95bd7a5a07e81de1447c038e0c949ffe72b70a8cfee6008a8",
+    "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+    "src/rational/arithmetic/toom4_multiplication.rs": "880dd405c14506c1c9f1a7875d227cb9df73117ecca478792318e7e8ceedc7fe",
+    "src/rational/arithmetic/toom6_multiplication.rs": "555d7d72d216fc511dc155fb258811700068420e1c812bd5576b6488f138036e",
+    "src/rational/arithmetic/toom8_multiplication.rs": "47a99119a60ff8243cbd4646811f5247bc44c3a85d3271800bd65f285c53e931",
+    "src/rational/arithmetic.rs": "6d0267b29263539a0e3e4efe4ccd460f3928f1985e116f437a7b0f7cecf4e3c9",
+    "src/rational/convert.rs": "c84f46852ff44db898eaa09dfcec75c878063d986e916855a2de0ccfb08e96b2",
+    "src/rational/mod.rs": "7359ce7238042faa9249f70eb70d2fffc6db9b8aa49d3ae0ab43e3ad6ab42b6c",
+    "src/rational/parse.rs": "5fbef4663228b20089802845c86d23215fbbd6f9ba0d44500028efcf3081f4f9",
+    "src/real/approximation.rs": "87bc6ec38e9e21bb600a675a766ca9b471d1cd519756662180f1faa95186894d",
+    "src/real/arithmetic/add_sub.rs": "1aa96da52677cafc6c7ceb82730ee319ef3ca1fae4c1e1cd7cd449228abe1f34",
+    "src/real/arithmetic/canonical_constants.rs": "228139ba0bf111f6974d7142df717a9644782f44349407bf1d22febca7024b83",
+    "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+    "src/real/arithmetic/comparison.rs": "ce02d790ba764b2a07a6aa1d884951d2dc7b31f49a2a411629262433a870658a",
+    "src/real/arithmetic/elementary_functions.rs": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+    "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+    "src/real/arithmetic/format_parse.rs": "9f76c46e271fd9e96bc95257a7181606351c37012d8713a33c42b2321181b4cf",
+    "src/real/arithmetic/inversion.rs": "83888fed4fc50322eb96228efe782623e5253af90f75d03561002c2f86735c46",
+    "src/real/arithmetic/linear_algebra.rs": "86ec7550aa1bd3badd4cc4ca7c70b1fb3695e1567a15a623097d793697320474",
+    "src/real/arithmetic/mul_div.rs": "0ec8e8570e24c027a2af7e48039b7551dba3012cfcc1d134b64705d7ef60b356",
+    "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14",
+    "src/real/arithmetic/structural_helpers.rs": "ab7ea957c8b46c21a321f832f2794172de717ba12c3ac35ab7b5b9caabb57568",
+    "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f",
+    "src/real/arithmetic.rs": "f847101ee6307f529a9fde6a750c3737293a1f8bd2ced8ee3cffceca89fb890e",
+    "src/real/constructors.rs": "9df1f6461c721e2b8f601aef917707cf2bd1d9458b1a416ee8bc9fa840ec7a21",
+    "src/real/convert.rs": "9b88bb5d23bb7ede24fd97bf39c1a4142f9704fff6bf6a1c1233aebcd9a22fdd",
+    "src/real/exact_set.rs": "5696f1a19a2b2b3471357bd89b62f90cd777edac3fd9635460beace72e6d7f1f",
+    "src/real/facts.rs": "748bc773c193cce377d89acbe9551a8f3c7e379778143bdd3941522193615174",
+    "src/real/linear_combination.rs": "23a45ce96520d3f5f8c5214150ca07e89ede1983934bfb5cf823a9270071c21c",
+    "src/real/mod.rs": "5038db252c0bf553ae85f8f6197b806e57d9b517f94fcb35e419313a78068471",
+    "src/real/normal_reference.rs": "cbc1dc4caefc2d31fe0a664e681830f39261f728363be81ede22a54103dbecf7",
+    "src/real/tests.rs": "b102886b88f9c6b91267e5078001523278a4db895a716bc9b713c7b84540c361",
+    "src/serde.rs": "eb1652610ef810b2db067f2ae8b7064c248525c58788bbc154f264935f43b65f",
+    "src/simple.rs": "a6a70cd37c7cf485b319a6c8141eae5adb68a41c0392e612e52a231c34e26931",
+    "src/structural.rs": "8af0ac66ee34c4e240b64cce348394c136a64a7bf06a356f9cfc21d728b45259",
+    "src/trace.rs": "379e1cc310d081c0cd7caae6ebcc59e059a0b65428c659cf0424a799f5a03222",
+    "src/verified/accumulate.rs": "2de8f6b68a1759dd2ccbed6080dbd4644889d7e20e0dfce0e33b0bd87bb08a64",
+    "src/verified/aggregate.rs": "446a40bd55378ee04e6d3760646d93312727a156dbc67628d4ec6bf73e6c32f9",
+    "src/verified/division.rs": "e5d1b9a29ddf017ec421ffe51e24a197b8186e76f804437a5a216c64fc5cae34",
+    "src/verified/dyadic.rs": "fa7fe3e7e4b554846e01bf7d200eb650a7e55829e7909c1183c65d6604b93db0",
+    "src/verified/fixed_gcd.rs": "43b3341f2f1b65f18d50c4af4a457959ec42daa13496f7ba77a97961c287a6e1",
+    "src/verified/float.rs": "9e770026a2a723fb343c00ff1e9efd1994d73d2c308c30aebb4eb88bf7b5f373",
+    "src/verified/fraction.rs": "406faff9417c001f05a56850065bcdf06683ab090781ed50ece8a48433e7f1f3",
+    "src/verified/gcd.rs": "0fd60ca5b0ebaebd6b63e8665d3dd6cf2b4f150fbe44a013f51a3661d38cbbb5",
+    "src/verified/lehmer.rs": "2d48c7616a324ea460c32e926272c1c8364a85dce09027e5bd02660d8201ffb6",
+    "src/verified/limbs.rs": "e9ca4cfff89d1d3ef4c0876d958027288e120ca3eca784313bfc06cdffb3f333",
+    "src/verified/mod.rs": "be729856835810d26315c4b6e525e796421e6c39e868a4f7653986a369336756",
+    "src/verified/product.rs": "0cf9d15d809d3346683964e37135916780380e5d78408925b9104427059edb10",
+    "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+    "verification/BASELINE.md": "c3fa02eec9801ede9180ad87ed9202e6e053be8adf2a207999f39f86bed439dc",
+    "verification/README.md": "592768d7b9c00aba6d1dbd97685edb9b7d85bb92df00e245f2abc220e44e0a9b",
+    "verification/acceptance.json": "65572284c513346a70b3425389cb7cf0ef8c4377de0343caee28d937f48a075e",
+    "verification/lib.rs": "efae324f0f489217356f7c511714b1af1a56660efe1c86f6574ff5dbe9e30058",
+    "verification/rational_model.rs": "32dad926d31696edd2ce25efac35d6d56892b452d40c2f8ad5f35baec791855a",
+    "verification/scope.json": "fc75a3ed67956341eaca43b0d9eb9f5c19694f1c0c6c2fda559d1f19223f32df",
+    "verification/test_acceptance.py": "4a1d863b8cef7891a2e70ee6a02e62b6e73a0d08f478cac0cb80884df9c6f397",
+    "verification/test_rejections.py": "b2b5848765b0451d3208b39f2b9818b255def65f6c5371b1249f460b5174bba8",
+    "verification/toolchain.json": "9dce818128bd4183844d4116092c37688ebf08f01a6d00607927b37dc7c9fbb5",
+    "scripts/verify_verus.py": "65322e1819b1710bc16df1c221adada5ea9ee6d4790c86c3bf846f22c9e0bc5c",
+    "scripts/check_verification_acceptance.py": "434b333f4f6854ed010b8eff7088d4b7e9b59abb44731f3b467ace3478871a55",
+    "Cargo.toml": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306",
+    "Cargo.lock": "1c8640884474caa19c0c6cf46cda6472a67aa6143fc0536d902d9a782eafb8c4"
+  },
+  "validation": [
+    {
+      "step": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/kernel-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 0.429065465927124
+    },
+    {
+      "step": "default-all-targets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/kernel-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 196.58964824676514
+    },
+    {
+      "step": "all-features-all-targets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--all-features",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/kernel-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 205.4628562927246
+    },
+    {
+      "step": "representations",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/kernel-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 10.772442817687988
+    },
+    {
+      "step": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/kernel-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 6.697327613830566
+    }
+  ],
+  "test_metrics": {
+    "default-all-targets": {
+      "test_executions": 790,
+      "ignored": 0,
+      "criterion_fixtures": 1271
+    },
+    "all-features-all-targets": {
+      "test_executions": 893,
+      "ignored": 0,
+      "criterion_fixtures": 1447
+    }
+  },
+  "mutation_rejections": 77,
+  "assumption_bypass_rejected": true,
+  "frozen_asan_inputs": 6492,
+  "fuzz_runs": [
+    {
+      "target": "computable_approximation",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "computable_approximation",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/computable_approximation/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/computable_approximation/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "corpus_files": 1055,
+      "exit_code": 0,
+      "seconds": 152.7901849746704,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "rational_arithmetic",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "rational_arithmetic",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/rational_arithmetic/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/rational_arithmetic/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "corpus_files": 963,
+      "exit_code": 0,
+      "seconds": 1.385848045349121,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "real_elementary",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "real_elementary",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/real_elementary/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/real_elementary/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "corpus_files": 2575,
+      "exit_code": 0,
+      "seconds": 2.336984872817993,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "real_exact",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "real_exact",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/real_exact/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/real_exact/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "corpus_files": 1750,
+      "exit_code": 0,
+      "seconds": 5.112842321395874,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "string_parsing",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "string_parsing",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/string_parsing/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/string_parsing/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "corpus_files": 117,
+      "exit_code": 0,
+      "seconds": 0.4893758296966553,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "structural_representations",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "structural_representations",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/structural_representations/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-range-fuzz/structural_representations/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "corpus_files": 32,
+      "exit_code": 0,
+      "seconds": 4.288357496261597,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    }
+  ],
+  "matched_builds": [
+    {
+      "runtime_base": "561e36a6df4a91e9ede58a74eaea64dad0370238",
+      "step": "probe-build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--release",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/representation-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/probe-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 11.403571367263794
+    },
+    {
+      "runtime_base": "561e36a6df4a91e9ede58a74eaea64dad0370238",
+      "step": "bench-build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--offline",
+        "--features",
+        "simple",
+        "--benches",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1",
+        "CARGO_NET_OFFLINE": "true"
+      },
+      "exit_code": 0,
+      "seconds": 71.3016881942749
+    }
+  ],
+  "baseline_debug_probes": [
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "exponent": 31,
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--",
+        "31"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 3.8734164237976074,
+      "source_sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "exponent": 2147483647,
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--",
+        "2147483647"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 101,
+      "seconds": 0.2374708652496338,
+      "source_sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "candidate",
+      "revision": "da3a6fdac3809f76c6434742f7f84bafb9b666b9",
+      "exponent": 31,
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--",
+        "31"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 2.4810614585876465,
+      "source_sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "candidate",
+      "revision": "da3a6fdac3809f76c6434742f7f84bafb9b666b9",
+      "exponent": 2147483647,
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--",
+        "2147483647"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 101,
+      "seconds": 0.23898744583129883,
+      "source_sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    }
+  ],
+  "fixed_additional_debug_probes": [
+    {
+      "exponent": 2147483648,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "--",
+        "2147483648",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 1.3419930934906006,
+      "probe_source_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "exponent": -2147483648,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "--",
+        "-2147483648",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 1.1129913330078125,
+      "probe_source_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "exponent": -2147483649,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "--",
+        "-2147483649",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.8537893295288086,
+      "probe_source_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "exponent": 2147483647,
+      "kind": "pi",
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "--",
+        "2147483647",
+        "pi"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.7792158126831055,
+      "probe_source_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "exponent": -2147483649,
+      "kind": "pi",
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "--",
+        "-2147483649",
+        "pi"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.8510382175445557,
+      "probe_source_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    }
+  ],
+  "release_probes": [
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "exponent": 2147483647,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--release",
+        "--",
+        "2147483647",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 13.266191959381104,
+      "probe_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "source_sha256": {
+        "src/rational/arithmetic/queries_conversion.rs": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+        "src/rational/arithmetic/tests.rs": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df",
+        "src/real/arithmetic/facts.rs": "bd6e4c39fecbd4ec815b0630dcab8062fb5e814fd3ce84e67b89e14d02330ce2",
+        "src/real/arithmetic/tests.rs": "6548c58f212828662076daff0556c833f811771e3f9064b76fa744a70b541604"
+      },
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "exponent": 2147483648,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--release",
+        "--",
+        "2147483648",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 101,
+      "seconds": 0.19771146774291992,
+      "probe_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "source_sha256": {
+        "src/rational/arithmetic/queries_conversion.rs": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+        "src/rational/arithmetic/tests.rs": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df",
+        "src/real/arithmetic/facts.rs": "bd6e4c39fecbd4ec815b0630dcab8062fb5e814fd3ce84e67b89e14d02330ce2",
+        "src/real/arithmetic/tests.rs": "6548c58f212828662076daff0556c833f811771e3f9064b76fa744a70b541604"
+      },
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "exponent": -2147483649,
+      "kind": "pi",
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--release",
+        "--",
+        "-2147483649",
+        "pi"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 101,
+      "seconds": 0.1936485767364502,
+      "probe_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "source_sha256": {
+        "src/rational/arithmetic/queries_conversion.rs": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+        "src/rational/arithmetic/tests.rs": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df",
+        "src/real/arithmetic/facts.rs": "bd6e4c39fecbd4ec815b0630dcab8062fb5e814fd3ce84e67b89e14d02330ce2",
+        "src/real/arithmetic/tests.rs": "6548c58f212828662076daff0556c833f811771e3f9064b76fa744a70b541604"
+      },
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "fixed",
+      "revision": "d9c7d3f",
+      "exponent": 2147483647,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--release",
+        "--",
+        "2147483647",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 10.295401811599731,
+      "probe_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "fixed",
+      "revision": "d9c7d3f",
+      "exponent": 2147483648,
+      "kind": "plain",
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--release",
+        "--",
+        "2147483648",
+        "plain"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.19486570358276367,
+      "probe_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    },
+    {
+      "label": "fixed",
+      "revision": "d9c7d3f",
+      "exponent": -2147483649,
+      "kind": "pi",
+      "command": [
+        "cargo",
+        "run",
+        "--offline",
+        "--release",
+        "--",
+        "-2147483649",
+        "pi"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/magnitude-boundary-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "seconds": 0.20537376403808594,
+      "probe_sha256": "0b922b339b186325de4632b84418ad3cbf9acd9de13c6767743325f941d4c58f",
+      "source_sha256": {
+        "src/verified/word.rs": "312a871374353079c04db53f91e98f41f9a3b9569326b139a8108896b8826105",
+        "src/rational/arithmetic/queries_conversion.rs": "96516a1b239b31e18c3c3edf57ee95512040e5e8ea6dc849b916a544865f3b2e",
+        "src/rational/arithmetic/tests.rs": "cc9ead086e69063ca48984d0ee1cef12c2c562fcf30f00f88a0b49371354db93",
+        "src/real/arithmetic/facts.rs": "05fa8d7c090efb68121d11d0a53e1e5be5da29e6b0ccb596cec34fc5247ffcf6",
+        "src/real/arithmetic/tests.rs": "b38a2eef15f78ee74359c2aef3c99b6d360ca9b4df81ea8e5d123c26da90360f"
+      },
+      "lock_sha256": "721a609a5a8b1e27f718b84436a88a28e30e1b56eb58576ba9a087a25f077fe2"
+    }
+  ],
+  "fixed_initial_debug_probe": {
+    "exponent": 2147483647,
+    "exit_code": 0,
+    "stdout": "magnitude-boundary-probe/fixed-max.stdout"
+  },
+  "limits": [
+    "The full source, caller and dependency proof remains incomplete. The integer range calculation is proved; BigUint refinement and complete real-magnitude semantics remain open.",
+    "The first exploratory probe resolved newer num dependencies. It is retained separately; the baseline/current comparisons use the repository pins, including num-bigint 0.4.6.",
+    "Large boundary probes allocate roughly 256 MiB for each value. Their recorded durations are correctness-run metadata, not native performance measurements.",
+    "The initial mutation invocation stopped before verification because formatting changed a textual anchor. Its failure is retained; the corrected full run rejects all 77 defects and the assumption bypass.",
+    "The earlier comparison-reuse overlay passed its smaller tests but retained the range defect. Its records are preserved as an unadopted intermediate, not final qualification.",
+    "Matched executables are built. Full native timing, resource/size/coverage and current downstream qualification remain pending.",
+    "Live Hypercurve was neither edited nor used for these checks."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-magnitude-range.tar.gz",
+    "bytes": 636568,
+    "files": 146,
+    "sha256": "64fe4382711f29bcdee00de883e3712db90fcd930677ac888bd2612b043dadee"
+  }
+}

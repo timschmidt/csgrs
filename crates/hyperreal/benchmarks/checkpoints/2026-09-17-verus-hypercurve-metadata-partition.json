@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "status": "pinned_consumer_failures_preserved_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "hypercurve_pin": "8228394f174be2ae607694682defb167f030f540",
+  "commands": 14,
+  "each_revision": {
+    "remaining_suite_timeout_seconds": 900,
+    "isolated_case_timeouts": 5,
+    "isolated_case_timeout_seconds": 120,
+    "isolated_failure": "retained_rational_arc_and_analytic_parallel_fillet_exactly: Boolean RationalBezier predicate blocker",
+    "completed_passing_commands": 0
+  },
+  "limits": [
+    "Timeouts and failures remain unsuccessful outcomes. Partial test passes do not establish a complete release-suite pass.",
+    "These runs concern cdc6d3a; qualification of the later certified-precision and bound-composition runtime is separate.",
+    "Durations include non-native validation under host load and are not performance comparisons.",
+    "Only the pinned temporary Hypercurve snapshot was used. The live concurrently edited checkout was never changed."
+  ],
+  "restoration": {
+    "hyperreal_revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+    "pinned_hypercurve_clean": true,
+    "pinned_hypercurve_inputs_unchanged": true
+  },
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-hypercurve-metadata-partition.tar.gz",
+    "bytes": 97785,
+    "files": 19,
+    "sha256": "a2b6234935ffc3f6df0510b85cf6b28efe3f41ba6277c01da4fb222cd85483c4"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "status": "pure_cache_codec_proof_not_complete",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "9418f85f0ae7b5fde01a0304e4b3226dafbfc0bb",
+  "runtime_reference": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 496,
+    "executable_contracts": 69,
+    "model_theorems": 99,
+    "source_hashes": 128,
+    "source_hashes_match_commit": true,
+    "no_cheating": true,
+    "entire_proof_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_contracts": [
+    "computable_cache::AtomicFacts::encode_bound",
+    "computable_cache::AtomicFacts::encode_exact_sign",
+    "computable_cache::AtomicFacts::decode_exact_sign"
+  ],
+  "new_theorems": [
+    "computable_cache::packed_bound_fields",
+    "computable_cache::encoded_bound_round_trip"
+  ],
+  "negative_guards": {
+    "new_cache_mutations_rejected": 13,
+    "acceptance_and_dependency_identity_tests": 10,
+    "reused_guards": [
+      {
+        "count": 85,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json"
+      },
+      {
+        "count": 25,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-bound-mapping.json"
+      }
+    ],
+    "note": "The kernel/model and bound inputs are unchanged from their cited guard runs. No fresh combined 123-mutation or assumption-bypass run is claimed."
+  },
+  "ordinary_runtime": {
+    "byte_identical_expansion_to_runtime_reference": true,
+    "expanded_sha256": "ad33a1bc262c820ffee036dee9152bf7d8675f842f661aa964dbfb9317671d83",
+    "lines": 36100,
+    "checks": [
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 6.453755855560303
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.31196141242980957
+      }
+    ],
+    "note": "Production bodies and layout are unchanged. Added annotations and proof blocks disappear from ordinary builds; strict all-feature all-target Clippy passes."
+  },
+  "dependency_import": {
+    "packages": 8,
+    "source_files": 169,
+    "source_and_artifact_identity_checked": true,
+    "scope": "Transparent Sign datatype only. No external arithmetic or equality implementation is assumed or verified by this import."
+  },
+  "experiments": [
+    "Copied codec bodies were used only for exploratory verifier support checks; their failed and passing runs are retained. The official target includes the actual production representation file.",
+    "Bit-vector identities discharge mask, signed payload and round-trip obligations. No project assumptions or operation axioms were added.",
+    "A tmpfs user quota exhausted during separate consumer feature tests also prevented the first erasure-driver write. That invocation performed no erasure check and is not counted as a pass. After cache cleanup, the complete driver passed."
+  ],
+  "limits": [
+    "Pure packing preserves every typed BoundCache state and all sign, exponent and exactness fields. The lossless theorem uses the actual encode_bound contract and an independent decoder specification.",
+    "Exact-sign decoding requires a valid tag (0 through 4); production callers must still establish that invariant. The actual bound decoder remains outside this added executable boundary.",
+    "Atomic loads, updates, memory ordering, cache publication, stored denotation, unsafe memory, allocation, cancellation and callers remain open. Importing the AtomicU64 datatype does not certify any of those operations.",
+    "All thirteen whole-implementation proof groups and final baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-cache-codecs.tar.gz",
+    "bytes": 704481,
+    "files": 243,
+    "sha256": "a5c9dd533954879eae5af43613eac3c8cebac90311502112aacfb9a52e856341"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "status": "proof_milestone_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "31f69773effada2c2b97b4a1d121459fb231a52e",
+  "runtime_revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+  "verification": {
+    "units": 402,
+    "executable_contracts": 55,
+    "model_theorems": 75,
+    "source_hashes": 113,
+    "source_hashes_match_commit": true,
+    "entire_proof_target": true,
+    "no_cheating": true,
+    "acceptance_guard_tests": 7
+  },
+  "new_model_theorems": [
+    "bit_length_model::leading_zeros_determine_word_bit_length",
+    "bit_length_model::normalized_limb_bit_length",
+    "bit_length_model::binary_shift_bit_length",
+    "bit_length_model::bit_lengths_determine_order"
+  ],
+  "runtime_identity": {
+    "all_src_and_cargo_inputs_unchanged_from": "f7e256c",
+    "expanded_runtime_evidence": "benchmarks/checkpoints/2026-09-17-verus-magnitude-model.json",
+    "expanded_sha256": "99986a4a43a85aa6eef35d6cd13399704037d0ceb42b3cd8b685b6266855dd22",
+    "fresh_runtime_build": false
+  },
+  "limits": [
+    "All 13 full-implementation obligation groups remain open.",
+    "This connects mathematical limb and leading-zero models to bit widths; actual BigUint storage, digit import, machine-width metadata and comparison callers remain unproved.",
+    "The previous 79 mutation guards and assumption-bypass record applies to unchanged kernel/magnitude inputs; no new mutation run is claimed for this module.",
+    "Native timing, resource and consumer assessments remain pending."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-bit-length-model.tar.gz",
+    "bytes": 20802,
+    "files": 11,
+    "sha256": "11abd1fc62723ef0abf44f8a098f9739302151651abce4f114b2c8e7be4d12f2"
+  }
+}

@@ -1,0 +1,839 @@
+impl Rational {
+    /// Returns a shared multiplicative identity for borrowed exact kernels.
+    #[inline]
+    pub fn one_ref() -> &'static Self {
+        &RATIONAL_ONE
+    }
+
+    /// Returns the identity of this rational's immutable shared storage.
+    ///
+    /// This is an internal cache key, not a numeric hash. Callers that retain
+    /// the key must also retain a clone of the rational so allocator address
+    /// reuse cannot alias a different value.
+    #[inline]
+    #[doc(hidden)]
+    pub fn storage_identity(&self) -> usize {
+        Arc::as_ptr(&self.0) as usize
+    }
+
+    /// Returns a coarse immutable-storage cost class for exact scheduling.
+    ///
+    /// This inspects only stored numerator and denominator bit lengths. It is
+    /// not a numeric predicate and reveals no value, so higher-level kernels
+    /// can defer expensive constructions without crossing the scalar
+    /// abstraction boundary.
+    #[inline]
+    pub fn storage_class(&self) -> RationalStorageClass {
+        if self.sign == NoSign {
+            RationalStorageClass::Zero
+        } else {
+            let numerator_bits = self.numerator.bits();
+            let denominator_bits = self.denominator.bits();
+            if numerator_bits <= 64 && denominator_bits <= 64 {
+                RationalStorageClass::WordSized
+            } else if numerator_bits.saturating_add(denominator_bits) <= 4096 {
+                RationalStorageClass::MultiLimb
+            } else {
+                RationalStorageClass::VeryLarge
+            }
+        }
+    }
+
+    ///
+    /// This is a stored-sign structural predicate. It deliberately avoids
+    /// constructing a comparison value so downstream numeric kernels can ask
+    /// identity questions without allocating or canonicalizing. This keeps
+    /// algebraic simplification ahead of approximation.
+    #[inline(always)]
+    pub fn is_zero(&self) -> bool {
+        self.sign == NoSign
+    }
+
+    /// Returns whether this rational is exactly one.
+    ///
+    /// Kept as a structural identity predicate so matrix/vector callers can
+    /// specialize common homogeneous coordinates without constructing
+    /// `Rational::one()` in hot paths.
+    #[inline(always)]
+    pub fn is_one(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_one();
+        }
+        self.sign == Plus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
+    }
+
+    #[inline]
+    pub(crate) fn is_two(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_two();
+        }
+        self.sign == Plus
+            && self.numerator.bits() == 2
+            && self.numerator == *TWO.deref()
+            && self.denominator == *ONE.deref()
+    }
+
+    #[inline]
+    pub(crate) fn is_one_half(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_one_half();
+        }
+        self.sign == Plus
+            && self.numerator.bits() == 1
+            && self.denominator.bits() == 2
+            && self.numerator == *ONE.deref()
+            && self.denominator == *TWO.deref()
+    }
+
+    #[inline]
+    pub(crate) fn is_minus_one(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_minus_one();
+        }
+        self.sign == Minus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
+    }
+
+    #[inline]
+    pub(crate) fn cmp_one_structural(&self) -> Ordering {
+        match self.sign {
+            Minus | NoSign => Ordering::Less,
+            Plus => self.numerator.cmp(&self.denominator),
+        }
+    }
+
+    #[inline]
+    pub(crate) fn abs_cmp_one_structural(&self) -> Ordering {
+        self.numerator.cmp(&self.denominator)
+    }
+
+    /// The integer part of this Rational.
+    ///
+    /// Non integer rationals will thus be truncated towards zero
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// let approx_pi = Rational::fraction(22, 7).unwrap();
+    /// let three = Rational::new(3);
+    /// assert_eq!(approx_pi.trunc(), three);
+    /// ```
+    ///
+    /// The integer result can be converted to a primitive integer type
+    /// with suitable range
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// let fraction = Rational::new(172) / Rational::new(9);
+    /// let int: u8 = fraction.trunc().try_into().unwrap();
+    /// assert_eq!(int, 19);
+    /// ```
+    pub fn trunc(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().trunc();
+        }
+        if self.is_integer() {
+            return self.clone();
+        }
+        let n = &self.numerator / &self.denominator;
+        if n.is_zero() {
+            return Self::zero();
+        }
+        Self::from_parts_raw(self.sign, n, ONE.deref().clone())
+    }
+
+    /// The fractional part of this Rational.
+    ///
+    /// If the rational was negative, this fraction will also be negative
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// let approx_pi = Rational::fraction(22, 7).unwrap();
+    /// let a_seventh = Rational::fraction(1, 7).unwrap();
+    /// assert_eq!(approx_pi.fract(), a_seventh);
+    /// ```
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// let backward = Rational::fraction(-53, 9).unwrap();
+    /// let fract = Rational::fraction(-8, 9).unwrap();
+    /// assert_eq!(backward.fract(), fract);
+    /// ```
+    pub fn fract(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().fract();
+        }
+        if self.is_integer() {
+            return Self::zero();
+        }
+        let n = Self::remainder_magnitudes(
+            "exact-fractional-remainder",
+            &self.numerator,
+            &self.denominator,
+        );
+        Self::from_parts_raw(self.sign, n, self.denominator.clone())
+    }
+
+    /// Returns the reduced positive denominator magnitude.
+    ///
+    /// Together with [`Rational::numerator`] and [`Rational::sign`], this
+    /// exposes the canonical exact-rational representation without cloning it.
+    pub fn denominator(&self) -> &BigUint {
+        &self.canonicalized_ref().denominator
+    }
+
+    /// Returns the reduced unsigned numerator magnitude.
+    ///
+    /// The sign is available separately through [`Rational::sign`].
+    pub fn numerator(&self) -> &BigUint {
+        &self.canonicalized_ref().numerator
+    }
+
+    pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().factor_two_powers();
+        }
+        // Split a rational into 2^shift * odd_part.  Computable multiplication consumes
+        // the shift as an Offset node, which is cheaper than a generic exact scale.
+        let numerator_shift = self.numerator.trailing_zeros().unwrap_or(0);
+        let denominator_shift = self
+            .denominator
+            .trailing_zeros()
+            .expect("Rational denominators are never zero");
+        let shift = i32::try_from(numerator_shift).expect("shift should fit in i32")
+            - i32::try_from(denominator_shift).expect("shift should fit in i32");
+        let numerator =
+            &self.numerator >> usize::try_from(numerator_shift).expect("shift should fit in usize");
+        let denominator = &self.denominator
+            >> usize::try_from(denominator_shift).expect("shift should fit in usize");
+
+        (
+            shift,
+            Self::from_parts_raw(self.sign, numerator, denominator),
+        )
+    }
+
+    pub(crate) fn divide_by_power_of_two(&self, shift: i32) -> Option<Self> {
+        if shift < 0 {
+            return None;
+        }
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().divide_by_power_of_two(shift);
+        }
+        if self.sign == NoSign || self.numerator.is_zero() {
+            return Some(Self::zero());
+        }
+
+        let shift = u64::try_from(shift).ok()?;
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("non-zero numerator has trailing zeros")
+            .min(shift);
+        let denominator_shift = shift - numerator_shift;
+        let numerator =
+            &self.numerator >> usize::try_from(numerator_shift).expect("shift should fit");
+        let denominator =
+            &self.denominator << usize::try_from(denominator_shift).expect("shift should fit");
+        Some(Self::from_fraction_parts(self.sign, numerator, denominator))
+    }
+
+    #[inline]
+    pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().power_of_two_shift();
+        }
+        // Identify exact +/-2^k scales. Computable multiplication consumes these as
+        // binary Offset nodes, which are cheaper than generic rational products.
+        if self.sign == NoSign {
+            return None;
+        }
+
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("Rational numerators are never zero for non-zero signs");
+        if numerator_shift != self.numerator.bits() - 1 {
+            return None;
+        }
+
+        let denominator_shift = self
+            .denominator
+            .trailing_zeros()
+            .expect("Rational denominators are never zero");
+        if denominator_shift != self.denominator.bits() - 1 {
+            return None;
+        }
+
+        let numerator_shift = i32::try_from(numerator_shift).ok()?;
+        let denominator_shift = i32::try_from(denominator_shift).ok()?;
+        Some((numerator_shift - denominator_shift, self.sign))
+    }
+
+    pub(crate) fn magnitude_at_least_power_of_two(&self, exponent: u32) -> bool {
+        // Hot constructors sometimes need only a threshold such as |x| >= 8.
+        // Bit lengths prove almost every case. Boundary-sized rationals use the
+        // same borrowed bit comparison as msd_exact(), avoiding a shifted
+        // BigUint temporary for the final comparison.
+        if self.sign == NoSign {
+            return false;
+        }
+
+        let numerator_bits = self.numerator.bits();
+        let target_bits = self.denominator.bits() + u64::from(exponent);
+        if numerator_bits > target_bits {
+            return true;
+        }
+        if numerator_bits < target_bits {
+            return false;
+        }
+
+        Self::compare_shifted_to(&self.denominator, u64::from(exponent), &self.numerator)
+            != Ordering::Greater
+    }
+
+    #[inline]
+    fn compare_shifted_to(left: &BigUint, shift: u64, right: &BigUint) -> Ordering {
+        compare_shifted_biguints(left, shift, right, 0)
+    }
+
+    #[inline]
+    pub(crate) fn msd_exact(&self) -> Option<i32> {
+        self.msd_exact_with_offset(0).map(|(msd, _)| msd)
+    }
+
+    /// Exact binary magnitude plus an offset, and a power-of-two certificate.
+    /// Keep bit lengths and alignment shifts wide until the final range check.
+    /// The same comparison determines whether the absolute scale is binary,
+    /// including when the stored numerator and denominator are unreduced.
+    #[inline]
+    pub(crate) fn msd_exact_with_offset(&self, offset: i32) -> Option<(i32, bool)> {
+        if self.sign == NoSign {
+            return None;
+        }
+        let numerator_bits = self.numerator.bits();
+        let denominator_bits = self.denominator.bits();
+        let ordering = if numerator_bits >= denominator_bits {
+            Self::compare_shifted_to(
+                &self.denominator, numerator_bits - denominator_bits, &self.numerator,
+            ).reverse()
+        } else {
+            Self::compare_shifted_to(
+                &self.numerator, denominator_bits - numerator_bits, &self.denominator,
+            )
+        };
+        let msd = crate::verified::word::checked_bit_length_msd(
+            numerator_bits, denominator_bits, ordering == Ordering::Less, offset,
+        )?;
+        Some((msd, ordering == Ordering::Equal))
+    }
+
+    #[inline]
+    pub(crate) fn to_f64_lossy(&self) -> Option<f64> {
+        // The unreduced bit is immutable and learned dyadic facts are
+        // monotonic, so one relaxed snapshot covers both decisions.
+        let retained = self
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
+            return self.canonicalized_ref().to_f64_lossy();
+        }
+        // Fast borrowed approximate conversion for modest rationals. If either
+        // side cannot fit through num-traits' f64 conversion, callers fall back
+        // to the general Computable approximation path.
+        if self.sign == NoSign {
+            return Some(0.0);
+        }
+
+        // Exact binary inputs dominate geometric filters. Combine the
+        // numerator and denominator exponents before scaling so normal results
+        // avoid an exact shifted-magnitude comparison, `powi`, and division.
+        if let Some(denominator_shift) = self.dyadic_denominator_shift_from_retained(retained)
+            && let Some(value) = self
+                .exact_word_dyadic_f64_magnitude(denominator_shift)
+                .or_else(|| self.normal_dyadic_f64_magnitude(denominator_shift))
+        {
+            return Some(match self.sign {
+                Minus => -value,
+                NoSign => 0.0,
+                Plus => value,
+            });
+        }
+
+        let msd = self.msd_exact()?;
+        if msd > 1023 {
+            return None;
+        }
+        if msd < -1075 {
+            return Some(0.0);
+        }
+
+        let numerator = self.numerator.to_f64()?;
+        // BigUint conversion can return infinity rather than None. Dividing
+        // by that infinity would erase a representable finite result;
+        // leave such ratios to the magnitude-aware computable fallback.
+        let denominator = self.denominator.to_f64().filter(|value| value.is_finite())?;
+        let value = numerator / denominator;
+        if !value.is_finite() {
+            return None;
+        }
+
+        Some(match self.sign {
+            Minus => -value,
+            NoSign => 0.0,
+            Plus => value,
+        })
+    }
+
+    #[inline]
+    fn exact_word_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
+        let numerator_bits = self.numerator.bits();
+        if numerator_bits > 53 || denominator_shift > 1022 {
+            return None;
+        }
+        // Both conversions and the normal power-of-two scaling are exact
+        // under these bounds; the signed cast avoids the wider u64 lowering.
+        let numerator = self.numerator.iter_u64_digits().next()? as i64;
+        let scale = f64::from_bits((1023 - denominator_shift) << 52);
+        Some((numerator as f64) * scale)
+    }
+
+    #[inline]
+    fn normal_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
+        let numerator_bits = self.numerator.bits();
+        let exponent = i128::from(numerator_bits - 1) - i128::from(denominator_shift);
+        if !(-1022..=1023).contains(&exponent) {
+            return None;
+        }
+
+        let high = Self::normalized_high_u64_round_to_odd(&self.numerator, numerator_bits)?;
+        let significand = (high as f64) * f64::from_bits((1023_u64 - 63) << 52);
+        let scale_exponent = u64::try_from(exponent + 1023).ok()?;
+        let value = significand * f64::from_bits(scale_exponent << 52);
+        value.is_finite().then_some(value)
+    }
+
+    #[inline]
+    fn normalized_high_u64_round_to_odd(value: &BigUint, bits: u64) -> Option<u64> {
+        let mut digits = value.iter_u64_digits();
+        let highest = digits.next_back()?;
+        if bits <= 64 {
+            return Some(highest << (64 - bits));
+        }
+
+        let highest_bits = u64::from(64 - highest.leading_zeros());
+        let (mut high, discarded) = if highest_bits == 64 {
+            (highest, digits.any(|digit| digit != 0))
+        } else {
+            let next = digits.next_back().unwrap_or_default();
+            let high = (highest << (64 - highest_bits)) | (next >> highest_bits);
+            let discarded_mask = (1_u64 << highest_bits) - 1;
+            (
+                high,
+                next & discarded_mask != 0 || digits.any(|digit| digit != 0),
+            )
+        };
+        high |= u64::from(discarded);
+        Some(high)
+    }
+
+    /// Return an `f64` only when conversion preserves this dyadic rational exactly.
+    ///
+    /// Non-dyadic rationals and dyadics outside the finite binary64 range return
+    /// `None`. Callers that have already selected a dyadic schedule avoid the
+    /// repeated denominator scan by construction, but this public query remains
+    /// total for arbitrary rationals.
+    #[inline]
+    pub fn dyadic_to_f64_exact(&self) -> Option<f64> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().dyadic_to_f64_exact();
+        }
+        if self.is_zero() {
+            self.mark_exact_f64_view();
+            return Some(0.0);
+        }
+
+        let denominator_shift = self.dyadic_denominator_shift()?;
+        if !self.is_exact_f64_with_denominator_shift(denominator_shift) {
+            return None;
+        }
+        let magnitude = self
+            .normal_dyadic_f64_magnitude(denominator_shift)
+            .or_else(|| self.exact_subnormal_dyadic_f64_magnitude(denominator_shift))?;
+        let value = if self.sign == Minus {
+            -magnitude
+        } else {
+            magnitude
+        };
+        self.mark_exact_f64_view();
+        Some(value)
+    }
+
+    #[inline]
+    fn is_exact_f64_with_denominator_shift(&self, denominator_shift: u64) -> bool {
+        let numerator_bits = self.numerator.bits();
+        let greatest_exponent =
+            i128::from(numerator_bits - 1) - i128::from(denominator_shift);
+        // Every normal binary value with at most 53 numerator bits fits the
+        // binary64 significand. Its least bit is no lower than 2^-1074, so no
+        // trailing-zero scan is needed on this dominant geometry path.
+        if numerator_bits <= 53 && (-1022..=1023).contains(&greatest_exponent) {
+            return true;
+        }
+
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("non-zero numerator has a trailing-zero count");
+        let significand_bits = numerator_bits - numerator_shift;
+        let least_exponent = i128::from(numerator_shift) - i128::from(denominator_shift);
+
+        // A binary64 value carries at most 53 significant bits, its greatest
+        // set bit cannot exceed 2^1023, and its least set bit cannot fall below
+        // the subnormal quantum 2^-1074. These structural checks prove exact
+        // representability without allocating a round-trip Rational.
+        significand_bits <= 53 && greatest_exponent <= 1023 && least_exponent >= -1074
+    }
+
+    fn exact_subnormal_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
+        if !(-1074..=-1023).contains(&self.msd_exact()?) {
+            return None;
+        }
+        let unit_shift = 1074_i128 - i128::from(denominator_shift);
+        let units = if unit_shift >= 0 {
+            &self.numerator << usize::try_from(unit_shift).ok()?
+        } else {
+            &self.numerator >> usize::try_from(-unit_shift).ok()?
+        };
+        let units = units.to_u64()?;
+        (units != 0 && units <= (1_u64 << 52)).then(|| f64::from_bits(units))
+    }
+
+    /// Return finite outward-rounded binary64 bounds for this exact rational.
+    ///
+    /// The first value is no greater than the rational and the second is no
+    /// less than it. Values outside the supported finite binary64 enclosure
+    /// range return `None` instead of weakening the enclosure.
+    #[inline]
+    pub fn to_f64_enclosure(&self) -> Option<[f64; 2]> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().to_f64_enclosure();
+        }
+        if self.sign == NoSign {
+            return Some([0.0, 0.0]);
+        }
+        if let Some(denominator_shift) = self.dyadic_denominator_shift() {
+            let exact = self.is_exact_f64_with_denominator_shift(denominator_shift);
+            let magnitude = self
+                .normal_dyadic_f64_magnitude(denominator_shift)
+                .or_else(|| {
+                    if exact {
+                        self.exact_subnormal_dyadic_f64_magnitude(denominator_shift)
+                    } else {
+                        None
+                    }
+                });
+            if let Some(magnitude) = magnitude {
+                let value = if self.sign == Minus {
+                    -magnitude
+                } else {
+                    magnitude
+                };
+                return Some(if exact {
+                    [value, value]
+                } else if magnitude == f64::MAX {
+                    return self.f64_enclosure_at_rounded_max();
+                } else {
+                    [value.next_down(), value.next_up()]
+                });
+            }
+        }
+
+        // Leading numerator/denominator words already enclose the ratio.
+        // Their bit-length difference supplies an exact power-of-two scale;
+        // locating the ratio's exact binade would add a full bigint comparison
+        // without strengthening these outward bounds.
+        let scale_exponent =
+            i128::from(self.numerator.bits()) - i128::from(self.denominator.bits());
+        if !(-1022..=1023).contains(&scale_exponent) {
+            return None;
+        }
+        let scale_exponent = i32::try_from(scale_exponent).ok()?;
+        let (lower, upper) = normalized_rational_magnitude_interval(self, scale_exponent)?;
+        let scale = f64::from_bits(u64::try_from(scale_exponent + 1023).ok()? << 52);
+        let lower = (lower * scale).next_down();
+        let upper = (upper * scale).next_up();
+        if !lower.is_finite() || !upper.is_finite() {
+            return None;
+        }
+        Some(match self.sign {
+            Minus => [-upper, -lower],
+            NoSign => [0.0, 0.0],
+            Plus => [lower, upper],
+        })
+    }
+
+    /// Called only for an inexact dyadic whose rounded magnitude is MAX.
+    #[cold]
+    #[inline(never)]
+    fn f64_enclosure_at_rounded_max(&self) -> Option<[f64; 2]> {
+        // The exact exponent is 1023 here. Rounding to MAX does not prove
+        // the value is at most MAX: compare the normalized integer head.
+        // MAX has 53 one bits; the odd sticky bit distinguishes a discarded
+        // positive tail from equality without constructing a large rational.
+        const MAX_HEAD: u64 = ((1_u64 << 53) - 1) << 11;
+        let head = Self::normalized_high_u64_round_to_odd(
+            &self.numerator,
+            self.numerator.bits(),
+        )?;
+        if head > MAX_HEAD {
+            return None;
+        }
+        Some(if self.sign == Minus {
+            [-f64::MAX, -f64::MAX.next_down()]
+        } else {
+            [f64::MAX.next_down(), f64::MAX]
+        })
+    }
+
+    #[inline]
+    pub(crate) fn has_exact_f64_view(&self) -> bool {
+        self.retained_fact(RETAINED_EXACT_F64_VIEW)
+    }
+
+    #[inline]
+    pub(crate) fn has_relative_f64_filter_view(&self) -> bool {
+        self.retained_fact(RETAINED_RELATIVE_F64_FILTER_VIEW)
+    }
+
+    #[inline]
+    pub(crate) fn mark_relative_f64_filter_view(&self) {
+        self.retain_fact(RETAINED_RELATIVE_F64_FILTER_VIEW);
+    }
+
+    #[inline]
+    pub(crate) fn denominator_could_be_dyadic(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().denominator_could_be_dyadic();
+        }
+        if self.retained_fact(RETAINED_DYADIC_KNOWN) {
+            crate::trace_dispatch!("rational", "retained-facts", "dyadic-prefilter-hit");
+            return self.retained_fact(RETAINED_DYADIC_VALUE);
+        }
+        self.denominator == *ONE || !self.denominator.bit(0)
+    }
+
+    #[inline]
+    pub(crate) fn mark_exact_f64_view(&self) {
+        self.retain_fact(RETAINED_EXACT_F64_VIEW);
+    }
+
+    /// Is this Rational better understood as a fraction?
+    ///
+    /// If a decimal expansion of this fraction would never end this is true.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// let third = Rational::fraction(1, 3).unwrap();
+    /// assert!(third.prefer_fraction());
+    /// ```
+    pub fn prefer_fraction(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().prefer_fraction();
+        }
+        let mut rem = self.denominator.clone();
+        while (&rem % &*TEN).is_zero() {
+            rem /= &*TEN;
+        }
+        while (&rem % &*FIVE).is_zero() {
+            rem /= &*FIVE;
+        }
+        while (&rem % &*TWO).is_zero() {
+            rem /= &*TWO;
+        }
+        rem != BigUint::one()
+    }
+
+    /// Left shift the value by any amount and return a [`BigInt`]
+    /// of the truncated integer value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// use num::bigint::ToBigInt;
+    /// let seven_fifths = Rational::fraction(7, 5).unwrap();
+    /// let eleven = ToBigInt::to_bigint(&11).unwrap();
+    /// assert_eq!(seven_fifths.shifted_big_integer(3), eleven);
+    /// ```
+    pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
+        let whole = if shift >= 0 {
+            (&self.numerator << shift as usize) / &self.denominator
+        } else {
+            &self.numerator / (&self.denominator << shift.unsigned_abs() as usize)
+        };
+        BigInt::from_biguint(self.sign, whole)
+    }
+
+    /// Smallest enclosing interval on the grid with spacing `2^precision`.
+    /// Unsigned quotient and remainder keep rounding exact for either sign,
+    /// including unreduced rationals and values smaller than one grid cell.
+    pub(crate) fn enclosing_dyadic_interval(&self, precision: i32) -> [Self; 2] {
+        if self.is_zero() {
+            return [Self::zero(), Self::zero()];
+        }
+        if precision <= 0
+            && self
+                .dyadic_denominator_shift_if_reduced()
+                .is_some_and(|shift| shift <= u64::from(precision.unsigned_abs()))
+        {
+            // Already on this grid: preserve the shared exact payload without
+            // constructing shifted integers or performing a division.
+            return [self.clone(), self.clone()];
+        }
+        let (floor, remainder) = if precision < 0 {
+            num::Integer::div_rem(
+                &(&self.numerator << precision.unsigned_abs() as usize),
+                &self.denominator,
+            )
+        } else {
+            num::Integer::div_rem(
+                &self.numerator,
+                &(&self.denominator << precision as usize),
+            )
+        };
+        let ceil = if remainder.is_zero() {
+            floor.clone()
+        } else {
+            &floor + BigUint::one()
+        };
+        let restore = |magnitude| {
+            let numerator = BigInt::from_biguint(self.sign, magnitude);
+            if precision < 0 {
+                Self::from_bigint_fraction(
+                    numerator,
+                    BigUint::one() << precision.unsigned_abs() as usize,
+                )
+                .expect("a dyadic grid has a nonzero denominator")
+            } else {
+                Self::from_bigint(numerator << precision as usize)
+            }
+        };
+        if self.sign == Minus {
+            [restore(ceil), restore(floor)]
+        } else {
+            [restore(floor), restore(ceil)]
+        }
+    }
+
+    /// Compare the magnitudes of two rationals without flipping signs.
+    ///
+    /// This keeps exact-rational absolute comparisons in `Computable` on
+    /// pre-normalized magnitude fields and avoids temporary allocations.
+    #[inline]
+    pub(crate) fn compare_magnitude(&self, other: &Self) -> Ordering {
+        if self.denominator == other.denominator {
+            return self.numerator.cmp(&other.numerator);
+        }
+        if self.numerator.bits() > 64 && self.numerator == other.numerator {
+            // Equal numerators let absolute order be decided by the reciprocal
+            // denominator order: |n/d1| > |n/d2| iff d1 < d2. Keep this guarded
+            // to multi-limb numerators: benchmarks showed the extra equality
+            // check regresses tiny exact-rational compares, while large
+            // numerators avoid two BigUint products. This mirrors the adaptive
+            // "cheap predicate first only when it is actually cheap" strategy
+            // used in exact geometric computation.
+            return other.denominator.cmp(&self.denominator);
+        }
+        (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
+    }
+
+    /// Compare `|self|^2 * factor` with `other` without constructing an
+    /// intermediate Rational.
+    ///
+    /// This is a structural predicate for sqrt-domain gates such as
+    /// `|a*sqrt(r)| <= 1`. Avoiding canonicalization here keeps inverse
+    /// trigonometric and hyperbolic dispatch in the exact-rational layer until
+    /// a real approximation is actually required.
+    #[inline]
+    pub(crate) fn compare_magnitude_squared_times(&self, factor: &Self, other: &Self) -> Ordering {
+        let left = &self.numerator * &self.numerator * &factor.numerator * &other.denominator;
+        let right = &self.denominator * &self.denominator * &factor.denominator * &other.numerator;
+        left.cmp(&right)
+    }
+
+    #[inline]
+    pub(crate) fn detailed_rational_facts(&self) -> RationalFacts {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().detailed_rational_facts();
+        }
+        let denominator_is_one = self.denominator == *ONE.deref();
+        let numerator_bits = self.numerator.bits();
+        let denominator_bits = self.denominator.bits();
+        let denominator_is_power_of_two = Self::is_power_of_two(&self.denominator);
+        let numerator_is_power_of_two =
+            self.sign != NoSign && Self::is_power_of_two(&self.numerator);
+        let storage = if self.sign == NoSign {
+            RationalStorageClass::Zero
+        } else if numerator_bits <= 64 && denominator_bits <= 64 {
+            RationalStorageClass::WordSized
+        } else if numerator_bits.saturating_add(denominator_bits) <= 4096 {
+            RationalStorageClass::MultiLimb
+        } else {
+            RationalStorageClass::VeryLarge
+        };
+
+        RationalFacts {
+            exact_integer: denominator_is_one,
+            exact_small_integer_i64: denominator_is_one
+                && (self.sign == NoSign || numerator_bits <= 63),
+            exact_dyadic: denominator_is_power_of_two,
+            power_of_two: numerator_is_power_of_two && denominator_is_power_of_two,
+            storage,
+        }
+    }
+
+    /// Either the corresponding [`BigInt`] or None if this value is not an integer.
+    pub fn to_big_integer(&self) -> Option<BigInt> {
+        self.integer_magnitude()
+            .map(|magnitude| BigInt::from_biguint(self.sign, magnitude.clone()))
+    }
+
+    pub(crate) fn integer_magnitude(&self) -> Option<&BigUint> {
+        // Integer-only callers usually need the non-negative magnitude. Return
+        // the borrowed BigUint so they can avoid constructing a signed BigInt.
+        let canonical = self.canonicalized_ref();
+        (canonical.denominator == *ONE.deref()).then_some(&canonical.numerator)
+    }
+
+    pub(crate) fn to_integer_i64(&self) -> Option<i64> {
+        let magnitude = self.integer_magnitude()?.to_i64()?;
+        match self.sign {
+            Plus | NoSign => Some(magnitude),
+            Minus => magnitude.checked_neg(),
+        }
+    }
+
+    /// The [`Sign`] of this value.
+    #[inline]
+    pub fn sign(&self) -> Sign {
+        self.sign
+    }
+
+    /// Returns whether this value is strictly negative without allocating.
+    #[inline]
+    pub fn is_negative(&self) -> bool {
+        self.sign == Minus
+    }
+
+    /// Returns whether this value is strictly positive without allocating.
+    #[inline]
+    pub fn is_positive(&self) -> bool {
+        self.sign == Plus
+    }
+
+}

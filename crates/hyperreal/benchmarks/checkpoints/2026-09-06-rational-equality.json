@@ -1,0 +1,4033 @@
+{
+  "schema": 1,
+  "date": "2026-09-06",
+  "title": "Rational equality comparison unification: rejected runtime candidate, retained oracle and benchmarks",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory",
+    "binary_size",
+    "code_size"
+  ],
+  "decision": {
+    "runtime": "Rejected all three equality-to-PartialOrd delegation variants; production comparison.rs remains byte-identical to the baseline.",
+    "reason": "The final guarded variant improves separated-wide and common equality cases, but costs 17.13% on close-wide equality, 3.94% on selected-fiber replay, 6.96% on the seven-pair cold conic/cubic lane, and 4.67% on matrix inverse. These representative regressions outweigh the runtime's 15-line reduction under the requested priority order.",
+    "retained": "One independent 110-value/12,100-ordered-pair cross-product oracle (two replay passes) and eight Criterion equality cases. The dispatch assertion requiring the rejected optimization is not retained.",
+    "retained_source_commit": "32d82589b56b8c22f4bfa53fce7823fdc1a9613e",
+    "production_api_change": false,
+    "compatibility_shims_added": 0
+  },
+  "revisions": {
+    "hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+    "hyperlimit": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e",
+    "hypercurve": "ac0d61978571ca1eb5989a1a60a45b2ca7e4dc9d",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "sources": {
+    "original_comparison": {
+      "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-comparison.rs",
+      "bytes": 12316,
+      "sha256": "8a4138fad668bdf364795642dd1fe3f53aaf64302cede47d49530c6cbaa99212"
+    },
+    "evaluated_variants": [
+      {
+        "variant": "candidate",
+        "source": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/candidate-comparison.rs",
+          "bytes": 11484,
+          "sha256": "83ce342d64525540d03c58f517ad34fe77c8ab0485978132d4c4267ad27b380e"
+        }
+      },
+      {
+        "variant": "inline",
+        "source": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/inline-comparison.rs",
+          "bytes": 11498,
+          "sha256": "fe1923c16bd57c0fde7ea09161073b1499bbf65fa799b15cd258dbfcfc6086c5"
+        }
+      },
+      {
+        "variant": "guarded",
+        "source": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-comparison.rs",
+          "bytes": 11573,
+          "sha256": "fe4af8d844eb6a5a75763120d0229461be7407a1928827ff06c541c80a599e94"
+        }
+      }
+    ],
+    "measured_workloads": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/evaluation-tests.rs",
+        "bytes": 203693,
+        "sha256": "ff5d407e99c45d5f738b9cdd7de87b0b6ee813c321f9d7976608ed663028c9ec"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/evaluation-scalar_micro.rs",
+        "bytes": 138382,
+        "sha256": "121c7bb96513c1d3eb2d53afaad9b159d8138e25921253cbc1f16d0b8061a495"
+      }
+    ],
+    "retained_workloads": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-tests.rs",
+        "bytes": 201676,
+        "sha256": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-scalar_micro.rs",
+        "bytes": 138372,
+        "sha256": "dc7141ca7571333c32d7ee16fe01073e5f562c4f038d91406893ab29a0cca747"
+      }
+    ],
+    "evaluated_runtime_line_delta": -15,
+    "retained_test_line_delta": 52,
+    "retained_benchmark_line_delta": 88,
+    "archived_state": "The seven-repository snapshot is restored to the final evaluated guarded candidate and its original evaluation workloads after the retained baseline-runtime qualification. Root retained-* files record the actually committed test/benchmark additions.",
+    "concurrent_drafts": "Nine modified Computable files and one untracked fractional-separation test file in live Hyperreal were excluded and left untouched."
+  },
+  "regressions": {
+    "oracle": "The independent cross-product test passes original and all candidates across canonical/unreduced values, zero, both signs, common denominators, dyadics, and 129/257/521/1025/4097-bit families.",
+    "experimental_dispatch": "The non-retained trace test fails original production and passes all candidates. It verifies existing leading-interval decisions and the exact fallback for close unequal and scaled-unreduced equal values.",
+    "scalar_catalogs": [
+      {
+        "count": 729,
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-catalog.txt",
+        "bytes": 52735,
+        "sha256": "73123d7e929d3efde250d8a9a13f62c25a19ac50412419c997350c26519158b0"
+      },
+      {
+        "count": 729,
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/candidate-catalog.txt",
+        "bytes": 52735,
+        "sha256": "73123d7e929d3efde250d8a9a13f62c25a19ac50412419c997350c26519158b0"
+      },
+      {
+        "count": 729,
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/inline-catalog.txt",
+        "bytes": 52735,
+        "sha256": "73123d7e929d3efde250d8a9a13f62c25a19ac50412419c997350c26519158b0"
+      },
+      {
+        "count": 729,
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-catalog.txt",
+        "bytes": 52735,
+        "sha256": "73123d7e929d3efde250d8a9a13f62c25a19ac50412419c997350c26519158b0"
+      }
+    ],
+    "geometry_catalogs": [
+      {
+        "count": 916,
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-geometry-catalog.txt",
+        "bytes": 89401,
+        "sha256": "530ac161b2a8e7b8de2e70ede1f9b64fbe5f68aab88fa3c847425042d398ff30"
+      },
+      {
+        "count": 916,
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-geometry-catalog.txt",
+        "bytes": 89401,
+        "sha256": "530ac161b2a8e7b8de2e70ede1f9b64fbe5f68aab88fa3c847425042d398ff30"
+      }
+    ],
+    "fairness": "Scalar benchmark bodies and 729-test experimental catalogs match across all four revisions; geometry test bodies and 916-test catalogs match across both. Baseline and candidates build in the same archived paths. Only the final retained benchmark description changes; timing bodies remain identical."
+  },
+  "retained_validation": {
+    "gates": [
+      {
+        "gate": "fmt",
+        "exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-fmt.log"
+      },
+      {
+        "gate": "default",
+        "exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-default.log"
+      },
+      {
+        "gate": "full",
+        "exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-full.log"
+      },
+      {
+        "gate": "clippy",
+        "exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-clippy.log"
+      },
+      {
+        "gate": "full-clippy",
+        "exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/retained-full-clippy.log"
+      }
+    ],
+    "test_counts": [
+      {
+        "gate": "default",
+        "passed": 705,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 18,
+        "criterion_smoke_successes": 1271
+      },
+      {
+        "gate": "full",
+        "passed": 827,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 15,
+        "criterion_smoke_successes": 0
+      }
+    ],
+    "runtime": "Unchanged pinned production; no new ecosystem runtime claim."
+  },
+  "evaluated_candidate_validation": {
+    "validation": [
+      {
+        "gate": "hyperreal-fmt",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-fmt.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-check",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-check.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-default",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-default.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-full",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-full.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-clippy.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-full-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-full-clippy.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-docs",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-docs.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hyperreal-fuzz",
+        "initial_exit_code": 101,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-fuzz.log",
+        "final_exit_code": 0,
+        "retry_log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hyperreal-fuzz-escalated.log",
+        "retry_result": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/fuzz-escalated-result.json",
+        "reason": "First compile failed on a read-only ccache in the sandbox; approved escalated retry succeeded."
+      },
+      {
+        "gate": "hypercurve-full",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-full.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-minimal",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-minimal.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-clippy.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-minimal-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-minimal-clippy.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-docs",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-docs.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-minimal-docs",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-minimal-docs.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-fuzz",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-fuzz.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-ui",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-ui.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-ui-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-ui-clippy.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypercurve-wasm",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypercurve-wasm.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypermesh-default",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypermesh-default.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypermesh-full",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypermesh-full.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypermesh-default-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypermesh-default-clippy.log",
+        "final_exit_code": 0
+      },
+      {
+        "gate": "hypermesh-clippy",
+        "initial_exit_code": 0,
+        "log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/qualification-hypermesh-clippy.log",
+        "final_exit_code": 0
+      }
+    ],
+    "test_counts": [
+      {
+        "gate": "hyperreal-default",
+        "passed": 705,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 18,
+        "criterion_smoke_successes": 1271
+      },
+      {
+        "gate": "hyperreal-full",
+        "passed": 828,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 15,
+        "criterion_smoke_successes": 0
+      },
+      {
+        "gate": "hypercurve-full",
+        "passed": 1766,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 46,
+        "criterion_smoke_successes": 0
+      },
+      {
+        "gate": "hypercurve-minimal",
+        "passed": 1728,
+        "failed": 0,
+        "ignored": 4,
+        "suites": 46,
+        "criterion_smoke_successes": 0
+      },
+      {
+        "gate": "hypercurve-ui",
+        "passed": 37,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 1,
+        "criterion_smoke_successes": 0
+      },
+      {
+        "gate": "hypermesh-default",
+        "passed": 228,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 8,
+        "criterion_smoke_successes": 0
+      },
+      {
+        "gate": "hypermesh-full",
+        "passed": 229,
+        "failed": 0,
+        "ignored": 0,
+        "suites": 8,
+        "criterion_smoke_successes": 0
+      }
+    ],
+    "hypermesh_manual_tests": [
+      "full_resolution_yeahright_reaches_and_validates_in_hypermesh",
+      "full_resolution_yeahright_rotated_intersection_certifies_empty",
+      "larger_yeahright_fixtures_expose_memory_pressure",
+      "yeahright_benchmark_inputs_reach_every_competitor",
+      "yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation",
+      "yeahright_single_and_multi_expression_results_remain_consistent",
+      "dense_crossing_grid_large_policy_outputs_are_exactly_equal"
+    ],
+    "fixture": {
+      "source": "https://www.cs.cmu.edu/~kmcrane/Projects/ModelRepository/yeahright.zip",
+      "validation_log": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/fixture-validation.log",
+      "artifacts": [
+        {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/fixture-yeahright.zip",
+          "sha256": "b3a4f314bfb8c67e36eab5faa96a146ffac90524e120769b5adb8a71be8ba3dc"
+        },
+        {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/fixture-controlmesh.obj",
+          "sha256": "bf8768bf019ac505c39c92ae5d63808ee1773047aefd5d5d6700b88c1b5f1c3e"
+        }
+      ]
+    },
+    "scope": [
+      "Seven commit-pinned archives without live dependency symlinks; only the three scoped Hyperreal files are changed.",
+      "Hyperreal default uses --all-targets; all-feature suites include ignored tests.",
+      "Hypercurve full includes ignored tests; four ignored minimal tests are covered in full.",
+      "Hypermesh defaults are empty. Both no-default and all-feature suites use --include-ignored with YEAHRIGHT_BENCH=1.",
+      "HR/HC fuzz targets compile only. No fresh fuzz campaign, coverage run, or full Hyperlimit/Hyperlattice/Hypertri/Hypersolve standalone suite is claimed.",
+      "Concurrent Hyperreal computable drafts are excluded. Full live integration and Hypercurve release readiness remain open."
+    ]
+  },
+  "timings": {
+    "host": "AMD Ryzen 7 5800X3D, x86_64 Linux, rustc 1.97.0 (2d8144b78), LLVM 22.1.6",
+    "policies": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/TIMING_POLICY.md",
+        "bytes": 914,
+        "sha256": "c83f621aadb2c061e5b64b90334eb2824d30935d667a97bb16c74b0fbb273b0f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/INLINE_TIMING_POLICY.md",
+        "bytes": 549,
+        "sha256": "2a72d6c3e356c701f496f2890aeb5ec116e0370eb9db4c50becdad84a7ae079e"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/GUARDED_TIMING_POLICY.md",
+        "bytes": 554,
+        "sha256": "ffc54981fde10d59dc16a140fce47219c931543c36344a3e96029eff628d0d9c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/GEOMETRY_CROSS_TIMING_POLICY.md",
+        "bytes": 1512,
+        "sha256": "9fbe8976d080cc900cb1499efb8ae47296c9f4e30fa3c6e2ccd6e4ed0edb4421"
+      }
+    ],
+    "first_pure_delegation": {
+      "baseline": "baseline",
+      "candidate": "candidate",
+      "samples_per_lane": 50,
+      "invocations": 6,
+      "lane_measurements": 60,
+      "statistic": "Median of the three per-run Criterion mean point estimates, with all estimates and samples retained.",
+      "quality": "within_prespecified_range_guard",
+      "range_guard": [
+        {
+          "variant": "baseline",
+          "elapsed_s": [
+            19.39,
+            17.9,
+            18.09
+          ],
+          "max_min_ratio": 1.0832402234636873
+        },
+        {
+          "variant": "candidate",
+          "elapsed_s": [
+            18.25,
+            17.5,
+            18.42
+          ],
+          "max_min_ratio": 1.0525714285714287
+        }
+      ],
+      "processes": [
+        {
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 19.39,
+          "user_s": 17.97,
+          "system_s": 1.32,
+          "max_rss_kib": 37248,
+          "exit": 0
+        },
+        {
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 18.25,
+          "user_s": 17.54,
+          "system_s": 0.63,
+          "max_rss_kib": 37408,
+          "exit": 0
+        },
+        {
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 17.9,
+          "user_s": 17.78,
+          "system_s": 0.05,
+          "max_rss_kib": 37484,
+          "exit": 0
+        },
+        {
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 17.5,
+          "user_s": 17.37,
+          "system_s": 0.05,
+          "max_rss_kib": 36920,
+          "exit": 0
+        },
+        {
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 18.09,
+          "user_s": 17.96,
+          "system_s": 0.05,
+          "max_rss_kib": 36960,
+          "exit": 0
+        },
+        {
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 18.42,
+          "user_s": 17.99,
+          "system_s": 0.34,
+          "max_rss_kib": 37464,
+          "exit": 0
+        }
+      ],
+      "summary": [
+        {
+          "fixture": "compare_dyadic_shifted_retained_1024_bits",
+          "baseline_mean_ns": [
+            12.096434719563302,
+            12.074235435906408,
+            11.893902607665623
+          ],
+          "candidate_mean_ns": [
+            11.445697029527652,
+            11.314396514497192,
+            11.471660545192133
+          ],
+          "baseline_median_mean_ns": 12.074235435906408,
+          "candidate_median_mean_ns": 11.445697029527652,
+          "change_percent": -5.205616618254815
+        },
+        {
+          "fixture": "compare_leading_significand_retained_1024_bits",
+          "baseline_mean_ns": [
+            45.76327521627999,
+            44.96700702758968,
+            48.802241113612816
+          ],
+          "candidate_mean_ns": [
+            42.59415049311842,
+            42.55324160503557,
+            42.1479807847602
+          ],
+          "baseline_median_mean_ns": 45.76327521627999,
+          "candidate_median_mean_ns": 42.55324160503557,
+          "change_percent": -7.014431541609745
+        },
+        {
+          "fixture": "equality_leading_significand_retained_1024_bits",
+          "baseline_mean_ns": [
+            167.1521085151287,
+            166.07035234865555,
+            165.47628132460923
+          ],
+          "candidate_mean_ns": [
+            42.7594510547427,
+            42.98567773581681,
+            45.5179444467767
+          ],
+          "baseline_median_mean_ns": 166.07035234865555,
+          "candidate_median_mean_ns": 42.98567773581681,
+          "change_percent": -74.11598329991452
+        },
+        {
+          "fixture": "equality_dyadic_shifted_retained_1024_bits",
+          "baseline_mean_ns": [
+            11.199992433488394,
+            11.349114978503291,
+            11.144210289319409
+          ],
+          "candidate_mean_ns": [
+            12.535315575662478,
+            11.899051580755943,
+            12.045830581786904
+          ],
+          "baseline_median_mean_ns": 11.199992433488394,
+          "candidate_median_mean_ns": 12.045830581786904,
+          "change_percent": 7.552131426173303
+        },
+        {
+          "fixture": "equality_shared_identity_retained",
+          "baseline_mean_ns": [
+            3.5476461765448395,
+            3.553611851546333,
+            3.525388762958409
+          ],
+          "candidate_mean_ns": [
+            3.1462036151582957,
+            3.1652032296208272,
+            3.1608386140294322
+          ],
+          "baseline_median_mean_ns": 3.5476461765448395,
+          "candidate_median_mean_ns": 3.1608386140294322,
+          "change_percent": -10.9032170421271
+        },
+        {
+          "fixture": "equality_same_denominator_retained",
+          "baseline_mean_ns": [
+            7.074589967017127,
+            7.028686554562986,
+            7.046979482023525
+          ],
+          "candidate_mean_ns": [
+            6.088320982586123,
+            6.055922858463584,
+            6.198056067439299
+          ],
+          "baseline_median_mean_ns": 7.046979482023525,
+          "candidate_median_mean_ns": 6.088320982586123,
+          "change_percent": -13.603821351869827
+        },
+        {
+          "fixture": "equality_word_retained",
+          "baseline_mean_ns": [
+            11.246763982916193,
+            11.235655781547905,
+            11.119860518859063
+          ],
+          "candidate_mean_ns": [
+            10.598541701986438,
+            10.609683283425463,
+            10.890951172959321
+          ],
+          "baseline_median_mean_ns": 11.235655781547905,
+          "candidate_median_mean_ns": 10.609683283425463,
+          "change_percent": -5.571303627425683
+        },
+        {
+          "fixture": "equality_equal_distinct_retained",
+          "baseline_mean_ns": [
+            6.815527787227327,
+            7.507200778611139,
+            7.484439753980871
+          ],
+          "candidate_mean_ns": [
+            6.36135511320712,
+            6.47664123243882,
+            7.445888330275664
+          ],
+          "baseline_median_mean_ns": 7.484439753980871,
+          "candidate_median_mean_ns": 6.47664123243882,
+          "change_percent": -13.465249967521164
+        },
+        {
+          "fixture": "equality_different_signs_retained",
+          "baseline_mean_ns": [
+            2.421586440510169,
+            2.52671551714834,
+            2.422176708375843
+          ],
+          "candidate_mean_ns": [
+            4.379228284728924,
+            4.380044008265469,
+            4.546706455070239
+          ],
+          "baseline_median_mean_ns": 2.422176708375843,
+          "candidate_median_mean_ns": 4.380044008265469,
+          "change_percent": 80.83090276276525
+        },
+        {
+          "fixture": "equality_close_retained_1024_bits",
+          "baseline_mean_ns": [
+            173.6271123944129,
+            173.66352037501164,
+            172.52311375981793
+          ],
+          "candidate_mean_ns": [
+            209.88480691865504,
+            208.0535823798262,
+            210.97891557973608
+          ],
+          "baseline_median_mean_ns": 173.6271123944129,
+          "candidate_median_mean_ns": 209.88480691865504,
+          "change_percent": 20.8825073597255
+        }
+      ],
+      "raw": {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/initial-micro.json",
+        "bytes": 227544,
+        "sha256": "d75b2b0be424a66e7c26fcbd53d2bfd589170e02ebae415ce15245296e68fdd8"
+      }
+    },
+    "second_inline_delegation": {
+      "baseline": "baseline",
+      "candidate": "inline",
+      "samples_per_lane": 50,
+      "invocations": 6,
+      "lane_measurements": 60,
+      "statistic": "Median of the three per-run Criterion mean point estimates, with all estimates and samples retained.",
+      "quality": "within_prespecified_range_guard",
+      "range_guard": [
+        {
+          "variant": "baseline",
+          "elapsed_s": [
+            18.11,
+            18.41,
+            17.97
+          ],
+          "max_min_ratio": 1.0244852531997775
+        },
+        {
+          "variant": "inline",
+          "elapsed_s": [
+            18.7,
+            18.44,
+            18.08
+          ],
+          "max_min_ratio": 1.0342920353982301
+        }
+      ],
+      "processes": [
+        {
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 18.11,
+          "user_s": 18,
+          "system_s": 0.05,
+          "max_rss_kib": 36992,
+          "exit": 0
+        },
+        {
+          "round": 1,
+          "variant": "inline",
+          "elapsed_s": 18.7,
+          "user_s": 18.18,
+          "system_s": 0.44,
+          "max_rss_kib": 37116,
+          "exit": 0
+        },
+        {
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 18.41,
+          "user_s": 17.97,
+          "system_s": 0.36,
+          "max_rss_kib": 37972,
+          "exit": 0
+        },
+        {
+          "round": 2,
+          "variant": "inline",
+          "elapsed_s": 18.44,
+          "user_s": 18.1,
+          "system_s": 0.27,
+          "max_rss_kib": 36940,
+          "exit": 0
+        },
+        {
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 17.97,
+          "user_s": 17.85,
+          "system_s": 0.05,
+          "max_rss_kib": 36920,
+          "exit": 0
+        },
+        {
+          "round": 3,
+          "variant": "inline",
+          "elapsed_s": 18.08,
+          "user_s": 17.95,
+          "system_s": 0.05,
+          "max_rss_kib": 36808,
+          "exit": 0
+        }
+      ],
+      "summary": [
+        {
+          "fixture": "compare_dyadic_shifted_retained_1024_bits",
+          "baseline_mean_ns": [
+            12.002371903272692,
+            12.171696473878734,
+            11.907391640456394
+          ],
+          "candidate_mean_ns": [
+            11.225813501641415,
+            11.374414451168994,
+            12.23988516777979
+          ],
+          "baseline_median_mean_ns": 12.002371903272692,
+          "candidate_median_mean_ns": 11.374414451168994,
+          "change_percent": -5.231944628648555
+        },
+        {
+          "fixture": "compare_leading_significand_retained_1024_bits",
+          "baseline_mean_ns": [
+            45.236411609591194,
+            45.26786981528412,
+            45.400892651998554
+          ],
+          "candidate_mean_ns": [
+            42.51814639272756,
+            43.43946829883236,
+            46.78527150293089
+          ],
+          "baseline_median_mean_ns": 45.26786981528412,
+          "candidate_median_mean_ns": 43.43946829883236,
+          "change_percent": -4.039071252772808
+        },
+        {
+          "fixture": "equality_leading_significand_retained_1024_bits",
+          "baseline_mean_ns": [
+            167.52532711618957,
+            167.71751248155982,
+            164.54193043501363
+          ],
+          "candidate_mean_ns": [
+            43.17108473470076,
+            42.92071623265596,
+            42.56797766353671
+          ],
+          "baseline_median_mean_ns": 167.52532711618957,
+          "candidate_median_mean_ns": 42.92071623265596,
+          "change_percent": -74.37956578178314
+        },
+        {
+          "fixture": "equality_dyadic_shifted_retained_1024_bits",
+          "baseline_mean_ns": [
+            11.919780813052716,
+            12.512635402919583,
+            11.14676801549552
+          ],
+          "candidate_mean_ns": [
+            11.322089350986454,
+            11.267614774577403,
+            11.193287505249017
+          ],
+          "baseline_median_mean_ns": 11.919780813052716,
+          "candidate_median_mean_ns": 11.267614774577403,
+          "change_percent": -5.471292204980482
+        },
+        {
+          "fixture": "equality_shared_identity_retained",
+          "baseline_mean_ns": [
+            3.450757902331247,
+            3.4052458710400875,
+            3.541488608732846
+          ],
+          "candidate_mean_ns": [
+            2.6678150058464856,
+            2.6764216796646694,
+            2.65307454127639
+          ],
+          "baseline_median_mean_ns": 3.450757902331247,
+          "candidate_median_mean_ns": 2.6678150058464856,
+          "change_percent": -22.689012635624895
+        },
+        {
+          "fixture": "equality_same_denominator_retained",
+          "baseline_mean_ns": [
+            7.9898518477901295,
+            7.106833731554782,
+            7.77267323978947
+          ],
+          "candidate_mean_ns": [
+            5.922073096599757,
+            5.362601177902817,
+            5.374965091089556
+          ],
+          "baseline_median_mean_ns": 7.77267323978947,
+          "candidate_median_mean_ns": 5.374965091089556,
+          "change_percent": -30.847921618854247
+        },
+        {
+          "fixture": "equality_word_retained",
+          "baseline_mean_ns": [
+            12.344787149277986,
+            11.58011113339086,
+            11.073294887399822
+          ],
+          "candidate_mean_ns": [
+            9.844420587550411,
+            9.67824493838522,
+            9.673159319228043
+          ],
+          "baseline_median_mean_ns": 11.58011113339086,
+          "candidate_median_mean_ns": 9.67824493838522,
+          "change_percent": -16.423557365711915
+        },
+        {
+          "fixture": "equality_equal_distinct_retained",
+          "baseline_mean_ns": [
+            7.462590771319157,
+            6.775503043947898,
+            7.717995318297462
+          ],
+          "candidate_mean_ns": [
+            5.341200261954273,
+            5.513436430682828,
+            5.424225759951381
+          ],
+          "baseline_median_mean_ns": 7.462590771319157,
+          "candidate_median_mean_ns": 5.424225759951381,
+          "change_percent": -27.314441778072407
+        },
+        {
+          "fixture": "equality_different_signs_retained",
+          "baseline_mean_ns": [
+            2.4195620928860087,
+            2.4815507045279093,
+            2.4340726258577785
+          ],
+          "candidate_mean_ns": [
+            4.095828436762954,
+            4.102911493045343,
+            4.161914457129978
+          ],
+          "baseline_median_mean_ns": 2.4340726258577785,
+          "candidate_median_mean_ns": 4.102911493045343,
+          "change_percent": 68.56158889669356
+        },
+        {
+          "fixture": "equality_close_retained_1024_bits",
+          "baseline_mean_ns": [
+            172.9441982626675,
+            181.2220468319722,
+            172.4542397032914
+          ],
+          "candidate_mean_ns": [
+            216.86607412757357,
+            212.8949885843274,
+            219.68775864565018
+          ],
+          "baseline_median_mean_ns": 172.9441982626675,
+          "candidate_median_mean_ns": 216.86607412757357,
+          "change_percent": 25.396559298391487
+        }
+      ],
+      "raw": {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/inline-micro.json",
+        "bytes": 227431,
+        "sha256": "1617b9a70af7c061bea1006dcb1db34aa09323cb63966955fee4aac69ab72293"
+      }
+    },
+    "final_guarded_delegation": {
+      "baseline": "baseline",
+      "candidate": "guarded",
+      "samples_per_lane": 50,
+      "invocations": 6,
+      "lane_measurements": 60,
+      "statistic": "Median of the three per-run Criterion mean point estimates, with all estimates and samples retained.",
+      "quality": "within_prespecified_range_guard",
+      "range_guard": [
+        {
+          "variant": "baseline",
+          "elapsed_s": [
+            17.83,
+            18.04,
+            18.56
+          ],
+          "max_min_ratio": 1.0409422321929334
+        },
+        {
+          "variant": "guarded",
+          "elapsed_s": [
+            19.95,
+            19.89,
+            19.12
+          ],
+          "max_min_ratio": 1.0434100418410042
+        }
+      ],
+      "processes": [
+        {
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 17.83,
+          "user_s": 17.55,
+          "system_s": 0.07,
+          "max_rss_kib": 37372,
+          "exit": 0
+        },
+        {
+          "round": 1,
+          "variant": "guarded",
+          "elapsed_s": 19.95,
+          "user_s": 18.31,
+          "system_s": 1.55,
+          "max_rss_kib": 36824,
+          "exit": 0
+        },
+        {
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 18.04,
+          "user_s": 17.92,
+          "system_s": 0.05,
+          "max_rss_kib": 37528,
+          "exit": 0
+        },
+        {
+          "round": 2,
+          "variant": "guarded",
+          "elapsed_s": 19.89,
+          "user_s": 18.86,
+          "system_s": 0.95,
+          "max_rss_kib": 36248,
+          "exit": 0
+        },
+        {
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 18.56,
+          "user_s": 17.77,
+          "system_s": 0.72,
+          "max_rss_kib": 37288,
+          "exit": 0
+        },
+        {
+          "round": 3,
+          "variant": "guarded",
+          "elapsed_s": 19.12,
+          "user_s": 18.24,
+          "system_s": 0.82,
+          "max_rss_kib": 37360,
+          "exit": 0
+        }
+      ],
+      "summary": [
+        {
+          "fixture": "compare_dyadic_shifted_retained_1024_bits",
+          "baseline_mean_ns": [
+            12.884630384576552,
+            12.03980915953854,
+            12.150207481251677
+          ],
+          "candidate_mean_ns": [
+            11.954564639019601,
+            12.273691766845378,
+            11.45039156639542
+          ],
+          "baseline_median_mean_ns": 12.150207481251677,
+          "candidate_median_mean_ns": 11.954564639019601,
+          "change_percent": -1.610201657329402
+        },
+        {
+          "fixture": "compare_leading_significand_retained_1024_bits",
+          "baseline_mean_ns": [
+            45.82238897197719,
+            45.06281277687295,
+            44.989950335879506
+          ],
+          "candidate_mean_ns": [
+            52.20034262326316,
+            47.21744532686329,
+            43.19747475416111
+          ],
+          "baseline_median_mean_ns": 45.06281277687295,
+          "candidate_median_mean_ns": 47.21744532686329,
+          "change_percent": 4.781398268809656
+        },
+        {
+          "fixture": "equality_leading_significand_retained_1024_bits",
+          "baseline_mean_ns": [
+            171.8260309527163,
+            168.0962964263563,
+            167.7053127153387
+          ],
+          "candidate_mean_ns": [
+            52.779264954437046,
+            46.24032224738074,
+            42.74295686923101
+          ],
+          "baseline_median_mean_ns": 168.0962964263563,
+          "candidate_median_mean_ns": 46.24032224738074,
+          "change_percent": -72.4917661897216
+        },
+        {
+          "fixture": "equality_dyadic_shifted_retained_1024_bits",
+          "baseline_mean_ns": [
+            12.033970260394353,
+            11.434092072481244,
+            11.323510669631927
+          ],
+          "candidate_mean_ns": [
+            11.767253933498717,
+            13.422072932175311,
+            11.599449740660573
+          ],
+          "baseline_median_mean_ns": 11.434092072481244,
+          "candidate_median_mean_ns": 11.767253933498717,
+          "change_percent": 2.913758774247621
+        },
+        {
+          "fixture": "equality_shared_identity_retained",
+          "baseline_mean_ns": [
+            3.673405465830911,
+            3.535662784615377,
+            3.440841564966411
+          ],
+          "candidate_mean_ns": [
+            1.1163844299534684,
+            1.1430773722557896,
+            1.1106332464617135
+          ],
+          "baseline_median_mean_ns": 3.535662784615377,
+          "candidate_median_mean_ns": 1.1163844299534684,
+          "change_percent": -68.42503095003408
+        },
+        {
+          "fixture": "equality_same_denominator_retained",
+          "baseline_mean_ns": [
+            8.841301507112998,
+            7.7347635561879455,
+            7.3482073076681464
+          ],
+          "candidate_mean_ns": [
+            6.066792126904124,
+            6.175428268692035,
+            6.184547294876916
+          ],
+          "baseline_median_mean_ns": 7.7347635561879455,
+          "candidate_median_mean_ns": 6.175428268692035,
+          "change_percent": -20.160089913135295
+        },
+        {
+          "fixture": "equality_word_retained",
+          "baseline_mean_ns": [
+            12.060821548494907,
+            11.953974524471052,
+            12.3826738653688
+          ],
+          "candidate_mean_ns": [
+            10.475753359398238,
+            10.484223174165638,
+            10.204563362602904
+          ],
+          "baseline_median_mean_ns": 12.060821548494907,
+          "candidate_median_mean_ns": 10.475753359398238,
+          "change_percent": -13.142290371541666
+        },
+        {
+          "fixture": "equality_equal_distinct_retained",
+          "baseline_mean_ns": [
+            8.249012110733613,
+            7.570825356674223,
+            6.862685468009582
+          ],
+          "candidate_mean_ns": [
+            5.891990087144811,
+            5.9313802713055,
+            5.940647208169427
+          ],
+          "baseline_median_mean_ns": 7.570825356674223,
+          "candidate_median_mean_ns": 5.9313802713055,
+          "change_percent": -21.654773530384443
+        },
+        {
+          "fixture": "equality_different_signs_retained",
+          "baseline_mean_ns": [
+            2.934279433431876,
+            2.5448738493426544,
+            2.442981174687446
+          ],
+          "candidate_mean_ns": [
+            1.3179672751411584,
+            1.3235867426510535,
+            1.3382166356640355
+          ],
+          "baseline_median_mean_ns": 2.5448738493426544,
+          "candidate_median_mean_ns": 1.3235867426510535,
+          "change_percent": -47.9900843417862
+        },
+        {
+          "fixture": "equality_close_retained_1024_bits",
+          "baseline_mean_ns": [
+            196.9873175229728,
+            174.8971479463255,
+            174.6571852354565
+          ],
+          "candidate_mean_ns": [
+            204.863790099356,
+            201.81250596278318,
+            209.02856192555737
+          ],
+          "baseline_median_mean_ns": 174.8971479463255,
+          "candidate_median_mean_ns": 204.863790099356,
+          "change_percent": 17.13386553463241
+        }
+      ],
+      "raw": {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-micro.json",
+        "bytes": 227492,
+        "sha256": "ca8c1a830624323f123369fa6d8aabf7382c0faa7fbc78479f90df1b0324f58b"
+      }
+    },
+    "geometry_three_pairs": {
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,guarded",
+        "guarded,baseline",
+        "baseline,guarded"
+      ],
+      "invocations": 60,
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.91,
+            5.77,
+            5.79
+          ],
+          "guarded": [
+            5.92,
+            5.78,
+            5.88
+          ],
+          "baseline_median": 5.79,
+          "guarded_median": 5.88,
+          "change_percent": 1.5544041450777257
+        },
+        {
+          "name": "capsules",
+          "baseline": [
+            4.6,
+            4.49,
+            4.58
+          ],
+          "guarded": [
+            4.57,
+            4.54,
+            4.51
+          ],
+          "baseline_median": 4.58,
+          "guarded_median": 4.54,
+          "change_percent": -0.8733624454148492
+        },
+        {
+          "name": "chord",
+          "baseline": [
+            17.3,
+            17.57,
+            17.03
+          ],
+          "guarded": [
+            17.73,
+            17.41,
+            17.08
+          ],
+          "baseline_median": 17.3,
+          "guarded_median": 17.41,
+          "change_percent": 0.6358381502890031
+        },
+        {
+          "name": "circles",
+          "baseline": [
+            13.68,
+            13.51,
+            13.63
+          ],
+          "guarded": [
+            13.79,
+            13.72,
+            13.51
+          ],
+          "baseline_median": 13.63,
+          "guarded_median": 13.72,
+          "change_percent": 0.6603081438004477
+        },
+        {
+          "name": "contacts",
+          "baseline": [
+            11.67,
+            11.55,
+            11.51
+          ],
+          "guarded": [
+            11.7,
+            11.52,
+            11.62
+          ],
+          "baseline_median": 11.55,
+          "guarded_median": 11.62,
+          "change_percent": 0.6060606060605878
+        },
+        {
+          "name": "mapped",
+          "baseline": [
+            0,
+            0,
+            0
+          ],
+          "guarded": [
+            0,
+            0,
+            0
+          ],
+          "baseline_median": 0,
+          "guarded_median": 0,
+          "change_percent": null
+        },
+        {
+          "name": "radial",
+          "baseline": [
+            31.45,
+            30.65,
+            30.96
+          ],
+          "guarded": [
+            31.63,
+            31.21,
+            30.53
+          ],
+          "baseline_median": 30.96,
+          "guarded_median": 31.21,
+          "change_percent": 0.8074935400516736
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.31,
+            0.31,
+            0.31
+          ],
+          "guarded": [
+            0.31,
+            0.32,
+            0.31
+          ],
+          "baseline_median": 0.31,
+          "guarded_median": 0.31,
+          "change_percent": 0
+        },
+        {
+          "name": "rectangles",
+          "baseline": [
+            1.05,
+            1.03,
+            1.09
+          ],
+          "guarded": [
+            1.07,
+            1.09,
+            1.04
+          ],
+          "baseline_median": 1.05,
+          "guarded_median": 1.07,
+          "change_percent": 1.904761904761898
+        },
+        {
+          "name": "selected",
+          "baseline": [
+            21.3,
+            22.07,
+            20.94
+          ],
+          "guarded": [
+            22.68,
+            22.14,
+            21.35
+          ],
+          "baseline_median": 21.3,
+          "guarded_median": 22.14,
+          "change_percent": 3.9436619718309807
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            183.948,
+            184.228,
+            202.868
+          ],
+          "guarded": [
+            264.344,
+            201.988,
+            175.388
+          ],
+          "baseline_median": 184.228,
+          "guarded_median": 201.988,
+          "change_percent": 9.640228412619134
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            349.286,
+            350.451,
+            350.721
+          ],
+          "guarded": [
+            380.784,
+            384.1035,
+            375.6545
+          ],
+          "baseline_median": 350.451,
+          "guarded_median": 380.784,
+          "change_percent": 8.655418303842755
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            359.7905,
+            343.9165,
+            346.2665
+          ],
+          "guarded": [
+            374.214,
+            365.175,
+            361.285
+          ],
+          "baseline_median": 346.2665,
+          "guarded_median": 365.175,
+          "change_percent": 5.4606784081047355
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            11029.184,
+            10865.936,
+            10893.894
+          ],
+          "guarded": [
+            11382.7,
+            11991.098,
+            11130.576
+          ],
+          "baseline_median": 10893.894,
+          "guarded_median": 11382.7,
+          "change_percent": 4.486972243350262
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            13154.753349999999,
+            12987.8172,
+            13052.927249999999
+          ],
+          "guarded": [
+            13528.02475,
+            13530.589,
+            14283.4024
+          ],
+          "baseline_median": 13052.927249999999,
+          "guarded_median": 13530.589,
+          "change_percent": 3.6594224487078275
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11464.4342,
+            11349.386,
+            11374.59535
+          ],
+          "guarded": [
+            11662.03065,
+            11677.8385,
+            11634.5405
+          ],
+          "baseline_median": 11374.59535,
+          "guarded_median": 11662.03065,
+          "change_percent": 2.5269936305910123
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            25219.33395,
+            25582.28495,
+            25098.83155
+          ],
+          "guarded": [
+            25720.0556,
+            26029.348299999998,
+            25773.6068
+          ],
+          "baseline_median": 25219.33395,
+          "guarded_median": 25773.6068,
+          "change_percent": 2.197809232785075
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            537.764,
+            539.64,
+            558.56
+          ],
+          "guarded": [
+            550.284,
+            579.72,
+            544.804
+          ],
+          "baseline_median": 539.64,
+          "guarded_median": 550.284,
+          "change_percent": 1.9724260618189993
+        },
+        {
+          "name": "rectangles/curve_region_boolean_four_independent",
+          "baseline": [
+            705272.97,
+            691430.355,
+            736364.645
+          ],
+          "guarded": [
+            718797.952,
+            730620.119,
+            701174.347
+          ],
+          "baseline_median": 705272.97,
+          "guarded_median": 718797.952,
+          "change_percent": 1.9176946480736534
+        },
+        {
+          "name": "rectangles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            344187.119,
+            337813.325,
+            354630.351
+          ],
+          "guarded": [
+            350782.587,
+            364887.608,
+            344038.868
+          ],
+          "baseline_median": 344187.119,
+          "guarded_median": 350782.587,
+          "change_percent": 1.9162448667929377
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            13354.3172,
+            12701.19885,
+            12830.505
+          ],
+          "guarded": [
+            13061.32375,
+            13213.20025,
+            12972.728799999999
+          ],
+          "baseline_median": 12830.505,
+          "guarded_median": 13061.32375,
+          "change_percent": 1.798984139751325
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            17593.4606,
+            17382.7345,
+            17273.80995
+          ],
+          "guarded": [
+            18454.86955,
+            17490.51955,
+            17682.31295
+          ],
+          "baseline_median": 17382.7345,
+          "guarded_median": 17682.31295,
+          "change_percent": 1.7234253333386684
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            175754.05,
+            176846.18,
+            182480.19
+          ],
+          "guarded": [
+            183285.64,
+            179719.68,
+            176897.47
+          ],
+          "baseline_median": 176846.18,
+          "guarded_median": 179719.68,
+          "change_percent": 1.6248583938878403
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            255728.992,
+            256641.328,
+            249430.14
+          ],
+          "guarded": [
+            259331.744,
+            259581.688,
+            260285.88000000003
+          ],
+          "baseline_median": 255728.992,
+          "guarded_median": 259581.688,
+          "change_percent": 1.5065542509939522
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            135119.5952,
+            132528.4881,
+            133441.05755
+          ],
+          "guarded": [
+            135872.12665,
+            130726.62815,
+            135406.7578
+          ],
+          "baseline_median": 133441.05755,
+          "guarded_median": 135406.7578,
+          "change_percent": 1.4730850355134884
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            350172.079,
+            342093.84,
+            343354.915
+          ],
+          "guarded": [
+            349264.971,
+            348261.707,
+            344098.094
+          ],
+          "baseline_median": 343354.915,
+          "guarded_median": 348261.707,
+          "change_percent": 1.4290728880348214
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            24899.943,
+            24362.58,
+            25207.842
+          ],
+          "guarded": [
+            25584.626,
+            25252.529,
+            24238.699
+          ],
+          "baseline_median": 24899.943,
+          "guarded_median": 25252.529,
+          "change_percent": 1.416011273600093
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            20561.27,
+            20315.846,
+            20340.846
+          ],
+          "guarded": [
+            20680.142,
+            20596.448,
+            20608.786
+          ],
+          "baseline_median": 20340.846,
+          "guarded_median": 20608.786,
+          "change_percent": 1.3172510130601278
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            25662.465049999995,
+            23344.6003,
+            23413.05865
+          ],
+          "guarded": [
+            23859.8891,
+            23181.81945,
+            23621.00285
+          ],
+          "baseline_median": 23413.05865,
+          "guarded_median": 23621.00285,
+          "change_percent": 0.8881547819468816
+        },
+        {
+          "name": "circles/curve_region_boolean_four_independent",
+          "baseline": [
+            9125613.818,
+            8997547.819,
+            9094950.532
+          ],
+          "guarded": [
+            9208861.751,
+            9166635.059,
+            9015308.031
+          ],
+          "baseline_median": 9094950.532,
+          "guarded_median": 9166635.059,
+          "change_percent": 0.7881794051301627
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3691.667,
+            3676.0282,
+            3675.556
+          ],
+          "guarded": [
+            3703.4162,
+            3853.0018,
+            3673.2302
+          ],
+          "baseline_median": 3676.0282,
+          "guarded_median": 3703.4162,
+          "change_percent": 0.7450432507563498
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            9833.564,
+            9619.54,
+            9773.972
+          ],
+          "guarded": [
+            10002.836,
+            9840.164,
+            9634.38
+          ],
+          "baseline_median": 9773.972,
+          "guarded_median": 9840.164,
+          "change_percent": 0.6772272316720507
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            692152.5,
+            632872.6,
+            631470.8
+          ],
+          "guarded": [
+            645674.7,
+            633542.5,
+            637151.4
+          ],
+          "baseline_median": 632872.6,
+          "guarded_median": 637151.4,
+          "change_percent": 0.676091839020998
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.41845,
+            12.10547,
+            12.58983
+          ],
+          "guarded": [
+            13.32748,
+            12.49984,
+            12.17657
+          ],
+          "baseline_median": 12.41845,
+          "guarded_median": 12.49984,
+          "change_percent": 0.6553958022136541
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.26081,
+            4.3627,
+            4.24011
+          ],
+          "guarded": [
+            4.26101,
+            4.3151,
+            4.2887
+          ],
+          "baseline_median": 4.26081,
+          "guarded_median": 4.2887,
+          "change_percent": 0.65457037511647
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            19917.676,
+            19445.348,
+            19463.624
+          ],
+          "guarded": [
+            19694.528,
+            19576.3,
+            19500.104
+          ],
+          "baseline_median": 19463.624,
+          "guarded_median": 19576.3,
+          "change_percent": 0.5789055522239739
+        },
+        {
+          "name": "circles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            4546916.828,
+            4500984.213,
+            4522672.146
+          ],
+          "guarded": [
+            4573260.553,
+            4542127.482,
+            4486033.648
+          ],
+          "baseline_median": 4522672.146,
+          "guarded_median": 4542127.482,
+          "change_percent": 0.4301734764746712
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            5672.4352,
+            5588.7494,
+            5626.56285
+          ],
+          "guarded": [
+            5477.1616,
+            5749.29195,
+            5648.03485
+          ],
+          "baseline_median": 5626.56285,
+          "guarded_median": 5648.03485,
+          "change_percent": 0.381618415583862
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            782628.4,
+            701056,
+            709640.3
+          ],
+          "guarded": [
+            718398.8,
+            712290.2,
+            696365.3
+          ],
+          "baseline_median": 709640.3,
+          "guarded_median": 712290.2,
+          "change_percent": 0.3734145312773052
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.595814,
+            3.445303,
+            3.49249
+          ],
+          "guarded": [
+            3.395518,
+            3.50409,
+            3.543667
+          ],
+          "baseline_median": 3.49249,
+          "guarded_median": 3.50409,
+          "change_percent": 0.3321412516571254
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            35184.2335,
+            34192.0315,
+            33881.3325
+          ],
+          "guarded": [
+            34304.184,
+            33822.347,
+            34356.445
+          ],
+          "baseline_median": 34192.0315,
+          "guarded_median": 34304.184,
+          "change_percent": 0.32800771138739027
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            72141.216,
+            71799.076,
+            71396.864
+          ],
+          "guarded": [
+            76215.096,
+            71504.416,
+            72013.184
+          ],
+          "baseline_median": 71799.076,
+          "guarded_median": 72013.184,
+          "change_percent": 0.29820439471950344
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5684.2309,
+            5634.39775,
+            5530.3254
+          ],
+          "guarded": [
+            5624.581,
+            5773.8397,
+            5649.55425
+          ],
+          "baseline_median": 5634.39775,
+          "guarded_median": 5649.55425,
+          "change_percent": 0.26899946848799594
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            2.972746,
+            3.226949,
+            3.056481
+          ],
+          "guarded": [
+            3.050071,
+            2.979266,
+            3.05911
+          ],
+          "baseline_median": 3.056481,
+          "guarded_median": 3.050071,
+          "change_percent": -0.20971830022826765
+        },
+        {
+          "name": "capsules/curve_region_boolean_shared_all_four",
+          "baseline": [
+            1115961.851,
+            1096915.82,
+            1118757.123
+          ],
+          "guarded": [
+            1111587.76,
+            1108150.74,
+            1085291.757
+          ],
+          "baseline_median": 1115961.851,
+          "guarded_median": 1108150.74,
+          "change_percent": -0.6999442671808742
+        },
+        {
+          "name": "capsules/curve_region_boolean_four_independent",
+          "baseline": [
+            3483971.604,
+            3392083.974,
+            3454735.1
+          ],
+          "guarded": [
+            3454893.638,
+            3427965.885,
+            3421583.172
+          ],
+          "baseline_median": 3454735.1,
+          "guarded_median": 3427965.885,
+          "change_percent": -0.7748557914035281
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            55404.4825,
+            55011.034,
+            53943.1875
+          ],
+          "guarded": [
+            55684.9735,
+            53855.178,
+            54399.7115
+          ],
+          "baseline_median": 55011.034,
+          "guarded_median": 54399.7115,
+          "change_percent": -1.1112725130743795
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11910.2,
+            11530.2,
+            12047.2
+          ],
+          "guarded": [
+            11746.2,
+            11770.2,
+            11953.2
+          ],
+          "baseline_median": 11910.2,
+          "guarded_median": 11770.2,
+          "change_percent": -1.1754630484794526
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            44480.1565,
+            43383.496,
+            44456.613
+          ],
+          "guarded": [
+            47617.8665,
+            43457.586,
+            43658.3875
+          ],
+          "baseline_median": 44456.613,
+          "guarded_median": 43658.3875,
+          "change_percent": -1.7955157762468366
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            3822.87,
+            3871.03215,
+            3901.968
+          ],
+          "guarded": [
+            3997.933,
+            3781.4318,
+            3793.69495
+          ],
+          "baseline_median": 3871.03215,
+          "guarded_median": 3793.69495,
+          "change_percent": -1.9978444250327354
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2951.5137,
+            2865.52205,
+            2938.3521
+          ],
+          "guarded": [
+            2877.92125,
+            2920.3468,
+            2849.98965
+          ],
+          "baseline_median": 2938.3521,
+          "guarded_median": 2877.92125,
+          "change_percent": -2.0566238470876352
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            212683.82,
+            218396.43,
+            209079.27
+          ],
+          "guarded": [
+            208845.18,
+            208059.54,
+            205798.19
+          ],
+          "baseline_median": 212683.82,
+          "guarded_median": 208059.54,
+          "change_percent": -2.174250960886448
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            149.9376,
+            155.3894,
+            149.9058
+          ],
+          "guarded": [
+            145.214,
+            146.61,
+            147.728
+          ],
+          "baseline_median": 149.9376,
+          "guarded_median": 146.61,
+          "change_percent": -2.219323238467197
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            179227.105,
+            173328.449,
+            181070.899
+          ],
+          "guarded": [
+            176552.169,
+            173959.246,
+            173906.139
+          ],
+          "baseline_median": 179227.105,
+          "guarded_median": 173959.246,
+          "change_percent": -2.939208888075273
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            19717.448,
+            19645.532,
+            19097.532
+          ],
+          "guarded": [
+            19022.736,
+            19310.756,
+            18593.368
+          ],
+          "baseline_median": 19645.532,
+          "guarded_median": 19022.736,
+          "change_percent": -3.1701661222510946
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            915.042,
+            888.504,
+            874.315
+          ],
+          "guarded": [
+            868.3905,
+            856.351,
+            850.047
+          ],
+          "baseline_median": 888.504,
+          "guarded_median": 856.351,
+          "change_percent": -3.618779431493835
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2420.619,
+            2367.768,
+            2442.178
+          ],
+          "guarded": [
+            2304.592,
+            2434.9935,
+            2291.478
+          ],
+          "baseline_median": 2420.619,
+          "guarded_median": 2304.592,
+          "change_percent": -4.793278083002739
+        }
+      ],
+      "quality": "within_prespecified_range_guard",
+      "range_guard": [
+        {
+          "fixture": "selected",
+          "variant": "baseline",
+          "elapsed_s": [
+            21.3,
+            22.07,
+            20.94
+          ],
+          "max_min_ratio": 1.05396370582617
+        },
+        {
+          "fixture": "selected",
+          "variant": "guarded",
+          "elapsed_s": [
+            22.68,
+            22.14,
+            21.35
+          ],
+          "max_min_ratio": 1.062295081967213
+        },
+        {
+          "fixture": "chord",
+          "variant": "baseline",
+          "elapsed_s": [
+            17.3,
+            17.57,
+            17.03
+          ],
+          "max_min_ratio": 1.031708749266001
+        },
+        {
+          "fixture": "chord",
+          "variant": "guarded",
+          "elapsed_s": [
+            17.73,
+            17.41,
+            17.08
+          ],
+          "max_min_ratio": 1.038056206088993
+        },
+        {
+          "fixture": "radial",
+          "variant": "baseline",
+          "elapsed_s": [
+            31.45,
+            30.65,
+            30.96
+          ],
+          "max_min_ratio": 1.0261011419249593
+        },
+        {
+          "fixture": "radial",
+          "variant": "guarded",
+          "elapsed_s": [
+            31.63,
+            31.21,
+            30.53
+          ],
+          "max_min_ratio": 1.036030134294137
+        },
+        {
+          "fixture": "contacts",
+          "variant": "baseline",
+          "elapsed_s": [
+            11.67,
+            11.55,
+            11.51
+          ],
+          "max_min_ratio": 1.0139009556907037
+        },
+        {
+          "fixture": "contacts",
+          "variant": "guarded",
+          "elapsed_s": [
+            11.7,
+            11.52,
+            11.62
+          ],
+          "max_min_ratio": 1.015625
+        },
+        {
+          "fixture": "mapped",
+          "variant": "baseline",
+          "elapsed_s": [
+            0,
+            0,
+            0
+          ],
+          "max_min_ratio": null
+        },
+        {
+          "fixture": "mapped",
+          "variant": "guarded",
+          "elapsed_s": [
+            0,
+            0,
+            0
+          ],
+          "max_min_ratio": null
+        },
+        {
+          "fixture": "bezier_region",
+          "variant": "baseline",
+          "elapsed_s": [
+            5.91,
+            5.77,
+            5.79
+          ],
+          "max_min_ratio": 1.024263431542461
+        },
+        {
+          "fixture": "bezier_region",
+          "variant": "guarded",
+          "elapsed_s": [
+            5.92,
+            5.78,
+            5.88
+          ],
+          "max_min_ratio": 1.0242214532871972
+        },
+        {
+          "fixture": "rational_bezier",
+          "variant": "baseline",
+          "elapsed_s": [
+            0.31,
+            0.31,
+            0.31
+          ],
+          "max_min_ratio": 1
+        },
+        {
+          "fixture": "rational_bezier",
+          "variant": "guarded",
+          "elapsed_s": [
+            0.31,
+            0.32,
+            0.31
+          ],
+          "max_min_ratio": 1.032258064516129
+        },
+        {
+          "fixture": "rectangles",
+          "variant": "baseline",
+          "elapsed_s": [
+            1.05,
+            1.03,
+            1.09
+          ],
+          "max_min_ratio": 1.058252427184466
+        },
+        {
+          "fixture": "rectangles",
+          "variant": "guarded",
+          "elapsed_s": [
+            1.07,
+            1.09,
+            1.04
+          ],
+          "max_min_ratio": 1.0480769230769231
+        },
+        {
+          "fixture": "circles",
+          "variant": "baseline",
+          "elapsed_s": [
+            13.68,
+            13.51,
+            13.63
+          ],
+          "max_min_ratio": 1.0125832716506291
+        },
+        {
+          "fixture": "circles",
+          "variant": "guarded",
+          "elapsed_s": [
+            13.79,
+            13.72,
+            13.51
+          ],
+          "max_min_ratio": 1.0207253886010361
+        },
+        {
+          "fixture": "capsules",
+          "variant": "baseline",
+          "elapsed_s": [
+            4.6,
+            4.49,
+            4.58
+          ],
+          "max_min_ratio": 1.0244988864142537
+        },
+        {
+          "fixture": "capsules",
+          "variant": "guarded",
+          "elapsed_s": [
+            4.57,
+            4.54,
+            4.51
+          ],
+          "max_min_ratio": 1.0133037694013305
+        }
+      ],
+      "lane_measurement_count": 282,
+      "raw": {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/paired-results.json",
+        "bytes": 137554,
+        "sha256": "a2fd1f42f41ae511e7d72d852967f70b2b77723a137589e84f32300de467a4a5"
+      }
+    },
+    "geometry_seven_additional_native_pairs": {
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,guarded",
+        "guarded,baseline",
+        "baseline,guarded",
+        "guarded,baseline",
+        "baseline,guarded",
+        "guarded,baseline",
+        "baseline,guarded"
+      ],
+      "invocations": 28,
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.74,
+            5.75,
+            5.74,
+            5.73,
+            5.78,
+            5.72,
+            5.75
+          ],
+          "guarded": [
+            5.83,
+            5.8,
+            5.83,
+            5.8,
+            5.81,
+            5.74,
+            5.82
+          ],
+          "baseline_median": 5.74,
+          "guarded_median": 5.81,
+          "change_percent": 1.21951219512193
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.31,
+            0.31,
+            0.31,
+            0.31,
+            0.31,
+            0.32,
+            0.32
+          ],
+          "guarded": [
+            0.32,
+            0.31,
+            0.32,
+            0.31,
+            0.31,
+            0.31,
+            0.31
+          ],
+          "baseline_median": 0.31,
+          "guarded_median": 0.31,
+          "change_percent": 0
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            358.8755,
+            353.121,
+            347.786,
+            352.686,
+            352.561,
+            349.751,
+            348.041
+          ],
+          "guarded": [
+            375.849,
+            377.419,
+            377.1045,
+            381.259,
+            372.7195,
+            373.6295,
+            381.084
+          ],
+          "baseline_median": 352.561,
+          "guarded_median": 377.1045,
+          "change_percent": 6.96149035202418
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            419.841,
+            342.0865,
+            344.921,
+            352.746,
+            344.9465,
+            344.4565,
+            339.8765
+          ],
+          "guarded": [
+            375.139,
+            358.8705,
+            361.3505,
+            365.62,
+            369.9945,
+            370.9995,
+            362.725
+          ],
+          "baseline_median": 344.921,
+          "guarded_median": 365.62,
+          "change_percent": 6.001084306261428
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            24693.89035,
+            24847.7463,
+            25123.88935,
+            24567.926,
+            24928.40675,
+            24836.63905,
+            24915.38815
+          ],
+          "guarded": [
+            25666.9826,
+            25611.62695,
+            26142.006049999996,
+            25841.60465,
+            26040.3395,
+            25599.51525,
+            25768.67215
+          ],
+          "baseline_median": 24847.7463,
+          "guarded_median": 25768.67215,
+          "change_percent": 3.7062751642791936
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            10908.312,
+            10907.092,
+            10875.156,
+            10838.616,
+            10916.492,
+            10800.54,
+            11001.006
+          ],
+          "guarded": [
+            11246.548,
+            11183.934,
+            11111.838,
+            11186.432,
+            11276.868,
+            11016.964,
+            11006.926
+          ],
+          "baseline_median": 10907.092,
+          "guarded_median": 11183.934,
+          "change_percent": 2.5381834131407155
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11642.2,
+            11388.2,
+            11793.2,
+            11470.2,
+            11393.2,
+            11832.2,
+            11559.2
+          ],
+          "guarded": [
+            12189.1,
+            11827.1,
+            14594,
+            11515.3,
+            12441.1,
+            11645.2,
+            11680.1
+          ],
+          "baseline_median": 11559.2,
+          "guarded_median": 11827.1,
+          "change_percent": 2.3176344383694314
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            12917.0431,
+            12666.9202,
+            12754.9187,
+            12614.28135,
+            12594.82365,
+            12805.867699999999,
+            12660.94865
+          ],
+          "guarded": [
+            12975.920049999999,
+            12951.9487,
+            12915.0802,
+            12969.98145,
+            12799.44265,
+            12930.87265,
+            13085.6615
+          ],
+          "baseline_median": 12666.9202,
+          "guarded_median": 12951.9487,
+          "change_percent": 2.2501799608716233
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            539.364,
+            542.604,
+            560.404,
+            562.724,
+            537.764,
+            969.136,
+            555.96
+          ],
+          "guarded": [
+            554.68,
+            575.284,
+            547.48,
+            582.68,
+            567.28,
+            633.756,
+            566.4
+          ],
+          "baseline_median": 555.96,
+          "guarded_median": 567.28,
+          "change_percent": 2.0361177063098035
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            13041.65305,
+            13071.219049999998,
+            13014.6359,
+            12955.61345,
+            13055.5806,
+            13142.8346,
+            12997.78255
+          ],
+          "guarded": [
+            13265.224699999999,
+            13530.12455,
+            13383.89905,
+            13255.2769,
+            13304.681550000001,
+            13220.04235,
+            13493.58455
+          ],
+          "baseline_median": 13041.65305,
+          "guarded_median": 13304.681550000001,
+          "change_percent": 2.0168340546369734
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            3903.56995,
+            3794.5904,
+            3729.32985,
+            3718.8276,
+            3738.6907,
+            3846.9983,
+            3816.95485
+          ],
+          "guarded": [
+            3886.0151,
+            3861.4668,
+            3867.0739,
+            3866.034,
+            3853.9558,
+            3916.97405,
+            3829.249
+          ],
+          "baseline_median": 3794.5904,
+          "guarded_median": 3866.034,
+          "change_percent": 1.8827750157171197
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            345706.373,
+            344605.578,
+            340989.237,
+            338508.436,
+            341260.988,
+            342517.892,
+            339626.61
+          ],
+          "guarded": [
+            352378.116,
+            344403.643,
+            344344.516,
+            346500.739,
+            353828.246,
+            347101.147,
+            349546.6
+          ],
+          "baseline_median": 341260.988,
+          "guarded_median": 347101.147,
+          "change_percent": 1.711346800648661
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            43519.012,
+            43446.537,
+            43427.9035,
+            43101.4805,
+            43193.394,
+            42655.391,
+            43458.176
+          ],
+          "guarded": [
+            44085.403,
+            44203.72,
+            43563.3485,
+            43967.351,
+            44272.215,
+            44169.6975,
+            44567.155
+          ],
+          "baseline_median": 43427.9035,
+          "guarded_median": 44169.6975,
+          "change_percent": 1.708104560009449
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            254413.404,
+            249927.668,
+            254461.596,
+            249550.296,
+            252022.084,
+            253405.872,
+            254530.356
+          ],
+          "guarded": [
+            257152.852,
+            254739.62,
+            257016.78399999996,
+            258992.24400000004,
+            255253.94,
+            258122.82800000004,
+            256615.612
+          ],
+          "baseline_median": 253405.872,
+          "guarded_median": 257016.78399999996,
+          "change_percent": 1.4249519837488123
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5605.92225,
+            5589.49135,
+            5619.32335,
+            5576.6132,
+            5527.7756,
+            5574.3194,
+            5570.42365
+          ],
+          "guarded": [
+            5698.95735,
+            5626.7513,
+            5719.9169,
+            5649.5722,
+            5620.16875,
+            5890.6972,
+            5597.34535
+          ],
+          "baseline_median": 5576.6132,
+          "guarded_median": 5649.5722,
+          "change_percent": 1.308303039558134
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            53527.0405,
+            54031.946,
+            53509.5725,
+            52942.621,
+            53223.8065,
+            52908.433,
+            53445.0415
+          ],
+          "guarded": [
+            54812.7875,
+            53980.115,
+            54055.2145,
+            54413.815,
+            54139.509,
+            53870.8875,
+            54292.643
+          ],
+          "baseline_median": 53445.0415,
+          "guarded_median": 54139.509,
+          "change_percent": 1.2994049223443938
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            631185.7,
+            629227.9,
+            637777.3,
+            627473,
+            626508,
+            975627.1,
+            622768.3
+          ],
+          "guarded": [
+            640532.1,
+            632903.6,
+            627505.9,
+            636900.4,
+            636771.4,
+            639092.2,
+            631920.7
+          ],
+          "baseline_median": 629227.9,
+          "guarded_median": 636771.4,
+          "change_percent": 1.1988502099159914
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            34279.305,
+            34408.4065,
+            34043.1215,
+            34247.2725,
+            33837.6355,
+            33888.3275,
+            33826.9765
+          ],
+          "guarded": [
+            34443.184,
+            34500.045,
+            34048.501,
+            34516.114,
+            34010.644,
+            34124.981,
+            35198.792
+          ],
+          "baseline_median": 34043.1215,
+          "guarded_median": 34443.184,
+          "change_percent": 1.1751639754891352
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11263.16545,
+            11229.0103,
+            11182.4555,
+            11261.68755,
+            11387.5944,
+            11273.54125,
+            11154.92685
+          ],
+          "guarded": [
+            11882.84545,
+            11539.01205,
+            11256.8094,
+            11417.94235,
+            11329.6974,
+            11355.63315,
+            11288.4287
+          ],
+          "baseline_median": 11261.68755,
+          "guarded_median": 11355.63315,
+          "change_percent": 0.8342053496236401
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            131497.11085,
+            131763.66355,
+            131887.959,
+            132425.0277,
+            134111.30915,
+            130705.2481,
+            132415.59335
+          ],
+          "guarded": [
+            133127.74005,
+            132688.73315,
+            134113.52745,
+            131935.55175,
+            132803.78625,
+            130370.41755,
+            133046.5871
+          ],
+          "baseline_median": 131887.959,
+          "guarded_median": 132803.78625,
+          "change_percent": 0.6943979245292553
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            3.05522,
+            3.049881,
+            3.004584,
+            3.21251,
+            3.121946,
+            3.084968,
+            2.976166
+          ],
+          "guarded": [
+            3.121056,
+            3.05789,
+            3.025362,
+            3.174842,
+            3.074979,
+            3.099878,
+            3.007074
+          ],
+          "baseline_median": 3.05522,
+          "guarded_median": 3.074979,
+          "change_percent": 0.6467292044435524
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3587.254,
+            3591.4738,
+            3638.7766,
+            3689.007,
+            3584.7684,
+            3685.9694,
+            3667.8906
+          ],
+          "guarded": [
+            3650.0638,
+            3703.3562,
+            3683.5434,
+            3689.365,
+            3658.6572,
+            3638.0766,
+            3659.945
+          ],
+          "baseline_median": 3638.7766,
+          "guarded_median": 3659.945,
+          "change_percent": 0.5817449743960701
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            23296.65655,
+            23300.9878,
+            23383.8061,
+            23128.9296,
+            23313.8344,
+            23154.60235,
+            23626.264
+          ],
+          "guarded": [
+            23409.89235,
+            23455.9637,
+            23139.14335,
+            23780.11695,
+            23251.4962,
+            23017.12825,
+            23410.04035
+          ],
+          "baseline_median": 23300.9878,
+          "guarded_median": 23409.89235,
+          "change_percent": 0.4673816875694792
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            17538.4038,
+            17586.569,
+            17197.86615,
+            17443.8763,
+            17426.86395,
+            17497.7741,
+            17261.1423
+          ],
+          "guarded": [
+            17467.4247,
+            17490.84155,
+            17743.40125,
+            17496.1422,
+            17318.28735,
+            17310.6724,
+            17512.6251
+          ],
+          "baseline_median": 17443.8763,
+          "guarded_median": 17490.84155,
+          "change_percent": 0.2692363164717104
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            20495.716,
+            20373.264,
+            20779.876,
+            21382.134,
+            20671.644,
+            20171.296,
+            20256.25
+          ],
+          "guarded": [
+            21011.1,
+            20773.456,
+            20844.73,
+            20508.536,
+            20516.374,
+            20410.122,
+            20528.572
+          ],
+          "baseline_median": 20495.716,
+          "guarded_median": 20528.572,
+          "change_percent": 0.16030667091599948
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            175908.892,
+            176242.429,
+            173181.129,
+            172666.665,
+            174843.676,
+            173901.74,
+            175743.853
+          ],
+          "guarded": [
+            175733.684,
+            173217.967,
+            174983.215,
+            174020.661,
+            177397.57,
+            173676.425,
+            178218.583
+          ],
+          "baseline_median": 174843.676,
+          "guarded_median": 174983.215,
+          "change_percent": 0.07980786219570213
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            5702.11315,
+            5667.507,
+            5688.84555,
+            5654.18095,
+            5673.00065,
+            5675.9754,
+            5766.8532
+          ],
+          "guarded": [
+            5778.7659,
+            5590.63075,
+            5840.65015,
+            5676.4974,
+            5664.1972,
+            5674.12455,
+            5607.04415
+          ],
+          "baseline_median": 5675.9754,
+          "guarded_median": 5674.12455,
+          "change_percent": -0.032608492277819145
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            695378.3,
+            698022.2,
+            696537.3,
+            685315,
+            698240.2,
+            689463.7,
+            681766.3
+          ],
+          "guarded": [
+            699275.1,
+            697792.1,
+            686883.9,
+            690042.7,
+            708399.4,
+            690492.6,
+            694431.4
+          ],
+          "baseline_median": 695378.3,
+          "guarded_median": 694431.4,
+          "change_percent": -0.1361704844686784
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            208973.97,
+            208683.29,
+            208349.72,
+            206401.75,
+            209803.22,
+            207911.35,
+            211296.92
+          ],
+          "guarded": [
+            205769.89,
+            211143.43,
+            211437.51,
+            207915.84,
+            213011.2,
+            208026.34,
+            205434.51
+          ],
+          "baseline_median": 208683.29,
+          "guarded_median": 208026.34,
+          "change_percent": -0.31480718940171126
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.698317,
+            3.49395,
+            3.623211,
+            3.511189,
+            3.600293,
+            3.35598,
+            3.64534
+          ],
+          "guarded": [
+            3.522668,
+            3.364679,
+            3.611943,
+            3.681478,
+            3.583865,
+            3.540308,
+            3.625242
+          ],
+          "baseline_median": 3.600293,
+          "guarded_median": 3.583865,
+          "change_percent": -0.4562961958929579
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            179710.88,
+            174348.05,
+            179369.71,
+            175691.86,
+            176031.73,
+            178117.3,
+            176826.38
+          ],
+          "guarded": [
+            174538.63,
+            175755.86,
+            179531.29,
+            175462.17,
+            177207.25,
+            177143.96,
+            174883.81
+          ],
+          "baseline_median": 176826.38,
+          "guarded_median": 175755.86,
+          "change_percent": -0.6054074058406966
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            19745.524,
+            19515.22,
+            19563.336,
+            19653.252,
+            19573.94,
+            19227.36,
+            20153.5
+          ],
+          "guarded": [
+            19965.912,
+            19380.992,
+            19605.456,
+            19590.66,
+            19425.588,
+            18982.5,
+            19389.872
+          ],
+          "baseline_median": 19573.94,
+          "guarded_median": 19425.588,
+          "change_percent": -0.7579056643680304
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2868.3454,
+            2938.0736,
+            2882.4754,
+            2845.69995,
+            2831.21195,
+            3173.38595,
+            2891.6748
+          ],
+          "guarded": [
+            2860.003,
+            2902.3491,
+            2828.06515,
+            2846.72385,
+            2865.2041,
+            2815.4515,
+            2924.836
+          ],
+          "baseline_median": 2882.4754,
+          "guarded_median": 2860.003,
+          "change_percent": -0.7796215710982213
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            70774.308,
+            71712.484,
+            73181.624,
+            71485.66,
+            72482.988,
+            70343.3,
+            72271.844
+          ],
+          "guarded": [
+            71890.672,
+            71130.644,
+            71374.068,
+            70884.86,
+            70768.188,
+            73343.892,
+            70513.288
+          ],
+          "baseline_median": 71712.484,
+          "guarded_median": 71130.644,
+          "change_percent": -0.8113510612740682
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            24968.098,
+            24203.541,
+            24620.403,
+            24205.661,
+            24606.673,
+            24088.579,
+            24655.65
+          ],
+          "guarded": [
+            24134.536,
+            24577.075,
+            24127.037,
+            24869.035,
+            24191.232,
+            24514.039,
+            24368.9
+          ],
+          "baseline_median": 24606.673,
+          "guarded_median": 24368.9,
+          "change_percent": -0.9662947932863486
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.3153,
+            4.26081,
+            4.23581,
+            4.23581,
+            4.3305,
+            7.00842,
+            4.33
+          ],
+          "guarded": [
+            4.3091,
+            4.26091,
+            4.3913,
+            4.3197,
+            4.26101,
+            4.26091,
+            4.23611
+          ],
+          "baseline_median": 4.3153,
+          "guarded_median": 4.26101,
+          "change_percent": -1.2580817092670227
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.65943,
+            12.74883,
+            12.60714,
+            13.60027,
+            12.61024,
+            12.71483,
+            12.98121
+          ],
+          "guarded": [
+            12.54034,
+            12.55454,
+            12.58504,
+            12.52884,
+            12.46355,
+            12.53834,
+            12.59614
+          ],
+          "baseline_median": 12.71483,
+          "guarded_median": 12.54034,
+          "change_percent": -1.3723345101743334
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            9822.248,
+            9647.94,
+            9743.412,
+            10454.724,
+            9732.372,
+            10110.548,
+            9831.288
+          ],
+          "guarded": [
+            9698.376,
+            9662.98,
+            9950,
+            9924.12,
+            9649.616,
+            9562.384,
+            9596.184
+          ],
+          "baseline_median": 9822.248,
+          "guarded_median": 9662.98,
+          "change_percent": -1.6215025318033094
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            18906.944,
+            19128.212,
+            19526.464,
+            19315.076,
+            19416.588,
+            18780.476,
+            20130.54
+          ],
+          "guarded": [
+            19361.356,
+            18939.104,
+            19110.448,
+            18968.66,
+            18987.016,
+            18488.132,
+            18973.1
+          ],
+          "baseline_median": 19315.076,
+          "guarded_median": 18973.1,
+          "change_percent": -1.7705133544387963
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2337.4545,
+            2326.5855,
+            2360.6735,
+            2350.769,
+            2338.4445,
+            2365.1675,
+            2413.0895
+          ],
+          "guarded": [
+            2298.6225,
+            2329.0655,
+            2280.909,
+            2373.5275,
+            2260.535,
+            2360.733,
+            2286.883
+          ],
+          "baseline_median": 2350.769,
+          "guarded_median": 2298.6225,
+          "change_percent": -2.21827410519706
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            882.9695,
+            873.285,
+            875.9095,
+            895.4035,
+            907.2775,
+            883.3995,
+            873.225
+          ],
+          "guarded": [
+            856.966,
+            849.402,
+            847.652,
+            864.5855,
+            858.646,
+            849.337,
+            890.079
+          ],
+          "baseline_median": 882.9695,
+          "guarded_median": 856.966,
+          "change_percent": -2.9450054616835586
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            153.0316,
+            150.4838,
+            148.8138,
+            163.9388,
+            148.7158,
+            152.0816,
+            153.9914
+          ],
+          "guarded": [
+            150.1516,
+            146.964,
+            144.7342,
+            148.4238,
+            144.864,
+            145.7,
+            146.902
+          ],
+          "baseline_median": 152.0816,
+          "guarded_median": 146.902,
+          "change_percent": -3.4058032003871697
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            185.868,
+            184.828,
+            183.508,
+            197.748,
+            198.144,
+            183.828,
+            186.548
+          ],
+          "guarded": [
+            175.268,
+            174.988,
+            179.948,
+            192.068,
+            174.188,
+            178.948,
+            175.708
+          ],
+          "baseline_median": 185.868,
+          "guarded_median": 175.708,
+          "change_percent": -5.466244861945036
+        }
+      ],
+      "quality": "within_prespecified_range_guard",
+      "range_guard": [
+        {
+          "fixture": "bezier_region",
+          "variant": "baseline",
+          "elapsed_s": [
+            5.74,
+            5.75,
+            5.74,
+            5.73,
+            5.78,
+            5.72,
+            5.75
+          ],
+          "max_min_ratio": 1.0104895104895106
+        },
+        {
+          "fixture": "bezier_region",
+          "variant": "guarded",
+          "elapsed_s": [
+            5.83,
+            5.8,
+            5.83,
+            5.8,
+            5.81,
+            5.74,
+            5.82
+          ],
+          "max_min_ratio": 1.0156794425087108
+        },
+        {
+          "fixture": "rational_bezier",
+          "variant": "baseline",
+          "elapsed_s": [
+            0.31,
+            0.31,
+            0.31,
+            0.31,
+            0.31,
+            0.32,
+            0.32
+          ],
+          "max_min_ratio": 1.032258064516129
+        },
+        {
+          "fixture": "rational_bezier",
+          "variant": "guarded",
+          "elapsed_s": [
+            0.32,
+            0.31,
+            0.32,
+            0.31,
+            0.31,
+            0.31,
+            0.31
+          ],
+          "max_min_ratio": 1.032258064516129
+        }
+      ],
+      "lane_measurement_count": 574,
+      "raw": {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/repeat-results.json",
+        "bytes": 235497,
+        "sha256": "e831f23cf76463fec80830aa2454c962941986d9844e843828f6cfdd306805de"
+      }
+    },
+    "cross_crate_three_pairs": {
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,guarded",
+        "guarded,baseline",
+        "baseline,guarded"
+      ],
+      "invocations": 12,
+      "lane_measurements": 66,
+      "samples_per_lane": 50,
+      "statistic": "Median of three per-run Criterion mean point estimates; all estimates and samples retained.",
+      "quality": "within_prespecified_range_guard",
+      "range_guard": [
+        {
+          "crate": "hyperlattice",
+          "variant": "baseline",
+          "elapsed_s": [
+            4.95,
+            4.77,
+            4.96
+          ],
+          "max_min_ratio": 1.0398322851153041
+        },
+        {
+          "crate": "hyperlattice",
+          "variant": "guarded",
+          "elapsed_s": [
+            4.97,
+            4.96,
+            4.96
+          ],
+          "max_min_ratio": 1.002016129032258
+        },
+        {
+          "crate": "hyperlimit",
+          "variant": "baseline",
+          "elapsed_s": [
+            4.26,
+            4.27,
+            4.28
+          ],
+          "max_min_ratio": 1.0046948356807512
+        },
+        {
+          "crate": "hyperlimit",
+          "variant": "guarded",
+          "elapsed_s": [
+            4.47,
+            4.44,
+            4.46
+          ],
+          "max_min_ratio": 1.0067567567567566
+        }
+      ],
+      "processes": [
+        {
+          "crate": "hyperlattice",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 4.95,
+          "user_s": 4.9,
+          "system_s": 0.01,
+          "max_rss_kib": 27080,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlattice",
+          "round": 1,
+          "variant": "guarded",
+          "elapsed_s": 4.97,
+          "user_s": 4.93,
+          "system_s": 0.01,
+          "max_rss_kib": 27164,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlattice",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 4.77,
+          "user_s": 4.74,
+          "system_s": 0.01,
+          "max_rss_kib": 27480,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlattice",
+          "round": 2,
+          "variant": "guarded",
+          "elapsed_s": 4.96,
+          "user_s": 4.93,
+          "system_s": 0.01,
+          "max_rss_kib": 27208,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlattice",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 4.96,
+          "user_s": 4.93,
+          "system_s": 0.01,
+          "max_rss_kib": 27360,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlattice",
+          "round": 3,
+          "variant": "guarded",
+          "elapsed_s": 4.96,
+          "user_s": 4.93,
+          "system_s": 0.01,
+          "max_rss_kib": 27316,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlimit",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 4.26,
+          "user_s": 4.22,
+          "system_s": 0.02,
+          "max_rss_kib": 27456,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlimit",
+          "round": 1,
+          "variant": "guarded",
+          "elapsed_s": 4.47,
+          "user_s": 4.42,
+          "system_s": 0.02,
+          "max_rss_kib": 27356,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlimit",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 4.27,
+          "user_s": 4.23,
+          "system_s": 0.01,
+          "max_rss_kib": 27480,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlimit",
+          "round": 2,
+          "variant": "guarded",
+          "elapsed_s": 4.44,
+          "user_s": 4.4,
+          "system_s": 0.02,
+          "max_rss_kib": 27412,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlimit",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 4.28,
+          "user_s": 4.25,
+          "system_s": 0.01,
+          "max_rss_kib": 27532,
+          "exit": 0
+        },
+        {
+          "crate": "hyperlimit",
+          "round": 3,
+          "variant": "guarded",
+          "elapsed_s": 4.46,
+          "user_s": 4.42,
+          "system_s": 0.01,
+          "max_rss_kib": 27340,
+          "exit": 0
+        }
+      ],
+      "summary": [
+        {
+          "crate": "hyperlattice",
+          "fixture": "sentinel/matrix3/inverse_fractional",
+          "baseline_mean_ns": [
+            1730.486427520693,
+            1717.2351867659872,
+            1740.6839698018862
+          ],
+          "guarded_mean_ns": [
+            1821.898565202311,
+            1806.3418779029757,
+            1811.3297057270768
+          ],
+          "baseline_median_mean_ns": 1730.486427520693,
+          "guarded_median_mean_ns": 1811.3297057270768,
+          "change_percent": 4.671708308178402
+        },
+        {
+          "crate": "hyperlattice",
+          "fixture": "sentinel/matrix3/sparse_mask_product",
+          "baseline_mean_ns": [
+            376.2470374383198,
+            398.367715766131,
+            369.6846418929168
+          ],
+          "guarded_mean_ns": [
+            375.55547536649,
+            372.4713915224577,
+            371.64697825351396
+          ],
+          "baseline_median_mean_ns": 376.2470374383198,
+          "guarded_median_mean_ns": 372.4713915224577,
+          "change_percent": -1.0035018326173817
+        },
+        {
+          "crate": "hyperlattice",
+          "fixture": "sentinel/matrix4/exact_facts",
+          "baseline_mean_ns": [
+            2341.618887274904,
+            2343.3953705246527,
+            2348.123409420321
+          ],
+          "guarded_mean_ns": [
+            2365.878085835878,
+            2348.112993580636,
+            2406.2407861060406
+          ],
+          "baseline_median_mean_ns": 2343.3953705246527,
+          "guarded_median_mean_ns": 2365.878085835878,
+          "change_percent": 0.9594076865566237
+        },
+        {
+          "crate": "hyperlattice",
+          "fixture": "sentinel/matrix4/division_fractional",
+          "baseline_mean_ns": [
+            7672.795923889538,
+            7693.107222381733,
+            7638.333257458575
+          ],
+          "guarded_mean_ns": [
+            7783.942169604057,
+            7767.236338475489,
+            7863.517561206976
+          ],
+          "baseline_median_mean_ns": 7672.795923889538,
+          "guarded_median_mean_ns": 7783.942169604057,
+          "change_percent": 1.448575549474218
+        },
+        {
+          "crate": "hyperlattice",
+          "fixture": "sentinel/matrix4/determinant_fractional",
+          "baseline_mean_ns": [
+            1182.0002056596177,
+            1179.0118389727168,
+            1197.2224374241446
+          ],
+          "guarded_mean_ns": [
+            1179.1217924946461,
+            1189.5771023880418,
+            1192.9543989523802
+          ],
+          "baseline_median_mean_ns": 1182.0002056596177,
+          "guarded_median_mean_ns": 1189.5771023880418,
+          "change_percent": 0.6410233003466992
+        },
+        {
+          "crate": "hyperlattice",
+          "fixture": "sentinel/matrix4/sparse_mask_product",
+          "baseline_mean_ns": [
+            591.3937719227897,
+            623.1654433038921,
+            588.0436820167071
+          ],
+          "guarded_mean_ns": [
+            587.1484811438756,
+            586.5743517239993,
+            583.4354549845646
+          ],
+          "baseline_median_mean_ns": 591.3937719227897,
+          "guarded_median_mean_ns": 586.5743517239993,
+          "change_percent": -0.8149257614129324
+        },
+        {
+          "crate": "hyperlimit",
+          "fixture": "point2_equality/equal_exact_rational",
+          "baseline_mean_ns": [
+            6.305653258567589,
+            6.30260358196261,
+            6.314063055439785
+          ],
+          "guarded_mean_ns": [
+            2.9489353132598923,
+            2.954823526545218,
+            2.9648435148724106
+          ],
+          "baseline_median_mean_ns": 6.305653258567589,
+          "guarded_median_mean_ns": 2.954823526545218,
+          "change_percent": -53.14008865726238
+        },
+        {
+          "crate": "hyperlimit",
+          "fixture": "point2_equality/unequal_y_exact_rational",
+          "baseline_mean_ns": [
+            14.617438316668618,
+            14.792564835444312,
+            14.594707604190448
+          ],
+          "guarded_mean_ns": [
+            13.565826970104947,
+            13.573157716117635,
+            13.63993738885471
+          ],
+          "baseline_median_mean_ns": 14.617438316668618,
+          "guarded_median_mean_ns": 13.573157716117635,
+          "change_percent": -7.144073933667061
+        },
+        {
+          "crate": "hyperlimit",
+          "fixture": "exact_rational_kernels/orient2d/common_denominator",
+          "baseline_mean_ns": [
+            48118.99411913956,
+            48071.28253564431,
+            48159.14359815858
+          ],
+          "guarded_mean_ns": [
+            49620.61766237522,
+            49447.11534200226,
+            48313.85007145702
+          ],
+          "baseline_median_mean_ns": 48118.99411913956,
+          "guarded_median_mean_ns": 49447.11534200226,
+          "change_percent": 2.760076861902716
+        },
+        {
+          "crate": "hyperlimit",
+          "fixture": "exact_rational_kernels/orient2d/larger_rational_near_degenerate",
+          "baseline_mean_ns": [
+            44204.3176419107,
+            43868.646205320714,
+            42229.04403691276
+          ],
+          "guarded_mean_ns": [
+            44847.19398098422,
+            43530.86972332284,
+            44985.473912708665
+          ],
+          "baseline_median_mean_ns": 43868.646205320714,
+          "guarded_median_mean_ns": 44847.19398098422,
+          "change_percent": 2.2306313513381637
+        },
+        {
+          "crate": "hyperlimit",
+          "fixture": "exact_rational_kernels/orient3d/common_denominator",
+          "baseline_mean_ns": [
+            143511.21640150558,
+            144462.13693003517,
+            145175.1493187729
+          ],
+          "guarded_mean_ns": [
+            146208.44381025896,
+            144393.6260638202,
+            146627.29017635644
+          ],
+          "baseline_median_mean_ns": 144462.13693003517,
+          "guarded_median_mean_ns": 146208.44381025896,
+          "change_percent": 1.2088336205836159
+        }
+      ],
+      "raw": {
+        "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/cross-results.json",
+        "bytes": 246993,
+        "sha256": "2fd712a439802c6baf9edda4f08df4239d8f94ad87d873c672aaa355dd33f49b"
+      }
+    },
+    "final_matrix_start_utc": "2026-09-07T01:45:41Z",
+    "final_matrix_end_utc": "2026-09-07T01:58:46Z",
+    "interpretation": "All runs retained, no favorable subrange or unchanged-binary retries. Each variant is a different source revision. Timing matrices meet the prespecified within-binary whole-process max/min <=1.5 guard. Mapped wall times round to zero and support correctness only. Criterion whole-process time includes setup, not just algorithm latency."
+  },
+  "profiles": {
+    "workload": "Single complete all-feature libtest process running the 12,100-pair equality oracle, including its independent expected cross-products; equal-length control-test/changed-test names.",
+    "heap": [
+      {
+        "variant": "baseline",
+        "allocations": 28247,
+        "frees": 28242,
+        "untracked_frees": 2,
+        "allocated_bytes": 8218780,
+        "peak_live_bytes": 196512,
+        "end_live_bytes": 1056,
+        "peak_live_allocations": 386,
+        "end_live_allocations": 5,
+        "accounting": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/heap-baseline-accounting.json",
+          "bytes": 29456,
+          "sha256": "755b19ea7e04f17eb68ebf932617d97f42f5fd7631c20412382f1e29f9722c98"
+        },
+        "raw": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/heap-baseline.raw.zst",
+          "bytes": 26813,
+          "sha256": "923e4f9e4fb7e0925724091078cb8ebca517a25a7a84a87ed133e2962d9eb80e"
+        }
+      },
+      {
+        "variant": "guarded",
+        "allocations": 25495,
+        "frees": 25490,
+        "untracked_frees": 2,
+        "allocated_bytes": 7459484,
+        "peak_live_bytes": 196512,
+        "end_live_bytes": 1056,
+        "peak_live_allocations": 386,
+        "end_live_allocations": 5,
+        "accounting": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/heap-guarded-accounting.json",
+          "bytes": 29236,
+          "sha256": "1d6678c6bd2ac22e1607ddd612a3e3e365ed6214326e23f448d680cb1bc6f3c5"
+        },
+        "raw": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/heap-guarded.raw.zst",
+          "bytes": 23658,
+          "sha256": "a5eb6cdf00216d78767894a1d58fd2c1326680f10773e2e51ee77b2cf6014d49"
+        }
+      }
+    ],
+    "callgrind": [
+      {
+        "variant": "baseline",
+        "instructions": 44947244,
+        "raw": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/instructions-baseline.callgrind",
+          "bytes": 138807,
+          "sha256": "fb7a918c087a33f969e8b8bbf50c539fd7de3444456f396867d7f3c38453b1a7"
+        }
+      },
+      {
+        "variant": "guarded",
+        "instructions": 42685011,
+        "raw": {
+          "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/instructions-guarded.callgrind",
+          "bytes": 138071,
+          "sha256": "49da35862a2516b0d071c05fb756d713ddabfe875a6d11acdfd35f6424118f47"
+        }
+      }
+    ],
+    "limits": "Not geometry-only attribution, ecosystem memory coverage, a leak proof, or latency evidence. Instrumented runs do not overlap timing matrices."
+  },
+  "evaluated_binary_size": {
+    "native": [
+      {
+        "fixture": "scalar",
+        "baseline": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-scalar",
+          "file_bytes": 9693704,
+          "text_bytes": 5476983,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-scalar  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    3504       832\n.gnu.version                292      4336\n.gnu.version_r              464      4628\n.gnu.hash                    28      5096\n.dynstr                    2068      5124\n.rela.dyn                357672      7192\n.rela.plt                    48    364864\n.rodata                  471296    364928\n.gcc_except_table        295624    836224\n.eh_frame_hdr             55452   1131848\n.eh_frame                461832   1187304\n.text                   5476983   1653232\n.init                        27   7130216\n.fini                        13   7130244\n.plt                         48   7130272\n.tdata                       32   7134416\n.tbss                      1504   7134448\n.data.rel.ro             279920   7134448\n.fini_array                   8   7414368\n.init_array                  16   7414376\n.dynamic                    480   7414392\n.got                      10464   7414872\n.got.plt                     40   7425336\n.relro_padding              672   7425376\n.tm_clone_table               0   7429472\n.data                    197968   7429472\n.bss                        284   7627440\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   7617637\n\n\n"
+        },
+        "guarded": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-scalar",
+          "file_bytes": 9694920,
+          "text_bytes": 5478423,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-scalar  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    3504       832\n.gnu.version                292      4336\n.gnu.version_r              464      4628\n.gnu.hash                    28      5096\n.dynstr                    2068      5124\n.rela.dyn                357648      7192\n.rela.plt                    48    364840\n.rodata                  471296    364928\n.gcc_except_table        295592    836224\n.eh_frame_hdr             55452   1131816\n.eh_frame                461688   1187272\n.text                   5478423   1653056\n.init                        27   7131480\n.fini                        13   7131508\n.plt                         48   7131536\n.tdata                       32   7135680\n.tbss                      1504   7135712\n.data.rel.ro             279920   7135712\n.fini_array                   8   7415632\n.init_array                  16   7415640\n.dynamic                    480   7415656\n.got                      10456   7416136\n.got.plt                     40   7426592\n.relro_padding             3512   7426632\n.tm_clone_table               0   7430728\n.data                    197968   7430728\n.bss                        284   7628696\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   7621709\n\n\n"
+        },
+        "file_delta_bytes": 1216,
+        "text_delta_bytes": 1440
+      },
+      {
+        "fixture": "bezier_region",
+        "baseline": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-bezier_region",
+          "file_bytes": 14857992,
+          "text_bytes": 9389975,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-bezier_region  :\nsection                     size       addr\n.interp                       28        736\n.note.ABI-tag                 32        764\n.note.gnu.build-id            36        796\n.dynsym                     1824        832\n.gnu.version                 152       2656\n.gnu.version_r               352       2808\n.gnu.hash                     28       3160\n.dynstr                     1155       3188\n.rela.dyn                 148032       4344\n.rela.plt                     48     152376\n.gcc_except_table        1226196     152424\n.rodata                   208112    1378624\n.eh_frame_hdr              81548    1586736\n.eh_frame                 761424    1668288\n.text                    9389975    2433808\n.init                         27   11823784\n.fini                         13   11823812\n.plt                          48   11823840\n.tdata                        32   11827984\n.tbss                       1224   11828016\n.data.rel.ro              113024   11828016\n.fini_array                    8   11941040\n.init_array                   16   11941048\n.dynamic                     480   11941064\n.got                        9888   11941544\n.got.plt                      40   11951432\n.relro_padding               656   11951472\n.tm_clone_table                0   11955568\n.data                     197688   11955568\n.bss                         232   12153256\n.comment                     231          0\n.annobin.notes               247          0\n.gnu.build.attributes        324          0\nTotal                   12143120\n\n\n"
+        },
+        "guarded": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-bezier_region",
+          "file_bytes": 14864056,
+          "text_bytes": 9393767,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-bezier_region  :\nsection                     size       addr\n.interp                       28        736\n.note.ABI-tag                 32        764\n.note.gnu.build-id            36        796\n.dynsym                     1824        832\n.gnu.version                 152       2656\n.gnu.version_r               352       2808\n.gnu.hash                     28       3160\n.dynstr                     1155       3188\n.rela.dyn                 148296       4344\n.rela.plt                     48     152640\n.gcc_except_table        1227428     152688\n.rodata                   208032    1380128\n.eh_frame_hdr              81572    1588160\n.eh_frame                 761400    1669736\n.text                    9393767    2435232\n.init                         27   11829000\n.fini                         13   11829028\n.plt                          48   11829056\n.tdata                        32   11833200\n.tbss                       1224   11833232\n.data.rel.ro              113056   11833232\n.fini_array                    8   11946288\n.init_array                   16   11946296\n.dynamic                     480   11946312\n.got                        9880   11946792\n.got.plt                      40   11956672\n.relro_padding              3608   11956712\n.tm_clone_table                0   11960808\n.data                     197688   11960816\n.bss                         232   12158504\n.comment                     231          0\n.annobin.notes               247          0\n.gnu.build.attributes        324          0\nTotal                   12151304\n\n\n"
+        },
+        "file_delta_bytes": 6064,
+        "text_delta_bytes": 3792
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-rational_bezier",
+          "file_bytes": 10489936,
+          "text_bytes": 6100263,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-rational_bezier  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    1824       832\n.gnu.version                152      2656\n.gnu.version_r              352      2808\n.gnu.hash                    28      3160\n.dynstr                    1155      3188\n.rela.dyn                115992      4344\n.rela.plt                    48    120336\n.gcc_except_table       1227944    120384\n.rodata                  161592   1348336\n.eh_frame_hdr             55812   1509928\n.eh_frame                494132   1565744\n.text                   6100263   2063984\n.init                        27   8164248\n.fini                        13   8164276\n.plt                         48   8164304\n.tdata                       32   8168448\n.tbss                       720   8168480\n.data.rel.ro              89072   8168480\n.fini_array                   8   8257552\n.init_array                  16   8257560\n.dynamic                    480   8257576\n.got                       7128   8258056\n.got.plt                     40   8265184\n.relro_padding              504   8265224\n.tm_clone_table               0   8269320\n.data                    197304   8269320\n.bss                        232   8466624\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   8455816\n\n\n"
+        },
+        "guarded": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-rational_bezier",
+          "file_bytes": 10496712,
+          "text_bytes": 6103271,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-rational_bezier  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    1824       832\n.gnu.version                152      2656\n.gnu.version_r              352      2808\n.gnu.hash                    28      3160\n.dynstr                    1155      3188\n.rela.dyn                116400      4344\n.rela.plt                    48    120744\n.gcc_except_table       1229176    120792\n.rodata                  161480   1349968\n.eh_frame_hdr             55892   1511448\n.eh_frame                494408   1567344\n.text                   6103271   2065856\n.init                        27   8169128\n.fini                        13   8169156\n.plt                         48   8169184\n.tdata                       32   8173328\n.tbss                       720   8173360\n.data.rel.ro              89240   8173360\n.fini_array                   8   8262600\n.init_array                  16   8262608\n.dynamic                    480   8262624\n.got                       7120   8263104\n.got.plt                     40   8270224\n.relro_padding             3656   8270264\n.tm_clone_table               0   8274360\n.data                    197304   8274360\n.bss                        232   8471664\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   8464020\n\n\n"
+        },
+        "file_delta_bytes": 6776,
+        "text_delta_bytes": 3008
+      },
+      {
+        "fixture": "curve_region_boolean_batch",
+        "baseline": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-curve_region_boolean_batch",
+          "file_bytes": 14297928,
+          "text_bytes": 8985639,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-curve_region_boolean_batch  :\nsection                     size       addr\n.interp                       28        736\n.note.ABI-tag                 32        764\n.note.gnu.build-id            36        796\n.dynsym                     1824        832\n.gnu.version                 152       2656\n.gnu.version_r               352       2808\n.gnu.hash                     28       3160\n.dynstr                     1155       3188\n.rela.dyn                 143256       4344\n.rela.plt                     48     147600\n.gcc_except_table        1224336     147648\n.rodata                   198528    1371984\n.eh_frame_hdr              77612    1570512\n.eh_frame                 724632    1648128\n.text                    8985639    2376864\n.init                         27   11362504\n.fini                         13   11362532\n.plt                          48   11362560\n.tdata                        32   11366704\n.tbss                       1224   11366736\n.data.rel.ro              109832   11366736\n.fini_array                    8   11476568\n.init_array                   16   11476576\n.dynamic                     480   11476592\n.got                        9352   11477072\n.got.plt                      40   11486424\n.relro_padding              2816   11486464\n.tm_clone_table                0   11490560\n.data                     197688   11490560\n.bss                         232   11688248\n.comment                     231          0\n.annobin.notes               247          0\n.gnu.build.attributes        324          0\nTotal                   11680268\n\n\n"
+        },
+        "guarded": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-curve_region_boolean_batch",
+          "file_bytes": 14304472,
+          "text_bytes": 8989895,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-curve_region_boolean_batch  :\nsection                     size       addr\n.interp                       28        736\n.note.ABI-tag                 32        764\n.note.gnu.build-id            36        796\n.dynsym                     1824        832\n.gnu.version                 152       2656\n.gnu.version_r               352       2808\n.gnu.hash                     28       3160\n.dynstr                     1155       3188\n.rela.dyn                 143520       4344\n.rela.plt                     48     147864\n.gcc_except_table        1225568     147912\n.rodata                   198448    1373488\n.eh_frame_hdr              77644    1571936\n.eh_frame                 724704    1649584\n.text                    8989895    2378384\n.init                         27   11368280\n.fini                         13   11368308\n.plt                          48   11368336\n.tdata                        32   11372480\n.tbss                       1224   11372512\n.data.rel.ro              109864   11372512\n.fini_array                    8   11482376\n.init_array                   16   11482384\n.dynamic                     480   11482400\n.got                        9344   11482880\n.got.plt                      40   11492224\n.relro_padding              1112   11492264\n.tm_clone_table                0   11496360\n.data                     197688   11496368\n.bss                         232   11694056\n.comment                     231          0\n.annobin.notes               247          0\n.gnu.build.attributes        324          0\nTotal                   11684364\n\n\n"
+        },
+        "file_delta_bytes": 6544,
+        "text_delta_bytes": 4256
+      },
+      {
+        "fixture": "hyperlattice",
+        "baseline": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-hyperlattice",
+          "file_bytes": 7451280,
+          "text_bytes": 3865271,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-hyperlattice  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    3408       832\n.gnu.version                284      4240\n.gnu.version_r              464      4524\n.gnu.hash                    28      4992\n.dynstr                    2048      5020\n.rela.dyn                321120      7072\n.rela.plt                    48    328192\n.gcc_except_table        308792    328240\n.rodata                  450072    637056\n.eh_frame_hdr             45460   1087128\n.eh_frame                341148   1132592\n.text                   3865271   1477840\n.init                        27   5343112\n.fini                        13   5343140\n.plt                         48   5343168\n.tdata                       32   5347312\n.tbss                       880   5347344\n.data.rel.ro             258032   5347344\n.fini_array                   8   5605376\n.init_array                  16   5605384\n.dynamic                    480   5605400\n.got                      10408   5605880\n.got.plt                     40   5616288\n.relro_padding             3384   5616328\n.tm_clone_table               0   5620424\n.data                    197448   5620424\n.bss                        284   5817872\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   5810141\n\n\n"
+        },
+        "guarded": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-hyperlattice",
+          "file_bytes": 7452392,
+          "text_bytes": 3866359,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-hyperlattice  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    3408       832\n.gnu.version                284      4240\n.gnu.version_r              464      4524\n.gnu.hash                    28      4992\n.dynstr                    2048      5020\n.rela.dyn                321096      7072\n.rela.plt                    48    328168\n.gcc_except_table        308772    328216\n.rodata                  450072    636992\n.eh_frame_hdr             45468   1087064\n.eh_frame                341024   1132536\n.text                   3866359   1477664\n.init                        27   5344024\n.fini                        13   5344052\n.plt                         48   5344080\n.tdata                       32   5348224\n.tbss                       880   5348256\n.data.rel.ro             258032   5348256\n.fini_array                   8   5606288\n.init_array                  16   5606296\n.dynamic                    480   5606312\n.got                      10400   5606792\n.got.plt                     40   5617192\n.relro_padding             2480   5617232\n.tm_clone_table               0   5621328\n.data                    197448   5621328\n.bss                        284   5818776\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   5810157\n\n\n"
+        },
+        "file_delta_bytes": 1112,
+        "text_delta_bytes": 1088
+      },
+      {
+        "fixture": "hyperlimit",
+        "baseline": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-hyperlimit",
+          "file_bytes": 9254304,
+          "text_bytes": 5168967,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-hyperlimit  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    3456       832\n.gnu.version                288      4288\n.gnu.version_r              464      4576\n.gnu.hash                    28      5040\n.dynstr                    2060      5068\n.rela.dyn                350328      7128\n.rela.plt                    48    357456\n.gcc_except_table        386124    357504\n.rodata                  451312    743680\n.eh_frame_hdr             53084   1194992\n.eh_frame                427900   1248080\n.text                   5168967   1680080\n.init                        27   6849048\n.fini                        13   6849076\n.plt                         48   6849104\n.tdata                       32   6853248\n.tbss                       768   6853280\n.data.rel.ro             279680   6853280\n.fini_array                   8   7132960\n.init_array                  16   7132968\n.dynamic                    480   7132984\n.got                      11112   7133464\n.got.plt                     40   7144576\n.relro_padding             2904   7144616\n.tm_clone_table               0   7148712\n.data                    197520   7148712\n.bss                        284   7346232\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   7337889\n\n\n"
+        },
+        "guarded": {
+          "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-hyperlimit",
+          "file_bytes": 9257856,
+          "text_bytes": 5172167,
+          "sections": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-hyperlimit  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    3456       832\n.gnu.version                288      4288\n.gnu.version_r              464      4576\n.gnu.hash                    28      5040\n.dynstr                    2060      5068\n.rela.dyn                350328      7128\n.rela.plt                    48    357456\n.gcc_except_table        386116    357504\n.rodata                  451248    743680\n.eh_frame_hdr             53100   1194928\n.eh_frame                427852   1248032\n.text                   5172167   1679984\n.init                        27   6852152\n.fini                        13   6852180\n.plt                         48   6852208\n.tdata                       32   6856352\n.tbss                       768   6856384\n.data.rel.ro             279712   6856384\n.fini_array                   8   7136096\n.init_array                  16   7136104\n.dynamic                    480   7136120\n.got                      11104   7136600\n.got.plt                     40   7147704\n.relro_padding             3872   7147744\n.tm_clone_table               0   7151840\n.data                    197520   7151840\n.bss                        284   7349360\n.comment                    231         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\nTotal                   7341977\n\n\n"
+        },
+        "file_delta_bytes": 3552,
+        "text_delta_bytes": 3200
+      }
+    ],
+    "wasm": [
+      {
+        "variant": "baseline",
+        "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/baseline-ui.wasm",
+        "bytes": 16995285
+      },
+      {
+        "variant": "guarded",
+        "file": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/guarded-ui.wasm",
+        "bytes": 16992367
+      }
+    ],
+    "wasm_delta_bytes": -2918
+  },
+  "resource_events": [
+    "Initial sandbox and approved host builds hit the per-user /tmp quota. Both failure logs remain. Builds moved to this evidence root with a task-local TMPDIR.",
+    "With approval, only the previous angular checkpoint's completed UI target cache was cleaned (Cargo reported 7,385 files/5.1 GiB). All 440 previous proof artifacts were reverified and preserved. Rebuilds regenerate that cache.",
+    "The 1.6 MiB incomplete /tmp build cache could not be cargo-cleaned because its quota-truncated cache tag was invalid. It was moved recoverably to failed-tmp-cache under this root, not deleted.",
+    "HR fuzz and the Hyperlattice mimalloc build first failed on sandbox ccache writes. Approved escalated retries succeeded; original failures remain. Read-only binary-size collection also required an approved child-process-permission retry."
+  ],
+  "limitations": [
+    "The 22-gate ecosystem result qualifies the rejected guarded candidate, not a shipped runtime change. Retained final-source validation is separately recorded.",
+    "No fresh fuzz campaign, coverage run, standalone full Hyperlimit/Hyperlattice/Hypertri/Hypersolve suites, or final live concurrent-draft integration is claimed.",
+    "CPU affinity is fixed but desktop activity, scheduling, frequency scaling and thermal conditions are uncontrolled. Small changes are observations, not universal guarantees.",
+    "Native .text grows for every measured final-guarded binary; WASM shrinks 2,918 bytes. These mixed size changes do not rescue the higher-priority performance costs."
+  ],
+  "milestone_status": {
+    "exactcorelib_mining_and_recorded_uplift": "closed",
+    "hypercurve_release_readiness": "open",
+    "uniform_performance": "open",
+    "live_lower_stack_integration": "open",
+    "overall_goal": "active"
+  },
+  "followups": [
+    "Use the retained equality guards to investigate a shared magnitude-comparison core or cheaper common exits without imposing the measured close-fraction and geometry costs. Do not add another filter/cache or public compatibility interface.",
+    "Remove Hypercurve's single-iteration coarse tensor-box refinement scaffolding while preserving fallthrough to exact-fiber specialization when endpoint ordering is undecided.",
+    "Continue non-angular retained point/coordinate policy audits and single-authority CurveRegion2 consolidation; requalify finalized concurrent lower-stack changes."
+  ],
+  "artifact_manifest": {
+    "path": "/home/tim/Documents/GitHub/workspace/hyperreal/target/rational-equality.RRORMd/artifact-manifest.sha256",
+    "bytes": 544687,
+    "sha256": "b0437c4e9fd804be6f82a12d84fe73e46bcc1c2d1ba2e0d707f870f368eb75f5",
+    "entries": 3694
+  }
+}

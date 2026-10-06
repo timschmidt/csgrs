@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "status": "magnitude_mapping_proof_not_complete",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "2d8cb1ab535e5977d8591b913fdf4e5eda601c23",
+  "runtime_reference": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 468,
+    "executable_contracts": 66,
+    "model_theorems": 97,
+    "source_hashes": 125,
+    "source_hashes_match_commit": true,
+    "no_cheating": true,
+    "entire_proof_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_contracts": [
+    "computable_bounds::BoundInfo::map_msd"
+  ],
+  "new_theorems": [
+    "computable_bounds::binary_scaling_preserves_real_binade",
+    "computable_bounds::binary_offset_preserves_bound_denotation"
+  ],
+  "negative_guards": {
+    "production_bound_mutations_rejected": 16,
+    "bound_denotation_mutations_rejected": 9,
+    "acceptance_and_dependency_identity_tests": 10,
+    "unchanged_kernel_model_mutations": 85,
+    "reused_evidence": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json",
+    "note": "Twenty-five bound guards were run on the final source. The unchanged kernel/model inputs retain their prior 85-mutation and assumption-bypass evidence; no fresh combined 110-mutation run is claimed."
+  },
+  "dependency_import": {
+    "packages": 8,
+    "source_files": 169,
+    "all_registry_pins_match_production": true,
+    "source_and_artifact_identity_checked": true,
+    "scope": "Transparent Sign datatype only. No external arithmetic or equality implementation is assumed or verified by this import."
+  },
+  "ordinary_runtime": {
+    "byte_identical_expansion_to_runtime_reference": true,
+    "expanded_sha256": "ad33a1bc262c820ffee036dee9152bf7d8675f842f661aa964dbfb9317671d83",
+    "lines": 36100,
+    "checks": [
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 8.403612852096558
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.34607386589050293
+      }
+    ],
+    "note": "The mapping implementation is unchanged. Its annotations pass strict all-feature all-target Clippy and erase to the same ordinary Rust as cdc6d3a."
+  },
+  "experiments": [
+    "The direct production mapping contract and the two binary-scaling refinements both pass their first focused verification runs. These inputs and verifier outputs are retained."
+  ],
+  "limits": [
+    "The mapping contract preserves every non-magnitude field and available callback result. It proves the callback precondition exactly when an exponent exists. Binary-offset denotation requires the callback to return the checked mathematical exponent sum.",
+    "Inexact planning magnitudes have no claimed error bound. The expression graph, rational/BigInt import, cache validity and production mapping callbacks/callers remain open.",
+    "All thirteen whole-implementation obligation groups and baseline qualification remain incomplete. Existing timing, resource and pinned-consumer failures are not dismissed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-bound-mapping.tar.gz",
+    "bytes": 693075,
+    "files": 241,
+    "sha256": "ec9be60c70145428fc2ca114a6fb69ea2500c8c95a282825cbccfa0d4680268e"
+  }
+}
