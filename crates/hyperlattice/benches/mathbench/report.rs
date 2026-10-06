@@ -860,15 +860,36 @@ fn estimate_value(
     .find_map(|key| estimates.get(&key).copied())
 }
 
+/// Criterion's output directory: `$CRITERION_HOME`, `$CARGO_TARGET_DIR/criterion`, or the
+/// `criterion` directory beside the target this bench binary was built in
+/// (the workspace target in a monorepo).
+fn criterion_dir() -> std::path::PathBuf {
+    if let Some(home) = std::env::var_os("CRITERION_HOME") {
+        return std::path::PathBuf::from(home);
+    }
+    match std::env::var_os("CARGO_TARGET_DIR") {
+        Some(path) => std::path::PathBuf::from(path).join("criterion"),
+        None => std::env::current_exe()
+            .ok()
+            .and_then(|exe| {
+                exe.ancestors()
+                    .find(|dir| dir.join("criterion").is_dir())
+                    .map(Path::to_path_buf)
+            })
+            .unwrap_or_else(|| std::path::PathBuf::from("target"))
+            .join("criterion"),
+    }
+}
+
 fn read_estimates() -> BTreeMap<String, f64> {
-    fn visit(path: &Path, out: &mut BTreeMap<String, f64>) {
+    fn visit(root: &Path, path: &Path, out: &mut BTreeMap<String, f64>) {
         let Ok(entries) = fs::read_dir(path) else {
             return;
         };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                visit(&path, out);
+                visit(root, &path, out);
                 continue;
             }
             if path.file_name().and_then(|name| name.to_str()) != Some("estimates.json")
@@ -883,7 +904,7 @@ fn read_estimates() -> BTreeMap<String, f64> {
             let Some(bench_path) = path.parent().and_then(Path::parent) else {
                 continue;
             };
-            let Ok(relative) = bench_path.strip_prefix("target/criterion") else {
+            let Ok(relative) = bench_path.strip_prefix(root) else {
                 continue;
             };
             let key = relative
@@ -905,7 +926,8 @@ fn read_estimates() -> BTreeMap<String, f64> {
     }
 
     let mut estimates = BTreeMap::new();
-    visit(Path::new("target/criterion"), &mut estimates);
+    let criterion = criterion_dir();
+    visit(&criterion, &criterion, &mut estimates);
     estimates
 }
 

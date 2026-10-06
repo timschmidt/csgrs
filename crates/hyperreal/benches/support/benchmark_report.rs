@@ -88,10 +88,26 @@ pub fn write_benchmarks_md() -> io::Result<ReportSummary> {
 }
 
 fn criterion_dir(root: &Path) -> PathBuf {
+    // CRITERION_HOME is where Criterion itself writes when it is set; the
+    // repository bench-report script gives each crate its own.
+    if let Some(home) = std::env::var_os("CRITERION_HOME") {
+        return PathBuf::from(home);
+    }
     match std::env::var_os("CARGO_TARGET_DIR") {
         Some(path) if Path::new(&path).is_absolute() => PathBuf::from(path).join("criterion"),
         Some(path) => root.join(path).join("criterion"),
-        None => root.join("target").join("criterion"),
+        // Bench binaries run from <target>/<profile>/deps, and Criterion writes
+        // to <target>/criterion: the workspace target in a monorepo, not
+        // necessarily this crate's own.
+        None => std::env::current_exe()
+            .ok()
+            .and_then(|exe| {
+                exe.ancestors()
+                    .find(|dir| dir.join("criterion").is_dir())
+                    .map(Path::to_path_buf)
+            })
+            .unwrap_or_else(|| root.join("target"))
+            .join("criterion"),
     }
 }
 

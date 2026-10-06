@@ -98,9 +98,7 @@ struct Estimate {
 }
 
 fn read_estimate(root: &Path, group: &str, bench: &str) -> Option<Estimate> {
-    let path = root
-        .join("target")
-        .join("criterion")
+    let path = criterion_dir(root)
         .join(group)
         .join(bench)
         .join("new")
@@ -163,4 +161,25 @@ fn replace_section(current: &str, begin: &str, end: &str, section: &str) -> Stri
         next.push_str(suffix);
     }
     next
+}
+
+/// Criterion's output directory: `$CRITERION_HOME`, `$CARGO_TARGET_DIR/criterion`, or the
+/// `criterion` directory beside the target this bench binary was built in.
+fn criterion_dir(root: &Path) -> std::path::PathBuf {
+    if let Some(home) = std::env::var_os("CRITERION_HOME") {
+        return home.into();
+    }
+    match std::env::var_os("CARGO_TARGET_DIR") {
+        Some(path) if Path::new(&path).is_absolute() => Path::new(&path).join("criterion"),
+        Some(path) => root.join(path).join("criterion"),
+        None => std::env::current_exe()
+            .ok()
+            .and_then(|exe| {
+                exe.ancestors()
+                    .find(|dir| dir.join("criterion").is_dir())
+                    .map(Path::to_path_buf)
+            })
+            .unwrap_or_else(|| root.join("target"))
+            .join("criterion"),
+    }
 }
