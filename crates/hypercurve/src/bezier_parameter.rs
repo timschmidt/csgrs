@@ -2920,6 +2920,10 @@ fn retain_linear_zero_witness(
     }
 }
 
+/// Defining-polynomial degree from which rational filter signs try the
+/// modular coprimality certificate before the Sturm-Tarski chain.
+const MODULAR_FIRST_DEFINING_DEGREE: usize = 16;
+
 /// Bisection steps spent separating a filter certified coprime to the
 /// selected parameter's defining polynomial before the Sturm-Tarski chain.
 const COPRIME_FILTER_REFINEMENT_STEPS: usize = 4096;
@@ -3030,12 +3034,16 @@ fn polynomial_sign_by_algebraic_replay(
     // refining the root until a retained-interval enclosure separates must
     // succeed; this replaces a Sturm-Tarski chain whose remainders grow with
     // both degrees. A likely common factor goes to the exact GCD first.
-    let rational_inputs = algebraic
-        .polynomial()
-        .coefficients()
-        .iter()
-        .chain(filter.coefficients())
-        .all(|coefficient| coefficient.exact_rational_ref().is_some());
+    // Small chains are already cheap; the certificate and bisection only
+    // pay for themselves once the defining polynomial is large.
+    let rational_inputs = algebraic.polynomial().coefficients().len()
+        > MODULAR_FIRST_DEFINING_DEGREE
+        && algebraic
+            .polynomial()
+            .coefficients()
+            .iter()
+            .chain(filter.coefficients())
+            .all(|coefficient| coefficient.exact_rational_ref().is_some());
     let modular = rational_inputs.then(|| {
         hypersolve::modular_gcd::univariate_polynomials_modular_coprimality(
             algebraic.polynomial().coefficients(),
