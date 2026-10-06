@@ -1069,26 +1069,35 @@ pub fn algebraic_root_affine_relation(
     let right_mean = -((right_coefficients[degree - 1].clone() / right_leading.clone()).ok()?
         / degree_real)
         .ok()?;
-    let left_centered = affine_transformed_polynomial(
-        left_coefficients,
-        &Real::one(),
-        &(-left_mean.clone()),
-        policy,
-    )?;
-    let right_centered = affine_transformed_polynomial(
-        right_coefficients,
-        &Real::one(),
-        &(-right_mean.clone()),
-        policy,
-    )?;
-    if left_centered.len() != degree + 1 || right_centered.len() != degree + 1 {
-        return None;
-    }
+    // Only the first informative centered coefficient is needed. Shifting
+    // the whole polynomial by a mean with a wide denominator inflates every
+    // coefficient; each needed one is instead the O(degree) sum
+    // c_k = sum_{j >= k} a_j C(j, k) mean^(j - k).
+    let centered_coefficient = |coefficients: &[Real], mean: &Real, index: usize| {
+        let mut sum = Real::zero();
+        let mut power = Real::one();
+        // C(index, index) = 1 and C(j + 1, index) = C(j, index) (j + 1) / (j + 1 - index).
+        let mut binomial = Real::one();
+        for (offset, coefficient) in coefficients[index..].iter().enumerate() {
+            if offset != 0 {
+                let row = u64::try_from(index + offset).ok()?;
+                let column = u64::try_from(offset).ok()?;
+                binomial = ((&binomial * &Real::from(row)) / Real::from(column)).ok()?;
+            }
+            sum = sum + &(coefficient * &binomial) * &power;
+            power = &power * mean;
+        }
+        Some(sum)
+    };
 
     let mut scales = Vec::with_capacity(2);
     for coefficient_index in (0..degree.saturating_sub(1)).rev() {
-        let left = (left_centered[coefficient_index].clone() / left_leading.clone()).ok()?;
-        let right = (right_centered[coefficient_index].clone() / right_leading.clone()).ok()?;
+        let left = (centered_coefficient(left_coefficients, &left_mean, coefficient_index)?
+            / left_leading.clone())
+        .ok()?;
+        let right = (centered_coefficient(right_coefficients, &right_mean, coefficient_index)?
+            / right_leading.clone())
+        .ok()?;
         let left_zero = algebraic_value_sign(&left, policy)? == Ordering::Equal;
         let right_zero = algebraic_value_sign(&right, policy)? == Ordering::Equal;
         if left_zero || right_zero {
