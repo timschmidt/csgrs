@@ -2962,16 +2962,14 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 &bivariate_scale(tangent_dot, &tangential),
                 &bivariate_scale(tangent_cross, &(radial * turn)),
             );
-            // This two-axis theorem requires a univariate parameter. Keep
-            // the original local contact authority in the published map.
-            let parameter = match promote_curve_region_bezier_parameter(parameter, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            match signed_bivariate_at_parameter_pair(
+            // A contact fibered over the anchor signs this two-axis predicate
+            // in its own field; otherwise the contact is promoted, keeping the
+            // original local contact authority in the published map.
+            match bivariate_sign_at_cusp_and_region_parameter(
                 &predicate,
                 &anchor_parameter,
-                &parameter,
+                parameter,
+                None,
                 policy,
             )? {
                 Classification::Decided(sign) => sign,
