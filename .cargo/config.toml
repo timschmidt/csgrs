@@ -37,13 +37,3 @@ panic = "abort"
 
 [alias]
 xtask = "run --manifest-path ./xtask/Cargo.toml --"
-
-[patch.crates-io]
-hypercurve = { path = "crates/hypercurve" }
-hyperlattice = { path = "crates/hyperlattice" }
-hyperlimit = { path = "crates/hyperlimit" }
-hypermesh = { path = "crates/hypermesh" }
-hyperphysics = { path = "crates/hyperphysics" }
-hyperreal = { path = "crates/hyperreal" }
-hypersolve = { path = "crates/hypersolve" }
-hypertri = { path = "crates/hypertri" }
