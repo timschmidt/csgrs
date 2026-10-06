@@ -133,6 +133,13 @@ overflow-checks = false
 inherits = "release"
 opt-level = "z"
 
+# Benchmarks keep Cargo's default release code generation, as the hyper
+# crates' tracked benchmark reports were measured with it; the release
+# profile's LTO would shift every comparison.
+[profile.bench]
+lto = false
+codegen-units = 16
+
 [dependencies]
 # geometry
 #alum = "0.6.1"
