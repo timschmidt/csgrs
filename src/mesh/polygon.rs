@@ -222,7 +222,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             for tri2d in tris {
                 // tri2d is a geo::Triangle in 2D
                 // Convert each corner from (x,y) to 3D again
-                let [coord_a, coord_b, coord_c] = [tri2d.0, tri2d.1, tri2d.2];
+                let [coord_a, coord_b, coord_c] = [tri2d.v1(), tri2d.v2(), tri2d.v3()];
                 let pos_a_3d = origin_3d.coords + coord_a.x * u + coord_a.y * v;
                 let pos_b_3d = origin_3d.coords + coord_b.x * u + coord_b.y * v;
                 let pos_c_3d = origin_3d.coords + coord_c.x * u + coord_c.y * v;
