@@ -1,0 +1,293 @@
+schema = 1
+date = "2026-07-30"
+direct_parent = "dc60a06c61b0a8dbc453945a08d4f09e128c7270"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+host = "AMD Ryzen 7 5800X3D 8-Core Processor"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[dependencies]
+hyperreal = "cc87212c6c4a0b1bf20399a8ec2816fd837a82a0"
+hyperlattice = "91d300239500116efbef0fe9da9e1b564d37adfb"
+hyperlimit = "e68bb9da6087587c32f4dbc118fe422672714c75"
+
+[tracked_diff_sha256]
+hyperreal = "461e1c22a477b13d46e4ebe42d0b3d3acbcb69d181d871c39b938e0d58116382"
+hyperlattice = "067a31c0fc19b1221e317290d0eb1a45e4b39030b4f937e1f7322c4aa3746fcf"
+hyperlimit = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+[correctness]
+focused_interner_tests = 8
+full_library_tests = 1045
+crossing_grid_width = 17
+crossing_grid_height = 17
+independent_crossings = 289
+strict_terminal = "PredicateUndecided"
+approximate_terminal = "Approximate512Consumed"
+
+[runtime.output_cube_parent]
+estimate_ns = 134420
+lower_ns = 134070
+upper_ns = 134830
+
+[runtime.output_cube_current]
+estimate_ns = 133730
+lower_ns = 133400
+upper_ns = 134050
+movement_percent = -0.51
+
+[runtime.convex_hull_grid_parent]
+points = 4913
+estimate_ns = 5856500
+lower_ns = 5837500
+upper_ns = 5875200
+
+[runtime.convex_hull_grid_current]
+points = 4913
+estimate_ns = 5886300
+lower_ns = 5867500
+upper_ns = 5905000
+movement_percent = 0.51
+criterion_classification = "no detectable change"
+
+[perf.crossing_parent]
+repetitions = 20
+cpu = 8
+instructions = 263405505
+cycles = 81441968
+task_clock_ms = 20.89
+minor_faults = 533
+
+[perf.crossing_current]
+repetitions = 20
+cpu = 8
+instructions = 77371719
+instructions_movement_percent = -70.6264
+cycles = 25798023
+cycles_movement_percent = -68.3234
+task_clock_ms = 7.68
+task_clock_movement_percent = -63.2360
+minor_faults = 558
+minor_faults_movement_percent = 4.6904
+
+[memory.crossing_parent]
+allocations = 39195
+peak_heap = "1.05M"
+peak_rss_with_heaptrack = "11.05M"
+heaptrack_runtime_s = 0.076
+
+[memory.crossing_current]
+allocations = 39211
+allocation_movement_percent = 0.0408
+peak_heap = "1.18M"
+peak_rss_with_heaptrack = "10.90M"
+heaptrack_runtime_s = 0.062
+
+[source]
+removed_existing_lines = 516
+added_existing_lines = 111
+shared_module_production_lines = 595
+shared_module_test_lines = 235
+net_production_lines = 190
+net_total_lines = 425
+
+[callgraph.parent]
+nodes = 7679
+edges = 19035
+
+[callgraph.current]
+nodes = 7736
+edges = 19134
+
+[size.default_general_release_native]
+parent_text_bytes = 3710877
+current_text_bytes = 3722325
+movement_percent = 0.3085
+
+[size.default_general_release_wasm]
+parent_wasm_opt_oz_bytes = 2601131
+current_wasm_opt_oz_bytes = 2612055
+movement_percent = 0.4200
+
+[size.default_immediate_release_native]
+parent_text_bytes = 3744701
+current_text_bytes = 3755597
+movement_percent = 0.2910
+
+[size.default_immediate_release_wasm]
+parent_wasm_opt_oz_bytes = 2616379
+current_wasm_opt_oz_bytes = 2627138
+movement_percent = 0.4112
+
+[size.default_general_size_native]
+parent_text_bytes = 1678963
+current_text_bytes = 1692315
+movement_percent = 0.7953
+
+[size.default_general_size_wasm]
+parent_wasm_opt_oz_bytes = 1091463
+current_wasm_opt_oz_bytes = 1100485
+movement_percent = 0.8266
+
+[size.default_immediate_size_native]
+parent_text_bytes = 1690951
+current_text_bytes = 1704215
+movement_percent = 0.7844
+
+[size.default_immediate_size_wasm]
+parent_wasm_opt_oz_bytes = 1101285
+current_wasm_opt_oz_bytes = 1111220
+movement_percent = 0.9021
+
+[size.all_general_release_native]
+parent_text_bytes = 3841826
+current_text_bytes = 3853346
+movement_percent = 0.2999
+
+[size.all_general_release_wasm]
+parent_wasm_opt_oz_bytes = 2679419
+current_wasm_opt_oz_bytes = 2690338
+movement_percent = 0.4075
+
+[size.all_immediate_release_native]
+parent_text_bytes = 3875898
+current_text_bytes = 3887162
+movement_percent = 0.2906
+
+[size.all_immediate_release_wasm]
+parent_wasm_opt_oz_bytes = 2694985
+current_wasm_opt_oz_bytes = 2705768
+movement_percent = 0.4001
+
+[size.all_general_size_native]
+parent_text_bytes = 1679211
+current_text_bytes = 1692587
+movement_percent = 0.7966
+
+[size.all_general_size_wasm]
+parent_wasm_opt_oz_bytes = 1088626
+current_wasm_opt_oz_bytes = 1098021
+movement_percent = 0.8630
+
+[size.all_immediate_size_native]
+parent_text_bytes = 1691175
+current_text_bytes = 1704439
+movement_percent = 0.7843
+
+[size.all_immediate_size_wasm]
+parent_wasm_opt_oz_bytes = 1098762
+current_wasm_opt_oz_bytes = 1108100
+movement_percent = 0.8499
+
+[artifacts.default_general_release_native]
+raw_bytes = 4340136
+text_bytes = 3722325
+gzip_9_bytes = 1730598
+brotli_11_bytes = 1292222
+sha256 = "477f883d30ec2f4d34685ccd96ae32cec4e7b9110013550e9d71c19e701393e7"
+
+[artifacts.default_general_release_wasm]
+raw_bytes = 3360172
+wasm_opt_oz_bytes = 2612055
+wasm_opt_oz_gzip_9_bytes = 904030
+wasm_opt_oz_brotli_11_bytes = 640376
+sha256 = "cab939d5425ecac2e65312e3acedfb4200519c740953ae83e8f5c7a164eda8cb"
+
+[artifacts.default_immediate_release_native]
+raw_bytes = 4375048
+text_bytes = 3755597
+gzip_9_bytes = 1745992
+brotli_11_bytes = 1303921
+sha256 = "a7c903e5dbc31e41b0a80a2fcb7049e2bf17a477b74e5fc7207666c2531e9a43"
+
+[artifacts.default_immediate_release_wasm]
+raw_bytes = 3377129
+wasm_opt_oz_bytes = 2627138
+wasm_opt_oz_gzip_9_bytes = 910275
+wasm_opt_oz_brotli_11_bytes = 645229
+sha256 = "3e70f3cbcfc7f6666c42a5404a74d1e76484e13b7c2de61da17324c5b426f9e0"
+
+[artifacts.default_general_size_native]
+raw_bytes = 1928624
+text_bytes = 1692315
+gzip_9_bytes = 796441
+brotli_11_bytes = 646455
+sha256 = "bfddc48a0378bf6e2f533819ac01f5674f7bd765f0a1fa0934bb530f07062f08"
+
+[artifacts.default_general_size_wasm]
+raw_bytes = 1297017
+wasm_opt_oz_bytes = 1100485
+wasm_opt_oz_gzip_9_bytes = 456900
+wasm_opt_oz_brotli_11_bytes = 359592
+sha256 = "a9547416c699092305f2c468509854eeae0d90928e78f0fe26c34ff4ba897916"
+
+[artifacts.default_immediate_size_native]
+raw_bytes = 1941056
+text_bytes = 1704215
+gzip_9_bytes = 802835
+brotli_11_bytes = 651092
+sha256 = "a15bed9b6835ec179917504bc348a01f3b3f64fd608e7d4697cc75307cee168f"
+
+[artifacts.default_immediate_size_wasm]
+raw_bytes = 1307536
+wasm_opt_oz_bytes = 1111220
+wasm_opt_oz_gzip_9_bytes = 460297
+wasm_opt_oz_brotli_11_bytes = 362927
+sha256 = "7369cd20c7869efd840169e0415144ffa8b036f40d9572eb2154721ad50d71e6"
+
+[artifacts.all_general_release_native]
+raw_bytes = 4475872
+text_bytes = 3853346
+gzip_9_bytes = 1783361
+brotli_11_bytes = 1337938
+sha256 = "7514e1896b59de8d4be9ace59f06af949a42529ba2e1d552331ea2f495b85b29"
+
+[artifacts.all_general_release_wasm]
+raw_bytes = 3462545
+wasm_opt_oz_bytes = 2690338
+wasm_opt_oz_gzip_9_bytes = 922578
+wasm_opt_oz_brotli_11_bytes = 654031
+sha256 = "0b812697b77874a2a697e11e347b35b0d1799e3dc8521c9728eb1b4b01ab8148"
+
+[artifacts.all_immediate_release_native]
+raw_bytes = 4511344
+text_bytes = 3887162
+gzip_9_bytes = 1799569
+brotli_11_bytes = 1346497
+sha256 = "9e55355ad8171cacd2ce83551fedfe62a9210a4e40178a465dedebd5843b6f0e"
+
+[artifacts.all_immediate_release_wasm]
+raw_bytes = 3479903
+wasm_opt_oz_bytes = 2705768
+wasm_opt_oz_gzip_9_bytes = 928622
+wasm_opt_oz_brotli_11_bytes = 658625
+sha256 = "c86fc04c2163e8df021c0ec38264518458df0a88afb0b6d09705f33faa12bc01"
+
+[artifacts.all_general_size_native]
+raw_bytes = 1928944
+text_bytes = 1692587
+gzip_9_bytes = 797148
+brotli_11_bytes = 646136
+sha256 = "bfdc89426208781ae40ff6fe66676f3be79346553fb99bef16e535f2a4fd30ee"
+
+[artifacts.all_general_size_wasm]
+raw_bytes = 1295200
+wasm_opt_oz_bytes = 1098021
+wasm_opt_oz_gzip_9_bytes = 456763
+wasm_opt_oz_brotli_11_bytes = 359060
+sha256 = "03c6fd27bdead5b710ae19092d4464d289b9113b4ab0bc9519c64c3f509faf72"
+
+[artifacts.all_immediate_size_native]
+raw_bytes = 1941328
+text_bytes = 1704439
+gzip_9_bytes = 803421
+brotli_11_bytes = 651570
+sha256 = "1efc49d1a28e003d2d1b638e6792ef12d8fc6382257ea099eeb32d72f9f9364b"
+
+[artifacts.all_immediate_size_wasm]
+raw_bytes = 1305681
+wasm_opt_oz_bytes = 1108100
+wasm_opt_oz_gzip_9_bytes = 460333
+wasm_opt_oz_brotli_11_bytes = 362739
+sha256 = "dd2bce8bdffe39707e1e77e636991843a6d9774bd3c3f2ee698317bc625788be"

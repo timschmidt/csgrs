@@ -1,0 +1,343 @@
+date = "2026-08-01"
+title = "compact projective input soup"
+parent_commit = "c45cc4a105fe87388eca379f177b15d1e2313072"
+implementation_commit = "d7dd9e492da6a4eeb8725d478cc7e7bf7e743a4e"
+hyperreal_commit = "a90fd36aca8df4aab4661c068f2b29961d657da2"
+retained = true
+
+[change]
+crate = "hypermesh"
+production_insertions = 831
+production_deletions = 261
+test_insertions = 143
+test_deletions = 88
+public_api_changed = false
+compatibility_shim_added = false
+runtime_priority_over_size = true
+
+[representation]
+projective_input_triangle_bytes = 32
+projective_input_triangle_usize_words = 4
+stores_indices = 3
+stores_support_plane_index = true
+polygon_offset_stored_per_mesh = true
+native_position_arc_reused = true
+borrowed_positions_copied_once = true
+full_polygon_bytes_on_host = 336
+
+[path]
+requires_exactly_two_inputs = true
+requires_both_certified_convex = true
+retained_polygon_replacement_excluded = true
+retryable_build_error_falls_through = true
+retryable_collapse_error_falls_through = true
+retryable_projective_error_falls_through = true
+projective_none_falls_through = true
+nonretryable_errors_propagate = true
+ordinary_full_polygon_path_preserved = true
+general_subdivision_path_preserved = true
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+compact_path_adds_terminal = false
+lossy_value_can_certify_topology = false
+both_policy_outputs_certified = true
+both_policy_meshes_exactly_equal = true
+operations_tested = ["union", "intersection", "difference", "symmetric_difference"]
+
+[cpu_method]
+measurement_order = "parent,candidate,candidate,parent"
+logical_cpu = 9
+fixture_built_once_per_process = true
+complete_immediate_union_repeated = true
+instructions_are_primary_retention_gate = true
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+policy = "STRICT"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+repetitions = 501
+parent_task_ms = [5276.24, 5289.61]
+candidate_task_ms = [4667.18, 4634.26]
+parent_ms_per_operation = 10.544760479
+candidate_ms_per_operation = 9.282874251
+task_movement_percent = -11.966950
+parent_instructions = [61014360778, 61011393336]
+candidate_instructions = [54827016090, 54826593991]
+instructions_movement_percent = -10.138961
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+policy = "APPROXIMATE_512"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+repetitions = 501
+parent_task_ms = [5300.39, 5331.33]
+candidate_task_ms = [4660.44, 4678.15]
+parent_ms_per_operation = 10.610499002
+candidate_ms_per_operation = 9.319950100
+task_movement_percent = -12.162943
+parent_instructions = [61013522817, 61012217318]
+candidate_instructions = [54826093110, 54826806604]
+instructions_movement_percent = -10.139533
+
+[[serialized_cpu]]
+fixture = "dense_boxes"
+policy = "STRICT"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+repetitions = 10001
+parent_task_ms = [14099.80, 13772.77]
+candidate_task_ms = [8006.22, 7957.67]
+parent_ms_per_operation = 1.393489151
+candidate_ms_per_operation = 0.798114689
+task_movement_percent = -42.725447
+parent_instructions = [157410680620, 157413784198]
+candidate_instructions = [101293375672, 101297709863]
+instructions_movement_percent = -35.649510
+
+[[serialized_cpu]]
+fixture = "dense_boxes"
+policy = "APPROXIMATE_512"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+repetitions = 10001
+parent_task_ms = [13619.53, 16157.12]
+candidate_task_ms = [7967.69, 8330.57]
+task_clock_contains_parent_outlier = true
+conservative_task_movement_percent = -38.833
+parent_instructions = [157405667617, 157409407074]
+candidate_instructions = [101307287101, 101297471421]
+instructions_movement_percent = -35.643247
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+policy = "STRICT"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+repetitions = 51
+parent_task_ms = [1801.53, 1784.50]
+candidate_task_ms = [1775.85, 1765.78]
+parent_ms_per_operation = 35.157156863
+candidate_ms_per_operation = 34.721862745
+task_movement_percent = -1.238138
+parent_instructions = [20906588743, 20907136862]
+candidate_instructions = [20797630668, 20796094616]
+instructions_movement_percent = -0.526144
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+policy = "APPROXIMATE_512"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+repetitions = 51
+parent_task_ms = [1804.01, 1786.61]
+candidate_task_ms = [1773.98, 1764.96]
+parent_ms_per_operation = 35.202156863
+candidate_ms_per_operation = 34.695490196
+task_movement_percent = -1.439306
+parent_instructions = [20907967814, 20907824804]
+candidate_instructions = [20797564298, 20798158383]
+instructions_movement_percent = -0.526284
+
+[heap.generated_projective]
+input_triangles = 13452
+parent_allocations = 200753
+current_allocations = 200756
+parent_reconstructed_temporaries = 10359
+current_reconstructed_temporaries = 10359
+parent_peak_mib = 10.69
+current_peak_mib = 7.50
+peak_movement_percent = -29.841
+policies_identical = true
+
+[heap.dense_boxes]
+input_triangles = 6144
+parent_allocations = 27209
+current_allocations = 27212
+parent_reconstructed_temporaries = 81
+current_reconstructed_temporaries = 81
+parent_peak_mib = 4.26
+current_peak_mib = 2.34
+peak_movement_percent = -45.070
+policies_identical = true
+
+[heap.retained_arrangement]
+input_triangles = 4524
+fixture_sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+parent_allocations = 454001
+current_allocations = 454005
+parent_reconstructed_temporaries = 28735
+current_reconstructed_temporaries = 28735
+parent_peak_mib = 12.38
+current_peak_mib = 11.67
+peak_movement_percent = -5.735
+policies_identical = true
+
+[size.release_native]
+general_parent_file = 4699376
+general_current_file = 4726120
+general_parent_text = 4040012
+general_current_text = 4065132
+general_text_movement_percent = 0.6218
+immediate_parent_file = 4734640
+immediate_current_file = 4761432
+immediate_parent_text = 4073628
+immediate_current_text = 4098796
+immediate_text_movement_percent = 0.6178
+
+[size.release_wasm_oz]
+general_parent_bytes = 2703302
+general_current_bytes = 2727644
+general_movement_percent = 0.9005
+immediate_parent_bytes = 2718337
+immediate_current_bytes = 2742692
+immediate_movement_percent = 0.8960
+
+[size.size_native]
+general_parent_file = 2098552
+general_current_file = 2115016
+general_parent_text = 1855338
+general_current_text = 1870978
+general_text_movement_percent = 0.8430
+immediate_parent_file = 2111608
+immediate_current_file = 2128024
+immediate_parent_text = 1867846
+immediate_current_text = 1883454
+immediate_text_movement_percent = 0.8356
+
+[size.size_wasm_oz]
+general_parent_bytes = 1153145
+general_current_bytes = 1165790
+general_movement_percent = 1.0966
+immediate_parent_bytes = 1163505
+immediate_current_bytes = 1176169
+immediate_movement_percent = 1.0884
+
+[size.repeated_release_native]
+parent_file = 6377360
+current_file = 6388304
+file_movement_percent = 0.1716
+parent_text = 5060542
+current_text = 5068286
+text_movement_percent = 0.1530
+parent_aggregate = 5317241
+current_aggregate = 5325417
+aggregate_movement_percent = 0.1538
+parent_bss = 1067
+current_bss = 883
+
+[profile]
+fixture = "generated_projective"
+policy = "STRICT"
+repetitions = 501
+logical_cpu = 9
+sample_count_approximate = 6000
+lost_samples = 0
+rational_to_f64_lossy_self_percent = 6.57
+compact_input_builder_self_percent = 5.67
+signed_product_sum_4x2_self_percent = 4.98
+signed_product_sum_6x2_self_percent = 4.97
+crossing_event_split_self_percent = 3.07
+compact_projective_preparation_self_percent = 2.10
+shared_projective_face_core_self_percent = 1.64
+memmove_self_percent = 1.33
+
+[call_graph.hypermesh]
+parent_nodes = 8018
+current_nodes = 8028
+parent_edges = 19670
+current_edges = 19820
+
+[call_graph.five_crates]
+parent_nodes = 19683
+current_nodes = 19718
+parent_edges = 39288
+current_edges = 39444
+
+[competitive.projective_generated]
+hypermesh_lower_ms = 6.2614
+hypermesh_center_ms = 6.2863
+hypermesh_upper_ms = 6.3339
+criterion_change_center_percent = -3.1184
+boolmesh_center_ms = 0.75975
+manifold_center_ms = 0.67420
+hypermesh_slower_than_boolmesh = 8.2742
+hypermesh_slower_than_manifold = 9.3241
+
+[competitive.dense_exact_cells]
+hypermesh_lower_ms = 0.83091
+hypermesh_center_ms = 0.83717
+hypermesh_upper_ms = 0.84668
+criterion_change_center_percent = -39.281
+boolmesh_center_ms = 7.2230
+manifold_center_ms = 4.3685
+hypermesh_faster_than_boolmesh = 8.6279
+hypermesh_faster_than_manifold = 5.2182
+
+[historical.retained_arrangement]
+historical_ms = 944.8
+current_strict_ms = 34.721862745
+time_reduction_percent = 96.325
+historical_peak_mib = 67.74
+current_peak_mib = 11.67
+peak_reduction_percent = 82.772
+historical_allocations = 5020891
+current_allocations = 454005
+allocation_reduction_percent = 90.958
+directional_only = true
+
+[validation]
+five_crate_default_tests = true
+five_crate_no_default_tests = true
+five_crate_all_feature_tests = true
+hypermesh_final_lib_tests = 1059
+warning_denied_clippy_all_and_minimal = true
+warning_denied_rustdoc_all_and_minimal = true
+bench_targets_compile = true
+fuzz_bins_compile = true
+address_sanitizer_hypermesh_lib_tests = 1059
+dispatch_all_families = true
+dispatch_unknown_facts = 0
+dispatch_fallbacks = 0
+dispatch_aborts = 0
+yeahright_both_policies_all_operations = true
+yeahright_policy_mesh_equality = true
+yeahright_exact_closure = true
+yeahright_exact_nondegeneracy = true
+yeahright_polygon_immediate_consistency = true
+stress_triangles = [3360, 13440]
+full_input_validation_triangles = 11894
+large_heap_fixtures_measured = true
+native_and_wasm_sizes_measured = true
+call_graph_measured = true
+full_rotated_boolean_rerun = false
+full_rotated_boolean_compact_path_reachable = false
+
+[[rejected]]
+name = "per-triangle polygon index"
+result = "40-byte carrier; replaced by one checked per-mesh offset and 32-byte rows"
+
+[[rejected]]
+name = "directed boundary occurrence keys"
+result = "misclassified internal reversed edges as unique and forced roughly 11x-slower fallback"
+
+[[rejected]]
+name = "second support deduplication and face collapse"
+result = "about +0.55% retained instructions and 12.45 MiB peak; replaced by one shared core"
+
+[[rejected]]
+name = "ManuallyDrop field copies"
+result = "compiled to the same memmove; ordinary ownership restored"
+
+[[rejected]]
+name = "fixture threshold gating"
+result = "unnecessary after every final workload family improved"

@@ -1,0 +1,420 @@
+date = "2026-08-01"
+title = "single-snapshot lossy dyadic export"
+hypermesh_commit = "13c9b99d8233140ac5ce1c2492a3a446ba18d2c5"
+hyperreal_parent_commit = "e90f501b85c65a37050cdcee31c7c92fb36d7b24"
+implementation_commit = "8d6eafdbddbb847fcd5d6a1acc4d74e91b3f84ea"
+retained = true
+
+[change]
+crate = "hyperreal"
+files_changed = 2
+production_insertions = 7
+production_deletions = 2
+test_insertions = 61
+public_api_changed = false
+compatibility_shim_added = false
+allocations_added = false
+caches_added = false
+carriers_added = false
+atomic_ordering_changed = false
+terminal_policy_changed = false
+
+[retained_fact_contract]
+old_relaxed_loads_per_reduced_lossy_export = 2
+new_relaxed_loads_per_reduced_lossy_export = 1
+unreduced_internal_bit_is_immutable = true
+learned_fact_bits_are_monotonic = true
+fact_updates_use_atomic_fetch_or = true
+single_snapshot_is_relaxed = true
+concurrent_stale_snapshot_may_only_repeat_exact_learning = true
+encoded_shift_is_one_atomic_word = true
+canonicalization_path_unchanged = true
+cold_learning_path_unchanged = true
+hot_decoder_reused = true
+
+[paths]
+cold_dyadic_learning_covered = true
+encoded_dyadic_hit_covered = true
+cached_non_dyadic_covered = true
+unreduced_canonicalization_covered = true
+zero_no_learning_covered = true
+wide_normal_dyadic_rounding_covered = true
+subnormal_and_overflow_covered_by_existing_suite = true
+non_dyadic_general_conversion_covered = true
+conversion_failure_fallback_covered = true
+concurrent_real_views_covered = true
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+lossy_export_is_non_certifying = true
+predicate_dispatch_changed = false
+equality_dispatch_changed = false
+certainty_changed = false
+topology_changed = false
+both_policy_outputs_certified = true
+both_policy_topology_identical = true
+
+[cpu_method]
+measurement_order = "parent,candidate,candidate,parent"
+logical_cpu = 9
+fixture_built_once_per_process = true
+complete_immediate_union_repeated = true
+instructions_and_branches_are_retention_gate = true
+task_clock_is_secondary = true
+host_load_was_variable = true
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+policy = "STRICT"
+repetitions = 101
+parent_task_ms_per_operation = 11.383564356
+candidate_task_ms_per_operation = 11.360297030
+task_movement_percent = -0.204394
+cycles_movement_percent = -0.128958
+instructions_movement_percent = -0.520322
+branches_movement_percent = -1.195963
+branch_misses_movement_percent = -0.130022
+cache_misses_movement_percent = -2.444883
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+policy = "APPROXIMATE_512"
+repetitions = 101
+parent_task_ms_per_operation = 11.450495050
+candidate_task_ms_per_operation = 11.443910891
+task_movement_percent = -0.057501
+cycles_movement_percent = -0.059165
+instructions_movement_percent = -0.524211
+branches_movement_percent = -1.200176
+branch_misses_movement_percent = -0.109793
+cache_misses_movement_percent = -0.949584
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+policy = "STRICT"
+repetitions = 51
+parent_task_ms_per_operation = 34.970490196
+candidate_task_ms_per_operation = 34.707843137
+task_movement_percent = -0.751053
+cycles_movement_percent = -0.688545
+instructions_movement_percent = -0.257947
+branches_movement_percent = -0.648889
+branch_misses_movement_percent = 0.730177
+cache_misses_movement_percent = -3.323678
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+policy = "APPROXIMATE_512"
+repetitions = 51
+parent_task_ms_per_operation = 34.830882353
+candidate_task_ms_per_operation = 34.937745098
+task_movement_percent = 0.306805
+cycles_movement_percent = 0.240148
+instructions_movement_percent = -0.257641
+branches_movement_percent = -0.649748
+branch_misses_movement_percent = -1.632723
+cache_misses_movement_percent = -1.681662
+
+[[serialized_cpu]]
+fixture = "subdivided_boxes"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+policy = "STRICT"
+repetitions = 2001
+parent_task_ms_per_operation = 1.393793103
+candidate_task_ms_per_operation = 1.363023488
+task_movement_percent = -2.207617
+cycles_movement_percent = -2.178912
+instructions_movement_percent = -0.065971
+branches_movement_percent = -0.200984
+branch_misses_movement_percent = -0.096220
+cache_misses_movement_percent = -5.383943
+
+[[serialized_cpu]]
+fixture = "subdivided_boxes"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+policy = "APPROXIMATE_512"
+repetitions = 2001
+parent_task_ms_per_operation = 1.368828086
+candidate_task_ms_per_operation = 1.363603198
+task_movement_percent = -0.381705
+cycles_movement_percent = -0.208017
+instructions_movement_percent = -0.099115
+branches_movement_percent = -0.225015
+branch_misses_movement_percent = 0.017848
+cache_misses_movement_percent = -4.598161
+
+[heap.generated_projective]
+input_triangles = 13452
+strict_allocations = 200753
+approximate_512_allocations = 200753
+strict_reconstructed_temporaries = 10359
+approximate_512_reconstructed_temporaries = 10359
+strict_peak_mib = 10.69
+approximate_512_peak_mib = 10.69
+matches_parent = true
+
+[heap.retained_arrangement]
+input_triangles = 4524
+fixture_sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+strict_allocations = 454001
+approximate_512_allocations = 454001
+strict_reconstructed_temporaries = 28735
+approximate_512_reconstructed_temporaries = 28735
+strict_peak_mib = 12.38
+approximate_512_peak_mib = 12.38
+matches_parent = true
+
+[heap.subdivided_boxes]
+input_triangles = 6144
+strict_allocations = 27209
+approximate_512_allocations = 27209
+strict_reconstructed_temporaries = 81
+approximate_512_reconstructed_temporaries = 81
+strict_peak_mib = 4.26
+approximate_512_peak_mib = 4.26
+matches_parent = true
+
+[criterion.exact_cell_union]
+hypermesh_low_ms = 1.3777
+hypermesh_center_ms = 1.3836
+hypermesh_high_ms = 1.3906
+preceding_hypermesh_center_ms = 1.3992
+movement_from_preceding_center_percent = -1.114923
+criterion_classification = "change within noise threshold"
+boolmesh_low_ms = 7.4253
+boolmesh_center_ms = 7.4395
+boolmesh_high_ms = 7.4570
+manifold_low_ms = 4.2846
+manifold_center_ms = 4.2928
+manifold_high_ms = 4.3030
+faster_than_boolmesh_ratio = 5.376915
+faster_than_manifold_ratio = 3.102631
+competitors_are_throughput_controls_not_exactness_oracles = true
+
+[criterion.projective_union]
+hypermesh_low_ms = 6.3661
+hypermesh_center_ms = 6.3755
+hypermesh_high_ms = 6.3813
+preceding_hypermesh_center_ms = 6.3530
+movement_from_preceding_center_percent = 0.354163
+criterion_classification = "no change in performance detected"
+boolmesh_low_us = 746.84
+boolmesh_center_us = 748.41
+boolmesh_high_us = 749.68
+manifold_low_us = 656.29
+manifold_center_us = 660.32
+manifold_high_us = 664.35
+slower_than_boolmesh_ratio = 8.518726
+slower_than_manifold_ratio = 9.655167
+competitors_are_throughput_controls_not_exactness_oracles = true
+
+[historical_retained]
+historical_runtime_ms = 944.8
+historical_peak_mib = 67.74
+historical_allocations = 5020891
+current_strict_runtime_ms = 34.707843
+current_peak_mib = 12.38
+current_allocations = 454001
+runtime_movement_percent = -96.326435
+peak_movement_percent = -81.724240
+allocations_movement_percent = -90.957760
+directional_not_direct_ab = true
+
+[profile]
+fixture = "generated_projective_8"
+policy = "STRICT"
+operations = 100
+frequency_hz = 1999
+samples = 2296
+lost_samples = 0
+approximate_cycle_events = 4767140061
+preceding_cycle_events = 4772911846
+cycle_events_movement_percent = -0.120928
+builder_self_percent = 5.06
+projective_construction_self_percent = 4.51
+memmove_self_percent = 4.44
+lossy_conversion_self_percent = 3.80
+signed_product_sum_ordering_self_percent = 3.52
+product_sum_plan_self_percent = 2.60
+normalization_self_percent = 2.54
+malloc_self_percent = 2.51
+crossing_self_percent = 2.47
+unplanned_word_totals_self_percent = 2.26
+
+[[linked_size]]
+consumer = "general"
+profile = "release"
+format = "native_text"
+parent_bytes = 4036996
+candidate_bytes = 4037092
+movement_bytes = 96
+movement_percent = 0.002378
+
+[[linked_size]]
+consumer = "immediate"
+profile = "release"
+format = "native_text"
+parent_bytes = 4070612
+candidate_bytes = 4070708
+movement_bytes = 96
+movement_percent = 0.002358
+
+[[linked_size]]
+consumer = "general"
+profile = "release"
+format = "wasm_opt_oz"
+parent_bytes = 2702295
+candidate_bytes = 2702123
+movement_bytes = -172
+movement_percent = -0.006365
+
+[[linked_size]]
+consumer = "immediate"
+profile = "release"
+format = "wasm_opt_oz"
+parent_bytes = 2717330
+candidate_bytes = 2717158
+movement_bytes = -172
+movement_percent = -0.006330
+
+[[linked_size]]
+consumer = "general"
+profile = "size"
+format = "native_text"
+parent_bytes = 1854058
+candidate_bytes = 1854090
+movement_bytes = 32
+movement_percent = 0.001726
+
+[[linked_size]]
+consumer = "immediate"
+profile = "size"
+format = "native_text"
+parent_bytes = 1866574
+candidate_bytes = 1866606
+movement_bytes = 32
+movement_percent = 0.001714
+
+[[linked_size]]
+consumer = "general"
+profile = "size"
+format = "wasm_opt_oz"
+parent_bytes = 1151845
+candidate_bytes = 1151896
+movement_bytes = 51
+movement_percent = 0.004428
+
+[[linked_size]]
+consumer = "immediate"
+profile = "size"
+format = "wasm_opt_oz"
+parent_bytes = 1162204
+candidate_bytes = 1162254
+movement_bytes = 50
+movement_percent = 0.004302
+
+[representative_binary]
+parent_file_bytes = 6372312
+candidate_file_bytes = 6374120
+file_movement_bytes = 1808
+parent_text_bytes = 5055522
+candidate_text_bytes = 5057314
+text_movement_bytes = 1792
+parent_data_bytes = 255632
+candidate_data_bytes = 255632
+data_movement_bytes = 0
+parent_bss_bytes = 1995
+candidate_bss_bytes = 4283
+bss_movement_bytes = 2288
+parent_text_data_bss_bytes = 5313149
+candidate_text_data_bss_bytes = 5317229
+text_data_bss_movement_bytes = 4080
+equal_length_executable_paths = true
+reported_bss_movement_is_link_layout_padding = true
+
+[callgraph]
+parent_hypermesh_nodes = 8018
+parent_hypermesh_edges = 19670
+candidate_hypermesh_nodes = 8018
+candidate_hypermesh_edges = 19670
+parent_five_crate_nodes = 19671
+parent_five_crate_edges = 39266
+candidate_five_crate_nodes = 19679
+candidate_five_crate_edges = 39275
+node_movement = 8
+edge_movement = 9
+production_function_added = false
+receiver_name_parser_heuristic = true
+new_policy_or_fallback_spine = false
+
+[validation]
+all_five_crates_default_tests_passed = true
+all_five_crates_minimal_tests_passed = true
+all_five_crates_all_feature_tests_passed = true
+hyperreal_default_library_tests_passed = 559
+hyperreal_minimal_library_tests_passed = 559
+hyperreal_all_feature_library_tests_passed = 636
+hypermesh_default_library_tests_passed = 1057
+hypermesh_minimal_library_tests_passed = 1057
+hypermesh_all_feature_library_tests_passed = 1058
+all_integration_and_doc_tests_passed = true
+all_five_crates_clippy_all_features_warning_denied = true
+all_five_crates_clippy_minimal_warning_denied = true
+all_five_crates_rustdoc_all_features_warning_denied = true
+all_five_crates_rustdoc_minimal_warning_denied = true
+all_five_crates_format_check_passed = true
+diff_check_passed = true
+hyperreal_all_benchmark_targets_compiled = true
+hypermesh_all_benchmark_targets_compiled = true
+hypermesh_all_fuzz_bins_checked = true
+asan_dyadic_tests_passed = 37
+yeahright_competitor_input_gate_passed = true
+yeahright_every_operation_closure_passed = true
+yeahright_polygon_immediate_consistency_passed = true
+yeahright_large_stress_passed = true
+yeahright_full_resolution_input_validation_passed = true
+dispatch_trace_all_families_passed = true
+generated_dispatch_unknown_fact_events = 0
+generated_dispatch_fallback_or_abort_events = 0
+full_resolution_rotated_boolean_rerun_required = false
+full_resolution_rerun_reason = "advisory retained-fact load reuse only; no numeric result, predicate, terminal policy, certainty, topology, allocation, carrier, normalization, or candidate-scaling change"
+
+[[rejected_experiment]]
+name = "one shared out-of-line lossy conversion copy"
+fully_removed = true
+representative_text_movement_bytes_from_parent = -13168
+generated_instructions_movement_percent_approx = -0.635
+generated_branches_movement_percent_approx = -1.235
+strict_task_movement_from_selected_percent = 1.224
+approximate_task_movement_from_selected_percent = 0.720
+cache_misses_movement_from_selected_percent_min = 4.5
+cache_misses_movement_from_selected_percent_max = 6.2
+reason = "size-first form repeatedly lost elapsed time and cache locality"
+
+[[rejected_experiment]]
+name = "cold out-of-line internal-unreduced conversion"
+fully_removed = true
+representative_text_movement_bytes_from_parent = 736
+representative_text_data_bss_movement_bytes_from_parent = -16
+generated_instructions_movement_percent_approx = -0.296
+generated_branches_movement_percent_approx = -0.674
+strict_task_movement_from_parent_percent = 0.527
+approximate_task_movement_from_parent_percent = 0.794
+reason = "frequent internal coordinates made the extra call slower and surrendered about half the selected deterministic gain"

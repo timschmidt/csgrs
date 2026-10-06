@@ -1,0 +1,307 @@
+schema_version = 1
+date = "2026-08-05"
+status = "retained; Phases 11, 17, and 18 remain open"
+
+[revisions]
+hypertri_parent = "72ddcdc"
+hypertri_current = "824bd3a"
+hypermesh_implementation = "4aa51efc"
+hypermesh_measurement_parent = "90597747"
+
+[scope]
+boolean_engine = "surface_arrangement"
+compatibility_shim = false
+alternate_boolean_engine = false
+fixture_dispatch = false
+coordinate_or_width_dispatch = false
+operation_dispatch = false
+expected_result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+algorithmic_cardinality_crossover_triangles = 16
+hypercurve_touched = false
+hypersolve_touched = false
+
+[algorithm]
+retained_unit = "checked reciprocal triangle adjacency plus one representative triangle per vertex"
+inside_point_split = "one triangle to three"
+hull_edge_point_split = "one triangle to two"
+interior_edge_point_split = "two triangles to four"
+small_path = "compact sparse adjacency rebuild"
+large_path = "one checked adjacency construction followed by local exact patches"
+topology_transfer = "point triangulation into constraint recovery and canonicalization"
+atomic_boundary_proof = true
+manifold_incidence_checked = true
+reciprocal_neighbors_checked = true
+replacement_index_vector = false
+reused_patch_scratch = true
+
+[policy]
+strict_exact_only = true
+approximate_512_terminal_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+implementation_policy_branch = false
+large_policy_outputs_equal = true
+large_certainty = "Certified"
+large_exact_six_volume = 12805
+
+[source_size]
+files_changed = 3
+insertions = 514
+deletions = 99
+net_lines = 415
+
+[dense17_parent]
+artifact = "target/phase17-before-retained-point-adjacency-competitive_arrangement_probe"
+sha256 = "4312f98547ad3fe6c10f08448a5e30b20a2104e3af5ab6b2df84ba4028fd9494"
+repetitions = 5
+instructions = 22355999159
+branches = 2924725135
+cycles = 5955766172
+median_boolean_ns = 1404054762
+
+[dense17_current]
+artifact = "target/release/examples/competitive_arrangement_probe"
+sha256 = "8cfc910b77edacb7594100a47ba7a8a82a45010522f6dc935c1067e431287973"
+repetitions = 5
+instructions = 21536995472
+branches = 2817740957
+cycles = 5649794117
+median_boolean_ns = 1334104449
+instruction_change_percent = -3.663463
+branch_change_percent = -3.657922
+cycle_change_percent = -5.137409
+median_boolean_change_percent = -4.982022
+shared_vertices = 9464
+result_triangles = [11308, 11908, 10764, 12452]
+certainty = "Certified"
+
+[[small_control]]
+fixture = "crossing_octahedra"
+repetitions = 5
+arrangements_per_repetition = 1000
+parent_instructions = 2917730202
+current_instructions = 2919816330
+instruction_change_percent = 0.071498
+parent_branches = 495810910
+current_branches = 495847493
+branch_change_percent = 0.007378
+parent_cycles = 1233360230
+current_cycles = 1228169036
+cycle_change_percent = -0.420898
+parent_median_ns = 292128409
+current_median_ns = 290506660
+median_change_percent = -0.555149
+retained_topology_initialized = false
+
+[[small_control]]
+fixture = "affine_boxes"
+repetitions = 5
+arrangements_per_repetition = 1000
+parent_instructions = 6862685269
+current_instructions = 6868511652
+instruction_change_percent = 0.084899
+parent_branches = 1174210957
+current_branches = 1176294351
+branch_change_percent = 0.177429
+parent_cycles = 2827822148
+current_cycles = 2906252889
+cycle_change_percent = 2.773539
+parent_median_ns = 668171683
+current_median_ns = 688752242
+median_change_percent = 3.080130
+retained_topology_initialized = false
+gap_open = true
+
+[dense65_heap]
+strict_equals_approximate_512 = true
+certainty = "Certified"
+input_triangles = 1572
+grid_crossings = 16900
+output_vertices = 73844
+output_triangles = 164068
+total_peak_bytes = 178914697
+incremental_kernel_peak_bytes = 178125996
+post_boolean_incremental_bytes = 57917376
+output_live_payload_bytes = 57784192
+input_fact_growth_bytes = 133184
+post_input_drop_incremental_bytes = 118328
+parent_allocation_calls = 47668590
+allocation_calls = 32817512
+allocation_call_change_percent = -31.154851
+parent_deallocation_calls = 47010732
+deallocation_calls = 32159654
+deallocation_call_change_percent = -31.590825
+parent_reallocation_calls = 2531566
+reallocation_calls = 2132870
+reallocation_change_percent = -15.748987
+parent_cumulative_added_bytes = 95666427841
+cumulative_added_bytes = 9761722369
+cumulative_added_change_percent = -89.796084
+parent_cumulative_removed_bytes = 95608510465
+cumulative_removed_bytes = 9703804993
+cumulative_removed_change_percent = -89.850480
+
+[dense65_process]
+policy = "STRICT"
+parent_elapsed_seconds = 80.35
+elapsed_seconds = 69.68
+elapsed_change_percent = -13.279403
+parent_user_seconds = 79.90
+user_seconds = 63.97
+user_change_percent = -19.937422
+parent_maximum_rss_kib = 191856
+maximum_rss_kib = 191772
+maximum_rss_change_kib = -84
+maximum_rss_change_percent = -0.043783
+swaps = 0
+
+[large_policy_gate]
+policies = ["STRICT", "APPROXIMATE_512"]
+complete_real_equality = true
+topology_equal = true
+balanced_boundaries = true
+exact_volume_equal = true
+parent_elapsed_seconds = 163.90
+elapsed_seconds = 129.93
+elapsed_change_percent = -20.726052
+
+[profile]
+artifact = "target/phase17-retained-point-insertion-topology-final.perf.data"
+frequency_hz = 999
+samples = 1341
+lost_samples = 0
+exact_homogeneous_point2_self_percent = 25.41
+orient2d_policy_self_percent = 19.84
+exact_dyadic_f64_self_percent = 6.92
+projected_segment_self_percent = 5.28
+rational_denominator_self_percent = 4.53
+rational_numerator_self_percent = 4.07
+replace_region_self_percent = 1.66
+triangle_neighbors_parent_self_percent = 7.98
+triangle_neighbors_self_percent = 0.98
+neighbor_across_self_percent = 0.68
+
+[direct_probe_size]
+parent_text_bytes = 2755089
+current_text_bytes = 2761053
+change_bytes = 5964
+change_percent = 0.216472
+
+[canonical_size]
+toolchain = "rustc 1.97.0 (2d8144b78 2026-07-07)"
+minimum_growth_percent = 0.226434
+maximum_growth_percent = 0.518828
+default_release_native_text_parent = [1981398, 1984542]
+default_release_native_text_current = [1986190, 1989342]
+default_release_wasm_oz_parent = [1403334, 1405165]
+default_release_wasm_oz_current = [1407703, 1409543]
+default_size_native_text_parent = [1086807, 1087763]
+default_size_native_text_current = [1091103, 1092059]
+default_size_wasm_oz_parent = [675721, 675947]
+default_size_wasm_oz_current = [678869, 679454]
+all_release_native_text_parent = [2116291, 2119147]
+all_release_native_text_current = [2121083, 2123947]
+all_release_wasm_oz_parent = [1477366, 1479327]
+all_release_wasm_oz_current = [1481754, 1483724]
+all_size_native_text_parent = [1089159, 1090131]
+all_size_native_text_current = [1093439, 1094411]
+all_size_wasm_oz_parent = [675570, 676034]
+all_size_wasm_oz_current = [678899, 679353]
+
+[cgal]
+version = "6.0.3"
+cpu = 11
+exact_rational_off = true
+all_outputs_valid_closed_structurally_valid = true
+all_runtime_gaps_open = true
+
+[[cgal_fresh]]
+fixture = "crossing_octahedra"
+cgal_outside_median_ns = 116262
+cgal_outside_min_ns = 110323
+cgal_outside_max_ns = 333227
+cgal_inside_median_ns = 117962
+cgal_inside_min_ns = 108343
+cgal_inside_max_ns = 348906
+hypermesh_strict_median_ns = 545353
+hypermesh_strict_min_ns = 427591
+hypermesh_strict_max_ns = 874250
+hypermesh_strict_ratio = 4.690724
+hypermesh_approximate_512_median_ns = 536783
+hypermesh_approximate_512_min_ns = 427321
+hypermesh_approximate_512_max_ns = 737980
+hypermesh_approximate_512_ratio = 4.617012
+
+[[cgal_fresh]]
+fixture = "affine_boxes"
+cgal_outside_median_ns = 379684
+cgal_outside_min_ns = 362775
+cgal_outside_max_ns = 582860
+cgal_inside_median_ns = 381824
+cgal_inside_min_ns = 366745
+cgal_inside_max_ns = 645656
+hypermesh_strict_median_ns = 996042
+hypermesh_strict_min_ns = 784446
+hypermesh_strict_max_ns = 1559783
+hypermesh_strict_ratio = 2.623345
+hypermesh_approximate_512_median_ns = 961074
+hypermesh_approximate_512_min_ns = 787946
+hypermesh_approximate_512_max_ns = 1490667
+hypermesh_approximate_512_ratio = 2.531247
+
+[[cgal_reused]]
+fixture = "crossing_octahedra"
+iterations_per_trial = 1000
+cgal_ns = [115402, 115702, 115102, 116442, 117712]
+hypermesh_strict_ns = [299894, 297499, 292155, 291288, 291468]
+paired_ratios = [2.598690, 2.571252, 2.538227, 2.501572, 2.476111]
+median_paired_ratio = 2.538227
+
+[[cgal_reused]]
+fixture = "affine_boxes"
+iterations_per_trial = 1000
+cgal_ns = [372625, 368385, 372095, 371224, 375244]
+hypermesh_strict_ns = [680305, 691325, 685467, 677567, 677959]
+paired_ratios = [1.825709, 1.876637, 1.842183, 1.825224, 1.806715]
+median_paired_ratio = 1.825709
+
+[callgraph]
+parent_production_nodes = 15255
+parent_production_edges = 25450
+production_nodes = 15309
+production_edges = 25529
+tests_examples_nodes = 17656
+tests_examples_edges = 28899
+all_evidence_nodes = 21701
+all_evidence_edges = 34999
+node_change = 54
+edge_change = 79
+production_artifact = "target/phase17-retained-point-topology-callgraph-production/callgraph.json"
+tests_examples_artifact = "target/phase17-retained-point-topology-callgraph-tests/callgraph.json"
+all_evidence_artifact = "target/phase17-retained-point-topology-callgraph-all/callgraph.json"
+retired_namespace_nodes = 0
+boolean_engine_namespaces = ["hypermesh::surface_arrangement"]
+
+[validation]
+hypertri_all_features = true
+hypermesh_release_all_features = true
+hypertri_clippy_all_targets_all_features_deny_warnings = true
+hypermesh_clippy_all_targets_all_features_deny_warnings = true
+format_check = true
+diff_check = true
+large_policy_gate = true
+canonical_size_default = true
+canonical_size_all = true
+callgraph_scopes = 3
+
+[open]
+phase11 = true
+phase17 = true
+phase18 = true
+small_affine_regression_control = true
+all_cgal_runtime_gaps = true
+linked_size_recovery = true
+external_real_world_corpus = true
+stage_specific_lifetime_attribution = true
+next_profile_target = "retained exact homogeneous-point and orientation scheduling"

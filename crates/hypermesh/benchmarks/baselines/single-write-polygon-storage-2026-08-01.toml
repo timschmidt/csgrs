@@ -1,0 +1,401 @@
+date = "2026-08-01"
+title = "single-write source-polygon storage"
+direct_parent_commit = "5b8f103a387b4f341366466dc3866f5bf05ce3d5"
+parent_implementation_commit = "88c2bc47c6b25389200a5e6a0f68abc3045694b6"
+implementation_commit = "df75f3b04474b8cf4803ec9313048728e37fc5d8"
+retained = true
+
+[change]
+file = "src/mesh.rs"
+insertions = 7
+deletions = 1
+convex_polygon_bytes = 336
+old_codegen_copies = 2
+new_codegen_copies = 1
+compatibility_shim_added = false
+production_unsafe_blocks_added = 1
+
+[safety_invariant]
+length_captured_before_pointer = true
+reserve_one_precedes_pointer = true
+reserve_guarantees_aligned_spare_slot = true
+write_initializes_exactly_one_slot = true
+panicking_operation_between_write_and_set_len = false
+set_len_exposes_exactly_initialized_slot = true
+reserve_panic_leaves_vector_unchanged_and_local_owned = true
+later_panic_drops_vector_element_normally = true
+outer_capacity_is_checked_triangle_sum = true
+local_proof_depends_on_outer_capacity = false
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+numeric_operations_changed = false
+predicates_changed = false
+certainty_changed = false
+topology_changed = false
+both_policy_outputs_certified = true
+both_policy_topology_identical = true
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+input_triangles = 13452
+policy = "STRICT"
+repetitions = 101
+parent_task_ms_per_operation = 11.713774
+candidate_task_ms_per_operation = 11.602085
+task_movement_percent = -0.953487
+cycles_movement_percent = -0.975899
+instructions_movement_percent = -0.696341
+branches_movement_percent = -0.651018
+branch_misses_movement_percent = 0.328733
+cache_misses_movement_percent = -6.441283
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+input_triangles = 13452
+policy = "APPROXIMATE_512"
+repetitions = 101
+parent_task_ms_per_operation = 11.705132
+candidate_task_ms_per_operation = 11.783096
+task_movement_percent = 0.666067
+cycles_movement_percent = 0.637312
+instructions_movement_percent = -0.703069
+branches_movement_percent = -0.661222
+branch_misses_movement_percent = -0.118520
+cache_misses_movement_percent = -4.096864
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+policy = "STRICT"
+repetitions = 51
+parent_task_ms_per_operation = 35.212783
+candidate_task_ms_per_operation = 35.080920
+task_movement_percent = -0.374475
+cycles_movement_percent = -0.439080
+instructions_movement_percent = -0.072929
+branches_movement_percent = -0.067561
+branch_misses_movement_percent = 0.538888
+cache_misses_movement_percent = -0.501712
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+policy = "APPROXIMATE_512"
+repetitions = 51
+parent_task_ms_per_operation = 34.970740
+candidate_task_ms_per_operation = 35.138934
+task_movement_percent = 0.480958
+cycles_movement_percent = 0.457479
+instructions_movement_percent = -0.076261
+branches_movement_percent = -0.072842
+branch_misses_movement_percent = 0.682892
+cache_misses_movement_percent = -1.831503
+
+[[serialized_cpu]]
+fixture = "subdivided_boxes"
+input_triangles = 6144
+policy = "STRICT"
+repetitions = 2001
+parent_task_ms_per_operation = 1.448041
+candidate_task_ms_per_operation = 1.397469
+task_movement_percent = -3.492398
+cycles_movement_percent = -3.258227
+instructions_movement_percent = -2.623350
+branches_movement_percent = -2.398210
+branch_misses_movement_percent = -2.832216
+cache_misses_movement_percent = -8.288916
+
+[[serialized_cpu]]
+fixture = "subdivided_boxes"
+input_triangles = 6144
+policy = "APPROXIMATE_512"
+repetitions = 2001
+parent_task_ms_per_operation = 1.436324
+candidate_task_ms_per_operation = 1.437084
+task_movement_percent = 0.052903
+cycles_movement_percent = 0.162203
+instructions_movement_percent = -2.622624
+branches_movement_percent = -2.397017
+branch_misses_movement_percent = -2.541168
+cache_misses_movement_percent = -5.755891
+
+[heap.generated_projective]
+input_triangles = 13452
+strict_allocations = 200753
+approximate_512_allocations = 200753
+strict_reconstructed_temporaries = 10359
+approximate_512_reconstructed_temporaries = 10359
+strict_peak_mib = 10.69
+approximate_512_peak_mib = 10.69
+matches_parent = true
+
+[heap.retained_arrangement]
+input_triangles = 4524
+strict_allocations = 454001
+approximate_512_allocations = 454001
+strict_reconstructed_temporaries = 28735
+approximate_512_reconstructed_temporaries = 28735
+strict_peak_mib = 12.38
+approximate_512_peak_mib = 12.38
+matches_parent = true
+
+[heap.subdivided_boxes]
+input_triangles = 6144
+strict_allocations = 27209
+approximate_512_allocations = 27209
+strict_reconstructed_temporaries = 81
+approximate_512_reconstructed_temporaries = 81
+strict_peak_mib = 4.26
+approximate_512_peak_mib = 4.26
+matches_parent = true
+
+[criterion.exact_cell_union]
+hypermesh_low_ms = 1.3524
+hypermesh_center_ms = 1.3547
+hypermesh_high_ms = 1.3560
+preceding_hypermesh_center_ms = 1.4354
+movement_from_preceding_center_percent = -5.622126
+criterion_paired_center_movement_percent = -5.1654
+criterion_classification = "improved"
+boolmesh_low_ms = 7.4128
+boolmesh_center_ms = 7.4327
+boolmesh_high_ms = 7.4529
+manifold_low_ms = 4.2749
+manifold_center_ms = 4.2850
+manifold_high_ms = 4.3012
+faster_than_boolmesh_ratio = 5.486602
+faster_than_manifold_ratio = 3.163062
+
+[criterion.projective_union]
+hypermesh_low_ms = 6.3440
+hypermesh_center_ms = 6.3595
+hypermesh_high_ms = 6.3771
+preceding_hypermesh_center_ms = 6.4028
+movement_from_preceding_center_percent = -0.676267
+criterion_paired_center_movement_percent = -0.5674
+criterion_classification = "within noise threshold"
+boolmesh_low_us = 744.79
+boolmesh_center_us = 746.05
+boolmesh_high_us = 748.42
+manifold_low_us = 661.16
+manifold_center_us = 663.50
+manifold_high_us = 665.20
+slower_than_boolmesh_ratio = 8.524228
+slower_than_manifold_ratio = 9.584778
+competitors_are_throughput_controls_not_exactness_oracles = true
+
+[historical_retained]
+historical_runtime_ms = 944.8
+historical_peak_mib = 67.74
+historical_allocations = 5020891
+current_strict_runtime_ms = 35.080920
+current_peak_mib = 12.38
+current_allocations = 454001
+runtime_movement_percent = -96.286948
+peak_movement_percent = -81.724240
+allocations_movement_percent = -90.957760
+directional_not_direct_ab = true
+
+[profile]
+fixture = "generated_projective_8"
+policy = "STRICT"
+operations = 100
+frequency_hz = 1999
+samples = 2350
+lost_samples = 0
+approximate_cycle_events = 4862760510
+preceding_cycle_events = 4965995227
+cycle_events_movement_percent = -2.078832
+preceding_memmove_self_percent = 6.00
+current_memmove_self_percent = 4.31
+builder_self_percent = 4.81
+
+[[linked_size]]
+consumer = "general"
+profile = "release"
+format = "native_text"
+parent_bytes = 4034636
+candidate_bytes = 4034636
+movement_bytes = 0
+
+[[linked_size]]
+consumer = "immediate"
+profile = "release"
+format = "native_text"
+parent_bytes = 4068252
+candidate_bytes = 4068252
+movement_bytes = 0
+
+[[linked_size]]
+consumer = "general"
+profile = "release"
+format = "wasm_opt_oz"
+parent_bytes = 2711129
+candidate_bytes = 2711129
+movement_bytes = 0
+
+[[linked_size]]
+consumer = "immediate"
+profile = "release"
+format = "wasm_opt_oz"
+parent_bytes = 2726164
+candidate_bytes = 2726164
+movement_bytes = 0
+
+[[linked_size]]
+consumer = "general"
+profile = "size"
+format = "native_text"
+parent_bytes = 1855802
+candidate_bytes = 1855938
+movement_bytes = 136
+movement_percent = 0.007328
+
+[[linked_size]]
+consumer = "immediate"
+profile = "size"
+format = "native_text"
+parent_bytes = 1868302
+candidate_bytes = 1868430
+movement_bytes = 128
+movement_percent = 0.006851
+
+[[linked_size]]
+consumer = "general"
+profile = "size"
+format = "wasm_opt_oz"
+parent_bytes = 1152628
+candidate_bytes = 1152620
+movement_bytes = -8
+movement_percent = -0.000694
+
+[[linked_size]]
+consumer = "immediate"
+profile = "size"
+format = "wasm_opt_oz"
+parent_bytes = 1163596
+candidate_bytes = 1163587
+movement_bytes = -9
+movement_percent = -0.000773
+
+[representative_binary]
+parent_file_bytes = 6369296
+candidate_file_bytes = 6369296
+file_movement_bytes = 0
+parent_text_bytes = 5053154
+candidate_text_bytes = 5053102
+text_movement_bytes = -52
+parent_data_bytes = 255712
+candidate_data_bytes = 255712
+data_movement_bytes = 0
+parent_bss_bytes = 4283
+candidate_bss_bytes = 4315
+bss_movement_bytes = 32
+parent_text_data_bss_bytes = 5313149
+candidate_text_data_bss_bytes = 5313129
+text_data_bss_movement_bytes = -20
+parent_builder_symbol_bytes = 12877
+candidate_builder_symbol_bytes = 12839
+builder_symbol_movement_bytes = -38
+
+[callgraph]
+parent_isolated_nodes = 8014
+parent_isolated_edges = 19666
+candidate_isolated_nodes = 8018
+candidate_isolated_edges = 19670
+parent_five_crate_nodes = 19664
+parent_five_crate_edges = 39256
+candidate_five_crate_nodes = 19668
+candidate_five_crate_edges = 39260
+synthetic_push_nodes_removed = 1
+synthetic_direct_storage_nodes_added = 5
+receiver_name_parser_heuristic = true
+new_policy_or_fallback_spine = false
+
+[validation]
+default_library_tests_passed = 1057
+minimal_library_tests_passed = 1057
+all_feature_library_tests_passed = 1058
+all_integration_suites_passed = true
+clippy_all_features_warning_denied = true
+clippy_minimal_warning_denied = true
+rustdoc_all_features_warning_denied = true
+rustdoc_minimal_warning_denied = true
+format_check_passed = true
+diff_check_passed = true
+all_fuzz_bins_checked = true
+all_benchmark_targets_compiled = true
+asan_internal_mesh_tests_passed = 14
+asan_polygon_soup_integration_tests_passed = 7
+yeahright_every_operation_closure_passed = true
+yeahright_polygon_immediate_consistency_passed = true
+yeahright_large_stress_passed = true
+yeahright_full_resolution_input_validation_passed = true
+dispatch_trace_all_families_passed = true
+generated_dispatch_unknown_fact_events = 0
+generated_dispatch_fallback_or_abort_events = 0
+full_resolution_rotated_boolean_rerun_required = false
+full_resolution_rerun_reason = "carrier-only single-write storage; no normalization, scaling, predicate, policy, or topology change"
+
+[[rejected_experiment]]
+name = "early safe push then mutate vector element"
+fully_removed = true
+copies = 1
+representative_file_movement_bytes = -136
+representative_text_movement_bytes = -200
+generated_instructions_movement_percent_approx = -0.64
+boxes_instructions_movement_percent_approx = -2.51
+extended_boxes_runtime_regression_percent_approx = 1.4
+reason = "moving support validation from the stack to vector storage regressed the hot box clock"
+
+[[rejected_experiment]]
+name = "validate then push and set identity"
+fully_removed = true
+copies = 2
+reason = "did not remove the second carrier copy"
+
+[[rejected_experiment]]
+name = "spare_capacity_mut indexed write"
+fully_removed = true
+copies = 1
+representative_text_movement_bytes = 56
+representative_data_movement_bytes = 24
+reason = "correct but larger than the direct pointer spelling"
+
+[[rejected_experiment]]
+name = "extend one-element array"
+fully_removed = true
+copies = 2
+representative_file_movement_bytes = 1112
+representative_text_movement_bytes = 476
+reason = "retained copies and added an out-of-line generic helper"
+
+[[rejected_experiment]]
+name = "extend once iterator"
+fully_removed = true
+copies = 2
+representative_file_movement_bytes = 624
+representative_text_movement_bytes = 212
+reason = "retained copies and added an out-of-line generic helper"
+
+[[rejected_experiment]]
+name = "direct pointer write without reserve"
+fully_removed = true
+copies = 1
+representative_file_movement_bytes = -40
+representative_text_movement_bytes = -72
+reason = "made safety depend on the distant whole-input preallocation invariant"
+
+[stack_revisions]
+hyperreal = "7262d3037d056c9fee83b07d6d43cc3d7bf65277"
+hyperlattice = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit = "3e5d8816cd32bba46f48e0c6c13ab7a9da227784"
+hypertri = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+
+[toolchain]
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+cpu = "AMD Ryzen 7 5800X3D 8-Core Processor"
+perf_version = "7.0.4"
+heaptrack_recordings_serialized = true

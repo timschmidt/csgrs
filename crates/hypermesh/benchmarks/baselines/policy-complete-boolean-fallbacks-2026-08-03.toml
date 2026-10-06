@@ -1,0 +1,559 @@
+date = "2026-08-03"
+status = "complete"
+phase = 9
+checkpoint = 45
+title = "Policy-complete Boolean fallbacks and completion audit"
+policy_contract = "explicit MeshContext; STRICT certified-only; APPROXIMATE_512 may consume only Hyperlimit's terminal 512-bit equality/sign interpretation"
+hypermesh_parent = "c4b582ac86ea710f2d1fbc91dd06f2f93d7e9eff"
+hypermesh_retained_fallback = "ee199c3aac42107f762a3a681575d93babe8916f"
+hypermesh_coincident_output_index = "0ef4a5de58bb1a5edf13136bfa6f6e717daf4204"
+hypermesh_bounded_candidate_keys = "074afe11267e48aacdbfa5a4d733d14d894de3ff"
+hyperreal_explicit_sign_boundary = "471a0ae564108425021b3a120fb9ccd0ed532c92"
+hyperreal_bounded_surd_reconstruction = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit = "3e5d8816cd32bba46f48e0c6c13ab7a9da227784"
+hypertri = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+hypervoxel_adapter_lock = "30b396d"
+retained_obj_sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+new_dependency = false
+new_public_mesh_api = false
+compatibility_shim = false
+deprecated_forwarder = false
+mutable_global_policy = false
+terminal_policy_change = false
+temporary_hooks_removed = true
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+kernel = "7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[implementation]
+native_retained_polygons_retry_fresh = true
+native_failures_retry_raw_general = true
+output_materialization_inside_retry_ladder = true
+clip_invalidates_known_vertices = true
+clip_invalidates_known_identities = true
+intersection_dedup_is_policy_numeric = true
+projective_coincident_output_declines_candidate = true
+finite_exact_rational_candidate_key = true
+candidate_key_different_proves_inequality = true
+candidate_key_collision_exactly_rechecked = true
+symbolic_and_nonfinite_all_pairs_fallback = true
+rounded_collision_regression = "1 + 2^-60 versus 1"
+computable_ambiguous_sign_api_removed = true
+owned_float_conversion_cache_independent = true
+lossy_float_conversion_noncertifying = true
+oversized_quadratic_surd_recursion_bounded = true
+
+[policy]
+mesh_context_bytes = 1
+mesh_certainty_bytes = 1
+strict_accepts_approximate = false
+approximate_512_terminal_precision = -512
+terminal_approximation_owner = "hyperlimit"
+failed_attempt_certainty_is_conservatively_retained = true
+reusable_approximate_facts_rejected_by_strict = true
+
+[path_audit]
+production_hardcoded_mesh_policy = false
+policy_free_topology_wrapper = false
+compatibility_wrapper = false
+hidden_default_depth_cap = false
+default_max_depth = "usize::MAX"
+explicit_depth_limit_is_typed_error = true
+unchecked_winding_transition = false
+silent_partial_output_acceptance = false
+accepted_outputs_closure_certified = true
+bounded_samples_only_schedule_or_accelerate = true
+bounded_accelerators_have_complete_fallback = true
+
+[[topology]]
+fixture = "generated_projective"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+strict_certainty = "Certified"
+approximate_512_certainty = "Certified"
+policies_identical = true
+
+[[topology]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+strict_certainty = "Certified"
+approximate_512_certainty = "Certified"
+policies_identical = true
+
+[[topology]]
+fixture = "dense_boxes"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+strict_certainty = "Certified"
+approximate_512_certainty = "Certified"
+policies_identical = true
+
+[[heap]]
+fixture = "generated_projective"
+policy = "STRICT"
+allocations = 200429
+temporary_allocations = 10364
+peak_mib = 7.50
+profiler_rss_mib = 18.20
+direct_rss_kib = 12988
+direct_elapsed_seconds = 0.07
+
+[[heap]]
+fixture = "generated_projective"
+policy = "APPROXIMATE_512"
+allocations = 200429
+temporary_allocations = 10364
+peak_mib = 7.50
+profiler_rss_mib = 18.41
+direct_rss_kib = 12992
+direct_elapsed_seconds = 0.06
+
+[[heap]]
+fixture = "retained_arrangement"
+policy = "STRICT"
+allocations = 452724
+temporary_allocations = 28731
+peak_mib = 11.60
+profiler_rss_mib = 21.59
+direct_rss_kib = 17664
+direct_elapsed_seconds = 0.04
+
+[[heap]]
+fixture = "retained_arrangement"
+policy = "APPROXIMATE_512"
+allocations = 452724
+temporary_allocations = 28731
+peak_mib = 11.60
+profiler_rss_mib = 21.43
+direct_rss_kib = 17740
+direct_elapsed_seconds = 0.04
+
+[[heap]]
+fixture = "dense_boxes"
+policy = "STRICT"
+allocations = 2138
+temporary_allocations = 65
+peak_mib = 1.14
+profiler_rss_mib = 9.63
+direct_rss_kib = 6440
+direct_elapsed_seconds = 0.00
+
+[[heap]]
+fixture = "dense_boxes"
+policy = "APPROXIMATE_512"
+allocations = 2138
+temporary_allocations = 65
+peak_mib = 1.14
+profiler_rss_mib = 9.73
+direct_rss_kib = 6412
+direct_elapsed_seconds = 0.00
+
+[historical_retained]
+elapsed_ms = 944.8
+heap_mib = 67.74
+allocations = 5020891
+rss_mib = 82.5
+current_elapsed_improvement_percent = 95.766
+current_speedup = 23.620
+current_heap_reduction_percent = 82.876
+current_allocation_reduction_percent = 90.983
+current_rss_reduction_percent = 79.091
+comparison = "directional; historical and current output representations differ"
+
+[[competitive.projective]]
+operation = "union"
+hypermesh_us = 7291.8
+hypermesh_ci_low_us = 7228.8
+hypermesh_ci_high_us = 7353.9
+boolmesh_us = 769.03
+manifold_us = 677.44
+hypermesh_slower_than_boolmesh = 9.482
+hypermesh_slower_than_manifold = 10.764
+
+[[competitive.projective]]
+operation = "intersection"
+hypermesh_us = 5200.6
+hypermesh_ci_low_us = 5198.5
+hypermesh_ci_high_us = 5204.7
+boolmesh_us = 745.29
+manifold_us = 675.06
+hypermesh_slower_than_boolmesh = 6.978
+hypermesh_slower_than_manifold = 7.704
+
+[[competitive.projective]]
+operation = "difference"
+hypermesh_us = 5161.0
+hypermesh_ci_low_us = 5129.7
+hypermesh_ci_high_us = 5214.3
+boolmesh_us = 770.18
+manifold_us = 681.36
+hypermesh_slower_than_boolmesh = 6.701
+hypermesh_slower_than_manifold = 7.575
+
+[[competitive.dense]]
+operation = "union"
+hypermesh_us = 706.69
+boolmesh_us = 7703.9
+manifold_us = 4876.6
+hypermesh_faster_than_boolmesh = 10.901
+hypermesh_faster_than_manifold = 6.901
+
+[[competitive.dense]]
+operation = "intersection"
+hypermesh_us = 510.90
+boolmesh_us = 3926.1
+manifold_us = 3419.4
+hypermesh_faster_than_boolmesh = 7.685
+hypermesh_faster_than_manifold = 6.693
+
+[[competitive.dense]]
+operation = "difference"
+hypermesh_us = 645.49
+boolmesh_us = 6628.1
+manifold_us = 4042.0
+hypermesh_faster_than_boolmesh = 10.268
+hypermesh_faster_than_manifold = 6.262
+
+[competitive.session]
+cpu = 15
+same_session_ratios_authoritative = true
+background_package_activity = true
+isolated_hypermesh_union_us = 6360.9
+isolated_hypermesh_intersection_us = 4586.5
+isolated_hypermesh_difference_us = 4195.5
+historical_2026_07_31_union_us = 13159.568686
+current_union_improvement_percent = 44.589
+
+[immediate_api]
+polygon_union_us = 8001.1
+mesh_union_us = 7352.6
+polygon_intersection_us = 5882.3
+mesh_intersection_us = 5237.0
+polygon_difference_us = 5908.0
+mesh_difference_us = 5092.6
+
+[rejected.all_pairs_exact_guard]
+retained = false
+reason = "exact comparison allocations made large projective rows unsuitable"
+
+[rejected.bounds_only_guard]
+retained = false
+union_regression_percent = 18.9
+intersection_regression_percent = 83.7
+difference_regression_percent = 53.6
+
+[candidate_key_vs_modular]
+union_delta_percent = -0.8079
+intersection_delta_percent = -3.2745
+difference_delta_percent = -2.8426
+
+[profile]
+artifact = "/tmp/hypermesh-final-v3-union.perf.data"
+fixture = "yeahright_control_hull_subdivided_box"
+operation = "union"
+policy = "APPROXIMATE_512"
+frequency_hz = 1999
+samples = 14537
+lost_samples = 0
+event = "cycles:u"
+approximate_event_count = 29675851111
+criterion_lower_us = 6450.8
+criterion_center_us = 6494.5
+criterion_upper_us = 6550.4
+reporting_threshold_percent = 0.5
+coincident_output_guard_above_reporting_threshold = false
+
+[[profile.hotspot]]
+owner = "rational gcd_magnitudes_with_mixed_width_fast_path"
+self_percent = 4.10
+
+[[profile.hotspot]]
+owner = "glibc _int_malloc"
+self_percent = 4.01
+
+[[profile.hotspot]]
+owner = "hypermesh output split_edge_crossing_events"
+self_percent = 3.85
+
+[[profile.hotspot]]
+owner = "rational gcd_word"
+self_percent = 3.78
+
+[[profile.hotspot]]
+owner = "certified_rational_line2_sign_from_direction_f64"
+self_percent = 3.03
+
+[[profile.hotspot]]
+owner = "hypermesh compute_projective_convex_faces"
+self_percent = 2.49
+
+[[profile.hotspot]]
+owner = "glibc malloc"
+self_percent = 2.12
+
+[[size]]
+consumer = "default_general_release"
+native_file_bytes = 4744368
+native_text_bytes = 4080804
+optimized_wasm_bytes = 2749974
+
+[[size]]
+consumer = "default_immediate_release"
+native_file_bytes = 4778912
+native_text_bytes = 4113828
+optimized_wasm_bytes = 2764531
+
+[[size]]
+consumer = "default_general_size"
+native_file_bytes = 2124032
+native_text_bytes = 1879786
+optimized_wasm_bytes = 1173451
+
+[[size]]
+consumer = "default_immediate_size"
+native_file_bytes = 2136352
+native_text_bytes = 1891558
+optimized_wasm_bytes = 1183597
+
+[[size]]
+consumer = "all_general_release"
+native_file_bytes = 4904560
+native_text_bytes = 4236113
+optimized_wasm_bytes = 2823407
+
+[[size]]
+consumer = "all_immediate_release"
+native_file_bytes = 4939424
+native_text_bytes = 4269465
+optimized_wasm_bytes = 2838310
+
+[[size]]
+consumer = "all_general_size"
+native_file_bytes = 2123984
+native_text_bytes = 1879690
+optimized_wasm_bytes = 1204250
+
+[[size]]
+consumer = "all_immediate_size"
+native_file_bytes = 2136320
+native_text_bytes = 1891478
+optimized_wasm_bytes = 1214218
+
+[size_comparison]
+checkpoint44_min_growth_percent = 0.306
+checkpoint44_max_growth_percent = 0.499
+modular_max_absolute_percent = 0.035
+modular_release_native_text_min_delta_bytes = -448
+modular_release_native_text_max_delta_bytes = -240
+modular_release_wasm_delta_bytes = 955
+modular_size_native_text_min_delta_bytes = 176
+modular_size_native_text_max_delta_bytes = 192
+modular_size_wasm_delta_bytes = 289
+
+[[source]]
+crate = "hyperreal"
+rust_code_lines = 46365
+src_bytes = 2155294
+baseline_rust_code_lines = 42602
+baseline_src_bytes = 1996208
+
+[[source]]
+crate = "hyperlattice"
+rust_code_lines = 14725
+src_bytes = 662090
+baseline_rust_code_lines = 14585
+baseline_src_bytes = 655735
+
+[[source]]
+crate = "hyperlimit"
+rust_code_lines = 17923
+src_bytes = 762752
+baseline_rust_code_lines = 17732
+baseline_src_bytes = 764495
+
+[[source]]
+crate = "hypertri"
+rust_code_lines = 7784
+src_bytes = 312015
+baseline_rust_code_lines = 6661
+baseline_src_bytes = 273318
+
+[[source]]
+crate = "hypermesh"
+rust_code_lines = 80706
+src_bytes = 2939886
+baseline_rust_code_lines = 69243
+baseline_src_bytes = 2567667
+
+[source_total]
+rust_code_lines = 167503
+src_bytes = 6832037
+baseline_rust_code_lines = 150823
+baseline_src_bytes = 6257423
+
+[bloat]
+hypermesh_kib = 2048.0
+hypermesh_percent = 55.3
+hyperreal_kib = 829.7
+hyperreal_percent = 22.5
+std_kib = 526.6
+std_percent = 14.3
+hyperlimit_kib = 106.7
+hyperlimit_percent = 2.9
+num_bigint_kib = 102.4
+num_bigint_percent = 2.8
+hypertri_kib = 41.5
+hypertri_percent = 1.1
+hyperlattice_kib = 12.9
+hyperlattice_percent = 0.3
+
+[dispatch]
+total_events = 97711
+predicate_events = 676
+linear_algebra_events = 1411
+object_facts = 6836
+scalar_facts = 953
+detailed_facts = 188
+unknown_facts = 0
+exact_rational_kind = 48676
+sign_zero = 12261
+exact_reducer = 94117
+approximation = 12376
+predicate_stage = 676
+cache_events = 6341
+fallback_abort = 0
+rational_temporaries = 12775
+reductions = 725
+gcd = 2389
+output_vertices = 154
+output_triangles = 304
+certainty = "Certified"
+
+[callgraph.production]
+nodes = 19859
+edges = 39734
+sha256 = "74f8b8450f5f0870a8fe7388b823474aaa245c0696510fa29aad86e2263d1c04"
+
+[callgraph.hypermesh]
+nodes = 8113
+edges = 20013
+sha256 = "58efe73a0004d5e4783835b92c83622ef57b39aa7cf45a6228f72d66e318651a"
+
+[callgraph.evidence]
+nodes = 26253
+edges = 49630
+sha256 = "4a38cc0ebaedd5067b5907dba688ad4ed3f51b875d52514692e2bd9d116ea837"
+
+[api.hypermesh]
+public_items = 325
+callables = 148
+test_qualified = 33
+test_any_static = 85
+benchmark_qualified = 8
+benchmark_any_static = 44
+fuzz_qualified = 9
+fuzz_any_static = 63
+trace_qualified = 10
+trace_any_static = 42
+all_four_qualified = 6
+all_four_any_static = 23
+json_sha256 = "e1fec6602e28ede2cd67d92c0e553752356b370100f8d097c23d5608519e46f2"
+markdown_sha256 = "95ab7b1b9d736cf922387978d15db8cb4bdb89fdbf79f7166e6b1fa81ba1fda5"
+static_counts_are_runtime_claim = false
+
+[validation]
+five_crate_default = true
+five_crate_minimal = true
+five_crate_all_features = true
+five_crate_feature_matrix = true
+five_crate_all_targets = true
+hypermesh_tests = 1069
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+format = true
+all_fuzz_bins_build = true
+all_fuzz_targets_executed = true
+asan_error = false
+lsan_enabled = false
+lsan_disabled_reason = "sandbox ptrace restriction"
+hypermesh_boolean_pipeline_corpus = 1141
+hypermesh_boolean_pipeline_executions = 1588
+hypermesh_boolean_pipeline_seconds = 31
+input_validation_executions = 43684
+box_executions = 1956
+transformation_corpus = 655
+hyperreal_representation_executions = 295
+yeahright_all_operations_both_policies = true
+yeahright_polygon_immediate_consistency = true
+yeahright_11894_source_closed_pwn = true
+yeahright_3360_and_13440_stress = true
+nested_hypermesh_ui_tests = 8
+nested_hypermesh_ui_passed = true
+hypervoxel_adapter_enabled_suite_passed = true
+hypervoxel_adapter_locked_rerun_passed = true
+
+[hard_gate]
+fixture_triangles_per_operand = 11894
+operation = "intersection"
+expected_output = "empty Certified"
+policy = "APPROXIMATE_512"
+complete = true
+status = "passed"
+current_source_dynamic_entry_bits = 192
+test_harness_seconds = 3312.65
+wall_seconds = 3312.66
+user_seconds = 3295.24
+system_seconds = 1.72
+cpu_percent = 99
+maximum_rss_kib = 329352
+maximum_rss_mib = 321.6328
+major_page_faults = 0
+minor_page_faults = 900394
+voluntary_context_switches = 37
+involuntary_context_switches = 25394
+swaps = 0
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+terminal_approximation_consumed = false
+strict_admissible_without_separate_timing = true
+prior_candidate_harness_movement_percent = -1.2923
+prior_candidate_wall_movement_percent = -1.3235
+prior_candidate_rss_movement_percent = 0.8043
+prechange_runtime_movement_percent = -35.6527
+historical_116_gib_rss_movement_percent_approximate = -99.7292
+
+[hard_gate.prior_conservative_512_candidate]
+test_harness_seconds = 3356.02
+wall_seconds = 3357.09
+maximum_rss_kib = 326724
+minor_page_faults = 1509813
+
+[hard_gate.exact_cgal_epeck_oracle]
+valid = true
+vertices = 0
+faces = 0
+wall_seconds = 0.09
+maximum_rss_kib = 15516
+hypermesh_wall_ratio = 36807.33
+hypermesh_rss_ratio = 21.2266
+
+[scope]
+hypercurve_excluded = true
+hypersolve_excluded = true
+reason = "concurrent user-directed work; do not touch"
+dependent_callers_excluded = ["csgrs", "hypercircuit", "hyperdrc", "hyperphysics", "synaps-cad"]
+hypervoxel_adapter_pending = false
+hypermesh_ui_command = "cargo test --locked --manifest-path examples/hypermesh_ui/Cargo.toml -q"
+hypervoxel_adapter_command = "cargo test --locked -p hypervoxel --features hypermesh-adapter -q"
+hypervoxel_adapter_lock_commit = "30b396d"
+hypervoxel_preexisting_modified_preserved = ["benches/grid_frame.rs"]
+hyperlimit_preexisting_untracked_preserved = ["fuzz/artifacts/", "fuzz/corpus/", "hyperlimit"]

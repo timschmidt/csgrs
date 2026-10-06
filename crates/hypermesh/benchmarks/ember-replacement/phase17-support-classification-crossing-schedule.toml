@@ -1,0 +1,347 @@
+[metadata]
+captured = "2026-08-03"
+phase = 17
+checkpoint = "support-classification-crossing-schedule"
+status = "retained-open"
+supersedes_checkpoint = "retained-crossing-identities-shared-point-carrier"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+parent_hypermesh = "e2bdff30d4ccbf0c0ba2a95473d75050db786463"
+support_separator_hypermesh = "42903e3e02ab980c7297fe15dc72d55dec4b3686"
+sign_only_parallelism_hypermesh = "06d51a47123ac2d9d75cfe2a791a1a23d690eb5e"
+shared_support_values_hypermesh = "7129b524b6e63fec982ed3ccb854a4c0b521afc0"
+hyperreal = "c2217bae132b725e29faeb89495b8cd51012e1bc"
+hyperlattice = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit = "6e4d68c835dbdcb487ef8e43cf57138ed13894b5"
+hypertri = "3b436192b9eaf4b7f5c7907fb17892c6557492c1"
+hyperpath = "e65506279d3cba99a23cf98bbd17be44126ec14d"
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+threads = 1
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[algorithm]
+crate = "hypermesh"
+engine = "exact-surface-arrangement"
+symmetric_triangle_support_separator = true
+successful_classifications_retained = 6
+parallelism_is_lazy_sign_only = true
+exact_rational_parallel_component = "Rational::signed_product_sum_ordering<2,2>"
+general_parallel_component = "Real::signed_product_sum then Hyperlimit classification"
+later_nonzero_component_overrides_earlier_undecided = true
+triangle_mixed_sign_support_values_shared_on_stack = 3
+proper_crossing_edges_consuming_values = 2
+arbitrary_polygon_generic_path_preserved = true
+fallback_paths_preserved = true
+adds_heap_storage = false
+hidden_work_limit = false
+fixture_branch = false
+coordinate_width_branch = false
+triangle_count_branch = false
+operation_branch = false
+policy_branch = false
+expected_output_branch = false
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+all_measured_certainty = "Certified"
+approximate_512_terminal_consumed_by_measured_meshes = false
+policy_values_exactly_equal = true
+policy_heap_exactly_equal = true
+symbolic_strict_result = "PredicateUndecided"
+symbolic_approximate_512_result = "Approximate512Consumed"
+
+[proof]
+triangle_classification_patterns_tested = 27
+proper_crossing_patterns_tested = 27
+parallel_exact_differential_cases = 512
+triangle_separator_complete_for_closed_triangle = true
+shared_support_values_require_exactly_two_proper_crossings = true
+undecided_parallel_component_preserved = true
+
+[full_perf_protocol]
+fixture = "yeahright-full-rotated"
+operation = "intersection"
+policy = "STRICT"
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+fresh_process = true
+cpu_pinned = 11
+repetitions = 5
+fixture_preparation_included = true
+exact_import_included = true
+one_boolean_included = true
+validation_and_destruction_included = true
+
+[full_perf]
+parent_median_seconds = 2.18
+current_samples_seconds = [1.93, 1.93, 1.96, 1.94, 1.92]
+current_median_seconds = 1.93
+wall_movement_percent = -11.467890
+parent_cycles = 8_528_856_984
+current_cycles = 7_497_540_892
+cycle_movement_percent = -12.092079
+parent_instructions = 22_237_885_130
+current_instructions = 19_222_742_051
+instruction_movement_percent = -13.558587
+parent_branches = 3_988_513_749
+current_branches = 3_433_388_544
+branch_movement_percent = -13.918097
+parent_cache_misses = 20_080_741
+current_cache_misses = 19_858_900
+cache_miss_movement_percent = -1.104746
+
+[shared_support_value_delta]
+parent_hypermesh = "06d51a47123ac2d9d75cfe2a791a1a23d690eb5e"
+parent_median_seconds = 1.96
+current_median_seconds = 1.93
+wall_movement_percent = -1.530612
+parent_cycles = 7_584_881_167
+current_cycles = 7_497_540_892
+cycle_movement_percent = -1.151505
+parent_instructions = 19_358_787_386
+current_instructions = 19_222_742_051
+instruction_movement_percent = -0.702758
+parent_branches = 3_460_352_900
+current_branches = 3_433_388_544
+branch_movement_percent = -0.779237
+
+[rejected.materialized_parallel_components]
+retained = false
+candidate_instructions_approx = 20_565_000_000
+movement_percent_approx = 6.23
+reason = "Materializing exact Rational cross-product components discarded the performance advantage of Hyperreal's sign-only retained-fact schedule."
+
+[historical]
+ember_seconds = 3_312.66
+current_vs_ember_speedup = 1_716.40
+cgal_epeck_seconds = 0.09
+current_vs_cgal_runtime_ratio = 21.44
+cgal_epeck_max_rss_kib = 15_516
+current_max_rss_kib = 189_656
+current_vs_cgal_rss_ratio = 12.22
+cgal_runtime_target_closed = false
+cgal_rss_target_closed = false
+
+[heap_protocol]
+metric = "global_allocator_requested_payload"
+fixture_preparation_excluded = true
+input_drop_measured_separately = true
+output_drop_measured_separately = true
+strict_and_approximate_512_equal = true
+
+[heap.full_yeahright]
+parent_incremental_peak_bytes = 158_258_204
+current_incremental_peak_bytes = 158_258_204
+parent_allocation_calls = 26_006_589
+current_allocation_calls = 19_290_062
+allocation_call_movement_percent = -25.826251
+parent_reallocation_calls = 2_525_282
+current_reallocation_calls = 2_133_982
+reallocation_call_movement_percent = -15.495299
+parent_added_bytes = 1_279_258_296
+current_added_bytes = 1_017_109_024
+added_byte_movement_percent = -20.492286
+current_deallocation_calls = 18_937_421
+current_removed_bytes = 992_719_120
+input_fact_growth_bytes = 24_389_848
+output_live_payload_bytes = 56
+post_input_drop_incremental_bytes = 10_792
+
+[heap.shared_support_value_delta]
+parent_allocation_calls = 19_548_409
+current_allocation_calls = 19_290_062
+allocation_call_movement_percent = -1.321576
+parent_reallocation_calls = 2_220_541
+current_reallocation_calls = 2_133_982
+reallocation_call_movement_percent = -3.898104
+parent_added_bytes = 1_026_339_016
+current_added_bytes = 1_017_109_024
+added_byte_movement_percent = -0.899312
+peak_bytes_unchanged = true
+
+[heap.wide_2049]
+incremental_peak_bytes = 31_038_074
+allocation_calls = 2_107_571
+reallocation_calls = 227_677
+added_bytes = 462_626_870
+input_fact_growth_bytes = 26_568
+output_live_payload_bytes = 520_472
+post_input_drop_incremental_bytes = 96_192
+strict_and_approximate_512_equal = true
+
+[controls.wide_2049]
+fixture = "wide-rational-2048"
+input_triangles = 6_144
+parent_instructions = 4_190_199_389
+current_instructions = 4_160_089_259
+instruction_movement_percent = -0.718585
+current_branches = 773_723_906
+certainty = "Certified"
+
+[controls.voxel_torus_33]
+input_triangles = 6_412
+parent_instructions = 1_246_596_747
+current_instructions = 1_216_283_938
+instruction_movement_percent = -2.431645
+current_branches = 212_606_964
+
+[controls.voxel_torus_65]
+input_triangles = 25_100
+parent_instructions = 5_334_327_874
+current_instructions = 5_220_285_535
+instruction_movement_percent = -2.137895
+current_branches = 910_025_683
+
+[controls.dense_coplanar_16]
+input_triangles = 6_144
+parent_instructions = 3_268_905_691
+current_instructions = 3_205_690_332
+instruction_movement_percent = -1.933839
+current_branches = 553_449_854
+
+[controls.small_exact_boxes]
+operation = "all"
+criterion_sample_size = 20
+strict_estimate_low_microseconds = 626.72
+strict_estimate_microseconds = 627.85
+strict_estimate_high_microseconds = 629.19
+approximate_512_estimate_low_microseconds = 630.01
+approximate_512_estimate_microseconds = 631.93
+approximate_512_estimate_high_microseconds = 634.78
+pinned_cgal_copy_outside_microseconds = 119.5965
+pinned_cgal_copy_inside_microseconds = 128.976
+strict_vs_cgal_copy_outside_ratio = 5.250
+approximate_512_vs_cgal_copy_inside_ratio = 4.899
+target_closed = false
+
+[controls.medium_dense_coplanar]
+operation = "intersection"
+input_triangles = 384
+repetitions = 31
+strict_median_milliseconds = 14.639013
+approximate_512_median_milliseconds = 14.667867
+pinned_cgal_milliseconds = 16.036
+strict_vs_cgal_ratio = 0.9129
+approximate_512_vs_cgal_ratio = 0.9147
+runtime_target_closed = true
+final_stack_sharing_path_executed = false
+
+[size_protocol]
+native_metric = "text bytes"
+wasm_metric = "wasm-opt -Oz bytes"
+feature_set = "default"
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_bytes = 2_019_526
+current_native_bytes = 2_028_558
+native_movement_bytes = 9_032
+native_movement_percent = 0.4472
+parent_wasm_bytes = 1_437_843
+current_wasm_bytes = 1_446_143
+wasm_movement_bytes = 8_300
+wasm_movement_percent = 0.5773
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_bytes = 2_022_670
+current_native_bytes = 2_031_702
+native_movement_bytes = 9_032
+native_movement_percent = 0.4465
+parent_wasm_bytes = 1_439_697
+current_wasm_bytes = 1_447_997
+wasm_movement_bytes = 8_300
+wasm_movement_percent = 0.5765
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_bytes = 1_082_351
+current_native_bytes = 1_086_399
+native_movement_bytes = 4_048
+native_movement_percent = 0.3740
+parent_wasm_bytes = 679_625
+current_wasm_bytes = 682_891
+wasm_movement_bytes = 3_266
+wasm_movement_percent = 0.4806
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_bytes = 1_083_315
+current_native_bytes = 1_087_355
+native_movement_bytes = 4_040
+native_movement_percent = 0.3729
+parent_wasm_bytes = 680_032
+current_wasm_bytes = 683_301
+wasm_movement_bytes = 3_269
+wasm_movement_percent = 0.4807
+
+[profile]
+path = "/tmp/hypermesh-support-scheduling-fp.data"
+samples = 1_981
+lost_samples = 0
+build_surface_inclusive_percent = 84.08
+corefine_inclusive_percent = 41.11
+pairwise_intersection_inclusive_percent = 36.19
+bvh_self_pairs_inclusive_percent = 35.76
+append_pair_inclusive_percent = 30.43
+polygon_intersection_inclusive_percent = 28.06
+constrained_triangulation_inclusive_percent = 20.10
+edge_plane_crossings_inclusive_percent = 19.32
+single_edge_crossing_inclusive_percent = 16.28
+rational_gcd_inclusive_percent = 11.98
+signed_product_sum_ordering_8x3_self_percent = 0.67
+
+[callgraph]
+path = "/tmp/hypermesh-support-separators-sign-only-shared-values-callgraph-2026-08-03"
+function_nodes = 14_685
+edges = 24_433
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+hypercurve_excluded = true
+hypersolve_excluded = true
+
+[validation]
+hypermesh_executed_tests = 167
+hypermesh_ignored_tests = 6
+no_default_checks_pass = true
+all_feature_tests_pass = true
+clippy_warning_denied_pass = true
+rustdoc_warning_denied_pass = true
+fuzz_target_checks_pass = true
+benchmark_compile_pass = true
+size_harness_pass = true
+full_resolution_oracle_pass = true
+full_heap_both_policies_pass = true
+wide_heap_both_policies_pass = true
+dispatch_trace_unknown_fact_events = 0
+dispatch_trace_fallback_or_abort_events = 0
+
+[open]
+phase_17_complete = false
+phase_18_complete = false
+full_cgal_runtime_parity = false
+small_cgal_runtime_parity = false
+full_cgal_rss_parity = false
+full_peak_heap_reduced = false
+external_real_world_corpus_complete = false
+deeper_symbolic_corpus_complete = false
+stage_specific_heap_attribution_complete = false
+final_path_audit_complete = false

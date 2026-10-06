@@ -1,0 +1,9 @@
+/target
+.DS_Store
+.nx
+/.idea
+/.vscode
+/fuzz/target
+/fuzz/artifacts
+/fuzz/corpus
+/crash-*

@@ -1,0 +1,455 @@
+date = "2026-08-01"
+title = "exact power-of-two filter reciprocal"
+checkpoint = 30
+source_parent_commit = "aa4b76b955ecdf46d133d91ef215b9f0c985c1d2"
+implementation_commit = "f6071aa430ce6e8fb10ed7c37e3b821d7c5b9d50"
+hypermesh_production_commit = "5c48a413d1895ccd8e5bc5d56a06f127d2ce82f6"
+hypermesh_parent_evidence_commit = "85edb3a56f4d58108670dd0bad7cb0ba89d90c09"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "3e5d8816cd32bba46f48e0c6c13ab7a9da227784"
+hypertri_commit = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+retained = true
+
+[change]
+crate = "hyperreal"
+file = "src/real/arithmetic/linear_algebra.rs"
+production_insertions = 4
+production_deletions = 1
+test_insertions = 72
+public_api_changed = false
+compatibility_shim_added = false
+new_dependency_added = false
+runtime_priority_over_size = true
+floating_division_removed = true
+
+[invariant]
+accepted_scale_is_positive_power_of_two = true
+accepted_biased_exponent_min = 1
+accepted_biased_exponent_max = 2046
+normal_reciprocal_biased_exponent_sum = 2046
+maximum_scale_reciprocal_bits = 2251799813685248
+maximum_scale_reciprocal_is_exact_subnormal = true
+zero_fast_path_preserved = true
+subnormal_scale_rejection_preserved = true
+nonfinite_scale_rejection_preserved = true
+per_lane_safe_minimum_rejection_preserved = true
+signed_zero_handling_preserved = true
+division_reference_bit_equivalent = true
+normal_exponents_exhaustively_tested = 2046
+approximation_added = false
+allocation_added_by_source = false
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+adds_policy_branch = false
+adds_terminal = false
+changes_real_equality = false
+changes_topology_predicate = false
+both_policy_outputs_certified = true
+both_policy_meshes_exactly_equal = true
+operations_tested = ["union", "intersection", "difference", "symmetric_difference"]
+
+[cpu_method]
+measurement_order = "parent,candidate,candidate,parent"
+logical_cpu = 9
+fixture_built_once_per_process = true
+complete_immediate_union_repeated = true
+cycles_are_primary_scalar_retention_gate = true
+equal_layout_source_worktrees = true
+system_noise_observed = true
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+policy = "STRICT"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+repetitions = 1501
+parent_task_ms = [13381.59, 13380.56]
+candidate_task_ms = [13319.48, 13314.37]
+task_movement_percent = -0.479408
+parent_cycles = [56564219968, 56580711609]
+candidate_cycles = [56294592740, 56301284535]
+cycles_movement_percent = -0.485266
+parent_instructions = [159583330051, 159585695588]
+candidate_instructions = [159615206008, 159607434743]
+instructions_movement_percent = 0.016798
+parent_branches = [26314448138, 26315313627]
+candidate_branches = [26333844691, 26332005862]
+branches_movement_percent = 0.068571
+parent_branch_misses = [333968015, 333235102]
+candidate_branch_misses = [333707061, 334810285]
+branch_misses_movement_percent = 0.196976
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+policy = "APPROXIMATE_512"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+repetitions = 1501
+parent_task_ms = [13293.15, 13323.98]
+candidate_task_ms = [13358.43, 13319.90]
+task_movement_percent = 0.229927
+parent_cycles = [56458909840, 56403374285]
+candidate_cycles = [56213208596, 56460682794]
+cycles_movement_percent = -0.166923
+parent_instructions = [159583539011, 159579734667]
+candidate_instructions = [159607114824, 159608571163]
+instructions_movement_percent = 0.016422
+parent_branches = [26314643572, 26313756455]
+candidate_branches = [26332118416, 26331821010]
+branches_movement_percent = 0.067529
+parent_branch_misses = [333988335, 332439875]
+candidate_branch_misses = [332416810, 332324504]
+branch_misses_movement_percent = -0.253125
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+policy = "STRICT"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+repetitions = 401
+parent_task_ms = [13713.35, 13702.07]
+candidate_task_ms = [13727.55, 13726.10]
+task_movement_percent = 0.139447
+parent_cycles = [57946744764, 58238167730]
+candidate_cycles = [58254750049, 58318814535]
+cycles_movement_percent = 0.334512
+parent_instructions = [162904482816, 162905189533]
+candidate_instructions = [162906374868, 162902993318]
+instructions_movement_percent = -0.000093
+parent_branches = [27708780980, 27708824188]
+candidate_branches = [27710247436, 27709424859]
+branches_movement_percent = 0.003730
+parent_branch_misses = [266533821, 272876648]
+candidate_branch_misses = [270139898, 278145577]
+branch_misses_movement_percent = 1.645316
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+policy = "APPROXIMATE_512"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+repetitions = 401
+runtime_authoritative = false
+parent_task_ms = [13601.78, 16593.67, 13662.61]
+candidate_task_ms = [13728.05, 13610.04, 14259.40]
+parent_cycles = [57790364715, 69373648441, 57935433445]
+candidate_cycles = [58304567841, 57828700452, 60308944109]
+excluded_clock_samples = ["parent_2", "candidate_3"]
+parent_instructions = [162909138158, 162902243821, 162898595138]
+candidate_instructions = [162903813766, 162902734775, 162907296129]
+instructions_movement_percent = 0.000791
+parent_branches = [27709899665, 27708340656, 27707418427]
+candidate_branches = [27709416111, 27709208450, 27710177154]
+branches_movement_percent = 0.003781
+
+[[serialized_cpu]]
+fixture = "dense_boxes"
+policy = "STRICT"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+repetitions = 20001
+parent_task_ms = [14495.04, 14373.51]
+candidate_task_ms = [14433.31, 14453.24]
+task_movement_percent = 0.062352
+parent_cycles = [61469246068, 61046489663]
+candidate_cycles = [61286870222, 61196686090]
+cycles_movement_percent = -0.026266
+parent_instructions = [182139829773, 182099945473]
+candidate_instructions = [182071104849, 182066136907]
+instructions_movement_percent = -0.028150
+parent_branches = [30159094473, 30148777975]
+candidate_branches = [30142774035, 30141621618]
+branches_movement_percent = -0.038928
+parent_branch_misses = [380561877, 368553825]
+candidate_branch_misses = [380029830, 370357449]
+branch_misses_movement_percent = 0.169744
+
+[[serialized_cpu]]
+fixture = "dense_boxes"
+policy = "APPROXIMATE_512"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+repetitions = 20001
+parent_task_ms = [14424.74, 14531.99]
+candidate_task_ms = [14607.84, 14510.75]
+task_movement_percent = 0.558972
+parent_cycles = [61216263267, 61437242049]
+candidate_cycles = [61788959367, 61576165503]
+cycles_movement_percent = 0.580187
+parent_instructions = [182087163241, 182097318698]
+candidate_instructions = [182088056511, 182162958773]
+instructions_movement_percent = 0.018269
+parent_branches = [30145668337, 30147352586]
+candidate_branches = [30147028119, 30165409562]
+branches_movement_percent = 0.032204
+parent_branch_misses = [372259810, 386206207]
+candidate_branch_misses = [388756536, 386047928]
+branch_misses_movement_percent = 2.154144
+
+[policy_paired_cpu]
+generated_task_movement_percent = -0.125704
+generated_cycles_movement_percent = -0.326294
+generated_instructions_movement_percent = 0.016610
+generated_branches_movement_percent = 0.068050
+generated_branch_misses_movement_percent = -0.027944
+boxes_task_movement_percent = 0.311040
+boxes_cycles_movement_percent = 0.277131
+boxes_instructions_movement_percent = -0.004942
+boxes_branches_movement_percent = -0.003367
+boxes_branch_misses_movement_percent = 1.168097
+
+[[heap]]
+fixture = "generated_projective"
+input_triangles = 13452
+parent_allocations = 200749
+current_allocations = 200749
+parent_temporary_allocations = 10358
+current_temporary_allocations = 10358
+parent_heaptrack_peak_mib = 7.50
+current_heaptrack_peak_mib = 7.50
+parent_valgrind_max_bytes = 8245672
+current_valgrind_max_bytes = 8245672
+parent_heaptrack_rss_mib = [18.00, 17.98]
+current_heaptrack_rss_mib = [17.97, 17.99]
+policies_identical = true
+
+[[heap]]
+fixture = "dense_boxes"
+input_triangles = 6144
+parent_allocations = 27209
+current_allocations = 27209
+parent_temporary_allocations = 81
+current_temporary_allocations = 81
+parent_heaptrack_peak_mib = 2.34
+current_heaptrack_peak_mib = 2.34
+parent_valgrind_max_bytes = 2597144
+current_valgrind_max_bytes = 2597144
+parent_heaptrack_rss_mib = [10.70, 10.89]
+current_heaptrack_rss_mib = [10.82, 10.89]
+policies_identical = true
+
+[size.release_native.general]
+parent_file = 4725600
+current_file = 4725656
+parent_text = 4065252
+current_text = 4065252
+parent_data = 238304
+current_data = 238304
+parent_bss = 1979
+current_bss = 1979
+parent_aggregate = 4305535
+current_aggregate = 4305535
+
+[size.release_native.immediate]
+parent_file = 4760880
+current_file = 4760936
+parent_text = 4098884
+current_text = 4098884
+parent_data = 238664
+current_data = 238664
+parent_bss = 4851
+current_bss = 4851
+parent_aggregate = 4342399
+current_aggregate = 4342399
+
+[size.release_wasm_oz]
+general_parent_bytes = 2740378
+general_current_bytes = 2740649
+immediate_parent_bytes = 2755421
+immediate_current_bytes = 2755692
+
+[size.size_native.general]
+parent_file = 2115336
+current_file = 2115368
+parent_text = 1871306
+current_text = 1871338
+parent_data = 239896
+current_data = 239896
+parent_bss = 2922
+current_bss = 2890
+parent_aggregate = 2114124
+current_aggregate = 2114124
+
+[size.size_native.immediate]
+parent_file = 2128360
+current_file = 2128376
+parent_text = 1883782
+current_text = 1883798
+parent_data = 240440
+current_data = 240440
+parent_bss = 2186
+current_bss = 2170
+parent_aggregate = 2126408
+current_aggregate = 2126408
+
+[size.size_wasm_oz]
+general_parent_bytes = 1165586
+general_current_bytes = 1165612
+immediate_parent_bytes = 1175965
+immediate_current_bytes = 1175991
+
+[size.repeated_probe_equal_layout]
+parent_file = 6383816
+current_file = 6383832
+parent_text = 5063618
+current_text = 5063618
+parent_data = 256320
+current_data = 256320
+parent_bss = 1387
+current_bss = 1387
+parent_aggregate = 5321325
+current_aggregate = 5321325
+
+[call_graph]
+parent_nodes = 19726
+current_nodes = 19726
+parent_edges = 39456
+current_edges = 39456
+byte_identical = true
+sha256 = "c937bcd90b749efa8a817f96c2ea0aabb10703562939fe2c77c5205b1c121457"
+policy_or_terminal_nodes_added = 0
+artifact = "/tmp/hyperstack-exponent-reciprocal-callgraph-final/callgraph.json"
+
+[profile]
+logical_cpu = 9
+fixture = "generated_projective"
+policy = "STRICT"
+repetitions = 501
+samples = 19386
+lost_samples = 0
+approximate_cycles = 19386058158
+parent_filter_normalization_self_percent = 2.62
+current_filter_normalization_self_percent = 2.24
+current_four_by_two_dispatcher_self_percent = 5.02
+current_compact_input_builder_self_percent = 4.63
+current_lossy_export_self_percent = 4.28
+current_crossing_split_self_percent = 3.71
+current_six_by_two_dispatcher_self_percent = 3.70
+current_mixed_width_gcd_self_percent = 2.98
+current_word_gcd_self_percent = 2.82
+artifact = "/tmp/hypermesh-exponent-reciprocal-final.data"
+
+[symbol_size.normalizer]
+parent_bytes = 326
+current_bytes = 332
+floating_division_parent = true
+floating_division_current = false
+
+[dispatch.generated_projective]
+output_vertices = 154
+output_triangles = 304
+dispatch_events = 97131
+predicate_events = 676
+unknown_fact_events = 0
+fallback_or_abort_events = 0
+rational_temporaries = 12794
+all_path_labels_unchanged = true
+
+[competitive.projective_generated]
+hypermesh_lower_ms = 6.1435
+hypermesh_center_ms = 6.1849
+hypermesh_upper_ms = 6.2477
+checkpoint_29_center_ms = 6.1909
+movement_percent = -0.096916
+boolmesh_center_ms = 0.75203
+manifold_center_ms = 0.65901
+slower_than_boolmesh = 8.22427
+slower_than_manifold = 9.38514
+
+[competitive.dense_boxes]
+hypermesh_lower_ms = 0.72584
+hypermesh_center_ms = 0.72942
+hypermesh_upper_ms = 0.73183
+checkpoint_29_center_ms = 0.72823
+movement_percent = 0.163410
+boolmesh_center_ms = 6.7502
+manifold_center_ms = 4.2941
+faster_than_boolmesh = 9.25420
+faster_than_manifold = 5.88701
+
+[historical.retained_arrangement]
+historical_clock_ms = 944.8
+current_policy_paired_clock_ms = 34.159439
+clock_reduction_percent = 96.384479
+comparison = "directional, not direct A/B"
+
+[[rejected_candidate]]
+name = "complete bit-level lane normalization"
+normalizer_bytes = 674
+text_delta_bytes = 384
+aggregate_delta_bytes = 0
+file_delta_bytes = 464
+reason = "duplicates complete subnormal normalization machinery and is substantially larger"
+
+[[rejected_candidate]]
+name = "defensive subnormal-reject bit transform"
+normalizer_bytes = 439
+text_delta_bytes = 148
+aggregate_delta_bytes = 4
+file_delta_bytes = 192
+generated_instructions_movement_percent = 0.70
+generated_branches_movement_percent = 0.58
+reason = "larger and retires materially more work on the owning fixture"
+
+[[rejected_candidate]]
+name = "two-pass min-max bit transform"
+normalizer_bytes = 386
+text_delta_bytes = 100
+aggregate_delta_bytes = 4
+file_delta_bytes = 112
+generated_instructions_movement_percent = 0.538
+generated_cycles_movement_percent = 0.204
+reason = "larger and slower than the reciprocal-only construction"
+
+[[rejected_measurement]]
+name = "first final generated Criterion session"
+reason = "Hypermesh reported 7.7493-10.432 ms while both competitors remained normal; the immediate serialized rerun returned a stable 6.1849 ms center"
+
+[[rejected_measurement]]
+name = "retained approximate clock samples"
+reason = "parent sample two and candidate sample three were interrupted; deterministic instruction and branch totals remain neutral and are retained"
+
+[[accepted_tradeoff]]
+name = "bounded linked-code growth"
+reason = "the selected mesh hot path improves cycles and sampled self ownership; native release sections and aggregate size sections are unchanged, while optimized WASM grows only 26-271 bytes"
+
+[validation]
+hyperreal_default_lib_tests = 561
+hyperreal_no_default_lib_tests = 561
+hyperreal_all_feature_lib_tests = 638
+hypermesh_default_lib_tests = 1060
+hypermesh_no_default_lib_tests = 1060
+hypermesh_all_feature_lib_tests = 1061
+hyperreal_address_sanitizer_focused_tests = 5
+hypermesh_address_sanitizer_lib_tests = 1060
+address_sanitizer_failures = 0
+five_crate_default_tests = true
+five_crate_no_default_tests = true
+five_crate_all_feature_tests = true
+clippy_all_features_warning_denied = true
+clippy_no_default_warning_denied = true
+rustdoc_all_features_warning_denied = true
+rustdoc_no_default_warning_denied = true
+hyperreal_fuzz_bins_checked = true
+hypermesh_fuzz_bins_checked = true
+all_feature_benches_compiled = true
+dispatch_trace_passed = true
+opt_in_every_operation_both_policies = true
+opt_in_polygon_immediate_agreement = true
+opt_in_stress_3360_13440 = true
+opt_in_full_input_11894 = true
+full_rotated_11894_boolean_rerun = false
+full_rotated_reason = "unchanged ordinary non-certified-input path; prior certified-empty run is approximately 56 minutes"
+format_check = true
+diff_check = true
+temporary_repetition_hooks_removed = true
+temporary_worktrees_removed = true
+preexisting_hyperlimit_untracked_binary_untouched = true

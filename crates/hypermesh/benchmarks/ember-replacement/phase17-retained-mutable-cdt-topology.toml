@@ -1,0 +1,219 @@
+title = "Phase 17 retained mutable exact CDT topology"
+date = "2026-08-04"
+status = "retained; Phases 11, 17, and 18 remain open"
+
+[revisions]
+hypertri_parent = "aa99d16"
+hypertri_current = "69a18e9"
+hypermesh_current = "7b567330"
+
+[scope]
+production_fixture_dispatch = false
+compatibility_shim = false
+alternate_boolean_engine = false
+policy_branch = false
+coordinate_width_branch = false
+workload_cardinality_branch = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[algorithm]
+retained_state = "reciprocal triangle neighbors plus one incident triangle representative per vertex"
+construction = "lazy at the first missing PSLG segment in a recovery batch"
+location = "endpoint fan followed by the exact crossed dual corridor"
+mutation = "fixed-slot replacement after atomic old/new boundary equivalence and manifold checks"
+legalization = "deterministic smallest-edge local worklist with stale-owner validation"
+compact_route = "complete sorted scan when every constraint is already represented"
+differential_oracle = "retained worklist equals scan canonical topology under both policies and two initial fans"
+removed = "repeated whole-triangulation incidence rebuild and sort"
+remaining_hotspot = "whole-topology protected cavity-hole closure on already-simple corridors"
+
+[policy]
+strict_exact_only = true
+approximate_512_terminal_owner = "hyperlimit"
+large_policy_counters_equal = true
+large_policy_outputs_equal = true
+large_certainty = "Certified"
+large_exact_intersection_volume = 12805
+
+[dense17_iterative]
+instructions = 59778316406
+branches = 7783893606
+cycles = 16178219472
+median_boolean_ns = 3826149526
+
+[dense17_complete_cavity]
+instructions = 30797543593
+branches = 4080896229
+cycles = 8626788491
+median_boolean_ns = 2040986333
+
+[dense17_retained_topology]
+artifact = "target/release/examples/competitive_arrangement_probe"
+sha256 = "487199d7c8793bc0140d6c74e34b27e97ea6a5590576b80c3cca309efe877aca"
+repetitions = 3
+instructions = 24083182461
+branches = 3125077444
+cycles = 6495638376
+median_boolean_ns = 1543316730
+output_vertices = 5444
+output_triangles = 11908
+vs_complete_instruction_percent = -21.801613
+vs_complete_branch_percent = -23.421786
+vs_complete_cycle_percent = -24.703864
+vs_complete_time_percent = -24.383779
+vs_iterative_instruction_percent = -59.712511
+vs_iterative_branch_percent = -59.852002
+vs_iterative_cycle_percent = -59.849485
+vs_iterative_time_percent = -59.663972
+
+[crossing_octahedra_control]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 2920063479
+branches = 496030851
+cycles = 1257473209
+instruction_change_percent = 0.994555
+branch_change_percent = 0.876706
+cycle_change_percent = 7.862979
+output_vertices = 24
+output_triangles = [44, 20, 32, 32]
+
+[affine_boxes_control]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 6865522412
+branches = 1175808029
+cycles = 2820165090
+instruction_change_percent = 0.114145
+branch_change_percent = 0.122593
+cycle_change_percent = -1.240829
+output_vertices = 24
+output_triangles = [44, 28, 20, 20]
+
+[dense65_heap]
+artifact = "target/release/examples/large_mesh_kernel_heap_probe"
+sha256 = "70f75792d4f715a8af642bdca3914ba8ec1064c9045d4bbeb6023f2f3a20dcd0"
+strict_equals_approximate_512 = true
+certainty = "Certified"
+input_triangles = 1572
+output_vertices = 73844
+output_triangles = 164068
+total_peak_bytes = 178914697
+incremental_kernel_peak_bytes = 178125996
+post_boolean_incremental_bytes = 57917376
+output_live_payload_bytes = 57784192
+input_fact_growth_bytes = 133184
+post_input_drop_incremental_bytes = 118328
+allocation_calls = 48160094
+deallocation_calls = 47502236
+reallocation_calls = 3875143
+cumulative_added_bytes = 97355251074
+cumulative_removed_bytes = 97297333698
+vs_complete_allocation_call_percent = 1.453141
+vs_complete_reallocation_percent = 25.405060
+vs_complete_cumulative_added_percent = -35.650915
+vs_iterative_incremental_peak_percent = -0.353145
+vs_iterative_cumulative_added_percent = -73.177036
+
+[dense65_process]
+policy = "STRICT"
+elapsed_seconds = 103.52
+boolean_seconds = 103.476914452
+user_seconds = 103.00
+system_seconds = 0.12
+maximum_rss_kib = 191708
+swaps = 0
+vs_complete_elapsed_percent = -40.265436
+vs_complete_rss_change_kib = 824
+vs_iterative_elapsed_percent = -85.024448
+
+[large_policy_gate]
+policies = ["STRICT", "APPROXIMATE_512"]
+complete_real_equality = true
+balanced_boundaries = true
+exact_volume_equality = true
+elapsed_seconds = 210.11
+parent_elapsed_seconds = 360.71
+elapsed_change_percent = -41.750991
+
+[profile]
+artifact = "target/phase17-retained-mutable-cdt-topology.perf.data"
+frequency_hz = 999
+samples = 1561
+lost_samples = 0
+exact_homogeneous_point2_self_percent = 21.66
+orient2d_policy_self_percent = 18.79
+close_constraint_cavity_holes_self_percent = 8.86
+triangle_neighbors_self_percent = 6.01
+projected_segment_self_percent = 4.39
+neighbor_across_self_percent = 1.88
+replace_region_self_percent = 1.48
+edge_use_sort_self_percent = 0.0
+
+[direct_probe_size]
+competitive_parent_text = 2728033
+competitive_current_text = 2755465
+competitive_change_bytes = 27432
+competitive_change_percent = 1.005560
+heap_parent_text = 2874383
+heap_current_text = 2901803
+heap_change_bytes = 27420
+heap_change_percent = 0.953944
+
+[canonical_size]
+maximum_growth_percent = 1.895873
+default_release_native_text_parent = [1960058, 1963210]
+default_release_native_text_current = [1982014, 1985158]
+default_release_wasm_oz_parent = [1383742, 1385579]
+default_release_wasm_oz_current = [1404400, 1406229]
+default_size_native_text_parent = [1070871, 1071835]
+default_size_native_text_current = [1086423, 1087387]
+default_size_wasm_oz_parent = [663053, 663466]
+default_size_wasm_oz_current = [675613, 676026]
+all_release_native_text_parent = [2095471, 2098335]
+all_release_native_text_current = [2116907, 2119763]
+all_release_wasm_oz_parent = [1457902, 1459873]
+all_release_wasm_oz_current = [1478558, 1480516]
+all_size_native_text_parent = [1073215, 1074179]
+all_size_native_text_current = [1088767, 1089731]
+all_size_wasm_oz_parent = [663072, 663528]
+all_size_wasm_oz_current = [675643, 675917]
+
+[callgraph]
+production_nodes = 15248
+production_edges = 25430
+tests_examples_nodes = 17595
+tests_examples_edges = 28800
+all_evidence_nodes = 21640
+all_evidence_edges = 34900
+production_artifact = "target/phase17-retained-mutable-cdt-topology-callgraph-production/callgraph.json"
+tests_examples_artifact = "target/phase17-retained-mutable-cdt-topology-callgraph-tests-examples/callgraph.json"
+all_evidence_artifact = "target/phase17-retained-mutable-cdt-topology-callgraph-all-evidence/callgraph.json"
+retired_global_scanner_nodes = 0
+ember_namespace_nodes = 0
+one_boolean_engine = true
+
+[corpus]
+records = 57
+large_heap_selectors = 19
+manifest_sha256 = "0d106f164c16ee089d311c8d8a47185f1e7e0aa3a0769c327277bc396f7767bb"
+migration_ledger_sha256 = "4da0ad3737fa8f15f3982fd09fd392ae9a05f3d0b58722508f5e6678170435f2"
+
+[validation]
+hypertri_all_feature_tests_pass = true
+hypertri_warning_denied_clippy_pass = true
+hypermesh_release_suite_pass = true
+hypermesh_warning_denied_clippy_pass = true
+hypermesh_docs_pass = true
+large_policy_equality_gate_pass = true
+default_all_native_wasm_release_size_pass = true
+
+[open]
+external_real_world_corpus = true
+complete_fuzz_seed_admission_audit = true
+local_cavity_hole_fast_path = true
+every_cgal_case_at_parity = true
+large_rss_at_cgal_target = true
+performance_neutral_footprint_recovery = true
+phase18_final_audit = true

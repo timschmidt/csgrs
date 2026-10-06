@@ -1,0 +1,364 @@
+schema_version = 1
+date = "2026-08-05"
+status = "accepted performance checkpoint; Phases 11, 17, and 18 remain open"
+hyperreal_implementation_commit = "e238dc1"
+hyperreal_parent_commit = "14258dc"
+hypermesh_implementation_commit = "63a7bc4e"
+hypermesh_parent_commit = "63a7bc4e"
+hypercurve_hypersolve_excluded = true
+fixture_dispatch_in_production = false
+compatibility_shim = false
+alternate_engine = false
+
+[algorithm]
+rule = "exact rational comparison reuses the immutable canonical denominator's retained dyadic shift"
+internally_unreduced_behavior = "decline to the existing complete exact comparison fallback"
+comparison_local_power_of_two_scanner_removed = true
+coordinate_width_threshold = false
+storage_bytes_added = 0
+allocation_added = false
+public_api_changed = false
+dependency_changed = false
+production_insertions = 2
+production_deletions = 7
+
+[correctness]
+wide_left = "5/2^512"
+wide_right = "3/2^511"
+repeated_comparisons = 128
+retained_facts_stable = true
+unreduced_value = "10/2^513"
+unreduced_equals_canonical = "5/2^512"
+unreduced_uses_complete_fallback = true
+output_vertices = 2410
+output_triangles = 4816
+strict_certainty = "Certified"
+approximate_512_certainty = "Certified"
+strict_exact_only = true
+approximate_terminal_consumed = false
+terminal_approximation_owner = "hyperlimit"
+
+[[thin_dyadic_perf]]
+shift = 64
+policy = "STRICT"
+parent_instructions = 1195582867
+current_instructions = 1175327260
+instruction_change_percent = -1.6942
+parent_branches = 205341264
+current_branches = 199169890
+branch_change_percent = -3.0054
+parent_cycles = 465413934
+current_cycles = 463136056
+cycle_change_percent = -0.4894
+
+[[thin_dyadic_perf]]
+shift = 512
+policy = "STRICT"
+parent_instructions = 1644102551
+current_instructions = 1564149168
+instruction_change_percent = -4.8630
+parent_branches = 296813019
+current_branches = 270788627
+branch_change_percent = -8.7679
+parent_cycles = 639851116
+current_cycles = 602185235
+cycle_change_percent = -5.8867
+
+[[thin_dyadic_perf]]
+shift = 2048
+policy = "STRICT"
+parent_instructions = 2331027131
+current_instructions = 2145069155
+instruction_change_percent = -7.9775
+parent_branches = 445853271
+current_branches = 384497692
+branch_change_percent = -13.7614
+parent_cycles = 871713329
+current_cycles = 790771069
+cycle_change_percent = -9.2854
+
+[[control]]
+name = "crossing-octahedra-all-four-x1000"
+instruction_change_percent = -0.1089
+branch_change_percent = -0.3597
+certainty = "Certified"
+
+[[control]]
+name = "affine-boxes-all-four-x1000"
+instruction_change_percent = 0.1757
+branch_change_percent = 0.0300
+certainty = "Certified"
+
+[[control]]
+name = "sparse-shells-512-all-four-x5"
+instruction_change_percent = 0.3668
+branch_change_percent = -0.1099
+certainty = "Certified"
+
+[[control]]
+name = "dense-coplanar-32-all-four-x1"
+instruction_change_percent = -1.3216
+branch_change_percent = -2.3316
+certainty = "Certified"
+
+[[control]]
+name = "voxel-torus-33-all-four-x3"
+instruction_change_percent = 0.5052
+branch_change_percent = 0.1369
+certainty = "Certified"
+
+[[control]]
+name = "wide-rational-2048-union-x5"
+instruction_change_percent = -9.9542
+branch_change_percent = -17.8183
+certainty = "Certified"
+
+[[control]]
+name = "yeahright-full-instrumented-x1"
+instruction_change_percent = -0.4375
+branch_change_percent = -0.8332
+cycle_change_percent = -1.8307
+certainty = "Certified"
+
+[[control]]
+name = "symbolic-depth-1-strict-all-four-x20"
+instruction_change_percent = 0.0344
+branch_change_percent = 0.0202
+certainty = "Certified"
+
+[[control]]
+name = "symbolic-depth-128-approximate-512-all-four-x5"
+instruction_change_percent = 0.0016
+branch_change_percent = -0.0014
+certainty = "Approximate512Consumed"
+
+[profile_512]
+repetitions = 21
+frequency_hz = 999
+parent_biguint_trailing_zeros_self_percent = 3.94
+current_biguint_trailing_zeros_self_percent = 0.24
+parent_rational_partial_cmp_self_percent = 8.15
+current_rational_partial_cmp_self_percent = 6.09
+current_compare_shifted_biguints_self_percent = 5.13
+profile_path = "target/phase17-retained-dyadic-comparison-512-21.data"
+
+[heap_512]
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_metrics_byte_identical = true
+parent_current_metrics_byte_identical = true
+input_payload_bytes = 798040
+boolean_peak_bytes = 23610989
+incremental_kernel_peak_bytes = 22812314
+post_boolean_incremental_bytes = 548712
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 28240
+post_input_drop_residual_bytes = 122584
+allocation_calls = 400128
+deallocation_calls = 399851
+reallocation_calls = 6081
+added_bytes = 46478238
+removed_bytes = 45929526
+
+[heap_full_control]
+input_triangles = 23788
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_metrics_byte_identical = true
+parent_current_metrics_byte_identical = true
+peak_bytes = 59440454
+incremental_kernel_peak_bytes = 52317092
+allocation_calls = 9906413
+reallocation_calls = 1612899
+added_bytes = 582162615
+
+[rss_512]
+runs_per_engine_policy = 3
+hypermesh_strict_median_kib = 29156
+hypermesh_approximate_512_median_kib = 29168
+cgal_median_kib = 10076
+strict_ratio_to_cgal = 2.894
+approximate_512_ratio_to_cgal = 2.895
+parity = false
+
+[cgal_512_process]
+engine = "CGAL 6.0.3 EPECK"
+operation = "union"
+repetitions = 21
+copy_timing = "outside"
+output_valid_closed_structurally_valid = true
+output_vertices = 2410
+output_triangles = 4816
+parent_hypermesh_instructions = 33127108506
+current_hypermesh_instructions = 31476829077
+cgal_instructions = 4854933895
+current_parent_instruction_change_percent = -4.9817
+current_cgal_instruction_ratio = 6.483
+parent_hypermesh_branches = 5997331669
+current_hypermesh_branches = 5460394310
+cgal_branches = 893866367
+current_parent_branch_change_percent = -8.9529
+current_cgal_branch_ratio = 6.109
+parent_hypermesh_cycles = 12612964143
+current_hypermesh_cycles = 12055899202
+cgal_cycles = 1828469164
+current_parent_cycle_change_percent = -4.4166
+current_cgal_cycle_ratio = 6.593
+current_hypermesh_internal_mean_ns = 136743797
+cgal_median_ns = 6390682
+current_cgal_wall_ratio = 21.397
+parity = false
+
+[[size]]
+configuration = "default-release-native-general-text"
+parent_bytes = 1957890
+current_bytes = 1957714
+movement_bytes = -176
+
+[[size]]
+configuration = "default-release-native-immediate-text"
+parent_bytes = 1961034
+current_bytes = 1960858
+movement_bytes = -176
+
+[[size]]
+configuration = "default-release-optimized-wasm-general"
+parent_bytes = 1381629
+current_bytes = 1381349
+movement_bytes = -280
+
+[[size]]
+configuration = "default-release-optimized-wasm-immediate"
+parent_bytes = 1383470
+current_bytes = 1383190
+movement_bytes = -280
+
+[[size]]
+configuration = "default-size-native-general-text"
+parent_bytes = 1069047
+current_bytes = 1069271
+movement_bytes = 224
+
+[[size]]
+configuration = "default-size-native-immediate-text"
+parent_bytes = 1070003
+current_bytes = 1070235
+movement_bytes = 232
+
+[[size]]
+configuration = "default-size-optimized-wasm-general"
+parent_bytes = 662037
+current_bytes = 661838
+movement_bytes = -199
+
+[[size]]
+configuration = "default-size-optimized-wasm-immediate"
+parent_bytes = 662450
+current_bytes = 662251
+movement_bytes = -199
+
+[[size]]
+configuration = "all-release-native-general-text"
+parent_bytes = 2093367
+current_bytes = 2093127
+movement_bytes = -240
+
+[[size]]
+configuration = "all-release-native-immediate-text"
+parent_bytes = 2096223
+current_bytes = 2095983
+movement_bytes = -240
+
+[[size]]
+configuration = "all-release-optimized-wasm-general"
+parent_bytes = 1455608
+current_bytes = 1455434
+movement_bytes = -174
+
+[[size]]
+configuration = "all-release-optimized-wasm-immediate"
+parent_bytes = 1457580
+current_bytes = 1457406
+movement_bytes = -174
+
+[[size]]
+configuration = "all-size-native-general-text"
+parent_bytes = 1071287
+current_bytes = 1071631
+movement_bytes = 344
+
+[[size]]
+configuration = "all-size-native-immediate-text"
+parent_bytes = 1072259
+current_bytes = 1072595
+movement_bytes = 336
+
+[[size]]
+configuration = "all-size-optimized-wasm-general"
+parent_bytes = 662295
+current_bytes = 662096
+movement_bytes = -199
+
+[[size]]
+configuration = "all-size-optimized-wasm-immediate"
+parent_bytes = 662334
+current_bytes = 662135
+movement_bytes = -199
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+production_nodes = 15152
+production_edges = 25274
+tests_nodes = 16606
+tests_edges = 27566
+all_targets_nodes = 21534
+all_targets_edges = 34715
+comparison_local_scanner_nodes = 0
+actual_ember_namespace_nodes = 0
+single_boolean_engine = true
+
+[[rejected]]
+name = "hypermesh-recent-linear-filter-entry"
+instructions = 1654012677
+branches = 298176165
+removed_completely = true
+
+[[rejected]]
+name = "raw-unreduced-dyadic-comparison-helper"
+instructions = 1567335544
+branches = 272413059
+removed_completely = true
+
+[[rejected]]
+name = "one-word-denominator-hybrid"
+instructions = 1693692758
+branches = 300573851
+removed_completely = true
+
+[validation]
+hyperreal_all_feature_unit_tests = 653
+hyperreal_no_default_unit_tests = 575
+hyperreal_all_feature_doctests = 24
+hyperreal_no_default_doctests = 19
+hypermesh_default_passed = 203
+hypermesh_default_ignored = 6
+hypermesh_all_feature_passed = 204
+hypermesh_all_feature_ignored = 6
+hypermesh_minimal_library_passed = 154
+clippy_warning_denied = true
+rustdoc_warning_denied = true
+fuzz_targets_checked = true
+benches_built = true
+examples_checked = true
+formatting_checked = true
+diff_checked = true
+size_matrices_passed = true
+large_heap_both_policies_passed = true
+full_large_heap_both_policies_passed = true
+cgal_output_validated = true
+callgraphs_regenerated = true
+
+[open_gates]
+phase11_corpus_complete = false
+phase17_per_case_cgal_runtime_parity = false
+phase17_per_case_cgal_rss_parity = false
+phase17_remaining_arrangement_ownership_complete = false
+phase18_requirement_audit_complete = false

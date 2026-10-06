@@ -1,0 +1,140 @@
+schema = 1
+date = "2026-07-30"
+host = "AMD Ryzen 7 5800X3D"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[revisions]
+hyperreal = "4ebfa43f8b48"
+hyperlattice = "91d300239500"
+hyperlimit = "681096cabf9a"
+hypertri = "67d106bd7704"
+hypermesh = "1314d54714fd"
+
+[tracked_diff_sha256]
+hyperlattice = "067a31c0fc19b1221e317290d0eb1a45e4b39030b4f937e1f7322c4aa3746fcf"
+hypertri = "170c6c31c013a84873203d278166b7991831d0e0d0d840273ca644ab44d352b8"
+
+[source.hypermesh]
+code_lines = 69243
+bytes = 2567667
+
+[graph.source]
+nodes = 18591
+edges = 36384
+non_test_nodes = 14247
+non_test_edges = 24239
+
+[graph.all_evidence]
+nodes = 24793
+edges = 46039
+
+[api.hypermesh]
+public_items = 333
+callables = 162
+qualified_tests = 21
+qualified_benchmarks = 7
+qualified_fuzz = 7
+qualified_trace = 16
+qualified_all_four = 4
+
+[api.hypertri]
+public_items = 284
+callables = 174
+qualified_tests = 21
+qualified_benchmarks = 18
+qualified_fuzz = 7
+qualified_trace = 0
+qualified_all_four = 0
+
+[size.release.default.native]
+file_bytes = 3923824
+text_bytes = 3345473
+data_bytes = 228232
+bss_bytes = 2787
+gzip_9_bytes = 1557668
+brotli_11_bytes = 1161694
+sha256 = "a25b7d5143a6fc5ba2e2189e1ce7be8237614ed7b16932a589013c6eee80d6e5"
+
+[size.release.default.wasm]
+file_bytes = 2919617
+gzip_9_bytes = 859383
+brotli_11_bytes = 580299
+wasm_opt_oz_bytes = 2229994
+wasm_opt_oz_gzip_9_bytes = 774245
+wasm_opt_oz_brotli_11_bytes = 551019
+sha256 = "0944bd1a3ca13ac4e00a41cc6dacf326e3c62eaf3beb56c6f86bfdbf4fd01479"
+
+[size.release.all.native]
+file_bytes = 4053088
+text_bytes = 3470590
+data_bytes = 228552
+bss_bytes = 4491
+gzip_9_bytes = 1608895
+brotli_11_bytes = 1201615
+sha256 = "4ad031431625ac619de87bdd32cbfd0bd1d85befbdefbd446066e36a5be0dbd5"
+
+[size.release.all.wasm]
+file_bytes = 3011956
+gzip_9_bytes = 878064
+brotli_11_bytes = 592695
+wasm_opt_oz_bytes = 2297018
+wasm_opt_oz_gzip_9_bytes = 790102
+wasm_opt_oz_brotli_11_bytes = 563803
+sha256 = "b0d31b6450219b09c38c8430f6141ba51b92a62d14fdcad13d393d4b9a6a9f79"
+
+[size.size.default.native]
+file_bytes = 1699872
+text_bytes = 1467875
+data_bytes = 227856
+bss_bytes = 4754
+gzip_9_bytes = 694445
+brotli_11_bytes = 568073
+sha256 = "a39fd406216f26a2cd8d376c00acd8b2fe2ec8a26b639490ffd36a297b0767f9"
+
+[size.size.default.wasm]
+file_bytes = 1102459
+gzip_9_bytes = 395734
+brotli_11_bytes = 307157
+wasm_opt_oz_bytes = 929484
+wasm_opt_oz_gzip_9_bytes = 383995
+wasm_opt_oz_brotli_11_bytes = 305713
+sha256 = "4b0fddd831a7874d4336265d8421fcf4a750c8815c35ca472375a229871fa418"
+
+[size.size.all.native]
+file_bytes = 1700096
+text_bytes = 1468051
+data_bytes = 227904
+bss_bytes = 4530
+gzip_9_bytes = 694441
+brotli_11_bytes = 567954
+sha256 = "6ba64995921b2f1e7cb55944ac367096f430e29b8061f9c1566fccbb7b20d632"
+
+[size.size.all.wasm]
+file_bytes = 1100662
+gzip_9_bytes = 395739
+brotli_11_bytes = 306737
+wasm_opt_oz_bytes = 927046
+wasm_opt_oz_gzip_9_bytes = 383976
+wasm_opt_oz_brotli_11_bytes = 305402
+sha256 = "641864e05096a5a4be96afdef49910a97816e8b3c39029b5e454200745e8e51d"
+
+[runtime.competitive_overlapping_box_union]
+hypermesh_median_ns = 618600
+boolmesh_median_ns = 64777
+manifold_rust_median_ns = 62279
+
+[runtime.general_cube_union]
+median_ns = 2391200
+
+[runtime.subdivided_cube_192_union]
+median_ns = 80019000
+
+[memory.yeahright_1140]
+historical_peak_rss_kib = 82500
+historical_peak_heap_mib = 67.74
+historical_allocations = 5020891
+historical_median_ns = 944800000
+output_polygons = 5152
+output_checksum = 675298388

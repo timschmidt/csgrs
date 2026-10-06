@@ -1,0 +1,239 @@
+title = "Phase 11/17 complete exact constraint-cavity corpus"
+date = "2026-08-04"
+status = "retained; Phases 11, 17, and 18 remain open"
+
+[revisions]
+hypertri_parent = "9e9b7ef"
+hypertri_cavity_completion = "d42d89a"
+hypertri_cardinality_schedule = "ab37e54"
+hypertri_current = "aa99d16"
+hypermesh_parent = "5127a570"
+hypermesh_corpus = "543ce9cb"
+hypermesh_large_gate = "be431e9e"
+
+[scope]
+production_fixture_dispatch = false
+compatibility_shim = false
+alternate_boolean_engine = false
+policy_branch = false
+coordinate_width_branch = false
+benchmark_identity_branch = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[corpus]
+records_parent = 49
+records_current = 57
+large_heap_selectors_parent = 18
+large_heap_selectors_current = 19
+manifest_sha256 = "0d106f164c16ee089d311c8d8a47185f1e7e0aa3a0769c327277bc396f7767bb"
+migration_ledger_sha256 = "4da0ad3737fa8f15f3982fd09fd392ae9a05f3d0b58722508f5e6678170435f2"
+microcases_added = [
+  "disconnected inner cells",
+  "strictly nested constraint loops",
+  "properly crossing constraints with one exact triple point",
+  "opposite-winding coincident faces",
+  "collinear overlaps and T-junctions",
+]
+dense_crossing_line_counts = [5, 17, 65]
+dense_crossing_input_triangles = [132, 420, 1572]
+dense_crossing_grid_intersections = [100, 1156, 16900]
+dense_crossing_expected_intersection_volumes = [85, 901, 12805]
+
+[policy]
+strict_exact_only = true
+approximate_512_terminal_owner = "hyperlimit"
+small_medium_policy_outputs_equal = true
+small_medium_certainty = "Certified"
+large_policy_metrics_equal = true
+large_certainty = "Certified"
+
+[algorithm]
+unit = "one complete exact crossed-triangle corridor per missing PSLG segment"
+single_crossing = "reuse proper-crossing fact as convex quadrilateral certificate and flip once"
+multiple_crossings = "close only unprotected enclosed triangle components, then retriangulate the disk"
+collinear_schedule = "prune straight chains before emitting ears and reinsert every omitted indexed point"
+postcondition = "same triangle count, target edge present, complete checked convex-hull topology"
+removed = "per-flip global edge-incidence rebuild and scan"
+remaining_hotspot = "one sorted global edge-incidence rebuild per multi-edge constraint"
+
+[dense17_perf_parent]
+artifact = "target/phase11-dense-crossing-cavity-competitive-parent"
+sha256 = "fcda9ff7ceab2fedf66d42e3a762a82c0a4ce4c9a88b639a811fdbac3b415322"
+repetitions = 3
+instructions = 59778316406
+branches = 7783893606
+cycles = 16178219472
+median_boolean_ns = 3826149526
+output_vertices = 5444
+output_triangles = 11908
+
+[dense17_perf_current]
+artifact = "target/release/examples/competitive_arrangement_probe"
+sha256 = "f5349b690e0a79efd6264234ac9bdcde2e72d4bb9c8682cdc073b67e833e855b"
+repetitions = 3
+instructions = 30797543593
+branches = 4080896229
+cycles = 8626788491
+median_boolean_ns = 2040986333
+output_vertices = 5444
+output_triangles = 11908
+instruction_change_percent = -48.480410
+branch_change_percent = -47.572559
+cycle_change_percent = -46.676527
+median_boolean_change_percent = -46.656911
+
+[crossing_octahedra_control_parent]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 2888683819
+branches = 491254589
+cycles = 1170149397
+
+[crossing_octahedra_control_current]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 2891307832
+branches = 491719914
+cycles = 1165806117
+instruction_change_percent = 0.090838
+branch_change_percent = 0.094722
+cycle_change_percent = -0.371173
+
+[affine_boxes_control_parent]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 6858397649
+branches = 1174245479
+cycles = 2958450691
+
+[affine_boxes_control_current]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 6857694730
+branches = 1174368333
+cycles = 2855598190
+instruction_change_percent = -0.010249
+branch_change_percent = 0.010462
+cycle_change_percent = -3.476566
+
+[dense65_heap_parent]
+artifact = "target/phase11-dense-crossing-cavity-heap-parent"
+sha256 = "fd39a2fde5c4346d246543884f0fb79136c44b94f775a798c8e6bd8c65849554"
+input_triangles = 1572
+output_vertices = 73844
+output_triangles = 164068
+total_peak_bytes = 179545969
+incremental_kernel_peak_bytes = 178757268
+post_boolean_incremental_bytes = 58463480
+output_live_payload_bytes = 58415720
+input_fact_growth_bytes = 47760
+allocation_calls = 35040748
+reallocation_calls = 1656922
+cumulative_added_bytes = 362954861088
+
+[dense65_heap_current]
+artifact = "target/release/examples/large_mesh_kernel_heap_probe"
+sha256 = "50d80f3600329d076f889e4b1d1870ce75e854548bb506b4d928cff58c05c596"
+strict_equals_approximate_512 = true
+certainty = "Certified"
+input_triangles = 1572
+output_vertices = 73844
+output_triangles = 164068
+total_peak_bytes = 178914697
+incremental_kernel_peak_bytes = 178125996
+post_boolean_incremental_bytes = 57917376
+output_live_payload_bytes = 57784192
+input_fact_growth_bytes = 133184
+allocation_calls = 47470284
+reallocation_calls = 3090101
+cumulative_added_bytes = 151292361689
+incremental_peak_change_percent = -0.353145
+cumulative_added_change_percent = -58.316480
+allocation_call_change_percent = 35.471663
+
+[dense65_process_parent]
+policy = "STRICT"
+elapsed_seconds = 691.26
+user_seconds = 685.33
+system_seconds = 0.13
+maximum_rss_kib = 190964
+swaps = 0
+
+[dense65_process_current]
+policy = "STRICT"
+elapsed_seconds = 173.30
+user_seconds = 172.53
+system_seconds = 0.10
+maximum_rss_kib = 190884
+swaps = 0
+elapsed_change_percent = -74.929838
+maximum_rss_change_kib = -80
+
+[profile]
+artifact = "target/phase11-dense-crossing-cavity-fast.perf.data"
+samples = 2516
+lost_samples = 0
+edge_use_quicksort_self_percent = 10.39
+edge_use_smallsort_self_percent = 10.34
+exact_homogeneous_point2_self_percent = 15.92
+orient2d_policy_self_percent = 13.45
+constraint_geometry_validation_self_percent = 0.84
+
+[direct_probe_size]
+competitive_parent_text = 2729885
+competitive_current_text = 2728033
+heap_parent_text = 2876235
+heap_current_text = 2874383
+text_change_bytes = -1852
+
+[canonical_size]
+maximum_growth_percent = 0.210380
+default_release_native_text = [1960058, 1963210]
+default_release_wasm_oz = [1383742, 1385579]
+default_size_native_text = [1070871, 1071835]
+default_size_wasm_oz = [663053, 663466]
+all_release_native_text = [2095471, 2098335]
+all_release_wasm_oz = [1457902, 1459873]
+all_size_native_text = [1073215, 1074179]
+all_size_wasm_oz = [663072, 663528]
+
+[competitive]
+dense_crossing_cgal_eligible = false
+dense_crossing_reason = "the right operand deliberately exercises generalized-winding self-PWN corefinement outside the shared CGAL contract"
+crossing_octahedra_cgal_ratio_approx = 3.53
+affine_boxes_cgal_ratio_approx = 2.11
+cgal_parity_closed = false
+
+[callgraph]
+production_nodes = 15182
+production_edges = 25305
+tests_examples_nodes = 17529
+tests_examples_edges = 28675
+all_evidence_nodes = 21574
+all_evidence_edges = 34775
+production_artifact = "target/phase11-complete-cavity-workspace-callgraph-production/callgraph.json"
+tests_examples_artifact = "target/phase11-complete-cavity-workspace-callgraph-tests-examples/callgraph.json"
+all_evidence_artifact = "target/phase11-complete-cavity-workspace-callgraph-all-evidence/callgraph.json"
+first_flippable_global_scanner_nodes = 0
+ember_namespace_nodes = 0
+one_corefine_to_cavity_spine = true
+
+[validation]
+hypertri_all_feature_tests_pass = true
+hypermesh_release_suite_pass = true
+hypermesh_surface_arrangement_tests_pass = 38
+hypermesh_corpus_manifest_tests_pass = 16
+warning_denied_clippy_hypertri = true
+warning_denied_clippy_hypermesh = true
+hypermesh_docs_pass = true
+large_policy_equality_gate = "manual release gate added and executed"
+large_policy_equality_elapsed_seconds = 360.71
+
+[open]
+retained_mutable_cdt_topology = true
+external_real_world_corpus = true
+complete_fuzz_seed_admission_audit = true
+every_cgal_case_at_parity = true
+large_rss_at_cgal_target = true
+phase18_final_audit = true

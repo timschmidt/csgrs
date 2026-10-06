@@ -1,0 +1,496 @@
+[metadata]
+captured = "2026-08-03"
+phase = 17
+checkpoint = "certified-bvh-candidate-envelopes"
+status = "retained-open"
+supersedes_checkpoint = "certified-cdt-postcondition-reuse"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hidden_work_limit = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+parent_hypermesh = "a04bd137989f66c9c7f606b76e6db673281f45f2"
+parent_production_hypermesh = "272185db96d834cfb3ed22e07c8ac2dc82fdaac8"
+hypermesh = "7088b9a4786651850d070b0cec05b0f54bacd082"
+hypertri = "41631f652233e1337521822abc63bc29a6c0ce55"
+hyperreal = "c2217bae132b725e29faeb89495b8cd51012e1bc"
+hyperlattice = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit = "6e4d68c835dbdcb487ef8e43cf57138ed13894b5"
+hyperpath = "e65506279d3cba99a23cf98bbd17be44126ec14d"
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+threads = 1
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[algorithm]
+component = "exact BVH broad-phase scheduling"
+filter_kind = "outward binary32 AABB enclosure"
+filter_bytes = 24
+primitive_filters_contiguous = true
+working_node_filters_retained = true
+working_primitive_filters_retained = true
+compact_source_node_filters_retained = false
+compact_source_primitive_filters_retained = false
+existing_binary64_partition_centers_preserved = true
+exact_leaf_classification_preserved_for_public_queries = true
+self_traversal_returns_conservative_candidates = true
+self_candidate_production_consumers = 1
+self_candidate_consumer = "exact pairwise polygon intersection graph"
+fallback_paths_preserved = true
+adds_dependency = false
+fixture_branch = false
+coordinate_width_branch = false
+triangle_count_branch = false
+operation_branch = false
+policy_branch = false
+expected_output_branch = false
+
+[filter]
+exact_dyadic_retained_view_first = true
+borrowed_exact_rational_enclosure_second = true
+binary64_to_binary32_rounding = "outward"
+unavailable_encoding = "empty axis-zero interval"
+unavailable_symbolic_falls_back_exact = true
+unavailable_out_of_binary64_rational_falls_back_exact = true
+disjoint_result_is_certified = true
+overlap_result_is_candidate_only = true
+false_positives_allowed = true
+false_negatives_allowed = false
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+certainty_aggregated = true
+all_measured_certainty = "Certified"
+policy_values_exactly_equal = true
+policy_heap_exactly_equal = true
+
+[proof]
+outward_f32_finite_corpus = true
+outward_f32_subnormal_paths = true
+outward_f32_overflow_paths = true
+non_dyadic_tiny_gap_false_positive = true
+binary32_2_pow_30_false_positive = true
+symbolic_unavailable_path = true
+out_of_binary64_exact_rational_unavailable_path = true
+strict_and_approximate_512_fallback_paths = true
+canonical_candidates_cover_exact_brute_force = true
+canonical_candidates_have_no_duplicates = true
+malformed_filter_storage_typed_error = true
+exact_narrow_phase_rejects_filter_false_positive = true
+
+[dispatch.full_yeahright]
+parent_exact_ordered_aabb3_relations = 60_859
+current_exact_ordered_aabb3_relations = 4
+exact_ordered_aabb3_movement_percent = -99.993423
+parent_bvh_candidates = 8_023
+current_bvh_candidates = 8_023
+parent_borrowed_dyadic_comparisons = 145_630
+current_borrowed_dyadic_comparisons = 56_906
+borrowed_dyadic_comparison_movement_percent = -60.924260
+unknown_fact_events = 0
+fallback_or_abort_events = 0
+output_triangles = 630
+certainty = "Certified"
+
+[full_perf_protocol]
+fixture = "yeahright-full-rotated"
+operation = "intersection"
+policy = "STRICT"
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+fresh_process = true
+cpu_pinned = 11
+repetitions = 5
+fixture_preparation_included = true
+exact_import_included = true
+validation_and_destruction_included = true
+
+[full_perf]
+parent_median_seconds = 1.92
+current_samples_seconds = [1.88, 1.87, 1.86, 1.89, 1.90]
+current_median_seconds = 1.88
+wall_movement_percent = -2.083333
+parent_cycles = 7_464_605_759
+current_cycles = 7_239_160_608
+cycle_movement_percent = -3.020188
+parent_instructions = 19_133_466_915
+current_instructions = 18_514_197_608
+instruction_movement_percent = -3.236577
+parent_branches = 3_414_974_772
+current_branches = 3_286_637_679
+branch_movement_percent = -3.758069
+parent_cache_misses = 19_189_528
+current_cache_misses = 19_792_580
+cache_miss_movement_percent = 3.142610
+later_instruction_repeat = 18_514_335_526
+later_instruction_repeat_movement_from_stable_percent = 0.000745
+later_wall_and_cycle_window_noisy = true
+
+[historical]
+ember_seconds = 3_312.66
+current_vs_ember_speedup = 1_762.05
+cgal_epeck_seconds = 0.09
+current_vs_cgal_runtime_ratio = 20.8889
+cgal_epeck_max_rss_kib = 15_516
+current_max_rss_kib = 189_940
+current_vs_cgal_rss_ratio = 12.2416
+cgal_runtime_target_closed = false
+cgal_rss_target_closed = false
+
+[controls.wide_2049]
+input_triangles = 6_144
+parent_instructions = 4_159_897_802
+current_instructions = 3_892_427_738
+instruction_movement_percent = -6.429727
+parent_branches = 773_681_983
+current_branches = 698_944_715
+branch_movement_percent = -9.659947
+
+[controls.voxel_torus_33]
+input_triangles = 6_412
+parent_instructions = 1_214_500_564
+current_instructions = 1_157_159_946
+instruction_movement_percent = -4.721333
+parent_branches = 212_195_730
+current_branches = 199_226_631
+branch_movement_percent = -6.111857
+
+[controls.voxel_torus_65]
+input_triangles = 25_100
+parent_instructions = 5_218_831_419
+current_instructions = 4_957_232_851
+instruction_movement_percent = -5.012589
+parent_branches = 909_727_376
+current_branches = 849_925_635
+branch_movement_percent = -6.573589
+
+[controls.dense_coplanar_16]
+input_triangles = 6_144
+parent_instructions = 3_181_158_003
+current_instructions = 3_053_149_032
+instruction_movement_percent = -4.023974
+parent_branches = 547_887_479
+current_branches = 521_645_228
+branch_movement_percent = -4.789715
+
+[controls.small_exact_boxes]
+operation = "all"
+repetitions_per_process = 1_000
+repetitions = 5
+outputs_vertices = 28
+outputs_triangles = [48, 24, 40, 32]
+parent_strict_median_nanoseconds = 614_860
+current_strict_samples_nanoseconds = [634_450, 634_550, 630_933, 632_628, 632_280]
+current_strict_median_nanoseconds = 632_628
+strict_wall_movement_percent = 2.889764
+parent_strict_instructions = 6_157_302_471
+current_strict_instructions = 6_097_019_193
+strict_instruction_movement_percent = -0.979053
+parent_strict_branches = 1_081_366_688
+current_strict_branches = 1_067_885_644
+strict_branch_movement_percent = -1.246667
+parent_approximate_512_median_nanoseconds = 617_034
+current_approximate_512_samples_nanoseconds = [628_345, 627_297, 630_275, 629_603, 648_472]
+current_approximate_512_median_nanoseconds = 629_603
+approximate_512_wall_movement_percent = 2.037003
+parent_approximate_512_instructions = 6_156_210_650
+current_approximate_512_instructions = 6_095_567_997
+approximate_512_instruction_movement_percent = -0.985065
+parent_approximate_512_branches = 1_081_075_810
+current_approximate_512_branches = 1_067_521_754
+approximate_512_branch_movement_percent = -1.253756
+pinned_cgal_copy_outside_microseconds = 119.5965
+pinned_cgal_copy_inside_microseconds = 128.9760
+strict_vs_cgal_copy_outside_ratio = 5.2897
+approximate_512_vs_cgal_copy_inside_ratio = 4.8816
+wall_window_frequency_sensitive = true
+target_closed = false
+
+[heap_protocol]
+metric = "global_allocator_requested_payload"
+fixture_preparation_excluded = true
+input_drop_measured_separately = true
+output_drop_measured_separately = true
+selectors = 13
+policies_per_selector = 2
+strict_and_approximate_512_exactly_equal = true
+
+[heap.boxes_3072]
+selector = "boxes-3072"
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 16_004_010
+allocation_calls = 166_057
+reallocation_calls = 788
+added_bytes = 27_536_446
+post_boolean_retained_bytes = 534_008
+output_live_payload_bytes = 520_472
+input_fact_growth_bytes = 13_536
+post_input_drop_incremental_bytes = 78_576
+
+[heap.boxes_3072_general]
+selector = "boxes-3072-general"
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 16_063_730
+allocation_calls = 166_811
+reallocation_calls = 788
+added_bytes = 29_005_558
+post_boolean_retained_bytes = 593_728
+output_live_payload_bytes = 520_472
+input_fact_growth_bytes = 73_256
+post_input_drop_incremental_bytes = 78_576
+
+[heap.dense_coplanar_16]
+selector = "dense-coplanar-16"
+input_triangles = 6_144
+output_vertices = 3_074
+output_triangles = 6_144
+incremental_peak_bytes = 18_719_560
+allocation_calls = 531_424
+reallocation_calls = 30_845
+added_bytes = 82_311_554
+post_boolean_retained_bytes = 704_064
+output_live_payload_bytes = 663_896
+input_fact_growth_bytes = 40_168
+post_input_drop_incremental_bytes = 85_640
+
+[heap.dense_coplanar_32]
+selector = "dense-coplanar-32"
+input_triangles = 24_576
+output_vertices = 12_290
+output_triangles = 24_576
+incremental_peak_bytes = 74_724_848
+allocation_calls = 2_090_317
+reallocation_calls = 123_026
+added_bytes = 327_920_778
+post_boolean_retained_bytes = 2_726_920
+output_live_payload_bytes = 2_654_552
+input_fact_growth_bytes = 72_368
+post_input_drop_incremental_bytes = 164_808
+
+[heap.wide_rational_64]
+selector = "wide-rational-64"
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 21_716_146
+allocation_calls = 657_846
+reallocation_calls = 4_903
+added_bytes = 49_073_174
+post_boolean_retained_bytes = 530_448
+output_live_payload_bytes = 520_472
+input_fact_growth_bytes = 9_976
+post_input_drop_incremental_bytes = 35_976
+
+[heap.wide_rational_512]
+selector = "wide-rational-512"
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 22_596_194
+allocation_calls = 1_832_331
+reallocation_calls = 44_317
+added_bytes = 136_567_142
+post_boolean_retained_bytes = 533_216
+output_live_payload_bytes = 520_472
+input_fact_growth_bytes = 12_744
+post_input_drop_incremental_bytes = 47_344
+
+[heap.wide_rational_2048]
+selector = "wide-rational-2048"
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+parent_incremental_peak_bytes = 31_038_074
+incremental_peak_bytes = 31_234_658
+peak_movement_percent = 0.633364
+parent_allocation_calls = 2_107_379
+allocation_calls = 2_107_380
+reallocation_calls = 227_677
+parent_added_bytes = 462_613_302
+added_bytes = 462_809_886
+post_boolean_retained_bytes = 547_040
+output_live_payload_bytes = 520_472
+input_fact_growth_bytes = 26_568
+post_input_drop_incremental_bytes = 96_192
+
+[heap.voxel_torus_33]
+selector = "voxel-torus-33"
+input_triangles = 6_412
+output_vertices = 1_730
+output_triangles = 3_456
+incremental_peak_bytes = 16_591_126
+allocation_calls = 180_343
+reallocation_calls = 927
+added_bytes = 34_699_864
+post_boolean_retained_bytes = 417_872
+output_live_payload_bytes = 375_368
+input_fact_growth_bytes = 42_504
+post_input_drop_incremental_bytes = 83_280
+
+[heap.voxel_torus_65]
+selector = "voxel-torus-65"
+input_triangles = 25_100
+output_vertices = 6_532
+output_triangles = 13_060
+incremental_peak_bytes = 66_152_426
+allocation_calls = 693_592
+reallocation_calls = 1_778
+added_bytes = 150_806_651
+post_boolean_retained_bytes = 2_322_776
+output_live_payload_bytes = 1_623_160
+input_fact_growth_bytes = 699_616
+post_input_drop_incremental_bytes = 166_368
+
+[heap.yeahright]
+selector = "yeahright"
+input_triangles = 852
+output_vertices = 317
+output_triangles = 630
+incremental_peak_bytes = 5_053_588
+allocation_calls = 226_795
+reallocation_calls = 10_405
+added_bytes = 14_362_133
+post_boolean_retained_bytes = 493_680
+output_live_payload_bytes = 232_536
+input_fact_growth_bytes = 261_144
+post_input_drop_incremental_bytes = 7_320
+
+[heap.yeahright_4]
+selector = "yeahright-4"
+input_triangles = 3_372
+output_vertices = 1_054
+output_triangles = 2_104
+incremental_peak_bytes = 18_851_122
+allocation_calls = 910_753
+reallocation_calls = 37_532
+added_bytes = 54_919_058
+post_boolean_retained_bytes = 1_598_392
+output_live_payload_bytes = 571_168
+input_fact_growth_bytes = 1_027_224
+post_input_drop_incremental_bytes = 7_320
+
+[heap.yeahright_8]
+selector = "yeahright-8"
+input_triangles = 13_452
+output_vertices = 3_820
+output_triangles = 7_636
+incremental_peak_bytes = 71_530_158
+allocation_calls = 3_923_019
+reallocation_calls = 144_758
+added_bytes = 219_026_204
+post_boolean_retained_bytes = 5_604_104
+output_live_payload_bytes = 1_512_560
+input_fact_growth_bytes = 4_091_544
+post_input_drop_incremental_bytes = 7_320
+
+[heap.full_yeahright]
+selector = "yeahright-full-rotated"
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+parent_incremental_peak_bytes = 158_258_204
+incremental_peak_bytes = 158_258_204
+parent_allocation_calls = 19_273_900
+allocation_calls = 19_273_901
+reallocation_calls = 2_133_982
+parent_added_bytes = 1_015_039_056
+added_bytes = 1_015_806_552
+added_byte_movement_percent = 0.075612
+post_boolean_retained_bytes = 24_389_904
+output_live_payload_bytes = 56
+input_fact_growth_bytes = 24_389_848
+post_input_drop_incremental_bytes = 10_792
+strict_max_rss_kib = 189_768
+approximate_512_max_rss_kib = 189_940
+
+[size_protocol]
+native_metric = "text bytes"
+wasm_metric = "wasm-opt -Oz bytes"
+feature_set = "default"
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_bytes = 2_024_622
+current_native_bytes = 2_029_758
+native_movement_percent = 0.253677
+parent_wasm_bytes = 1_443_031
+current_wasm_bytes = 1_447_589
+wasm_movement_percent = 0.315863
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_bytes = 2_027_766
+current_native_bytes = 2_032_902
+native_movement_percent = 0.253282
+parent_wasm_bytes = 1_444_878
+current_wasm_bytes = 1_449_447
+wasm_movement_percent = 0.316220
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_bytes = 1_084_319
+current_native_bytes = 1_088_223
+native_movement_percent = 0.360042
+parent_wasm_bytes = 680_776
+current_wasm_bytes = 684_175
+wasm_movement_percent = 0.499283
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_bytes = 1_085_259
+current_native_bytes = 1_089_171
+native_movement_percent = 0.360464
+parent_wasm_bytes = 681_393
+current_wasm_bytes = 684_362
+wasm_movement_percent = 0.435720
+
+[rejected_layouts]
+binary64_filter_full_heap_delta_bytes = 1_534_992
+binary64_filter_wide_heap_delta_bytes = 393_168
+all_filters_on_demand_full_instructions = 19_788_000_000
+working_nodes_only_full_instructions = 19_703_000_000
+f32_derived_partition_centers_regressed_instructions = true
+compact_hierarchy_retained_duplicate_filters = false
+
+[callgraph]
+output = "/tmp/hypermesh-certified-bvh-filters-callgraph-2026-08-03/callgraph.json"
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+function_nodes = 14_732
+edges = 24_516
+hypercurve_excluded = true
+hypersolve_excluded = true
+
+[validation]
+all_feature_tests_passed = 173
+default_tests_passed = 172
+no_default_feature_tests_passed = 172
+ignored_external_or_manual_tests = 6
+full_yeahright_oracle_passed = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+format_check = true
+diff_check = true
+fuzz_targets_compile = true
+benchmark_targets_compile = true
+large_heap_selectors_both_policies = 13
+large_heap_policy_exact_equality = true

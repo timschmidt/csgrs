@@ -1,0 +1,227 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "shared-exact-intersection-events"
+parent_commit = "816bb81f"
+hypermesh_implementation_commit = "a824644a76887e53b87d462b6e290f75f4967689"
+hyperlimit_implementation_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+
+[representation]
+node_fields = ["next_u32", "other_polygon_u32", "segment_or_sentinel_u32"]
+node_bytes_x86_64 = 12
+retained_face_index_bytes = 8
+shared_endpoint_records_per_pair = 1
+directed_events_per_pair = 2
+cloned_support_planes_per_event = 0
+cloned_overlap_edge_vectors_per_event = 0
+compatibility_adapter = false
+dual_representation = false
+transactional_pair_append = true
+checked_face_ids = true
+checked_segment_ids = true
+checked_node_ids = true
+checked_row_counts = true
+
+[policy]
+scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+graph_stores_policy_sensitive_decisions = false
+
+[fixture]
+id = "subdivided_overlapping_boxes_3072_each"
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[tests.hypermesh_default]
+library_passed = 1074
+competitive_passed = 4
+competitive_ignored = 6
+core_passed = 59
+corpus_passed = 4
+predicate_policy_passed = 8
+readme_passed = 2
+regression_passed = 48
+regression_ignored = 1
+failed = 0
+
+[tests.hypermesh_all_features]
+library_passed = 1075
+core_passed = 60
+failed = 0
+
+[tests.hyperlimit]
+default_library_passed = 142
+minimal_library_passed = 142
+all_features_library_passed = 150
+failed = 0
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+native_minimal_and_all_feature_checks = true
+wasm_minimal_and_all_feature_checks = true
+fuzz_bins_check = true
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 19941
+edges = 39811
+
+[callgraph.evidence]
+includes = ["examples", "tests", "bench", "fuzz"]
+nodes = 26359
+edges = 49757
+
+[heap.tool]
+massif_version = "3.27.0"
+massif_args = "--time-unit=B --detailed-freq=1"
+heaptrack_allocations_parent = 844727
+heaptrack_allocations_candidate = 844735
+heaptrack_temporary_parent = 33802
+heaptrack_temporary_candidate = 33794
+
+[heap.strict.parent]
+useful_bytes = 29450268
+extra_bytes = 1227836
+total_bytes = 30678104
+
+[heap.strict.candidate]
+useful_bytes = 28864564
+extra_bytes = 1227340
+total_bytes = 30091904
+
+[heap.strict.delta]
+useful_bytes = -585704
+useful_percent = -1.9888
+total_bytes = -586200
+total_percent = -1.9108
+
+[heap.approximate_512.parent]
+useful_bytes = 29450268
+extra_bytes = 1228316
+total_bytes = 30678584
+
+[heap.approximate_512.candidate]
+useful_bytes = 28864564
+extra_bytes = 1226092
+total_bytes = 30090656
+
+[heap.approximate_512.delta]
+useful_bytes = -585704
+useful_percent = -1.9888
+total_bytes = -587928
+total_percent = -1.9164
+
+[runtime]
+policy = "STRICT"
+cpu = 11
+repetitions_per_batch = 5
+batches_per_revision = 2
+fixture = "boxes-3072-general"
+shared_hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+
+[runtime.parent]
+task_clock_ms = 2091.385
+cycles = 8464117377
+instructions = 24422459824
+branches = 4693546069
+branch_misses = 14382991
+
+[runtime.candidate]
+task_clock_ms = 2071.195
+cycles = 8413046371
+instructions = 24416096898
+branches = 4692496542
+branch_misses = 14293052
+
+[runtime.delta_percent]
+task_clock = -0.9654
+cycles = -0.6034
+instructions = -0.0261
+branches = -0.0224
+branch_misses = -0.6253
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4080804
+candidate_bytes = 4083004
+delta_bytes = 2200
+delta_percent = 0.0539
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4113860
+candidate_bytes = 4116028
+delta_bytes = 2168
+delta_percent = 0.0527
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2753327
+candidate_bytes = 2755317
+delta_bytes = 1990
+delta_percent = 0.0723
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2767885
+candidate_bytes = 2769936
+delta_bytes = 2051
+delta_percent = 0.0741
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1878874
+candidate_bytes = 1880338
+delta_bytes = 1464
+delta_percent = 0.0779
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1890678
+candidate_bytes = 1892134
+delta_bytes = 1456
+delta_percent = 0.0770
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1173589
+candidate_bytes = 1174206
+delta_bytes = 617
+delta_percent = 0.0526
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1183734
+candidate_bytes = 1184346
+delta_bytes = 612
+delta_percent = 0.0517
+
+[decision]
+retained = true
+reason = "Shared exact endpoint storage and compact directed events reduce both-policy large-fixture useful heap 1.9888% and deterministic runtime work while preserving exact policy semantics; the controlled linked-size increase remains below 0.08% and is temporary until EMBER deletion."

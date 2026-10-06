@@ -1,0 +1,52 @@
+[package]
+name = "hypermesh"
+version = "0.1.0"
+edition = "2024"
+description = "Hyperreal-backed exact mesh boolean primitives for Rust."
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/hypermesh"
+readme = "README.md"
+keywords = ["mesh", "boolean", "geometry", "exact", "csg"]
+categories = ["mathematics", "graphics", "algorithms"]
+
+[dependencies]
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
+
+[dev-dependencies]
+boolmesh = "=0.1.9"
+criterion = "0.5"
+manifold-rust = "=0.9.2"
+proptest = "1.7.0"
+three-d-asset = "=0.4.0"
+toml = "=0.8.23"
+tri-mesh = "=0.6.1"
+
+[features]
+default = []
+fuzz-bounded-campaign = []
+dispatch-trace = [
+    "hyperreal/dispatch-trace",
+    "hyperlattice/hyperreal-dispatch-trace",
+    "hyperlimit/dispatch-trace",
+]
+
+[[bench]]
+name = "end_to_end"
+harness = false
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["dispatch-trace"]
+
+[[bench]]
+name = "competitive"
+harness = false
+
+[patch.crates-io]
+hyperreal = { path = "../hyperreal" }
+hyperlimit = { path = "../hyperlimit" }

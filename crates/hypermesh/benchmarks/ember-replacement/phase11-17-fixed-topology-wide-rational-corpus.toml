@@ -1,0 +1,478 @@
+schema = 1
+status = "retained-checkpoint-phase-11-17-and-18-open"
+captured_at = "2026-08-03"
+checkpoint = "fixed-topology-wide-rational-scaling-corpus"
+implementation_commit = "4408288fe5053d7c9da205583b6718b506e52afe"
+previous_implementation_commit = "9b3dd0b981f67dc7471438f01c1d01c66096e76b"
+previous_evidence_commit = "bbb462907791eb06f06f722d6fa49feae807857b"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[component_heads]
+hyperreal = "bf31dea557880036ea172472bcba094fe7c0698b"
+hyperlattice = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit = "e9d58cf4ae46a29d35884a9fb50e91a1be3a526b"
+hypertri = "186a29eb74ade9126f605184d1275a504450b9ec"
+hypermesh = "4408288fe5053d7c9da205583b6718b506e52afe"
+
+[scope]
+production_boolean_engine_count = 1
+production_module_changed = false
+dependency_changed = false
+cargo_feature_changed = false
+compatibility_shim = false
+benchmark_engine_dispatch = false
+fixture_coordinate_width_or_triangle_count_dispatch_in_engine = false
+hypercurve_edited = false
+hypersolve_edited = false
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false
+whole_corpus_cgal_parity = false
+
+[corpus]
+manifest_records_before = 32
+manifest_records_after = 35
+new_scale_points = 3
+new_large_heap_selectors = 3
+closed_named_gaps = ["first fixed-topology arbitrary-rational-width scaling family"]
+open_named_gaps = ["deeper symbolic non-rational scaling", "distributable external real-world pathologies", "stage-specific arena attribution"]
+policies = ["STRICT", "APPROXIMATE_512"]
+all_successful_rows_certainty = "Certified"
+approximate_512_terminal_consumed = false
+operations_in_exact_regression = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policy_outputs_exactly_equal = true
+normalized_geometry_equal_across_widths = true
+large_policy_topology_counts_equal = true
+large_policy_allocator_metrics_equal = true
+
+[generator]
+function = "competitive::support::wide_rational_overlapping_box_case"
+kind = "one exact positive similarity applied to the fixed-connectivity overlapping-box surface grid"
+division_value = 16
+triangles_per_operand = 3072
+input_triangles_total = 6144
+scale_formula = "(2^k + 1) / 2^k"
+shift_values = [64, 512, 2048]
+scale_component_bit_widths = [65, 513, 2049]
+all_wide_scales_round_to_binary64_one = true
+production_special_case = false
+
+[[scale]]
+id = "subdivided_overlapping_boxes_3072_each"
+shift = 0
+scale_component_bits = 1
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+normalized_volume = 84.0
+heap_selector = "boxes-3072"
+
+[[scale]]
+id = "wide_rational_boxes_64"
+shift = 64
+scale_component_bits = 65
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+normalized_volume = 84.0
+heap_selector = "wide-rational-64"
+
+[[scale]]
+id = "wide_rational_boxes_512"
+shift = 512
+scale_component_bits = 513
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+normalized_volume = 84.0
+heap_selector = "wide-rational-512"
+
+[[scale]]
+id = "wide_rational_boxes_2048"
+shift = 2048
+scale_component_bits = 2049
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+normalized_volume = 84.0
+heap_selector = "wide-rational-2048"
+
+[correctness]
+regression_divisions = 2
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+exact_volume_coefficients = [84, 12, 52, 20, 72]
+exact_six_volume_coefficients = [504, 72, 312, 120, 432]
+exact_volume_multiplier = "scale^3"
+finite = true
+nondegenerate = true
+directionally_balanced = true
+exact_normalized_vertices_equal = true
+triangle_arrays_equal = true
+strict_approximate_batches_equal = true
+cgal_operation = "union"
+cgal_valid = true
+cgal_closed = true
+cgal_structurally_valid = true
+cgal_output_vertices = 2410
+cgal_output_triangles = 4816
+
+[exact_off]
+exporter = "examples/export_cgal_exact_off.rs"
+scalar_encoding = "reduced numerator/denominator from Real::exact_rational"
+rounds_through_decimal_approximation = false
+cgal_version = "6.0.3"
+cgal_commit = "cefe3007d59cf4292a09da4fa8a35f38478a4e0b"
+cgal_kernel = "Exact_predicates_exact_constructions_kernel"
+
+[[exact_off.asset]]
+fixture = "subdivided_overlapping_boxes_3072_each"
+left_sha256 = "180adda7add394332e99ee76cf5eeb5638128abdc77c432bdf83b3dfd44b2c31"
+right_sha256 = "dc72da54edf2ccafc864dcfdd43a245056f7f63cc6b60d1e286ad3db560df039"
+
+[[exact_off.asset]]
+fixture = "wide_rational_boxes_64"
+left_sha256 = "d2ebe4956aa1ef23e21f7f79d923d35b6a794a146c22b5aa90c1a7b9b1796c2b"
+right_sha256 = "8cd482c9bd04e71128248998a378d96507368665ae1325f92f65fb2090eed1c4"
+
+[[exact_off.asset]]
+fixture = "wide_rational_boxes_512"
+left_sha256 = "d8f4e81f743403e2baa3e0adde96b78fff5ecd50396b0c7907c0af6311fd116d"
+right_sha256 = "c0942f9e5317819972271ed2d62401db71634cf9531aef52f87c4366292cbf01"
+
+[[exact_off.asset]]
+fixture = "wide_rational_boxes_2048"
+left_sha256 = "64ee8735c5228ce1547294528d8f521dc1c2dd3bdcbb9a6ca4f600d4c2caa8b5"
+right_sha256 = "523e3b5b20e106fb0cf62cbdba08f49fae29e0b1cc0301c523d35294b9e5bd48"
+
+[runtime_protocol]
+operation = "union"
+hypermesh_executable = "competitive_arrangement_probe"
+hypermesh_boundary = "repeated production boolean calls after exact input import and policy-qualified PWN priming"
+hypermesh_independent_aggregates = 3
+hypermesh_statistic = "median of independent aggregate elapsed-per-call means"
+cgal_executable = "hypermesh_cgal_epeck"
+cgal_boundary = "corefine_and_compute_boolean_operations with mutable input copy outside timing"
+cgal_repetitions = 21
+cgal_statistic = "median"
+threads = 1
+pinned_cpu = 11
+
+[[runtime]]
+fixture = "subdivided_overlapping_boxes_3072_each"
+scale_component_bits = 1
+hypermesh_repetitions_per_aggregate = 11
+hypermesh_strict_samples_ns = [94575462, 94123172, 92719241]
+hypermesh_strict_median_ns = 94123172
+hypermesh_approximate_512_samples_ns = [92291599, 93282993, 94560999]
+hypermesh_approximate_512_median_ns = 93282993
+cgal_min_ns = 4623042
+cgal_median_ns = 4673199
+cgal_max_ns = 5259649
+strict_to_cgal = 20.1411
+approximate_512_to_cgal = 19.9613
+
+[[runtime]]
+fixture = "wide_rational_boxes_64"
+scale_component_bits = 65
+hypermesh_repetitions_per_aggregate = 11
+hypermesh_strict_samples_ns = [140173512, 142942382, 141633015]
+hypermesh_strict_median_ns = 141633015
+hypermesh_approximate_512_samples_ns = [140273599, 139473080, 140668852]
+hypermesh_approximate_512_median_ns = 140273599
+cgal_min_ns = 22292330
+cgal_median_ns = 22379184
+cgal_max_ns = 23928517
+strict_to_cgal = 6.3288
+approximate_512_to_cgal = 6.2680
+
+[[runtime]]
+fixture = "wide_rational_boxes_512"
+scale_component_bits = 513
+hypermesh_repetitions_per_aggregate = 11
+hypermesh_strict_samples_ns = [195590334, 187713264, 187625673]
+hypermesh_strict_median_ns = 187713264
+hypermesh_approximate_512_samples_ns = [192243627, 196119665, 188068709]
+hypermesh_approximate_512_median_ns = 192243627
+cgal_min_ns = 28908145
+cgal_median_ns = 29265830
+cgal_max_ns = 31845033
+strict_to_cgal = 6.4141
+approximate_512_to_cgal = 6.5689
+
+[[runtime]]
+fixture = "wide_rational_boxes_2048"
+scale_component_bits = 2049
+hypermesh_repetitions_per_aggregate = 5
+hypermesh_strict_samples_ns = [540351481, 542590640, 542174352]
+hypermesh_strict_median_ns = 542174352
+hypermesh_approximate_512_samples_ns = [540821857, 544255539, 538696983]
+hypermesh_approximate_512_median_ns = 540821857
+cgal_min_ns = 54942247
+cgal_median_ns = 55243716
+cgal_max_ns = 57858537
+strict_to_cgal = 9.8142
+approximate_512_to_cgal = 9.7897
+
+[runtime_scaling]
+strict_growth_65_from_identity = 1.5048
+strict_growth_513_from_identity = 1.9943
+strict_growth_2049_from_identity = 5.7603
+approximate_512_growth_65_from_identity = 1.5037
+approximate_512_growth_513_from_identity = 2.0609
+approximate_512_growth_2049_from_identity = 5.7976
+cgal_growth_65_from_identity = 4.7888
+cgal_growth_513_from_identity = 6.2625
+cgal_growth_2049_from_identity = 11.8214
+hypermesh_absolute_win_count = 0
+historical_ember_row_exists = false
+historical_ratio_invented = false
+
+[hardware_counters]
+executable = "large_mesh_heap_probe"
+policy = "STRICT"
+repetitions = 11
+counters_include_process_fixture_preparation = true
+
+[[hardware_counters.row]]
+scale_component_bits = 1
+task_clock_ms = 114.92
+cycles = 454470457
+instructions = 1257736009
+branches = 222733845
+branch_misses = 1752771
+cache_misses = 1135036
+
+[[hardware_counters.row]]
+scale_component_bits = 65
+task_clock_ms = 180.93
+cycles = 712133902
+instructions = 1884202515
+branches = 341588452
+branch_misses = 2273058
+cache_misses = 3132186
+
+[[hardware_counters.row]]
+scale_component_bits = 513
+task_clock_ms = 253.99
+cycles = 991591171
+instructions = 2581084839
+branches = 481724660
+branch_misses = 2593923
+cache_misses = 3542375
+
+[[hardware_counters.row]]
+scale_component_bits = 2049
+task_clock_ms = 744.52
+cycles = 2970098453
+instructions = 8612012286
+branches = 1397652445
+branch_misses = 5923494
+cache_misses = 5871094
+
+[hardware_counters.identity_to_2049_growth]
+task_clock = 6.4786
+cycles = 6.5353
+instructions = 6.8472
+branches = 6.2750
+branch_misses = 3.3795
+cache_misses = 5.1726
+
+[profile]
+executable = "large_mesh_heap_probe"
+fixture = "wide-rational-2048"
+policy = "STRICT"
+frequency_hz = 999
+call_graph = "dwarf"
+event = "cycles"
+samples = 768
+lost_samples = 0
+approximate_event_count = 3012914459
+whole_process_includes_fixture_preparation = true
+mac3_self_percent = 39.65
+biguint_trailing_zeros_self_percent = 4.20
+memmove_self_percent = 3.98
+biguint_sub_sign_self_percent = 3.51
+rational_to_f64_lossy_self_percent = 3.04
+classify_exact_rational_coordinates_self_percent = 2.13
+signed_product_sum_ordering_fallback_self_percent = 1.55
+rational_partial_cmp_self_percent = 1.32
+realloc_self_percent = 1.21
+next_general_target = "reuse normalized arbitrary-width operands, capacities, and retained exact facts along existing predicate/construction paths"
+
+[heap_protocol]
+executable = "large_mesh_kernel_heap_probe"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+boundary = "prepared input versus one production Boolean call versus output/input drop"
+serialized = true
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_byte_identical = true
+
+[[heap]]
+scale_component_bits = 1
+process_baseline_live_bytes = 630
+input_live_bytes = 656246
+input_payload_bytes = 655616
+boolean_peak_live_bytes = 16463672
+kernel_peak_incremental_bytes = 15807426
+post_boolean_incremental_bytes = 534008
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 13536
+post_input_drop_incremental_bytes = 78576
+allocation_calls = 166410
+deallocation_calls = 166211
+reallocation_calls = 788
+added_bytes = 27359910
+removed_bytes = 26825902
+
+[[heap]]
+scale_component_bits = 65
+process_baseline_live_bytes = 636
+input_live_bytes = 617940
+input_payload_bytes = 617304
+boolean_peak_live_bytes = 27524318
+kernel_peak_incremental_bytes = 26906378
+post_boolean_incremental_bytes = 530448
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 9976
+post_input_drop_incremental_bytes = 35856
+allocation_calls = 1076635
+deallocation_calls = 1076489
+reallocation_calls = 2035
+added_bytes = 68227422
+removed_bytes = 67696974
+
+[[heap]]
+scale_component_bits = 513
+process_baseline_live_bytes = 637
+input_live_bytes = 627485
+input_payload_bytes = 626848
+boolean_peak_live_bytes = 46660967
+kernel_peak_incremental_bytes = 46033482
+post_boolean_incremental_bytes = 533216
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 12744
+post_input_drop_incremental_bytes = 47224
+allocation_calls = 1806898
+deallocation_calls = 1806756
+reallocation_calls = 38201
+added_bytes = 293106862
+removed_bytes = 292573646
+
+[[heap]]
+scale_component_bits = 2049
+process_baseline_live_bytes = 638
+input_live_bytes = 665006
+input_payload_bytes = 664368
+boolean_peak_live_bytes = 112513016
+kernel_peak_incremental_bytes = 111848010
+post_boolean_incremental_bytes = 547040
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 26568
+post_input_drop_incremental_bytes = 96072
+allocation_calls = 3183205
+deallocation_calls = 3183063
+reallocation_calls = 955733
+added_bytes = 1488168086
+removed_bytes = 1487621046
+
+[heap_scaling]
+input_payload = 1.0133
+kernel_peak = 7.0757
+post_boolean_incremental = 1.0244
+output_payload = 1.0
+input_fact_growth = 1.9628
+allocation_calls = 19.1287
+reallocation_calls = 1212.8591
+allocated_bytes = 54.3923
+
+[[rss]]
+scale_component_bits = 1
+hypermesh_strict_kib = 20640
+hypermesh_approximate_512_kib = 20800
+cgal_kib = 9780
+strict_to_cgal = 2.1104
+
+[[rss]]
+scale_component_bits = 65
+hypermesh_strict_kib = 33572
+hypermesh_approximate_512_kib = 33588
+cgal_kib = 9792
+strict_to_cgal = 3.4285
+
+[[rss]]
+scale_component_bits = 513
+hypermesh_strict_kib = 51852
+hypermesh_approximate_512_kib = 51832
+cgal_kib = 10692
+strict_to_cgal = 4.8496
+
+[[rss]]
+scale_component_bits = 2049
+hypermesh_strict_kib = 116016
+hypermesh_approximate_512_kib = 116096
+cgal_kib = 13672
+strict_to_cgal = 8.4857
+
+[call_graph]
+utility = "tools/hyper-callgraph"
+scope = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+hypercurve_excluded = true
+hypersolve_excluded = true
+include_examples = false
+include_tests = false
+include_bench = false
+include_fuzz = false
+syntactic_nodes = 14607
+edges = 24276
+production_nodes_added_by_checkpoint = 0
+navigation_not_reachability_proof = true
+
+[size]
+production_source_changed = false
+cargo_input_changed = false
+canonical_rows_byte_identical = true
+release_general_native_text_bytes = 2033826
+release_general_wasm_oz_bytes = 1441629
+release_immediate_native_text_bytes = 2036970
+release_immediate_wasm_oz_bytes = 1443484
+size_general_native_text_bytes = 1080599
+size_general_wasm_oz_bytes = 675111
+size_immediate_native_text_bytes = 1081539
+size_immediate_wasm_oz_bytes = 675517
+inserted_lines = 405
+deleted_lines = 43
+
+[validation]
+unit_tests = 118
+boolean_tests = 8
+competitive_tests_executed = 8
+manifest_tests = 11
+intersection_tests = 2
+policy_tests = 9
+readme_tests = 2
+executed_tests_total = 158
+ignored_tests = 6
+all_features = true
+no_default_check = true
+all_target_all_feature_clippy_deny_warnings = true
+rustdoc_deny_warnings = true
+all_fuzz_bins_check = true
+bench_no_run = true
+release_probes_built = true
+both_policy_heap_matrix = true
+cgal_exact_input_and_output_validation = true
+format_check = true
+diff_check = true
+native_wasm_size_harness = true
+
+[exit]
+fixed_topology_wide_rational_family_retained = true
+all_absolute_cgal_runtime_losses_open = true
+high_width_temporary_allocation_cliff_open = true
+stage_specific_heap_attribution_open = true
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false

@@ -1,0 +1,685 @@
+//! Explicit approximation adapters for GPU triangle buffers.
+//!
+//! Hypermesh keeps topology and native coordinates exact. This module owns the
+//! deliberate boundary where exact render rows become finite `f32` or `f64`
+//! vertex attributes and `u32` triangle-list indices suitable for graphics APIs.
+
+use std::error::Error;
+use std::fmt;
+
+use hyperlattice::{Point3, Real};
+
+use crate::TriangleMesh;
+use crate::output::BooleanMeshResult;
+
+/// One exact render vertex stored as `(position, normal)` rows.
+pub type ExactGpuVertex = ([Real; 3], [Real; 3]);
+
+/// Exact render rows with a GPU-compatible `u32` triangle-list index carrier.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ExactGpuMeshBuffers {
+    /// Exact position/normal vertex rows.
+    pub vertices: Vec<ExactGpuVertex>,
+    /// Flat triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
+impl ExactGpuMeshBuffers {
+    /// Builds sequential exact vertex and index buffers from triangle rows.
+    ///
+    /// Vertices remain duplicated at triangle corners so authored flat-normal
+    /// seams are preserved without a second position/normal index stream.
+    pub fn from_triangles(
+        triangles: impl IntoIterator<Item = [ExactGpuVertex; 3]>,
+    ) -> Result<Self, GpuMeshError> {
+        let triangles = triangles.into_iter();
+        let (lower_bound, upper_bound) = triangles.size_hint();
+        Self::from_triangle_iterator(upper_bound.unwrap_or(lower_bound), triangles)
+    }
+
+    /// Builds sequential exact buffers while reserving space for the expected
+    /// number of triangle rows.
+    pub fn from_triangles_with_capacity(
+        triangle_capacity: usize,
+        triangles: impl IntoIterator<Item = [ExactGpuVertex; 3]>,
+    ) -> Result<Self, GpuMeshError> {
+        Self::from_triangle_iterator(triangle_capacity, triangles.into_iter())
+    }
+
+    fn from_triangle_iterator(
+        triangle_capacity: usize,
+        triangles: impl Iterator<Item = [ExactGpuVertex; 3]>,
+    ) -> Result<Self, GpuMeshError> {
+        Self::from_fallible_triangle_iterator(triangle_capacity, triangles.map(Ok))
+    }
+
+    fn from_fallible_triangle_iterator(
+        triangle_capacity: usize,
+        triangles: impl Iterator<Item = Result<[ExactGpuVertex; 3], GpuMeshError>>,
+    ) -> Result<Self, GpuMeshError> {
+        let vertex_capacity = triangle_capacity.saturating_mul(3);
+        let mut vertices = Vec::with_capacity(vertex_capacity);
+        let mut indices = Vec::with_capacity(vertex_capacity);
+
+        for triangle in triangles {
+            let triangle = triangle?;
+            let base =
+                u32::try_from(vertices.len()).map_err(|_| GpuMeshError::VertexCountExceededU32)?;
+            let second = base
+                .checked_add(1)
+                .ok_or(GpuMeshError::VertexCountExceededU32)?;
+            let third = base
+                .checked_add(2)
+                .ok_or(GpuMeshError::VertexCountExceededU32)?;
+            vertices.extend(triangle);
+            indices.extend([base, second, third]);
+        }
+
+        Ok(Self { vertices, indices })
+    }
+
+    /// Approximates every exact attribute as finite `f32` values.
+    pub fn try_approximate_f32(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+        approximate_gpu_mesh_f32(&self.vertices, &self.indices)
+    }
+
+    /// Approximates every exact attribute as finite `f64` values.
+    pub fn try_approximate_f64(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+        approximate_gpu_mesh_f64(&self.vertices, &self.indices)
+    }
+}
+
+/// Backend-neutral binary32 GPU buffers using triangle-list topology.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct GpuMeshBuffersF32 {
+    /// Finite binary32 positions.
+    pub positions: Vec<[f32; 3]>,
+    /// Finite binary32 normals.
+    pub normals: Vec<[f32; 3]>,
+    /// Flat `u32` triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
+/// Backend-neutral binary64 GPU buffers using triangle-list topology.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct GpuMeshBuffersF64 {
+    /// Finite binary64 positions.
+    pub positions: Vec<[f64; 3]>,
+    /// Finite binary64 normals.
+    pub normals: Vec<[f64; 3]>,
+    /// Flat `u32` triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
+/// Interleaved finite binary32 GPU buffers.
+///
+/// This layout avoids a second position/normal merge for consumers whose
+/// vertex type stores both attributes together.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct InterleavedGpuMeshBuffersF32 {
+    /// Finite `(position, normal)` vertex rows.
+    pub vertices: Vec<([f32; 3], [f32; 3])>,
+    /// Flat triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
+/// Interleaved finite binary64 GPU buffers.
+///
+/// This is the binary64 counterpart of [`InterleavedGpuMeshBuffersF32`].
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct InterleavedGpuMeshBuffersF64 {
+    /// Finite `(position, normal)` vertex rows.
+    pub vertices: Vec<([f64; 3], [f64; 3])>,
+    /// Flat triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
+/// Vertex attribute selected while crossing the GPU approximation boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GpuVertexAttribute {
+    /// Position coordinate.
+    Position,
+    /// Normal coordinate.
+    Normal,
+}
+
+/// Failure while constructing or approximating GPU mesh buffers.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum GpuMeshError {
+    /// The exact vertex stream cannot be represented by `u32` indices.
+    VertexCountExceededU32,
+    /// The flat index stream does not contain complete triangles.
+    IndexCountNotTriangleList {
+        /// Number of entries in the flat index stream.
+        index_count: usize,
+    },
+    /// A supplied index does not address the supplied vertex stream.
+    IndexOutOfBounds {
+        /// Offset in the flat index stream.
+        index_offset: usize,
+        /// Invalid vertex index.
+        index: u32,
+        /// Number of available vertices.
+        vertex_count: usize,
+    },
+    /// A triangle soup index does not address its exact vertex stream.
+    SourceTriangleIndexOutOfBounds {
+        /// Offset of the triangle in the soup.
+        triangle: usize,
+        /// Corner within the triangle.
+        corner: usize,
+        /// Invalid source vertex index.
+        index: usize,
+        /// Number of available source vertices.
+        vertex_count: usize,
+    },
+    /// An exact triangle has no certifiable finite unit normal.
+    TriangleNormalUnavailable {
+        /// Offset of the triangle in the source mesh.
+        triangle: usize,
+    },
+    /// An exact attribute could not be approximated as a finite floating-point row.
+    AttributeApproximationFailed {
+        /// Vertex containing the attribute.
+        vertex: usize,
+        /// Attribute that failed conversion.
+        attribute: GpuVertexAttribute,
+    },
+}
+
+impl fmt::Display for GpuMeshError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::VertexCountExceededU32 => {
+                formatter.write_str("GPU vertex count exceeds the u32 index range")
+            }
+            Self::IndexCountNotTriangleList { index_count } => write!(
+                formatter,
+                "GPU triangle-list index stream contains {index_count} entries, which is not divisible by three"
+            ),
+            Self::IndexOutOfBounds {
+                index_offset,
+                index,
+                vertex_count,
+            } => write!(
+                formatter,
+                "GPU index {index} at offset {index_offset} does not address any of {vertex_count} vertices"
+            ),
+            Self::SourceTriangleIndexOutOfBounds {
+                triangle,
+                corner,
+                index,
+                vertex_count,
+            } => write!(
+                formatter,
+                "triangle {triangle} corner {corner} references source vertex {index}, but only {vertex_count} vertices exist"
+            ),
+            Self::TriangleNormalUnavailable { triangle } => {
+                write!(
+                    formatter,
+                    "triangle {triangle} has no certifiable unit normal"
+                )
+            }
+            Self::AttributeApproximationFailed { vertex, attribute } => {
+                write!(
+                    formatter,
+                    "GPU {attribute:?} row for vertex {vertex} is not representable as the requested finite floating-point type"
+                )
+            }
+        }
+    }
+}
+
+impl Error for GpuMeshError {}
+
+/// Approximates exact render rows into backend-neutral GPU buffers.
+pub fn approximate_gpu_mesh_f32(
+    vertices: &[ExactGpuVertex],
+    indices: &[u32],
+) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+    validate_indices(vertices.len(), indices)?;
+    let (positions, normals) = try_approximate_rows(vertices, Real::to_f32_lossy)?;
+    Ok(GpuMeshBuffersF32 {
+        positions,
+        normals,
+        indices: indices.to_vec(),
+    })
+}
+
+/// Approximates exact render rows into backend-neutral binary64 GPU buffers.
+pub fn approximate_gpu_mesh_f64(
+    vertices: &[ExactGpuVertex],
+    indices: &[u32],
+) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+    validate_indices(vertices.len(), indices)?;
+    let (positions, normals) = try_approximate_rows(vertices, Real::to_f64_lossy)?;
+    Ok(GpuMeshBuffersF64 {
+        positions,
+        normals,
+        indices: indices.to_vec(),
+    })
+}
+
+/// Approximates exact render rows directly into interleaved finite `f32`
+/// vertices, avoiding temporary separate position and normal buffers.
+pub fn approximate_interleaved_gpu_mesh_f32(
+    vertices: &[ExactGpuVertex],
+    indices: &[u32],
+) -> Result<InterleavedGpuMeshBuffersF32, GpuMeshError> {
+    validate_indices(vertices.len(), indices)?;
+    Ok(InterleavedGpuMeshBuffersF32 {
+        vertices: try_approximate_interleaved_rows(vertices, Real::to_f32_lossy)?,
+        indices: indices.to_vec(),
+    })
+}
+
+/// Approximates exact render rows directly into interleaved finite `f64`
+/// vertices, avoiding temporary separate position and normal buffers.
+pub fn approximate_interleaved_gpu_mesh_f64(
+    vertices: &[ExactGpuVertex],
+    indices: &[u32],
+) -> Result<InterleavedGpuMeshBuffersF64, GpuMeshError> {
+    validate_indices(vertices.len(), indices)?;
+    Ok(InterleavedGpuMeshBuffersF64 {
+        vertices: try_approximate_interleaved_rows(vertices, Real::to_f64_lossy)?,
+        indices: indices.to_vec(),
+    })
+}
+
+impl BooleanMeshResult {
+    /// Builds exact flat-shaded render rows from this result and its batch's
+    /// shared vertex arena.
+    pub fn to_exact_gpu_mesh_buffers(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<ExactGpuMeshBuffers, GpuMeshError> {
+        for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
+            for (corner, &index) in triangle.iter().enumerate() {
+                if index as usize >= vertices.len() {
+                    return Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
+                        triangle: triangle_offset,
+                        corner,
+                        index: index as usize,
+                        vertex_count: vertices.len(),
+                    });
+                }
+            }
+        }
+
+        let triangles = self
+            .triangles
+            .iter()
+            .enumerate()
+            .map(|(triangle_index, triangle)| {
+                let [a, b, c] = triangle.map(|index| vertices[index as usize].clone());
+                exact_gpu_triangle(triangle_index, a, b, c)
+            });
+        ExactGpuMeshBuffers::from_fallible_triangle_iterator(self.triangles.len(), triangles)
+    }
+
+    /// Produces strict finite-`f32` GPU buffers from this exact triangle soup.
+    pub fn try_to_gpu_mesh_f32(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers(vertices)?
+            .try_approximate_f32()
+    }
+
+    /// Produces strict finite-`f64` GPU buffers from this exact triangle soup.
+    pub fn try_to_gpu_mesh_f64(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers(vertices)?
+            .try_approximate_f64()
+    }
+}
+
+impl TriangleMesh {
+    /// Builds caller-owned exact flat-shaded render rows and `u32` indices.
+    ///
+    /// Derived buffers are intentionally not retained by the exact mesh
+    /// carrier. Renderers that reuse them keep the returned value.
+    pub fn to_exact_gpu_mesh_buffers(&self) -> Result<ExactGpuMeshBuffers, GpuMeshError> {
+        for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
+            for (corner, index) in triangle.indices().into_iter().enumerate() {
+                if index >= self.positions.len() {
+                    return Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
+                        triangle: triangle_offset,
+                        corner,
+                        index,
+                        vertex_count: self.positions.len(),
+                    });
+                }
+            }
+        }
+        let triangles = self
+            .triangles
+            .iter()
+            .enumerate()
+            .map(|(triangle_index, triangle)| {
+                let [a, b, c] = triangle
+                    .indices()
+                    .map(|index| self.positions[index].clone());
+                exact_gpu_triangle(triangle_index, a, b, c)
+            });
+        ExactGpuMeshBuffers::from_fallible_triangle_iterator(self.triangles.len(), triangles)
+    }
+
+    /// Produces strict finite-`f32` GPU buffers from native exact rows.
+    pub fn try_to_gpu_mesh_f32(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers()?.try_approximate_f32()
+    }
+
+    /// Produces strict finite-`f64` GPU buffers from native exact rows.
+    pub fn try_to_gpu_mesh_f64(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers()?.try_approximate_f64()
+    }
+}
+
+fn exact_gpu_triangle(
+    triangle: usize,
+    a: Point3,
+    b: Point3,
+    c: Point3,
+) -> Result<[ExactGpuVertex; 3], GpuMeshError> {
+    let normal = (&b - &a)
+        .unit_cross_checked(&(&c - &a))
+        .map_err(|_| GpuMeshError::TriangleNormalUnavailable { triangle })?;
+    let normal = [
+        normal.0[0].clone(),
+        normal.0[1].clone(),
+        normal.0[2].clone(),
+    ];
+    Ok([
+        (point_row(a), normal.clone()),
+        (point_row(b), normal.clone()),
+        (point_row(c), normal),
+    ])
+}
+
+fn point_row(point: Point3) -> [Real; 3] {
+    [point.x, point.y, point.z]
+}
+
+#[inline(always)]
+fn try_approximate_row<T: Copy>(
+    row: &[Real; 3],
+    approximate: impl Fn(&Real) -> Option<T>,
+) -> Option<[T; 3]> {
+    Some([
+        approximate(&row[0])?,
+        approximate(&row[1])?,
+        approximate(&row[2])?,
+    ])
+}
+
+fn try_approximate_rows<T: Copy>(
+    vertices: &[ExactGpuVertex],
+    approximate: impl Fn(&Real) -> Option<T> + Copy,
+) -> Result<(Vec<[T; 3]>, Vec<[T; 3]>), GpuMeshError> {
+    let mut positions = Vec::with_capacity(vertices.len());
+    let mut normals = Vec::with_capacity(vertices.len());
+
+    for (vertex, (position, normal)) in vertices.iter().enumerate() {
+        positions.push(try_approximate_row(position, approximate).ok_or(
+            GpuMeshError::AttributeApproximationFailed {
+                vertex,
+                attribute: GpuVertexAttribute::Position,
+            },
+        )?);
+        normals.push(try_approximate_row(normal, approximate).ok_or(
+            GpuMeshError::AttributeApproximationFailed {
+                vertex,
+                attribute: GpuVertexAttribute::Normal,
+            },
+        )?);
+    }
+
+    Ok((positions, normals))
+}
+
+#[inline]
+fn try_approximate_interleaved_rows<T: Copy>(
+    vertices: &[ExactGpuVertex],
+    approximate: impl Fn(&Real) -> Option<T> + Copy,
+) -> Result<Vec<([T; 3], [T; 3])>, GpuMeshError> {
+    let mut approximated = Vec::with_capacity(vertices.len());
+    for (vertex, (position, normal)) in vertices.iter().enumerate() {
+        let position = try_approximate_row(position, approximate).ok_or(
+            GpuMeshError::AttributeApproximationFailed {
+                vertex,
+                attribute: GpuVertexAttribute::Position,
+            },
+        )?;
+        let normal = try_approximate_row(normal, approximate).ok_or(
+            GpuMeshError::AttributeApproximationFailed {
+                vertex,
+                attribute: GpuVertexAttribute::Normal,
+            },
+        )?;
+        approximated.push((position, normal));
+    }
+    Ok(approximated)
+}
+
+fn validate_indices(vertex_count: usize, indices: &[u32]) -> Result<(), GpuMeshError> {
+    if !indices.len().is_multiple_of(3) {
+        return Err(GpuMeshError::IndexCountNotTriangleList {
+            index_count: indices.len(),
+        });
+    }
+    for (index_offset, &index) in indices.iter().enumerate() {
+        if usize::try_from(index).map_or(true, |index| index >= vertex_count) {
+            return Err(GpuMeshError::IndexOutOfBounds {
+                index_offset,
+                index,
+                vertex_count,
+            });
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{BooleanMeshResult, Triangle};
+
+    fn exact_vertex(position: [i64; 3], normal: [i64; 3]) -> ExactGpuVertex {
+        (position.map(Real::from), normal.map(Real::from))
+    }
+
+    #[test]
+    fn exact_triangle_rows_approximate_to_gpu_buffers() {
+        let exact = ExactGpuMeshBuffers::from_triangles([[
+            exact_vertex([0, 0, 0], [0, 0, 1]),
+            exact_vertex([2, 0, 0], [0, 0, 1]),
+            exact_vertex([0, 2, 0], [0, 0, 1]),
+        ]])
+        .unwrap();
+
+        let gpu = exact.try_approximate_f32().unwrap();
+        let gpu_f64 = exact.try_approximate_f64().unwrap();
+        assert_eq!(
+            gpu.positions,
+            [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]]
+        );
+        assert_eq!(gpu.normals, [[0.0, 0.0, 1.0]; 3]);
+        assert_eq!(gpu.indices, [0, 1, 2]);
+        assert_eq!(
+            gpu_f64.positions,
+            [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]]
+        );
+        assert_eq!(gpu_f64.normals, [[0.0, 0.0, 1.0]; 3]);
+        assert_eq!(gpu_f64.indices, gpu.indices);
+
+        let interleaved_f32 =
+            approximate_interleaved_gpu_mesh_f32(&exact.vertices, &exact.indices).unwrap();
+        let interleaved_f64 =
+            approximate_interleaved_gpu_mesh_f64(&exact.vertices, &exact.indices).unwrap();
+        assert_eq!(
+            interleaved_f32.vertices,
+            gpu.positions
+                .into_iter()
+                .zip(gpu.normals)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(interleaved_f32.indices, gpu.indices);
+        assert_eq!(
+            interleaved_f64.vertices,
+            gpu_f64
+                .positions
+                .into_iter()
+                .zip(gpu_f64.normals)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(interleaved_f64.indices, gpu_f64.indices);
+    }
+
+    #[test]
+    fn approximation_rejects_an_invalid_index() {
+        let vertices = [exact_vertex([0, 0, 0], [0, 0, 1])];
+        assert_eq!(
+            approximate_gpu_mesh_f32(&vertices, &[0, 0, 1]),
+            Err(GpuMeshError::IndexOutOfBounds {
+                index_offset: 2,
+                index: 1,
+                vertex_count: 1,
+            })
+        );
+        assert_eq!(
+            approximate_interleaved_gpu_mesh_f32(&vertices, &[0, 0, 1]),
+            Err(GpuMeshError::IndexOutOfBounds {
+                index_offset: 2,
+                index: 1,
+                vertex_count: 1,
+            })
+        );
+    }
+
+    #[test]
+    fn approximation_rejects_an_incomplete_triangle_list() {
+        let vertices = [exact_vertex([0, 0, 0], [0, 0, 1])];
+        assert_eq!(
+            approximate_gpu_mesh_f32(&vertices, &[0]),
+            Err(GpuMeshError::IndexCountNotTriangleList { index_count: 1 })
+        );
+    }
+
+    #[test]
+    fn approximation_failure_is_explicit_at_each_precision() {
+        let mut huge = Real::from(2);
+        for _ in 0..8 {
+            huge = huge.clone() * huge;
+        }
+        let vertices = [
+            (
+                [huge.clone(), 1.into(), 2.into()],
+                [0.into(), 0.into(), 1.into()],
+            ),
+            ([0.into(), 0.into(), 0.into()], [huge, 1.into(), 0.into()]),
+            exact_vertex([0, 0, 0], [0, 0, 1]),
+        ];
+        let indices = [0, 1, 2];
+
+        assert_eq!(
+            approximate_gpu_mesh_f32(&vertices, &indices),
+            Err(GpuMeshError::AttributeApproximationFailed {
+                vertex: 0,
+                attribute: GpuVertexAttribute::Position,
+            })
+        );
+        let binary64 = approximate_gpu_mesh_f64(&vertices, &indices).unwrap();
+        assert!(binary64.positions[0][0] > f64::from(f32::MAX));
+        assert_eq!(binary64.positions[0][1..], [1.0, 2.0]);
+        assert_eq!(binary64.normals[1][1..], [1.0, 0.0]);
+
+        let mut binary64_overflow = vertices.clone();
+        let mut too_huge = binary64_overflow[0].0[0].clone();
+        too_huge = too_huge.clone() * too_huge;
+        too_huge = too_huge.clone() * too_huge;
+        binary64_overflow[0].0[0] = too_huge;
+        assert_eq!(
+            approximate_gpu_mesh_f64(&binary64_overflow, &indices),
+            Err(GpuMeshError::AttributeApproximationFailed {
+                vertex: 0,
+                attribute: GpuVertexAttribute::Position,
+            })
+        );
+    }
+
+    #[test]
+    fn boolean_mesh_rejects_an_invalid_source_index() {
+        let vertices = vec![Point3::origin()];
+        let result = BooleanMeshResult {
+            triangles: vec![[0, 4, 0]],
+            sources: Vec::new(),
+            exterior_inside: false,
+        };
+
+        assert_eq!(
+            result.to_exact_gpu_mesh_buffers(&vertices),
+            Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
+                triangle: 0,
+                corner: 1,
+                index: 4,
+                vertex_count: 1,
+            })
+        );
+    }
+
+    #[test]
+    fn exact_gpu_exports_reject_degenerate_triangle_normals() {
+        let positions = vec![
+            Point3::origin(),
+            Point3::new(Real::one(), Real::zero(), Real::zero()),
+            Point3::new(Real::from(2), Real::zero(), Real::zero()),
+        ];
+        let mesh = TriangleMesh::new(positions.clone(), vec![Triangle::new(0, 1, 2)]);
+        assert_eq!(
+            mesh.to_exact_gpu_mesh_buffers(),
+            Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
+        );
+
+        let result = BooleanMeshResult {
+            triangles: vec![[0, 1, 2]],
+            sources: Vec::new(),
+            exterior_inside: false,
+        };
+        assert_eq!(
+            result.to_exact_gpu_mesh_buffers(&positions),
+            Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
+        );
+    }
+
+    #[test]
+    fn boolean_mesh_exports_flat_shaded_gpu_rows() {
+        let vertices = vec![
+            Point3::origin(),
+            Point3::new(Real::from(2), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::from(2), Real::zero()),
+        ];
+        let result = BooleanMeshResult {
+            triangles: vec![[0, 1, 2]],
+            sources: Vec::new(),
+            exterior_inside: false,
+        };
+
+        let gpu = result.try_to_gpu_mesh_f32(&vertices).unwrap();
+        let gpu_f64 = result.try_to_gpu_mesh_f64(&vertices).unwrap();
+        assert_eq!(
+            gpu.positions,
+            [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]]
+        );
+        assert_eq!(gpu.normals, [[0.0, 0.0, 1.0]; 3]);
+        assert_eq!(gpu.indices, [0, 1, 2]);
+        assert_eq!(
+            gpu_f64.positions,
+            [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]]
+        );
+        assert_eq!(gpu_f64.normals, [[0.0, 0.0, 1.0]; 3]);
+        assert_eq!(gpu_f64.indices, gpu.indices);
+    }
+}

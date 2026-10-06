@@ -1,0 +1,474 @@
+date = "2026-08-02"
+title = "right-sized projective input buffers"
+checkpoint = 32
+hyperreal_commit = "3d50951775764f6ca50f5805b149c54cc423432c"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "3e5d8816cd32bba46f48e0c6c13ab7a9da227784"
+hypertri_commit = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+hypermesh_parent_commit = "c993cb5f63cfe0086b1139a8db5450f610d200c3"
+hypermesh_implementation_commit = "5b32e85ddb109371c39975ca423f11f36c311a11"
+retained = true
+
+[change]
+files = 1
+insertions = 47
+deletions = 9
+compatibility_shim_added = false
+new_dependency_added = false
+public_api_changed = false
+policy_branch_added = false
+runtime_priority_over_size = true
+explicit_dyadic_position_reserve = true
+bounded_support_plane_seed = true
+support_plane_capacity_is_a_limit = false
+
+[capacity]
+exact_dyadic_position_capacity_equals_input_positions = true
+axis_support_seed = 6
+general_support_seed_limit = 256
+general_support_seed_is_bounded_by_triangle_count = true
+vec_growth_remains_complete = true
+partially_built_dyadic_cache_drops_on_failure = true
+former_lossy_full_scan_fallback_retained = true
+
+[invariant]
+approximate_positions_are_scheduling_hints_only = true
+exact_dyadic_values_unchanged = true
+support_planes_remain_exact = true
+every_new_support_is_exactly_validated = true
+supplied_support_path_unchanged = true
+adjacent_support_reuse_path_unchanged = true
+topology_predicate_changed = false
+equality_changed = false
+fallback_removed = false
+hidden_work_limit_added = false
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+adds_terminal = false
+changes_hyperlimit_policy = false
+both_policy_outputs_certified = true
+both_policy_meshes_exactly_equal = true
+late_nondyadic_fallback_tested_under_both_policies = true
+late_nondyadic_fallback_certainty = "Certified"
+operations_tested = ["union", "intersection", "difference", "symmetric_difference"]
+
+[cpu_method]
+measurement_order = "parent,candidate,candidate,parent"
+logical_cpu = 9
+fixture_built_once_per_process = true
+complete_immediate_union_repeated = true
+equal_layout_source_worktrees = true
+task_cycles_instructions_branches_are_retention_gates = true
+branch_misses_are_secondary_noisy_counter = true
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+policy = "STRICT"
+input_triangles = 852
+output_vertices = 154
+output_triangles = 304
+repetitions = 1501
+parent_task_mean_ms = 9366.610
+current_task_mean_ms = 9272.375
+task_movement_percent = -1.006074
+parent_cycles_mean = 39579428677.5
+current_cycles_mean = 39169687954.5
+cycles_movement_percent = -1.035237
+parent_instructions_mean = 103115318803.0
+current_instructions_mean = 103087766817.0
+instructions_movement_percent = -0.026720
+parent_branches_mean = 17349677174.5
+current_branches_mean = 17344057628.5
+branches_movement_percent = -0.032390
+branch_misses_movement_percent = 0.317754
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+policy = "APPROXIMATE_512"
+input_triangles = 852
+output_vertices = 154
+output_triangles = 304
+repetitions = 1501
+parent_task_mean_ms = 9370.700
+current_task_mean_ms = 9292.190
+task_movement_percent = -0.837824
+parent_cycles_mean = 39589088579.0
+current_cycles_mean = 39304682330.5
+cycles_movement_percent = -0.718396
+parent_instructions_mean = 103108888381.5
+current_instructions_mean = 103081712553.0
+instructions_movement_percent = -0.026356
+parent_branches_mean = 17347754484.0
+current_branches_mean = 17342684784.5
+branches_movement_percent = -0.029224
+branch_misses_movement_percent = -0.174384
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+policy = "STRICT"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+repetitions = 401
+parent_task_mean_ms = 14192.035
+current_task_mean_ms = 13801.480
+task_movement_percent = -2.751931
+parent_cycles_mean = 60127186053.0
+current_cycles_mean = 58380161307.5
+cycles_movement_percent = -2.905549
+parent_instructions_mean = 162191788921.5
+current_instructions_mean = 162189329608.0
+instructions_movement_percent = -0.001516
+parent_branches_mean = 27539824535.5
+current_branches_mean = 27540660892.0
+branches_movement_percent = 0.003037
+branch_misses_movement_percent = -1.637292
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+policy = "APPROXIMATE_512"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+repetitions = 401
+parent_task_mean_ms = 14094.835
+current_task_mean_ms = 13713.970
+task_movement_percent = -2.702160
+parent_cycles_mean = 59798383498.5
+current_cycles_mean = 58172334557.5
+cycles_movement_percent = -2.719219
+parent_instructions_mean = 162193628956.0
+current_instructions_mean = 162188237622.0
+instructions_movement_percent = -0.003324
+parent_branches_mean = 27540235539.0
+current_branches_mean = 27540078332.5
+branches_movement_percent = -0.000571
+branch_misses_movement_percent = -1.065700
+
+[[serialized_cpu]]
+fixture = "dense_boxes"
+policy = "STRICT"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+repetitions = 20001
+parent_task_mean_ms = 14453.620
+current_task_mean_ms = 14440.935
+task_movement_percent = -0.087763
+parent_cycles_mean = 61197632333.5
+current_cycles_mean = 61147066210.0
+cycles_movement_percent = -0.082628
+parent_instructions_mean = 181546176837.0
+current_instructions_mean = 180818665347.5
+instructions_movement_percent = -0.400731
+parent_branches_mean = 30123801030.0
+current_branches_mean = 30051564922.5
+branches_movement_percent = -0.239797
+branch_misses_movement_percent = -3.332847
+
+[[serialized_cpu]]
+fixture = "dense_boxes"
+policy = "APPROXIMATE_512"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+repetitions = 20001
+parent_task_mean_ms = 14561.860
+current_task_mean_ms = 14432.345
+task_movement_percent = -0.889412
+parent_cycles_mean = 61693175865.5
+current_cycles_mean = 60982970627.5
+cycles_movement_percent = -1.151189
+parent_instructions_mean = 181546371118.5
+current_instructions_mean = 180810346186.0
+instructions_movement_percent = -0.405420
+parent_branches_mean = 30123554219.0
+current_branches_mean = 30049494740.0
+branches_movement_percent = -0.245852
+branch_misses_movement_percent = -4.217838
+
+[policy_paired_cpu]
+generated_task_movement_percent = -0.921949
+generated_cycles_movement_percent = -0.876816
+generated_instructions_movement_percent = -0.026538
+generated_branches_movement_percent = -0.030807
+generated_branch_misses_movement_percent = 0.071685
+retained_task_movement_percent = -2.727045
+retained_cycles_movement_percent = -2.812384
+retained_instructions_movement_percent = -0.002420
+retained_branches_movement_percent = 0.001233
+retained_branch_misses_movement_percent = -1.351496
+boxes_task_movement_percent = -0.488588
+boxes_cycles_movement_percent = -0.616908
+boxes_instructions_movement_percent = -0.403075
+boxes_branches_movement_percent = -0.242825
+boxes_branch_misses_movement_percent = -3.775343
+
+[dispatch.generated_projective]
+dispatch_events = 97347
+predicate_events = 676
+linear_algebra_events = 1411
+cache_events = 6345
+cache_hits = 6107
+cache_misses = 216
+active_cycles_proposed = 45
+active_cycles_certified = 45
+rational_temporaries = 12794
+unknown_fact_events = 0
+fallback_or_abort_events = 0
+matches_checkpoint_31 = true
+
+[[heap]]
+fixture = "generated_projective_large"
+input_triangles = 13452
+parent_allocations = 200748
+current_allocations = 200740
+parent_temporary_allocations = 10357
+current_temporary_allocations = 10356
+parent_heaptrack_peak_mib = 7.50
+current_heaptrack_peak_mib = 7.50
+parent_massif_max_bytes = 8245672
+current_massif_max_bytes = 8245672
+parent_massif_useful_heap_bytes = 7420542
+current_massif_useful_heap_bytes = 7420542
+parent_heaptrack_rss_mib = [17.99, 17.91]
+current_heaptrack_rss_mib = [18.20, 17.99]
+both_policies_measured = true
+
+[[heap]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+parent_allocations = 453997
+current_allocations = 453989
+parent_temporary_allocations = 28734
+current_temporary_allocations = 28733
+parent_heaptrack_peak_mib = 11.67
+current_heaptrack_peak_mib = 11.67
+parent_massif_max_bytes = 12699320
+current_massif_max_bytes = 12701088
+massif_max_movement_percent = 0.013922
+parent_massif_useful_heap_bytes = 11590063
+current_massif_useful_heap_bytes = 11591727
+parent_heaptrack_rss_mib = [21.17, 21.14]
+current_heaptrack_rss_mib = [21.35, 21.09]
+both_policies_measured = true
+
+[[heap]]
+fixture = "dense_boxes"
+input_triangles = 6144
+parent_allocations = 27208
+current_allocations = 27188
+parent_temporary_allocations = 79
+current_temporary_allocations = 61
+parent_heaptrack_peak_mib = 2.34
+current_heaptrack_peak_mib = 2.34
+parent_massif_max_bytes = 2597128
+current_massif_max_bytes = 2597128
+parent_massif_useful_heap_bytes = 2262494
+current_massif_useful_heap_bytes = 2262494
+parent_heaptrack_rss_mib = [10.82, 10.71]
+current_heaptrack_rss_mib = [10.83, 10.94]
+both_policies_measured = true
+
+[size.release_native.general]
+parent_file = 4726000
+current_file = 4725608
+parent_text = 4065604
+current_text = 4065204
+parent_data = 238304
+current_data = 238304
+parent_bss = 1627
+current_bss = 2027
+parent_aggregate = 4305535
+current_aggregate = 4305535
+
+[size.release_native.immediate]
+parent_file = 4761304
+current_file = 4760904
+parent_text = 4099252
+current_text = 4098852
+parent_data = 238664
+current_data = 238664
+parent_bss = 4483
+current_bss = 4883
+parent_aggregate = 4342399
+current_aggregate = 4342399
+
+[size.release_wasm_oz]
+general_parent_bytes = 2740864
+general_current_bytes = 2740709
+immediate_parent_bytes = 2755907
+immediate_current_bytes = 2755752
+
+[size.size_native.general]
+parent_file = 2115512
+current_file = 2115080
+parent_text = 1871474
+current_text = 1871042
+parent_data = 239896
+current_data = 239896
+parent_bss = 2746
+current_bss = 3178
+parent_aggregate = 2114116
+current_aggregate = 2114116
+
+[size.size_native.immediate]
+parent_file = 2128504
+current_file = 2128088
+parent_text = 1883926
+current_text = 1883510
+parent_data = 240440
+current_data = 240440
+parent_bss = 2042
+current_bss = 2458
+parent_aggregate = 2126408
+current_aggregate = 2126408
+
+[size.size_wasm_oz]
+general_parent_bytes = 1165740
+general_current_bytes = 1165389
+immediate_parent_bytes = 1176119
+immediate_current_bytes = 1175768
+
+[size.repeated_probe_equal_layout]
+parent_file = 6381240
+current_file = 6373288
+parent_text = 5062270
+current_text = 5056094
+parent_data = 256248
+current_data = 256248
+parent_bss = 2819
+current_bss = 803
+parent_aggregate = 5321337
+current_aggregate = 5313145
+
+[call_graph]
+parent_nodes = 19743
+current_nodes = 19744
+parent_edges = 39489
+current_edges = 39498
+sha256 = "89d03d7b45239310d4b96814538f8bd2ace4b3bcb962b5bdcf2443dc9bce32ba"
+new_test_nodes = 1
+new_test_edges = 9
+production_policy_or_terminal_edges_added = 0
+artifact = "/tmp/hypermesh-input-buffers-callgraph-five/callgraph.json"
+
+[profile]
+logical_cpu = 9
+fixture = "generated_projective"
+policy = "STRICT"
+repetitions = 501
+lost_samples = 0
+samples = 13585
+approximate_cycles = 13585040755
+crossing_split_self_percent = 5.67
+mixed_width_gcd_self_percent = 4.00
+word_gcd_self_percent = 3.88
+line_filter_self_percent = 3.22
+projective_convex_faces_self_percent = 2.07
+lossy_export_primary_self_percent = 1.51
+lossy_export_secondary_self_percent = 0.87
+projective_operation_self_percent = 0.93
+input_builder_self_percent = 0.54
+checkpoint_31_input_builder_self_percent = 4.57
+direct_parent_profile_diff_usable = false
+cpu_counters_are_authoritative = true
+artifact = "/tmp/hypermesh-input-buffers-profile.perf.data"
+
+[competitive.projective_generated]
+hypermesh_lower_ms = 6.1914
+hypermesh_center_ms = 6.2274
+hypermesh_upper_ms = 6.2486
+checkpoint_31_center_ms = 6.2610
+movement_percent = -0.536655
+boolmesh_center_ms = 0.75118
+boolmesh_checkpoint_31_center_ms = 0.76426
+boolmesh_movement_percent = -1.711459
+manifold_center_ms = 0.66416
+manifold_checkpoint_31_center_ms = 0.67584
+manifold_movement_percent = -1.728220
+slower_than_boolmesh = 8.290157
+slower_than_manifold = 9.376355
+
+[competitive.dense_boxes]
+hypermesh_lower_ms = 0.71885
+hypermesh_center_ms = 0.72119
+hypermesh_upper_ms = 0.72516
+checkpoint_31_center_ms = 0.74724
+movement_percent = -3.486162
+boolmesh_center_ms = 6.8849
+boolmesh_checkpoint_31_center_ms = 6.9370
+boolmesh_movement_percent = -0.751045
+manifold_center_ms = 4.3405
+manifold_checkpoint_31_center_ms = 4.4209
+manifold_movement_percent = -1.818634
+faster_than_boolmesh = 9.546583
+faster_than_manifold = 6.018525
+
+[historical.retained_arrangement]
+historical_clock_ms = 944.8
+current_policy_paired_clock_ms = 34.308541
+historical_clock_reduction_percent = 96.368698
+historical_speedup = 27.538332
+comparison = "directional, not direct A/B"
+
+[[rejected_candidate]]
+name = "generic lazy source approximation"
+generated_instructions_movement_percent_approximate = -0.0067
+generated_branches_movement_percent_approximate = -0.01075
+boxes_task_movement_percent_approximate = 1.7
+reason = "dense-box clocks and cycles regressed"
+
+[[rejected_candidate]]
+name = "inline specialized lazy source approximation"
+generated_cycles_movement_percent_approximate = -0.331
+boxes_cycles_movement_percent_approximate = 0.45
+reason = "generated gain did not survive the dense-box gate"
+
+[[rejected_candidate]]
+name = "cold source approximation layouts"
+reason = "the only favorable whole-function layout falsely marked a frequently called method cold; clean hit/miss splits regressed dense boxes"
+
+[[rejected_candidate]]
+name = "direct source-identity cycle lookup"
+repeated_text_delta_bytes_approximate = 4000
+boxes_instructions_movement_percent_approximate = 0.85
+reason = "larger and retires more work"
+
+[accepted_tradeoff]
+retained_massif_delta_bytes = 1768
+retained_massif_delta_percent = 0.013922
+reason = "all six clock/cycle rows improve, allocations fall, rounded retained peak is unchanged, and performance has priority over this 0.014% allocator-layout movement"
+
+[validation]
+hyperreal_default_lib_tests = 562
+hyperreal_no_default_lib_tests = 562
+hyperreal_all_feature_lib_tests = 639
+hypermesh_default_lib_tests = 1063
+hypermesh_no_default_lib_tests = 1063
+hypermesh_all_feature_lib_tests = 1064
+hypermesh_address_sanitizer_lib_tests = 1063
+address_sanitizer_failures = 0
+five_crate_default_tests = true
+five_crate_no_default_tests = true
+five_crate_all_feature_tests = true
+clippy_all_features_warning_denied = true
+clippy_no_default_warning_denied = true
+rustdoc_all_features_warning_denied = true
+rustdoc_no_default_warning_denied = true
+hypermesh_fuzz_bins_checked = true
+all_feature_benches_compiled = true
+dispatch_trace_passed = true
+opt_in_every_operation_both_policies = true
+opt_in_polygon_immediate_agreement = true
+opt_in_stress_3360_13440 = true
+opt_in_full_input_11894 = true
+full_rotated_11894_boolean_rerun = false
+full_rotated_reason = "capacity-only change cannot alter decisions or remove fallback; prior certified-empty run is approximately 56 minutes"
+format_check = true
+diff_check = true
+temporary_repetition_hooks_removed = true
+temporary_worktrees_removed = true
+preexisting_hyperlimit_untracked_binary_untouched = true

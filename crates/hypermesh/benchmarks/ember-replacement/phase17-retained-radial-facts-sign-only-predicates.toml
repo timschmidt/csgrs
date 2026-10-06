@@ -1,0 +1,401 @@
+schema = 1
+status = "retained-checkpoint-phase-17-and-18-open"
+captured_at = "2026-08-03"
+checkpoint = "retained-radial-separation-and-sign-only-exact-predicates"
+hypermesh_implementation_commit = "a8724b4bdfff3a85009c2d838ca2a6ba0f8a04c2"
+hyperlimit_implementation_commit = "9deee2642869735b9b77d333fab2be6f075904ea"
+previous_hypermesh_evidence_commit = "07226164f6b1fa8653caeb765ba59c8f51919f44"
+previous_hypermesh_implementation_commit = "1a3bfd099647d9286e78a2a43d38bffddc899533"
+hypertri_commit = "afdaf6386098914f854d1027e695f08d1f898bb4"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+one_boolean_engine = true
+compatibility_shim = false
+dual_boolean_engine = false
+benchmark_special_cases = false
+coordinate_or_triangle_count_dispatch = false
+hypercurve_edited = false
+hypersolve_edited = false
+phase_17_complete = false
+phase_18_complete = false
+cgal_parity = false
+
+[algorithm.retained_radial_separation]
+producer = "policy-aware authored reversed-manifold-edge proof during pairwise intersection"
+storage = "sorted deduplicated Box<[u64]> of canonical packed source-face pairs"
+capacity_seed = "face_count + face_count / 2; checked growth remains complete"
+consumer = "degree-two radial edges only"
+higher_degree_path = "unchanged exact half classification, angular sort, and ray equality"
+coincident_facet_path = "all source-face contributions are checked before reuse"
+invalid_storage = "rejected before cell assembly"
+
+[algorithm.radial_dot]
+exact_rational_path = "sign-only 12-term four-factor expanded perpendicular-dot polynomial"
+scalar_primitive = "Rational::signed_product_sum_ordering"
+materialized_result = false
+symbolic_path = "unchanged factored Real polynomial followed by policy-aware sign classification"
+
+[algorithm.hyperlimit_orient3]
+filters = "unchanged certified Real filter and exact word-rational filter"
+wide_exact_path = "sign-only six-term three-factor translated determinant"
+scalar_primitive = "Rational::signed_product_sum_ordering"
+materialized_result = false
+symbolic_path = "unchanged Real determinant and STRICT/APPROXIMATE_512 resolver"
+
+[policy]
+strict_symbolic_terminal_result = "PredicateUndecided"
+approximate_512_symbolic_terminal_result = "Approximate512Consumed"
+exact_rational_certainty = "Certified under both policies"
+retained_fact_certainty = "the producing DecisionContext records any terminal approximation before reuse"
+hypermesh_absorbs_hyperlimit_certainty = true
+
+[diagnostic.radial_work]
+instrumentation_retained = false
+degree_two_retained_separations = 38796
+degree_two_exact_classifications = 10114
+higher_degree_edges = 4924
+higher_degree_post_sort_exact_adjacencies = 14772
+higher_degree_retained_separation_hits = 0
+
+[validation.hyperlimit]
+unit = 151
+integration = 75
+executed_total = 226
+failed = 0
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_bins_check = true
+fmt = true
+diff_check = true
+wide_sign_only_property_cases = 256
+
+[validation.hypermesh]
+unit = 110
+boolean = 8
+competitive_executed = 5
+competitive_ignored = 6
+corpus = 6
+intersection = 2
+policy = 9
+readme = 2
+executed_total = 142
+failed = 0
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_bins_check = true
+fmt = true
+diff_check = true
+radial_polynomial_exhaustive_vector_triples = 19683
+malformed_retained_pair_classes = 3
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh", "csgrs"]
+nodes = 18080
+edges = 29599
+artifact = "target/hypermesh-radial-sign-final-callgraph/callgraph.json"
+retained_fact_producer_edge_present = true
+radial_sign_only_scalar_edge_present = true
+orient3_sign_only_scalar_edge_present = true
+hypercurve_in_scope = false
+hypersolve_in_scope = false
+
+[profile.full_resolution_hard_case_after]
+pairwise_intersection_children_percent = 42.95
+edge_plane_crossing_children_percent = 31.11
+corefine_surface_children_percent = 29.55
+topology_triangulation_children_percent = 16.62
+orient3_children_percent = 13.22
+radial_ring_children_percent = 12.65
+radial_dot_children_percent = 5.96
+
+[competitive.full_resolution_hard_case]
+fixture = "YeahRight control mesh against rotated copy"
+input_triangles_left = 11894
+input_triangles_right = 11894
+policy = "APPROXIMATE_512"
+certainty = "Certified"
+output_vertices = 0
+output_triangles = 0
+topology_checkpoint_wall_seconds = 9.59
+current_wall_seconds = 4.82
+current_user_seconds = 4.61
+current_system_seconds = 0.18
+current_max_rss_kib = 201544
+current_swaps = 0
+wall_speedup_vs_topology_checkpoint = 1.989627
+wall_reduction_percent_vs_topology_checkpoint = 49.739312
+historical_ember_seconds = 3312.66
+historical_ember_max_rss_kib = 329352
+historical_cgal_seconds = 0.09
+historical_cgal_max_rss_kib = 15516
+speedup_over_ember = 687.273859
+runtime_reduction_vs_ember_percent = 99.854498
+rss_reduction_vs_ember_percent = 38.805898
+runtime_ratio_over_cgal = 53.555556
+rss_ratio_over_cgal = 12.989430
+parity = false
+
+[competitive.full_resolution_hard_case.perf]
+repetitions = 3
+task_clock_ms = 4766.29
+cycles = 19448036412
+instructions = 50394157929
+branches = 8684791554
+branch_misses = 94790398
+cache_misses = 43461547
+topology_checkpoint_task_clock_ms = 9628.02
+topology_checkpoint_instructions = 122117257187
+task_clock_reduction_percent = 50.495637
+instruction_reduction_percent = 58.732976
+instruction_speedup = 2.423242
+
+[competitive.exact_boxes]
+outputs = ["union", "intersection", "difference", "reverse-difference"]
+expected_volumes = [84, 12, 52, 20]
+expected_triangles = [48, 24, 40, 32]
+
+[competitive.exact_boxes.hypermesh_strict]
+criterion_low_ns = 946810
+criterion_mid_ns = 954770
+criterion_high_ns = 965880
+certainty = "Certified"
+reduction_percent_vs_topology_checkpoint = 3.134923
+
+[competitive.exact_boxes.hypermesh_approximate_512]
+criterion_low_ns = 941420
+criterion_mid_ns = 942370
+criterion_high_ns = 943640
+certainty = "Certified"
+reduction_percent_vs_topology_checkpoint = 5.368386
+
+[competitive.exact_boxes.cgal_outside_copy]
+engine = "CGAL 6.0.3 EPECK"
+warmed_repetitions = 30
+median_ns = 119596.5
+valid = true
+closed = true
+structurally_valid = true
+
+[competitive.exact_boxes.cgal_inside_copy]
+engine = "CGAL 6.0.3 EPECK"
+warmed_repetitions = 30
+median_ns = 128976.0
+valid = true
+closed = true
+structurally_valid = true
+
+[competitive.exact_boxes.ratios]
+strict_over_cgal_outside = 7.983260
+strict_over_cgal_inside = 7.402695
+approximate_over_cgal_outside = 7.879578
+approximate_over_cgal_inside = 7.306553
+parity = false
+
+[large_fixture]
+fixture = "subdivided_overlapping_boxes_3072_each"
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+certainty = "Certified"
+profiler_runs_sequential = true
+
+[[large_fixture.performance]]
+input_path = "native-retained"
+policy = "STRICT"
+repetitions = 11
+task_clock_ms = 155.02
+instructions = 1662345028
+task_clock_reduction_percent = 4.726200
+instruction_reduction_percent = 5.628545
+
+[[large_fixture.performance]]
+input_path = "native-retained"
+policy = "APPROXIMATE_512"
+repetitions = 11
+task_clock_ms = 153.68
+instructions = 1662344721
+task_clock_reduction_percent = 6.713609
+instruction_reduction_percent = 5.619658
+
+[[large_fixture.performance]]
+input_path = "raw-general"
+policy = "STRICT"
+repetitions = 11
+task_clock_ms = 145.52
+instructions = 1535917001
+task_clock_reduction_percent = 5.463522
+instruction_reduction_percent = 6.112980
+
+[[large_fixture.performance]]
+input_path = "raw-general"
+policy = "APPROXIMATE_512"
+repetitions = 11
+task_clock_ms = 147.05
+instructions = 1535793170
+task_clock_reduction_percent = 3.630644
+instruction_reduction_percent = 6.114374
+
+[[large_fixture.heap]]
+input_path = "native-retained"
+policy = "STRICT"
+allocations = 323213
+recorder_temporary_allocations = 84886
+peak_heap_bytes = 16497378
+heaptrack_peak_rss_mb = 24.12
+
+[[large_fixture.heap]]
+input_path = "native-retained"
+policy = "APPROXIMATE_512"
+allocations = 323213
+recorder_temporary_allocations = 84886
+peak_heap_bytes = 16497378
+heaptrack_peak_rss_mb = 24.04
+
+[[large_fixture.heap]]
+input_path = "raw-general"
+policy = "STRICT"
+allocations = 286331
+recorder_temporary_allocations = 84886
+peak_heap_bytes = 16497386
+heaptrack_peak_rss_mb = 23.84
+
+[[large_fixture.heap]]
+input_path = "raw-general"
+policy = "APPROXIMATE_512"
+allocations = 286331
+recorder_temporary_allocations = 84886
+peak_heap_bytes = 16497386
+heaptrack_peak_rss_mb = 23.91
+
+[large_fixture.heap_delta]
+allocation_reduction_per_row = 8423
+native_allocation_reduction_percent = 2.539833
+general_allocation_reduction_percent = 2.857637
+peak_increase_min_bytes = 73376
+peak_increase_max_bytes = 73728
+peak_increase_max_percent = 0.448914
+material_peak_regression = false
+
+[source]
+hypermesh_tokei_code_lines = 15393
+hypermesh_tracked_src_lines_added = 323
+hypermesh_tracked_src_lines_removed = 41
+hyperlimit_tokei_code_lines = 17974
+hyperlimit_tracked_src_lines_added = 54
+hyperlimit_tracked_src_lines_removed = 6
+
+[size]
+baseline = "phase17-topology-only-face-triangulation at 07226164"
+native_metric = "ELF .text bytes"
+wasm_metric = "wasm-opt --all-features -Oz bytes"
+performance_priority = true
+all_rows_bounded_growth = true
+
+[[size.rows]]
+features = "default"
+profile = "release"
+consumer = "general"
+native_text_bytes = 1956290
+native_delta_bytes = 23800
+native_delta_percent = 1.231572
+wasm_opt_oz_bytes = 1367406
+wasm_delta_bytes = 24951
+wasm_delta_percent = 1.858610
+
+[[size.rows]]
+features = "default"
+profile = "release"
+consumer = "immediate"
+native_text_bytes = 1959442
+native_delta_bytes = 23800
+native_delta_percent = 1.229566
+wasm_opt_oz_bytes = 1369257
+wasm_delta_bytes = 24954
+wasm_delta_percent = 1.856278
+
+[[size.rows]]
+features = "default"
+profile = "size"
+consumer = "general"
+native_text_bytes = 1045599
+native_delta_bytes = 11296
+native_delta_percent = 1.092136
+wasm_opt_oz_bytes = 647508
+wasm_delta_bytes = 12217
+wasm_delta_percent = 1.923056
+
+[[size.rows]]
+features = "default"
+profile = "size"
+consumer = "immediate"
+native_text_bytes = 1046555
+native_delta_bytes = 11312
+native_delta_percent = 1.092690
+wasm_opt_oz_bytes = 647907
+wasm_delta_bytes = 12219
+wasm_delta_percent = 1.922169
+
+[[size.rows]]
+features = "all"
+profile = "release"
+consumer = "general"
+native_text_bytes = 2092527
+native_delta_bytes = 24800
+native_delta_percent = 1.199385
+wasm_opt_oz_bytes = 1446553
+wasm_delta_bytes = 25829
+wasm_delta_percent = 1.818017
+
+[[size.rows]]
+features = "all"
+profile = "release"
+consumer = "immediate"
+native_text_bytes = 2095375
+native_delta_bytes = 24800
+native_delta_percent = 1.197735
+wasm_opt_oz_bytes = 1448520
+wasm_delta_bytes = 25829
+wasm_delta_percent = 1.815503
+
+[[size.rows]]
+features = "all"
+profile = "size"
+consumer = "general"
+native_text_bytes = 1047191
+native_delta_bytes = 11296
+native_delta_percent = 1.090458
+wasm_opt_oz_bytes = 647639
+wasm_delta_bytes = 12314
+wasm_delta_percent = 1.938221
+
+[[size.rows]]
+features = "all"
+profile = "size"
+consumer = "immediate"
+native_text_bytes = 1048163
+native_delta_bytes = 11320
+native_delta_percent = 1.091776
+wasm_opt_oz_bytes = 647909
+wasm_delta_bytes = 12313
+wasm_delta_percent = 1.937237
+
+[rejected]
+higher_degree_retained_fact_reuse = "zero hits on the hard-case diagnostic; removed"
+five_u32_proof_record = "raised large-fixture peak by about 326 KiB; replaced by one u64 key"
+generic_real_12x4_product_sum = "slower and linked the generic symbolic product-sum family; replaced by exact-rational sign-only scheduling plus unchanged symbolic fallback"
+orient2_sign_only = "about 0.07 percent fewer hard-case instructions but linked an 8.7 KiB specialization; rejected"
+
+[open]
+phase_17_complete = false
+phase_18_complete = false
+per_case_cgal_parity = false
+corpus_complete = false
+kernel_lifetime_heap_isolated = false
+next_profile_target = "pairwise edge-plane crossing construction, then remaining exact radial predicates"

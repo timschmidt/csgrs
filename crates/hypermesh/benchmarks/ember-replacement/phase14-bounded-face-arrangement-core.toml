@@ -1,0 +1,221 @@
+schema = 1
+status = "retained-test-gated"
+captured_at = "2026-08-03"
+phases = [11, 14]
+checkpoint = "bounded-face-arrangement-core"
+implementation_commit = "716116aade5564e3fab629f273e9999d47e439df"
+corpus_commit = "eb5f7424bc47e6efe0127806b1b86da75efe5f68"
+source_parent_commit = "4a3f83c287960b94421a61a2c51f4bcf75f24e16"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypertri_commit = "d6014be5cc3ee4961929430d40b5cba83efc4813"
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+module_cfg_test = true
+production_orchestrator = false
+dual_shipped_engine = false
+compatibility_shim = false
+ember_removed = false
+phase_14_complete = false
+phase_15_complete = false
+phase_16_complete = false
+cgal_parity = false
+
+[architecture]
+bound = "one convex source face"
+whole_plane_cdt = false
+global_point_arena = true
+structural_construction_recipes = true
+policy_aware_numeric_aliasing = true
+coplanar_overlay_shared_once = true
+proper_crossings_exhausted = true
+collinear_overlap_split = true
+t_junction_split = true
+isolated_contacts_retained = true
+hypertri_entry = "constrained_delaunay_convex_hull"
+exact_3d_backvalidation = true
+constraint_backvalidation = true
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+strict_undecided_is_error = true
+approximate_512_terminal_only = true
+aggregate_certainty_absorbed_from_hypertri = true
+exact_rational_fixture_certainty = "Certified"
+
+[corpus]
+focused_tests = 8
+disconnected_inner_loops = true
+partial_overlap_shared_triangulation = true
+coincident_opposite_winding = true
+transverse_plane_triple = true
+collinear_overlap = true
+t_junctions = true
+isolated_contact = true
+dense_grid_width = 17
+dense_grid_height = 17
+dense_proper_crossings = 289
+dense_authored_endpoints = 68
+dense_exact_points = 360
+dense_final_constraints = 649
+symbolic_terminal_equality = true
+historical_pass_limit = 256
+
+[tests.all_features]
+unit_passed = 1098
+integration_passed = 134
+failed = 0
+ignored = 7
+
+[gates]
+focused_tests = true
+all_feature_tests = true
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+large_fixture_both_policies = true
+callgraph = true
+size = true
+
+[runtime.callgrind]
+tool = "Callgrind 3.27.0"
+cpu = 11
+new_policies = 2
+new_scope = "crossing discovery, splitting, local CDT, exact backvalidation"
+new_instructions = 333927495
+retained_policies = 1
+retained_scope = "34-triangle output crossing discovery and split"
+retained_instructions = 369096924
+instruction_delta = -35169429
+instruction_delta_percent = -9.528508
+strict_ab_claim = false
+reason = "authored-constraint and triangulated-soup inputs are structurally comparable but not identical"
+
+[runtime.hotspots]
+hypertri_spatial_delaunay_inclusive_instructions = 119288317
+hypertri_spatial_delaunay_inclusive_percent = 35.72
+hypertri_incremental_insertion_self_instructions = 58289608
+hypertri_incremental_insertion_self_percent = 17.46
+
+[heap.local.massif]
+args = "--stacks=yes"
+new_useful_bytes = 631076
+new_total_bytes = 659208
+retained_useful_bytes = 1683275
+retained_total_bytes = 1814944
+useful_delta_bytes = -1052199
+useful_delta_percent = -62.509037
+total_delta_bytes = -1155736
+total_delta_percent = -63.678879
+
+[heap.local.heaptrack]
+new_allocations = 43292
+retained_allocations = 82948
+allocation_delta = -39656
+allocation_delta_percent = -47.808265
+new_temporary_allocations = 11245
+retained_temporary_allocations = 12851
+temporary_delta = -1606
+temporary_delta_percent = -12.497082
+new_peak_heap_report = "705.15K"
+retained_peak_heap_report = "1.76M"
+new_peak_rss_mib = 11.77
+retained_peak_rss_mib = 12.81
+
+[heap.large_general_strict]
+input_triangles = 6144
+useful_bytes = 28730032
+total_bytes = 29956456
+output_vertices = 2410
+output_triangles = 4816
+certainty = "Certified"
+
+[heap.large_general_approximate_512]
+input_triangles = 6144
+useful_bytes = 28730032
+total_bytes = 29956584
+output_vertices = 2410
+output_triangles = 4816
+certainty = "Certified"
+
+[heap.large_certified_strict]
+input_triangles = 6144
+useful_bytes = 1063718
+total_bytes = 1064976
+output_vertices = 27
+output_triangles = 50
+certainty = "Certified"
+
+[heap.large_certified_approximate_512]
+input_triangles = 6144
+useful_bytes = 1063718
+total_bytes = 1064976
+output_vertices = 27
+output_triangles = 50
+certainty = "Certified"
+
+[size.general_release]
+parent_native_text = 4118684
+current_native_text = 4118732
+native_delta = 48
+native_delta_percent = 0.001165
+parent_wasm_opt_oz = 2780083
+current_wasm_opt_oz = 2780336
+wasm_delta = 253
+wasm_delta_percent = 0.009100
+
+[size.immediate_release]
+parent_native_text = 4151900
+current_native_text = 4151956
+native_delta = 56
+native_delta_percent = 0.001349
+parent_wasm_opt_oz = 2794642
+current_wasm_opt_oz = 2794896
+wasm_delta = 254
+wasm_delta_percent = 0.009089
+
+[size.general_size]
+parent_native_text = 1899770
+current_native_text = 1899850
+native_delta = 80
+native_delta_percent = 0.004211
+parent_wasm_opt_oz = 1189673
+current_wasm_opt_oz = 1189737
+wasm_delta = 64
+wasm_delta_percent = 0.005380
+
+[size.immediate_size]
+parent_native_text = 1911902
+current_native_text = 1911998
+native_delta = 96
+native_delta_percent = 0.005021
+parent_wasm_opt_oz = 1199830
+current_wasm_opt_oz = 1199904
+wasm_delta = 74
+wasm_delta_percent = 0.006168
+
+[callgraph.source]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20543
+edges = 40822
+arrangement_nodes = 318
+historical_ember_nodes = 4437
+
+[callgraph.evidence]
+includes = ["tests", "bench", "examples", "fuzz"]
+nodes = 27000
+edges = 50839
+
+[competitive.context]
+hypermesh_exact_box_union_us = 8.1114
+boolmesh_exact_box_union_us = 73.329
+manifold_exact_box_union_us = 60.191
+cgal_epeck_exact_box_union_us = 156.159
+historical_full_resolution_hypermesh_seconds = 3312.66
+historical_full_resolution_cgal_seconds = 0.09
+historical_rss_ratio_vs_cgal = 21.23
+new_full_resolution_measured = false
+per_case_parity_open = true

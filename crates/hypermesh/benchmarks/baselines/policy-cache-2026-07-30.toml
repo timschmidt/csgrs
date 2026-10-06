@@ -1,0 +1,175 @@
+[identity]
+date = "2026-07-30"
+parent_hypermesh = "0973f776"
+current_hypermesh = "911f9caf"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+workload = "512 sequential general cube unions through raw mesh views"
+
+[dispatch_current_per_union]
+filter_cache_hits = 3792
+filter_cache_misses = 42
+filter_cache_clears = 0
+
+[memory_parent]
+allocation_calls = 3392817
+temporary_allocations = 212477
+peak_heap_bytes = 1063232
+peak_rss_mib = 9.23
+runtime_seconds = 2.179
+
+[memory_current]
+allocation_calls = 3397405
+temporary_allocations = 212477
+peak_heap_bytes = 335024
+peak_rss_mib = 8.44
+runtime_seconds = 2.156
+
+[perf_parent]
+runs = 5
+cycles = 4542252729
+cycles_relative_stddev_percent = 1.08
+instructions = 9323990377
+instructions_relative_stddev_percent = 0.02
+task_clock_ms = 1073.75
+task_clock_relative_stddev_percent = 1.09
+
+[perf_current]
+runs = 5
+cycles = 4614024720
+cycles_relative_stddev_percent = 1.56
+instructions = 9322836137
+instructions_relative_stddev_percent = 0.01
+task_clock_ms = 1090.47
+task_clock_relative_stddev_percent = 1.59
+
+[criterion_parent_ns]
+lower = 2244200
+estimate = 2253700
+upper = 2263200
+
+[criterion_current_ns]
+lower = 2248300
+estimate = 2279300
+upper = 2332500
+
+[size.general_release_native_parent]
+raw_bytes = 4318312
+text_bytes = 3703653
+gzip_9_bytes = 1722252
+brotli_11_bytes = 1289300
+
+[size.general_release_native_current]
+raw_bytes = 4317416
+text_bytes = 3703453
+gzip_9_bytes = 1722019
+brotli_11_bytes = 1288599
+
+[size.general_release_wasm_parent]
+raw_bytes = 3336958
+gzip_9_bytes = 978774
+brotli_11_bytes = 663199
+wasm_opt_oz_bytes = 2593657
+wasm_opt_oz_gzip_9_bytes = 896557
+wasm_opt_oz_brotli_11_bytes = 633844
+
+[size.general_release_wasm_current]
+raw_bytes = 3337021
+gzip_9_bytes = 978548
+brotli_11_bytes = 663770
+wasm_opt_oz_bytes = 2594043
+wasm_opt_oz_gzip_9_bytes = 896782
+wasm_opt_oz_brotli_11_bytes = 633715
+
+[size.general_size_native_parent]
+raw_bytes = 1909072
+text_bytes = 1672963
+gzip_9_bytes = 786817
+brotli_11_bytes = 638886
+
+[size.general_size_native_current]
+raw_bytes = 1909408
+text_bytes = 1673291
+gzip_9_bytes = 787069
+brotli_11_bytes = 638813
+
+[size.general_size_wasm_parent]
+raw_bytes = 1277944
+gzip_9_bytes = 462419
+brotli_11_bytes = 355311
+wasm_opt_oz_bytes = 1085379
+wasm_opt_oz_gzip_9_bytes = 451009
+wasm_opt_oz_brotli_11_bytes = 354615
+
+[size.general_size_wasm_current]
+raw_bytes = 1277919
+gzip_9_bytes = 462329
+brotli_11_bytes = 355283
+wasm_opt_oz_bytes = 1085402
+wasm_opt_oz_gzip_9_bytes = 451017
+wasm_opt_oz_brotli_11_bytes = 354355
+
+[size.immediate_release_native_parent]
+raw_bytes = 4353864
+text_bytes = 3737509
+gzip_9_bytes = 1737887
+brotli_11_bytes = 1300565
+
+[size.immediate_release_native_current]
+raw_bytes = 4353248
+text_bytes = 3737741
+gzip_9_bytes = 1738181
+brotli_11_bytes = 1300942
+
+[size.immediate_release_wasm_parent]
+raw_bytes = 3353967
+gzip_9_bytes = 983906
+brotli_11_bytes = 668600
+wasm_opt_oz_bytes = 2608785
+wasm_opt_oz_gzip_9_bytes = 901834
+wasm_opt_oz_brotli_11_bytes = 639266
+
+[size.immediate_release_wasm_current]
+raw_bytes = 3354177
+gzip_9_bytes = 984241
+brotli_11_bytes = 668509
+wasm_opt_oz_bytes = 2609374
+wasm_opt_oz_gzip_9_bytes = 902548
+wasm_opt_oz_brotli_11_bytes = 639503
+
+[size.immediate_size_native_parent]
+raw_bytes = 1921712
+text_bytes = 1685063
+gzip_9_bytes = 793018
+brotli_11_bytes = 643741
+
+[size.immediate_size_native_current]
+raw_bytes = 1922016
+text_bytes = 1685375
+gzip_9_bytes = 793177
+brotli_11_bytes = 644061
+
+[size.immediate_size_wasm_parent]
+raw_bytes = 1288414
+gzip_9_bytes = 466363
+brotli_11_bytes = 358833
+wasm_opt_oz_bytes = 1096003
+wasm_opt_oz_gzip_9_bytes = 454294
+wasm_opt_oz_brotli_11_bytes = 357862
+
+[size.immediate_size_wasm_current]
+raw_bytes = 1288544
+gzip_9_bytes = 466427
+brotli_11_bytes = 358683
+wasm_opt_oz_bytes = 1096173
+wasm_opt_oz_gzip_9_bytes = 454340
+wasm_opt_oz_brotli_11_bytes = 357897
+
+[verification]
+all_features_tests_passed = 1153
+no_default_features_tests_passed = 1151
+ignored_tests = 7
+all_targets_all_features = true
+all_targets_no_default_features = true
+all_fuzz_targets_compiled = true
+clippy_warnings_denied = true
+native_and_wasm_size_matrix = true
