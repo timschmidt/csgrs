@@ -2920,6 +2920,62 @@ fn retain_linear_zero_witness(
     }
 }
 
+/// Bisection steps spent separating a filter certified coprime to the
+/// selected parameter's defining polynomial before the Sturm-Tarski chain.
+const COPRIME_FILTER_REFINEMENT_STEPS: usize = 4096;
+
+/// Signs a filter certified nonzero at a selected root by bisecting a local
+/// copy of the root's isolator on the defining polynomial's sign change and
+/// enclosing the filter over each bracket. The retained parameter is not
+/// refined, so it builds no Sturm sequence of its own. `None` when the
+/// isolator lacks a strict sign change or the step budget is exhausted.
+fn coprime_filter_sign_by_bisection(
+    coefficients: &[Real],
+    defining: &[Real],
+    interval: &BezierParameterInterval,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    let sign_at = |point: &Real| real_sign(&Real::eval_poly(defining, point), policy);
+    let mut lower = interval.start().clone();
+    let mut upper = interval.end().clone();
+    let (Some(lower_sign), Some(upper_sign)) = (sign_at(&lower), sign_at(&upper)) else {
+        return Ok(None);
+    };
+    if lower_sign == RealSign::Zero || upper_sign == RealSign::Zero || lower_sign == upper_sign {
+        return Ok(None);
+    }
+    let enclosure_sign = |lower: &Real, upper: &Real| -> CurveResult<Option<RealSign>> {
+        if let Some(sign) = rational_horner_interval_strict_sign(coefficients, lower, upper) {
+            return Ok(Some(sign));
+        }
+        univariate_unit_interval_strict_bernstein_sign(
+            &polynomial_restrict_to_interval(coefficients, lower, upper),
+            policy,
+        )
+    };
+    let mut completed = 0_usize;
+    let mut target = 8_usize;
+    while target <= COPRIME_FILTER_REFINEMENT_STEPS {
+        while completed < target {
+            let midpoint = Real::average_pair(&lower, &upper);
+            match sign_at(&midpoint) {
+                Some(RealSign::Zero) => {
+                    return Ok(real_sign(&Real::eval_poly(coefficients, &midpoint), policy));
+                }
+                Some(sign) if sign == lower_sign => lower = midpoint,
+                Some(_) => upper = midpoint,
+                None => return Ok(None),
+            }
+            completed += 1;
+        }
+        if let Some(sign) = enclosure_sign(&lower, &upper)? {
+            return Ok(Some(sign));
+        }
+        target *= 2;
+    }
+    Ok(None)
+}
+
 fn polynomial_sign_by_algebraic_replay(
     coefficients: &[Real],
     parameter: &BezierParameter2,
@@ -2969,7 +3025,35 @@ fn polynomial_sign_by_algebraic_replay(
     // below are the cheaper exact route.
     let defining_dominates =
         algebraic.polynomial().coefficients().len() > 2 * filter.coefficients().len();
+    // Exact rational inputs admit a modular coprimality certificate. A filter
+    // coprime to the defining polynomial is nonzero at the selected root, so
+    // refining the root until a retained-interval enclosure separates must
+    // succeed; this replaces a Sturm-Tarski chain whose remainders grow with
+    // both degrees. A likely common factor goes to the exact GCD first.
+    let rational_inputs = algebraic
+        .polynomial()
+        .coefficients()
+        .iter()
+        .chain(filter.coefficients())
+        .all(|coefficient| coefficient.exact_rational_ref().is_some());
+    let modular = rational_inputs.then(|| {
+        hypersolve::modular_gcd::univariate_polynomials_modular_coprimality(
+            algebraic.polynomial().coefficients(),
+            filter.coefficients(),
+        )
+    });
+    if modular == Some(hypersolve::modular_gcd::ModularCoprimality::Coprime)
+        && let Some(sign) = coprime_filter_sign_by_bisection(
+            coefficients,
+            algebraic.polynomial().coefficients(),
+            algebraic.interval(),
+            &policy.strict_counterpart(),
+        )?
+    {
+        return Ok(Classification::Decided(sign));
+    }
     if !defining_dominates
+        && modular != Some(hypersolve::modular_gcd::ModularCoprimality::CommonFactorLikely)
         && let Some(sign) = hypersolve::sign_at_selected_root(
             algebraic.polynomial().coefficients(),
             filter.coefficients(),
