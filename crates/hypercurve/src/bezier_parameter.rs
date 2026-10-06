@@ -2963,16 +2963,24 @@ fn polynomial_sign_by_algebraic_replay(
     // through Hypersolve before isolating the roots of a new filter: nearby
     // filter roots need not force refinement of this selected parameter.
     let interval = algebraic.interval();
-    if let Some(sign) = hypersolve::sign_at_selected_root(
-        algebraic.polynomial().coefficients(),
-        filter.coefficients(),
-        &hypersolve::IsolatedRootInterval {
-            lower: interval.start().clone(),
-            upper: interval.end().clone(),
-            exact_root: None,
-            distinct_root_count: 1,
-        },
-    ) {
+    // A Sturm-Tarski chain over the parameter's defining polynomial grows
+    // with that polynomial's degree. When it is much larger than the filter,
+    // the common-divisor zero test and the filter's own Sturm exclusion
+    // below are the cheaper exact route.
+    let defining_dominates =
+        algebraic.polynomial().coefficients().len() > 2 * filter.coefficients().len();
+    if !defining_dominates
+        && let Some(sign) = hypersolve::sign_at_selected_root(
+            algebraic.polynomial().coefficients(),
+            filter.coefficients(),
+            &hypersolve::IsolatedRootInterval {
+                lower: interval.start().clone(),
+                upper: interval.end().clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        )
+    {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
