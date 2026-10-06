@@ -46,7 +46,3 @@ required-features = ["dispatch-trace"]
 [[bench]]
 name = "competitive"
 harness = false
-
-[patch.crates-io]
-hyperreal = { path = "../hyperreal" }
-hyperlimit = { path = "../hyperlimit" }

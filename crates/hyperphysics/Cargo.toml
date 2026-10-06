@@ -28,12 +28,6 @@ hypermesh = { version = "0.1.0", path = "../hypermesh" }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
 hypersolve = { version = "0.3.1", path = "../hypersolve" }
 
-# Keep transitive sibling crates unified while using local path development mode.
-[patch.crates-io]
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
-hyperreal = { path = "../hyperreal" }
-
 [dev-dependencies]
 proptest = "1.7.0"
 

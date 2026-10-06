@@ -51,12 +51,3 @@ required-features = ["exact"]
 
 [package.metadata.docs.rs]
 all-features = true
-
-# Keep transitive Hyper crates unified while using sibling path dependencies.
-[patch.crates-io]
-hypercurve = { path = "../hypercurve" }
-hyperreal = { path = "../hyperreal" }
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
-hypermesh = { path = "../hypermesh" }
-hypertri = { path = "../hypertri" }
