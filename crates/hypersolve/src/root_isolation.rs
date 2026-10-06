@@ -1006,6 +1006,30 @@ pub fn refine_isolated_univariate_polynomial_interval(
 // sign exactly once before its non-root upper endpoint. Comparing each
 // midpoint only with that stable upper sign therefore selects the owned child
 // even when the excluded lower endpoint is itself another root.
+/// Refines an interval whose single distinct root is already owned by an
+/// admitted representation. Opposite nonzero endpoint signs make bisection by
+/// sign exact, so the Sturm chain that re-proves uniqueness is not rebuilt
+/// for each refinement; other intervals take the complete refinement.
+pub(crate) fn refine_owned_isolated_univariate_polynomial_interval(
+    polynomial: &[Real],
+    interval: &IsolatedRootInterval,
+    config: RootIsolationConfig,
+) -> IsolatedRootRefinementReport {
+    if interval.distinct_root_count == 1
+        && interval.exact_root.is_none()
+        && let Some(trimmed) = trim_polynomial_slice(polynomial, config.policy)
+        && trimmed.len() > 1
+        && let Some(lower_sign) = sign_at(trimmed, &interval.lower, config.policy)
+        && let Some(upper_sign) = sign_at(trimmed, &interval.upper, config.policy)
+        && lower_sign != Ordering::Equal
+        && upper_sign != Ordering::Equal
+        && lower_sign != upper_sign
+    {
+        return refine_owned_one_root_interval(trimmed, interval, config, upper_sign);
+    }
+    refine_isolated_univariate_polynomial_interval(polynomial, interval, config)
+}
+
 fn refine_owned_one_root_interval(
     polynomial: &[Real],
     interval: &IsolatedRootInterval,

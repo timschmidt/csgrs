@@ -728,11 +728,12 @@ fn compare_admitted_algebraic_root_representations_with_refinement(
         let left_progress = if refined_left.exact_point_witness().is_some() {
             true
         } else {
-            let left_refinement = refine_isolated_univariate_polynomial_interval(
-                &refined_left.polynomial_coefficients,
-                &refined_left.interval,
-                root_config.clone(),
-            );
+            let left_refinement =
+                crate::root_isolation::refine_owned_isolated_univariate_polynomial_interval(
+                    &refined_left.polynomial_coefficients,
+                    &refined_left.interval,
+                    root_config.clone(),
+                );
             let progress =
                 apply_refined_interval(&mut refined_left, &left_refinement, config.policy);
             left_refinements.push(left_refinement);
@@ -741,11 +742,12 @@ fn compare_admitted_algebraic_root_representations_with_refinement(
         let right_progress = if refined_right.exact_point_witness().is_some() {
             true
         } else {
-            let right_refinement = refine_isolated_univariate_polynomial_interval(
-                &refined_right.polynomial_coefficients,
-                &refined_right.interval,
-                root_config,
-            );
+            let right_refinement =
+                crate::root_isolation::refine_owned_isolated_univariate_polynomial_interval(
+                    &refined_right.polynomial_coefficients,
+                    &refined_right.interval,
+                    root_config,
+                );
             let progress =
                 apply_refined_interval(&mut refined_right, &right_refinement, config.policy);
             right_refinements.push(right_refinement);
