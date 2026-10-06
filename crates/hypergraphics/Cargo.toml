@@ -1,0 +1,62 @@
+[package]
+name = "hypergraphics"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Exact 3D scene geometry with explicit f64/f32 rendering boundaries."
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/hypergraphics"
+documentation = "https://docs.rs/hypergraphics"
+readme = "README.md"
+keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
+categories = ["graphics", "rendering", "mathematics"]
+
+[features]
+default = ["exact"]
+exact = [
+    "dep:hypercurve",
+    "dep:hyperreal",
+    "dep:hyperlattice",
+    "dep:hyperlimit",
+    "dep:hypermesh",
+    "dep:hypertri",
+    "dep:nalgebra",
+]
+dispatch-trace = ["exact", "hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+
+[dependencies]
+hypercurve = { version = "0.3.1", path = "../hypercurve", default-features = false, optional = true }
+hyperreal = { version = "0.13.1", path = "../hyperreal", optional = true }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice", optional = true }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+hypermesh = { version = "0.1.0", path = "../hypermesh", optional = true }
+hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
+
+bytemuck = "1.23"
+glow = "0.16"
+nalgebra = { version = "0.34", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "graphics"
+harness = false
+required-features = ["exact"]
+
+[[example]]
+name = "readme_quickstart"
+required-features = ["exact"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+# Keep transitive Hyper crates unified while using sibling path dependencies.
+[patch.crates-io]
+hypercurve = { path = "../hypercurve" }
+hyperreal = { path = "../hyperreal" }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypermesh = { path = "../hypermesh" }
+hypertri = { path = "../hypertri" }
