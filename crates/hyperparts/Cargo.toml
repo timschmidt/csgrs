@@ -1,0 +1,26 @@
+[package]
+name = "hyperparts"
+version = "0.3.0"
+edition = "2024"
+description = "Source-attributed part knowledge graph carriers for the Hyper ecosystem"
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/timschmidt/hyperparts"
+keywords = ["parts", "bom", "knowledge-graph", "hyperreal", "cad"]
+categories = ["data-structures", "science", "development-tools"]
+
+[features]
+default = []
+dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+
+[dependencies]
+# Cargo uses this path in the workspace and retains the version requirement in
+# the published manifest.
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+[dev-dependencies]
+proptest = "1.7.0"
+
+[[bench]]
+name = "queries"
+harness = false
