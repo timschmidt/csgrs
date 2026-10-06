@@ -1624,9 +1624,10 @@ fn polynomial_root_is_simple(polynomial: &[Real], lower: &Real, upper: &Real) ->
 /// open bracket `(lower, upper)`.
 ///
 /// The norm of the predicate over the local field is a rational polynomial
-/// vanishing wherever the predicate does on some conjugate field sheet. A
-/// rational GCD with the defining polynomial, having no root in the bracket,
-/// proves a nonzero value without field arithmetic. Otherwise the usually
+/// vanishing wherever the predicate does on some conjugate field sheet. Its
+/// coprimality with the defining polynomial, certified modulo small primes
+/// or by a rational GCD having no root in the bracket, proves a nonzero
+/// value without field arithmetic. Otherwise the usually
 /// small common factor replaces the defining polynomial in a local-field GCD
 /// with the predicate, which decides the selected sheet. `None` means a step
 /// was undecided.
@@ -1647,6 +1648,30 @@ fn predicate_vanishes_at_isolated_root(
         })
         .collect::<Option<Vec<_>>>()?;
     let source = field.modulus().to_vec();
+    // The modulus and the predicate, as polynomials in the field generator,
+    // share no root over Q(x0) exactly when the predicate is nonzero on every
+    // conjugate sheet at x0. Modular resultants certify that cheaply even
+    // when the predicate's rational coefficients are very wide.
+    let generator_degree = fiber.iter().map(Vec::len).max().unwrap_or(0);
+    let by_generator = (0..generator_degree)
+        .map(|power| {
+            fiber
+                .iter()
+                .map(|coefficient| coefficient.get(power).cloned().unwrap_or_else(Real::zero))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let modulus = source
+        .iter()
+        .map(|coefficient| vec![coefficient.clone()])
+        .collect::<Vec<_>>();
+    if crate::modular_gcd::algebraic_extension_polynomials_certainly_coprime(
+        &modulus,
+        &by_generator,
+        &variable.polynomial_coefficients,
+    ) {
+        return Some(false);
+    }
     let norm =
         crate::resultant::quotient_ring_fiber_resultant_polynomial(&source, &fiber, source.len())?;
     if norm
