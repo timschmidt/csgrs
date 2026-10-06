@@ -88,8 +88,10 @@ fn conflicting_exact_assertions_are_not_silently_averaged() {
 #[test]
 fn structurally_distinct_unresolved_assertions_remain_unknown() {
     let mut graph = MaterialPropertyGraph::default();
-    let logarithm = Real::pi() + Real::e();
-    let scaled_logarithm = Real::e() + Real::pi();
+    // ln(pi e) = ln(pi) + ln(e), but strict comparison cannot certify it:
+    // hyperreal canonicalizes simpler identities such as pi + e = e + pi.
+    let logarithm = (Real::pi() * Real::e()).ln().unwrap();
+    let scaled_logarithm = Real::pi().ln().unwrap() + Real::e().ln().unwrap();
     assert_ne!(
         logarithm, scaled_logarithm,
         "fixture must use distinct structures"
