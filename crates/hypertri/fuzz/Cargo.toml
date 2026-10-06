@@ -1,0 +1,31 @@
+[package]
+name = "hypertri-fuzz"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+# Keep fuzz-only dependencies out of the parent crate's normal and dev graph.
+[workspace]
+
+[dependencies]
+arbitrary = { version = "1", features = ["derive"] }
+hypertri = { version = "0.4.1", path = "..", features = ["earcut", "cdt", "nd", "runtime-select"] }
+hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "topology_invariants"
+path = "fuzz_targets/topology_invariants.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false
