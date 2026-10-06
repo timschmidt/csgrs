@@ -1,0 +1,1103 @@
+mod support;
+use hypercurve::{
+    BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2, CurveCertainty,
+    CurveFamily2, CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, PredicatePolicy,
+    QuadraticBezier2, Real, RegionPointLocation,
+};
+use hypercurve::{
+    CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalQuadraticBezier2,
+};
+
+/// Contacts of one unit-domain analytic parallel with a line segment.
+fn line_contacts(
+    parallel: hypercurve::BezierParallel2,
+    line: LineSeg2,
+    policy: &PredicatePolicy,
+) -> Vec<hypercurve::CurveIntersectionContact2> {
+    let Classification::Decided(range) = crate::support::under_classified_result(policy, || {
+        BezierParameterRange2::try_new(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        )
+    })
+    .unwrap() else {
+        panic!("the unit range is exact");
+    };
+    let parallel = crate::support::under(policy, || Curve2::try_analytic_parallel(parallel, range))
+        .unwrap()
+        .into_value();
+    let evidence = crate::support::under(policy, || parallel.intersect_curve(&Curve2::from(line)))
+        .unwrap()
+        .value;
+    assert!(evidence.is_complete());
+    evidence.contacts().to_vec()
+}
+
+fn point(x: i64, y: i64) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
+}
+
+fn range(start: i64, end: i64, policy: &PredicatePolicy) -> BezierParameterRange2 {
+    match crate::support::under_classified_result(policy, || {
+        BezierParameterRange2::try_new(
+            BezierParameter2::Exact(Real::from(start)),
+            BezierParameter2::Exact(Real::from(end)),
+        )
+    })
+    .unwrap()
+    {
+        Classification::Decided(range) => range,
+        Classification::Uncertain(reason) => panic!("unexpected range uncertainty: {reason:?}"),
+    }
+}
+
+fn line_parallel_fragment(
+    start: Point2,
+    midpoint: Point2,
+    end: Point2,
+    distance: i64,
+    start_parameter: i64,
+    end_parameter: i64,
+    policy: &PredicatePolicy,
+) -> Curve2 {
+    let parallel = QuadraticBezier2::new(start, midpoint, end)
+        .parallel_left(Real::from(distance))
+        .unwrap();
+    crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel, range(start_parameter, end_parameter, policy))
+    })
+    .unwrap()
+    .into_value()
+}
+
+fn assert_real_equal(left: &Real, right: &Real) {
+    assert_eq!(left.partial_cmp(right), Some(std::cmp::Ordering::Equal));
+}
+
+fn loop_vertex_at(region: &CurveRegion2, point: Point2, policy: &PredicatePolicy) -> usize {
+    let paths = crate::support::under(policy, || region.boundary_paths())
+        .unwrap()
+        .value;
+    assert_eq!(paths.len(), 1);
+    let point = point.into();
+    paths[0]
+        .curves()
+        .iter()
+        .position(|curve| {
+            crate::support::under_outcome_classification(policy, || {
+                curve.start().coincides_with(&point)
+            })
+            .value
+                == Classification::Decided(true)
+        })
+        .expect("the authored corner survives normalization")
+}
+
+fn analytic_square(min_x: i64, max_x: i64, policy: &PredicatePolicy) -> CurveRegion2 {
+    let midpoint_x = (min_x + max_x) / 2;
+    let edges = [
+        (point(min_x, 0), point(midpoint_x, 0), point(max_x, 0)),
+        (point(max_x, 0), point(max_x, 2), point(max_x, 4)),
+        (point(max_x, 4), point(midpoint_x, 4), point(min_x, 4)),
+        (point(min_x, 4), point(min_x, 2), point(min_x, 0)),
+    ];
+    let fragments = edges
+        .into_iter()
+        .map(|(start, midpoint, end)| line_parallel_fragment(start, midpoint, end, 0, 0, 1, policy))
+        .collect();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(fragments))
+                    .unwrap()
+                    .into_value(),
+            ],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+#[test]
+fn boundary_curves_reenter_boolean_without_native_conversion() {
+    let policy = PredicatePolicy::STRICT;
+    let region = analytic_square(0, 4, &policy);
+    let curves = region.boundary_loops()[0].curves();
+    assert!(curves.iter().any(|curve| {
+        curve.family() == CurveFamily2::AnalyticParallel && curve.geometry().is_none()
+    }));
+    let path = crate::support::under(&policy, || CurvePath2::try_new(curves.to_vec()))
+        .expect("generated analytic boundary curves remain one exact path")
+        .into_value();
+    let replay = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+    })
+    .expect("the exact boundary path re-enters region construction")
+    .into_value();
+    let disjoint = analytic_square(10, 14, &policy);
+    let batch = crate::support::under(&policy, || replay.boolean_regions(&disjoint))
+        .expect("an analytic boundary re-enters Boolean operations");
+    assert_eq!(batch.certainty, CurveCertainty::Certified);
+    assert!(batch.value.intersection().is_empty());
+    assert_eq!(batch.value.union().boundary_loops().len(), 2);
+    assert_eq!(
+        crate::support::under(&policy, || replay.classify_point(&point(2, 2).into()))
+            .unwrap()
+            .value,
+        RegionPointLocation::Inside
+    );
+}
+
+fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
+    let midpoint = start.lerp(&end, (Real::one() / Real::from(2_u8)).unwrap());
+    QuadraticBezier2::new(start, midpoint, end).into()
+}
+
+fn curved_parallel_cap(policy: &PredicatePolicy) -> CurveRegion2 {
+    let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    let right =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
+        };
+    let left =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
+        };
+    let analytic = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel, range(1, 0, policy))
+    })
+    .unwrap()
+    .into_value();
+    let lower_left = Point2::new(left.x().clone(), Real::from(-2));
+    let lower_right = Point2::new(right.x().clone(), Real::from(-2));
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![
+            analytic,
+            quadratic_line(left, lower_left.clone()),
+            quadratic_line(lower_left, lower_right.clone()),
+            quadratic_line(lower_right, right),
+        ])
+    })
+    .unwrap();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary.into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+fn analytic_rational_arc_corner_region(
+    unit_end_weights: bool,
+    reversed: bool,
+    policy: &PredicatePolicy,
+) -> (CurveRegion2, usize) {
+    let analytic = QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
+    let analytic = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(analytic, range(0, 1, policy))
+    })
+    .unwrap()
+    .into_value();
+    let arc = if unit_end_weights {
+        let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+        RationalQuadraticBezier2::try_unit_end_weights(
+            point(1, 1),
+            point(2, 1),
+            point(2, 2),
+            half_sqrt_two,
+        )
+        .unwrap()
+    } else {
+        RationalQuadraticBezier2::try_new(
+            point(1, 1),
+            point(2, 1),
+            point(2, 2),
+            Real::one(),
+            Real::one(),
+            Real::from(2_i8),
+        )
+        .unwrap()
+    };
+    let arc = Curve2::from(arc);
+    let lower_right = point(2, -1);
+    let mut fragments = vec![
+        analytic,
+        arc,
+        quadratic_line(point(2, 2), lower_right.clone()),
+        quadratic_line(lower_right, point(0, 0)),
+    ];
+    if reversed {
+        fragments = fragments
+            .into_iter()
+            .rev()
+            .map(|curve| {
+                crate::support::under(policy, || curve.reversed())
+                    .unwrap()
+                    .into_value()
+            })
+            .collect();
+    }
+    let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments)).unwrap();
+    let region = crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary.into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value();
+    let vertex = loop_vertex_at(&region, point(1, 1), policy);
+    (region, vertex)
+}
+
+#[test]
+fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for unit_end_weights in [false, true] {
+            for reversed in [false, true] {
+                let (source, vertex_index) =
+                    analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
+                let solved = crate::support::under(&policy, || {
+                    source.fillet_loop_vertex(
+                        0,
+                        vertex_index,
+                        &hypercurve::CurveFillet2::new((Real::one() / Real::from(4_i8)).unwrap()),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
+                .unwrap_or_else(|error| {
+                    panic!("retained rational-arc/analytic fillet must decide: {error:?}")
+                });
+                let candidates = {
+                    let solutions = solved.value;
+                    let candidates = solutions.into_solutions();
+                    assert!(
+                        !candidates.is_empty(),
+                        "expected at least one isolated fillet"
+                    );
+                    candidates
+                };
+                assert!(!candidates.is_empty());
+                for candidate in candidates {
+                    assert!(
+                        candidate.boundary_loops()[0]
+                            .curves()
+                            .iter()
+                            .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+                    );
+                    let disjoint = analytic_square(5, 6, &policy);
+                    let replay =
+                        crate::support::under(&policy, || candidate.boolean_regions(&disjoint))
+                            .expect("the retained mixed fillet must re-enter the Boolean kernel");
+                    assert!(replay.value.intersection().is_empty());
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
+    let radius = (Real::one() / Real::from(4_i8)).unwrap();
+    let count =
+        |solutions: hypercurve::CurveCornerSolutions2<CurveRegion2>| solutions.solutions().len();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for unit_end_weights in [false, true] {
+            for reversed in [false, true] {
+                let (source, vertex_index) =
+                    analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
+                let trim_count = count(
+                    crate::support::under(&policy, || {
+                        source.fillet_loop_vertex(
+                            0,
+                            vertex_index,
+                            &hypercurve::CurveFillet2::new(radius.clone()),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    })
+                    .unwrap_or_else(|error| {
+                        panic!("retained trim-only fillet must decide: {error:?}")
+                    })
+                    .value,
+                );
+                let extended = crate::support::under(&policy, || {
+                    source.fillet_loop_vertex(
+                        0,
+                        vertex_index,
+                        &hypercurve::CurveFillet2::new(radius.clone()),
+                        CurveCornerMode2::TrimOrExtend,
+                    )
+                })
+                .unwrap_or_else(|error| {
+                    panic!("retained trim-or-extend fillet must decide: {error:?}")
+                })
+                .value;
+                let extended_count = count(extended);
+                assert!(
+                    extended_count > trim_count,
+                    "the incident analytic ray must contribute an exterior fillet center"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
+    let radius = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for unit_end_weights in [false, true] {
+            for reversed in [false, true] {
+                let (source, vertex_index) =
+                    analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
+                let solved = crate::support::under(&policy, || {
+                    source.fillet_loop_vertex(
+                        0,
+                        vertex_index,
+                        &hypercurve::CurveFillet2::new(radius.clone()),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
+                .unwrap_or_else(|error| panic!("past-center arc fillet must decide: {error:?}"));
+                let candidates = {
+                    let solutions = solved.value;
+                    let candidates = solutions.into_solutions();
+                    assert!(
+                        !candidates.is_empty(),
+                        "expected at least one isolated fillet"
+                    );
+                    candidates
+                };
+                assert!(candidates.iter().all(|candidate| {
+                    candidate.boundary_loops()[0]
+                        .curves()
+                        .iter()
+                        .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+                }));
+            }
+        }
+    }
+}
+
+fn rational_endpoint_curved_parallel_cap(policy: &PredicatePolicy) -> CurveRegion2 {
+    let parallel = QuadraticBezier2::new(point(0, 0), point(0, 2), point(4, 2))
+        .parallel_left(Real::one())
+        .unwrap();
+    let right =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
+        };
+    let left =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
+        };
+    let analytic = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel, range(1, 0, policy))
+    })
+    .unwrap()
+    .into_value();
+    let lower_left = Point2::new(left.x().clone(), Real::from(-2));
+    let lower_right = Point2::new(right.x().clone(), Real::from(-2));
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![
+            analytic,
+            quadratic_line(left, lower_left.clone()),
+            quadratic_line(lower_left, lower_right.clone()),
+            quadratic_line(lower_right, right),
+        ])
+    })
+    .unwrap();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary.into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+fn check_policy(policy: PredicatePolicy) {
+    let fragment = line_parallel_fragment(point(0, 0), point(2, 0), point(4, 0), 1, 1, 0, &policy);
+    // The parallel y = 1 of the degenerate quadratic is traversed backwards.
+    for (actual, expected) in [
+        (fragment.start(), point(4, 1)),
+        (fragment.end(), point(0, 1)),
+    ] {
+        assert_eq!(
+            crate::support::under_outcome_classification(&policy, || actual
+                .coincides_with(&expected.into()))
+            .value,
+            Classification::Decided(true)
+        );
+    }
+
+    let region = analytic_square(0, 4, &policy);
+    let boundary = &region.boundary_loops()[0];
+
+    let projected = crate::support::under(&policy, || {
+        region.project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-2).unwrap())
+    })
+    .expect("analytic-parallel loops must cross the explicit finite-output boundary")
+    .into_value();
+
+    assert_eq!(projected.len(), 1);
+    assert_eq!(projected[0].material().points().len(), 5);
+
+    assert_eq!(
+        crate::support::under(&policy, || region.filled_side_is_left())
+            .unwrap()
+            .value,
+        &[true][..],
+    );
+    assert_eq!(boundary.curves().len(), 4);
+    let envelope = crate::support::under(&policy, || region.bounds())
+        .unwrap()
+        .value
+        .expect("a nonempty region has bounds");
+    let envelope = envelope;
+    assert_real_equal(envelope.min_x(), &Real::zero());
+    assert_real_equal(envelope.min_y(), &Real::zero());
+    assert_real_equal(envelope.max_x(), &Real::from(4));
+    assert_real_equal(envelope.max_y(), &Real::from(4));
+
+    for (point, expected) in [
+        (point(2, 2), RegionPointLocation::Inside),
+        (point(5, 2), RegionPointLocation::Outside),
+        (point(0, 2), RegionPointLocation::Boundary),
+    ] {
+        let location =
+            crate::support::under(&policy, || region.classify_point(&point.clone().into()))
+                .unwrap()
+                .value;
+        assert_eq!(location, expected)
+    }
+
+    let crossing_parallel = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    let vertical = LineSeg2::try_new(point(2, 0), point(2, 2)).unwrap();
+    let contacts = line_contacts(crossing_parallel, vertical, &policy);
+    assert_eq!(contacts.len(), 1);
+    assert!(contacts[0].is_certified_transverse());
+    assert_eq!(
+        contacts[0].tangent_cross_sign(),
+        Some(hyperreal::RealSign::Positive)
+    );
+
+    let endpoint_tangent = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
+    let horizontal = LineSeg2::try_new(point(-1, 0), point(3, 0)).unwrap();
+    let contacts = line_contacts(endpoint_tangent, horizontal, &policy);
+    assert_eq!(contacts.len(), 1);
+    assert!(!contacts[0].is_certified_transverse());
+
+    let shifted = analytic_square(2, 6, &policy);
+    let evidence = crate::support::under(&policy, || region.intersect_region(&shifted))
+        .unwrap()
+        .value;
+    assert!(evidence.is_complete(), "{:#?}", evidence.blockers());
+    assert_eq!(evidence.overlaps().len(), 2);
+    let intersection = crate::support::under(&policy, || {
+        region.boolean_region(&shifted, hypercurve::BooleanOp::Intersection)
+    })
+    .unwrap()
+    .value;
+    for (point, expected) in [
+        (point(3, 2), RegionPointLocation::Inside),
+        (point(1, 2), RegionPointLocation::Outside),
+        (point(2, 2), RegionPointLocation::Boundary),
+    ] {
+        let location = crate::support::under(&policy, || {
+            intersection.classify_point(&point.clone().into())
+        })
+        .unwrap()
+        .value;
+        assert_eq!(location, expected)
+    }
+
+    let curved = curved_parallel_cap(&policy);
+    let cutter = analytic_square(1, 5, &policy);
+    let evidence = crate::support::under(&policy, || curved.intersect_region(&cutter))
+        .unwrap()
+        .value;
+    assert!(evidence.is_complete(), "{:#?}", evidence.blockers());
+    assert!(!evidence.contacts().is_empty());
+    assert!(evidence.contacts().iter().any(|contact| {
+        contact.first_parameter().scalar().is_none()
+            || contact.second_parameter().scalar().is_none()
+    }));
+    let clipped = crate::support::under(&policy, || {
+        curved.boolean_region(&cutter, hypercurve::BooleanOp::Intersection)
+    })
+    .unwrap()
+    .value;
+    for (point, expected) in [
+        (point(2, 1), RegionPointLocation::Inside),
+        (point(0, 1), RegionPointLocation::Outside),
+        (point(1, 1), RegionPointLocation::Boundary),
+    ] {
+        let location =
+            crate::support::under(&policy, || clipped.classify_point(&point.clone().into()))
+                .unwrap()
+                .value;
+        assert_eq!(location, expected)
+    }
+}
+
+fn radical_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 {
+    let half = (Real::one() / Real::from(2_u8)).unwrap();
+    let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
+        .parallel_left(Real::one())
+        .unwrap();
+    let analysis = match crate::support::under_classified_result(policy, || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
+    {
+        Classification::Decided(analysis) => analysis,
+        Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
+    };
+    let [cusp] = analysis.parallel_cusps() else {
+        panic!("expected one radical parallel cusp");
+    };
+
+    let zero = BezierParameter2::Exact(Real::from(0));
+    let one = BezierParameter2::Exact(Real::from(1));
+    let make_range = |start: BezierParameter2, end: BezierParameter2| {
+        match crate::support::under_classified_result(policy, || {
+            BezierParameterRange2::try_new(start, end)
+        })
+        .unwrap()
+        {
+            Classification::Decided(range) => range,
+            Classification::Uncertain(reason) => panic!("cusp range: {reason:?}"),
+        }
+    };
+    let first = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel.clone(), make_range(zero, cusp.clone()))
+    })
+    .unwrap()
+    .into_value();
+    let second = crate::support::under(policy, || {
+        Curve2::try_analytic_parallel(parallel.clone(), make_range(cusp.clone(), one))
+    })
+    .unwrap()
+    .into_value();
+    let start =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
+        };
+    let end =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
+        };
+
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![first, second, quadratic_line(end, start)])
+    })
+    .expect("the shared analytic carrier and cusp parameter certify connectivity");
+    assert_eq!(boundary.value.curves().len(), 3);
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary.into_value()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .expect("the radical cusp cap has exact regularized topology")
+    .into_value()
+}
+
+fn self_crossing_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 {
+    let source = CubicBezier2::new(point(0, 0), point(0, 4), point(4, -4), point(4, 0));
+    let parallel = source
+        .parallel_left((Real::one() / Real::from(2_u8)).unwrap())
+        .unwrap();
+    let analysis = match crate::support::under_classified_result(policy, || {
+        parallel.singularity_analysis(&CurveParameterRange2::unit())
+    })
+    .unwrap()
+    {
+        Classification::Decided(analysis) => analysis,
+        Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
+    };
+    let [first_cusp, second_cusp] = analysis.parallel_cusps() else {
+        panic!("expected two algebraic parallel cusps");
+    };
+    let boundaries = [
+        BezierParameter2::Exact(Real::from(0)),
+        first_cusp.clone(),
+        second_cusp.clone(),
+        BezierParameter2::Exact(Real::from(1)),
+    ];
+    let mut fragments = boundaries
+        .windows(2)
+        .map(|window| {
+            let range = match crate::support::under_classified_result(policy, || {
+                BezierParameterRange2::try_new(window[0].clone(), window[1].clone())
+            })
+            .unwrap()
+            {
+                Classification::Decided(range) => range,
+                Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
+            };
+            crate::support::under(policy, || {
+                Curve2::try_analytic_parallel(parallel.clone(), range)
+            })
+            .unwrap()
+            .into_value()
+        })
+        .collect::<Vec<_>>();
+    let start =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::zero()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
+        };
+    let end =
+        match crate::support::under_classified_result(policy, || parallel.point_at(&Real::one()))
+            .unwrap()
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
+        };
+    fragments.push(quadratic_line(end, start));
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[
+                crate::support::under(policy, || CurvePath2::try_new(fragments))
+                    .unwrap()
+                    .into_value(),
+            ],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+#[test]
+fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies() {
+    check_policy(PredicatePolicy::STRICT);
+    check_policy(PredicatePolicy::APPROXIMATE_512);
+}
+
+#[test]
+fn analytic_parallel_chamfers_retain_normalized_cut_points() {
+    let setback = (Real::one() / Real::from(4_u8)).unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (corner, analytic_next) in [(point(4, 3), true), (point(-1, 0), false)] {
+            let source = rational_endpoint_curved_parallel_cap(&policy);
+            let vertex = loop_vertex_at(&source, corner, &policy);
+            let outcome = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a represented-endpoint analytic parallel chamfer must complete");
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let region = match outcome.value {
+                CurveCornerSolutions2::Unique(region) => region,
+                other => {
+                    panic!("the analytic-parallel corner must have one finite chamfer: {other:?}")
+                }
+            };
+            let fragments = region.boundary_loops()[0].curves();
+            assert_eq!(fragments.len(), 5);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| { fragment.family() == CurveFamily2::AnalyticParallel })
+                    .count(),
+                1
+            );
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| { fragment.family() == CurveFamily2::Line })
+                    .count(),
+                1
+            );
+            let chord = fragments
+                .iter()
+                .find(|fragment| fragment.family() == CurveFamily2::Line)
+                .expect("the chamfer is retained as one authoritative exact chord");
+            assert_eq!(
+                [chord.start(), chord.end()]
+                    .into_iter()
+                    .filter(|point| point.coordinates().is_some())
+                    .count(),
+                1,
+                "one chamfer endpoint retains selected evidence and the other has coordinates",
+            );
+
+            for (sample, expected) in [
+                (point(2, 0), RegionPointLocation::Inside),
+                (point(6, 0), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    crate::support::under(&policy, || region
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .value,
+                    expected
+                );
+            }
+
+            let union = crate::support::under(&policy, || {
+                region.boolean_region(
+                    &analytic_square(10, 14, &policy),
+                    hypercurve::BooleanOp::Union,
+                )
+            })
+            .expect("a later Boolean must consume the retained chamfer evidence");
+            assert_eq!(union.certainty, CurveCertainty::Certified);
+            for (sample, expected) in [
+                (point(2, 0), RegionPointLocation::Inside),
+                (point(12, 2), RegionPointLocation::Inside),
+                (point(7, 0), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    crate::support::under(&policy, || union
+                        .value
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .value,
+                    expected
+                );
+            }
+
+            let (previous_setback, next_setback) = if analytic_next {
+                (setback.clone(), Real::zero())
+            } else {
+                (Real::zero(), setback.clone())
+            };
+            let one_sided = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a zero analytic-side setback must retain the exact corner");
+            assert_eq!(one_sided.certainty, CurveCertainty::Certified);
+            assert!(matches!(one_sided.value, CurveCornerSolutions2::Unique(_)));
+
+            let (previous_setback, next_setback) = if analytic_next {
+                (setback.clone(), Real::from(100_u8))
+            } else {
+                (Real::from(100_u8), setback.clone())
+            };
+            let over_setback = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("an over-setback must terminate as an exact no-solution");
+            assert_eq!(over_setback.certainty, CurveCertainty::Certified);
+            assert!(matches!(
+                over_setback.value,
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+            ));
+        }
+    }
+}
+
+#[test]
+fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
+    let first_setback = (Real::one() / Real::from(4_u8)).unwrap();
+    let second_setback = (Real::one() / Real::from(16_u8)).unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for corner in [point(4, 3), point(-1, 0)] {
+            let source = rational_endpoint_curved_parallel_cap(&policy);
+            let first_vertex = loop_vertex_at(&source, corner, &policy);
+            let first = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    first_vertex,
+                    first_setback.clone(),
+                    first_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("the first analytic-parallel chamfer must complete");
+            assert_eq!(first.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(first) = first.value else {
+                panic!("the first analytic-parallel chamfer must be unique");
+            };
+
+            // The first cut is an algebraic parameter retained jointly by the
+            // analytic fragment and its chord. Chamfer that new junction in
+            // both carrier orientations without materializing its point.
+            let paths = crate::support::under(&policy, || first.boundary_paths())
+                .unwrap()
+                .value;
+            let curves = paths[0].curves();
+            let generated_chord = |curve: &Curve2| {
+                curve.family() == hypercurve::CurveFamily2::Line && curve.geometry().is_none()
+            };
+            let second_vertex = (0..curves.len())
+                .find(|&index| {
+                    let previous = &curves[(index + curves.len() - 1) % curves.len()];
+                    let next = &curves[index];
+                    (previous.family() == hypercurve::CurveFamily2::AnalyticParallel
+                        && generated_chord(next))
+                        || (generated_chord(previous)
+                            && next.family() == hypercurve::CurveFamily2::AnalyticParallel)
+                })
+                .expect("the selected analytic/chord junction is retained");
+            let second = crate::support::under(&policy, || {
+                first.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    second_vertex,
+                    second_setback.clone(),
+                    second_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("an algebraic-endpoint analytic chamfer must complete");
+            assert_eq!(second.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(second) = second.value else {
+                panic!("the algebraic-endpoint analytic chamfer must be unique");
+            };
+            let fragments = second.boundary_loops()[0].curves();
+            assert_eq!(fragments.len(), 6);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| { fragment.family() == CurveFamily2::AnalyticParallel })
+                    .count(),
+                1
+            );
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| { fragment.family() == CurveFamily2::Line })
+                    .count(),
+                2
+            );
+            for (sample, expected) in [
+                (point(2, 0), RegionPointLocation::Inside),
+                (point(6, 0), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    crate::support::under(&policy, || second
+                        .classify_point(&sample.clone().into()))
+                    .unwrap()
+                    .value,
+                    expected
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn curve_trim_intersects_analytic_parallel_region_boundaries() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = analytic_square(0, 4, &policy);
+        let source = Curve2::from(LineSeg2::try_new(point(-1, 2), point(5, 2)).unwrap());
+        let outcome =
+            crate::support::under(&policy, || source.trim_inside_region(&region)).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let [curve] = outcome.value.as_slice() else {
+            panic!("analytic-square trim must retain one exact line");
+        };
+        assert_eq!(curve.start(), point(0, 2).into());
+        assert_eq!(curve.end(), point(4, 2).into());
+    }
+}
+
+#[test]
+fn curve_trim_retains_an_analytic_parallel_boundary_overlap() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = analytic_square(0, 4, &policy);
+        let source = Curve2::from(LineSeg2::try_new(point(-1, 0), point(5, 0)).unwrap());
+        let outcome =
+            crate::support::under(&policy, || source.trim_inside_region(&region)).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let [curve] = outcome.value.as_slice() else {
+            panic!("analytic boundary overlap must retain one exact line");
+        };
+        assert_eq!(curve.start(), point(0, 0).into());
+        assert_eq!(curve.end(), point(4, 0).into());
+    }
+}
+
+#[test]
+fn radical_parallel_cusp_spans_connect_under_both_policies() {
+    assert_eq!(
+        radical_cusp_split_parallel_region(&PredicatePolicy::STRICT).boundary_loops()[0].len(),
+        3
+    );
+    assert_eq!(
+        radical_cusp_split_parallel_region(&PredicatePolicy::APPROXIMATE_512).boundary_loops()[0]
+            .len(),
+        3
+    );
+}
+
+#[test]
+fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
+    let distance = (Real::one() / Real::from(10_u8)).unwrap();
+    let mut strict_signature = None;
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = radical_cusp_split_parallel_region(&policy);
+        let offset = crate::support::under(&policy, || {
+            source.offset(distance.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("the represented radical cusp offset must complete");
+        assert!(!offset.value.is_empty());
+        let fragment_kinds = offset
+            .value
+            .boundary_loops()
+            .iter()
+            .map(|boundary| {
+                boundary
+                    .curves()
+                    .iter()
+                    .map(Curve2::family)
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        let roles = crate::support::under(&policy, || offset.value.loop_roles())
+            .unwrap()
+            .value;
+        let signature = (fragment_kinds, roles);
+        if let Some(strict_signature) = &strict_signature {
+            assert_eq!(&signature, strict_signature);
+        } else {
+            strict_signature = Some(signature);
+        }
+    }
+}
+
+#[test]
+fn cusp_split_analytic_self_crossing_normalizes_at_admission() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = self_crossing_cusp_split_parallel_region(&policy);
+        assert_eq!(region.boundary_loops().len(), 3);
+        assert_eq!(
+            crate::support::under(&policy, || region.filled_side_is_left())
+                .unwrap()
+                .value,
+            &[true; 3][..]
+        );
+        assert_eq!(
+            crate::support::under(&policy, || region.regularized_region())
+                .unwrap()
+                .into_value(),
+            region
+        );
+    }
+}
+
+#[test]
+fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = curved_parallel_cap(&policy);
+        let exported = crate::support::under(&policy, || source.boundary_paths()).unwrap();
+        assert_eq!(exported.certainty, CurveCertainty::Certified);
+        let paths = exported.value;
+        assert_eq!(paths.len(), 1);
+        let analytic = &paths[0].curves()[0];
+        assert_eq!(
+            analytic.family(),
+            hypercurve::CurveFamily2::AnalyticParallel
+        );
+        assert!(analytic.geometry().is_none());
+        assert!(analytic.start().coordinates().is_none());
+        let reversed = crate::support::under(&policy, || analytic.reversed()).unwrap();
+        assert_eq!(reversed.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            crate::support::under_outcome_classification(&policy, || analytic
+                .start()
+                .coincides_with(&reversed.value.end()))
+            .value,
+            Classification::Decided(true),
+        );
+        assert_eq!(
+            crate::support::under_outcome_classification(&policy, || analytic
+                .end()
+                .coincides_with(&reversed.value.start()))
+            .value,
+            Classification::Decided(true),
+        );
+        assert!(analytic.bounds().is_ok());
+        let reversed_path = crate::support::under(&policy, || paths[0].reversed()).unwrap();
+        assert_eq!(reversed_path.certainty, CurveCertainty::Certified);
+        let restored = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                &[reversed_path.value],
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .unwrap();
+        assert_eq!(restored.certainty, CurveCertainty::Certified);
+        let clipped = crate::support::under(&policy, || {
+            restored.value.boolean_region(
+                &analytic_square(1, 3, &policy),
+                hypercurve::BooleanOp::Intersection,
+            )
+        })
+        .unwrap();
+        assert_eq!(clipped.certainty, CurveCertainty::Certified);
+        for (query, expected) in [
+            (point(2, 1), RegionPointLocation::Inside),
+            (point(2, 3), RegionPointLocation::Outside),
+            (point(-2, 0), RegionPointLocation::Outside),
+        ] {
+            let located = crate::support::under(&policy, || {
+                clipped.value.classify_point(&query.clone().into())
+            })
+            .unwrap();
+            assert_eq!(located.certainty, CurveCertainty::Certified);
+            assert_eq!(located.value, expected);
+        }
+    }
+}

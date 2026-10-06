@@ -1,0 +1,295 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "rootless-axis-saturation",
+  "source_revision": "6a960fa4046ecb51cd5089d9b46fa3e675958fc0",
+  "historical_control_revision": "d2ef32ddef96c32cb5724821efff6a75ebb68f25",
+  "hypersolve_revision": "a23f6bbbd6c43d275fedd5867e170c18dc86659c",
+  "historical_hypersolve_revision": "6126872b9cc21c58b77774cde7dcf0998dfb468c",
+  "scope": {
+    "operation": "finite analytic-parallel/rational-Bezier intersections whose authored homogeneous equations contain removable single-parameter factors",
+    "completed_families": [
+      "common rational factors depending only on the analytic-parallel parameter",
+      "common rational factors depending only on the rational-Bezier parameter",
+      "simultaneous factors in both parameter directions",
+      "closed-domain rootlessness proofs under STRICT and APPROXIMATE_512",
+      "exact contact replay against the same reduced equation system that produced the projected candidates",
+      "zero-distance and certified Pythagorean-hodograph rational shared components before generic saturation"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "extraction": "Hypersolve computes exact rational polynomial GCD content shared by both equations first by columns and then by rows, and divides both equations exactly",
+    "authorization": "Hypercurve uses a reduced system only after isolating every root of every nonconstant removed factor and proving that none lies on the closed authored interval [0,1]",
+    "domain_preservation": "rootless axis saturation preserves the complete solution set on the closed parameter square; factors with endpoint or interior roots are not removed",
+    "projective_base_points": "an in-domain removable homogeneous base point remains an explicit Boundary uncertainty rather than being silently regularized away",
+    "coefficient_domain": "this cut accepts only Hypersolve's exact rational factor report; unsupported Real coefficient towers remain on the existing degenerate/incomplete boundary",
+    "strict": "STRICT accepts only exact factor arithmetic and exact closed-domain rootlessness certificates",
+    "approximate_512": "APPROXIMATE_512 follows the same proof graph and may differ only when inherited Hyperreal decisions terminate at the authorized 512-bit equality boundary",
+    "cache_isolation": "an approximate-only PH classification is not retained as a certified rational parallel and cannot answer a later STRICT query",
+    "replay": "candidate construction retains the exact original or reduced bivariate equations, so contact replay does not reconstruct a different system or repeat equation construction"
+  },
+  "implementation": {
+    "hypersolve_api": "extract_bivariate_polynomial_system_axis_factors returns explicit Primitive, Reduced, ZeroSystem, UnsupportedCoefficient, or DivisionFailed status plus the two axis factors and optional reduced equations",
+    "hypercurve_spine": "BezierParallel2::intersection_candidate_system owns bounds, projections, rational-component delegation, axis saturation, and retained replay equations behind the unchanged public candidate result",
+    "projection": "one project_parallel_intersection_system helper preserves first-projection degenerate short-circuiting and is reused after saturation",
+    "rational_component_order": "zero-distance and certified PH parallels delegate to RationalBezier2 before axis saturation, preserving the existing authoritative overlap engine and its oriented range evidence",
+    "allocation_control": "primitive factor reports avoid cloning equation systems; reduced equations are retained only when finite candidates require replay",
+    "tests": "source-axis and target-axis rootless homogeneous factors produce two exact contacts under both policies; an in-domain projective base point remains Boundary; a direct unit matrix proves that every removed factor must be rootless"
+  },
+  "matched_release_benchmark": {
+    "method": "five interleaved all-feature release processes pinned to CPU 11 with identical benchmark source and fixtures; CPU 9 was occupied by an unrelated Hypermesh session and was neither used nor interrupted",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "baseline_checkout": "/tmp/hypercurve-axis-baseline",
+    "baseline_hypersolve_checkout": "/tmp/hypersolve-axis-baseline",
+    "baseline_semantics": "each new rootless-axis lane returns DegenerateResultant with checksum 10; the candidate returns four exact projected parameters with checksum 40 and two exact contacts with checksum 20",
+    "lanes": {
+      "exact_candidates": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [36.864, 40.079, 37.767, 36.794, 39.734],
+        "candidate_samples_microseconds": [37.599, 37.606, 37.646, 38.323, 38.248],
+        "baseline_median_microseconds": 37.767,
+        "candidate_median_microseconds": 37.646,
+        "median_change_percent": -0.320386
+      },
+      "exact_contacts": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [52.432, 54.622, 53.204, 52.861, 54.494],
+        "candidate_samples_microseconds": [45.779, 46.705, 46.479, 48.078, 46.442],
+        "baseline_median_microseconds": 53.204,
+        "candidate_median_microseconds": 46.479,
+        "median_change_percent": -12.640027
+      },
+      "algebraic_lift_candidates": {
+        "iterations_per_process": 100,
+        "baseline_samples_microseconds": [448.785, 457.899, 453.674, 446.932, 448.557],
+        "candidate_samples_microseconds": [434.138, 451.549, 443.552, 451.672, 445.594],
+        "baseline_median_microseconds": 448.785,
+        "candidate_median_microseconds": 445.594,
+        "median_change_percent": -0.711031
+      },
+      "algebraic_lift_contacts": {
+        "iterations_per_process": 100,
+        "baseline_samples_milliseconds": [1.080685, 1.078219, 1.081255, 1.094818, 1.092460],
+        "candidate_samples_milliseconds": [1.067153, 1.067453, 1.078796, 1.072291, 1.066973],
+        "baseline_median_milliseconds": 1.081255,
+        "candidate_median_milliseconds": 1.067453,
+        "median_change_percent": -1.276480
+      },
+      "selected_branch_candidates": {
+        "iterations_per_process": 100,
+        "baseline_samples_microseconds": [463.247, 465.417, 472.083, 468.491, 466.693],
+        "candidate_samples_microseconds": [468.354, 478.114, 469.509, 469.622, 476.772],
+        "baseline_median_microseconds": 466.693,
+        "candidate_median_microseconds": 469.622,
+        "median_change_percent": 0.627607
+      },
+      "selected_branch_contacts": {
+        "iterations_per_process": 100,
+        "baseline_samples_milliseconds": [1.122496, 1.150212, 1.143172, 1.128957, 1.143258],
+        "candidate_samples_milliseconds": [1.113609, 1.139204, 1.121147, 1.125126, 1.125798],
+        "baseline_median_milliseconds": 1.143172,
+        "candidate_median_milliseconds": 1.125126,
+        "median_change_percent": -1.578590
+      },
+      "higher_nullity_candidates": {
+        "iterations_per_process": 100,
+        "baseline_samples_microseconds": [755.039, 766.084, 770.132, 770.353, 767.789],
+        "candidate_samples_microseconds": [765.164, 756.515, 774.261, 761.720, 772.923],
+        "baseline_median_microseconds": 767.789,
+        "candidate_median_microseconds": 765.164,
+        "median_change_percent": -0.341891
+      },
+      "higher_nullity_contacts": {
+        "iterations_per_process": 100,
+        "baseline_samples_milliseconds": [2.116569, 2.112451, 2.119188, 2.101124, 2.132629],
+        "candidate_samples_milliseconds": [2.111007, 2.067215, 2.130290, 2.096975, 2.118764],
+        "baseline_median_milliseconds": 2.116569,
+        "candidate_median_milliseconds": 2.111007,
+        "median_change_percent": -0.262784
+      },
+      "rootless_source_axis_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [2.662643, 2.673541, 2.737230, 2.728542, 2.694515],
+        "candidate_samples_milliseconds": [3.503249, 3.535322, 3.615862, 3.534111, 3.607125],
+        "baseline_median_milliseconds": 2.694515,
+        "candidate_median_milliseconds": 3.535322,
+        "median_change_percent": 31.204391,
+        "interpretation": "accepted completeness cost: four exact projected parameters replace one unresolved marker"
+      },
+      "rootless_source_axis_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [2.675647, 2.659286, 2.730753, 2.668125, 2.727571],
+        "candidate_samples_milliseconds": [3.562971, 3.556830, 3.668847, 3.585265, 3.643363],
+        "baseline_median_milliseconds": 2.675647,
+        "candidate_median_milliseconds": 3.585265,
+        "median_change_percent": 33.996189,
+        "interpretation": "accepted completeness cost: two exactly replayed selected-branch contacts replace one unresolved marker"
+      },
+      "rootless_target_axis_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [1.159104, 1.156780, 1.168361, 1.151383, 1.167364],
+        "candidate_samples_milliseconds": [2.049145, 2.065109, 2.114197, 2.051412, 2.112087],
+        "baseline_median_milliseconds": 1.159104,
+        "candidate_median_milliseconds": 2.065109,
+        "median_change_percent": 78.164254,
+        "interpretation": "accepted completeness cost: four exact projected parameters replace one unresolved marker"
+      },
+      "rootless_target_axis_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [1.157710, 1.153041, 1.156665, 1.139370, 1.160177],
+        "candidate_samples_milliseconds": [2.097273, 2.081617, 2.176382, 2.084395, 2.137224],
+        "baseline_median_milliseconds": 1.156665,
+        "candidate_median_milliseconds": 2.097273,
+        "median_change_percent": 81.320694,
+        "interpretation": "accepted completeness cost: two exactly replayed selected-branch contacts replace one unresolved marker"
+      },
+      "line_overlap_candidates": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [29.166, 29.389, 28.898, 29.631, 29.236],
+        "candidate_samples_microseconds": [2.226, 2.232, 2.307, 2.318, 2.265],
+        "baseline_median_microseconds": 29.236,
+        "candidate_median_microseconds": 2.265,
+        "median_change_percent": -92.252702,
+        "speedup": 12.908
+      },
+      "line_overlap_contacts": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [7.332, 7.447, 7.302, 7.312, 7.417],
+        "candidate_samples_microseconds": [7.301, 7.317, 7.516, 7.454, 7.969],
+        "baseline_median_microseconds": 7.332,
+        "candidate_median_microseconds": 7.454,
+        "median_change_percent": 1.663939
+      },
+      "warm_ph_overlap_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_microseconds": [1.773, 3.181, 1.728, 1.724, 1.754],
+        "candidate_samples_microseconds": [1.791, 1.782, 1.855, 1.829, 1.811],
+        "baseline_median_microseconds": 1.754,
+        "candidate_median_microseconds": 1.811,
+        "median_change_percent": 3.249715,
+        "interpretation": "ten-iteration sub-two-microsecond lane; retained as a noisy size-of-effect sentinel"
+      },
+      "warm_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_microseconds": [7.603, 6.875, 6.487, 7.488, 6.577],
+        "candidate_samples_microseconds": [6.500, 10.027, 6.611, 6.643, 6.585],
+        "baseline_median_microseconds": 6.875,
+        "candidate_median_microseconds": 6.611,
+        "median_change_percent": -3.840000
+      },
+      "cold_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [120.017990, 116.921919, 121.475284, 117.018210, 115.966539],
+        "candidate_samples_milliseconds": [116.324814, 115.672854, 116.916080, 118.054470, 117.760324],
+        "baseline_median_milliseconds": 117.018210,
+        "candidate_median_milliseconds": 116.916080,
+        "median_change_percent": -0.087277
+      }
+    },
+    "ordinary_sentinels": {
+      "maximum_observed_median_regression_percent": 0.627607,
+      "maximum_lane": "selected-branch candidate projection",
+      "interpretation": "all ordinary exact/algebraic candidate and contact medians remain within 0.63 percent on the sole regressing lane; five of eight lanes improve"
+    }
+  },
+  "matched_heaptrack": {
+    "method": "the identical complete release benchmark process under Heaptrack on CPU 11; candidate and control include the same added rootless-axis fixtures",
+    "baseline_profile": "/tmp/hypercurve-axis-baseline.zst.zst",
+    "candidate_profile": "/tmp/hypercurve-axis-current.zst.zst",
+    "baseline": {
+      "runtime_seconds": 22.631,
+      "allocation_calls": 44186076,
+      "temporary_allocations": 2829155,
+      "peak_heap_mebibytes_reported": 93.38,
+      "peak_rss_mebibytes_reported": 123.57,
+      "leaked_mebibytes_reported": 92.62
+    },
+    "candidate": {
+      "runtime_seconds": 23.121,
+      "allocation_calls": 44523483,
+      "temporary_allocations": 2830972,
+      "peak_heap_mebibytes_reported": 93.38,
+      "peak_rss_mebibytes_reported": 124.14,
+      "leaked_mebibytes_reported": 92.62
+    },
+    "change_percent": {
+      "runtime": 2.165172,
+      "allocation_calls": 0.763605,
+      "temporary_allocations": 0.064224,
+      "peak_heap": 0.0,
+      "peak_rss": 0.461277,
+      "leaked": 0.0
+    },
+    "interpretation": "peak heap is unchanged; profiler-wide call growth includes the newly completed rootless lanes doing four-result projection and two-contact replay where the baseline stopped at one unresolved marker"
+  },
+  "release_size": {
+    "matched_offset_microbenchmark": {
+      "baseline_file_bytes": 6973272,
+      "candidate_file_bytes": 7001240,
+      "file_change_percent": 0.401074,
+      "baseline_text_bytes": 5292310,
+      "candidate_text_bytes": 5309082,
+      "text_change_percent": 0.316913,
+      "baseline_data_bytes": 264184,
+      "candidate_data_bytes": 263464,
+      "baseline_bss_bytes": 3392,
+      "candidate_bss_bytes": 3728,
+      "baseline_loadable_total_bytes": 5559886,
+      "candidate_loadable_total_bytes": 5576274,
+      "loadable_change_percent": 0.294754,
+      "interpretation": "the source fixture is byte-identical across both builds, so the delta represents linked implementation and Hypersolve support rather than benchmark-only fixture skew"
+    }
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "matched_hypercurve_only": {
+      "baseline_nodes": 17361,
+      "candidate_nodes": 17373,
+      "node_delta": 12,
+      "baseline_edges": 29587,
+      "candidate_edges": 29622,
+      "edge_delta": 35,
+      "baseline_artifact": "/tmp/hypercurve-axis-callgraph-baseline/callgraph.json",
+      "candidate_artifact": "/tmp/hypercurve-axis-callgraph-current/callgraph.json"
+    },
+    "hypercurve_exact_stack": {
+      "libraries": [
+        "hyperreal",
+        "hyperlattice",
+        "hyperlimit",
+        "hypersolve",
+        "hypertri",
+        "hypercurve",
+        "hyperbrep"
+      ],
+      "nodes": 39912,
+      "edges": 74632,
+      "artifact": "/tmp/hypercurve-rootless-axis-callgraph/callgraph.json"
+    },
+    "caveat": "the utility is a static source approximation; the matched graphs exclude tests and benchmarks, and the exact-stack scan deliberately excludes Hypermesh"
+  },
+  "competitive_context": {
+    "equivalent_direct_peer": "none in the current harness",
+    "reason": "available offset libraries do not expose exact projective-base-point semantics, complete two-parameter correspondence, selected-normal replay, or STRICT/APPROXIMATE_512 evidence",
+    "comparison_rule": "an unresolved historical result and heuristic finite offset output are not reported as correctness-equivalent throughput"
+  },
+  "validation": {
+    "hypersolve": "pass: 182 library tests, 131 residual property tests, 209 smoke tests, README/doc tests, all-target warning-denied Clippy, formatting, and diff checks",
+    "cargo_test_all_features": "pass: 278 library tests, every integration target, 29 authoritative CurveRegion Boolean tests, 11 deterministic Boolean fuzz tests including both approximately 95-second retired corpora, the 268-operation pathological workload, README tests, and doc tests",
+    "cargo_test_no_default_features": "pass: 245 library tests and every enabled integration, README, and documentation target",
+    "clippy_all_targets_all_features_deny_warnings": "pass",
+    "clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "policies": "all new geometric cases run under STRICT and APPROXIMATE_512; in-domain factor roots remain explicit and no approximate result is relabeled exact"
+  },
+  "next_boundary": {
+    "genuinely_bivariate_factors": "classify shared factors that depend irreducibly on both parameters and transport their finite parameter-domain components",
+    "coefficient_towers": "support exact algebraic Real coefficients beyond the rational factor extractor without making approximation an implicit construction policy",
+    "carrier_surfaces": "complete remaining parallel transforms, intersections, trimming, joins, and singularity/topology surfaces",
+    "topology": "feed raw exact parallel pieces and overlap evidence into one authoritative CurveRegion2 regularization pass",
+    "corner_solver": "build solver-driven corner construction behind the unified chamfer/fillet option enum after the incidence and regularization substrate is complete"
+  }
+}

@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc e051f4312f65feedeeb72cb68b7f4e4e082873061fba4ef376b780e85c715a92 # shrinks to seeds = [Seed { x: 4, y: 0, width: 10, height: 11, lower: 0, upper: 0, curvature: 1, weight: 1 }, Seed { x: 0, y: 0, width: 8, height: 11, lower: 0, upper: 0, curvature: 1, weight: 1 }, Seed { x: 0, y: -7, width: 13, height: 6, lower: 0, upper: 1, curvature: 3, weight: 1 }], steps = [Boolean(10, 11, 1), Boolean(14, 6, 1), Boolean(2, 5, 0)], nested = true
+cc 8bad95390e5442d0702d93868a4a685bec01a93ce5db07d90e95dbb78598b332 # shrinks to seeds = [Seed { x: 0, y: 0, width: 13, height: 14, lower: 0, upper: 0, curvature: 1, weight: 1 }, Seed { x: 0, y: 0, width: 16, height: 6, lower: 0, upper: 1, curvature: 1, weight: 1 }], steps = [Translate(1, 0, 1), Boolean(9, 0, 0), Boolean(9, 3, 0), Boolean(0, 0, 0), Boolean(10, 8, 0)], nested = false

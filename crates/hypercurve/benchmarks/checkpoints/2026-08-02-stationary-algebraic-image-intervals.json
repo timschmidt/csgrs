@@ -1,0 +1,103 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "stationary algebraic image interval certification",
+  "source_revision": "b03da76dad7b8556a785afea4430b56e9ddcc1e3",
+  "hypersolve_revision": "5cb5232eab73ccaaaf1c3fcfc0f920a2b29eab30",
+  "hypersolve_comparison_revision": "339d4d8",
+  "previous_checkpoint": "2026-08-02-general-algebraic-cusp-point-images.json",
+  "scope": {
+    "included": [
+      "one shared exact image-interval certification and source-refinement loop for polynomial and rational algebraic images",
+      "stationary and initially nonmonotone algebraic maps",
+      "Bernstein one-variation proof of one distinct resultant root",
+      "square-free fallback for repeated image roots",
+      "foreign resultant-root exclusion and rational witnesses discovered during refinement",
+      "STRICT and APPROXIMATE_512 capability, performance, and linked-size evidence"
+    ],
+    "excluded": [
+      "raising the degree-16 rational-image elimination ceiling for the degree-12/degree-6 general cusp coordinate maps",
+      "admitting a partial algebraic cusp join carrier to CurveRegion2",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "image_identity": "The resultant proves that the exact image beta=f(alpha) is a root of the image polynomial.",
+    "containment": "Endpoint mapping is used only when the rational or polynomial derivative is certified away from zero. Otherwise exact interval evaluation gives a conservative image enclosure.",
+    "isolation": "An enclosure is published only when exact Bernstein variation certifies one distinct open-interval root; repeated factors are removed only when direct variation does not decide.",
+    "refinement": "Ambiguous enclosures trigger up to eight rounds of eight exact Sturm bisections of the already-isolated source root. Exhaustion remains an explicit image-isolation failure.",
+    "endpoints": "A resultant root on an enclosure endpoint is not silently assigned. Refinement continues until ownership is interior or an exact rational image witness is replayed.",
+    "policy": "Both policies use the same proof structure. APPROXIMATE_512 can terminate only through its ordinary 512-bit predicate boundary; no sampled coordinate or tolerance topology is introduced."
+  },
+  "capability": {
+    "comparison_revision": "Polynomial images rejected stationary/nonmonotone source intervals. Rational images fell back to those polynomial images, and both paths trusted an endpoint image interval's inherited unit-root count without excluding distinct resultant roots from other source roots.",
+    "source_revision": "Polynomial and rational images represent stationary maps exactly, refine nonmonotone isolators, exclude foreign resultant roots, and preserve rational source/image witnesses found during refinement.",
+    "hypercurve_decision": "The general cubic cusp remains a retained rational point expression. Raising the rational-image dimension ceiling from 16 to 18 transformed its coordinates but increased the focused release fixture from about 4 ms to about 190 ms and forced degree-18 elimination; the experiment was reverted in favor of the smaller exact carrier substrate."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "adjacent-parent Criterion binaries in separate clean target directories; 30 samples, 2 s warmup, 3 s measurement",
+    "lanes": {
+      "polynomial_image": {
+        "comparison_median_us": 3.0216,
+        "source_median_us": 3.5239,
+        "change_percent": 16.623643,
+        "interpretation": "The approximately 0.50 us proof cost closes a false unit-isolation claim and enables stationary images."
+      },
+      "linear_fractional_rational_image": {
+        "comparison_median_us": 8.0489,
+        "source_median_us": 8.1069,
+        "change_percent": 0.720595,
+        "interpretation": "The Mobius fast path is effectively neutral."
+      },
+      "retained_rational_map_transform": {
+        "comparison_median_us": 5.6220,
+        "source_median_us": 6.1224,
+        "change_percent": 8.900747,
+        "interpretation": "The approximately 0.50 us local isolation proof is paid per independently selected source root while the elimination remains reused."
+      },
+      "degree_12_cubic_rational_image": {
+        "comparison_median_ms": 1.9807,
+        "source_median_ms": 2.0723,
+        "change_percent": 4.624628,
+        "interpretation": "The approximately 0.09 ms Bernstein image-isolation proof is retained because exactness outranks the bounded overhead."
+      }
+    },
+    "hypercurve_general_cusp_guard": {
+      "result": "passed in release under both policies with retained exact rational coordinate expressions",
+      "observed_test_time": "below the test harness's 0.01 s display resolution after reverting the degree-18 coordinate-elimination experiment"
+    }
+  },
+  "release_size": {
+    "artifact": "Hypersolve certification benchmark executable",
+    "comparison_file_bytes": 12732304,
+    "source_file_bytes": 12726240,
+    "file_change_bytes": -6064,
+    "file_change_percent": -0.047627,
+    "comparison_text_bytes": 9650499,
+    "source_text_bytes": 9647515,
+    "text_change_bytes": -2984,
+    "text_change_percent": -0.030921,
+    "comparison_data_bytes": 495184,
+    "source_data_bytes": 495360,
+    "comparison_bss_bytes": 2232,
+    "source_bss_bytes": 5016,
+    "interpretation": "The representative executable is 6,064 bytes smaller and aggregate text is 2,984 bytes smaller; the BSS movement is linker/alignment state and does not add retained heap ownership."
+  },
+  "verification": {
+    "hypersolve_all_targets": "passed: 206 library tests, 2 readme tests, 209 residual/property tests, examples, and benchmark smoke targets",
+    "hypersolve_all_features_library": "passed: 206 tests",
+    "clippy_default": "passed all targets with -D warnings",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "hypercurve_focused_release": "passed general_algebraic_cusp_points_are_exact_rational_images under STRICT and APPROXIMATE_512",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "use retained rational cusp expressions directly in one complete algebraic semicircle/line carrier",
+    "complete carrier intersections, bounds, ray classification, arrangement, reversal, splitting, and finite export before fragment admission",
+    "route general algebraic cusp and distinct-carrier joins through that carrier",
+    "continue bigint/allocation hardening without forcing high-degree coordinate elimination"
+  ]
+}

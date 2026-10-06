@@ -1,0 +1,239 @@
+#[path = "common/pathological.rs"]
+mod pathological_fixture;
+#[path = "../tests/support/mod.rs"]
+mod support;
+
+use std::env;
+use std::hint::black_box;
+use std::time::Instant;
+
+use hypercurve::{BooleanOp, PredicatePolicy};
+
+use pathological_fixture::{MemoryTier, NativeDataset, rotated_region, selected_tiers};
+
+#[derive(Clone, Copy)]
+enum BenchmarkMode {
+    Build,
+    Transform,
+    Boolean,
+    All,
+}
+
+impl BenchmarkMode {
+    fn from_environment() -> Self {
+        match env::var("HYPERCURVE_PATHOLOGICAL_MODE")
+            .unwrap_or_else(|_| "all".to_owned())
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "build" => Self::Build,
+            "transform" | "rotate" => Self::Transform,
+            "boolean" | "booleans" => Self::Boolean,
+            "all" => Self::All,
+            value => panic!(
+                "invalid HYPERCURVE_PATHOLOGICAL_MODE={value:?}; expected build, transform, boolean, or all"
+            ),
+        }
+    }
+
+    const fn includes_transform(self) -> bool {
+        matches!(self, Self::Transform | Self::All)
+    }
+
+    const fn includes_boolean(self) -> bool {
+        matches!(self, Self::Boolean | Self::All)
+    }
+}
+
+fn main() {
+    let mode = BenchmarkMode::from_environment();
+    let tiers = selected_tiers("HYPERCURVE_PATHOLOGICAL_TIERS", &[MemoryTier::Mib100]);
+    println!(
+        "pathological CurveRegion2 benchmark: tiers={:?}, cell_limit={:?}",
+        tiers.iter().map(|tier| tier.name()).collect::<Vec<_>>(),
+        env::var("HYPERCURVE_PATHOLOGICAL_CELL_LIMIT").ok(),
+    );
+    println!(
+        "each cell contains every curve family, every Real representation sample, and an exact 3-4-5 rotated/translated mate"
+    );
+
+    #[cfg(feature = "dispatch-trace")]
+    if env::var_os("HYPERCURVE_PATHOLOGICAL_DISPATCH_TRACE").is_some() {
+        hyperreal::dispatch_trace::reset();
+        hyperreal::dispatch_trace::with_recording(|| run_tiers(&tiers, mode));
+        let snapshot = hyperreal::dispatch_trace::take_trace();
+        for entry in snapshot.dispatch {
+            println!(
+                "dispatch/{}/{}/{}={}",
+                entry.layer, entry.operation, entry.path, entry.count
+            );
+        }
+        println!("dispatch/rational_stats={:?}", snapshot.rational);
+        return;
+    }
+
+    run_tiers(&tiers, mode);
+}
+
+fn run_tiers(tiers: &[MemoryTier], mode: BenchmarkMode) {
+    for tier in tiers {
+        run_tier(*tier, mode);
+    }
+}
+
+fn run_tier(tier: MemoryTier, mode: BenchmarkMode) {
+    let resident_before = resident_bytes();
+    let started = Instant::now();
+    let dataset = NativeDataset::build(tier);
+    let build_elapsed = started.elapsed();
+    let resident_delta = resident_before
+        .zip(resident_bytes())
+        .map(|(before, after)| after.saturating_sub(before));
+    println!(
+        "pathological/{}/build: cells={} estimated_input={} observed_rss_delta={} elapsed={build_elapsed:?}",
+        tier.name(),
+        dataset.cells.len(),
+        format_bytes(dataset.estimated_resident_bytes),
+        resident_delta.map_or_else(|| "unavailable".to_owned(), format_bytes),
+    );
+    assert_eq!(dataset.tier, tier);
+
+    let family_checksum = dataset
+        .cells
+        .iter()
+        .flat_map(|cell| cell.source_path.curves())
+        .fold(0_usize, |checksum, curve| {
+            checksum ^ curve.family() as usize
+        });
+    let representation_checksum = dataset
+        .cells
+        .iter()
+        .flat_map(|cell| &cell.representations)
+        .fold(0_usize, |checksum, sample| {
+            checksum
+                ^ sample.name.len()
+                ^ usize::from(sample.value.structural_facts().exact_rational)
+        });
+    black_box((family_checksum, representation_checksum));
+
+    if mode.includes_transform() {
+        let started = Instant::now();
+        let transformed = dataset
+            .cells
+            .iter()
+            .enumerate()
+            .map(|(index, cell)| rotated_region(&cell.source_path, index))
+            .collect::<Vec<_>>();
+        let boundary_checksum = transformed.iter().map(|region| region.len()).sum::<usize>();
+        println!(
+            "pathological/{}/deep_copy_rotate: cells={} boundaries={} elapsed={:?}",
+            tier.name(),
+            transformed.len(),
+            black_box(boundary_checksum),
+            started.elapsed(),
+        );
+        black_box(transformed);
+    }
+
+    if mode.includes_boolean() {
+        benchmark_booleans(&dataset);
+    }
+}
+
+fn benchmark_booleans(dataset: &NativeDataset) {
+    let policy = PredicatePolicy::STRICT;
+    let started = Instant::now();
+    let mut completed_pair_count = 0_usize;
+    let mut candidate_pair_count = 0_usize;
+    let mut decided_count = 0_usize;
+    let mut blocked_count = 0_usize;
+    let mut boundary_checksum = 0_usize;
+    let mut first_blocker = None;
+    let mut topology_fragment_count = 0_usize;
+    let mut topology_point_classification_count = 0_usize;
+
+    for cell in &dataset.cells {
+        match crate::support::under(&policy, || cell.source.boolean_regions(&cell.rotated)) {
+            Ok(results) => {
+                let results = results.value;
+                completed_pair_count += 1;
+                candidate_pair_count += results.candidate_carrier_pair_count();
+                for operation in [
+                    BooleanOp::Union,
+                    BooleanOp::Intersection,
+                    BooleanOp::Difference,
+                    BooleanOp::Xor,
+                ] {
+                    let region = results.region(operation);
+                    decided_count += 1;
+                    boundary_checksum ^= region.len();
+                }
+                topology_fragment_count += results.topology_fragment_count();
+                topology_point_classification_count +=
+                    results.topology_point_classification_count();
+            }
+            Err(error) => {
+                blocked_count += 4;
+                first_blocker.get_or_insert_with(|| error.to_string());
+            }
+        }
+    }
+
+    println!(
+        "pathological/{}/boolean_all_ops: cells={} completed_pairs={} candidate_pairs={} fragments={} point_classifications={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} elapsed={:?}",
+        dataset.tier.name(),
+        dataset.cells.len(),
+        completed_pair_count,
+        candidate_pair_count,
+        topology_fragment_count,
+        topology_point_classification_count,
+        decided_count,
+        blocked_count,
+        black_box(boundary_checksum),
+        started.elapsed(),
+    );
+
+    let started = Instant::now();
+    let mut projection_decided = 0_usize;
+    let mut projection_errors = 0_usize;
+    let mut projection_checksum = 0_usize;
+    for cell in &dataset.cells {
+        for operation in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ] {
+            match crate::support::under(&policy, || {
+                cell.source_projection
+                    .boolean_region(&cell.rotated_projection, operation)
+            }) {
+                Ok(region) => {
+                    projection_decided += 1;
+                    projection_checksum ^= region.value.len();
+                }
+                Err(_) => projection_errors += 1,
+            }
+        }
+    }
+    println!(
+        "pathological/{}/flattened_exact_boolean_all_ops: cells={} decided={} errors={} checksum={} elapsed={:?}",
+        dataset.tier.name(),
+        dataset.cells.len(),
+        projection_decided,
+        projection_errors,
+        black_box(projection_checksum),
+        started.elapsed(),
+    );
+}
+
+fn resident_bytes() -> Option<usize> {
+    let status = std::fs::read_to_string("/proc/self/status").ok()?;
+    let line = status.lines().find(|line| line.starts_with("VmRSS:"))?;
+    let kibibytes = line.split_whitespace().nth(1)?.parse::<usize>().ok()?;
+    kibibytes.checked_mul(1024)
+}
+
+fn format_bytes(bytes: usize) -> String {
+    format!("{:.1} MiB", bytes as f64 / (1024.0 * 1024.0))
+}

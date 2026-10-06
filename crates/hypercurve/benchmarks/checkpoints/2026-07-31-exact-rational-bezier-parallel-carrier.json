@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "exact-rational-bezier-parallel-carrier",
+  "source_revision": "8284dcfb8bbbbaebdc955822e42cb753aa28af5d",
+  "implementation_revisions": [
+    "8284dcf"
+  ],
+  "historical_control_revision": "92b9477b43bd2912802a50a9be8b6066b976eb54",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "carrier": "BezierParallel2 is one machine word and clone-shares one immutable source/distance record plus lazy polynomial-basis and homogeneous-tangent caches",
+    "native_polynomial_fast_path": "quadratic and cubic sources remain native instead of being eagerly promoted to general rational control storage",
+    "rational_coverage": "RationalQuadraticBezier2 and arbitrary-degree RationalBezier2 expose exact left/right parallel carriers",
+    "curve_path_admission": "certified CurvePath2 parallel construction admits regular exact rational-PH spans without source chords",
+    "circle_fast_path": "one shared rational circular-conic recognizer materializes same-parameter concentric degree-two curves, including exact radius collapse and negative-radius reversal",
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "exactness_and_policy": {
+    "homogeneous_source": "P=(X/W,Y/W)",
+    "homogeneous_tangent": "H=(X'W-XW',Y'W-YW')",
+    "parallel": "Q=P+d*R90(H)/sqrt(H dot H)",
+    "derivative": "Q'=H/W^2+d*(R90(H')/S-R90(H)*(H dot H')/S^3), S=sqrt(H dot H)",
+    "cusp_equation": "d*W^2*(H' cross H)+S^3=0; roots of the squared polynomial are isolated exactly and opposite-sign roots are rejected",
+    "projective_boundary": "all roots of W on the closed unit interval are rejected before evaluation, singularity analysis, or exact materialization",
+    "ph_materialization": "when H dot H=S^2, the exact homogeneous parallel is (XS-dW*Hy,YS+dW*Hx,WS)",
+    "bernstein_completion": "strict positivity of WS is first certified on [0,1], then exact incremental degree elevation continues until every weight coefficient is positive; the former arbitrary +32 cap is deleted",
+    "strict": "STRICT requires exact sign, root, square, regularity, and branch evidence and never substitutes a finite approximation",
+    "approximate_512": "APPROXIMATE_512 uses the same exact carrier and may terminate only an unresolved equality/sign predicate at the inherited 512-bit terminal",
+    "endpoint_identity": "structural t=0 and t=1 rational evaluations return the retained exact endpoints directly",
+    "common_circle_center": "independently authored algebraic circular conics recover the minimal tangent-normal center and validate it against the implicit conic"
+  },
+  "regression_matrix": {
+    "focused_test_target": "tests/hypercurve_bezier_fit_offset.rs",
+    "test_count": 38,
+    "all_features": "pass",
+    "no_default_features": "pass",
+    "covered_paths": [
+      "polynomial quadratic and cubic analytic point/derivative evaluation",
+      "source singularities and represented/nonrepresented offset cusps",
+      "nonuniform rational line same-parameter materialization",
+      "noncircular arbitrary-degree rational PH point and derivative replay",
+      "rational quarter circles with rational and algebraic weights",
+      "circle radius collapse and negative-scale reversal",
+      "projective denominator boundary rejection",
+      "regular rational PH CurvePath promotion without chord fallback",
+      "STRICT and APPROXIMATE_512 materialization",
+      "strictly positive PH speed requiring Bernstein degree 65, beyond the deleted fixed search cap"
+    ]
+  },
+  "paired_release_carrier_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_OFFSET_BENCH_GROUP=bezier-carrier {historical,candidate target/release/deps/offset-4d7476685f053fc3}",
+    "method": "15 alternating historical/candidate process pairs after warmup; medians of fixed-iteration native release runs",
+    "construction": {
+      "iterations_per_process": 100000,
+      "historical_nanoseconds_per_iteration": [2127.43678, 1629.43249, 1587.93203, 1549.78565, 1572.05252, 1604.87597, 1640.92, 1594.07901, 1591.3955, 1639.45471, 1581.30609, 1584.38177, 1566.22162, 1600.90634, 1609.15057],
+      "candidate_nanoseconds_per_iteration": [193.82373, 252.27842, 65.96898, 75.35164, 62.93599, 68.5188, 62.45432, 64.86716, 65.33383, 67.96755, 61.84437, 62.93619, 67.42968, 64.64457, 66.50884],
+      "historical_median_nanoseconds": 1594.07901,
+      "candidate_median_nanoseconds": 65.96898,
+      "median_change_percent": -95.861624,
+      "interpretation": "native source retention and lazy clone-shared differential construction remove eager power-basis work"
+    },
+    "evaluation": {
+      "iterations_per_process": 10000,
+      "historical_nanoseconds_per_iteration": [5284.214, 5200.6908, 5161.9774, 5184.3719, 5200.5078, 5184.1769, 5211.398, 5297.5582, 5166.0001, 5303.5377, 5527.4004, 5137.5801, 5171.8048, 5224.4072, 5131.8195],
+      "candidate_nanoseconds_per_iteration": [4824.2296, 3935.4805, 3948.8865, 4108.6455, 4090.8638, 3995.9653, 4360.5713, 4091.2777, 3956.2431, 4018.7977, 4025.1313, 3914.7059, 3869.9339, 3970.043, 3938.0853],
+      "historical_median_nanoseconds": 5200.5078,
+      "candidate_median_nanoseconds": 3995.9653,
+      "median_change_percent": -23.162017,
+      "interpretation": "one lazy differential is shared across all repeated exact evaluations"
+    },
+    "ph_materialization": {
+      "iterations_per_process": 1000,
+      "historical_nanoseconds_per_iteration": [16751.572, 16231.719, 15804.547, 15645.419, 15990.215, 16417.256, 15593.362, 16090.738, 15759.71, 15921.67, 15762.241, 15781.289, 16036.642, 16126.095, 15776.799],
+      "candidate_nanoseconds_per_iteration": [15898.591, 15737.832, 15658.118, 16352.68, 16017.243, 15932.269, 15616.08, 17041.892, 15695.445, 15745.651, 15695.045, 15737.642, 16713.386, 15888.732, 15710.664],
+      "historical_median_nanoseconds": 15921.67,
+      "candidate_median_nanoseconds": 15745.651,
+      "median_change_percent": -1.105531,
+      "interpretation": "the generalized homogeneous PH path and completeness fix remain throughput-neutral on the historical polynomial fixture"
+    }
+  },
+  "competitive_open_cubic": {
+    "command": "taskset -c 9 HYPERCURVE_COMPARE_GROUP=bezier_offset/open_cubic {historical,candidate comparative-b2bf500a69174bc4}",
+    "method": "seven alternating process pairs; each process reports the median of seven approximately 75 ms samples",
+    "historical_process_medians_nanoseconds": {
+      "hypercurve_certified": [31414738.3, 29917297.7, 29955321.3, 32892393.7, 29835526.3, 30136386.0, 30155394.3],
+      "hypercurve_chord_fallback": [948795.3, 924843.0, 922829.6, 933257.8, 921039.0, 928084.0, 932560.3],
+      "curvo_heuristic": [14843.9, 8180.8, 8258.9, 8242.3, 8222.9, 8465.5, 8432.4]
+    },
+    "candidate_process_medians_nanoseconds": {
+      "hypercurve_certified": [30434280.5, 29889059.3, 29779950.0, 29708915.0, 29719124.0, 29667394.7, 29471561.0],
+      "hypercurve_chord_fallback": [1266739.5, 919796.9, 918315.8, 914728.8, 913561.9, 927281.7, 910283.9],
+      "curvo_heuristic": [8242.8, 8337.2, 8299.3, 8300.7, 8285.4, 8223.8, 8316.5]
+    },
+    "historical_medians_nanoseconds": {
+      "hypercurve_certified": 30136386.0,
+      "hypercurve_chord_fallback": 928084.0,
+      "curvo_heuristic": 8258.9
+    },
+    "candidate_medians_nanoseconds": {
+      "hypercurve_certified": 29719124.0,
+      "hypercurve_chord_fallback": 918315.8,
+      "curvo_heuristic": 8299.3
+    },
+    "median_change_percent": {
+      "hypercurve_certified": -1.384579,
+      "hypercurve_chord_fallback": -1.052512,
+      "curvo_heuristic": 0.489169
+    },
+    "contract_note": "Hypercurve certified proves an exact-scalar conservative parallel bound; the chord and Curvo controls use weaker finite/heuristic guarantees and are not interchangeable correctness peers"
+  },
+  "heaptrack": {
+    "construction_100000": {
+      "historical_allocation_calls": 4300074,
+      "candidate_allocation_calls": 100040,
+      "allocation_change_percent": -97.673528,
+      "historical_temporary_allocations": 800002,
+      "candidate_temporary_allocations": 100002,
+      "temporary_change_percent": -87.499781,
+      "historical_peak_heap_kib": 79.22,
+      "candidate_peak_heap_kib": 76.87,
+      "peak_change_percent": -2.966423,
+      "historical_leaked_kib": 4.00,
+      "candidate_leaked_kib": 1.65
+    },
+    "evaluation_10000": {
+      "historical_allocation_calls": 1050291,
+      "candidate_allocation_calls": 760369,
+      "allocation_change_percent": -27.603969,
+      "historical_temporary_allocations": 120010,
+      "candidate_temporary_allocations": 120012,
+      "historical_peak_heap_kib": 89.53,
+      "candidate_peak_heap_kib": 90.56,
+      "peak_change_percent": 1.150452,
+      "historical_leaked_kib": 12.42,
+      "candidate_leaked_kib": 13.79,
+      "interpretation": "recurring allocation calls fall materially; the 1.03 KiB peak increase is the retained lazy source/differential cache and remains a visible memory sentinel"
+    }
+  },
+  "release_size": {
+    "artifact": "matched offset release benchmark executable",
+    "historical_file_bytes": 6399032,
+    "candidate_file_bytes": 6454520,
+    "file_change_bytes": 55488,
+    "file_change_percent": 0.867131,
+    "historical_text_bytes": 4825602,
+    "candidate_text_bytes": 4882630,
+    "text_change_bytes": 57028,
+    "text_change_percent": 1.181780,
+    "historical_elf_load_file_bytes": 5086080,
+    "candidate_elf_load_file_bytes": 5143784,
+    "elf_load_change_bytes": 57704,
+    "elf_load_change_percent": 1.134548,
+    "interpretation": "accepted first-cut size cost for arbitrary-degree rational exactness, policy regressions, and removal of a mathematical completeness cap; later shared polynomial kernels and piecewise low-degree PH publication remain size/memory optimization targets"
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "source_only_historical": {
+      "nodes": 17003,
+      "edges": 28734
+    },
+    "source_only_candidate": {
+      "nodes": 17131,
+      "edges": 29002
+    },
+    "candidate_hypersolve_source_only": {
+      "nodes": 4162,
+      "edges": 6671
+    },
+    "workspace_union_navigation_scan": {
+      "nodes": 21365,
+      "edges": 35900,
+      "hypercurve_nodes": 17202,
+      "hypersolve_nodes": 4163,
+      "best_effort_cross_library_edges": 3
+    },
+    "caveat": "the parser is a static approximation; the historical source-only delta also includes accepted Boolean cuts between 92b9477 and this checkpoint, while the workspace-union navigation scan includes staged historical repository copies and is not a size delta"
+  },
+  "validation": {
+    "cargo_test_all_features": "pass: 274 library tests, every integration target, retained adversarial Boolean corpora, and doc tests",
+    "focused_all_features": "pass: 38/38",
+    "focused_no_default_features": "pass: 38/38",
+    "clippy_all_targets_all_features_deny_warnings": "pass",
+    "clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "next_boundary": {
+    "correctness": "add split/reversal/subcurve/bounds/incidence/intersection support directly to the exact general parallel carrier, then feed its raw pieces into the authoritative arrangement",
+    "memory": "replace pathological high-degree positive-weight PH publication with exact low-degree piecewise spans when subdivision is smaller",
+    "topology": "generate round, bevel, and bounded-miter joins under an explicit OffsetCornerStyle2 and regularize signed material/hole offsets through CurveRegionBooleanContext",
+    "hypersolve": "add only reusable implicitization, resultant factor filtering, and exact root replay primitives needed by non-PH parallel intersections"
+  }
+}

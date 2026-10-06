@@ -1,0 +1,162 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact rational-image local interval proof performance",
+  "source_revision": "83d60f8420456b61c72340501475b7e8e751507d",
+  "semantic_revisions": [
+    "83d60f8"
+  ],
+  "comparison_revision": "0986677906277fa9405646d596af8b7ffd8004e3",
+  "previous_checkpoint": "2026-08-02-cyclic-algebraic-offset-seam.json",
+  "scope": {
+    "included": [
+      "the exact quotient-ring local determinant interval proof used to lift selected rational images to algebraic parameters",
+      "direct exact interval accumulation without negation or point-interval temporaries",
+      "sign-quadrant exact interval products with four-corner evaluation retained when both operands straddle zero",
+      "scalar-specialized interval products for target affine maps and Bernstein weights",
+      "matched radical-cusp runtime, allocation, representative release-size, historical/competitive sentinel, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "changes to quotient-ring matrices, candidate roots, Bernstein variation criteria, or algebraic parameter representations",
+      "genuine general algebraic cusp and distinct-carrier join coordinate carriers",
+      "finite projection or export of general analytic offsets",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "product_enclosure": "For fixed-sign intervals, monotonicity determines the exact lower and upper corner products, so only two endpoint products are needed. If both intervals straddle zero, all four corner products are still evaluated. The resulting closed interval is identical to the four-corner reference enclosure.",
+    "subtraction": "Closed interval subtraction remains [a,b]-[c,d]=[a-d,b-c]; mutating accumulation changes ownership only.",
+    "scalar_product": "A nonnegative scalar preserves endpoint order, a negative scalar reverses it, and zero returns the exact point interval [0,0].",
+    "certification": "The locally certified lift still requires one determinant Bernstein sign variation, nonzero endpoints, a nonzero global leading coefficient, and containment in the selected rational image interval before publishing an algebraic parameter.",
+    "policy": "STRICT and APPROXIMATE_512 share the same exact interval, determinant, candidate, and topology graph. APPROXIMATE_512 remains only the terminal unresolved equality/sign policy and introduces no approximate interval endpoint or geometry."
+  },
+  "capability": {
+    "0986677": "The exact radical-cusp regression completes, but the local rational-image proof allocates temporary rational intervals and evaluates four products for every interval multiplication.",
+    "83d60f8": "The same proof and exact returned CurveRegion2 topology complete with direct accumulation and sign-specialized products; an exhaustive integer-interval oracle confirms identity with the four-corner reference.",
+    "intentional_boundary": "This is a semantics-preserving exact-arithmetic optimization. General algebraic join/image carriers remain a separate completeness tranche rather than being approximated or partially represented."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "matched release integration-test executables pinned to CPU 11; seven perf-stat repetitions of the two-policy radical_parallel_cusp_offsets_exactly_under_both_policies regression; fixture construction, exact CurveRegion2 construction, and assertions are retained in both revisions",
+    "primary_command": "taskset -c 11 perf stat -r 7 -e task-clock,cycles,instructions,branches,branch-misses <matched-release-test> radical_parallel_cusp_offsets_exactly_under_both_policies --exact",
+    "primary": {
+      "comparison_revision": {
+        "task_clock_ms": 425.11,
+        "cycles": 1759462684,
+        "instructions": 3968163252,
+        "branches": 759618465,
+        "branch_misses": 10562929,
+        "elapsed_seconds": 0.425797980
+      },
+      "source_revision": {
+        "task_clock_ms": 371.98,
+        "cycles": 1533528555,
+        "instructions": 3473783320,
+        "branches": 662039862,
+        "branch_misses": 9560081,
+        "elapsed_seconds": 0.372513999
+      },
+      "change_percent": {
+        "task_clock": -12.497942,
+        "cycles": -12.841087,
+        "instructions": -12.458659,
+        "branches": -12.845739,
+        "branch_misses": -9.494033,
+        "elapsed": -12.513911
+      },
+      "interpretation": "The exact local interval proof removes roughly one eighth of end-to-end radical-cusp work without changing candidate generation, policy, or returned topology."
+    },
+    "historical_and_competitive_controls": {
+      "open_cubic_current_process_median_ns": 30713675.2,
+      "open_cubic_previous_checkpoint_median_ns": 30775728.5,
+      "open_cubic_historical_change_percent": -0.2016,
+      "open_cubic_chord_current_process_median_ns": 1011062.2,
+      "open_cubic_curvo_current_process_median_ns": 8581.3,
+      "open_cubic_exact_to_curvo_ratio": 3579.1,
+      "line_arc_current_process_median_ns": 19860.8,
+      "line_arc_cavalier_current_process_median_ns": 929.9,
+      "line_arc_exact_to_cavalier_ratio": 21.36,
+      "matched_line_arc_fixed_iteration_parent_process_median_ns": 19717.3,
+      "matched_line_arc_fixed_iteration_current_process_median_ns": 19709.4,
+      "matched_line_arc_change_percent": -0.0400663,
+      "matched_open_cubic_fixed_iteration_parent_process_median_ns": 32244445.3,
+      "matched_open_cubic_fixed_iteration_current_process_median_ns": 30578356.8,
+      "matched_open_cubic_observed_change_percent": -5.16706,
+      "interpretation": "The pinned historical open-cubic sentinel is neutral. The fixed-iteration line/arc matched control is neutral. The matched open-cubic processes were load-noisy and show no regression; their apparent improvement is not attributed to this local proof change. Chord/Curvo and line/arc/Cavalier remain finite binary64 controls and do not retain Hypercurve's algebraic parameters, canonical-Real carriers, or exact region topology."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct matched release-integration-test traces",
+      "comparison_profile": "/tmp/hypercurve-radical-cusp-interval-baseline-matched-20260802.zst",
+      "source_profile": "/tmp/hypercurve-radical-cusp-interval-opt-20260802.zst",
+      "workload": "the identical two-policy radical_parallel_cusp_offsets_exactly_under_both_policies regression",
+      "comparison_allocation_calls": 6086345,
+      "source_allocation_calls": 5309365,
+      "allocation_call_change_percent": -12.765954,
+      "comparison_temporary_allocations": 980144,
+      "source_temporary_allocations": 947560,
+      "temporary_allocation_change_percent": -3.324409,
+      "comparison_peak_heap": "2.60 MiB",
+      "source_peak_heap": "2.59 MiB",
+      "comparison_instrumented_runtime_seconds": 3.899,
+      "source_instrumented_runtime_seconds": 3.537,
+      "interpretation": "Exact rational interval ownership and product specialization remove 776,980 allocation calls in the matched regression. More than five million calls remain, so bigint and rational-image allocation hardening remains active work."
+    }
+  },
+  "release_size": {
+    "method": "matched all-feature curve_region_boolean_batch release executables built from source and comparison revisions against identical live dependency contents",
+    "file_bytes": 7821616,
+    "text_bytes": 5921078,
+    "data_bytes": 266232,
+    "bss_bytes": 3648,
+    "prior_file_bytes": 7830136,
+    "prior_text_bytes": 5927974,
+    "prior_data_bytes": 266360,
+    "prior_bss_bytes": 4816,
+    "file_change_bytes": -8520,
+    "text_change_bytes": -6896,
+    "data_change_bytes": -128,
+    "bss_change_bytes": -1168,
+    "file_change_percent": -0.108810,
+    "text_change_percent": -0.116330,
+    "interpretation": "The optimized exact interval implementation is smaller in the representative linked application despite the exhaustive test oracle."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-rational-image-interval-20260802 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 11,
+    "nodes": 31633,
+    "edges": 58080,
+    "prior_nodes": 31617,
+    "prior_edges": 58066,
+    "artifact": "/tmp/hypercurve-callgraph-rational-image-interval-20260802/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::pair_result -> rational_parameter_image -> real_coefficient_rational_image_parameter -> locally_certified_rational_image_parameter -> determinant_local_bernstein_signs_from_enclosures",
+      "determinant_local_bernstein_signs_from_enclosures -> CertifiedRationalInterval::{multiply,multiply_scalar,add_assign,subtract_assign}"
+    ]
+  },
+  "verification": {
+    "exhaustive_interval_oracle": "passed every ordered integer interval endpoint in [-3,3] crossed with every such second interval and every integer scalar in [-3,3] against the four-corner exact reference",
+    "focused_regression": "passed radical_parallel_cusp_offsets_exactly_under_both_policies in debug and release",
+    "all_feature_library": "passed: 351 tests",
+    "no_default_library": "passed: 312 tests",
+    "strict_and_approximate": "passed identical exact radical-cusp CurveRegion2 topology under STRICT and APPROXIMATE_512",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "comparative_benchmarks": "passed current historical/competitive sentinels and matched fixed-iteration parent controls",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "represent genuine joins at general algebraic cusp and distinct-carrier coordinates without approximation",
+    "continue reducing bigint and certified rational-image allocation churn",
+    "extend structural parallel-pair differential coverage beyond the monotone simple-loop proof",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection/export for exact analytic offsets",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}

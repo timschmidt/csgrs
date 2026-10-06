@@ -1,0 +1,3079 @@
+//! Retained traversal graph for split Bezier and conic fragments.
+//!
+//! Higher-order booleans need an arrangement graph before they can emit
+//! concrete regions. This module is a deliberately small, testable traversal
+//! substrate for the fragments produced by [`BezierSplitMaterialization2`]: it
+//! connects materialized Bezier/conic fragments by exact endpoint equality,
+//! follows branch-free chains, and can optionally resolve simple branch
+//! vertices by exact tangent angle order. A retained traversal variant also
+//! consumes algebraic endpoint-image fragments with certified connectivity and
+//! exact tangent evidence, including retained source expressions. Unresolved
+//! overlaps and branches whose local order is uncertified remain classified.
+//!
+//! That boundary is exact-computation discipline: topology code may retain unresolved exact objects, but it must
+//! not invent a floating successor. The branch-free chain walk mirrors the
+//! regularized graph assumption in polygon clipping traversal
+//! while multi-successor handling follows the degenerate-intersection clipping
+//! model: when local
+//! order is not certified, traversal stops instead of guessing.
+
+use crate::CurvePointData2;
+use std::{borrow::Cow, cmp::Ordering, collections::HashMap};
+
+use crate::bezier_tangent_order::{
+    compare_algebraic_equal_curvature_third_order,
+    compare_algebraic_tangent_filled_left_face_sign_only,
+    compare_algebraic_tangent_turn_from_base_sign_only,
+};
+use crate::classify::{compare_reals, is_zero, real_sign};
+use crate::{
+    BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
+    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
+    BezierParameter2, BezierSplitFragment2, BezierSubcurve2, BezierTangentTurnOrdering2,
+    Classification, CurveContext, CurveError, CurveResult, Point2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2, UncertaintyReason,
+    ZeroKnowledge, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_same_tangent_third_order,
+};
+use hyperreal::{Rational, Real, RealSign};
+use hypersolve::AlgebraicRootRepresentation;
+
+/// One retained Bezier arrangement fragment with source provenance.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct BezierArrangementFragment2 {
+    source_curve_index: usize,
+    source_fragment_index: usize,
+    start_topology_vertex: Option<usize>,
+    end_topology_vertex: Option<usize>,
+    fragment: BezierSplitFragment2,
+}
+
+/// Branch-free retained Bezier arrangement graph.
+pub(crate) struct BezierArrangementGraph2 {
+    fragments: Vec<BezierArrangementFragment2>,
+}
+
+/// One endpoint-connected traversal chain through retained Bezier fragments.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct BezierArrangementChain2 {
+    fragment_indices: Vec<usize>,
+    closed: bool,
+}
+
+/// Traversal result for a branch-free retained Bezier arrangement graph.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(crate) struct BezierArrangementTraversal2 {
+    chains: Vec<BezierArrangementChain2>,
+}
+
+impl BezierArrangementFragment2 {
+    /// Constructs a retained fragment with source-curve and fragment provenance.
+    pub const fn new(
+        source_curve_index: usize,
+        source_fragment_index: usize,
+        fragment: BezierSplitFragment2,
+    ) -> Self {
+        Self {
+            source_curve_index,
+            source_fragment_index,
+            start_topology_vertex: None,
+            end_topology_vertex: None,
+            fragment,
+        }
+    }
+
+    pub(crate) const fn with_topology_vertices(
+        mut self,
+        start_topology_vertex: Option<usize>,
+        end_topology_vertex: Option<usize>,
+    ) -> Self {
+        self.start_topology_vertex = start_topology_vertex;
+        self.end_topology_vertex = end_topology_vertex;
+        self
+    }
+
+    pub(crate) const fn start_topology_vertex(&self) -> Option<usize> {
+        self.start_topology_vertex
+    }
+
+    pub(crate) const fn end_topology_vertex(&self) -> Option<usize> {
+        self.end_topology_vertex
+    }
+
+    /// Returns the source curve index supplied to the graph builder.
+    pub const fn source_curve_index(&self) -> usize {
+        self.source_curve_index
+    }
+
+    /// Returns the fragment index within the source curve supplied to the builder.
+    pub const fn source_fragment_index(&self) -> usize {
+        self.source_fragment_index
+    }
+
+    /// Returns the retained split fragment.
+    pub const fn fragment(&self) -> &BezierSplitFragment2 {
+        &self.fragment
+    }
+}
+
+impl BezierArrangementGraph2 {
+    pub(crate) fn from_certified_fragments(fragments: Vec<BezierArrangementFragment2>) -> Self {
+        Self { fragments }
+    }
+
+    /// Returns retained fragments.
+    pub fn fragments(&self) -> &[BezierArrangementFragment2] {
+        &self.fragments
+    }
+
+    /// Returns the number of retained fragments.
+    pub fn len(&self) -> usize {
+        self.fragments.len()
+    }
+
+    /// Traverses retained fragments using native and algebraic endpoint evidence.
+    ///
+    /// This is the first traversal consumer for
+    /// [`BezierSplitFragment2::RetainedBezier`]. It connects endpoints
+    /// only when the retained point evidence is exact and structurally equal
+    /// (or when a represented coordinate has an exact point witness matching
+    /// a native point). At a branch vertex it compares outgoing tangents with
+    /// either the native exact cross/dot predicate or
+    /// [`crate::compare_algebraic_tangent_turn_from_base`].
+    ///
+    /// The method deliberately does not materialize concrete Bezier regions
+    /// from algebraic fragments. It only proves traversal order over retained
+    /// evidence, preserving the exactness model's construction/decision boundary from
+    /// exact-computation discipline, and matching the arrangement local-order discipline in de
+    /// standard arrangement algorithms.
+    pub fn traverse_retained_with_tangent_order(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<BezierArrangementTraversal2> {
+        self.traverse_retained_with_certified_successors(&[], policy)
+    }
+
+    pub(crate) fn traverse_retained_with_certified_successors(
+        &self,
+        certified_successors: &[Option<usize>],
+        policy: &CurveContext,
+    ) -> Classification<BezierArrangementTraversal2> {
+        self.traverse_retained_with_successor_rule(certified_successors, false, policy)
+    }
+
+    pub(crate) fn traverse_retained_filled_left_faces_with_certified_successors(
+        &self,
+        certified_successors: &[Option<usize>],
+        policy: &CurveContext,
+    ) -> Classification<BezierArrangementTraversal2> {
+        self.traverse_retained_with_successor_rule(certified_successors, true, policy)
+    }
+
+    fn traverse_retained_with_successor_rule(
+        &self,
+        certified_successors: &[Option<usize>],
+        filled_left_faces: bool,
+        policy: &CurveContext,
+    ) -> Classification<BezierArrangementTraversal2> {
+        let defer_tangent_order_evidence = !certified_successors.is_empty();
+        let complete_topology_vertices = defer_tangent_order_evidence
+            && self.fragments.iter().all(|fragment| {
+                fragment.start_topology_vertex().is_some()
+                    && fragment.end_topology_vertex().is_some()
+            });
+        let initial_endpoint_scope = if defer_tangent_order_evidence {
+            RetainedEndpointScope::Connectivity
+        } else {
+            RetainedEndpointScope::TangentOrder
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "retained-endpoint-scope",
+            if complete_topology_vertices {
+                "topology-connectivity-first"
+            } else if defer_tangent_order_evidence {
+                "coordinate-connectivity-first"
+            } else {
+                "tangent-order-immediate"
+            },
+        );
+        let mut endpoints = Vec::with_capacity(self.fragments.len());
+        for fragment in &self.fragments {
+            let endpoints_for_fragment = if complete_topology_vertices {
+                retained_topology_endpoint_data(fragment)
+            } else {
+                match retained_endpoint_data(fragment, initial_endpoint_scope, policy) {
+                    Some(Classification::Decided(endpoints)) => endpoints,
+                    Some(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
+                }
+            };
+            endpoints.push(endpoints_for_fragment);
+        }
+
+        let (outgoing, predecessors) = match retained_tangent_adjacency(&endpoints, policy) {
+            Classification::Decided(adjacency) => adjacency,
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
+        };
+        if defer_tangent_order_evidence
+            && outgoing.iter().enumerate().any(|(index, candidates)| {
+                candidates.len() > 1
+                    && !certified_successors
+                        .get(index)
+                        .copied()
+                        .flatten()
+                        .is_some_and(|successor| candidates.contains(&successor))
+            })
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "retained-endpoint-scope",
+                "tangent-order-rebuild",
+            );
+            endpoints.clear();
+            for fragment in &self.fragments {
+                let endpoints_for_fragment = match retained_endpoint_data(
+                    fragment,
+                    RetainedEndpointScope::TangentOrder,
+                    policy,
+                ) {
+                    Some(Classification::Decided(endpoints)) => endpoints,
+                    Some(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
+                };
+                endpoints.push(endpoints_for_fragment);
+            }
+        }
+
+        let mut used = vec![false; self.fragments.len()];
+        let mut chains = Vec::new();
+        for index in 0..self.fragments.len() {
+            if predecessors[index] == 0 && !used[index] {
+                match follow_retained_tangent_ordered_chain(
+                    index,
+                    &outgoing,
+                    &endpoints,
+                    certified_successors,
+                    filled_left_faces,
+                    &mut used,
+                    policy,
+                ) {
+                    Classification::Decided(chain) => chains.push(chain),
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                }
+            }
+        }
+        for index in 0..self.fragments.len() {
+            if !used[index] {
+                match follow_retained_tangent_ordered_chain(
+                    index,
+                    &outgoing,
+                    &endpoints,
+                    certified_successors,
+                    filled_left_faces,
+                    &mut used,
+                    policy,
+                ) {
+                    Classification::Decided(chain) => chains.push(chain),
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                }
+            }
+        }
+
+        decided_arrangement_traversal(chains)
+    }
+}
+
+impl BezierArrangementChain2 {
+    /// Constructs a traversal chain from retained fragment indices.
+    pub fn new(fragment_indices: Vec<usize>, closed: bool) -> CurveResult<Self> {
+        validate_arrangement_chain_indices(&fragment_indices)?;
+        Ok(Self {
+            fragment_indices,
+            closed,
+        })
+    }
+
+    /// Returns retained fragment indices in traversal order.
+    pub fn fragment_indices(&self) -> &[usize] {
+        &self.fragment_indices
+    }
+
+    /// Returns true when the chain's last endpoint equals its first endpoint.
+    pub const fn is_closed(&self) -> bool {
+        self.closed
+    }
+
+    /// Returns the number of fragments in the chain.
+    pub fn len(&self) -> usize {
+        self.fragment_indices.len()
+    }
+}
+
+impl BezierArrangementTraversal2 {
+    /// Constructs a traversal result from chains.
+    pub fn new(chains: Vec<BezierArrangementChain2>) -> CurveResult<Self> {
+        validate_arrangement_traversal_indices(&chains)?;
+        Ok(Self { chains })
+    }
+
+    /// Returns endpoint-connected chains.
+    pub fn chains(&self) -> &[BezierArrangementChain2] {
+        &self.chains
+    }
+}
+
+fn validate_arrangement_chain_indices(fragment_indices: &[usize]) -> CurveResult<()> {
+    if fragment_indices.is_empty() {
+        return Err(CurveError::Topology(
+            "retained Bezier arrangement chain must carry at least one fragment index".to_owned(),
+        ));
+    }
+
+    if fragment_indices.iter().enumerate().any(|(index, value)| {
+        fragment_indices[index + 1..]
+            .iter()
+            .any(|candidate| candidate == value)
+    }) {
+        return Err(CurveError::Topology(
+            "retained Bezier arrangement chain fragment indices must be unique".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_arrangement_traversal_indices(chains: &[BezierArrangementChain2]) -> CurveResult<()> {
+    let mut indices = Vec::new();
+    for chain in chains {
+        validate_arrangement_chain_indices(chain.fragment_indices())?;
+        indices.extend_from_slice(chain.fragment_indices());
+    }
+    indices.sort_unstable();
+    if indices.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "retained Bezier arrangement traversal chains must not reuse fragment indices"
+                .to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn decided_arrangement_chain(
+    fragment_indices: Vec<usize>,
+    closed: bool,
+) -> Classification<BezierArrangementChain2> {
+    match BezierArrangementChain2::new(fragment_indices, closed) {
+        Ok(chain) => Classification::Decided(chain),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+fn decided_arrangement_traversal(
+    chains: Vec<BezierArrangementChain2>,
+) -> Classification<BezierArrangementTraversal2> {
+    match BezierArrangementTraversal2::new(chains) {
+        Ok(traversal) => Classification::Decided(traversal),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+#[derive(Clone, Debug)]
+struct EndpointData {
+    start: Point2,
+    end: Point2,
+    start_tangent: TangentVector,
+    end_tangent: TangentVector,
+    start_second_derivative: Option<TangentVector>,
+    start_third_derivative: Option<TangentVector>,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct ExactRationalPointKey([Rational; 2]);
+
+impl ExactRationalPointKey {
+    fn from_point(point: &Point2) -> Option<Self> {
+        Some(Self([
+            point.x().exact_rational_ref()?.clone(),
+            point.y().exact_rational_ref()?.clone(),
+        ]))
+    }
+}
+
+const EXACT_ENDPOINT_BUCKET_MIN_COUNT: usize = 16;
+
+#[derive(Debug, Default)]
+struct RetainedEndpointStartIndex {
+    by_vertex: HashMap<usize, Vec<usize>>,
+    with_vertex_exact: HashMap<ExactRationalPointKey, Vec<usize>>,
+    with_vertex_unkeyed: Vec<usize>,
+    without_vertex_exact: HashMap<ExactRationalPointKey, Vec<usize>>,
+    without_vertex_unkeyed: Vec<usize>,
+}
+
+impl RetainedEndpointStartIndex {
+    fn new(endpoints: &[RetainedEndpointData]) -> Self {
+        let mut index = Self::default();
+        for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
+            if let Some(vertex) = endpoint.start_topology_vertex {
+                index
+                    .by_vertex
+                    .entry(vertex)
+                    .or_default()
+                    .push(endpoint_index);
+            }
+            match endpoint
+                .start
+                .as_ref()
+                .and_then(exact_retained_endpoint_key)
+            {
+                Some(key) => {
+                    if endpoint.start_topology_vertex.is_some() {
+                        index
+                            .with_vertex_exact
+                            .entry(key)
+                            .or_default()
+                            .push(endpoint_index);
+                    } else {
+                        index
+                            .without_vertex_exact
+                            .entry(key)
+                            .or_default()
+                            .push(endpoint_index);
+                    }
+                }
+                None => {
+                    if endpoint.start_topology_vertex.is_some() {
+                        index.with_vertex_unkeyed.push(endpoint_index);
+                    } else {
+                        index.without_vertex_unkeyed.push(endpoint_index);
+                    }
+                }
+            }
+        }
+        index
+    }
+
+    fn try_for_each_candidate<E>(
+        &self,
+        vertex: Option<usize>,
+        key: Option<&ExactRationalPointKey>,
+        endpoint_count: usize,
+        mut visit: impl FnMut(usize) -> Result<(), E>,
+    ) -> Result<(), E> {
+        if let Some(vertex) = vertex {
+            let Some(key) = key else {
+                return self
+                    .by_vertex
+                    .get(&vertex)
+                    .into_iter()
+                    .flatten()
+                    .copied()
+                    .try_for_each(visit);
+            };
+            self.by_vertex
+                .get(&vertex)
+                .into_iter()
+                .flatten()
+                .copied()
+                .try_for_each(&mut visit)?;
+            return self
+                .without_vertex_exact
+                .get(key)
+                .into_iter()
+                .flatten()
+                .chain(&self.without_vertex_unkeyed)
+                .copied()
+                .try_for_each(visit);
+        }
+        let Some(key) = key else {
+            return (0..endpoint_count).try_for_each(visit);
+        };
+        self.with_vertex_exact
+            .get(key)
+            .into_iter()
+            .flatten()
+            .chain(self.without_vertex_exact.get(key).into_iter().flatten())
+            .chain(&self.with_vertex_unkeyed)
+            .chain(&self.without_vertex_unkeyed)
+            .copied()
+            .try_for_each(visit)
+    }
+}
+
+fn exact_retained_endpoint_key(endpoint: &RetainedEndpointKey) -> Option<ExactRationalPointKey> {
+    match endpoint {
+        RetainedEndpointKey::Exact(point) => ExactRationalPointKey::from_point(point),
+        RetainedEndpointKey::Algebraic { .. } => None,
+    }
+}
+
+#[derive(Clone, Debug)]
+struct TangentVector {
+    dx: Real,
+    dy: Real,
+}
+
+#[derive(Clone, Debug)]
+struct RetainedEndpointData {
+    start: Option<RetainedEndpointKey>,
+    end: Option<RetainedEndpointKey>,
+    start_topology_vertex: Option<usize>,
+    end_topology_vertex: Option<usize>,
+    start_tangent: Option<RetainedTangentVector>,
+    end_tangent: Option<RetainedTangentVector>,
+    start_second_derivative: Option<RetainedTangentVector>,
+    start_third_derivative: Option<RetainedTangentVector>,
+    start_derivative_source: Option<RetainedAlgebraicDerivativeSource>,
+    end_derivative_source: Option<RetainedAlgebraicDerivativeSource>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RetainedEndpointScope {
+    Connectivity,
+    TangentOrder,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum RetainedEndpointKey {
+    Exact(Box<Point2>),
+    Algebraic {
+        x: Box<AlgebraicRootRepresentation>,
+        y: Box<AlgebraicRootRepresentation>,
+    },
+}
+
+#[derive(Clone, Debug)]
+enum RetainedTangentVector {
+    Native(Box<TangentVector>),
+    Algebraic(Box<BezierAlgebraicTangentVector2>),
+}
+
+#[derive(Clone, Debug)]
+struct RetainedEndpointSideData {
+    point: Option<RetainedEndpointKey>,
+    tangent: Option<RetainedTangentVector>,
+    second_derivative: Option<RetainedTangentVector>,
+    third_derivative: Option<RetainedTangentVector>,
+    derivative_source: Option<RetainedAlgebraicDerivativeSource>,
+}
+
+#[derive(Clone, Debug)]
+struct RetainedAlgebraicDerivativeSource {
+    curve: Box<BezierSubcurve2>,
+    parameter: crate::BezierAlgebraicParameter2,
+    reversed: bool,
+}
+
+fn retained_topology_endpoint_data(
+    arrangement_fragment: &BezierArrangementFragment2,
+) -> RetainedEndpointData {
+    RetainedEndpointData {
+        start: None,
+        end: None,
+        start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+        end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+        start_tangent: None,
+        end_tangent: None,
+        start_second_derivative: None,
+        start_third_derivative: None,
+        start_derivative_source: None,
+        end_derivative_source: None,
+    }
+}
+
+fn retained_endpoint_data(
+    arrangement_fragment: &BezierArrangementFragment2,
+    scope: RetainedEndpointScope,
+    policy: &CurveContext,
+) -> Option<Classification<RetainedEndpointData>> {
+    let fragment = arrangement_fragment.fragment();
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. }
+            if scope == RetainedEndpointScope::Connectivity =>
+        {
+            let (start, end) = curve.endpoints();
+            Some(Classification::Decided(RetainedEndpointData {
+                start: Some(RetainedEndpointKey::Exact(Box::new(start))),
+                end: Some(RetainedEndpointKey::Exact(Box::new(end))),
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+                start_tangent: None,
+                end_tangent: None,
+                start_second_derivative: None,
+                start_third_derivative: None,
+                start_derivative_source: None,
+                end_derivative_source: None,
+            }))
+        }
+        BezierSplitFragment2::Materialized { curve, .. } => match curve.endpoint_data(policy) {
+            Classification::Decided(data) => Some(Classification::Decided(RetainedEndpointData {
+                start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
+                end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+                start_tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
+                end_tangent: Some(RetainedTangentVector::Native(Box::new(data.end_tangent))),
+                start_second_derivative: data
+                    .start_second_derivative
+                    .map(Box::new)
+                    .map(RetainedTangentVector::Native),
+                start_third_derivative: data
+                    .start_third_derivative
+                    .map(Box::new)
+                    .map(RetainedTangentVector::Native),
+                start_derivative_source: None,
+                end_derivative_source: None,
+            })),
+            Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
+        },
+        BezierSplitFragment2::RetainedBezier {
+            reversed,
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+        } => {
+            let source_start_topology_vertex = if *reversed {
+                arrangement_fragment.end_topology_vertex()
+            } else {
+                arrangement_fragment.start_topology_vertex()
+            };
+            let source_end_topology_vertex = if *reversed {
+                arrangement_fragment.start_topology_vertex()
+            } else {
+                arrangement_fragment.end_topology_vertex()
+            };
+            let source_start = match retained_endpoint_side_data(
+                start,
+                start_image.as_ref(),
+                Some(source_curve),
+                source_start_topology_vertex,
+                scope,
+                policy,
+            ) {
+                Classification::Decided(data) => data,
+                Classification::Uncertain(reason) => {
+                    return Some(Classification::Uncertain(reason));
+                }
+            };
+            let source_end = match retained_endpoint_side_data(
+                end,
+                end_image.as_ref(),
+                Some(source_curve),
+                source_end_topology_vertex,
+                scope,
+                policy,
+            ) {
+                Classification::Decided(data) => data,
+                Classification::Uncertain(reason) => {
+                    return Some(Classification::Uncertain(reason));
+                }
+            };
+            let (start, end) = if *reversed {
+                let start = match reverse_retained_endpoint_side_option(source_end, policy) {
+                    Some(data) => data,
+                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
+                };
+                let end = match reverse_retained_endpoint_side_option(source_start, policy) {
+                    Some(data) => data,
+                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
+                };
+                (start, end)
+            } else {
+                (source_start, source_end)
+            };
+            let (
+                start,
+                start_tangent,
+                start_second_derivative,
+                start_third_derivative,
+                start_derivative_source,
+            ) = retained_endpoint_side_parts(start);
+            let (end, end_tangent, _, _, end_derivative_source) = retained_endpoint_side_parts(end);
+            Some(Classification::Decided(RetainedEndpointData {
+                start,
+                end,
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+                start_tangent,
+                end_tangent,
+                start_second_derivative,
+                start_third_derivative,
+                start_derivative_source,
+                end_derivative_source,
+            }))
+        }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let data = match analytic_parallel_endpoint_data(fragment, policy) {
+                Classification::Decided(data) => data,
+                Classification::Uncertain(reason) => {
+                    return Some(Classification::Uncertain(reason));
+                }
+            };
+            Some(Classification::Decided(RetainedEndpointData {
+                start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
+                end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+                start_tangent: (scope == RetainedEndpointScope::TangentOrder)
+                    .then(|| RetainedTangentVector::Native(Box::new(data.start_tangent))),
+                end_tangent: (scope == RetainedEndpointScope::TangentOrder)
+                    .then(|| RetainedTangentVector::Native(Box::new(data.end_tangent))),
+                start_second_derivative: None,
+                start_third_derivative: None,
+                start_derivative_source: None,
+                end_derivative_source: None,
+            }))
+        }
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            let endpoint_key = |endpoint: &crate::CurvePoint2| match endpoint {
+                crate::CurvePoint2(CurvePointData2::Exact(point)) => {
+                    Some(RetainedEndpointKey::Exact(Box::new(point.clone())))
+                }
+                crate::CurvePoint2(CurvePointData2::Algebraic(point)) => {
+                    let point = point.resolved(policy)?;
+                    Some(RetainedEndpointKey::Algebraic {
+                        x: Box::new(point.x()?.representation()?.clone()),
+                        y: Box::new(point.y()?.representation()?.clone()),
+                    })
+                }
+                crate::CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => None,
+                crate::CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
+                | crate::CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
+                | crate::CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
+                | crate::CurvePoint2(CurvePointData2::AnalyticParallel(_))
+                | crate::CurvePoint2(
+                    CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_),
+                ) => None,
+            };
+            let mut data = retained_topology_endpoint_data(arrangement_fragment);
+            data.start = endpoint_key(chord.start());
+            data.end = endpoint_key(chord.end());
+            Some(Classification::Decided(data))
+        }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Some(Classification::Decided(
+            retained_topology_endpoint_data(arrangement_fragment),
+        )),
+        BezierSplitFragment2::SelectedFiber(_) => Some(Classification::Decided(
+            retained_topology_endpoint_data(arrangement_fragment),
+        )),
+    }
+}
+
+fn analytic_parallel_endpoint_data(
+    fragment: &crate::BezierParallelFragment2,
+    policy: &CurveContext,
+) -> Classification<EndpointData> {
+    let Some((source_start, source_end)) = fragment.range().scalar_endpoints() else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let source_start_point = match fragment
+        .parallel()
+        .point_at_with_policy(source_start, policy)
+    {
+        Ok(Classification::Decided(point)) => point,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let source_end_point = match fragment.parallel().point_at_with_policy(source_end, policy) {
+        Ok(Classification::Decided(point)) => point,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let source_start_tangent = match fragment
+        .parallel()
+        .derivative_at_with_policy(source_start, policy)
+    {
+        Ok(Classification::Decided(tangent)) => TangentVector {
+            dx: tangent.dx().clone(),
+            dy: tangent.dy().clone(),
+        },
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let source_end_tangent = match fragment
+        .parallel()
+        .derivative_at_with_policy(source_end, policy)
+    {
+        Ok(Classification::Decided(tangent)) => TangentVector {
+            dx: tangent.dx().clone(),
+            dy: tangent.dy().clone(),
+        },
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let (start, end, start_tangent, end_tangent) = if fragment.is_reversed() {
+        (
+            source_end_point,
+            source_start_point,
+            TangentVector {
+                dx: -source_end_tangent.dx,
+                dy: -source_end_tangent.dy,
+            },
+            TangentVector {
+                dx: -source_start_tangent.dx,
+                dy: -source_start_tangent.dy,
+            },
+        )
+    } else {
+        (
+            source_start_point,
+            source_end_point,
+            source_start_tangent,
+            source_end_tangent,
+        )
+    };
+    Classification::Decided(EndpointData {
+        start,
+        end,
+        start_tangent,
+        end_tangent,
+        start_second_derivative: None,
+        start_third_derivative: None,
+    })
+}
+
+fn retained_endpoint_side_data(
+    parameter: &BezierParameter2,
+    image: Option<&BezierAlgebraicEndpointImage2>,
+    source_curve: Option<&BezierSubcurve2>,
+    topology_vertex: Option<usize>,
+    scope: RetainedEndpointScope,
+    policy: &CurveContext,
+) -> Classification<Option<RetainedEndpointSideData>> {
+    if let Some(image) = image {
+        let derivative_source = (scope == RetainedEndpointScope::TangentOrder)
+            .then(|| retained_algebraic_derivative_source(source_curve, image.parameter()))
+            .flatten();
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "retained-endpoint-image",
+            match (image.is_lazy_first_order(), topology_vertex.is_some()) {
+                (true, true) => "lazy-topology-deferred",
+                (true, false) => "lazy-unkeyed-resolved",
+                (false, true) => "eager-topology-resolved",
+                (false, false) => "eager-unkeyed-resolved",
+            },
+        );
+        if topology_vertex.is_some() && image.is_lazy_first_order() && source_curve.is_some() {
+            return Classification::Decided(Some(RetainedEndpointSideData {
+                point: None,
+                tangent: None,
+                second_derivative: None,
+                third_derivative: None,
+                derivative_source,
+            }));
+        }
+        let point_image = match image.point() {
+            Ok(Classification::Decided(image)) => image,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+        };
+        let Some(point) = retained_algebraic_point_key(point_image) else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        if scope == RetainedEndpointScope::Connectivity {
+            return Classification::Decided(Some(RetainedEndpointSideData {
+                point: Some(point),
+                tangent: None,
+                second_derivative: None,
+                third_derivative: None,
+                derivative_source: None,
+            }));
+        }
+        let tangent_image = match image.tangent() {
+            Ok(Classification::Decided(image)) => image,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+        };
+        let tangent = retained_algebraic_tangent(tangent_image);
+        // Retain every available exact derivative image. Ordering requests
+        // missing higher derivatives only when their evidence is needed.
+        let second_derivative = image.second_derivative().map(retained_algebraic_tangent);
+        let third_derivative = image.third_derivative().map(retained_algebraic_tangent);
+        return Classification::Decided(Some(RetainedEndpointSideData {
+            point: Some(point),
+            tangent: Some(tangent),
+            second_derivative,
+            third_derivative,
+            derivative_source,
+        }));
+    }
+
+    let (BezierParameter2::Exact(parameter), Some(source_curve)) = (parameter, source_curve) else {
+        return Classification::Decided(None);
+    };
+    if scope == RetainedEndpointScope::Connectivity {
+        return source_curve
+            .point_at_with_policy(parameter, policy)
+            .map(|point| {
+                Some(RetainedEndpointSideData {
+                    point: Some(RetainedEndpointKey::Exact(Box::new(point))),
+                    tangent: None,
+                    second_derivative: None,
+                    third_derivative: None,
+                    derivative_source: None,
+                })
+            });
+    }
+    retained_exact_source_endpoint_side_data(source_curve, parameter, true, policy).map(Some)
+}
+
+fn retained_exact_source_endpoint_side_data(
+    source_curve: &BezierSubcurve2,
+    parameter: &Real,
+    include_higher_derivatives: bool,
+    policy: &CurveContext,
+) -> Classification<RetainedEndpointSideData> {
+    let at_source_end = match compare_reals(parameter, &Real::one(), policy) {
+        Some(ordering) => ordering == std::cmp::Ordering::Equal,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let (data, restore_source_orientation) = if at_source_end {
+        match source_curve
+            .reversed()
+            .endpoint_data_with_higher_derivatives(policy, include_higher_derivatives)
+        {
+            Classification::Decided(data) => (data, true),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    } else {
+        let subcurve = match source_curve.subcurve_between_exact(parameter, &Real::one(), policy) {
+            Ok(Classification::Decided(subcurve)) => subcurve,
+            Ok(Classification::Uncertain(reason)) => {
+                return Classification::Uncertain(reason);
+            }
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+        };
+        match subcurve.endpoint_data_with_higher_derivatives(policy, include_higher_derivatives) {
+            Classification::Decided(data) => (data, false),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    };
+    let side = RetainedEndpointSideData {
+        point: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
+        tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
+        second_derivative: data
+            .start_second_derivative
+            .map(Box::new)
+            .map(RetainedTangentVector::Native),
+        third_derivative: data
+            .start_third_derivative
+            .map(Box::new)
+            .map(RetainedTangentVector::Native),
+        derivative_source: None,
+    };
+    if restore_source_orientation {
+        match reversed_retained_endpoint_side(side, policy) {
+            Some(side) => Classification::Decided(side),
+            None => Classification::Uncertain(UncertaintyReason::Boundary),
+        }
+    } else {
+        Classification::Decided(side)
+    }
+}
+
+fn retained_endpoint_side_parts(
+    side: Option<RetainedEndpointSideData>,
+) -> (
+    Option<RetainedEndpointKey>,
+    Option<RetainedTangentVector>,
+    Option<RetainedTangentVector>,
+    Option<RetainedTangentVector>,
+    Option<RetainedAlgebraicDerivativeSource>,
+) {
+    match side {
+        Some(side) => (
+            side.point,
+            side.tangent,
+            side.second_derivative,
+            side.third_derivative,
+            side.derivative_source,
+        ),
+        None => (None, None, None, None, None),
+    }
+}
+
+fn reverse_retained_endpoint_side_option(
+    side: Option<RetainedEndpointSideData>,
+    policy: &CurveContext,
+) -> Option<Option<RetainedEndpointSideData>> {
+    match side {
+        Some(side) => Some(Some(reversed_retained_endpoint_side(side, policy)?)),
+        None => Some(None),
+    }
+}
+
+fn reversed_retained_endpoint_side(
+    mut side: RetainedEndpointSideData,
+    policy: &CurveContext,
+) -> Option<RetainedEndpointSideData> {
+    side.tangent = match side.tangent {
+        Some(tangent) => Some(negate_retained_tangent(tangent, policy)?),
+        None => None,
+    };
+    side.third_derivative = match side.third_derivative {
+        Some(derivative) => Some(negate_retained_tangent(derivative, policy)?),
+        None => None,
+    };
+    if let Some(source) = &mut side.derivative_source {
+        source.reversed = !source.reversed;
+    }
+    Some(side)
+}
+
+fn retained_algebraic_derivative_source(
+    source_curve: Option<&BezierSubcurve2>,
+    parameter: &crate::BezierAlgebraicParameter2,
+) -> Option<RetainedAlgebraicDerivativeSource> {
+    let source_curve = source_curve?;
+    Some(RetainedAlgebraicDerivativeSource {
+        curve: Box::new(source_curve.clone()),
+        parameter: parameter.clone(),
+        reversed: false,
+    })
+}
+
+fn retained_algebraic_point_key(
+    point: &RationalBezierAlgebraicPointImage2,
+) -> Option<RetainedEndpointKey> {
+    let x = point.x()?.representation()?.clone();
+    let y = point.y()?.representation()?.clone();
+    Some(RetainedEndpointKey::Algebraic {
+        x: Box::new(x),
+        y: Box::new(y),
+    })
+}
+
+fn retained_algebraic_tangent(
+    tangent: &RationalBezierAlgebraicTangentImage2,
+) -> RetainedTangentVector {
+    RetainedTangentVector::Algebraic(Box::new(BezierAlgebraicTangentVector2::from_image(tangent)))
+}
+
+fn negate_retained_tangent(
+    tangent: RetainedTangentVector,
+    policy: &CurveContext,
+) -> Option<RetainedTangentVector> {
+    match tangent {
+        RetainedTangentVector::Native(tangent) => {
+            let TangentVector { dx, dy } = *tangent;
+            Some(RetainedTangentVector::Native(Box::new(TangentVector {
+                dx: -dx,
+                dy: -dy,
+            })))
+        }
+        RetainedTangentVector::Algebraic(tangent) => Some(RetainedTangentVector::Algebraic(
+            Box::new(tangent.negated(policy)?),
+        )),
+    }
+}
+
+type TangentAdjacency = (Vec<Vec<usize>>, Vec<usize>);
+
+fn retained_tangent_adjacency(
+    endpoints: &[RetainedEndpointData],
+    policy: &CurveContext,
+) -> Classification<TangentAdjacency> {
+    let mut outgoing = vec![Vec::new(); endpoints.len()];
+    let mut predecessors = vec![0_usize; endpoints.len()];
+    let start_index = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT)
+        .then(|| RetainedEndpointStartIndex::new(endpoints));
+    for (left_index, left) in endpoints.iter().enumerate() {
+        if left.end.is_none() && left.end_topology_vertex.is_none() {
+            continue;
+        }
+        let left_key = left.end.as_ref().and_then(exact_retained_endpoint_key);
+        let mut visit = |right_index: usize| {
+            if left_index == right_index
+                && !matches!(
+                    (left.start_topology_vertex, left.end_topology_vertex),
+                    (Some(start), Some(end)) if start == end
+                )
+            {
+                return Ok(());
+            }
+            let right = &endpoints[right_index];
+            if right.start.is_none() && right.start_topology_vertex.is_none() {
+                return Ok(());
+            }
+            match retained_endpoints_equal(
+                left.end_topology_vertex,
+                left.end.as_ref(),
+                right.start_topology_vertex,
+                right.start.as_ref(),
+                policy,
+            ) {
+                Some(true) => {
+                    outgoing[left_index].push(right_index);
+                    predecessors[right_index] += 1;
+                }
+                Some(false) => {}
+                None => return Err(UncertaintyReason::RealSign),
+            }
+            Ok(())
+        };
+        let result = match &start_index {
+            Some(index) => index.try_for_each_candidate(
+                left.end_topology_vertex,
+                left_key.as_ref(),
+                endpoints.len(),
+                &mut visit,
+            ),
+            None => (0..endpoints.len()).try_for_each(visit),
+        };
+        if let Err(reason) = result {
+            return Classification::Uncertain(reason);
+        }
+    }
+    Classification::Decided((outgoing, predecessors))
+}
+
+#[cfg(test)]
+mod endpoint_adjacency_tests {
+    use super::*;
+
+    #[test]
+    fn polynomial_derivative_sources_retain_exact_zero() {
+        let controls = [
+            point(0),
+            Point2::new(Real::pi(), Real::one()),
+            Point2::from_values(1, 3),
+            point(4),
+        ];
+        let curves = [
+            (
+                BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                    controls[0].clone(),
+                    controls[1].clone(),
+                    controls[2].clone(),
+                )),
+                2,
+            ),
+            (
+                BezierSubcurve2::Cubic(crate::CubicBezier2::new(
+                    controls[0].clone(),
+                    controls[1].clone(),
+                    controls[2].clone(),
+                    controls[3].clone(),
+                )),
+                3,
+            ),
+        ];
+        let parameter = sqrt_half_parameter();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (curve, degree) in &curves {
+                for reversed in [false, true] {
+                    let source = RetainedAlgebraicDerivativeSource {
+                        curve: Box::new(curve.clone()),
+                        parameter: parameter.clone(),
+                        reversed,
+                    };
+                    for order in [degree + 1, degree + 5] {
+                        let Classification::Decided(Some(RetainedTangentVector::Algebraic(zero))) =
+                            retained_algebraic_derivative(None, Some(&source), order, &policy)
+                        else {
+                            panic!("a degree-certified zero derivative was lost");
+                        };
+                        let (x, y) = zero
+                            .represented_coordinates()
+                            .expect("represented polynomial zero");
+                        for coordinate in [x, y] {
+                            assert!(coordinate.exact_point_witness() == Some(&Real::zero()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn equal_curvature_graph_jets_ignore_source_acceleration() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (first_algebraic, second_algebraic) in
+                [(false, false), (false, true), (true, false), (true, true)]
+            {
+                let vector = |algebraic: bool, dx: Real, dy: Real| {
+                    if algebraic {
+                        RetainedTangentVector::Algebraic(Box::new(
+                            BezierAlgebraicTangentVector2::new(
+                                AlgebraicRootRepresentation::from_exact_value(&dx),
+                                AlgebraicRootRepresentation::from_exact_value(&dy),
+                            ),
+                        ))
+                    } else {
+                        RetainedTangentVector::Native(Box::new(TangentVector { dx, dy }))
+                    }
+                };
+                for curvature in [Real::one(), -Real::one(), Real::pi(), -Real::pi()] {
+                    for (first_speed, second_speed) in [(1_i32, 2_i32), (2, 1), (2, 3)] {
+                        for (first_k, second_k, expected) in [
+                            (-1, 1, TurnOrdering::FirstBeforeSecond),
+                            (1, -1, TurnOrdering::SecondBeforeFirst),
+                            (1, 1, TurnOrdering::SameDirection),
+                        ] {
+                            let jet = |algebraic: bool, speed: i32, acceleration: i32, k: i32| {
+                                let mut data = endpoint(0);
+                                // x=s*u+a*u^2, y=c*x^2+k*x^3. The graph is
+                                // independent of the positive source speed
+                                // and tangential acceleration a. Its common
+                                // nonzero curvature fixes the angular half;
+                                // the smaller k is encountered first.
+                                data.start_tangent =
+                                    Some(vector(algebraic, Real::from(speed), Real::zero()));
+                                data.start_second_derivative = Some(vector(
+                                    algebraic,
+                                    Real::from(2 * acceleration),
+                                    &curvature * Real::from(2 * speed.pow(2)),
+                                ));
+                                data.start_third_derivative = Some(vector(
+                                    algebraic,
+                                    Real::zero(),
+                                    &curvature * Real::from(12 * speed * acceleration)
+                                        + Real::from(6 * k * speed.pow(3)),
+                                ));
+                                data
+                            };
+                            assert_eq!(
+                                compare_retained_same_tangent_second_order(
+                                    &jet(first_algebraic, first_speed, 1, first_k),
+                                    &jet(second_algebraic, second_speed, -1, second_k),
+                                    &policy,
+                                ),
+                                Classification::Decided(expected),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_same_side_derivative_orders_reverse_under_reflection() {
+        let vector = |x: i32, y: i32| TangentVector {
+            dx: Real::from(x),
+            dy: Real::from(y),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for order in [2, 3] {
+                for sign in [1, -1] {
+                    for swap in [false, true] {
+                        let (first_k, second_k) = if swap { (2, 1) } else { (1, 2) };
+                        let factor = if order == 2 { 2 } else { 6 };
+                        let tangent = vector(1, 0);
+                        let first = vector(0, sign * factor * first_k);
+                        let second = vector(0, sign * factor * second_k);
+                        // At x>0, reflection reverses the order of the
+                        // rays (x,k*x^order). These are their exact jets.
+                        let comparison = if order == 2 {
+                            compare_same_tangent_second_order(
+                                &tangent,
+                                Some(&first),
+                                None,
+                                &tangent,
+                                Some(&second),
+                                None,
+                                &policy,
+                            )
+                        } else {
+                            compare_same_tangent_third_order(
+                                &tangent,
+                                Some(&first),
+                                &tangent,
+                                Some(&second),
+                                &policy,
+                            )
+                        };
+                        assert_eq!(
+                            comparison,
+                            Classification::Decided(if (sign == 1) != swap {
+                                TurnOrdering::FirstBeforeSecond
+                            } else {
+                                TurnOrdering::SecondBeforeFirst
+                            })
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_third_order_comparison_is_invariant_under_parameter_speed() {
+        let vector = |x: i32, y: i32| TangentVector {
+            dx: Real::from(x),
+            dy: Real::from(y),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for first_speed in [1_i32, 2, 3] {
+                for second_speed in [1_i32, 2, 3] {
+                    // Independent graph oracle: (s*u,k*(s*u)^3) is y=k*x^3.
+                    for (first_k, second_k, expected) in [
+                        (1, 1, TurnOrdering::SameDirection),
+                        (1, 2, TurnOrdering::FirstBeforeSecond),
+                        (2, 1, TurnOrdering::SecondBeforeFirst),
+                    ] {
+                        assert_eq!(
+                            compare_same_tangent_third_order(
+                                &vector(first_speed, 0),
+                                Some(&vector(0, 6 * first_k * first_speed.pow(3))),
+                                &vector(second_speed, 0),
+                                Some(&vector(0, 6 * second_k * second_speed.pow(3))),
+                                &policy,
+                            ),
+                            Classification::Decided(expected)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_third_order_fallback_requires_zero_curvature() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for algebraic in [false, true] {
+                let vector = |x: i32, y: i32| {
+                    if algebraic {
+                        RetainedTangentVector::Algebraic(Box::new(
+                            BezierAlgebraicTangentVector2::new(
+                                AlgebraicRootRepresentation::from_exact_value(&Real::from(x)),
+                                AlgebraicRootRepresentation::from_exact_value(&Real::from(y)),
+                            ),
+                        ))
+                    } else {
+                        RetainedTangentVector::Native(Box::new(TangentVector {
+                            dx: Real::from(x),
+                            dy: Real::from(y),
+                        }))
+                    }
+                };
+                for second_y in [0, 2] {
+                    let mut first = endpoint(0);
+                    let mut second = endpoint(1);
+                    first.start_tangent = Some(vector(1, 0));
+                    second.start_tangent = Some(vector(1, 0));
+                    first.start_second_derivative = Some(vector(2, second_y));
+                    second.start_second_derivative = Some(vector(4, second_y));
+                    first.start_third_derivative = Some(vector(0, 12));
+                    second.start_third_derivative = Some(vector(0, 24));
+                    // For second_y=2 these are the jets of
+                    // C_a(u)=(u+a*u^2,(u+a*u^2)^2), a=1,2: one parabola.
+                    // Their unequal third derivatives must not order them.
+                    // With second_y=0, the normal cubic coefficients are 2
+                    // and 4, so the zero-curvature fallback must still order.
+                    assert_eq!(
+                        compare_retained_same_tangent_second_order(&first, &second, &policy),
+                        Classification::Decided(if second_y == 0 {
+                            TurnOrdering::FirstBeforeSecond
+                        } else {
+                            TurnOrdering::SameDirection
+                        })
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn represented_tangent_negation_accepts_an_exact_real_result() {
+        let value = AlgebraicRootRepresentation::from_exact_value(&Real::pi());
+        let negated =
+            crate::bezier_tangent_order::negate_algebraic_root(&value, &CurveContext::STRICT)
+                .expect("exact Real negation remains represented");
+
+        assert_eq!(negated.exact_point_witness(), Some(&-Real::pi()));
+    }
+
+    fn point(x: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::zero())
+    }
+
+    fn endpoint(index: i32) -> RetainedEndpointData {
+        RetainedEndpointData {
+            start: Some(RetainedEndpointKey::Exact(Box::new(point(
+                1_000 + index * 3,
+            )))),
+            end: Some(RetainedEndpointKey::Exact(Box::new(point(
+                1_001 + index * 3,
+            )))),
+            start_topology_vertex: None,
+            end_topology_vertex: None,
+            start_tangent: None,
+            end_tangent: None,
+            start_second_derivative: None,
+            start_third_derivative: None,
+            start_derivative_source: None,
+            end_derivative_source: None,
+        }
+    }
+
+    fn sqrt_half_parameter() -> crate::BezierAlgebraicParameter2 {
+        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
+            vec![Real::from(-1), Real::zero(), Real::from(2)],
+            &CurveContext::STRICT,
+        )
+        .expect("valid parameter polynomial")
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                panic!("parameter polynomial unexpectedly uncertain: {reason:?}")
+            }
+        };
+        let interval = match crate::BezierParameterInterval::try_new_with_policy(
+            Real::from(Rational::fraction(2, 3).expect("nonzero denominator")),
+            Real::from(Rational::fraction(3, 4).expect("nonzero denominator")),
+            &CurveContext::STRICT,
+        )
+        .expect("valid parameter interval")
+        {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                panic!("parameter interval unexpectedly uncertain: {reason:?}")
+            }
+        };
+        match crate::BezierAlgebraicParameter2::try_isolate_with_policy(
+            polynomial,
+            interval,
+            &CurveContext::STRICT,
+        )
+        .expect("isolated parameter")
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                panic!("parameter isolation unexpectedly uncertain: {reason:?}")
+            }
+        }
+    }
+
+    #[test]
+    fn optional_unprojected_derivatives_do_not_block_endpoint_setup() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let polynomial = crate::tests::decided(
+                crate::BezierParameterPolynomial::try_new_power_basis_with_policy(
+                    vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval = crate::tests::decided(
+                crate::BezierParameterInterval::try_new_with_policy(
+                    Real::zero(),
+                    Real::one(),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let parameter = crate::tests::decided(
+                crate::BezierAlgebraicParameter2::try_isolate_with_policy(
+                    polynomial, interval, &policy,
+                )
+                .unwrap(),
+            );
+            // x=(4t^3-pi)^2/(1+t),y=0. At the selected root, point and
+            // tangent are zero, while x''=72*pi*t/(1+t) retains its source
+            // expression. Its optional projection must not block the available
+            // point/tangent evidence.
+            let controls = (0..=6)
+                .map(|i| {
+                    let cubic = if i < 3 { 0 } else { i * (i - 1) * (i - 2) / 6 };
+                    let x = Real::pi() * Real::pi()
+                        - (Real::from(8 * cubic) * Real::pi() / Real::from(20)).unwrap()
+                        + Real::from(if i == 6 { 16 } else { 0 });
+                    crate::HomogeneousControl2::new(
+                        x,
+                        Real::zero(),
+                        Real::one() + (Real::from(i) / Real::from(6)).unwrap(),
+                    )
+                })
+                .collect();
+            let curve = crate::tests::decided(
+                crate::RationalBezier2::from_homogeneous_controls_with_policy(controls, &policy)
+                    .unwrap(),
+            );
+            let source = BezierSubcurve2::Rational(curve.clone());
+            let image = crate::tests::decided(
+                BezierAlgebraicEndpointImage2::rational(&curve, &parameter, &policy).unwrap(),
+            );
+            assert_eq!(
+                image.second_derivative().unwrap().status(),
+                crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+            );
+            let Classification::Decided(Some(side)) = retained_endpoint_side_data(
+                &BezierParameter2::Algebraic(parameter),
+                Some(&image),
+                Some(&source),
+                None,
+                RetainedEndpointScope::TangentOrder,
+                &policy,
+            ) else {
+                panic!("unused higher-derivative projection blocked endpoint evidence");
+            };
+            assert!(side.point.is_some() && side.tangent.is_some());
+            assert!(side.second_derivative.is_some());
+            assert!(side.derivative_source.is_some());
+        }
+    }
+
+    #[test]
+    fn lazy_polynomial_endpoint_derivatives_match_eager_images() {
+        let policy = CurveContext::STRICT;
+        let parameter = sqrt_half_parameter();
+        let curve = crate::CubicBezier2::new(
+            point(0),
+            Point2::new(Real::from(1), Real::from(2)),
+            Point2::new(Real::from(3), Real::from(-1)),
+            point(4),
+        );
+        let lazy = BezierAlgebraicEndpointImage2::from_source_curve_first_order(
+            &BezierSubcurve2::Cubic(curve.clone()),
+            &parameter,
+            &policy,
+        );
+        let eager = crate::tests::decided(
+            BezierAlgebraicEndpointImage2::cubic(&curve, &parameter, &policy).unwrap(),
+        );
+
+        assert!(lazy.is_lazy_first_order());
+        assert!(lazy.second_derivative().is_none());
+        assert!(lazy.third_derivative().is_none());
+        assert_eq!(lazy.point(), eager.point());
+        assert_eq!(lazy.tangent(), eager.tangent());
+
+        let source =
+            retained_algebraic_derivative_source(Some(&BezierSubcurve2::Cubic(curve)), &parameter)
+                .expect("cubic derivative source");
+        for (order, expected) in [
+            (1, Some(crate::tests::decided(eager.tangent().unwrap()))),
+            (2, eager.second_derivative()),
+            (3, eager.third_derivative()),
+        ] {
+            let Classification::Decided(Some(actual)) =
+                retained_algebraic_derivative(None, Some(&source), order, &policy)
+            else {
+                panic!("lazy derivative {order} should construct exactly");
+            };
+            let expected = expected.map(retained_algebraic_tangent);
+            assert_eq!(
+                Some(retained_tangent_as_algebraic(&actual)),
+                expected.as_ref().map(retained_tangent_as_algebraic)
+            );
+        }
+    }
+
+    #[test]
+    fn retained_index_combines_topology_vertices_and_exact_coordinate_fallback() {
+        let mut endpoints = (0..16).map(endpoint).collect::<Vec<_>>();
+        endpoints[0].end = Some(RetainedEndpointKey::Exact(Box::new(point(10))));
+        endpoints[0].end_topology_vertex = Some(7);
+        endpoints[1].start = Some(RetainedEndpointKey::Exact(Box::new(point(999))));
+        endpoints[1].start_topology_vertex = Some(7);
+        endpoints[2].start = Some(RetainedEndpointKey::Exact(Box::new(point(10))));
+        endpoints[3].end = Some(RetainedEndpointKey::Exact(Box::new(point(20))));
+        endpoints[4].start = Some(RetainedEndpointKey::Exact(Box::new(point(20))));
+        endpoints[4].start_topology_vertex = Some(9);
+
+        let Classification::Decided((outgoing, predecessors)) =
+            retained_tangent_adjacency(&endpoints, &CurveContext::STRICT)
+        else {
+            panic!("indexed retained adjacency should remain exact");
+        };
+        assert_eq!(outgoing[0], [1, 2]);
+        assert_eq!(outgoing[3], [4]);
+        assert_eq!(predecessors[1], 1);
+        assert_eq!(predecessors[2], 1);
+        assert_eq!(predecessors[4], 1);
+    }
+
+    #[test]
+    fn partial_successor_evidence_rebuilds_higher_order_tangents() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = |source_curve_index, curve| {
+            BezierArrangementFragment2::new(
+                source_curve_index,
+                0,
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(curve),
+                },
+            )
+        };
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![
+            fragment(
+                0,
+                crate::QuadraticBezier2::new(point2(0, 0), point2(1, 0), point2(2, 0)),
+            ),
+            fragment(
+                1,
+                crate::QuadraticBezier2::new(point2(2, 0), point2(3, 1), point2(4, 0)),
+            ),
+            fragment(
+                2,
+                crate::QuadraticBezier2::new(point2(2, 0), point2(4, 2), point2(5, 0)),
+            ),
+        ]);
+        let policy = CurveContext::STRICT;
+
+        assert_eq!(
+            graph.traverse_retained_with_certified_successors(&[None], &policy),
+            graph.traverse_retained_with_tangent_order(&policy)
+        );
+    }
+
+    #[test]
+    fn certified_branch_free_traversal_defers_unused_zero_tangent() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let start = point2(0, 0);
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![
+            BezierArrangementFragment2::new(
+                0,
+                0,
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                        start.clone(),
+                        start,
+                        point2(2, 0),
+                    )),
+                },
+            ),
+        ]);
+        let policy = CurveContext::STRICT;
+
+        assert!(matches!(
+            graph.traverse_retained_with_tangent_order(&policy),
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        ));
+        assert!(matches!(
+            graph.traverse_retained_with_certified_successors(&[None], &policy),
+            Classification::Decided(_)
+        ));
+    }
+
+    #[test]
+    fn complete_topology_traversal_defers_unused_endpoint_coordinates() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = |source_curve_index: usize,
+                        start_vertex: usize,
+                        end_vertex: usize,
+                        start: Point2,
+                        end: Point2| {
+            BezierArrangementFragment2::new(
+                source_curve_index,
+                0,
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                        start.clone(),
+                        start,
+                        end,
+                    )),
+                },
+            )
+            .with_topology_vertices(Some(start_vertex), Some(end_vertex))
+        };
+        let first = fragment(0, 0, 1, point2(0, 0), point2(1, 0));
+        let second = fragment(1, 1, 2, point2(100, 0), point2(101, 0));
+        let policy = CurveContext::STRICT;
+        let first_endpoints = retained_topology_endpoint_data(&first);
+
+        assert!(first_endpoints.start.is_none());
+        assert!(first_endpoints.end.is_none());
+
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![first, second]);
+        let Classification::Decided(traversal) =
+            graph.traverse_retained_with_certified_successors(&[Some(1), None], &policy)
+        else {
+            panic!("certified topology-only traversal should be decided");
+        };
+        assert_eq!(traversal.chains()[0].fragment_indices(), [0, 1]);
+    }
+
+    #[test]
+    fn certified_topology_can_close_one_fragment_at_a_self_contact() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                    point2(0, 0),
+                    point2(1, 1),
+                    point2(2, 0),
+                )),
+            },
+        )
+        .with_topology_vertices(Some(7), Some(7));
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![fragment]);
+        let Classification::Decided(traversal) =
+            graph.traverse_retained_with_certified_successors(&[Some(0)], &CurveContext::STRICT)
+        else {
+            panic!("certified one-fragment self-contact face should close");
+        };
+        assert_eq!(traversal.chains().len(), 1);
+        assert_eq!(traversal.chains()[0].fragment_indices(), [0]);
+        assert!(traversal.chains()[0].is_closed());
+    }
+}
+
+fn follow_retained_tangent_ordered_chain(
+    start: usize,
+    outgoing: &[Vec<usize>],
+    endpoints: &[RetainedEndpointData],
+    certified_successors: &[Option<usize>],
+    filled_left_faces: bool,
+    used: &mut [bool],
+    policy: &CurveContext,
+) -> Classification<BezierArrangementChain2> {
+    let first_start = endpoints[start].start.clone();
+    let first_start_topology_vertex = endpoints[start].start_topology_vertex;
+    let mut current = start;
+    let mut indices = Vec::new();
+
+    loop {
+        if used[current] {
+            break;
+        }
+        used[current] = true;
+        indices.push(current);
+
+        let next = match choose_retained_tangent_successor(
+            current,
+            &outgoing[current],
+            endpoints,
+            certified_successors.get(current).copied().flatten(),
+            filled_left_faces,
+            policy,
+        ) {
+            Classification::Decided(next) => next,
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
+        };
+        let Some(next) = next else {
+            let closed = match retained_endpoints_equal(
+                endpoints[current].end_topology_vertex,
+                endpoints[current].end.as_ref(),
+                first_start_topology_vertex,
+                first_start.as_ref(),
+                policy,
+            ) {
+                Some(value) => value,
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            };
+            return decided_arrangement_chain(indices, closed);
+        };
+
+        current = next;
+        if current == start {
+            return decided_arrangement_chain(indices, true);
+        }
+    }
+
+    Classification::Uncertain(UncertaintyReason::Boundary)
+}
+
+fn choose_retained_tangent_successor(
+    current: usize,
+    candidates: &[usize],
+    endpoints: &[RetainedEndpointData],
+    certified_successor: Option<usize>,
+    filled_left_faces: bool,
+    policy: &CurveContext,
+) -> Classification<Option<usize>> {
+    if candidates.is_empty() {
+        return Classification::Decided(None);
+    }
+    if candidates.len() == 1 {
+        return Classification::Decided(Some(candidates[0]));
+    }
+    if let Some(successor) = certified_successor
+        && candidates.contains(&successor)
+    {
+        return Classification::Decided(Some(successor));
+    }
+
+    let base = match retained_algebraic_derivative(
+        endpoints[current].end_tangent.as_ref(),
+        endpoints[current].end_derivative_source.as_ref(),
+        1,
+        policy,
+    ) {
+        Classification::Decided(Some(tangent)) => tangent,
+        Classification::Decided(None) => {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let mut best = candidates[0];
+
+    for candidate in candidates.iter().copied().skip(1) {
+        let first = match retained_algebraic_derivative(
+            endpoints[candidate].start_tangent.as_ref(),
+            endpoints[candidate].start_derivative_source.as_ref(),
+            1,
+            policy,
+        ) {
+            Classification::Decided(Some(tangent)) => tangent,
+            Classification::Decided(None) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let second = match retained_algebraic_derivative(
+            endpoints[best].start_tangent.as_ref(),
+            endpoints[best].start_derivative_source.as_ref(),
+            1,
+            policy,
+        ) {
+            Classification::Decided(Some(tangent)) => tangent,
+            Classification::Decided(None) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        match compare_retained_turn_from_base(&base, &first, &second, filled_left_faces, policy) {
+            Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
+            Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
+            Classification::Decided(TurnOrdering::SameDirection) => {
+                let ordering = compare_retained_same_tangent_second_order(
+                    &endpoints[candidate],
+                    &endpoints[best],
+                    policy,
+                );
+                match if filled_left_faces {
+                    reverse_turn_ordering(ordering)
+                } else {
+                    ordering
+                } {
+                    Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
+                    Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
+                    Classification::Decided(TurnOrdering::SameDirection) => {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+    Classification::Decided(Some(best))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum TurnOrdering {
+    FirstBeforeSecond,
+    SecondBeforeFirst,
+    SameDirection,
+}
+
+fn reverse_turn_ordering(ordering: Classification<TurnOrdering>) -> Classification<TurnOrdering> {
+    ordering.map(|ordering| match ordering {
+        TurnOrdering::FirstBeforeSecond => TurnOrdering::SecondBeforeFirst,
+        TurnOrdering::SecondBeforeFirst => TurnOrdering::FirstBeforeSecond,
+        TurnOrdering::SameDirection => TurnOrdering::SameDirection,
+    })
+}
+
+fn compare_filled_left_face_turn_from_base(
+    base: &TangentVector,
+    first: &TangentVector,
+    second: &TangentVector,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let first_half = match turn_half(base, first, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_half = match turn_half(base, second, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    if first_half != second_half {
+        return Classification::Decided(if first_half < second_half {
+            TurnOrdering::FirstBeforeSecond
+        } else {
+            TurnOrdering::SecondBeforeFirst
+        });
+    }
+    match real_sign(&cross_vectors(first, second), policy) {
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn compare_turn_from_base(
+    base: &TangentVector,
+    first: &TangentVector,
+    second: &TangentVector,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let first_half = match turn_half(base, first, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_half = match turn_half(base, second, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    if first_half != second_half {
+        return Classification::Decided(if first_half < second_half {
+            TurnOrdering::FirstBeforeSecond
+        } else {
+            TurnOrdering::SecondBeforeFirst
+        });
+    }
+
+    match real_sign(&cross_vectors(first, second), policy) {
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn compare_retained_turn_from_base(
+    base: &RetainedTangentVector,
+    first: &RetainedTangentVector,
+    second: &RetainedTangentVector,
+    filled_left_faces: bool,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    match (base, first, second) {
+        (
+            RetainedTangentVector::Native(base),
+            RetainedTangentVector::Native(first),
+            RetainedTangentVector::Native(second),
+        ) => {
+            if filled_left_faces {
+                compare_filled_left_face_turn_from_base(base, first, second, policy)
+            } else {
+                compare_turn_from_base(base, first, second, policy)
+            }
+        }
+        _ => {
+            let base = retained_tangent_as_algebraic(base);
+            let first = retained_tangent_as_algebraic(first);
+            let second = retained_tangent_as_algebraic(second);
+            let comparison = if filled_left_faces {
+                compare_algebraic_tangent_filled_left_face_sign_only(&base, &first, &second, policy)
+            } else {
+                compare_algebraic_tangent_turn_from_base_sign_only(&base, &first, &second, policy)
+            };
+            match comparison {
+                Classification::Decided(evidence) => match evidence.status {
+                    BezierAlgebraicTangentOrderStatus::Ordered => match evidence.ordering {
+                        Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
+                            Classification::Decided(TurnOrdering::FirstBeforeSecond)
+                        }
+                        Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
+                            Classification::Decided(TurnOrdering::SecondBeforeFirst)
+                        }
+                        None => Classification::Uncertain(UncertaintyReason::Boundary),
+                    },
+                    BezierAlgebraicTangentOrderStatus::SameDirection => {
+                        Classification::Decided(TurnOrdering::SameDirection)
+                    }
+                    BezierAlgebraicTangentOrderStatus::ZeroTangent
+                    | BezierAlgebraicTangentOrderStatus::SignUndecided => {
+                        Classification::Uncertain(UncertaintyReason::RealSign)
+                    }
+                    BezierAlgebraicTangentOrderStatus::ArithmeticFailed => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                },
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            }
+        }
+    }
+}
+
+fn retained_tangent_as_algebraic(
+    tangent: &RetainedTangentVector,
+) -> Cow<'_, BezierAlgebraicTangentVector2> {
+    match tangent {
+        RetainedTangentVector::Native(tangent) => Cow::Owned(BezierAlgebraicTangentVector2::new(
+            AlgebraicRootRepresentation::from_exact_value(&tangent.dx),
+            AlgebraicRootRepresentation::from_exact_value(&tangent.dy),
+        )),
+        RetainedTangentVector::Algebraic(tangent) => Cow::Borrowed(tangent.as_ref()),
+    }
+}
+
+fn compare_retained_same_tangent_second_order(
+    first: &RetainedEndpointData,
+    second: &RetainedEndpointData,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let first_tangent = match retained_algebraic_derivative(
+        first.start_tangent.as_ref(),
+        first.start_derivative_source.as_ref(),
+        1,
+        policy,
+    ) {
+        Classification::Decided(Some(tangent)) => tangent,
+        Classification::Decided(None) => {
+            return Classification::Decided(TurnOrdering::SameDirection);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let second_tangent = match retained_algebraic_derivative(
+        second.start_tangent.as_ref(),
+        second.start_derivative_source.as_ref(),
+        1,
+        policy,
+    ) {
+        Classification::Decided(Some(tangent)) => tangent,
+        Classification::Decided(None) => {
+            return Classification::Decided(TurnOrdering::SameDirection);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    match (&first_tangent, &second_tangent) {
+        (
+            RetainedTangentVector::Native(first_tangent),
+            RetainedTangentVector::Native(second_tangent),
+        ) => compare_same_tangent_second_order(
+            first_tangent,
+            retained_native_vector(first.start_second_derivative.as_ref()),
+            retained_native_vector(first.start_third_derivative.as_ref()),
+            second_tangent,
+            retained_native_vector(second.start_second_derivative.as_ref()),
+            retained_native_vector(second.start_third_derivative.as_ref()),
+            policy,
+        ),
+        _ => {
+            // Both exact carriers use the same comparison authority. Borrow
+            // represented roots and promote only native coordinate values.
+            let first_tangent = retained_tangent_as_algebraic(&first_tangent);
+            let second_tangent = retained_tangent_as_algebraic(&second_tangent);
+            let first_second_derivative =
+                match retained_algebraic_higher_derivative(first, 2, policy) {
+                    Classification::Decided(derivative) => derivative,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+            let second_second_derivative =
+                match retained_algebraic_higher_derivative(second, 2, policy) {
+                    Classification::Decided(derivative) => derivative,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+            match (
+                first_second_derivative
+                    .as_ref()
+                    .map(retained_tangent_as_algebraic),
+                second_second_derivative
+                    .as_ref()
+                    .map(retained_tangent_as_algebraic),
+            ) {
+                (Some(first_second_derivative), Some(second_second_derivative)) => {
+                    match compare_algebraic_same_tangent_second_order(
+                        &first_tangent,
+                        &first_second_derivative,
+                        &second_tangent,
+                        &second_second_derivative,
+                        policy,
+                    ) {
+                        Classification::Decided(evidence) => {
+                            let zero_curvature = evidence
+                                .first_side_witness
+                                .as_ref()
+                                .is_some_and(|witness| witness.sign == Some(Ordering::Equal))
+                                && evidence
+                                    .second_side_witness
+                                    .as_ref()
+                                    .is_some_and(|witness| witness.sign == Some(Ordering::Equal));
+                            // A same-direction report can also mean an absent
+                            // side witness. Request the next order only when
+                            // equality of the signed curvatures is certified.
+                            if evidence.status
+                                == BezierAlgebraicSameTangentOrderStatus::SameDirection
+                                && (zero_curvature
+                                    || evidence.normalized_difference.as_ref().is_some_and(
+                                        |difference| difference.sign == Some(Ordering::Equal),
+                                    ))
+                            {
+                                return compare_retained_algebraic_same_tangent_third_order(
+                                    first,
+                                    second,
+                                    [&first_tangent, &first_second_derivative],
+                                    [&second_tangent, &second_second_derivative],
+                                    zero_curvature,
+                                    policy,
+                                );
+                            }
+                            retained_algebraic_same_tangent_evidence_to_turn(
+                                evidence.status,
+                                evidence.ordering,
+                            )
+                        }
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
+                }
+                _ => Classification::Decided(TurnOrdering::SameDirection),
+            }
+        }
+    }
+}
+
+fn compare_retained_algebraic_same_tangent_third_order(
+    first: &RetainedEndpointData,
+    second: &RetainedEndpointData,
+    first_jet: [&BezierAlgebraicTangentVector2; 2],
+    second_jet: [&BezierAlgebraicTangentVector2; 2],
+    zero_curvature: bool,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let first_third_derivative = match retained_algebraic_higher_derivative(first, 3, policy) {
+        Classification::Decided(derivative) => derivative,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let second_third_derivative = match retained_algebraic_higher_derivative(second, 3, policy) {
+        Classification::Decided(derivative) => derivative,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    match (
+        first_third_derivative
+            .as_ref()
+            .map(retained_tangent_as_algebraic),
+        second_third_derivative
+            .as_ref()
+            .map(retained_tangent_as_algebraic),
+    ) {
+        (Some(first_third_derivative), Some(second_third_derivative)) => {
+            let comparison = if zero_curvature {
+                compare_algebraic_same_tangent_third_order(
+                    first_jet[0],
+                    &first_third_derivative,
+                    second_jet[0],
+                    &second_third_derivative,
+                    policy,
+                )
+            } else {
+                compare_algebraic_equal_curvature_third_order(
+                    [first_jet[0], first_jet[1], &first_third_derivative],
+                    [second_jet[0], second_jet[1], &second_third_derivative],
+                    policy,
+                )
+            };
+            match comparison {
+                Classification::Decided(evidence) => {
+                    retained_algebraic_same_tangent_evidence_to_turn(
+                        evidence.status,
+                        evidence.ordering,
+                    )
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            }
+        }
+        _ => Classification::Decided(TurnOrdering::SameDirection),
+    }
+}
+
+fn retained_algebraic_higher_derivative(
+    endpoint: &RetainedEndpointData,
+    order: usize,
+    policy: &CurveContext,
+) -> Classification<Option<RetainedTangentVector>> {
+    let retained = match order {
+        2 => &endpoint.start_second_derivative,
+        3 => &endpoint.start_third_derivative,
+        _ => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    retained_algebraic_derivative(
+        retained.as_ref(),
+        endpoint.start_derivative_source.as_ref(),
+        order,
+        policy,
+    )
+}
+
+fn retained_algebraic_derivative(
+    retained: Option<&RetainedTangentVector>,
+    source: Option<&RetainedAlgebraicDerivativeSource>,
+    order: usize,
+    policy: &CurveContext,
+) -> Classification<Option<RetainedTangentVector>> {
+    if retained.is_some() {
+        return Classification::Decided(retained.cloned());
+    }
+    let Some(source) = source else {
+        return Classification::Decided(None);
+    };
+    if matches!(
+        (source.curve.as_ref(), order),
+        (BezierSubcurve2::Quadratic(_), 3..) | (BezierSubcurve2::Cubic(_), 4..)
+    ) {
+        // These polynomial derivatives are identically zero, including under
+        // reversed traversal. Their evidence needs no coordinate projection
+        // or selected-parameter arithmetic.
+        let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+        return Classification::Decided(Some(RetainedTangentVector::Algebraic(Box::new(
+            BezierAlgebraicTangentVector2::new(zero.clone(), zero),
+        ))));
+    }
+    let derivative = match source.curve.as_ref() {
+        BezierSubcurve2::Quadratic(curve) => match order {
+            1 => curve
+                .tangent_at_algebraic_parameter(&source.parameter, policy)
+                .map(|image| image.map(Some)),
+            2 => curve
+                .second_derivative_at_algebraic_parameter(&source.parameter, policy)
+                .map(|image| image.map(Some)),
+            _ => Ok(Classification::Decided(None)),
+        },
+        BezierSubcurve2::Cubic(curve) => match order {
+            1 => curve
+                .tangent_at_algebraic_parameter(&source.parameter, policy)
+                .map(|image| image.map(Some)),
+            2 => curve
+                .second_derivative_at_algebraic_parameter(&source.parameter, policy)
+                .map(|image| image.map(Some)),
+            3 => curve
+                .third_derivative_at_algebraic_parameter(&source.parameter, policy)
+                .map(|image| image.map(Some)),
+            _ => Ok(Classification::Decided(None)),
+        },
+        BezierSubcurve2::RationalQuadratic(curve) => curve
+            .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+            .map(|derivatives| {
+                derivatives.map(|derivatives| derivatives.into_iter().nth(order - 1))
+            }),
+        BezierSubcurve2::Rational(curve) => curve
+            .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+            .map(|derivatives| {
+                derivatives.map(|derivatives| derivatives.into_iter().nth(order - 1))
+            }),
+    };
+    let mut derivative = match derivative {
+        Ok(Classification::Decided(derivative)) => {
+            derivative.as_ref().map(retained_algebraic_tangent)
+        }
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    if source.reversed && order % 2 == 1 {
+        derivative = match derivative {
+            Some(derivative) => match negate_retained_tangent(derivative, policy) {
+                Some(derivative) => Some(derivative),
+                None => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+            None => None,
+        };
+    }
+    Classification::Decided(derivative)
+}
+
+fn retained_algebraic_same_tangent_evidence_to_turn(
+    status: BezierAlgebraicSameTangentOrderStatus,
+    ordering: Option<BezierTangentTurnOrdering2>,
+) -> Classification<TurnOrdering> {
+    match status {
+        BezierAlgebraicSameTangentOrderStatus::Ordered => match ordering {
+            Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
+                Classification::Decided(TurnOrdering::FirstBeforeSecond)
+            }
+            Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
+                Classification::Decided(TurnOrdering::SecondBeforeFirst)
+            }
+            None => Classification::Uncertain(UncertaintyReason::Boundary),
+        },
+        BezierAlgebraicSameTangentOrderStatus::SameDirection => {
+            Classification::Decided(TurnOrdering::SameDirection)
+        }
+        BezierAlgebraicSameTangentOrderStatus::ZeroTangent
+        | BezierAlgebraicSameTangentOrderStatus::SignUndecided => {
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        }
+        BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+    }
+}
+
+fn retained_native_vector(vector: Option<&RetainedTangentVector>) -> Option<&TangentVector> {
+    match vector {
+        Some(RetainedTangentVector::Native(vector)) => Some(vector),
+        _ => None,
+    }
+}
+
+fn compare_same_tangent_second_order(
+    first_tangent: &TangentVector,
+    first_second_derivative: Option<&TangentVector>,
+    first_third_derivative: Option<&TangentVector>,
+    second_tangent: &TangentVector,
+    second_second_derivative: Option<&TangentVector>,
+    second_third_derivative: Option<&TangentVector>,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let Some(first_second_derivative) = first_second_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+    let Some(second_second_derivative) = second_second_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+
+    // Same first-order directions need a higher-order local witness.  For
+    // polynomial Bezier arcs we compare signed curvature
+    // `cross(B'(0), B''(0)) / |B'(0)|^3` exactly by clearing denominators:
+    // the sign gives the side of departure and the squared, speed-scaled
+    // magnitude orders arcs departing on the same side.  This is the
+    // expression underlying standard parametric curvature, used here only as
+    // an exact predicate in the exactness model's EGC sense.
+    let first_cross = cross_vectors(first_tangent, first_second_derivative);
+    let second_cross = cross_vectors(second_tangent, second_second_derivative);
+    let first_sign = match real_sign(&first_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_sign = match real_sign(&second_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+
+    match (first_sign, second_sign) {
+        (RealSign::Zero, RealSign::Zero) => compare_same_tangent_third_order(
+            first_tangent,
+            first_third_derivative,
+            second_tangent,
+            second_third_derivative,
+            policy,
+        ),
+        (RealSign::Zero, _) | (_, RealSign::Zero) => {
+            Classification::Decided(TurnOrdering::SameDirection)
+        }
+        (RealSign::Positive, RealSign::Negative) => {
+            Classification::Decided(TurnOrdering::FirstBeforeSecond)
+        }
+        (RealSign::Negative, RealSign::Positive) => {
+            Classification::Decided(TurnOrdering::SecondBeforeFirst)
+        }
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            let ordering = compare_same_side_curvature_magnitude(
+                first_tangent,
+                &first_cross,
+                second_tangent,
+                &second_cross,
+                policy,
+            );
+            if ordering == Classification::Decided(TurnOrdering::SameDirection) {
+                compare_equal_curvature_third_order(
+                    [first_tangent, first_second_derivative],
+                    first_third_derivative,
+                    [second_tangent, second_second_derivative],
+                    second_third_derivative,
+                    policy,
+                )
+            } else if first_sign == RealSign::Negative {
+                reverse_turn_ordering(ordering)
+            } else {
+                ordering
+            }
+        }
+    }
+}
+
+fn compare_equal_curvature_third_order(
+    first: [&TangentVector; 2],
+    first_jerk: Option<&TangentVector>,
+    second: [&TangentVector; 2],
+    second_jerk: Option<&TangentVector>,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let (Some(first_jerk), Some(second_jerk)) = (first_jerk, second_jerk) else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+    let first_speed = speed_squared(first[0]);
+    let second_speed = speed_squared(second[0]);
+    if real_sign(&first_speed, policy) != Some(RealSign::Positive)
+        || real_sign(&second_speed, policy) != Some(RealSign::Positive)
+    {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+    // The graph third derivative is J/S^3 with S=v.v and
+    // J=S*cross(v,j)-3*cross(v,a)*(v.a). Equal nonzero curvature fixes
+    // the common angular half, so compare these signed values directly.
+    let witness =
+        |[tangent, acceleration]: [&TangentVector; 2], jerk: &TangentVector, speed: &Real| {
+            speed * cross_vectors(tangent, jerk)
+                - Real::from(3)
+                    * cross_vectors(tangent, acceleration)
+                    * dot_vectors(tangent, acceleration)
+        };
+    let difference = witness(first, first_jerk, &first_speed) * cube(&second_speed)
+        - witness(second, second_jerk, &second_speed) * cube(&first_speed);
+    match real_sign(&difference, policy) {
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn compare_same_tangent_third_order(
+    first_tangent: &TangentVector,
+    first_third_derivative: Option<&TangentVector>,
+    second_tangent: &TangentVector,
+    second_third_derivative: Option<&TangentVector>,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let Some(first_third_derivative) = first_third_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+    let Some(second_third_derivative) = second_third_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+
+    // If `cross(B'(0), B''(0))` vanishes for both candidates, a cubic Bezier
+    // can still peel away at third order.  We compare
+    // `cross(B'(0), B'''(0))` as an exact Taylor witness and scale same-side
+    // magnitudes by speed to avoid treating a parameter-speed change as a
+    // topology decision.  The derivative identities are the polynomial Bezier
+    // endpoint formulas from the Bernstein and de Casteljau curve model; using them only after exact sign certification follows exact-computation discipline.
+    let first_cross = cross_vectors(first_tangent, first_third_derivative);
+    let second_cross = cross_vectors(second_tangent, second_third_derivative);
+    let first_sign = match real_sign(&first_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_sign = match real_sign(&second_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+
+    match (first_sign, second_sign) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => {
+            Classification::Decided(TurnOrdering::SameDirection)
+        }
+        (RealSign::Positive, RealSign::Negative) => {
+            Classification::Decided(TurnOrdering::FirstBeforeSecond)
+        }
+        (RealSign::Negative, RealSign::Positive) => {
+            Classification::Decided(TurnOrdering::SecondBeforeFirst)
+        }
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            let ordering = compare_same_side_third_order_magnitude(
+                first_tangent,
+                &first_cross,
+                second_tangent,
+                &second_cross,
+                policy,
+            );
+            if first_sign == RealSign::Negative {
+                reverse_turn_ordering(ordering)
+            } else {
+                ordering
+            }
+        }
+    }
+}
+
+fn compare_same_side_curvature_magnitude(
+    first_tangent: &TangentVector,
+    first_cross: &Real,
+    second_tangent: &TangentVector,
+    second_cross: &Real,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let first_speed_sq = speed_squared(first_tangent);
+    let second_speed_sq = speed_squared(second_tangent);
+    if !definitely_nonzero(&first_speed_sq, policy) || !definitely_nonzero(&second_speed_sq, policy)
+    {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+
+    let first_scaled = first_cross * first_cross * cube(&second_speed_sq);
+    let second_scaled = second_cross * second_cross * cube(&first_speed_sq);
+    match real_sign(&(first_scaled - second_scaled), policy) {
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn compare_same_side_third_order_magnitude(
+    first_tangent: &TangentVector,
+    first_cross: &Real,
+    second_tangent: &TangentVector,
+    second_cross: &Real,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let first_speed_sq = speed_squared(first_tangent);
+    let second_speed_sq = speed_squared(second_tangent);
+    if !definitely_nonzero(&first_speed_sq, policy) || !definitely_nonzero(&second_speed_sq, policy)
+    {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+
+    // With zero curvature, cross(v, B^(3)) / |v|^4 is the normal
+    // third derivative with respect to tangent distance. Squaring this
+    // witness requires the fourth power of speed squared.
+    let first_scaled = first_cross * first_cross * square(&square(&second_speed_sq));
+    let second_scaled = second_cross * second_cross * square(&square(&first_speed_sq));
+    match real_sign(&(first_scaled - second_scaled), policy) {
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurveContext) -> Option<u8> {
+    match real_sign(&cross_vectors(base, candidate), policy)? {
+        RealSign::Positive => Some(0),
+        RealSign::Negative => Some(1),
+        RealSign::Zero => match real_sign(&dot_vectors(base, candidate), policy)? {
+            RealSign::Positive => Some(0),
+            RealSign::Negative => Some(1),
+            RealSign::Zero => None,
+        },
+    }
+}
+
+fn points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
+    if left.identity() == right.identity() {
+        return Some(true);
+    }
+    if compare_reals(left.x(), right.x(), policy)? != Ordering::Equal {
+        return Some(false);
+    }
+    Some(compare_reals(left.y(), right.y(), policy)? == Ordering::Equal)
+}
+
+fn retained_endpoints_equal(
+    left_topology_vertex: Option<usize>,
+    left: Option<&RetainedEndpointKey>,
+    right_topology_vertex: Option<usize>,
+    right: Option<&RetainedEndpointKey>,
+    policy: &CurveContext,
+) -> Option<bool> {
+    if let (Some(left), Some(right)) = (left_topology_vertex, right_topology_vertex) {
+        return Some(left == right);
+    }
+    let (Some(left), Some(right)) = (left, right) else {
+        return Some(false);
+    };
+    match (left, right) {
+        (RetainedEndpointKey::Exact(left), RetainedEndpointKey::Exact(right)) => {
+            points_equal(left, right, policy)
+        }
+        (
+            RetainedEndpointKey::Algebraic {
+                x: left_x,
+                y: left_y,
+            },
+            RetainedEndpointKey::Algebraic {
+                x: right_x,
+                y: right_y,
+            },
+        ) => Some(
+            represented_roots_equal(left_x, right_x, policy)?
+                && represented_roots_equal(left_y, right_y, policy)?,
+        ),
+        (RetainedEndpointKey::Exact(point), RetainedEndpointKey::Algebraic { x, y })
+        | (RetainedEndpointKey::Algebraic { x, y }, RetainedEndpointKey::Exact(point)) => Some(
+            represented_roots_equal(
+                x,
+                &AlgebraicRootRepresentation::from_exact_value(point.x()),
+                policy,
+            )? && represented_roots_equal(
+                y,
+                &AlgebraicRootRepresentation::from_exact_value(point.y()),
+                policy,
+            )?,
+        ),
+    }
+}
+
+fn compare_reals_equal(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
+    Some(crate::classify::compare_reals(left, right, policy)? == std::cmp::Ordering::Equal)
+}
+
+pub(crate) fn represented_roots_equal(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> Option<bool> {
+    if left == right {
+        return Some(true);
+    }
+    if let (Some(left_witness), Some(right_witness)) =
+        (left.exact_point_witness(), right.exact_point_witness())
+    {
+        return compare_reals_equal(left_witness, right_witness, policy);
+    }
+
+    // Algebraic endpoint images produced from different curve expressions can
+    // represent the same point without having byte-identical construction
+    // payloads. Refine the roots and, when needed, construct their exact
+    // difference rather than comparing interval samples.
+    compare_represented_roots_by_difference(left, right, policy)
+}
+
+fn compare_represented_roots_by_difference(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> Option<bool> {
+    crate::bezier_algebraic_image::compare_algebraic_representations_with_policy(
+        left, right, policy,
+    )
+    .map(|ordering| ordering.is_eq())
+}
+
+impl BezierSubcurve2 {
+    /// Returns the exact start and end points of this native subcurve.
+    pub fn endpoints(&self) -> (Point2, Point2) {
+        match self {
+            Self::Quadratic(curve) => (curve.start().clone(), curve.end().clone()),
+            Self::Cubic(curve) => (curve.start().clone(), curve.end().clone()),
+            Self::RationalQuadratic(curve) => (curve.start().clone(), curve.end().clone()),
+            Self::Rational(curve) => (curve.start().clone(), curve.end().clone()),
+        }
+    }
+
+    fn endpoint_data(&self, policy: &CurveContext) -> Classification<EndpointData> {
+        self.endpoint_data_with_higher_derivatives(policy, true)
+    }
+
+    fn endpoint_data_with_higher_derivatives(
+        &self,
+        policy: &CurveContext,
+        include_higher_derivatives: bool,
+    ) -> Classification<EndpointData> {
+        let (start, end) = self.endpoints();
+        let (
+            start_tangent,
+            end_tangent,
+            start_second_derivative,
+            start_third_derivative,
+            start_tangent_zero_status,
+            end_tangent_zero_status,
+        ) = match self {
+            Self::Quadratic(curve) => {
+                let (start_tangent, start_tangent_zero_status) =
+                    TangentVector::from_endpoint_tangent(
+                        curve.endpoint_tangent(BezierEndpoint::Start),
+                    );
+                let (end_tangent, end_tangent_zero_status) = TangentVector::from_endpoint_tangent(
+                    curve.endpoint_tangent(BezierEndpoint::End),
+                );
+                (
+                    start_tangent,
+                    end_tangent,
+                    include_higher_derivatives.then(|| quadratic_second_derivative(curve)),
+                    include_higher_derivatives.then(|| TangentVector {
+                        dx: Real::zero(),
+                        dy: Real::zero(),
+                    }),
+                    Some(start_tangent_zero_status),
+                    Some(end_tangent_zero_status),
+                )
+            }
+            Self::Cubic(curve) => {
+                let (start_tangent, start_tangent_zero_status) =
+                    TangentVector::from_endpoint_tangent(
+                        curve.endpoint_tangent(BezierEndpoint::Start),
+                    );
+                let (end_tangent, end_tangent_zero_status) = TangentVector::from_endpoint_tangent(
+                    curve.endpoint_tangent(BezierEndpoint::End),
+                );
+                (
+                    start_tangent,
+                    end_tangent,
+                    include_higher_derivatives.then(|| cubic_start_second_derivative(curve)),
+                    include_higher_derivatives.then(|| cubic_third_derivative(curve)),
+                    Some(start_tangent_zero_status),
+                    Some(end_tangent_zero_status),
+                )
+            }
+            Self::RationalQuadratic(curve) => {
+                let start = match rational_quadratic_endpoint_derivative_jet(
+                    curve,
+                    false,
+                    include_higher_derivatives,
+                    policy,
+                ) {
+                    Classification::Decided(derivatives) => derivatives,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                let end =
+                    match rational_quadratic_endpoint_derivative_jet(curve, true, false, policy) {
+                        Classification::Decided(derivatives) => derivatives,
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    };
+                (
+                    start.first,
+                    end.first,
+                    start.second,
+                    start.third,
+                    None,
+                    None,
+                )
+            }
+            Self::Rational(curve) => {
+                let start = match curve.endpoint_derivatives(
+                    false,
+                    if include_higher_derivatives { 3 } else { 1 },
+                    policy,
+                ) {
+                    Classification::Decided(derivatives) => derivatives,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                let end = match curve.endpoint_derivatives(true, 1, policy) {
+                    Classification::Decided(derivatives) => derivatives,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                let vector = |derivative: &(Real, Real)| TangentVector {
+                    dx: derivative.0.clone(),
+                    dy: derivative.1.clone(),
+                };
+                (
+                    vector(&start[1]),
+                    vector(&end[1]),
+                    start.get(2).map(vector),
+                    start.get(3).map(vector),
+                    None,
+                    None,
+                )
+            }
+        };
+
+        if !start_tangent.is_nonzero_with_status(start_tangent_zero_status, policy)
+            || !end_tangent.is_nonzero_with_status(end_tangent_zero_status, policy)
+        {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        }
+
+        Classification::Decided(EndpointData {
+            start,
+            end,
+            start_tangent,
+            end_tangent,
+            start_second_derivative,
+            start_third_derivative,
+        })
+    }
+}
+
+struct RationalQuadraticEndpointDerivativeJet {
+    first: TangentVector,
+    second: Option<TangentVector>,
+    third: Option<TangentVector>,
+}
+
+fn rational_quadratic_endpoint_derivative_jet(
+    curve: &crate::RationalQuadraticBezier2,
+    at_end: bool,
+    higher_orders: bool,
+    policy: &CurveContext,
+) -> Classification<RationalQuadraticEndpointDerivativeJet> {
+    let (point0, point1, point2, weight0, weight1, weight2) = if at_end {
+        (
+            curve.end(),
+            curve.control(),
+            curve.start(),
+            curve.end_weight(),
+            curve.control_weight(),
+            curve.start_weight(),
+        )
+    } else {
+        (
+            curve.start(),
+            curve.control(),
+            curve.end(),
+            curve.start_weight(),
+            curve.control_weight(),
+            curve.end_weight(),
+        )
+    };
+    match is_zero(weight0, policy) {
+        Some(false) => {}
+        Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+    let Ok(weight_ratio1) = weight1 / weight0 else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let difference1 = TangentVector {
+        dx: point1.x() - point0.x(),
+        dy: point1.y() - point0.y(),
+    };
+    let two = Real::from(2_i8);
+    let first_scale = &two * &weight_ratio1;
+    let first_in_reversed_parameter = TangentVector {
+        dx: &first_scale * &difference1.dx,
+        dy: &first_scale * &difference1.dy,
+    };
+    if !higher_orders {
+        let first = if at_end {
+            TangentVector {
+                dx: -first_in_reversed_parameter.dx,
+                dy: -first_in_reversed_parameter.dy,
+            }
+        } else {
+            first_in_reversed_parameter
+        };
+        return Classification::Decided(RationalQuadraticEndpointDerivativeJet {
+            first,
+            second: None,
+            third: None,
+        });
+    }
+
+    let Ok(weight_ratio2) = weight2 / weight0 else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let difference2 = TangentVector {
+        dx: point2.x() - point0.x(),
+        dy: point2.y() - point0.y(),
+    };
+    let second_scale1 = Real::from(4_i8) * &weight_ratio1 * (Real::one() - (&two * &weight_ratio1));
+    let second_scale2 = &two * &weight_ratio2;
+    let second = TangentVector {
+        dx: (&second_scale1 * &difference1.dx) + (&second_scale2 * &difference2.dx),
+        dy: (&second_scale1 * &difference1.dy) + (&second_scale2 * &difference2.dy),
+    };
+    let denominator_first = &two * (&weight_ratio1 - Real::one());
+    let denominator_second = &two * ((Real::one() - (&two * &weight_ratio1)) + &weight_ratio2);
+    let mut third = TangentVector {
+        dx: -(Real::from(3_i8)
+            * ((&denominator_first * &second.dx)
+                + (&denominator_second * &first_in_reversed_parameter.dx))),
+        dy: -(Real::from(3_i8)
+            * ((&denominator_first * &second.dy)
+                + (&denominator_second * &first_in_reversed_parameter.dy))),
+    };
+    let first = if at_end {
+        third.dx = -third.dx;
+        third.dy = -third.dy;
+        TangentVector {
+            dx: -first_in_reversed_parameter.dx,
+            dy: -first_in_reversed_parameter.dy,
+        }
+    } else {
+        first_in_reversed_parameter
+    };
+    Classification::Decided(RationalQuadraticEndpointDerivativeJet {
+        first,
+        second: Some(second),
+        third: Some(third),
+    })
+}
+
+#[cfg(test)]
+mod rational_quadratic_endpoint_derivative_tests {
+    use super::*;
+
+    #[test]
+    fn polynomial_endpoint_tangent_keeps_its_structural_zero_evidence() {
+        let policy = CurveContext::STRICT;
+        for (dx, expected_status, expected_nonzero) in [
+            (Real::zero(), ZeroKnowledge::Zero, false),
+            (Real::from(7_i8), ZeroKnowledge::NonZero, true),
+        ] {
+            let endpoint = crate::EndpointTangent2::new(dx, Real::zero());
+            let (tangent, status) = TangentVector::from_endpoint_tangent(endpoint);
+
+            assert_eq!(status, expected_status);
+            assert_eq!(
+                tangent.is_nonzero_with_status(Some(status), &policy),
+                expected_nonzero
+            );
+        }
+    }
+
+    #[test]
+    fn specialized_endpoint_jets_match_general_rational_quotient_derivatives() {
+        let policy = CurveContext::STRICT;
+
+        for (weight_case, (start_weight, control_weight, end_weight)) in [
+            (Real::one(), Real::one(), Real::one()),
+            (Real::from(2_i8), Real::from(3_i8), Real::from(5_i8)),
+            (Real::from(-7_i8), Real::from(-2_i8), Real::from(-3_i8)),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let curve = crate::RationalQuadraticBezier2::try_new(
+                Point2::new(Real::from(-3_i8), Real::from(2_i8)),
+                Point2::new(Real::from(5_i8), Real::from(11_i8)),
+                Point2::new(Real::from(17_i8), Real::from(-7_i8)),
+                start_weight,
+                control_weight,
+                end_weight,
+            )
+            .expect("nonzero rational weights");
+            let general = crate::RationalBezier2::try_new(
+                curve.control_points().into_iter().cloned().collect(),
+                curve.weights().into_iter().cloned().collect(),
+            )
+            .expect("valid general rational curve");
+
+            for at_end in [false, true] {
+                let Classification::Decided(specialized) =
+                    rational_quadratic_endpoint_derivative_jet(&curve, at_end, true, &policy)
+                else {
+                    panic!("specialized endpoint jet should be exact");
+                };
+                let Classification::Decided(general) =
+                    general.endpoint_derivatives(at_end, 3, &policy)
+                else {
+                    panic!("general endpoint jet should be exact");
+                };
+                for (derivative_order, (specialized, general)) in [
+                    (&specialized.first, &general[1]),
+                    (
+                        specialized
+                            .second
+                            .as_ref()
+                            .expect("second derivative requested"),
+                        &general[2],
+                    ),
+                    (
+                        specialized
+                            .third
+                            .as_ref()
+                            .expect("third derivative requested"),
+                        &general[3],
+                    ),
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    assert_eq!(
+                        compare_reals(&specialized.dx, &general.0, &policy),
+                        Some(Ordering::Equal),
+                        "weight case {weight_case}, at_end={at_end}, derivative order {} x",
+                        derivative_order + 1
+                    );
+                    assert_eq!(
+                        compare_reals(&specialized.dy, &general.1, &policy),
+                        Some(Ordering::Equal),
+                        "weight case {weight_case}, at_end={at_end}, derivative order {} y",
+                        derivative_order + 1
+                    );
+                }
+            }
+        }
+    }
+}
+
+impl TangentVector {
+    fn from_endpoint_tangent(tangent: crate::EndpointTangent2) -> (Self, ZeroKnowledge) {
+        let (dx, dy, zero_status) = tangent.into_components();
+        (Self { dx, dy }, zero_status)
+    }
+
+    fn is_nonzero_with_status(
+        &self,
+        zero_status: Option<ZeroKnowledge>,
+        policy: &CurveContext,
+    ) -> bool {
+        match zero_status {
+            Some(ZeroKnowledge::NonZero) => true,
+            Some(ZeroKnowledge::Zero) => false,
+            Some(ZeroKnowledge::Unknown) | None => self.is_nonzero(policy),
+        }
+    }
+
+    fn is_nonzero(&self, policy: &CurveContext) -> bool {
+        let length_squared = &self.dx * &self.dx + &self.dy * &self.dy;
+        match length_squared.zero_status() {
+            ZeroKnowledge::NonZero => true,
+            ZeroKnowledge::Zero => false,
+            ZeroKnowledge::Unknown => is_zero(&length_squared, policy) == Some(false),
+        }
+    }
+}
+
+fn quadratic_second_derivative(curve: &crate::QuadraticBezier2) -> TangentVector {
+    let two = Real::from(2_i8);
+    let dx = &two * ((curve.start().x() - (&two * curve.control().x())) + curve.end().x());
+    let dy = &two * ((curve.start().y() - (&two * curve.control().y())) + curve.end().y());
+    TangentVector { dx, dy }
+}
+
+fn cubic_start_second_derivative(curve: &crate::CubicBezier2) -> TangentVector {
+    let six = Real::from(6_i8);
+    let dx = &six
+        * ((curve.start().x() - (Real::from(2_i8) * curve.control1().x())) + curve.control2().x());
+    let dy = &six
+        * ((curve.start().y() - (Real::from(2_i8) * curve.control1().y())) + curve.control2().y());
+    TangentVector { dx, dy }
+}
+
+fn cubic_third_derivative(curve: &crate::CubicBezier2) -> TangentVector {
+    let six = Real::from(6_i8);
+    let three = Real::from(3_i8);
+    let dx = &six
+        * (((curve.end().x() - (&three * curve.control2().x())) + (&three * curve.control1().x()))
+            - curve.start().x());
+    let dy = &six
+        * (((curve.end().y() - (&three * curve.control2().y())) + (&three * curve.control1().y()))
+            - curve.start().y());
+    TangentVector { dx, dy }
+}
+
+fn cross_vectors(left: &TangentVector, right: &TangentVector) -> Real {
+    (&left.dx * &right.dy) - (&left.dy * &right.dx)
+}
+
+fn dot_vectors(left: &TangentVector, right: &TangentVector) -> Real {
+    (&left.dx * &right.dx) + (&left.dy * &right.dy)
+}
+
+fn speed_squared(vector: &TangentVector) -> Real {
+    (&vector.dx * &vector.dx) + (&vector.dy * &vector.dy)
+}
+
+fn cube(value: &Real) -> Real {
+    value * value * value
+}
+
+fn square(value: &Real) -> Real {
+    value * value
+}
+
+fn definitely_nonzero(value: &Real, policy: &CurveContext) -> bool {
+    match value.zero_status() {
+        ZeroKnowledge::NonZero => true,
+        ZeroKnowledge::Zero => false,
+        ZeroKnowledge::Unknown => is_zero(value, policy) == Some(false),
+    }
+}
