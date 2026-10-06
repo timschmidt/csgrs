@@ -1,0 +1,37 @@
+[package]
+name = "voxelis-bevy"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
+description = "Bevy examples for visualizing Voxelis models and greedy meshes"
+repository.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+voxelis.workspace = true
+bevy_egui.workspace = true
+bevy_panorbit_camera.workspace = true
+bevy_screen_diagnostics.workspace = true
+bevy.workspace = true
+egui_plot.workspace = true
+fastnoise-lite.workspace = true
+humanize-bytes.workspace = true
+parking_lot.workspace = true
+tracy-client = { workspace = true, optional = true }
+
+[features]
+default = ["memory_stats"]
+memory_stats = ["voxelis/memory_stats"]
+tracy = ["voxelis/tracy", "dep:tracy-client"]
+trace_greedy_timings = ["voxelis/trace_greedy_timings"]
+
+[[example]]
+name = "lod"
+path = "examples/lod.rs"
+
+[[example]]
+name = "greedy_meshing"
+path = "examples/greedy_meshing.rs"

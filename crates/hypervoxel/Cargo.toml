@@ -1,0 +1,135 @@
+[package]
+name = "hypervoxel"
+version = "0.3.0"
+edition = "2024"
+description = "Exact-aware voxel grid frames, aggregate facts, and sparse-grid reports for the Hyper stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hypervoxel"
+readme = "README.md"
+keywords = ["voxel", "exact", "geometry", "hyperreal", "simulation"]
+categories = ["data-structures", "science", "simulation", "mathematics"]
+
+[workspace]
+resolver = "3"
+members = [
+  "voxelis",
+  "voxelis-math",
+  "voxelis-memory",
+  "voxelis-voxelize",
+  "voxelis-bevy",
+  "vtm-export",
+  "vtm-viewer",
+  "vtm-voxelize",
+]
+default-members = ["voxelis", "voxelis-memory"]
+
+[dependencies]
+# Cargo uses these paths in the workspace and retains the version requirements
+# in the published manifest.
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
+hypermesh = { version = "0.1.0", path = "../hypermesh", optional = true }
+voxelis = { version = "25.5.0", path = "voxelis", optional = true }
+glam = { workspace = true, optional = true }
+rustc-hash = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
+[features]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace"]
+hypermesh-adapter = ["dep:hypermesh"]
+legacy-voxelis = ["dep:voxelis", "dep:glam"]
+
+[[bench]]
+name = "grid_frame"
+harness = false
+
+[workspace.package]
+version = "25.5.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Sparse Voxel Octree DAG engine for building worlds, shaping matter, and mastering 3D space — powered by pure Rust."
+homepage = "https://github.com/WildPixelGames/voxelis"
+repository = "https://github.com/WildPixelGames/voxelis"
+documentation = "https://docs.rs/voxelis"
+readme = "README.md"
+keywords = [
+  "voxel",
+  "voxel-engine",
+  "sparse-voxel-octree",
+  "svo",
+  "dag",
+  "3d-engine",
+  "world-generation",
+  "geometry",
+  "compression",
+  "graphics",
+]
+categories = [
+  "data-structures",
+  "game-development",
+  "graphics",
+  "rendering",
+  "simulation",
+]
+rust-version = "1.88"
+
+[workspace.dependencies]
+voxelis = { version = "25.5.0", path = "voxelis" }
+voxelis-math = { version = "25.5.0", path = "voxelis-math" }
+voxelis-voxelize = { version = "25.5.0", path = "voxelis-voxelize" }
+voxelis-bevy = { version = "25.5.0", path = "voxelis-bevy" }
+
+ahash = "0.8"
+bitflags = "2.9"
+byteorder = "1.5"
+crossbeam = { version = "0.8" }
+fastnoise-lite = "1.1"
+glam = "0.29"
+humanize-bytes = "1.0"
+indicatif = { version = "0.18", features = ["improved_unicode"] }
+log = { version = "0.4", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }
+md-5 = "0.10"
+parking_lot = "0.12"
+rand = { version = "0.9", features = ["small_rng"] }
+rayon = "1.10"
+rustc-hash = "2.1"
+serde = "1.0"
+tracy-client = "0.18"
+wide = "0.7"
+zstd = "0.13"
+
+# Bevy and egui integration versions.
+bevy = "0.16"
+bevy_egui = "0.35"
+bevy_panorbit_camera = { version = "0.27", features = ["bevy_egui"] }
+bevy_screen_diagnostics = "0.8"
+egui_extras = "0.32"
+egui_plot = "0.33"
+
+# Optimize dependencies in development builds while keeping workspace crates
+# debuggable.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release-debug-info]
+inherits = "release"
+debug = true
+strip = "none"
+
+[profile.final]
+inherits = "release"
+opt-level = 3
+codegen-units = 1
+lto = "fat"
+debug = false
+overflow-checks = false

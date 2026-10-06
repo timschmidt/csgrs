@@ -1,0 +1,63 @@
+[package]
+name = "hypervoxel-fuzz"
+version = "0.1.0"
+publish = false
+edition = "2024"
+readme = "README.md"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary = { version = "1", features = ["derive"] }
+libfuzzer-sys = "0.4"
+hypervoxel = { version = "0.3.0", path = "..", features = ["hypermesh-adapter", "legacy-voxelis"] }
+hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+hyperlimit = { version = "0.4.1", path = "../../hyperlimit" }
+hypermesh = { version = "0.1.0", path = "../../hypermesh" }
+voxelis = { version = "25.5.0", path = "../voxelis" }
+glam = "0.29"
+
+[[bin]]
+name = "grid_address"
+path = "fuzz_targets/grid_address.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "continuous_field_materialization"
+path = "fuzz_targets/continuous_field_materialization.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "triangle_surface_voxelization"
+path = "fuzz_targets/triangle_surface_voxelization.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "triangle_solid_voxelization"
+path = "fuzz_targets/triangle_solid_voxelization.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypermesh_adapter"
+path = "fuzz_targets/hypermesh_adapter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false

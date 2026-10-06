@@ -1,0 +1,51 @@
+[package]
+name = "voxelis"
+version = "25.5.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+license = "MIT OR Apache-2.0"
+description = "Sparse Voxel Octree DAG engine for building worlds, shaping matter, and mastering 3D space — powered by pure Rust."
+homepage = "https://github.com/WildPixelGames/voxelis"
+repository = "https://github.com/WildPixelGames/voxelis"
+documentation = "https://docs.rs/voxelis"
+edition = "2024"
+readme = "README.md"
+keywords = ["voxel", "voxel-engine", "sparse-voxel-octree", "dag", "3d-engine"]
+categories = [
+  "data-structures",
+  "game-development",
+  "graphics",
+  "rendering",
+  "simulation",
+]
+rust-version = "1.88"
+
+[features]
+default = ["numeric_voxel_impls"]
+numeric_voxel_impls = []
+vtm = ["dep:bitflags", "dep:byteorder", "dep:md-5", "dep:zstd"]
+memory_stats = []
+debug_trace_ref_counts = []
+trace_greedy_timings = []
+tracy = ["dep:tracy-client"]
+
+[dependencies]
+voxelis-memory = { version = "25.5.0", path = "../voxelis-memory" }
+fastnoise-lite.workspace = true
+glam.workspace = true
+parking_lot.workspace = true
+rayon.workspace = true
+rustc-hash.workspace = true
+wide.workspace = true
+bitflags = { workspace = true, optional = true }
+byteorder = { workspace = true, optional = true }
+md-5 = { workspace = true, optional = true }
+tracy-client = { workspace = true, optional = true }
+zstd = { workspace = true, optional = true }
+
+[dev-dependencies]
+criterion2 = { version = "3.0" }
+rand.workspace = true
+
+[[bench]]
+name = "voxtree_bench"
+harness = false

@@ -1,0 +1,190 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "vtm-viewer (Release)",
+      "cargo": {
+        "args": [
+          "build",
+          "--release",
+          "--bin=vtm-viewer",
+          "--package=vtm-viewer"
+        ],
+        "filter": {
+          "name": "vtm-viewer",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "vtm-viewer/assets/export/vtm/statue_03.vtm"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "vtm-viewer (RelWithDebug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--profile",
+          "release-debug-info",
+          "--bin=vtm-viewer",
+          "--package=vtm-viewer"
+        ],
+        "filter": {
+          "name": "vtm-viewer",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "vtm-viewer (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=vtm-viewer",
+          "--package=vtm-viewer"
+        ],
+        "filter": {
+          "name": "vtm-viewer",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "vtm-viewer/assets/export/vtm/worm_gear.vtm"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "terrain (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=terrain",
+        ],
+        "filter": {
+          "name": "terrain",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "meshing-debugger (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=meshing-debugger",
+          "--package=meshing-debugger"
+        ],
+        "filter": {
+          "name": "meshing-debugger",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "vtm-voxelize (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=vtm-voxelize",
+          "--package=vtm-voxelize"
+        ],
+        "filter": {
+          "name": "vtm-voxelize",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "vtm-viewer/assets/import/statue_03.obj",
+        "vtm-viewer/assets/export/vtm/statue_03.vtm"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'ad-altum'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=ad-altum",
+          "--package=ad-altum"
+        ],
+        "filter": {
+          "name": "ad-altum",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'ad-altum'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=ad-altum",
+          "--package=ad-altum"
+        ],
+        "filter": {
+          "name": "ad-altum",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'voxelis'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=voxelis"
+        ],
+        "filter": {
+          "name": "voxelis",
+          "kind": "lib"
+        }
+      },
+      "args": [
+        "svo_dag::tests::test_multiple_assign"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

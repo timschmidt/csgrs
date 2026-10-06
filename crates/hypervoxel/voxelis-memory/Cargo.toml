@@ -1,0 +1,24 @@
+[package]
+name = "voxelis-memory"
+version = "25.5.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+license = "MIT OR Apache-2.0"
+description = "Memory utilities for the Voxelis voxel engine."
+edition = "2024"
+homepage = "https://github.com/WildPixelGames/voxelis"
+repository = "https://github.com/WildPixelGames/voxelis"
+documentation = "https://docs.rs/voxelis-memory"
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+tracy-client = { workspace = true, optional = true }
+
+[features]
+default = []
+memory_stats = []
+tracy = ["dep:tracy-client"]

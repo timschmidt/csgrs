@@ -1,0 +1,30 @@
+[package]
+name = "voxelis-voxelize"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
+description = "Parallel OBJ-to-Voxelis surface voxelization"
+repository.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = []
+memory_stats = ["voxelis/memory_stats"]
+tracy = ["voxelis/tracy", "dep:tracy-client"]
+
+[dependencies]
+voxelis = { workspace = true, features = ["vtm"] }
+voxelis-math.workspace = true
+crossbeam.workspace = true
+glam.workspace = true
+indicatif.workspace = true
+rayon.workspace = true
+rustc-hash.workspace = true
+tracy-client = { workspace = true, optional = true }
+
+[[bench]]
+name = "voxelize"
+harness = false

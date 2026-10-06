@@ -1,0 +1,32 @@
+[package]
+name = "vtm-viewer"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
+description = "Interactive Bevy viewer for Voxelis VTM models"
+repository.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+voxelis.workspace = true
+voxelis-bevy.workspace = true
+
+bevy_egui.workspace = true
+bevy_panorbit_camera.workspace = true
+bevy_screen_diagnostics.workspace = true
+bevy.workspace = true
+egui_extras.workspace = true
+
+humanize-bytes.workspace = true
+log.workspace = true
+rayon.workspace = true
+rustc-hash.workspace = true
+tracy-client = { workspace = true, optional = true }
+
+[features]
+default = ["memory_stats", "voxelis/vtm"]
+memory_stats = ["voxelis/memory_stats"]
+tracy = ["dep:tracy-client", "voxelis/tracy"]
