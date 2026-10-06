@@ -965,7 +965,7 @@ fn compare_curve_half_edge_angle(
     if left == right {
         return Some(Ordering::Equal);
     }
-    let left_vector = curve_half_edge_tangent(
+    let left_vector = curve_half_edge_direction(
         left,
         edges,
         half_edges,
@@ -974,8 +974,9 @@ fn compare_curve_half_edge_angle(
         bezier_fragments,
         cubic_fragments,
         conic_fragments,
-    );
-    let right_vector = curve_half_edge_tangent(
+        policy,
+    )?;
+    let right_vector = curve_half_edge_direction(
         right,
         edges,
         half_edges,
@@ -984,10 +985,8 @@ fn compare_curve_half_edge_angle(
         bezier_fragments,
         cubic_fragments,
         conic_fragments,
-    );
-    if vector_is_zero(&left_vector, policy)? || vector_is_zero(&right_vector, policy)? {
-        return None;
-    }
+        policy,
+    )?;
     let left_upper = direction_upper_half(&left_vector.x, &left_vector.y, policy)?;
     let right_upper = direction_upper_half(&right_vector.x, &right_vector.y, policy)?;
     match (left_upper, right_upper) {
@@ -1000,6 +999,83 @@ fn compare_curve_half_edge_angle(
         Ordering::Greater => Some(Ordering::Less),
         Ordering::Less => Some(Ordering::Greater),
         Ordering::Equal => Some(Ordering::Equal),
+    }
+}
+
+/// Outgoing direction of a half-edge at its source vertex.
+///
+/// A Bezier or conic fragment that starts at a turning point of its source
+/// curve has a vanishing first derivative there. Its outgoing direction is
+/// then the first nonvanishing Bernstein difference: with `P1 = P0` the
+/// curve leaves along `P2 - P0` (homogeneously for a conic, whose weights
+/// are positive). Returns `None` when the direction is still zero or the
+/// predicates are undecided.
+#[allow(clippy::too_many_arguments)]
+fn curve_half_edge_direction(
+    half_edge: usize,
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+    line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
+    policy: PredicatePolicy,
+) -> Option<Point2> {
+    let tangent = curve_half_edge_tangent(
+        half_edge,
+        edges,
+        half_edges,
+        line_fragments,
+        arc_fragments,
+        bezier_fragments,
+        cubic_fragments,
+        conic_fragments,
+    );
+    if !vector_is_zero(&tangent, policy)? {
+        return Some(tangent);
+    }
+    let half = &half_edges[half_edge];
+    let edge = &edges[half.edge];
+    let forward = half_edge < half.twin;
+    let direction = match edge.kind {
+        CurveArrangementCellEdgeKind::Line | CurveArrangementCellEdgeKind::ExplicitArc => {
+            return None;
+        }
+        CurveArrangementCellEdgeKind::QuadraticBezier => {
+            let curve = &bezier_fragments[edge.fragments[0]].curve;
+            let (from, to) = if forward {
+                (curve.start(), curve.end())
+            } else {
+                (curve.end(), curve.start())
+            };
+            Point2::new(to.x.clone() - from.x.clone(), to.y.clone() - from.y.clone())
+        }
+        CurveArrangementCellEdgeKind::CubicBezier => {
+            let curve = &cubic_fragments[edge.fragments[0]].curve;
+            let (from, next) = if forward {
+                (curve.start(), curve.control1())
+            } else {
+                (curve.end(), curve.control0())
+            };
+            Point2::new(
+                next.x.clone() - from.x.clone(),
+                next.y.clone() - from.y.clone(),
+            )
+        }
+        CurveArrangementCellEdgeKind::RationalQuadraticBezier => {
+            let fragment = &conic_fragments[edge.fragments[0]];
+            if forward {
+                homogeneous_endpoint_tangent(&fragment.start_control, &fragment.end_control)
+            } else {
+                homogeneous_endpoint_tangent(&fragment.end_control, &fragment.start_control)
+            }
+        }
+    };
+    if vector_is_zero(&direction, policy)? {
+        None
+    } else {
+        Some(direction)
     }
 }
 

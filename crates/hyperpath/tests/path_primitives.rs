@@ -237,8 +237,10 @@ fn line_segment_exposes_bounds_for_immediate_predicates() {
 
 #[test]
 fn line_segment_bounds_and_endpoint_identity_honor_predicate_policy() {
-    let left_x = Real::pi() + Real::e();
-    let right_x = Real::e() + Real::pi();
+    // ln(pi e) = ln(pi) + ln(e) is true but not certifiable under strict
+    // policy; hyperreal canonicalizes simpler identities such as pi + e.
+    let left_x = (Real::pi() * Real::e()).ln().unwrap();
+    let right_x = Real::pi().ln().unwrap() + Real::e().ln().unwrap();
     assert_eq!(
         strict_segment!(
             Point2::new(left_x.clone(), r(0)),
@@ -267,8 +269,8 @@ fn line_segment_bounds_and_endpoint_identity_honor_predicate_policy() {
 
 #[test]
 fn compound_segment_predicates_honor_the_caller_policy() {
-    let left = Real::pi() + Real::e();
-    let right = Real::e() + Real::pi();
+    let left = (Real::pi() * Real::e()).ln().unwrap();
+    let right = Real::pi().ln().unwrap() + Real::e().ln().unwrap();
     let horizontal = strict_segment!(Point2::new(left.clone(), r(0)), Point2::new(r(10), r(0)));
     let vertical = strict_segment!(Point2::new(right.clone(), r(0)), Point2::new(right, r(10)));
 
@@ -301,7 +303,8 @@ fn compound_segment_predicates_honor_the_caller_policy() {
 
 #[test]
 fn strict_policy_rejects_unresolved_scalar_construction_guards() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = ((Real::pi() * Real::e()).ln().unwrap())
+        - (Real::pi().ln().unwrap() + Real::e().ln().unwrap());
     let segment = strict_segment!(p(0, 0), p(10, 0));
 
     assert_eq!(
@@ -352,8 +355,8 @@ fn strict_policy_rejects_unresolved_scalar_construction_guards() {
         RouteCertificationError::PredicateUnresolved
     );
 
-    let left = Real::pi() + Real::e();
-    let right = Real::e() + Real::pi();
+    let left = (Real::pi() * Real::e()).ln().unwrap();
+    let right = Real::pi().ln().unwrap() + Real::e().ln().unwrap();
     assert_eq!(
         strict_new!(RectangularPocket;
             Point2::new(left.clone(), r(0)),
@@ -2711,7 +2714,7 @@ fn line_cubic_bezier_arrangement_blocks_duplicate_algebraic_curve_sequence() {
     assert_eq!(report.algebraic_breakpoint_orders.len(), 1);
     assert_eq!(
         report.algebraic_breakpoint_orders[0].cubic_order,
-        Some(LineCubicBezierAlgebraicBreakpointOrderClass::Unknown)
+        Some(LineCubicBezierAlgebraicBreakpointOrderClass::Equal)
     );
     assert_eq!(report.algebraic_breakpoint_orders[0].line_order, None);
     let curve_sequence = report
@@ -2728,7 +2731,7 @@ fn line_cubic_bezier_arrangement_blocks_duplicate_algebraic_curve_sequence() {
     assert_eq!(curve_sequence.breakpoints, vec![0, 1]);
     assert_eq!(
         curve_sequence.blockers,
-        vec![LineCubicBezierAlgebraicBreakpointSequenceBlocker::UnknownOrder { left: 0, right: 1 }]
+        vec![LineCubicBezierAlgebraicBreakpointSequenceBlocker::EqualOrder { left: 0, right: 1 }]
     );
     let line_spans: Vec<_> = report
         .algebraic_source_spans
@@ -5598,7 +5601,8 @@ fn explicit_circular_arc_rejects_off_circle_endpoints_and_marks_full_circle() {
 
 #[test]
 fn explicit_circular_arc_uses_the_selected_policy_for_incidence() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = ((Real::pi() * Real::e()).ln().unwrap())
+        - (Real::pi().ln().unwrap() + Real::e().ln().unwrap());
     let equivalent_end = Point2::new(r(3) + undecidable_zero, r(4));
 
     let full = ExplicitCircularArc::new(
@@ -14978,7 +14982,12 @@ proptest! {
         );
         prop_assert_eq!(report.algebraic_source_spans.len(), 4);
         prop_assert_eq!(report.line_breakpoints[0].len(), 2);
-        prop_assert_eq!(report.conic_breakpoints[0].len(), 2);
+        // The line ends exactly at the conic's apex, t = 1/2: that double root
+        // has an exact rational witness and is promoted to a conic breakpoint.
+        prop_assert_eq!(report.exact_algebraic_breakpoint_promotions.len(), 1);
+        prop_assert_eq!(report.exact_algebraic_breakpoint_promotions[0].parameter.clone(), rq(1, 2));
+        prop_assert_eq!(report.conic_breakpoints[0].len(), 3);
+        prop_assert_eq!(report.conic_breakpoints[0][1].parameter.clone(), rq(1, 2));
     }
 
     #[test]
