@@ -125,7 +125,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             for triangle in tris {
                 // Each `triangle` is a geo_types::Triangle whose `.0, .1, .2`
                 // are the 2D coordinates. We'll embed them at z=0.
-                let [a, b, c] = [triangle.0, triangle.1, triangle.2];
+                let [a, b, c] = [triangle.v1(), triangle.v2(), triangle.v3()];
                 result.push([
                     Point3::new(a.x, a.y, 0.0),
                     Point3::new(b.x, b.y, 0.0),

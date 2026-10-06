@@ -9,7 +9,7 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
-use core2::io::Cursor;
+use std::io::Cursor;
 
 #[cfg(feature = "stl-io")]
 use stl_io;
@@ -77,7 +77,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```
     #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
-        use core2::io::Cursor;
+        use std::io::Cursor;
         use stl_io::{Normal, Triangle, Vertex, write_stl};
 
         let mut triangles = Vec::new();
@@ -305,7 +305,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ```
     #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
-        use core2::io::Cursor;
+        use std::io::Cursor;
         use stl_io::{Normal, Triangle, Vertex, write_stl};
 
         let mut triangles = Vec::new();
@@ -406,7 +406,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         }
 
-        //
         // (C) Encode into a binary STL buffer
         //
         let mut cursor = Cursor::new(Vec::new());

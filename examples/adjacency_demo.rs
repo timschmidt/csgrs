@@ -145,7 +145,7 @@ fn main() {
     // Demonstrate adaptive refinement
     println!("\n7. Adaptive mesh refinement:");
     let refined = tessellated.adaptive_refine(0.5, 2.0, 15.0);
-    let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
+    let (_refined_vertex_map, _refined_adjacency_map) = refined.build_connectivity();
     println!("   Original triangles: {}", tessellated.polygons.len());
     println!("   After refinement: {}", refined.polygons.len());
 
