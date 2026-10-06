@@ -1,0 +1,233 @@
+use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
+use hyperreal::{Rational, Real};
+use hypervoxel::{
+    ExactBox, ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
+    GridFrame, LengthUnit, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid,
+    VoxelAddress, VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
+    extract_exposed_faces, greedy_face_patches, lossy_quad_mesh_from_faces, voxelize_exact_box,
+    voxelize_exact_triangle_solid,
+};
+
+fn r(n: i32) -> Real {
+    n.into()
+}
+
+fn frame(depth: u8) -> GridFrame {
+    GridFrame::new(
+        [r(0), r(0), r(0)],
+        [
+            Rational::fraction(1, 8).unwrap().into(),
+            Rational::fraction(1, 8).unwrap().into(),
+            Rational::fraction(1, 8).unwrap().into(),
+        ],
+        depth,
+        LengthUnit::Unitless,
+    )
+    .unwrap()
+}
+
+fn populated_sparse_grid(depth: u8) -> SparseVoxelGrid {
+    let mut grid = SparseVoxelGrid::new(frame(depth));
+    let cells = 1_u64 << depth;
+    for i in 0..cells.min(64) {
+        grid.set(
+            VoxelAddress::new(depth, [i, (i * 3) % cells, (i * 7) % cells]).unwrap(),
+            VoxelCell::material(MaterialRegionId((i % 4) as u32)),
+        )
+        .unwrap();
+    }
+    grid
+}
+
+fn exact_tetrahedron_solid() -> ExactTriangleSolidMesh {
+    let point = |x, y, z| [r(x), r(y), r(z)];
+    let vertices = [
+        point(0, 0, 0),
+        point(1, 0, 0),
+        point(0, 1, 0),
+        point(0, 0, 1),
+    ];
+    let triangles = [[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]]
+        .map(|indices| ExactTriangle3::new(indices.map(|index| vertices[index].clone()), None))
+        .into();
+    ExactTriangleSolidMesh::new(ExactTriangleSurfaceMesh::new(triangles), true)
+}
+
+fn bench_grid_frame_construction(c: &mut Criterion) {
+    let origin = [r(-3), r(5), r(7)];
+    let pitch = [
+        Rational::fraction(1, 8).unwrap().into(),
+        Rational::fraction(1, 16).unwrap().into(),
+        Rational::fraction(1, 32).unwrap().into(),
+    ];
+    c.bench_function("grid_frame_construction", |b| {
+        b.iter(|| {
+            GridFrame::new(
+                black_box(origin.clone()),
+                black_box(pitch.clone()),
+                black_box(12),
+                black_box(LengthUnit::Millimeter),
+            )
+            .unwrap()
+        })
+    });
+}
+
+fn bench_cell_bounds(c: &mut Criterion) {
+    let frame = frame(8);
+    let address = VoxelAddress::new(8, [173, 91, 207]).unwrap();
+    c.bench_function("exact_cell_bounds", |b| {
+        b.iter(|| black_box(address).bounds(black_box(&frame)).unwrap())
+    });
+}
+
+fn bench_sparse_edits(c: &mut Criterion) {
+    let frame = frame(8);
+    let address = VoxelAddress::new(8, [73, 91, 107]).unwrap();
+    c.bench_function("sparse_set_remove", |b| {
+        b.iter_batched(
+            || SparseVoxelGrid::new(frame.clone()),
+            |mut grid| {
+                grid.set(address, VoxelCell::material(MaterialRegionId(7)))
+                    .unwrap();
+                grid.set(address, VoxelCell::empty()).unwrap();
+                black_box(grid)
+            },
+            BatchSize::SmallInput,
+        )
+    });
+}
+
+fn bench_exact_box_voxelization(c: &mut Criterion) {
+    let frame = frame(6);
+    let solid = ExactBox::new([r(2), r(2), r(2)], [r(6), r(6), r(6)]);
+    c.bench_function("exact_box_voxelization", |b| {
+        b.iter(|| {
+            voxelize_exact_box(
+                black_box(frame.clone()),
+                black_box(&solid),
+                MaterialRegionId(3),
+                VoxelizationPolicy::conservative_cover(),
+            )
+            .unwrap()
+        })
+    });
+}
+
+fn bench_svo_compaction_and_expansion(c: &mut Criterion) {
+    let sparse = populated_sparse_grid(8);
+    c.bench_function("sparse_to_svo", |b| {
+        b.iter(|| SvoVoxelGrid::from_sparse_grid(black_box(&sparse)).unwrap())
+    });
+
+    let svo = SvoVoxelGrid::from_sparse_grid(&sparse).unwrap();
+    c.bench_function("svo_to_sparse", |b| {
+        b.iter(|| black_box(&svo).to_sparse_grid().unwrap())
+    });
+}
+
+fn bench_surface_paths(c: &mut Criterion) {
+    let frame = GridFrame::unit(5).unwrap();
+    let solid = ExactBox::new([r(4), r(4), r(4)], [r(20), r(20), r(20)]);
+    let (grid, _) = voxelize_exact_box(
+        frame,
+        &solid,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+
+    c.bench_function("extract_exposed_faces", |b| {
+        b.iter(|| extract_exposed_faces(black_box(&grid)).unwrap())
+    });
+
+    let faces = extract_exposed_faces(&grid).unwrap();
+    c.bench_function("greedy_face_patches", |b| {
+        b.iter(|| greedy_face_patches(black_box(&faces)))
+    });
+    c.bench_function("exact_surface_triangle_mesh", |b| {
+        b.iter(|| exact_voxel_surface_triangle_mesh_from_faces(black_box(&faces)).unwrap())
+    });
+    c.bench_function("lossy_preview_quad_mesh", |b| {
+        b.iter(|| lossy_quad_mesh_from_faces(black_box(&faces)).unwrap())
+    });
+}
+
+fn bench_grid_queries(c: &mut Criterion) {
+    let grid = populated_sparse_grid(8);
+    let region = QueryRegion {
+        min: [0, 0, 0],
+        max: [127, 127, 127],
+        depth: 8,
+    };
+    c.bench_function("region_aggregate", |b| {
+        b.iter(|| grid.query_region_aggregate(black_box(&region)))
+    });
+}
+
+fn bench_triangle_solid(c: &mut Criterion) {
+    let solid = exact_tetrahedron_solid();
+    c.bench_function("triangle_solid_construction", |b| {
+        b.iter(|| ExactTriangleSolid::new(black_box(solid.clone())).unwrap())
+    });
+
+    let solid = ExactTriangleSolid::new(solid).unwrap();
+    let frame = frame(3);
+    c.bench_function("triangle_solid_voxelization", |b| {
+        b.iter(|| {
+            voxelize_exact_triangle_solid(
+                black_box(frame.clone()),
+                black_box(&solid),
+                MaterialRegionId(3),
+                VoxelizationPolicy::conservative_cover(),
+            )
+            .unwrap()
+        })
+    });
+}
+
+fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
+    #[cfg(feature = "hypermesh-adapter")]
+    {
+        use hypermesh::{MeshContext, Point3, Real, Triangle, TriangleMesh};
+        use hypervoxel::adapt_hypermesh_exact_solid;
+
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let point = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+        let mesh = TriangleMesh::new(
+            vec![
+                point(0, 0, 0),
+                point(2, 0, 0),
+                point(0, 2, 0),
+                point(0, 0, 2),
+            ],
+            vec![
+                Triangle::new(0, 2, 1),
+                Triangle::new(0, 1, 3),
+                Triangle::new(1, 2, 3),
+                Triangle::new(2, 0, 3),
+            ],
+        );
+        c.bench_function("hypermesh_exact_solid_adapter", |b| {
+            b.iter(|| adapt_hypermesh_exact_solid(black_box(&context), black_box(&mesh)).unwrap())
+        });
+    }
+    #[cfg(not(feature = "hypermesh-adapter"))]
+    {
+        let _ = c;
+    }
+}
+
+criterion_group!(
+    benches,
+    bench_grid_frame_construction,
+    bench_cell_bounds,
+    bench_sparse_edits,
+    bench_exact_box_voxelization,
+    bench_svo_compaction_and_expansion,
+    bench_surface_paths,
+    bench_grid_queries,
+    bench_triangle_solid,
+    bench_hypermesh_exact_adapter,
+);
+criterion_main!(benches);

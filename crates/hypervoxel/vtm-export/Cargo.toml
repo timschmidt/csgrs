@@ -1,0 +1,19 @@
+[package]
+name = "vtm-export"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
+description = "Convert Voxelis VTM models to OBJ meshes"
+repository.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+voxelis.workspace = true
+tracy-client = { workspace = true, optional = true }
+
+[features]
+default = ["voxelis/vtm"]
+tracy = ["dep:tracy-client", "voxelis/tracy"]

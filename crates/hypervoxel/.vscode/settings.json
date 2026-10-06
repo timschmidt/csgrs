@@ -1,0 +1,6 @@
+{
+  "$schema": "vscode://schemas/settings/user",
+  "lldb.launch.initCommands": [
+    "command script import .vscode/lldb_formatters.py"
+  ]
+}
