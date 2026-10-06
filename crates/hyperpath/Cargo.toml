@@ -1,0 +1,29 @@
+[package]
+name = "hyperpath"
+version = "0.3.0"
+edition = "2024"
+description = "Exact-aware path predicates and route constraints for the Hyper ecosystem"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hyperpath"
+readme = "README.md"
+keywords = ["paths", "routing", "constraints", "hyperreal", "cad"]
+categories = ["algorithms", "mathematics", "science"]
+
+[features]
+default = []
+dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+
+[dependencies]
+# Cargo uses these paths in the workspace and retains the version requirements
+# in the published manifest.
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false }
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
+hypersolve = { version = "0.3.1", path = "../hypersolve", default-features = false }
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
+[[bench]]
+name = "path_predicates"
+harness = false

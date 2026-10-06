@@ -1,0 +1,162 @@
+[package]
+name = "hyperpath-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+hyperlimit = { path = "../../hyperlimit" }
+hyperpath = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
+hypersolve = { path = "../../hypersolve" }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "specctra_route_text"
+path = "fuzz_targets/specctra_route_text.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "specctra_route_rules"
+path = "fuzz_targets/specctra_route_rules.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "specctra_route_rule_audit"
+path = "fuzz_targets/specctra_route_rule_audit.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "specctra_trace_rule_clearance"
+path = "fuzz_targets/specctra_trace_rule_clearance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_rounded_rect_pad"
+path = "fuzz_targets/pcb_rounded_rect_pad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_oriented_rect_pad"
+path = "fuzz_targets/pcb_oriented_rect_pad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_circular_board"
+path = "fuzz_targets/pcb_circular_board.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_obround_board"
+path = "fuzz_targets/pcb_obround_board.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_obround_pad"
+path = "fuzz_targets/pcb_obround_pad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_convex_pad"
+path = "fuzz_targets/pcb_convex_pad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_via_fabrication"
+path = "fuzz_targets/pcb_via_fabrication.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "line_arrangement"
+path = "fuzz_targets/line_arrangement.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "line_arc_arrangement"
+path = "fuzz_targets/line_arc_arrangement.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "explicit_arc_arrangement"
+path = "fuzz_targets/explicit_arc_arrangement.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bezier_arrangement"
+path = "fuzz_targets/bezier_arrangement.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "routing_feed"
+path = "fuzz_targets/routing_feed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "cam_pocket_link"
+path = "fuzz_targets/cam_pocket_link.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "cam_rest_material"
+path = "fuzz_targets/cam_rest_material.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "routing_keepout"
+path = "fuzz_targets/routing_keepout.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_orthogonal_pad"
+path = "fuzz_targets/pcb_orthogonal_pad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false
