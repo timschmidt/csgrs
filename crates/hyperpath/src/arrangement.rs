@@ -1,0 +1,1684 @@
+//! Retained exact arrangement cleanup for line path sets.
+//!
+//! This module does not perform a boolean operation. It records the exact event
+//! schedule that later CAM/EDA cleanup stages can consume: proper crossings,
+//! endpoint touches, positive-length collinear overlaps, the exact split
+//! fragments induced on every retained input segment, and a retained line-cell
+//! graph over those fragments. The cell graph is still an exact replay object,
+//! not a sampled polygonizer; it follows Yap, "Towards Exact Geometric
+//! Computation" (1997), by admitting topology only after exact predicate and
+//! ordering replay.
+
+use std::cmp::Ordering;
+
+use hyperlimit::{
+    Point2, PointSegmentLocation, PredicatePolicy, SegmentIntersection, classify_point_segment,
+    classify_segment_intersection_with_facts, compare_reals, construct_line_intersection_point,
+    point2_equal,
+};
+use hyperreal::{Real, RealExactSetFacts};
+
+use crate::arc::{
+    ArcDirection, ExplicitArcArrangementClass, ExplicitArcArrangementReport,
+    ExplicitArcIntersectionClass, ExplicitArcPointClassification, ExplicitCircularArc,
+    LineExplicitArcIntersectionClass,
+};
+use crate::curve_cell::{
+    CurveArrangementCellError, CurveArrangementCellGraph, build_explicit_arc_cell_graph,
+    build_line_arc_cell_graph,
+};
+use crate::segment::LinePathSegment;
+
+/// Topological event class for a pair of retained line segments.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineArrangementEventClass {
+    /// The segments are certified disjoint.
+    Disjoint,
+    /// The segments cross at one point interior to both closed segments.
+    ProperCrossing,
+    /// The common set is a single endpoint or one endpoint on the other segment.
+    EndpointTouch,
+    /// The common set is a positive-length collinear interval.
+    CollinearOverlap,
+    /// The retained closed segments have the same endpoint set.
+    Identical,
+    /// The predicate policy could not certify the relation.
+    Unknown,
+}
+
+/// Errors that prevent line arrangement cleanup from producing trusted splits.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineArrangementError {
+    /// A retained line segment is degenerate and cannot induce a 1D parameter order.
+    DegenerateSegment { segment: usize },
+    /// A point used as a split witness did not lie on the referenced segment.
+    SplitPointOffSegment { segment: usize },
+    /// Exact parameter construction required a division that the scalar layer rejected.
+    ParameterDivision,
+    /// Exact comparison of retained split parameters was undecidable.
+    UndecidableParameterOrder { segment: usize },
+    /// The same geometric point could not be de-duplicated exactly.
+    UndecidablePointEquality,
+    /// A split witness was not certified on the referenced arc.
+    SplitPointOffArc { arc: usize },
+    /// Exact ordering along an explicit arc sweep was undecidable.
+    UndecidableArcOrder { arc: usize },
+    /// Exact angular ordering of incident line fragments was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact curved face area replay was unavailable for a retained cell edge.
+    UndecidableCellArea { edge: usize },
+    /// A retained explicit sub-arc could not be reconstructed from certified endpoints.
+    ArcFragmentConstruction,
+}
+
+/// Errors that prevent explicit-arc arrangement cleanup from producing trusted splits.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExplicitArcArrangementError {
+    /// A split witness was not certified on the referenced arc.
+    SplitPointOffArc { arc: usize },
+    /// Exact ordering along an arc sweep was undecidable.
+    UndecidableArcOrder { arc: usize },
+    /// The same geometric point could not be de-duplicated exactly.
+    UndecidablePointEquality,
+    /// Exact tangent ordering of incident explicit-arc fragments was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact curved face area replay was unavailable for a retained arc-cell edge.
+    UndecidableCellArea { edge: usize },
+    /// A retained explicit sub-arc could not be reconstructed from certified endpoints.
+    FragmentConstruction,
+}
+
+/// Exact event class for one retained line segment against one explicit arc.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineArcArrangementEventClass {
+    /// The retained segment and arc are certified disjoint.
+    Disjoint,
+    /// The line segment touches the arc at one certified point.
+    Tangent,
+    /// The line segment crosses the arc at two certified points.
+    Secant,
+    /// The current exact predicates cannot decide the relation.
+    Unknown,
+}
+
+/// Exact facts cached for one arranged line path set.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementFacts {
+    /// Exact-set facts across all input endpoint coordinates.
+    pub endpoint_exact: RealExactSetFacts,
+    /// Exact-set facts across all emitted fragment endpoint coordinates.
+    pub fragment_exact: RealExactSetFacts,
+}
+
+/// Exact parameter and point witness on one input segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementBreakpoint {
+    /// Input segment index.
+    pub segment: usize,
+    /// Exact point on the segment.
+    pub point: Point2,
+    /// Numerator of the retained parameter `dot(point-start, end-start) / |end-start|^2`.
+    pub parameter_numerator: Real,
+    /// Positive denominator of the retained parameter.
+    pub parameter_denominator: Real,
+}
+
+/// Exact fragment produced by splitting one retained segment at all events.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementFragment {
+    /// Input segment index.
+    pub source_segment: usize,
+    /// Fragment start witness on the source segment.
+    pub start: LineArrangementBreakpoint,
+    /// Fragment end witness on the source segment.
+    pub end: LineArrangementBreakpoint,
+    /// Retained exact line fragment.
+    pub segment: LinePathSegment,
+}
+
+/// Exact vertex in the retained line arrangement cell graph.
+///
+/// Vertices are de-duplicated from fragment endpoints by exact point equality.
+/// They are not snapped or bucketed. This is the point-object side of Yap's
+/// exact geometric computation split: the graph stores constructed exact
+/// coordinates and the predicates that justified their use.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementCellVertex {
+    /// Exact vertex coordinate.
+    pub point: Point2,
+    /// Outgoing half-edge indices sorted by exact angular order.
+    pub outgoing_half_edges: Vec<usize>,
+}
+
+/// Exact undirected edge in the retained line arrangement cell graph.
+///
+/// Multiple source fragments may cover the same geometric open segment after
+/// collinear overlap splitting. The graph stores one geometric edge and keeps
+/// every contributing fragment index as replay provenance instead of emitting
+/// duplicate cell boundaries.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineArrangementCellEdge {
+    /// Start vertex index for the retained geometric edge.
+    pub start: usize,
+    /// End vertex index for the retained geometric edge.
+    pub end: usize,
+    /// Indices in [`LineArrangementReport::fragments`] that realize this edge.
+    pub fragments: Vec<usize>,
+}
+
+/// Directed half-edge used for exact line-cell face walks.
+///
+/// Half-edges are sorted around each vertex by exact quadrant/cross-product
+/// predicates. Face traversal uses the standard DCEL rule: after crossing an
+/// edge, take the predecessor
+/// of the twin in the angular order at the arrival vertex. All ordering uses
+/// exact `Real` comparisons.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineArrangementHalfEdge {
+    /// Undirected cell edge index.
+    pub edge: usize,
+    /// Origin vertex index.
+    pub from: usize,
+    /// Destination vertex index.
+    pub to: usize,
+    /// Opposite half-edge index.
+    pub twin: usize,
+    /// Next half-edge in the exact face walk, when the walk is non-degenerate.
+    pub next: Option<usize>,
+}
+
+/// Classification for an exact line-cell face walk.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineArrangementCellFaceClass {
+    /// A counter-clockwise positive-area bounded face.
+    Bounded,
+    /// The clockwise exterior walk around a connected component.
+    Exterior,
+}
+
+/// Nonzero-area face walk in the retained line cell graph.
+///
+/// The signed doubled area is the exact shoelace sum over the face vertices.
+/// Positive area denotes a bounded counter-clockwise walk; negative area is an
+/// exterior walk. Zero-area backtracks and dangling-edge walks are deliberately
+/// omitted rather than promoted into cells.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementCellFace {
+    /// Half-edges traversed in order.
+    pub half_edges: Vec<usize>,
+    /// Exact doubled signed area of the walk.
+    pub signed_area_twice: Real,
+    /// Whether the walk is bounded or exterior.
+    pub class: LineArrangementCellFaceClass,
+}
+
+/// Retained exact cell graph induced by arranged line fragments.
+///
+/// This is the first planar-cell scheduling artifact for line arrangements. It
+/// does not decide boolean interiors or fill rules. It gives downstream CAM
+/// and PCB stages exact vertices, unique geometric edges, angular half-edge
+/// order, and nonzero face walks that can be replayed without sampled
+/// coordinates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementCellGraph {
+    /// Exact graph vertices.
+    pub vertices: Vec<LineArrangementCellVertex>,
+    /// Unique undirected geometric edges.
+    pub edges: Vec<LineArrangementCellEdge>,
+    /// Directed half-edges, two per unique edge.
+    pub half_edges: Vec<LineArrangementHalfEdge>,
+    /// Nonzero-area face walks discovered from exact half-edge traversal.
+    pub faces: Vec<LineArrangementCellFace>,
+}
+
+/// Pairwise arrangement event between two retained line segments.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementEvent {
+    /// First input segment index.
+    pub first: usize,
+    /// Second input segment index.
+    pub second: usize,
+    /// Exact topological class.
+    pub class: LineArrangementEventClass,
+    /// Raw segment classifier value when available.
+    pub segment_intersection: Option<SegmentIntersection>,
+    /// Single-point witness for proper crossings and endpoint touches.
+    pub point: Option<Point2>,
+    /// Positive-length overlap witness for collinear overlaps and identical segments.
+    pub overlap: Option<LinePathSegment>,
+}
+
+/// Pairwise arrangement event between one line segment and one explicit arc.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArcArrangementEvent {
+    /// Line segment index.
+    pub line: usize,
+    /// Explicit arc index.
+    pub arc: usize,
+    /// Certified line/arc event class.
+    pub class: LineArcArrangementEventClass,
+    /// Raw axis-aligned line/arc classifier value when available.
+    pub line_arc_intersection: Option<LineExplicitArcIntersectionClass>,
+    /// Certified intersection points in line construction order.
+    pub points: Vec<Point2>,
+}
+
+/// Exact breakpoint witness on one explicit arc.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExplicitArcArrangementBreakpoint {
+    /// Explicit arc index.
+    pub arc: usize,
+    /// Exact point on the arc sweep.
+    pub point: Point2,
+}
+
+/// Exact explicit-arc fragment induced by retained arc/arc events.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExplicitArcArrangementFragment {
+    /// Input explicit arc index.
+    pub source_arc: usize,
+    /// Fragment start witness on the source arc.
+    pub start: ExplicitArcArrangementBreakpoint,
+    /// Fragment end witness on the source arc.
+    pub end: ExplicitArcArrangementBreakpoint,
+    /// Retained exact explicit sub-arc.
+    pub arc: ExplicitCircularArc,
+}
+
+/// Pairwise retained event between two explicit circular arcs.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExplicitArcSetArrangementEvent {
+    /// First explicit arc index.
+    pub first: usize,
+    /// Second explicit arc index.
+    pub second: usize,
+    /// Certified arrangement class from the retained arc predicate.
+    pub class: ExplicitArcArrangementClass,
+    /// Raw retained pair report.
+    pub report: ExplicitArcArrangementReport,
+    /// Certified point witnesses that should split one or both arcs.
+    pub points: Vec<Point2>,
+}
+
+/// Retained line arrangement schedule and split fragments.
+///
+/// The report is an exact object package: input geometry is preserved,
+/// pairwise events are certified by exact predicates, and split fragments are
+/// emitted only after their exact segment parameters are ordered. The pairwise
+/// classifier is the standard segment-intersection test exposed by `hyperlimit`.
+/// Split ordering uses exact rational parameter comparison; topology is
+/// accepted only after exact predicate replay, not after sampled tolerance
+/// cleanup.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementReport {
+    /// Retained input segments.
+    pub segments: Vec<LinePathSegment>,
+    /// Certified or unknown pairwise events.
+    pub events: Vec<LineArrangementEvent>,
+    /// Sorted breakpoints for every source segment.
+    pub breakpoints: Vec<Vec<LineArrangementBreakpoint>>,
+    /// Positive-length split fragments. Point fragments are intentionally omitted.
+    pub fragments: Vec<LineArrangementFragment>,
+    /// Exact retained cell graph induced by split line fragments.
+    pub cell_graph: LineArrangementCellGraph,
+    /// Cached exact facts for the retained arrangement schedule.
+    pub facts: LineArrangementFacts,
+}
+
+/// Retained mixed line/arc arrangement schedule for the axis-aligned line subset.
+///
+/// This report is intentionally narrower than a full circular-arc arrangement
+/// graph. It schedules exact line/arc events and split fragments on both the
+/// retained lines and retained explicit arcs so later CAM/EDA stages can
+/// consume certified witnesses without flattening the arc or constructing
+/// planar cells in `hyperpath`. The exact line/circle solve is a retained
+/// axis-aligned branch. Every event point is replayed against
+/// exact segment bounds and exact arc-sweep predicates before it can split a
+/// source carrier. Full-circle arc fragments reuse the exact retained branch
+/// cut ordering from the arc-only scheduler instead of sampled angles.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArcArrangementReport {
+    /// Retained input line segments.
+    pub lines: Vec<LinePathSegment>,
+    /// Retained input explicit arcs.
+    pub arcs: Vec<ExplicitCircularArc>,
+    /// Certified or unknown line/arc pair events.
+    pub events: Vec<LineArcArrangementEvent>,
+    /// Sorted line breakpoints induced by line endpoints and line/arc events.
+    pub line_breakpoints: Vec<Vec<LineArrangementBreakpoint>>,
+    /// Sorted arc breakpoints induced by arc endpoints and line/arc events.
+    pub arc_breakpoints: Vec<Vec<ExplicitArcArrangementBreakpoint>>,
+    /// Positive-length line fragments induced by exact line/arc split points.
+    pub line_fragments: Vec<LineArrangementFragment>,
+    /// Positive-length explicit-arc fragments induced by exact line/arc split points.
+    pub arc_fragments: Vec<ExplicitArcArrangementFragment>,
+    /// Exact retained mixed line/arc cell graph induced by split fragments.
+    pub cell_graph: CurveArrangementCellGraph,
+    /// Cached exact facts for retained line endpoints and emitted line fragments.
+    pub facts: LineArrangementFacts,
+}
+
+/// Retained explicit-arc arrangement schedule, split fragments, and cells.
+///
+/// This is the arc-only companion to [`LineArrangementReport`]. It promotes
+/// retained arc/arc predicate reports into exact breakpoints and sub-arcs
+/// then feeds the positive-length sub-arcs into the retained curve-cell
+/// scheduler. Different-circle tangent/secant events contribute exact point
+/// witnesses from the retained radical-axis/tangent construction. Same-circle
+/// positive overlaps contribute the endpoints that delimit the shared sweep.
+/// Breakpoint ordering is accepted only for non-full explicit arcs and is
+/// certified by exact sub-arc containment predicates. Full circles use their
+/// retained start point as a branch cut and sort by exact oriented half-turn
+/// and cross-product predicates, rather than by sampled angles. The cell graph
+/// then orders half-edges from exact tangents and computes nonzero face walks
+/// by Green-integral circular-arc area terms. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), and the CGAL
+/// circular-arc arrangement split between exact curve objects and exact
+/// topology predicates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExplicitArcSetArrangementReport {
+    /// Retained input explicit arcs.
+    pub arcs: Vec<ExplicitCircularArc>,
+    /// Certified or unknown pairwise arc events.
+    pub events: Vec<ExplicitArcSetArrangementEvent>,
+    /// Sorted breakpoints for every source arc.
+    pub breakpoints: Vec<Vec<ExplicitArcArrangementBreakpoint>>,
+    /// Positive-length explicit sub-arcs. Point fragments are intentionally omitted.
+    pub fragments: Vec<ExplicitArcArrangementFragment>,
+    /// Exact retained curve cell graph induced by split explicit-arc fragments.
+    pub cell_graph: CurveArrangementCellGraph,
+    /// Exact-set facts across all emitted fragment endpoints.
+    pub fragment_exact: RealExactSetFacts,
+}
+
+/// Arrange a retained set of line segments into exact pair events and fragments.
+///
+/// Degenerate input segments are rejected before pair classification because a
+/// zero-length carrier has no strict one-dimensional order for split fragments.
+/// Proper crossings use the exact construction from `hyperlimit`; endpoint and
+/// overlap events reuse retained endpoint witnesses, so this layer does not
+/// invent new topology or perform region materialization.
+pub fn arrange_line_segments(
+    segments: &[LinePathSegment],
+    policy: PredicatePolicy,
+) -> Result<LineArrangementReport, LineArrangementError> {
+    for (index, segment) in segments.iter().enumerate() {
+        if segment.facts().known_degenerate == Some(true) {
+            return Err(LineArrangementError::DegenerateSegment { segment: index });
+        }
+        if matches!(
+            compare_reals(&segment.length_squared(), &Real::zero(), policy).value(),
+            Some(Ordering::Equal)
+        ) {
+            return Err(LineArrangementError::DegenerateSegment { segment: index });
+        }
+    }
+
+    let mut breakpoints = seed_endpoint_breakpoints(segments, policy)?;
+    let mut events = Vec::new();
+
+    for first in 0..segments.len() {
+        for second in (first + 1)..segments.len() {
+            let event =
+                classify_line_arrangement_event(first, second, segments, &mut breakpoints, policy)?;
+            events.push(event);
+        }
+    }
+
+    sort_and_dedup_breakpoints(&mut breakpoints, policy)?;
+    let fragments = build_fragments(&breakpoints, policy)?;
+    let cell_graph = build_line_cell_graph(&fragments, policy)?;
+    let endpoint_refs = segments
+        .iter()
+        .flat_map(|segment| {
+            [
+                &segment.start().x,
+                &segment.start().y,
+                &segment.end().x,
+                &segment.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    let fragment_refs = fragments
+        .iter()
+        .flat_map(|fragment| {
+            [
+                &fragment.segment.start().x,
+                &fragment.segment.start().y,
+                &fragment.segment.end().x,
+                &fragment.segment.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    let facts = LineArrangementFacts {
+        endpoint_exact: Real::exact_set_facts(endpoint_refs),
+        fragment_exact: Real::exact_set_facts(fragment_refs),
+    };
+    Ok(LineArrangementReport {
+        segments: segments.to_vec(),
+        events,
+        breakpoints,
+        fragments,
+        cell_graph,
+        facts,
+    })
+}
+
+/// Arrange retained line segments against retained explicit circular arcs.
+///
+/// Certified event witnesses are replayed on both source families. Line
+/// fragments use exact segment parameters; arc fragments use the same exact
+/// sweep-order predicates as [`arrange_explicit_arcs`], including retained
+/// branch-cut ordering for full circles.
+pub fn arrange_line_segments_with_explicit_arcs(
+    lines: &[LinePathSegment],
+    arcs: &[ExplicitCircularArc],
+    policy: PredicatePolicy,
+) -> Result<LineArcArrangementReport, LineArrangementError> {
+    for (index, line) in lines.iter().enumerate() {
+        if line.facts().known_degenerate == Some(true) {
+            return Err(LineArrangementError::DegenerateSegment { segment: index });
+        }
+        if matches!(
+            compare_reals(&line.length_squared(), &Real::zero(), policy).value(),
+            Some(Ordering::Equal)
+        ) {
+            return Err(LineArrangementError::DegenerateSegment { segment: index });
+        }
+    }
+
+    let mut line_breakpoints = seed_endpoint_breakpoints(lines, policy)?;
+    let mut arc_breakpoints =
+        seed_arc_endpoint_breakpoints(arcs, policy).map_err(line_arc_error_from_arc_error)?;
+    let mut events = Vec::new();
+    for (line_index, line) in lines.iter().enumerate() {
+        for (arc_index, arc) in arcs.iter().enumerate() {
+            let event = classify_line_arc_arrangement_event(
+                line_index,
+                line,
+                arc_index,
+                arc,
+                &mut line_breakpoints,
+                &mut arc_breakpoints,
+                policy,
+            )?;
+            events.push(event);
+        }
+    }
+
+    sort_and_dedup_breakpoints(&mut line_breakpoints, policy)?;
+    sort_and_dedup_arc_breakpoints(&mut arc_breakpoints, arcs, policy)
+        .map_err(line_arc_error_from_arc_error)?;
+    let line_fragments = build_fragments(&line_breakpoints, policy)?;
+    let arc_fragments = build_arc_fragments(arcs, &arc_breakpoints, policy)
+        .map_err(line_arc_error_from_arc_error)?;
+    let cell_graph = build_line_arc_cell_graph(&line_fragments, &arc_fragments, policy)
+        .map_err(line_error_from_curve_cell_error)?;
+    let endpoint_refs = lines
+        .iter()
+        .flat_map(|segment| {
+            [
+                &segment.start().x,
+                &segment.start().y,
+                &segment.end().x,
+                &segment.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    let mut fragment_refs = line_fragments
+        .iter()
+        .flat_map(|fragment| {
+            [
+                &fragment.segment.start().x,
+                &fragment.segment.start().y,
+                &fragment.segment.end().x,
+                &fragment.segment.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    fragment_refs.extend(arc_fragments.iter().flat_map(|fragment| {
+        [
+            &fragment.arc.start().x,
+            &fragment.arc.start().y,
+            &fragment.arc.end().x,
+            &fragment.arc.end().y,
+        ]
+    }));
+    let facts = LineArrangementFacts {
+        endpoint_exact: Real::exact_set_facts(endpoint_refs),
+        fragment_exact: Real::exact_set_facts(fragment_refs),
+    };
+    Ok(LineArcArrangementReport {
+        lines: lines.to_vec(),
+        arcs: arcs.to_vec(),
+        events,
+        line_breakpoints,
+        arc_breakpoints,
+        line_fragments,
+        arc_fragments,
+        cell_graph,
+        facts,
+    })
+}
+
+/// Arrange retained explicit circular arcs into pair events and sub-arc fragments.
+///
+/// Full-circle arcs use the retained coincident start/end point as a branch
+/// cut. Non-full arcs keep their authored direction and all arcs are split
+/// only at exact witnesses certified by existing arc/arc predicates.
+pub fn arrange_explicit_arcs(
+    arcs: &[ExplicitCircularArc],
+    policy: PredicatePolicy,
+) -> Result<ExplicitArcSetArrangementReport, ExplicitArcArrangementError> {
+    let mut breakpoints = seed_arc_endpoint_breakpoints(arcs, policy)?;
+    let mut events = Vec::new();
+    for first in 0..arcs.len() {
+        for second in (first + 1)..arcs.len() {
+            let event = classify_explicit_arc_arrangement_event(
+                first,
+                second,
+                arcs,
+                &mut breakpoints,
+                policy,
+            )?;
+            events.push(event);
+        }
+    }
+
+    sort_and_dedup_arc_breakpoints(&mut breakpoints, arcs, policy)?;
+    let fragments = build_arc_fragments(arcs, &breakpoints, policy)?;
+    let cell_graph = build_explicit_arc_cell_graph(&fragments, policy)
+        .map_err(arc_error_from_curve_cell_error)?;
+    let fragment_refs = fragments
+        .iter()
+        .flat_map(|fragment| {
+            [
+                &fragment.arc.start().x,
+                &fragment.arc.start().y,
+                &fragment.arc.end().x,
+                &fragment.arc.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    let fragment_exact = Real::exact_set_facts(fragment_refs);
+    Ok(ExplicitArcSetArrangementReport {
+        arcs: arcs.to_vec(),
+        events,
+        breakpoints,
+        fragments,
+        cell_graph,
+        fragment_exact,
+    })
+}
+
+fn classify_explicit_arc_arrangement_event(
+    first: usize,
+    second: usize,
+    arcs: &[ExplicitCircularArc],
+    breakpoints: &mut [Vec<ExplicitArcArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<ExplicitArcSetArrangementEvent, ExplicitArcArrangementError> {
+    let report = arcs[first].arrange_with(&arcs[second], policy);
+    let mut points = Vec::new();
+    match report.class {
+        ExplicitArcArrangementClass::DifferentCircleOnePoint
+        | ExplicitArcArrangementClass::DifferentCircleTwoPoints => {
+            if let Some(intersection) = &report.intersection
+                && matches!(
+                    intersection.class,
+                    ExplicitArcIntersectionClass::OnePoint
+                        | ExplicitArcIntersectionClass::TwoPoints
+                )
+            {
+                for point in &intersection.points {
+                    push_unique_arc_point(&mut points, point.clone(), policy)?;
+                    add_arc_breakpoint(breakpoints, first, &arcs[first], point.clone(), policy)?;
+                    add_arc_breakpoint(breakpoints, second, &arcs[second], point.clone(), policy)?;
+                }
+            }
+        }
+        ExplicitArcArrangementClass::SameCircleEndpointTouch
+        | ExplicitArcArrangementClass::SameCircleOverlap
+        | ExplicitArcArrangementClass::SameCircleFirstCoversSecond
+        | ExplicitArcArrangementClass::SameCircleSecondCoversFirst
+        | ExplicitArcArrangementClass::SameCircleEqual => {
+            let overlap_points =
+                same_circle_overlap_breakpoints(&arcs[first], &arcs[second], policy)?;
+            for point in overlap_points {
+                push_unique_arc_point(&mut points, point.clone(), policy)?;
+                if point_on_arc_bool_for_arrangement(&arcs[first], &point, policy)? {
+                    add_arc_breakpoint(breakpoints, first, &arcs[first], point.clone(), policy)?;
+                }
+                if point_on_arc_bool_for_arrangement(&arcs[second], &point, policy)? {
+                    add_arc_breakpoint(breakpoints, second, &arcs[second], point, policy)?;
+                }
+            }
+        }
+        ExplicitArcArrangementClass::SameCircleDisjoint
+        | ExplicitArcArrangementClass::DifferentCircleDisjoint
+        | ExplicitArcArrangementClass::DifferentCircleOutsideArcSweeps
+        | ExplicitArcArrangementClass::Unknown => {}
+    }
+    Ok(ExplicitArcSetArrangementEvent {
+        first,
+        second,
+        class: report.class,
+        report,
+        points,
+    })
+}
+
+fn classify_line_arc_arrangement_event(
+    line_index: usize,
+    line: &LinePathSegment,
+    arc_index: usize,
+    arc: &ExplicitCircularArc,
+    line_breakpoints: &mut [Vec<LineArrangementBreakpoint>],
+    arc_breakpoints: &mut [Vec<ExplicitArcArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<LineArcArrangementEvent, LineArrangementError> {
+    let report = arc.intersect_segment(line, policy);
+    match report.class {
+        LineExplicitArcIntersectionClass::Disjoint => Ok(LineArcArrangementEvent {
+            line: line_index,
+            arc: arc_index,
+            class: LineArcArrangementEventClass::Disjoint,
+            line_arc_intersection: Some(report.class),
+            points: Vec::new(),
+        }),
+        LineExplicitArcIntersectionClass::Tangent | LineExplicitArcIntersectionClass::Secant => {
+            for point in &report.points {
+                add_breakpoint(line_breakpoints, line_index, line, point.clone(), policy)?;
+                add_arc_breakpoint(arc_breakpoints, arc_index, arc, point.clone(), policy)
+                    .map_err(line_arc_error_from_arc_error)?;
+            }
+            Ok(LineArcArrangementEvent {
+                line: line_index,
+                arc: arc_index,
+                class: match report.class {
+                    LineExplicitArcIntersectionClass::Tangent => {
+                        LineArcArrangementEventClass::Tangent
+                    }
+                    LineExplicitArcIntersectionClass::Secant => {
+                        LineArcArrangementEventClass::Secant
+                    }
+                    LineExplicitArcIntersectionClass::Disjoint
+                    | LineExplicitArcIntersectionClass::Unknown => unreachable!("matched above"),
+                },
+                line_arc_intersection: Some(report.class),
+                points: report.points,
+            })
+        }
+        LineExplicitArcIntersectionClass::Unknown => Ok(LineArcArrangementEvent {
+            line: line_index,
+            arc: arc_index,
+            class: LineArcArrangementEventClass::Unknown,
+            line_arc_intersection: Some(report.class),
+            points: Vec::new(),
+        }),
+    }
+}
+
+fn line_arc_error_from_arc_error(error: ExplicitArcArrangementError) -> LineArrangementError {
+    match error {
+        ExplicitArcArrangementError::SplitPointOffArc { arc } => {
+            LineArrangementError::SplitPointOffArc { arc }
+        }
+        ExplicitArcArrangementError::UndecidableArcOrder { arc } => {
+            LineArrangementError::UndecidableArcOrder { arc }
+        }
+        ExplicitArcArrangementError::UndecidablePointEquality => {
+            LineArrangementError::UndecidablePointEquality
+        }
+        ExplicitArcArrangementError::UndecidableCellOrder { vertex } => {
+            LineArrangementError::UndecidableCellOrder { vertex }
+        }
+        ExplicitArcArrangementError::UndecidableCellArea { edge } => {
+            LineArrangementError::UndecidableCellArea { edge }
+        }
+        ExplicitArcArrangementError::FragmentConstruction => {
+            LineArrangementError::ArcFragmentConstruction
+        }
+    }
+}
+
+fn line_error_from_curve_cell_error(error: CurveArrangementCellError) -> LineArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            LineArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            LineArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            LineArrangementError::UndecidableCellArea { edge }
+        }
+    }
+}
+
+fn arc_error_from_curve_cell_error(
+    error: CurveArrangementCellError,
+) -> ExplicitArcArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            ExplicitArcArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            ExplicitArcArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            ExplicitArcArrangementError::UndecidableCellArea { edge }
+        }
+    }
+}
+
+fn classify_line_arrangement_event(
+    first: usize,
+    second: usize,
+    segments: &[LinePathSegment],
+    breakpoints: &mut [Vec<LineArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<LineArrangementEvent, LineArrangementError> {
+    let a = &segments[first];
+    let b = &segments[second];
+    let Some(intersection) = classify_segment_intersection_with_facts(
+        a.start(),
+        a.end(),
+        b.start(),
+        b.end(),
+        a.facts().segment,
+        b.facts().segment,
+        policy,
+    )
+    .value() else {
+        return Ok(LineArrangementEvent {
+            first,
+            second,
+            class: LineArrangementEventClass::Unknown,
+            segment_intersection: None,
+            point: None,
+            overlap: None,
+        });
+    };
+
+    match intersection {
+        SegmentIntersection::Disjoint => Ok(LineArrangementEvent {
+            first,
+            second,
+            class: LineArrangementEventClass::Disjoint,
+            segment_intersection: Some(intersection),
+            point: None,
+            overlap: None,
+        }),
+        SegmentIntersection::Proper => {
+            let Some(point) =
+                construct_line_intersection_point(a.start(), a.end(), b.start(), b.end())
+            else {
+                return Ok(LineArrangementEvent {
+                    first,
+                    second,
+                    class: LineArrangementEventClass::Unknown,
+                    segment_intersection: Some(intersection),
+                    point: None,
+                    overlap: None,
+                });
+            };
+            add_breakpoint(breakpoints, first, a, point.clone(), policy)?;
+            add_breakpoint(breakpoints, second, b, point.clone(), policy)?;
+            Ok(LineArrangementEvent {
+                first,
+                second,
+                class: LineArrangementEventClass::ProperCrossing,
+                segment_intersection: Some(intersection),
+                point: Some(point),
+                overlap: None,
+            })
+        }
+        SegmentIntersection::EndpointTouch => {
+            let Some(point) = collect_shared_points(a, b, policy)?.into_iter().next() else {
+                return Ok(LineArrangementEvent {
+                    first,
+                    second,
+                    class: LineArrangementEventClass::Unknown,
+                    segment_intersection: Some(intersection),
+                    point: None,
+                    overlap: None,
+                });
+            };
+            add_breakpoint(breakpoints, first, a, point.clone(), policy)?;
+            add_breakpoint(breakpoints, second, b, point.clone(), policy)?;
+            Ok(LineArrangementEvent {
+                first,
+                second,
+                class: LineArrangementEventClass::EndpointTouch,
+                segment_intersection: Some(intersection),
+                point: Some(point),
+                overlap: None,
+            })
+        }
+        SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+            let shared_points = collect_shared_points(a, b, policy)?;
+            let Some((start, end)) = overlap_endpoints(shared_points, a, policy)? else {
+                return Ok(LineArrangementEvent {
+                    first,
+                    second,
+                    class: LineArrangementEventClass::Unknown,
+                    segment_intersection: Some(intersection),
+                    point: None,
+                    overlap: None,
+                });
+            };
+            add_breakpoint(breakpoints, first, a, start.clone(), policy)?;
+            add_breakpoint(breakpoints, first, a, end.clone(), policy)?;
+            add_breakpoint(breakpoints, second, b, start.clone(), policy)?;
+            add_breakpoint(breakpoints, second, b, end.clone(), policy)?;
+            Ok(LineArrangementEvent {
+                first,
+                second,
+                class: if intersection == SegmentIntersection::Identical {
+                    LineArrangementEventClass::Identical
+                } else {
+                    LineArrangementEventClass::CollinearOverlap
+                },
+                segment_intersection: Some(intersection),
+                point: None,
+                overlap: Some(
+                    LinePathSegment::new(start, end, policy)
+                        .map_err(|_| LineArrangementError::UndecidablePointEquality)?,
+                ),
+            })
+        }
+    }
+}
+
+fn seed_arc_endpoint_breakpoints(
+    arcs: &[ExplicitCircularArc],
+    policy: PredicatePolicy,
+) -> Result<Vec<Vec<ExplicitArcArrangementBreakpoint>>, ExplicitArcArrangementError> {
+    arcs.iter()
+        .enumerate()
+        .map(|(index, arc)| {
+            Ok(vec![
+                make_arc_breakpoint(index, arc, arc.start().clone(), policy)?,
+                make_arc_breakpoint(index, arc, arc.end().clone(), policy)?,
+            ])
+        })
+        .collect()
+}
+
+fn add_arc_breakpoint(
+    breakpoints: &mut [Vec<ExplicitArcArrangementBreakpoint>],
+    arc_index: usize,
+    arc: &ExplicitCircularArc,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), ExplicitArcArrangementError> {
+    breakpoints[arc_index].push(make_arc_breakpoint(arc_index, arc, point, policy)?);
+    Ok(())
+}
+
+fn make_arc_breakpoint(
+    arc_index: usize,
+    arc: &ExplicitCircularArc,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<ExplicitArcArrangementBreakpoint, ExplicitArcArrangementError> {
+    if !point_on_arc_bool_for_arrangement(arc, &point, policy)? {
+        return Err(ExplicitArcArrangementError::SplitPointOffArc { arc: arc_index });
+    }
+    Ok(ExplicitArcArrangementBreakpoint {
+        arc: arc_index,
+        point,
+    })
+}
+
+fn same_circle_overlap_breakpoints(
+    first: &ExplicitCircularArc,
+    second: &ExplicitCircularArc,
+    policy: PredicatePolicy,
+) -> Result<Vec<Point2>, ExplicitArcArrangementError> {
+    let mut points = Vec::new();
+    for point in [first.start(), first.end()] {
+        if point_on_arc_bool_for_arrangement(second, point, policy)? {
+            push_unique_arc_point(&mut points, point.clone(), policy)?;
+        }
+    }
+    for point in [second.start(), second.end()] {
+        if point_on_arc_bool_for_arrangement(first, point, policy)? {
+            push_unique_arc_point(&mut points, point.clone(), policy)?;
+        }
+    }
+    Ok(points)
+}
+
+fn sort_and_dedup_arc_breakpoints(
+    breakpoints: &mut [Vec<ExplicitArcArrangementBreakpoint>],
+    arcs: &[ExplicitCircularArc],
+    policy: PredicatePolicy,
+) -> Result<(), ExplicitArcArrangementError> {
+    for (arc_index, points) in breakpoints.iter_mut().enumerate() {
+        let mut sorted = Vec::new();
+        for point in std::mem::take(points) {
+            insert_sorted_arc_breakpoint(&mut sorted, point, &arcs[arc_index], policy)?;
+        }
+        *points = sorted;
+    }
+    Ok(())
+}
+
+fn insert_sorted_arc_breakpoint(
+    sorted: &mut Vec<ExplicitArcArrangementBreakpoint>,
+    point: ExplicitArcArrangementBreakpoint,
+    arc: &ExplicitCircularArc,
+    policy: PredicatePolicy,
+) -> Result<(), ExplicitArcArrangementError> {
+    for index in 0..sorted.len() {
+        match compare_arc_breakpoints(&point, &sorted[index], arc, policy)? {
+            Ordering::Less => {
+                sorted.insert(index, point);
+                return Ok(());
+            }
+            Ordering::Equal => return Ok(()),
+            Ordering::Greater => {}
+        }
+    }
+    sorted.push(point);
+    Ok(())
+}
+
+fn compare_arc_breakpoints(
+    left: &ExplicitArcArrangementBreakpoint,
+    right: &ExplicitArcArrangementBreakpoint,
+    arc: &ExplicitCircularArc,
+    policy: PredicatePolicy,
+) -> Result<Ordering, ExplicitArcArrangementError> {
+    if point2_equal(&left.point, &right.point, policy).value() == Some(true) {
+        return Ok(Ordering::Equal);
+    }
+    if arc.facts().known_full_circle {
+        return compare_full_circle_breakpoints(left, right, arc, policy);
+    }
+    if point2_equal(&left.point, arc.start(), policy).value() == Some(true)
+        || point2_equal(&right.point, arc.end(), policy).value() == Some(true)
+    {
+        return Ok(Ordering::Less);
+    }
+    if point2_equal(&right.point, arc.start(), policy).value() == Some(true)
+        || point2_equal(&left.point, arc.end(), policy).value() == Some(true)
+    {
+        return Ok(Ordering::Greater);
+    }
+    let prefix = ExplicitCircularArc::new(
+        arc.center().clone(),
+        arc.radius().clone(),
+        arc.start().clone(),
+        right.point.clone(),
+        arc.direction(),
+        policy,
+    )
+    .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
+    match prefix.classify_point(&left.point, policy) {
+        ExplicitArcPointClassification::OnArc => Ok(Ordering::Less),
+        ExplicitArcPointClassification::OnCircleOutsideSweep => Ok(Ordering::Greater),
+        ExplicitArcPointClassification::OffCircle => {
+            Err(ExplicitArcArrangementError::SplitPointOffArc { arc: left.arc })
+        }
+        ExplicitArcPointClassification::Unknown => {
+            Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: left.arc })
+        }
+    }
+}
+
+fn compare_full_circle_breakpoints(
+    left: &ExplicitArcArrangementBreakpoint,
+    right: &ExplicitArcArrangementBreakpoint,
+    arc: &ExplicitCircularArc,
+    policy: PredicatePolicy,
+) -> Result<Ordering, ExplicitArcArrangementError> {
+    // Full-circle ordering uses the retained start radial as a branch cut.
+    // Points are first partitioned by exact directed half-turn, then ordered
+    // inside a half-turn by an exact cross-product sign. This is the same
+    // predicate-only discipline Yap advocates for EGC and mirrors the
+    // circular-arc traits in CGAL: no angle sampling or tolerance sort is used.
+    if point2_equal(&left.point, arc.start(), policy).value() == Some(true) {
+        return Ok(Ordering::Less);
+    }
+    if point2_equal(&right.point, arc.start(), policy).value() == Some(true) {
+        return Ok(Ordering::Greater);
+    }
+    let left_half = full_circle_half_turn_rank(arc, &left.point, policy)?;
+    let right_half = full_circle_half_turn_rank(arc, &right.point, policy)?;
+    match left_half.cmp(&right_half) {
+        Ordering::Less | Ordering::Greater => return Ok(left_half.cmp(&right_half)),
+        Ordering::Equal => {}
+    }
+    let left_radial = radial_vector(arc.center(), &left.point);
+    let right_radial = radial_vector(arc.center(), &right.point);
+    match compare_reals(
+        &directed_cross(&left_radial, &right_radial, arc.direction()),
+        &Real::zero(),
+        policy,
+    )
+    .value()
+    {
+        Some(Ordering::Greater) => Ok(Ordering::Less),
+        Some(Ordering::Less) => Ok(Ordering::Greater),
+        Some(Ordering::Equal) | None => {
+            Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: left.arc })
+        }
+    }
+}
+
+fn full_circle_half_turn_rank(
+    arc: &ExplicitCircularArc,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<u8, ExplicitArcArrangementError> {
+    let branch = radial_vector(arc.center(), arc.start());
+    let radial = radial_vector(arc.center(), point);
+    let y = directed_cross(&branch, &radial, arc.direction());
+    match compare_reals(&y, &Real::zero(), policy).value() {
+        Some(Ordering::Greater) => Ok(0),
+        Some(Ordering::Less) => Ok(1),
+        Some(Ordering::Equal) => {
+            let x = dot(&branch, &radial);
+            match compare_reals(&x, &Real::zero(), policy).value() {
+                Some(Ordering::Less) => Ok(0),
+                Some(Ordering::Greater) => Ok(0),
+                Some(Ordering::Equal) | None => {
+                    Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: 0 })
+                }
+            }
+        }
+        None => Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: 0 }),
+    }
+}
+
+fn build_arc_fragments(
+    arcs: &[ExplicitCircularArc],
+    breakpoints: &[Vec<ExplicitArcArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<Vec<ExplicitArcArrangementFragment>, ExplicitArcArrangementError> {
+    let mut fragments = Vec::new();
+    for points in breakpoints {
+        if points.len() == 1 && arcs[points[0].arc].facts().known_full_circle {
+            let source = &arcs[points[0].arc];
+            fragments.push(ExplicitArcArrangementFragment {
+                source_arc: points[0].arc,
+                start: points[0].clone(),
+                end: points[0].clone(),
+                arc: source.clone(),
+            });
+            continue;
+        }
+        for window in points.windows(2) {
+            if point2_equal(&window[0].point, &window[1].point, policy).value() == Some(true) {
+                continue;
+            }
+            let source = &arcs[window[0].arc];
+            let fragment = ExplicitCircularArc::new(
+                source.center().clone(),
+                source.radius().clone(),
+                window[0].point.clone(),
+                window[1].point.clone(),
+                source.direction(),
+                policy,
+            )
+            .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
+            fragments.push(ExplicitArcArrangementFragment {
+                source_arc: window[0].arc,
+                start: window[0].clone(),
+                end: window[1].clone(),
+                arc: fragment,
+            });
+        }
+        if points.len() > 1 && arcs[points[0].arc].facts().known_full_circle {
+            let first = points.first().expect("len checked");
+            let last = points.last().expect("len checked");
+            let source = &arcs[first.arc];
+            let fragment = ExplicitCircularArc::new(
+                source.center().clone(),
+                source.radius().clone(),
+                last.point.clone(),
+                first.point.clone(),
+                source.direction(),
+                policy,
+            )
+            .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
+            fragments.push(ExplicitArcArrangementFragment {
+                source_arc: first.arc,
+                start: last.clone(),
+                end: first.clone(),
+                arc: fragment,
+            });
+        }
+    }
+    Ok(fragments)
+}
+
+fn point_on_arc_bool_for_arrangement(
+    arc: &ExplicitCircularArc,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<bool, ExplicitArcArrangementError> {
+    match arc.classify_point(point, policy) {
+        ExplicitArcPointClassification::OnArc => Ok(true),
+        ExplicitArcPointClassification::OnCircleOutsideSweep
+        | ExplicitArcPointClassification::OffCircle => Ok(false),
+        ExplicitArcPointClassification::Unknown => {
+            Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: 0 })
+        }
+    }
+}
+
+fn push_unique_arc_point(
+    points: &mut Vec<Point2>,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), ExplicitArcArrangementError> {
+    for existing in points.iter() {
+        match point2_equal(existing, &point, policy).value() {
+            Some(true) => return Ok(()),
+            Some(false) => {}
+            None => return Err(ExplicitArcArrangementError::UndecidablePointEquality),
+        }
+    }
+    points.push(point);
+    Ok(())
+}
+
+fn seed_endpoint_breakpoints(
+    segments: &[LinePathSegment],
+    policy: PredicatePolicy,
+) -> Result<Vec<Vec<LineArrangementBreakpoint>>, LineArrangementError> {
+    segments
+        .iter()
+        .enumerate()
+        .map(|(index, segment)| {
+            Ok(vec![
+                make_breakpoint(index, segment, segment.start().clone(), policy)?,
+                make_breakpoint(index, segment, segment.end().clone(), policy)?,
+            ])
+        })
+        .collect()
+}
+
+fn add_breakpoint(
+    breakpoints: &mut [Vec<LineArrangementBreakpoint>],
+    segment_index: usize,
+    segment: &LinePathSegment,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), LineArrangementError> {
+    breakpoints[segment_index].push(make_breakpoint(segment_index, segment, point, policy)?);
+    Ok(())
+}
+
+fn make_breakpoint(
+    segment_index: usize,
+    segment: &LinePathSegment,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<LineArrangementBreakpoint, LineArrangementError> {
+    match classify_point_segment(segment.start(), segment.end(), &point, policy).value() {
+        Some(location) if location.is_on_segment() => {}
+        Some(_) => {
+            return Err(LineArrangementError::SplitPointOffSegment {
+                segment: segment_index,
+            });
+        }
+        None => {
+            return Err(LineArrangementError::SplitPointOffSegment {
+                segment: segment_index,
+            });
+        }
+    }
+    let direction = Point2::new(
+        segment.end().x.clone() - segment.start().x.clone(),
+        segment.end().y.clone() - segment.start().y.clone(),
+    );
+    let offset = Point2::new(
+        point.x.clone() - segment.start().x.clone(),
+        point.y.clone() - segment.start().y.clone(),
+    );
+    let denominator = squared_norm(&direction);
+    if !matches!(
+        compare_reals(&denominator, &Real::zero(), policy).value(),
+        Some(Ordering::Greater)
+    ) {
+        return Err(LineArrangementError::DegenerateSegment {
+            segment: segment_index,
+        });
+    }
+    Ok(LineArrangementBreakpoint {
+        segment: segment_index,
+        point,
+        parameter_numerator: dot(&offset, &direction),
+        parameter_denominator: denominator,
+    })
+}
+
+fn sort_and_dedup_breakpoints(
+    breakpoints: &mut [Vec<LineArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<(), LineArrangementError> {
+    for (segment_index, points) in breakpoints.iter_mut().enumerate() {
+        let mut sorted = Vec::new();
+        for point in std::mem::take(points) {
+            insert_sorted_breakpoint(&mut sorted, point, segment_index, policy)?;
+        }
+        *points = sorted;
+    }
+    Ok(())
+}
+
+fn insert_sorted_breakpoint(
+    sorted: &mut Vec<LineArrangementBreakpoint>,
+    point: LineArrangementBreakpoint,
+    segment_index: usize,
+    policy: PredicatePolicy,
+) -> Result<(), LineArrangementError> {
+    for index in 0..sorted.len() {
+        match compare_breakpoints(&point, &sorted[index], policy)? {
+            Ordering::Less => {
+                sorted.insert(index, point);
+                return Ok(());
+            }
+            Ordering::Equal => {
+                if point2_equal(&point.point, &sorted[index].point, policy).value() != Some(true) {
+                    return Err(LineArrangementError::UndecidablePointEquality);
+                }
+                return Ok(());
+            }
+            Ordering::Greater => {}
+        }
+    }
+    if sorted
+        .last()
+        .and_then(|last| point2_equal(&point.point, &last.point, policy).value())
+        == Some(true)
+    {
+        return Ok(());
+    }
+    if sorted.last().is_some()
+        && compare_breakpoints(sorted.last().expect("checked"), &point, policy).is_err()
+    {
+        return Err(LineArrangementError::UndecidableParameterOrder {
+            segment: segment_index,
+        });
+    }
+    sorted.push(point);
+    Ok(())
+}
+
+fn compare_breakpoints(
+    left: &LineArrangementBreakpoint,
+    right: &LineArrangementBreakpoint,
+    policy: PredicatePolicy,
+) -> Result<Ordering, LineArrangementError> {
+    let left_scaled = left.parameter_numerator.clone() * right.parameter_denominator.clone();
+    let right_scaled = right.parameter_numerator.clone() * left.parameter_denominator.clone();
+    compare_reals(&left_scaled, &right_scaled, policy)
+        .value()
+        .ok_or(LineArrangementError::UndecidableParameterOrder {
+            segment: left.segment,
+        })
+}
+
+fn build_fragments(
+    breakpoints: &[Vec<LineArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<Vec<LineArrangementFragment>, LineArrangementError> {
+    let mut fragments = Vec::new();
+    for points in breakpoints {
+        for window in points.windows(2) {
+            if compare_breakpoints(&window[0], &window[1], policy)? == Ordering::Equal {
+                continue;
+            }
+            fragments.push(LineArrangementFragment {
+                source_segment: window[0].segment,
+                start: window[0].clone(),
+                end: window[1].clone(),
+                segment: LinePathSegment::new(
+                    window[0].point.clone(),
+                    window[1].point.clone(),
+                    policy,
+                )
+                .map_err(|_| LineArrangementError::UndecidablePointEquality)?,
+            });
+        }
+    }
+    Ok(fragments)
+}
+
+fn build_line_cell_graph(
+    fragments: &[LineArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<LineArrangementCellGraph, LineArrangementError> {
+    let mut vertices = Vec::new();
+    let mut edges: Vec<LineArrangementCellEdge> = Vec::new();
+
+    for (fragment_index, fragment) in fragments.iter().enumerate() {
+        let start = cell_vertex_index(&mut vertices, fragment.segment.start(), policy)?;
+        let end = cell_vertex_index(&mut vertices, fragment.segment.end(), policy)?;
+        if start == end {
+            continue;
+        }
+        if let Some(edge) = edges.iter_mut().find(|edge| {
+            (edge.start == start && edge.end == end) || (edge.start == end && edge.end == start)
+        }) {
+            edge.fragments.push(fragment_index);
+        } else {
+            edges.push(LineArrangementCellEdge {
+                start,
+                end,
+                fragments: vec![fragment_index],
+            });
+        }
+    }
+
+    let mut half_edges = Vec::with_capacity(edges.len() * 2);
+    for (edge_index, edge) in edges.iter().enumerate() {
+        let forward = half_edges.len();
+        let reverse = forward + 1;
+        half_edges.push(LineArrangementHalfEdge {
+            edge: edge_index,
+            from: edge.start,
+            to: edge.end,
+            twin: reverse,
+            next: None,
+        });
+        half_edges.push(LineArrangementHalfEdge {
+            edge: edge_index,
+            from: edge.end,
+            to: edge.start,
+            twin: forward,
+            next: None,
+        });
+        vertices[edge.start].outgoing_half_edges.push(forward);
+        vertices[edge.end].outgoing_half_edges.push(reverse);
+    }
+
+    for vertex in 0..vertices.len() {
+        sort_outgoing_half_edges(vertex, &mut vertices, &half_edges, policy)?;
+    }
+    assign_half_edge_successors(&vertices, &mut half_edges);
+    let faces = line_cell_faces(&vertices, &half_edges, policy)?;
+
+    Ok(LineArrangementCellGraph {
+        vertices,
+        edges,
+        half_edges,
+        faces,
+    })
+}
+
+fn cell_vertex_index(
+    vertices: &mut Vec<LineArrangementCellVertex>,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<usize, LineArrangementError> {
+    for (index, vertex) in vertices.iter().enumerate() {
+        match point2_equal(&vertex.point, point, policy).value() {
+            Some(true) => return Ok(index),
+            Some(false) => {}
+            None => return Err(LineArrangementError::UndecidablePointEquality),
+        }
+    }
+    let index = vertices.len();
+    vertices.push(LineArrangementCellVertex {
+        point: point.clone(),
+        outgoing_half_edges: Vec::new(),
+    });
+    Ok(index)
+}
+
+fn sort_outgoing_half_edges(
+    vertex: usize,
+    vertices: &mut [LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+    policy: PredicatePolicy,
+) -> Result<(), LineArrangementError> {
+    let mut outgoing = std::mem::take(&mut vertices[vertex].outgoing_half_edges);
+    for left in 0..outgoing.len() {
+        for right in (left + 1)..outgoing.len() {
+            compare_half_edge_angle(
+                outgoing[left],
+                outgoing[right],
+                vertices,
+                half_edges,
+                policy,
+            )
+            .ok_or(LineArrangementError::UndecidableCellOrder { vertex })?;
+        }
+    }
+    outgoing.sort_by(|left, right| {
+        compare_half_edge_angle(*left, *right, vertices, half_edges, policy)
+            .expect("cell half-edge order was certified before sorting")
+    });
+    vertices[vertex].outgoing_half_edges = outgoing;
+    Ok(())
+}
+
+fn compare_half_edge_angle(
+    left: usize,
+    right: usize,
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if left == right {
+        return Some(Ordering::Equal);
+    }
+    let left_vector = half_edge_vector(left, vertices, half_edges);
+    let right_vector = half_edge_vector(right, vertices, half_edges);
+    let left_upper = direction_upper_half(&left_vector.0, &left_vector.1, policy)?;
+    let right_upper = direction_upper_half(&right_vector.0, &right_vector.1, policy)?;
+    match (left_upper, right_upper) {
+        (true, false) => return Some(Ordering::Less),
+        (false, true) => return Some(Ordering::Greater),
+        _ => {}
+    }
+    let cross = left_vector.0 * right_vector.1 - left_vector.1 * right_vector.0;
+    match compare_reals(&cross, &Real::zero(), policy).value()? {
+        Ordering::Greater => Some(Ordering::Less),
+        Ordering::Less => Some(Ordering::Greater),
+        Ordering::Equal => Some(Ordering::Equal),
+    }
+}
+
+fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
+    match compare_reals(dy, &Real::zero(), policy).value()? {
+        Ordering::Greater => Some(true),
+        Ordering::Less => Some(false),
+        Ordering::Equal => match compare_reals(dx, &Real::zero(), policy).value()? {
+            Ordering::Less => Some(false),
+            Ordering::Equal | Ordering::Greater => Some(true),
+        },
+    }
+}
+
+fn half_edge_vector(
+    half_edge: usize,
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+) -> (Real, Real) {
+    let edge = &half_edges[half_edge];
+    let from = &vertices[edge.from].point;
+    let to = &vertices[edge.to].point;
+    (to.x.clone() - from.x.clone(), to.y.clone() - from.y.clone())
+}
+
+fn assign_half_edge_successors(
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &mut [LineArrangementHalfEdge],
+) {
+    for half_edge in half_edges.iter_mut() {
+        let twin = half_edge.twin;
+        let vertex = half_edge.to;
+        let outgoing = &vertices[vertex].outgoing_half_edges;
+        let Some(position) = outgoing.iter().position(|candidate| *candidate == twin) else {
+            continue;
+        };
+        let next_position = if position == 0 {
+            outgoing.len() - 1
+        } else {
+            position - 1
+        };
+        half_edge.next = Some(outgoing[next_position]);
+    }
+}
+
+fn line_cell_faces(
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+    policy: PredicatePolicy,
+) -> Result<Vec<LineArrangementCellFace>, LineArrangementError> {
+    let mut visited = vec![false; half_edges.len()];
+    let mut faces = Vec::new();
+    for start in 0..half_edges.len() {
+        if visited[start] {
+            continue;
+        }
+        let mut cycle = Vec::new();
+        let mut current = start;
+        loop {
+            if visited[current] {
+                break;
+            }
+            visited[current] = true;
+            cycle.push(current);
+            let Some(next) = half_edges[current].next else {
+                break;
+            };
+            current = next;
+            if current == start {
+                break;
+            }
+        }
+        if current != start || cycle.len() < 3 {
+            continue;
+        }
+        let area = signed_face_area_twice(&cycle, vertices, half_edges);
+        match compare_reals(&area, &Real::zero(), policy).value() {
+            Some(Ordering::Equal) => continue,
+            Some(Ordering::Greater) => faces.push(LineArrangementCellFace {
+                half_edges: cycle,
+                signed_area_twice: area,
+                class: LineArrangementCellFaceClass::Bounded,
+            }),
+            Some(Ordering::Less) => faces.push(LineArrangementCellFace {
+                half_edges: cycle,
+                signed_area_twice: area,
+                class: LineArrangementCellFaceClass::Exterior,
+            }),
+            None => {
+                return Err(LineArrangementError::UndecidableCellOrder {
+                    vertex: half_edges[start].from,
+                });
+            }
+        }
+    }
+    Ok(faces)
+}
+
+fn signed_face_area_twice(
+    cycle: &[usize],
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+) -> Real {
+    cycle.iter().fold(Real::zero(), |area, half_edge| {
+        let from = &vertices[half_edges[*half_edge].from].point;
+        let to = &vertices[half_edges[*half_edge].to].point;
+        area + from.x.clone() * to.y.clone() - from.y.clone() * to.x.clone()
+    })
+}
+
+fn collect_shared_points(
+    first: &LinePathSegment,
+    second: &LinePathSegment,
+    policy: PredicatePolicy,
+) -> Result<Vec<Point2>, LineArrangementError> {
+    let mut shared = Vec::new();
+    for point in [first.start(), first.end()] {
+        if classify_point_segment(second.start(), second.end(), point, policy)
+            .value()
+            .is_some_and(PointSegmentLocation::is_on_segment)
+        {
+            push_unique_point(&mut shared, point.clone(), policy)?;
+        }
+    }
+    for point in [second.start(), second.end()] {
+        if classify_point_segment(first.start(), first.end(), point, policy)
+            .value()
+            .is_some_and(PointSegmentLocation::is_on_segment)
+        {
+            push_unique_point(&mut shared, point.clone(), policy)?;
+        }
+    }
+    Ok(shared)
+}
+
+fn push_unique_point(
+    points: &mut Vec<Point2>,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), LineArrangementError> {
+    for existing in points.iter() {
+        match point2_equal(existing, &point, policy).value() {
+            Some(true) => return Ok(()),
+            Some(false) => {}
+            None => return Err(LineArrangementError::UndecidablePointEquality),
+        }
+    }
+    points.push(point);
+    Ok(())
+}
+
+fn overlap_endpoints(
+    points: Vec<Point2>,
+    reference: &LinePathSegment,
+    policy: PredicatePolicy,
+) -> Result<Option<(Point2, Point2)>, LineArrangementError> {
+    if points.len() < 2 {
+        return Ok(None);
+    }
+    let mut breakpoints = points
+        .into_iter()
+        .map(|point| make_breakpoint(0, reference, point, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    sort_and_dedup_breakpoints(std::slice::from_mut(&mut breakpoints), policy)?;
+    if breakpoints.len() < 2 {
+        return Ok(None);
+    }
+    Ok(Some((
+        breakpoints.first().expect("len checked").point.clone(),
+        breakpoints.last().expect("len checked").point.clone(),
+    )))
+}
+
+fn squared_norm(vector: &Point2) -> Real {
+    Real::signed_product_sum(
+        [true, true],
+        [[&vector.x, &vector.x], [&vector.y, &vector.y]],
+    )
+}
+
+fn radial_vector(center: &Point2, point: &Point2) -> Point2 {
+    Point2::new(
+        point.x.clone() - center.x.clone(),
+        point.y.clone() - center.y.clone(),
+    )
+}
+
+fn dot(first: &Point2, second: &Point2) -> Real {
+    Real::signed_product_sum([true, true], [[&first.x, &second.x], [&first.y, &second.y]])
+}
+
+fn directed_cross(first: &Point2, second: &Point2, direction: ArcDirection) -> Real {
+    let cross = first.x.clone() * second.y.clone() - first.y.clone() * second.x.clone();
+    match direction {
+        ArcDirection::Ccw => cross,
+        ArcDirection::Cw => -cross,
+    }
+}

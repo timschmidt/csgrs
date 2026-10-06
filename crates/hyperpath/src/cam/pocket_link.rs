@@ -1,0 +1,300 @@
+//! Exact retained link graphs for rectangular pockets.
+//!
+//! This module stays deliberately on the path side of the Hyper split. It
+//! turns source geometry and process parameters directly into exact boundary
+//! segments plus exact connector candidates, but it does not perform
+//! stock clipping, cutter engagement analysis, gouge detection, or mesh/solid
+//! materialization. The distinction follows Yap, "Towards Exact Geometric
+//! Computation," *Computational Geometry* 7.1-2 (1997): construct exact
+//! objects first, then expose the predicates needed to certify whether the
+//! objects may become output. The contour/link separation is also consistent
+//! with contour-parallel pocketing treatments such as Held, "On the
+//! Computational Geometry of Pocket Machining" (1991), where offset contours
+//! and linking moves are separate algorithmic objects.
+
+use std::cmp::Ordering;
+
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
+use hyperreal::Real;
+
+use crate::cam::{
+    PocketOffsetRing, PocketRingError, RectangularPocket, RectangularScheduleStop,
+    rectangular_pocket_rings,
+};
+use crate::segment::LinePathSegment;
+
+/// Axis-aligned side of a retained rectangular pocket ring.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PocketRingSide {
+    /// Low-Y side from minimum X to maximum X.
+    MinY,
+    /// High-X side from minimum Y to maximum Y.
+    MaxX,
+    /// High-Y side from maximum X to minimum X.
+    MaxY,
+    /// Low-X side from maximum Y to minimum Y.
+    MinX,
+}
+
+/// One exact boundary segment of a scheduled rectangular pocket ring.
+///
+/// The segment is a retained path-domain source record. It carries the ring
+/// index and side so a downstream `hypermesh` intake can build or reject solid
+/// topology while preserving source identity.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PocketRingSegment {
+    /// Source ring index from the pocket schedule.
+    pub ring_index: usize,
+    /// Rectangular side represented by `segment`.
+    pub side: PocketRingSide,
+    /// Exact side segment.
+    pub segment: LinePathSegment,
+}
+
+/// One exact connector candidate between two adjacent pocket rings.
+///
+/// Connectors are emitted as axis-aligned dogleg legs between lower-left ring
+/// corners. They are candidates only: feed, ramping, cutter radius, gouge, and
+/// rest-material predicates still have to certify whether a CAM process may
+/// use them.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PocketLinkSegment {
+    /// Outer/source ring index.
+    pub from_ring: usize,
+    /// Inner/target ring index.
+    pub to_ring: usize,
+    /// Zero-based leg index within the dogleg connector.
+    pub leg_index: usize,
+    /// Exact connector segment.
+    pub segment: LinePathSegment,
+}
+
+/// Exact retained link graph over rectangular pocket rings.
+///
+/// `ring_segments` contains four oriented side segments for every positive-area
+/// ring. `links` contains exact connector legs between adjacent rings. The
+/// graph is intentionally a source graph rather than an accepted toolpath:
+/// later exact arrangements, rest-material predicates, process constraints,
+/// and mesh-domain intake decide whether and how these retained paths are used.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RectangularPocketLinkGraph {
+    /// Source pocket boundary.
+    pub pocket: RectangularPocket,
+    /// Exact tool radius used for the first inset.
+    pub tool_radius: Real,
+    /// Exact stepover added between successive rings.
+    pub stepover: Real,
+    /// Generated contour-parallel rings.
+    pub rings: Vec<PocketOffsetRing>,
+    /// Why ring generation stopped.
+    pub stop: RectangularScheduleStop,
+    /// Exact boundary segments for every scheduled ring.
+    pub ring_segments: Vec<PocketRingSegment>,
+    /// Exact connector legs between adjacent rings.
+    pub links: Vec<PocketLinkSegment>,
+}
+
+/// Errors while constructing retained rectangular pocket link graphs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PocketLinkGraphError {
+    /// Ring generation failed.
+    Rings(PocketRingError),
+    /// No ring was available to link.
+    EmptyRings,
+    /// A scheduled ring did not have positive area.
+    DegenerateRing,
+    /// Exact comparison could not decide a required predicate.
+    UnknownComparison,
+    /// A generated connector endpoint failed exact equality validation.
+    InvalidConnectorEndpoint,
+}
+
+/// Returns an exact retained link graph for a rectangular pocket.
+///
+/// The function validates that every scheduled ring has positive extent and
+/// that each adjacent pair is exactly nested. It then emits four exact
+/// side-segments per ring plus a deterministic lower-left dogleg between
+/// adjacent rings. The dogleg is represented as one or two axis-aligned
+/// `LinePathSegment`s; zero-length legs are skipped after exact comparison.
+///
+/// This is not a pocketing executor. It is the path-domain graph carrier that a
+/// later arrangement or hypermesh intake can certify, reject, or transform.
+pub fn rectangular_pocket_link_graph(
+    pocket: RectangularPocket,
+    tool_radius: Real,
+    stepover: Real,
+    max_rings: usize,
+    policy: PredicatePolicy,
+) -> Result<RectangularPocketLinkGraph, PocketLinkGraphError> {
+    let report = rectangular_pocket_rings(
+        &pocket,
+        tool_radius.clone(),
+        stepover.clone(),
+        max_rings,
+        policy,
+    )
+    .map_err(PocketLinkGraphError::Rings)?;
+    if report.rings.is_empty() {
+        return Err(PocketLinkGraphError::EmptyRings);
+    }
+
+    for ring in &report.rings {
+        validate_positive_ring(ring, policy)?;
+    }
+
+    let mut ring_segments = Vec::with_capacity(report.rings.len() * 4);
+    for ring in &report.rings {
+        ring_segments.extend(ring_boundary_segments(ring, policy)?);
+    }
+
+    let mut links = Vec::new();
+    for pair in report.rings.windows(2) {
+        links.extend(lower_left_dogleg(&pair[0], &pair[1], policy)?);
+    }
+
+    Ok(RectangularPocketLinkGraph {
+        pocket,
+        tool_radius,
+        stepover,
+        rings: report.rings,
+        stop: report.stop,
+        ring_segments,
+        links,
+    })
+}
+
+fn ring_boundary_segments(
+    ring: &PocketOffsetRing,
+    policy: PredicatePolicy,
+) -> Result<[PocketRingSegment; 4], PocketLinkGraphError> {
+    let min_min = ring.min.clone();
+    let max_min = Point2::new(ring.max.x.clone(), ring.min.y.clone());
+    let max_max = ring.max.clone();
+    let min_max = Point2::new(ring.min.x.clone(), ring.max.y.clone());
+    Ok([
+        PocketRingSegment {
+            ring_index: ring.index,
+            side: PocketRingSide::MinY,
+            segment: LinePathSegment::new(min_min.clone(), max_min.clone(), policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
+        },
+        PocketRingSegment {
+            ring_index: ring.index,
+            side: PocketRingSide::MaxX,
+            segment: LinePathSegment::new(max_min, max_max.clone(), policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
+        },
+        PocketRingSegment {
+            ring_index: ring.index,
+            side: PocketRingSide::MaxY,
+            segment: LinePathSegment::new(max_max, min_max.clone(), policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
+        },
+        PocketRingSegment {
+            ring_index: ring.index,
+            side: PocketRingSide::MinX,
+            segment: LinePathSegment::new(min_max, min_min, policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
+        },
+    ])
+}
+
+fn lower_left_dogleg(
+    outer: &PocketOffsetRing,
+    inner: &PocketOffsetRing,
+    policy: PredicatePolicy,
+) -> Result<Vec<PocketLinkSegment>, PocketLinkGraphError> {
+    let bend = Point2::new(inner.min.x.clone(), outer.min.y.clone());
+    let mut links = Vec::with_capacity(2);
+    push_link_leg(
+        &mut links,
+        outer.index,
+        inner.index,
+        0,
+        outer.min.clone(),
+        bend.clone(),
+        policy,
+    )?;
+    push_link_leg(
+        &mut links,
+        outer.index,
+        inner.index,
+        1,
+        bend,
+        inner.min.clone(),
+        policy,
+    )?;
+    if !links.is_empty()
+        && (!points_equal(links.first().unwrap().segment.start(), &outer.min, policy)
+            || !points_equal(links.last().unwrap().segment.end(), &inner.min, policy))
+    {
+        return Err(PocketLinkGraphError::InvalidConnectorEndpoint);
+    }
+    Ok(links)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_link_leg(
+    links: &mut Vec<PocketLinkSegment>,
+    from_ring: usize,
+    to_ring: usize,
+    leg_index: usize,
+    start: Point2,
+    end: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), PocketLinkGraphError> {
+    if points_equal(&start, &end, policy) {
+        return Ok(());
+    }
+    if !same_axis(&start, &end, policy)? {
+        return Err(PocketLinkGraphError::InvalidConnectorEndpoint);
+    }
+    let segment = LinePathSegment::new(start.clone(), end.clone(), policy)
+        .map_err(|_| PocketLinkGraphError::UnknownComparison)?;
+    if !points_equal(segment.start(), &start, policy) || !points_equal(segment.end(), &end, policy)
+    {
+        return Err(PocketLinkGraphError::InvalidConnectorEndpoint);
+    }
+    links.push(PocketLinkSegment {
+        from_ring,
+        to_ring,
+        leg_index,
+        segment,
+    });
+    Ok(())
+}
+
+fn validate_positive_ring(
+    ring: &PocketOffsetRing,
+    policy: PredicatePolicy,
+) -> Result<(), PocketLinkGraphError> {
+    if compare(&ring.min.x, &ring.max.x, policy)? != Ordering::Less
+        || compare(&ring.min.y, &ring.max.y, policy)? != Ordering::Less
+    {
+        return Err(PocketLinkGraphError::DegenerateRing);
+    }
+    Ok(())
+}
+
+fn same_axis(
+    start: &Point2,
+    end: &Point2,
+    policy: PredicatePolicy,
+) -> Result<bool, PocketLinkGraphError> {
+    Ok(compare(&start.x, &end.x, policy)? == Ordering::Equal
+        || compare(&start.y, &end.y, policy)? == Ordering::Equal)
+}
+
+fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> bool {
+    point2_equal(first, second, policy).value() == Some(true)
+}
+
+fn compare(
+    first: &Real,
+    second: &Real,
+    policy: PredicatePolicy,
+) -> Result<Ordering, PocketLinkGraphError> {
+    compare_reals(first, second, policy)
+        .value()
+        .ok_or(PocketLinkGraphError::UnknownComparison)
+}

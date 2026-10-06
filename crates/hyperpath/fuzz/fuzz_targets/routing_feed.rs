@@ -1,0 +1,383 @@
+#![no_main]
+
+use hyperlimit::{Point2, PredicatePolicy};
+use hyperpath::{
+    AccelerationLimitedFeedProfileClass, ArcDirection, CubicPythagoreanHodograph,
+    ExplicitCircularArc, FeedPathElement, JerkRampPhaseProposal, JerkRampSpanProposal,
+    LinePathSegment, LookaheadFeedSchedule, QuinticPythagoreanHodograph, RouteCertificationError,
+    TangentSpan, certify_acceleration_limited_feed_time,
+    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_cubic_ph_inverse_length, certify_jerk_ramp_feed_schedule,
+    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    certify_quintic_ph_g1_smoothing, certify_quintic_ph_inverse_length,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+};
+use hyperreal::{Rational, Real};
+use libfuzzer_sys::fuzz_target;
+
+fn r(value: i64) -> Real {
+    Real::new(Rational::new(value))
+}
+
+fn rq(numerator: i64, denominator: i64) -> Real {
+    Real::new(Rational::new(numerator) / Rational::new(denominator))
+}
+
+fn p(x: i64, y: i64) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn positive(byte: u8, max: i64) -> i64 {
+    i64::from(byte % u8::try_from(max).unwrap()) + 1
+}
+
+fuzz_target!(|data: &[u8]| {
+    if data.len() < 8 {
+        return;
+    }
+
+    let feed = positive(data[0], 20);
+    let time = positive(data[1], 20);
+    let route = vec![
+        LinePathSegment::new(p(0, 0), p(feed * time, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    ];
+    let constant =
+        certify_constant_feed_time(&route, r(feed), r(time), PredicatePolicy::STRICT).unwrap();
+    assert!(constant.certification.all_satisfied());
+    let mixed_constant = certify_constant_feed_time_for_path(
+        &[FeedPathElement::Line(route[0].clone())],
+        r(feed),
+        r(time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(mixed_constant.certification.all_satisfied());
+
+    let accel_scale = positive(data[2], 8);
+    let triangular_time = positive(data[3], 20);
+    let acceleration = 4 * accel_scale;
+    let triangular_length = accel_scale * triangular_time * triangular_time;
+    let triangular_route = vec![
+        LinePathSegment::new(p(0, 0), p(triangular_length, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    ];
+    let triangular = certify_acceleration_limited_feed_time(
+        &triangular_route,
+        r(acceleration * triangular_time),
+        r(acceleration),
+        r(triangular_time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert_eq!(
+        triangular.profile,
+        AccelerationLimitedFeedProfileClass::Triangular
+    );
+    assert!(triangular.certification.all_satisfied());
+    let triangular_mixed = certify_acceleration_limited_feed_time_for_path(
+        &[FeedPathElement::Line(triangular_route[0].clone())],
+        r(acceleration * triangular_time),
+        r(acceleration),
+        r(triangular_time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(triangular_mixed.certification.all_satisfied());
+
+    let max_feed = positive(data[4], 20);
+    let cruise_time = positive(data[5], 20);
+    let trapezoid_length = max_feed * max_feed + max_feed * cruise_time;
+    let trapezoid_time = 2 * max_feed + cruise_time;
+    let trapezoid_route = vec![
+        LinePathSegment::new(p(0, 0), p(trapezoid_length, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    ];
+    let trapezoid = certify_acceleration_limited_feed_time(
+        &trapezoid_route,
+        r(max_feed),
+        r(1),
+        r(trapezoid_time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert_eq!(
+        trapezoid.profile,
+        AccelerationLimitedFeedProfileClass::Trapezoidal
+    );
+    assert!(trapezoid.certification.all_satisfied());
+
+    let diagonal = vec![
+        LinePathSegment::new(p(0, 0), p(3, 4), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    ];
+    assert_eq!(
+        certify_acceleration_limited_feed_time(
+            &diagonal,
+            r(max_feed),
+            r(1),
+            r(trapezoid_time),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+
+    let jerk = positive(data[6], 8);
+    let quarter_time = positive(data[7], 16);
+    let jerk_length = 2 * jerk * quarter_time * quarter_time * quarter_time;
+    let jerk_time = 4 * quarter_time;
+    let jerk_route = vec![
+        LinePathSegment::new(p(0, 0), p(jerk_length, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    ];
+    let jerk_report = certify_symmetric_jerk_limited_feed_time(
+        &jerk_route,
+        r(jerk * quarter_time * quarter_time),
+        r(jerk * quarter_time),
+        r(jerk),
+        r(jerk_time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(jerk_report.certification.all_satisfied());
+    let radius = (r(2) / Real::pi()).unwrap();
+    let arc = ExplicitCircularArc::new(
+        p(0, 0),
+        radius.clone(),
+        Point2::new(radius.clone(), r(0)),
+        Point2::new(-radius, r(0)),
+        ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    let mixed_jerk_route = vec![
+        FeedPathElement::Line(
+            LinePathSegment::new(p(0, 0), p(jerk_length - 2, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+        ),
+        FeedPathElement::ExplicitArc(arc),
+    ];
+    let mixed_jerk_report = certify_symmetric_jerk_limited_feed_time_for_path(
+        &mixed_jerk_route,
+        r(jerk * quarter_time * quarter_time),
+        r(jerk * quarter_time),
+        r(jerk),
+        r(jerk_time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(mixed_jerk_report.certification.all_satisfied());
+
+    let limited_report = certify_symmetric_jerk_limited_feed_time(
+        &jerk_route,
+        r(1),
+        r(1),
+        r(jerk),
+        r(jerk_time),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(limited_report.certification.has_certified_violation());
+
+    let corner_feed = positive(data[0], 20);
+    let corner_spans = vec![
+        TangentSpan::from_line_segment(
+            &LinePathSegment::new(p(0, 0), p(10, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+        ),
+        TangentSpan::from_line_segment(
+            &LinePathSegment::new(p(10, 0), p(10, 10), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+        ),
+    ];
+    let corner_report = certify_corner_lookahead_limits(
+        &corner_spans,
+        r(corner_feed),
+        r(corner_feed),
+        r(corner_feed * corner_feed),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(corner_report.all_satisfied());
+
+    let reversal_spans = vec![
+        TangentSpan::from_line_segment(
+            &LinePathSegment::new(p(0, 0), p(5, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+        ),
+        TangentSpan::from_line_segment(
+            &LinePathSegment::new(p(5, 0), p(0, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+        ),
+    ];
+    let reversal_report = certify_corner_lookahead_limits(
+        &reversal_spans,
+        Real::zero(),
+        r(1),
+        r(1),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(reversal_report.all_satisfied());
+
+    let schedule_line = LinePathSegment::new(
+        p(0, 0),
+        p(corner_feed * corner_feed, 0),
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
+    let schedule_route = vec![FeedPathElement::Line(schedule_line.clone())];
+    let schedule_spans = vec![TangentSpan::from_line_segment(&schedule_line)];
+    let schedule = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![],
+        corner_radii: vec![],
+        exit_feed: r(corner_feed),
+    };
+    let schedule_report = certify_lookahead_feed_schedule(
+        &schedule_route,
+        &schedule_spans,
+        &schedule,
+        r(corner_feed),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(schedule_report.all_satisfied());
+
+    let ramp_time = 2 * positive(data[1], 8);
+    let ramp_acceleration = positive(data[2], 6);
+    let ramp_length = ramp_acceleration * ramp_time * ramp_time / 2;
+    let ramp_route = vec![FeedPathElement::Line(
+        LinePathSegment::new(p(0, 0), p(ramp_length, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    )];
+    let ramp = JerkRampSpanProposal {
+        start_feed: Real::zero(),
+        end_feed: r(ramp_acceleration * ramp_time),
+        start_acceleration: r(ramp_acceleration),
+        end_acceleration: r(ramp_acceleration),
+        traversal_time: r(ramp_time),
+    };
+    let ramp_report = certify_jerk_ramp_feed_schedule(
+        &ramp_route,
+        &[ramp],
+        r(ramp_acceleration * ramp_time),
+        r(ramp_acceleration),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(ramp_report.all_satisfied());
+
+    let phase_acceleration = positive(data[2], 6);
+    let phase_time = positive(data[3], 8);
+    let phase_length = phase_acceleration * phase_time * phase_time;
+    let phase_route = vec![FeedPathElement::Line(
+        LinePathSegment::new(p(0, 0), p(phase_length, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+    )];
+    let phase_schedule = vec![vec![
+        JerkRampPhaseProposal {
+            path_length: rq(phase_acceleration * phase_time * phase_time, 6),
+            ramp: JerkRampSpanProposal {
+                start_feed: Real::zero(),
+                end_feed: rq(phase_acceleration * phase_time, 2),
+                start_acceleration: Real::zero(),
+                end_acceleration: r(phase_acceleration),
+                traversal_time: r(phase_time),
+            },
+        },
+        JerkRampPhaseProposal {
+            path_length: rq(5 * phase_acceleration * phase_time * phase_time, 6),
+            ramp: JerkRampSpanProposal {
+                start_feed: rq(phase_acceleration * phase_time, 2),
+                end_feed: r(phase_acceleration * phase_time),
+                start_acceleration: r(phase_acceleration),
+                end_acceleration: Real::zero(),
+                traversal_time: r(phase_time),
+            },
+        },
+    ]];
+    let phase_report = certify_multi_phase_jerk_ramp_feed_schedule(
+        &phase_route,
+        &phase_schedule,
+        r(phase_acceleration * phase_time),
+        r(phase_acceleration),
+        r(phase_acceleration),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(phase_report.all_satisfied());
+
+    let ph_root = positive(data[4], 12);
+    let ph = CubicPythagoreanHodograph::new(
+        p(0, 0),
+        r(ph_root),
+        Real::zero(),
+        r(ph_root),
+        Real::zero(),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    let ph_inverse = certify_cubic_ph_inverse_length(
+        &ph,
+        rq(ph_root * ph_root, 2),
+        hyperpath::BezierParameter::new(1, 2).unwrap(),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(ph_inverse.certification.all_satisfied());
+    let ph_route = vec![FeedPathElement::CubicPh(ph)];
+    let ph_feed = certify_constant_feed_time_for_path(
+        &ph_route,
+        r(ph_root * ph_root),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(ph_feed.certification.all_satisfied());
+
+    let quintic_ph = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(ph_root),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    let quintic_inverse = certify_quintic_ph_inverse_length(
+        &quintic_ph,
+        rq(ph_root * ph_root, 2),
+        hyperpath::BezierParameter::new(1, 2).unwrap(),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(quintic_inverse.certification.all_satisfied());
+    let quintic_route = vec![FeedPathElement::QuinticPh(quintic_ph.clone())];
+    let quintic_feed = certify_constant_feed_time_for_path(
+        &quintic_route,
+        r(ph_root * ph_root),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(quintic_feed.certification.all_satisfied());
+    let quintic_g1 = certify_quintic_ph_g1_smoothing(
+        &quintic_ph,
+        p(0, 0),
+        p(ph_root * ph_root, 0),
+        p(ph_root * ph_root, 0),
+        p(ph_root * ph_root, 0),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(quintic_g1.all_satisfied());
+});

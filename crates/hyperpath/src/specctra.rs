@@ -1,0 +1,1727 @@
+//! Exact PCB route interchange records for Specctra DSN/SES-style flows.
+//!
+//! DSN/SES exchange is an autorouter boundary: Lee and Hightower style search
+//! may produce route candidates outside the exact stack, but those candidates
+//! should enter `hyperpath` as fixed-grid exact geometry before clearance
+//! predicates certify topology. This module models validated route records and
+//! a conservative S-expression subset: canonical `(routes ...)` records,
+//! DSN/SES-style envelopes that contain route records, and multi-segment
+//! `(path ...)` wires. It deliberately lowers syntax to exact fixed-grid
+//! records before geometry import. The boundary follows Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign};
+use hyperreal::{Rational, Real};
+use std::borrow::Cow;
+use std::fmt::Write;
+
+use crate::arc::{ArcDirection, ExplicitCircularArc};
+use crate::bezier::CubicBezier;
+use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer, ViaDrillIntent};
+use crate::routing::{MeanderError, MeanderKeepout, MeanderObstacle, validate_meander_keepouts};
+use crate::segment::LinePathSegment;
+use crate::specctra_syntax::{is_bare_atom, tokenize, write_atom};
+use crate::swept::SweptLineSegment;
+
+mod rule_audit;
+
+pub use rule_audit::{
+    SpecctraRouteRuleAudit, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemAudit,
+    SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass, SpecctraRouteRuleTraceClearanceAudit,
+    SpecctraRouteRuleTraceClearancePairAudit, SpecctraRouteRuleTraceClearanceStatus,
+    SpecctraRouteRuleWidthStatus, audit_specctra_route_rule_widths,
+    audit_specctra_trace_rule_clearances,
+};
+
+/// Exact route-level net alias retained from a Specctra DSN/SES-style file.
+///
+/// Real DSN/SES files carry human net names as well as router-internal
+/// identifiers. This canonical subset keeps the alias table separate from
+/// geometric records: `(net N NAME)` records validate that `N` lowers to the
+/// exact [`NetId`] used by wires and vias while retaining `NAME` for diagnostics
+/// and round-trips. The split follows Yap's exact object boundary: net labels
+/// are source metadata, while numeric net ids remain the exact predicate key.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SpecctraNetAlias {
+    /// Exact numeric net identifier used by route geometry.
+    pub net: NetId,
+    /// Source net name as one canonical non-whitespace atom.
+    pub name: String,
+}
+
+/// Exact route-level layer alias retained from a Specctra DSN/SES-style file.
+///
+/// Layer names are source metadata, not geometric predicates. The canonical
+/// `(layer N NAME)` record maps a human board-layer name onto the exact
+/// [`TraceLayer`] identifier used by wires and vias. This keeps diagnostics and
+/// interchange round-trips close to DSN/SES practice while preserving Yap's
+/// object split: route predicates consume exact numeric layer ids.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SpecctraLayerAlias {
+    /// Exact numeric layer identifier used by route geometry.
+    pub layer: TraceLayer,
+    /// Source layer name as one canonical non-whitespace atom.
+    pub name: String,
+}
+
+/// Exact straight trace record in a Specctra DSN/SES-style route exchange.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraTraceRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact route start point.
+    pub start: Point2,
+    /// Exact route end point.
+    pub end: Point2,
+    /// Exact trace width.
+    pub width: Real,
+}
+
+/// Raw fixed-grid trace token lowered from a DSN/SES route file.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SpecctraGridTraceRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Start X coordinate in source grid units.
+    pub start_x: i64,
+    /// Start Y coordinate in source grid units.
+    pub start_y: i64,
+    /// End X coordinate in source grid units.
+    pub end_x: i64,
+    /// End Y coordinate in source grid units.
+    pub end_y: i64,
+    /// Trace width in source grid units.
+    pub width: i64,
+    /// Denominator of one source unit.
+    pub grid_denominator: u64,
+}
+
+/// Exact circular-arc route record in a Specctra DSN/SES-style exchange.
+///
+/// This is a retained curved route object, not a flattened trace sequence.
+/// The exact [`ExplicitCircularArc`] carrier preserves circle center, radius,
+/// endpoints, and sweep direction so later arrangement/feed predicates can
+/// certify topology without chordal approximation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraArcWireRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact retained arc geometry.
+    pub arc: ExplicitCircularArc,
+    /// Exact route width.
+    pub width: Real,
+}
+
+/// Raw fixed-grid circular-arc route token lowered from a DSN/SES route file.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SpecctraGridArcWireRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Circle center X coordinate in source grid units.
+    pub center_x: i64,
+    /// Circle center Y coordinate in source grid units.
+    pub center_y: i64,
+    /// Start X coordinate in source grid units.
+    pub start_x: i64,
+    /// Start Y coordinate in source grid units.
+    pub start_y: i64,
+    /// End X coordinate in source grid units.
+    pub end_x: i64,
+    /// End Y coordinate in source grid units.
+    pub end_y: i64,
+    /// Retained circular radius in source grid units.
+    pub radius: i64,
+    /// Exact sweep direction.
+    pub direction: ArcDirection,
+    /// Route width in source grid units.
+    pub width: i64,
+    /// Denominator of one source unit.
+    pub grid_denominator: u64,
+}
+
+/// Exact via record in a Specctra DSN/SES-style route exchange.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraViaRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Inclusive first copper layer touched by this via.
+    pub start_layer: TraceLayer,
+    /// Inclusive final copper layer touched by this via.
+    pub end_layer: TraceLayer,
+    /// Exact via center.
+    pub center: Point2,
+    /// Exact copper land diameter.
+    pub land_diameter: Real,
+    /// Exact drill diameter.
+    pub drill_diameter: Real,
+    /// Retained drill plating intent from the route interchange boundary.
+    pub drill_intent: ViaDrillIntent,
+}
+
+/// Raw fixed-grid via token lowered from a DSN/SES route file.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SpecctraGridViaRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Inclusive first copper layer touched by this via.
+    pub start_layer: TraceLayer,
+    /// Inclusive final copper layer touched by this via.
+    pub end_layer: TraceLayer,
+    /// Center X coordinate in source grid units.
+    pub x: i64,
+    /// Center Y coordinate in source grid units.
+    pub y: i64,
+    /// Copper land diameter in source grid units.
+    pub land_diameter: i64,
+    /// Drill diameter in source grid units.
+    pub drill_diameter: i64,
+    /// Retained drill plating intent from the route interchange boundary.
+    pub drill_intent: ViaDrillIntent,
+    /// Denominator of one source unit.
+    pub grid_denominator: u64,
+}
+
+/// Raw fixed-grid keepout shape lowered from a DSN/SES route file.
+///
+/// Keepouts are retained route-search constraints, not board/copper booleans.
+/// Rectangles, circles, and simple orthogonal polygons capture common
+/// autorouter blockages such as no-route channels, notched rooms, drills,
+/// vias, and machine exclusion discs while preserving the exact fixed-grid
+/// source values.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SpecctraGridKeepoutShape {
+    /// Axis-aligned rectangular keepout in source grid units.
+    Rect {
+        /// Minimum X coordinate in source grid units.
+        min_x: i64,
+        /// Minimum Y coordinate in source grid units.
+        min_y: i64,
+        /// Maximum X coordinate in source grid units.
+        max_x: i64,
+        /// Maximum Y coordinate in source grid units.
+        max_y: i64,
+    },
+    /// Circular/disc keepout in source grid units.
+    Circle {
+        /// Center X coordinate in source grid units.
+        x: i64,
+        /// Center Y coordinate in source grid units.
+        y: i64,
+        /// Radius in source grid units.
+        radius: i64,
+    },
+    /// Simple orthogonal polygon keepout in source grid units.
+    Polygon {
+        /// Retained `(x, y)` vertex tokens in winding order.
+        vertices: Vec<(i64, i64)>,
+    },
+}
+
+/// Raw fixed-grid keepout token lowered from a DSN/SES route file.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SpecctraGridKeepoutRecord {
+    /// Optional copper layer identifier for layer-scoped route blockages.
+    pub layer: Option<TraceLayer>,
+    /// Retained fixed-grid shape.
+    pub shape: SpecctraGridKeepoutShape,
+    /// Denominator of one source unit.
+    pub grid_denominator: u64,
+}
+
+/// Exact route-rule record retained from a Specctra DSN/SES-style exchange.
+///
+/// Rule records are design-rule source objects, not geometry edits. A rule can
+/// be scoped to a net, a layer, both, or neither; exact clearance and width
+/// predicates consume it later when checking route candidates. This follows
+/// Yap's object/predicate boundary and mirrors DSN/SES autorouter practice:
+/// keep rule declarations separate from wires/vias so import does not silently
+/// modify path geometry.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteRuleRecord {
+    /// Optional net scope.
+    pub net: Option<NetId>,
+    /// Optional layer scope.
+    pub layer: Option<TraceLayer>,
+    /// Exact minimum route clearance.
+    pub clearance: Real,
+    /// Exact minimum route width.
+    pub width: Real,
+}
+
+/// Raw fixed-grid route-rule token lowered from a DSN/SES route file.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SpecctraGridRouteRuleRecord {
+    /// Optional net scope.
+    pub net: Option<NetId>,
+    /// Optional layer scope.
+    pub layer: Option<TraceLayer>,
+    /// Minimum route clearance in source grid units.
+    pub clearance: i64,
+    /// Minimum route width in source grid units.
+    pub width: i64,
+    /// Denominator of one source unit.
+    pub grid_denominator: u64,
+}
+
+/// Exact keepout shape retained from a Specctra DSN/SES-style route exchange.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraKeepoutRecord {
+    /// Optional copper layer identifier for layer-scoped route blockages.
+    pub layer: Option<TraceLayer>,
+    /// Exact keepout used by route placement predicates.
+    pub keepout: MeanderKeepout,
+}
+
+/// Imported exact circular-arc route segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteArc {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact retained arc geometry.
+    pub arc: ExplicitCircularArc,
+    /// Exact route width.
+    pub width: Real,
+}
+
+/// Imported exact cubic-Bezier route segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteBezier {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact retained polynomial centerline.
+    pub bezier: CubicBezier,
+    /// Exact route width.
+    pub width: Real,
+}
+
+/// Exact route made of validated trace, via, arc, and Bezier records.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SpecctraRoute {
+    traces: Vec<PcbTrace>,
+    vias: Vec<PcbViaStack>,
+    arcs: Vec<SpecctraRouteArc>,
+    beziers: Vec<SpecctraRouteBezier>,
+}
+
+impl SpecctraRoute {
+    /// Construct a route from already validated traces.
+    pub fn new(traces: Vec<PcbTrace>) -> Self {
+        Self {
+            traces,
+            vias: Vec::new(),
+            arcs: Vec::new(),
+            beziers: Vec::new(),
+        }
+    }
+
+    /// Construct a route from already validated traces and vias.
+    pub fn with_vias(traces: Vec<PcbTrace>, vias: Vec<PcbViaStack>) -> Self {
+        Self {
+            traces,
+            vias,
+            arcs: Vec::new(),
+            beziers: Vec::new(),
+        }
+    }
+
+    /// Construct a route from already validated traces, vias, and retained arcs.
+    pub fn with_vias_and_arcs(
+        traces: Vec<PcbTrace>,
+        vias: Vec<PcbViaStack>,
+        arcs: Vec<SpecctraRouteArc>,
+    ) -> Self {
+        Self {
+            traces,
+            vias,
+            arcs,
+            beziers: Vec::new(),
+        }
+    }
+
+    /// Construct a route from validated traces, vias, arcs, and cubic Beziers.
+    pub fn with_curves(
+        traces: Vec<PcbTrace>,
+        vias: Vec<PcbViaStack>,
+        arcs: Vec<SpecctraRouteArc>,
+        beziers: Vec<SpecctraRouteBezier>,
+    ) -> Self {
+        Self {
+            traces,
+            vias,
+            arcs,
+            beziers,
+        }
+    }
+
+    /// Return the validated trace list.
+    pub fn traces(&self) -> &[PcbTrace] {
+        &self.traces
+    }
+
+    /// Return the validated via list.
+    pub fn vias(&self) -> &[PcbViaStack] {
+        &self.vias
+    }
+
+    /// Return retained exact circular-arc route segments.
+    pub fn arcs(&self) -> &[SpecctraRouteArc] {
+        &self.arcs
+    }
+
+    /// Return retained exact cubic-Bezier route segments.
+    pub fn beziers(&self) -> &[SpecctraRouteBezier] {
+        &self.beziers
+    }
+
+    /// Import exact trace records, stopping at the first invalid record.
+    pub fn from_records(
+        records: &[SpecctraTraceRecord],
+        policy: PredicatePolicy,
+    ) -> Result<Self, SpecctraImportError> {
+        records
+            .iter()
+            .map(|record| import_specctra_trace_record(record, policy))
+            .collect::<Result<Vec<_>, _>>()
+            .map(Self::new)
+    }
+
+    /// Import exact trace and via records, stopping at the first invalid record.
+    pub fn from_trace_and_via_records(
+        traces: &[SpecctraTraceRecord],
+        vias: &[SpecctraViaRecord],
+        policy: PredicatePolicy,
+    ) -> Result<Self, SpecctraImportError> {
+        Self::from_trace_via_and_arc_records(traces, vias, &[], policy)
+    }
+
+    /// Import exact trace, via, and arc records, stopping at the first invalid record.
+    pub fn from_trace_via_and_arc_records(
+        traces: &[SpecctraTraceRecord],
+        vias: &[SpecctraViaRecord],
+        arcs: &[SpecctraArcWireRecord],
+        policy: PredicatePolicy,
+    ) -> Result<Self, SpecctraImportError> {
+        let traces = traces
+            .iter()
+            .map(|record| import_specctra_trace_record(record, policy))
+            .collect::<Result<Vec<_>, _>>()?;
+        let vias = vias
+            .iter()
+            .map(|record| import_specctra_via_record(record, policy))
+            .collect::<Result<Vec<_>, _>>()?;
+        let arcs = arcs
+            .iter()
+            .map(|record| import_specctra_arc_wire_record(record, policy))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::with_vias_and_arcs(traces, vias, arcs))
+    }
+}
+
+/// Errors while lowering external route records into exact trace geometry.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SpecctraImportError {
+    /// Source grid denominator was zero or otherwise invalid.
+    InvalidGrid,
+    /// Trace width was exactly negative.
+    NegativeWidth,
+    /// Via land or drill diameter was exactly negative.
+    NegativeDiameter,
+    /// Circular keepout radius was exactly negative.
+    NegativeRadius,
+    /// Rectangular keepout bounds were not exactly ordered.
+    InvalidKeepoutBounds,
+    /// Polygon keepout vertices did not form a simple orthogonal loop.
+    InvalidKeepoutPolygon,
+    /// Via start layer was above its end layer.
+    ReversedLayerSpan,
+    /// Circular arc route geometry failed exact construction.
+    InvalidArcGeometry,
+    /// Route rule clearance or width was exactly negative.
+    NegativeRuleValue,
+    /// The workspace predicate policy could not certify an imported scalar sign.
+    PredicateUnresolved,
+}
+
+/// Errors while parsing the minimal DSN/SES-style route text form.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SpecctraParseError {
+    /// Parentheses, field names, or route shape did not match the supported form.
+    InvalidSyntax,
+    /// Integer token could not be parsed or did not fit the target field.
+    InvalidInteger,
+    /// Source grid denominator was zero or otherwise invalid.
+    InvalidGrid,
+    /// Trace width was exactly negative after exact fixed-grid lowering.
+    NegativeWidth,
+    /// Via land or drill diameter was exactly negative after exact fixed-grid lowering.
+    NegativeDiameter,
+    /// Circular keepout radius was exactly negative after exact fixed-grid lowering.
+    NegativeRadius,
+    /// Rectangular keepout bounds were not exactly ordered after exact lowering.
+    InvalidKeepoutBounds,
+    /// Polygon keepout vertices did not form a simple orthogonal loop.
+    InvalidKeepoutPolygon,
+    /// Via start layer was above its end layer.
+    ReversedLayerSpan,
+    /// Circular arc route geometry failed exact construction.
+    InvalidArcGeometry,
+    /// Route-level net alias was empty, malformed, or duplicated.
+    InvalidNetAlias,
+    /// Route-level layer alias was empty, malformed, or duplicated.
+    InvalidLayerAlias,
+    /// Via drill intent was not one of the canonical supported atoms.
+    InvalidDrillIntent,
+    /// Route rule clearance or width was exactly negative after exact lowering.
+    NegativeRuleValue,
+    /// The workspace predicate policy could not certify a lowered scalar sign.
+    PredicateUnresolved,
+}
+
+impl From<SpecctraImportError> for SpecctraParseError {
+    fn from(error: SpecctraImportError) -> Self {
+        match error {
+            SpecctraImportError::InvalidGrid => Self::InvalidGrid,
+            SpecctraImportError::NegativeWidth => Self::NegativeWidth,
+            SpecctraImportError::NegativeDiameter => Self::NegativeDiameter,
+            SpecctraImportError::NegativeRadius => Self::NegativeRadius,
+            SpecctraImportError::InvalidKeepoutBounds => Self::InvalidKeepoutBounds,
+            SpecctraImportError::InvalidKeepoutPolygon => Self::InvalidKeepoutPolygon,
+            SpecctraImportError::ReversedLayerSpan => Self::ReversedLayerSpan,
+            SpecctraImportError::InvalidArcGeometry => Self::InvalidArcGeometry,
+            SpecctraImportError::NegativeRuleValue => Self::NegativeRuleValue,
+            SpecctraImportError::PredicateUnresolved => Self::PredicateUnresolved,
+        }
+    }
+}
+
+/// Convert a fixed-grid DSN/SES token into an exact trace record.
+///
+/// The conversion uses `Rational::fraction` directly so source-grid values are
+/// not rounded through floats. This keeps the import boundary compatible with
+/// exact predicates and with future DSN/SES parsers.
+pub fn specctra_grid_trace_record(
+    record: SpecctraGridTraceRecord,
+) -> Result<SpecctraTraceRecord, SpecctraImportError> {
+    validate_grid(record.grid_denominator)?;
+    Ok(SpecctraTraceRecord {
+        net: record.net,
+        layer: record.layer,
+        start: Point2::new(
+            grid_real(record.start_x, record.grid_denominator)?,
+            grid_real(record.start_y, record.grid_denominator)?,
+        ),
+        end: Point2::new(
+            grid_real(record.end_x, record.grid_denominator)?,
+            grid_real(record.end_y, record.grid_denominator)?,
+        ),
+        width: grid_real(record.width, record.grid_denominator)?,
+    })
+}
+
+/// Convert a fixed-grid DSN/SES via token into an exact via record.
+///
+/// This is the via analogue of [`specctra_grid_trace_record`]. It preserves
+/// land and drill dimensions as exact rationals and keeps drill plating intent
+/// as a discrete fabrication fact. The split follows Yap's exact
+/// object/predicate model: route import preserves source intent, while
+/// annular-ring, drill, layer-span, and clearance predicates certify the
+/// resulting exact objects.
+pub fn specctra_grid_via_record(
+    record: SpecctraGridViaRecord,
+) -> Result<SpecctraViaRecord, SpecctraImportError> {
+    validate_grid(record.grid_denominator)?;
+    Ok(SpecctraViaRecord {
+        net: record.net,
+        start_layer: record.start_layer,
+        end_layer: record.end_layer,
+        center: Point2::new(
+            grid_real(record.x, record.grid_denominator)?,
+            grid_real(record.y, record.grid_denominator)?,
+        ),
+        land_diameter: grid_real(record.land_diameter, record.grid_denominator)?,
+        drill_diameter: grid_real(record.drill_diameter, record.grid_denominator)?,
+        drill_intent: record.drill_intent,
+    })
+}
+
+/// Convert a fixed-grid DSN/SES arc-wire token into an exact arc route record.
+///
+/// The fixed-grid center, endpoints, radius, and width are lifted as exact
+/// rationals before constructing the retained circular arc. This follows Yap's
+/// exact-geometric-computation boundary and the circular-arc arrangement model
+/// used by CGAL: preserve the curve object first, then let exact predicates
+/// certify sweep membership, intersections, and feed length. Off-circle
+/// endpoints, zero radius, and negative radius reject instead of being
+/// projected or flattened.
+pub fn specctra_grid_arc_wire_record(
+    record: SpecctraGridArcWireRecord,
+    policy: PredicatePolicy,
+) -> Result<SpecctraArcWireRecord, SpecctraImportError> {
+    validate_grid(record.grid_denominator)?;
+    let radius = grid_real(record.radius, record.grid_denominator)?;
+    if record.radius < 0 {
+        return Err(SpecctraImportError::NegativeRadius);
+    }
+    let arc = ExplicitCircularArc::new(
+        Point2::new(
+            grid_real(record.center_x, record.grid_denominator)?,
+            grid_real(record.center_y, record.grid_denominator)?,
+        ),
+        radius,
+        Point2::new(
+            grid_real(record.start_x, record.grid_denominator)?,
+            grid_real(record.start_y, record.grid_denominator)?,
+        ),
+        Point2::new(
+            grid_real(record.end_x, record.grid_denominator)?,
+            grid_real(record.end_y, record.grid_denominator)?,
+        ),
+        record.direction,
+        policy,
+    )
+    .map_err(|_| SpecctraImportError::InvalidArcGeometry)?;
+    Ok(SpecctraArcWireRecord {
+        net: record.net,
+        layer: record.layer,
+        arc,
+        width: grid_real(record.width, record.grid_denominator)?,
+    })
+}
+
+/// Convert a fixed-grid DSN/SES keepout token into an exact keepout record.
+///
+/// This is a retained autorouter constraint boundary. The exact keepout can
+/// feed route-placement predicates such as circular meander keepouts, but it
+/// does not clip board outlines or materialize copper/stock topology. That
+/// preserves Yap's exact object/predicate split for DSN/SES import.
+pub fn specctra_grid_keepout_record(
+    record: SpecctraGridKeepoutRecord,
+    policy: PredicatePolicy,
+) -> Result<SpecctraKeepoutRecord, SpecctraImportError> {
+    validate_grid(record.grid_denominator)?;
+    let keepout = match record.shape {
+        SpecctraGridKeepoutShape::Rect {
+            min_x,
+            min_y,
+            max_x,
+            max_y,
+        } => {
+            if min_x > max_x || min_y > max_y {
+                return Err(SpecctraImportError::InvalidKeepoutBounds);
+            }
+            MeanderKeepout::Rectangular(MeanderObstacle {
+                min: Point2::new(
+                    grid_real(min_x, record.grid_denominator)?,
+                    grid_real(min_y, record.grid_denominator)?,
+                ),
+                max: Point2::new(
+                    grid_real(max_x, record.grid_denominator)?,
+                    grid_real(max_y, record.grid_denominator)?,
+                ),
+            })
+        }
+        SpecctraGridKeepoutShape::Circle { x, y, radius } => {
+            if radius < 0 {
+                return Err(SpecctraImportError::NegativeRadius);
+            }
+            MeanderKeepout::Circular {
+                center: Point2::new(
+                    grid_real(x, record.grid_denominator)?,
+                    grid_real(y, record.grid_denominator)?,
+                ),
+                radius: grid_real(radius, record.grid_denominator)?,
+            }
+        }
+        SpecctraGridKeepoutShape::Polygon { vertices } => {
+            let vertices = vertices
+                .into_iter()
+                .map(|(x, y)| {
+                    Ok(Point2::new(
+                        grid_real(x, record.grid_denominator)?,
+                        grid_real(y, record.grid_denominator)?,
+                    ))
+                })
+                .collect::<Result<Vec<_>, SpecctraImportError>>()?;
+            let keepout = MeanderKeepout::OrthogonalPolygon { vertices };
+            validate_imported_keepout(&keepout, policy)?;
+            keepout
+        }
+    };
+    Ok(SpecctraKeepoutRecord {
+        layer: record.layer,
+        keepout,
+    })
+}
+
+/// Convert a fixed-grid DSN/SES rule token into an exact route-rule record.
+///
+/// Rule records deliberately remain retained source constraints. They are not
+/// applied to traces during parse/import because that would hide a design-rule
+/// decision inside syntax handling. Exact route checks can later select rules
+/// by net/layer scope and replay clearance/width predicates without losing the
+/// changing their exact values.
+pub fn specctra_grid_route_rule_record(
+    record: SpecctraGridRouteRuleRecord,
+) -> Result<SpecctraRouteRuleRecord, SpecctraImportError> {
+    if record.clearance < 0 || record.width < 0 {
+        return Err(SpecctraImportError::NegativeRuleValue);
+    }
+    validate_grid(record.grid_denominator)?;
+    Ok(SpecctraRouteRuleRecord {
+        net: record.net,
+        layer: record.layer,
+        clearance: grid_real(record.clearance, record.grid_denominator)?,
+        width: grid_real(record.width, record.grid_denominator)?,
+    })
+}
+
+/// Lower an exact trace record under an explicit predicate policy.
+pub fn import_specctra_trace_record(
+    record: &SpecctraTraceRecord,
+    policy: PredicatePolicy,
+) -> Result<PcbTrace, SpecctraImportError> {
+    let centerline = LinePathSegment::new(record.start.clone(), record.end.clone(), policy)
+        .map_err(|_| SpecctraImportError::PredicateUnresolved)?;
+    let swept =
+        SweptLineSegment::new(centerline, record.width.clone(), policy).map_err(|message| {
+            match message {
+                "swept path width must be nonnegative" => SpecctraImportError::NegativeWidth,
+                _ => SpecctraImportError::PredicateUnresolved,
+            }
+        })?;
+    Ok(PcbTrace::new(record.net, record.layer, swept, policy))
+}
+
+/// Lower an exact via record under an explicit predicate policy.
+pub fn import_specctra_via_record(
+    record: &SpecctraViaRecord,
+    policy: PredicatePolicy,
+) -> Result<PcbViaStack, SpecctraImportError> {
+    PcbViaStack::with_drill_intent(
+        record.net,
+        record.start_layer,
+        record.end_layer,
+        record.center.clone(),
+        record.land_diameter.clone(),
+        record.drill_diameter.clone(),
+        record.drill_intent,
+        policy,
+    )
+    .map_err(|message| match message {
+        "via start layer must not be above end layer" => SpecctraImportError::ReversedLayerSpan,
+        "pad diameter must be nonnegative" | "via drill diameter must be nonnegative" => {
+            SpecctraImportError::NegativeDiameter
+        }
+        "pad diameter sign is unresolved" | "via drill diameter sign is unresolved" => {
+            SpecctraImportError::PredicateUnresolved
+        }
+        _ => SpecctraImportError::PredicateUnresolved,
+    })
+}
+
+/// Lower an exact arc-wire record under an explicit predicate policy.
+pub fn import_specctra_arc_wire_record(
+    record: &SpecctraArcWireRecord,
+    policy: PredicatePolicy,
+) -> Result<SpecctraRouteArc, SpecctraImportError> {
+    match classify_real_sign(&record.width, policy).value() {
+        Some(Sign::Negative) => return Err(SpecctraImportError::NegativeWidth),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(SpecctraImportError::PredicateUnresolved),
+    }
+    Ok(SpecctraRouteArc {
+        net: record.net,
+        layer: record.layer,
+        arc: record.arc.clone(),
+        width: record.width.clone(),
+    })
+}
+
+/// Export a validated PCB trace into an exact Specctra-style route record.
+pub fn export_specctra_trace_record(trace: &PcbTrace) -> SpecctraTraceRecord {
+    SpecctraTraceRecord {
+        net: trace.net(),
+        layer: trace.layer(),
+        start: trace.swept().centerline().start().clone(),
+        end: trace.swept().centerline().end().clone(),
+        width: trace.swept().width().clone(),
+    }
+}
+
+/// Export a validated PCB via into an exact Specctra-style via record.
+pub fn export_specctra_via_record(via: &PcbViaStack) -> Option<SpecctraViaRecord> {
+    Some(SpecctraViaRecord {
+        net: via.net(),
+        start_layer: via.start_layer(),
+        end_layer: via.end_layer(),
+        center: via.center().clone(),
+        land_diameter: via.land_diameter().clone(),
+        drill_diameter: via.drill_diameter()?.clone(),
+        drill_intent: via.drill_intent(),
+    })
+}
+
+/// Lower an exact Specctra keepout record into a retained route keepout.
+pub fn import_specctra_keepout_record(record: &SpecctraKeepoutRecord) -> MeanderKeepout {
+    record.keepout.clone()
+}
+
+fn validate_imported_keepout(
+    keepout: &MeanderKeepout,
+    policy: PredicatePolicy,
+) -> Result<(), SpecctraImportError> {
+    validate_meander_keepouts(std::slice::from_ref(keepout), policy).map_err(|error| match error {
+        MeanderError::NegativeObstacleRadius => SpecctraImportError::NegativeRadius,
+        MeanderError::InvalidObstacleBounds => SpecctraImportError::InvalidKeepoutBounds,
+        MeanderError::InvalidObstaclePolygon => SpecctraImportError::InvalidKeepoutPolygon,
+        _ => SpecctraImportError::InvalidKeepoutPolygon,
+    })
+}
+
+/// Serialize fixed-grid route records into a small DSN/SES-style S-expression.
+///
+/// This is intentionally a canonical subset rather than a complete Specctra
+/// writer. It preserves integer grid tokens exactly, providing a stable
+/// fixture/export boundary for Lee/Hightower-style autorouter candidates before
+/// they are lowered into exact `PcbTrace` geometry.
+pub fn serialize_specctra_grid_trace_records(records: &[SpecctraGridTraceRecord]) -> String {
+    let mut output = String::from("(routes");
+    for record in records {
+        write_wire_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
+/// Serialize fixed-grid via records into the canonical route subset.
+pub fn serialize_specctra_grid_via_records(records: &[SpecctraGridViaRecord]) -> String {
+    let mut output = String::from("(routes");
+    for record in records {
+        write_via_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
+/// Serialize fixed-grid circular-arc route records into the canonical route subset.
+pub fn serialize_specctra_grid_arc_wire_records(records: &[SpecctraGridArcWireRecord]) -> String {
+    let mut output = String::from("(routes");
+    for record in records {
+        write_arc_wire_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
+/// Serialize fixed-grid keepout records into the canonical route subset.
+pub fn serialize_specctra_grid_keepout_records(records: &[SpecctraGridKeepoutRecord]) -> String {
+    let mut output = String::from("(routes");
+    for record in records {
+        write_keepout_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
+/// Serialize fixed-grid route-rule records into the canonical route subset.
+pub fn serialize_specctra_grid_route_rule_records(
+    records: &[SpecctraGridRouteRuleRecord],
+) -> String {
+    let mut output = String::from("(routes");
+    for record in records {
+        write_rule_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
+/// Parsed canonical fixed-grid Specctra route tokens.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct SpecctraGridRouteRecords {
+    /// Route-level net aliases retained for diagnostics and round-trips.
+    pub net_aliases: Vec<SpecctraNetAlias>,
+    /// Route-level layer aliases retained for diagnostics and round-trips.
+    pub layer_aliases: Vec<SpecctraLayerAlias>,
+    /// Fixed-grid wire records.
+    pub traces: Vec<SpecctraGridTraceRecord>,
+    /// Fixed-grid via records.
+    pub vias: Vec<SpecctraGridViaRecord>,
+    /// Fixed-grid retained circular-arc route records.
+    pub arcs: Vec<SpecctraGridArcWireRecord>,
+    /// Fixed-grid retained route keepouts.
+    pub keepouts: Vec<SpecctraGridKeepoutRecord>,
+    /// Fixed-grid retained route-rule records.
+    pub rules: Vec<SpecctraGridRouteRuleRecord>,
+}
+
+impl SpecctraGridRouteRecords {
+    /// Return whether the document contained no retained geometry or aliases.
+    pub fn is_empty(&self) -> bool {
+        self.net_aliases.is_empty()
+            && self.layer_aliases.is_empty()
+            && self.traces.is_empty()
+            && self.vias.is_empty()
+            && self.arcs.is_empty()
+            && self.keepouts.is_empty()
+            && self.rules.is_empty()
+    }
+
+    fn extend(&mut self, other: Self) -> Result<(), SpecctraParseError> {
+        for alias in other.net_aliases {
+            self.push_net_alias(alias)?;
+        }
+        for alias in other.layer_aliases {
+            self.push_layer_alias(alias)?;
+        }
+        self.traces.extend(other.traces);
+        self.vias.extend(other.vias);
+        self.arcs.extend(other.arcs);
+        self.keepouts.extend(other.keepouts);
+        self.rules.extend(other.rules);
+        Ok(())
+    }
+
+    fn push_net_alias(&mut self, alias: SpecctraNetAlias) -> Result<(), SpecctraParseError> {
+        if self
+            .net_aliases
+            .iter()
+            .any(|existing| existing.net == alias.net || existing.name == alias.name)
+        {
+            return Err(SpecctraParseError::InvalidNetAlias);
+        }
+        self.net_aliases.push(alias);
+        Ok(())
+    }
+
+    fn push_layer_alias(&mut self, alias: SpecctraLayerAlias) -> Result<(), SpecctraParseError> {
+        if self
+            .layer_aliases
+            .iter()
+            .any(|existing| existing.layer == alias.layer || existing.name == alias.name)
+        {
+            return Err(SpecctraParseError::InvalidLayerAlias);
+        }
+        self.layer_aliases.push(alias);
+        Ok(())
+    }
+}
+
+/// Serialize mixed fixed-grid wire/via records into one canonical route form.
+///
+/// This is still a deliberately small DSN/SES subset, but the mixed serializer
+/// gives tests and autorouter fixtures a single canonical text boundary for
+/// typed trace and via records before exact import and predicate validation.
+pub fn serialize_specctra_grid_route_records(records: &SpecctraGridRouteRecords) -> String {
+    let mut output = String::from("(routes");
+    for alias in &records.net_aliases {
+        write_net_alias(&mut output, alias);
+    }
+    for alias in &records.layer_aliases {
+        write_layer_alias(&mut output, alias);
+    }
+    for record in &records.traces {
+        write_wire_record(&mut output, record);
+    }
+    for record in &records.vias {
+        write_via_record(&mut output, record);
+    }
+    for record in &records.arcs {
+        write_arc_wire_record(&mut output, record);
+    }
+    for record in &records.keepouts {
+        write_keepout_record(&mut output, record);
+    }
+    for record in &records.rules {
+        write_rule_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
+/// Parse the canonical fixed-grid DSN/SES-style route subset.
+///
+/// Supported records have the form
+/// `(routes (wire (net N) (layer L) (start X Y) (end X Y) (width W) (grid D)))`.
+/// DSN/SES route envelopes such as `(session "name" (routes ...))` are also
+/// accepted, and `(wire (net N) (path L W X0 Y0 X1 Y1 ... Xn Yn) (grid D))`
+/// lowers a retained polyline into one exact trace record per consecutive
+/// point pair. This keeps autorouter path output as source-grid integers
+/// rather than sampled or rounded path geometry.
+pub fn parse_specctra_grid_trace_records(
+    input: &str,
+) -> Result<Vec<SpecctraGridTraceRecord>, SpecctraParseError> {
+    Ok(parse_specctra_grid_route_records(input)?.traces)
+}
+
+/// Parse canonical fixed-grid wire and via records.
+///
+/// Supported route-level net aliases have the form `(net N NAME)`.
+/// Supported route-level layer aliases have the form `(layer N NAME)`.
+/// Supported via records have the form
+/// `(via (net N) (layers A B) (at X Y) (land D) (drill H) (intent plated) (grid G))`.
+/// Supported arc-wire records have the form
+/// `(arc (net N) (layer L) (center CX CY) (start X0 Y0) (end X1 Y1) (radius R) (direction ccw) (width W) (grid G))`.
+/// Supported keepout records have the form
+/// `(keepout (layer L) (rect X0 Y0 X1 Y1) (grid G))`,
+/// `(keepout (circle X Y R) (grid G))`, or
+/// `(keepout (polygon X0 Y0 X1 Y1 ... Xn Yn) (grid G))`; the layer is optional.
+/// Supported rule records have the form
+/// `(rule (net N) (layer L) (clearance C) (width W) (grid G))`; net and layer
+/// scopes are optional, but clearance and width are retained exactly.
+/// This remains intentionally narrower than full DSN/SES, but it gives
+/// autorouter fixtures an exact typed boundary for layer transitions and drill
+/// fabrication predicates, route-search keepouts, and route design rules
+/// instead of leaving
+/// geometry constraints as unvalidated text.
+pub fn parse_specctra_grid_route_records(
+    input: &str,
+) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+    let tokens = tokenize(input)?;
+    let mut parser = Parser::new(&tokens);
+    let records = parser.parse_document()?;
+    if parser.peek().is_some() {
+        return Err(SpecctraParseError::InvalidSyntax);
+    }
+    Ok(records)
+}
+
+/// Parse and lower the canonical fixed-grid route subset into validated traces.
+pub fn import_specctra_text_route(
+    input: &str,
+    policy: PredicatePolicy,
+) -> Result<SpecctraRoute, SpecctraParseError> {
+    let records = parse_specctra_grid_route_records(input)?;
+    let exact_traces = records
+        .traces
+        .into_iter()
+        .map(specctra_grid_trace_record)
+        .collect::<Result<Vec<_>, _>>()?;
+    let exact_vias = records
+        .vias
+        .into_iter()
+        .map(specctra_grid_via_record)
+        .collect::<Result<Vec<_>, _>>()?;
+    let exact_arcs = records
+        .arcs
+        .into_iter()
+        .map(|record| specctra_grid_arc_wire_record(record, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    records
+        .keepouts
+        .into_iter()
+        .map(|record| specctra_grid_keepout_record(record, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    SpecctraRoute::from_trace_via_and_arc_records(&exact_traces, &exact_vias, &exact_arcs, policy)
+        .map_err(Into::into)
+}
+
+fn grid_real(value: i64, denominator: u64) -> Result<Real, SpecctraImportError> {
+    Rational::fraction(value, denominator)
+        .map(Real::new)
+        .map_err(|_| SpecctraImportError::InvalidGrid)
+}
+
+fn validate_grid(denominator: u64) -> Result<(), SpecctraImportError> {
+    if denominator == 0 {
+        Err(SpecctraImportError::InvalidGrid)
+    } else {
+        Ok(())
+    }
+}
+
+fn write_net_alias(output: &mut String, alias: &SpecctraNetAlias) {
+    write!(output, " (net {} ", alias.net.0).expect("writing to a String cannot fail");
+    write_atom(output, &alias.name);
+    output.push(')');
+}
+
+fn write_layer_alias(output: &mut String, alias: &SpecctraLayerAlias) {
+    write!(output, " (layer {} ", alias.layer.0).expect("writing to a String cannot fail");
+    write_atom(output, &alias.name);
+    output.push(')');
+}
+
+fn write_wire_record(output: &mut String, record: &SpecctraGridTraceRecord) {
+    write!(
+        output,
+        " (wire (net {}) (layer {}) (start {} {}) (end {} {}) (width {}) (grid {}))",
+        record.net.0,
+        record.layer.0,
+        record.start_x,
+        record.start_y,
+        record.end_x,
+        record.end_y,
+        record.width,
+        record.grid_denominator
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn write_via_record(output: &mut String, record: &SpecctraGridViaRecord) {
+    write!(
+        output,
+        " (via (net {}) (layers {} {}) (at {} {}) (land {}) (drill {}) (intent {}) (grid {}))",
+        record.net.0,
+        record.start_layer.0,
+        record.end_layer.0,
+        record.x,
+        record.y,
+        record.land_diameter,
+        record.drill_diameter,
+        drill_intent_atom(record.drill_intent),
+        record.grid_denominator
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn write_arc_wire_record(output: &mut String, record: &SpecctraGridArcWireRecord) {
+    write!(
+        output,
+        " (arc (net {}) (layer {}) (center {} {}) (start {} {}) (end {} {}) (radius {}) (direction {}) (width {}) (grid {}))",
+        record.net.0,
+        record.layer.0,
+        record.center_x,
+        record.center_y,
+        record.start_x,
+        record.start_y,
+        record.end_x,
+        record.end_y,
+        record.radius,
+        arc_direction_atom(record.direction),
+        record.width,
+        record.grid_denominator
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn arc_direction_atom(direction: ArcDirection) -> &'static str {
+    match direction {
+        ArcDirection::Cw => "cw",
+        ArcDirection::Ccw => "ccw",
+    }
+}
+
+fn write_keepout_record(output: &mut String, record: &SpecctraGridKeepoutRecord) {
+    output.push_str(" (keepout");
+    if let Some(layer) = record.layer {
+        write!(output, " (layer {})", layer.0).expect("writing to a String cannot fail");
+    }
+    match &record.shape {
+        SpecctraGridKeepoutShape::Rect {
+            min_x,
+            min_y,
+            max_x,
+            max_y,
+        } => write!(output, " (rect {min_x} {min_y} {max_x} {max_y})")
+            .expect("writing to a String cannot fail"),
+        SpecctraGridKeepoutShape::Circle { x, y, radius } => {
+            write!(output, " (circle {x} {y} {radius})").expect("writing to a String cannot fail");
+        }
+        SpecctraGridKeepoutShape::Polygon { vertices } => {
+            output.push_str(" (polygon");
+            for (x, y) in vertices {
+                write!(output, " {x} {y}").expect("writing to a String cannot fail");
+            }
+            output.push(')');
+        }
+    }
+    write!(output, " (grid {}))", record.grid_denominator)
+        .expect("writing to a String cannot fail");
+}
+
+fn write_rule_record(output: &mut String, record: &SpecctraGridRouteRuleRecord) {
+    output.push_str(" (rule");
+    if let Some(net) = record.net {
+        write!(output, " (net {})", net.0).expect("writing to a String cannot fail");
+    }
+    if let Some(layer) = record.layer {
+        write!(output, " (layer {})", layer.0).expect("writing to a String cannot fail");
+    }
+    write!(
+        output,
+        " (clearance {}) (width {}) (grid {}))",
+        record.clearance, record.width, record.grid_denominator
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn drill_intent_atom(intent: ViaDrillIntent) -> &'static str {
+    match intent {
+        ViaDrillIntent::Unspecified => "unspecified",
+        ViaDrillIntent::Plated => "plated",
+        ViaDrillIntent::NonPlated => "nonplated",
+    }
+}
+
+struct Parser<'tokens, 'input> {
+    tokens: &'tokens [Cow<'input, str>],
+    index: usize,
+}
+
+impl<'tokens, 'input> Parser<'tokens, 'input> {
+    fn new(tokens: &'tokens [Cow<'input, str>]) -> Self {
+        Self { tokens, index: 0 }
+    }
+
+    fn parse_document(&mut self) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        self.expect("(")?;
+        let root = self.next()?;
+        let records = if root == "routes" {
+            self.parse_routes_body()?
+        } else {
+            self.parse_envelope_body()?
+        };
+        self.expect(")")?;
+        if records.is_empty() {
+            return Err(SpecctraParseError::InvalidSyntax);
+        }
+        Ok(records)
+    }
+
+    fn parse_routes_body(&mut self) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        let mut records = SpecctraGridRouteRecords::default();
+        while self.peek() == Some("(") {
+            match self.peek_record_kind()? {
+                "net" => {
+                    let alias = self.parse_net_alias()?;
+                    records.push_net_alias(alias)?;
+                }
+                "layer" => {
+                    let alias = self.parse_layer_alias()?;
+                    records.push_layer_alias(alias)?;
+                }
+                "wire" => records.traces.extend(self.parse_wire()?),
+                "via" => records.vias.push(self.parse_via()?),
+                "arc" => records.arcs.push(self.parse_arc_wire()?),
+                "keepout" => records.keepouts.push(self.parse_keepout()?),
+                "rule" => records.rules.push(self.parse_rule()?),
+                _ => return Err(SpecctraParseError::InvalidSyntax),
+            }
+        }
+        Ok(records)
+    }
+
+    fn parse_envelope_body(&mut self) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        let mut records = SpecctraGridRouteRecords::default();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            if self.peek() == Some("(") {
+                if self.peek_record_kind()? == "routes" {
+                    self.expect("(")?;
+                    self.expect("routes")?;
+                    let nested = self.parse_routes_body()?;
+                    self.expect(")")?;
+                    records.extend(nested)?;
+                } else {
+                    let nested = self.parse_unknown_group_for_routes()?;
+                    records.extend(nested)?;
+                }
+            } else {
+                self.next()?;
+            }
+        }
+        Ok(records)
+    }
+
+    fn parse_unknown_group_for_routes(
+        &mut self,
+    ) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        self.expect("(")?;
+        self.next()?;
+        let mut records = SpecctraGridRouteRecords::default();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            if self.peek() == Some("(") {
+                if self.peek_record_kind()? == "routes" {
+                    self.expect("(")?;
+                    self.expect("routes")?;
+                    let nested = self.parse_routes_body()?;
+                    self.expect(")")?;
+                    records.extend(nested)?;
+                } else {
+                    let nested = self.parse_unknown_group_for_routes()?;
+                    records.extend(nested)?;
+                }
+            } else {
+                self.next()?;
+            }
+        }
+        self.expect(")")?;
+        Ok(records)
+    }
+
+    fn peek(&self) -> Option<&str> {
+        self.tokens.get(self.index).map(Cow::as_ref)
+    }
+
+    fn next(&mut self) -> Result<&'tokens str, SpecctraParseError> {
+        let token = self
+            .tokens
+            .get(self.index)
+            .ok_or(SpecctraParseError::InvalidSyntax)?;
+        self.index += 1;
+        Ok(token.as_ref())
+    }
+
+    fn expect(&mut self, expected: &str) -> Result<(), SpecctraParseError> {
+        if self.next()? == expected {
+            Ok(())
+        } else {
+            Err(SpecctraParseError::InvalidSyntax)
+        }
+    }
+
+    fn peek_record_kind(&self) -> Result<&str, SpecctraParseError> {
+        if self.peek() != Some("(") {
+            return Err(SpecctraParseError::InvalidSyntax);
+        }
+        self.tokens
+            .get(self.index + 1)
+            .map(Cow::as_ref)
+            .ok_or(SpecctraParseError::InvalidSyntax)
+    }
+
+    fn parse_net_alias(&mut self) -> Result<SpecctraNetAlias, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("net")?;
+        let net = self.parse_u32()?;
+        let name = self.next()?.to_owned();
+        self.expect(")")?;
+        if !is_valid_alias_name(&name) {
+            return Err(SpecctraParseError::InvalidNetAlias);
+        }
+        Ok(SpecctraNetAlias {
+            net: NetId(net),
+            name,
+        })
+    }
+
+    fn parse_layer_alias(&mut self) -> Result<SpecctraLayerAlias, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("layer")?;
+        let layer = self.parse_u16()?;
+        let name = self.next()?.to_owned();
+        self.expect(")")?;
+        if !is_valid_alias_name(&name) {
+            return Err(SpecctraParseError::InvalidLayerAlias);
+        }
+        Ok(SpecctraLayerAlias {
+            layer: TraceLayer(layer),
+            name,
+        })
+    }
+
+    fn parse_wire(&mut self) -> Result<Vec<SpecctraGridTraceRecord>, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("wire")?;
+        let mut net = None;
+        let mut layer = None;
+        let mut start = None;
+        let mut end = None;
+        let mut width = None;
+        let mut grid_denominator = None;
+        let mut path = None;
+        while self.peek() == Some("(") {
+            match self
+                .peek_field_name()
+                .ok_or(SpecctraParseError::InvalidSyntax)?
+            {
+                "net" => set_once(&mut net, self.parse_u32_field("net")?)?,
+                "layer" => set_once(&mut layer, self.parse_u16_field("layer")?)?,
+                "start" => set_once(&mut start, self.parse_i64_pair_field("start")?)?,
+                "end" => set_once(&mut end, self.parse_i64_pair_field("end")?)?,
+                "width" => set_once(&mut width, self.parse_i64_field("width")?)?,
+                "grid" => set_once(&mut grid_denominator, self.parse_u64_field("grid")?)?,
+                "path" => set_once(&mut path, self.parse_path_field()?)?,
+                _ => return Err(SpecctraParseError::InvalidSyntax),
+            }
+        }
+        self.expect(")")?;
+        let net = net.ok_or(SpecctraParseError::InvalidSyntax)?;
+        let grid_denominator = grid_denominator.ok_or(SpecctraParseError::InvalidSyntax)?;
+        if grid_denominator == 0 {
+            return Err(SpecctraParseError::InvalidGrid);
+        }
+        if let Some(path) = path {
+            if layer.is_some() || start.is_some() || end.is_some() || width.is_some() {
+                return Err(SpecctraParseError::InvalidSyntax);
+            }
+            return path.into_records(NetId(net), grid_denominator);
+        }
+        let (start_x, start_y) = start.ok_or(SpecctraParseError::InvalidSyntax)?;
+        let (end_x, end_y) = end.ok_or(SpecctraParseError::InvalidSyntax)?;
+        Ok(vec![SpecctraGridTraceRecord {
+            net: NetId(net),
+            layer: TraceLayer(layer.ok_or(SpecctraParseError::InvalidSyntax)?),
+            start_x,
+            start_y,
+            end_x,
+            end_y,
+            width: width.ok_or(SpecctraParseError::InvalidSyntax)?,
+            grid_denominator,
+        }])
+    }
+
+    fn parse_via(&mut self) -> Result<SpecctraGridViaRecord, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("via")?;
+        let net = self.parse_u32_field("net")?;
+        let (start_layer, end_layer) = self.parse_u16_pair_field("layers")?;
+        let (x, y) = self.parse_i64_pair_field("at")?;
+        let land_diameter = self.parse_i64_field("land")?;
+        let drill_diameter = self.parse_i64_field("drill")?;
+        let drill_intent = if self.peek_field_name() == Some("intent") {
+            self.parse_drill_intent_field()?
+        } else {
+            ViaDrillIntent::Unspecified
+        };
+        let grid_denominator = self.parse_u64_field("grid")?;
+        self.expect(")")?;
+        if grid_denominator == 0 {
+            return Err(SpecctraParseError::InvalidGrid);
+        }
+        Ok(SpecctraGridViaRecord {
+            net: NetId(net),
+            start_layer: TraceLayer(start_layer),
+            end_layer: TraceLayer(end_layer),
+            x,
+            y,
+            land_diameter,
+            drill_diameter,
+            drill_intent,
+            grid_denominator,
+        })
+    }
+
+    fn parse_arc_wire(&mut self) -> Result<SpecctraGridArcWireRecord, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("arc")?;
+        let net = self.parse_u32_field("net")?;
+        let layer = self.parse_u16_field("layer")?;
+        let (center_x, center_y) = self.parse_i64_pair_field("center")?;
+        let (start_x, start_y) = self.parse_i64_pair_field("start")?;
+        let (end_x, end_y) = self.parse_i64_pair_field("end")?;
+        let radius = self.parse_i64_field("radius")?;
+        let direction = self.parse_arc_direction_field()?;
+        let width = self.parse_i64_field("width")?;
+        let grid_denominator = self.parse_u64_field("grid")?;
+        self.expect(")")?;
+        if grid_denominator == 0 {
+            return Err(SpecctraParseError::InvalidGrid);
+        }
+        let record = SpecctraGridArcWireRecord {
+            net: NetId(net),
+            layer: TraceLayer(layer),
+            center_x,
+            center_y,
+            start_x,
+            start_y,
+            end_x,
+            end_y,
+            radius,
+            direction,
+            width,
+            grid_denominator,
+        };
+        Ok(record)
+    }
+
+    fn parse_keepout(&mut self) -> Result<SpecctraGridKeepoutRecord, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("keepout")?;
+        let mut layer = None;
+        let mut shape = None;
+        let mut grid_denominator = None;
+        while self.peek() == Some("(") {
+            match self
+                .peek_field_name()
+                .ok_or(SpecctraParseError::InvalidSyntax)?
+            {
+                "layer" => set_once(&mut layer, TraceLayer(self.parse_u16_field("layer")?))?,
+                "rect" => set_once(&mut shape, self.parse_keepout_rect_field()?)?,
+                "circle" => set_once(&mut shape, self.parse_keepout_circle_field()?)?,
+                "polygon" => set_once(&mut shape, self.parse_keepout_polygon_field()?)?,
+                "grid" => set_once(&mut grid_denominator, self.parse_u64_field("grid")?)?,
+                _ => return Err(SpecctraParseError::InvalidSyntax),
+            }
+        }
+        self.expect(")")?;
+        let grid_denominator = grid_denominator.ok_or(SpecctraParseError::InvalidSyntax)?;
+        if grid_denominator == 0 {
+            return Err(SpecctraParseError::InvalidGrid);
+        }
+        let record = SpecctraGridKeepoutRecord {
+            layer,
+            shape: shape.ok_or(SpecctraParseError::InvalidSyntax)?,
+            grid_denominator,
+        };
+        Ok(record)
+    }
+
+    fn parse_rule(&mut self) -> Result<SpecctraGridRouteRuleRecord, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("rule")?;
+        let mut net = None;
+        let mut layer = None;
+        let mut clearance = None;
+        let mut width = None;
+        let mut grid_denominator = None;
+        while self.peek() == Some("(") {
+            match self
+                .peek_field_name()
+                .ok_or(SpecctraParseError::InvalidSyntax)?
+            {
+                "net" => set_once(&mut net, NetId(self.parse_u32_field("net")?))?,
+                "layer" => set_once(&mut layer, TraceLayer(self.parse_u16_field("layer")?))?,
+                "clearance" => set_once(&mut clearance, self.parse_i64_field("clearance")?)?,
+                "width" => set_once(&mut width, self.parse_i64_field("width")?)?,
+                "grid" => set_once(&mut grid_denominator, self.parse_u64_field("grid")?)?,
+                _ => return Err(SpecctraParseError::InvalidSyntax),
+            }
+        }
+        self.expect(")")?;
+        let grid_denominator = grid_denominator.ok_or(SpecctraParseError::InvalidSyntax)?;
+        if grid_denominator == 0 {
+            return Err(SpecctraParseError::InvalidGrid);
+        }
+        let record = SpecctraGridRouteRuleRecord {
+            net,
+            layer,
+            clearance: clearance.ok_or(SpecctraParseError::InvalidSyntax)?,
+            width: width.ok_or(SpecctraParseError::InvalidSyntax)?,
+            grid_denominator,
+        };
+        specctra_grid_route_rule_record(record)?;
+        Ok(record)
+    }
+
+    fn peek_field_name(&self) -> Option<&str> {
+        if self.peek() == Some("(") {
+            self.tokens.get(self.index + 1).map(Cow::as_ref)
+        } else {
+            None
+        }
+    }
+
+    fn parse_drill_intent_field(&mut self) -> Result<ViaDrillIntent, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("intent")?;
+        let intent = match self.next()? {
+            "unspecified" => ViaDrillIntent::Unspecified,
+            "plated" => ViaDrillIntent::Plated,
+            "nonplated" => ViaDrillIntent::NonPlated,
+            _ => return Err(SpecctraParseError::InvalidDrillIntent),
+        };
+        self.expect(")")?;
+        Ok(intent)
+    }
+
+    fn parse_arc_direction_field(&mut self) -> Result<ArcDirection, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("direction")?;
+        let direction = match self.next()? {
+            "cw" => ArcDirection::Cw,
+            "ccw" => ArcDirection::Ccw,
+            _ => return Err(SpecctraParseError::InvalidArcGeometry),
+        };
+        self.expect(")")?;
+        Ok(direction)
+    }
+
+    fn parse_path_field(&mut self) -> Result<SpecctraPathWire, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("path")?;
+        let layer = self.parse_u16()?;
+        let width = self.parse_i64()?;
+        let mut points = Vec::new();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            let x = self.parse_i64()?;
+            if self.peek() == Some(")") {
+                return Err(SpecctraParseError::InvalidSyntax);
+            }
+            let y = self.parse_i64()?;
+            points.push((x, y));
+        }
+        self.expect(")")?;
+        if points.len() < 2 {
+            return Err(SpecctraParseError::InvalidSyntax);
+        }
+        Ok(SpecctraPathWire {
+            layer: TraceLayer(layer),
+            width,
+            points,
+        })
+    }
+
+    fn parse_keepout_rect_field(&mut self) -> Result<SpecctraGridKeepoutShape, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("rect")?;
+        let min_x = self.parse_i64()?;
+        let min_y = self.parse_i64()?;
+        let max_x = self.parse_i64()?;
+        let max_y = self.parse_i64()?;
+        self.expect(")")?;
+        Ok(SpecctraGridKeepoutShape::Rect {
+            min_x,
+            min_y,
+            max_x,
+            max_y,
+        })
+    }
+
+    fn parse_keepout_circle_field(
+        &mut self,
+    ) -> Result<SpecctraGridKeepoutShape, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("circle")?;
+        let x = self.parse_i64()?;
+        let y = self.parse_i64()?;
+        let radius = self.parse_i64()?;
+        self.expect(")")?;
+        Ok(SpecctraGridKeepoutShape::Circle { x, y, radius })
+    }
+
+    fn parse_keepout_polygon_field(
+        &mut self,
+    ) -> Result<SpecctraGridKeepoutShape, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("polygon")?;
+        let mut vertices = Vec::new();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            let x = self.parse_i64()?;
+            if self.peek() == Some(")") {
+                return Err(SpecctraParseError::InvalidSyntax);
+            }
+            let y = self.parse_i64()?;
+            vertices.push((x, y));
+        }
+        self.expect(")")?;
+        if vertices.len() < 4 {
+            return Err(SpecctraParseError::InvalidKeepoutPolygon);
+        }
+        Ok(SpecctraGridKeepoutShape::Polygon { vertices })
+    }
+
+    fn parse_i64_field(&mut self, name: &str) -> Result<i64, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect(name)?;
+        let value = self.parse_i64()?;
+        self.expect(")")?;
+        Ok(value)
+    }
+
+    fn parse_u32_field(&mut self, name: &str) -> Result<u32, SpecctraParseError> {
+        let value = self.parse_u64_field(name)?;
+        u32::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
+    fn parse_u32(&mut self) -> Result<u32, SpecctraParseError> {
+        let value = self.parse_u64()?;
+        u32::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
+    fn parse_u16_field(&mut self, name: &str) -> Result<u16, SpecctraParseError> {
+        let value = self.parse_u64_field(name)?;
+        u16::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
+    fn parse_u16(&mut self) -> Result<u16, SpecctraParseError> {
+        let value = self.parse_u64()?;
+        u16::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
+    fn parse_u64_field(&mut self, name: &str) -> Result<u64, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect(name)?;
+        let value = self.parse_u64()?;
+        self.expect(")")?;
+        Ok(value)
+    }
+
+    fn parse_i64_pair_field(&mut self, name: &str) -> Result<(i64, i64), SpecctraParseError> {
+        self.expect("(")?;
+        self.expect(name)?;
+        let first = self.parse_i64()?;
+        let second = self.parse_i64()?;
+        self.expect(")")?;
+        Ok((first, second))
+    }
+
+    fn parse_u16_pair_field(&mut self, name: &str) -> Result<(u16, u16), SpecctraParseError> {
+        self.expect("(")?;
+        self.expect(name)?;
+        let first = self.parse_u64()?;
+        let second = self.parse_u64()?;
+        self.expect(")")?;
+        Ok((
+            u16::try_from(first).map_err(|_| SpecctraParseError::InvalidInteger)?,
+            u16::try_from(second).map_err(|_| SpecctraParseError::InvalidInteger)?,
+        ))
+    }
+
+    fn parse_i64(&mut self) -> Result<i64, SpecctraParseError> {
+        self.next()?
+            .parse()
+            .map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
+    fn parse_u64(&mut self) -> Result<u64, SpecctraParseError> {
+        self.next()?
+            .parse()
+            .map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+}
+
+struct SpecctraPathWire {
+    layer: TraceLayer,
+    width: i64,
+    points: Vec<(i64, i64)>,
+}
+
+impl SpecctraPathWire {
+    fn into_records(
+        self,
+        net: NetId,
+        grid_denominator: u64,
+    ) -> Result<Vec<SpecctraGridTraceRecord>, SpecctraParseError> {
+        Ok(self
+            .points
+            .windows(2)
+            .map(|pair| SpecctraGridTraceRecord {
+                net,
+                layer: self.layer,
+                start_x: pair[0].0,
+                start_y: pair[0].1,
+                end_x: pair[1].0,
+                end_y: pair[1].1,
+                width: self.width,
+                grid_denominator,
+            })
+            .collect())
+    }
+}
+
+fn set_once<T>(slot: &mut Option<T>, value: T) -> Result<(), SpecctraParseError> {
+    if slot.replace(value).is_some() {
+        return Err(SpecctraParseError::InvalidSyntax);
+    }
+    Ok(())
+}
+
+fn is_valid_alias_name(name: &str) -> bool {
+    !name.is_empty()
+        && (is_bare_atom(name)
+            || !name
+                .chars()
+                .any(|character| character == '(' || character == ')'))
+}
