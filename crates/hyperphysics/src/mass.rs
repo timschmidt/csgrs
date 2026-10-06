@@ -1,0 +1,366 @@
+//! Exact uniform-density mass-property reports.
+
+use std::array::from_fn;
+use std::cell::RefCell;
+use std::sync::Arc;
+
+use hyperlattice::{Point3, Vector3};
+use hyperreal::{CertifiedRealSign, Real, RealSign};
+
+use crate::{ClosedTriangleMesh3, ExactMaterial, PhysicsError, PhysicsResult};
+
+#[derive(Clone)]
+struct CachedTriangleMeshMassProperties {
+    positions: Arc<[Point3]>,
+    triangles: Arc<[hypermesh::Triangle]>,
+    density: Real,
+    report: MassPropertyReport3,
+}
+
+thread_local! {
+    static TRIANGLE_MESH_MASS_PROPERTIES: RefCell<Vec<CachedTriangleMeshMassProperties>> =
+        const { RefCell::new(Vec::new()) };
+}
+
+/// Symmetric inertia tensor in row-major named components.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SymmetricInertia3 {
+    /// Moment around the x axis.
+    pub xx: Real,
+    /// Moment around the y axis.
+    pub yy: Real,
+    /// Moment around the z axis.
+    pub zz: Real,
+    /// Product component `Ixy`.
+    pub xy: Real,
+    /// Product component `Ixz`.
+    pub xz: Real,
+    /// Product component `Iyz`.
+    pub yz: Real,
+}
+
+/// Certificate attached to a mass-property report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct MassPropertyCertificate3 {
+    /// Number of oriented triangles consumed.
+    pub triangle_count: usize,
+    /// Sign proof for the accumulated signed volume.
+    pub signed_volume_sign: CertifiedRealSign,
+    /// Whether the final physical integrals were flipped from inward winding.
+    pub orientation_was_negative: bool,
+}
+
+/// Uniform-density mass properties for a closed oriented triangle mesh.
+#[derive(Clone, Debug, PartialEq)]
+pub struct MassPropertyReport3 {
+    /// Certified positive density used by the report.
+    pub density: Real,
+    /// Non-negative enclosed volume.
+    pub volume: Real,
+    /// Oriented volume before absolute-value normalization.
+    pub signed_volume: Real,
+    /// Total mass.
+    pub mass: Real,
+    /// Exact center of mass.
+    pub center_of_mass: Vector3,
+    /// Inertia tensor about the coordinate origin.
+    pub inertia_about_origin: SymmetricInertia3,
+    /// Inertia tensor about the center of mass.
+    pub inertia_about_center_of_mass: SymmetricInertia3,
+    /// Audit certificate for the report.
+    pub certificate: MassPropertyCertificate3,
+}
+
+impl SymmetricInertia3 {
+    /// Returns an all-zero tensor.
+    pub fn zero() -> Self {
+        Self {
+            xx: Real::zero(),
+            yy: Real::zero(),
+            zz: Real::zero(),
+            xy: Real::zero(),
+            xz: Real::zero(),
+            yz: Real::zero(),
+        }
+    }
+
+    fn scale(self, factor: &Real) -> Self {
+        Self {
+            xx: &self.xx * factor,
+            yy: &self.yy * factor,
+            zz: &self.zz * factor,
+            xy: &self.xy * factor,
+            xz: &self.xz * factor,
+            yz: &self.yz * factor,
+        }
+    }
+
+    fn sub_parallel_axis(self, mass: &Real, center: &Vector3) -> Self {
+        let cx2 = &center[0] * &center[0];
+        let cy2 = &center[1] * &center[1];
+        let cz2 = &center[2] * &center[2];
+        let cxy = &center[0] * &center[1];
+        let cxz = &center[0] * &center[2];
+        let cyz = &center[1] * &center[2];
+        Self {
+            xx: self.xx - (mass * &(cy2.clone() + cz2.clone())),
+            yy: self.yy - (mass * &(cx2.clone() + cz2)),
+            zz: self.zz - (mass * &(cx2 + cy2)),
+            xy: self.xy + (mass * &cxy),
+            xz: self.xz + (mass * &cxz),
+            yz: self.yz + (mass * &cyz),
+        }
+    }
+}
+
+impl ClosedTriangleMesh3 {
+    /// Computes exact uniform-density volume, center of mass, and inertia.
+    ///
+    /// The mesh is decomposed into oriented tetrahedra with one vertex at the
+    /// origin. Volume, first moments, and second moments are accumulated over
+    /// those tetrahedra using exact [`Real`] arithmetic. The divergence and
+    /// integral strategy stays at the exact object layer instead of evaluating
+    /// the integrals through primitive floating point.
+    pub fn uniform_density_mass_properties(
+        &self,
+        density: Real,
+    ) -> PhysicsResult<MassPropertyReport3> {
+        require_positive_density(&density)?;
+
+        let mut signed_volume_numerator = Real::zero();
+        let mut first_moment_numerator = Vector3::zero();
+        let mut second_moment_numerators: [[Real; 3]; 3] = from_fn(|_| from_fn(|_| Real::zero()));
+
+        for triangle in self.triangles() {
+            let [a, b, c] = triangle.vertices();
+            let det = determinant3(a, b, c);
+            signed_volume_numerator =
+                Real::signed_product_sum([true, true], [[&signed_volume_numerator], [&det]]);
+
+            let vertex_sum = Vector3::new(from_fn(|axis| {
+                Real::signed_product_sum([true, true, true], [[&a[axis]], [&b[axis]], [&c[axis]]])
+            }));
+            first_moment_numerator = Vector3::new(from_fn(|axis| {
+                Real::signed_product_sum(
+                    [true, true],
+                    [
+                        [&first_moment_numerator[axis], &Real::one()],
+                        [&vertex_sum[axis], &det],
+                    ],
+                )
+            }));
+
+            for (row_index, row) in second_moment_numerators.iter_mut().enumerate() {
+                for (col_index, value) in row.iter_mut().enumerate().skip(row_index) {
+                    let numerator =
+                        tetra_second_moment_numerator(a, b, c, &vertex_sum, row_index, col_index);
+                    *value = Real::signed_product_sum(
+                        [true, true],
+                        [[value, &Real::one()], [&det, &numerator]],
+                    );
+                }
+            }
+        }
+
+        // All tetrahedra share these fixed integration denominators. Accumulate
+        // their exact numerators first so the rational kernel performs ten
+        // divisions per mesh rather than ten divisions per triangle.
+        let signed_volume = div_exact(&signed_volume_numerator, 6)?;
+        let first_moment = div_vector_by_real(first_moment_numerator, &Real::from(24))?;
+        let second_moment_denominator = Real::from(120);
+        let mut second_moments = from_fn(|_| from_fn(|_| Real::zero()));
+        for (row_index, row) in second_moments.iter_mut().enumerate() {
+            for (col_index, value) in row.iter_mut().enumerate().skip(row_index) {
+                *value = div_real(
+                    &second_moment_numerators[row_index][col_index],
+                    &second_moment_denominator,
+                )?;
+            }
+        }
+
+        let sign_certificate = signed_volume
+            .certified_sign_until(hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION);
+        let sign = sign_certificate.sign();
+        let orientation_was_negative = match sign {
+            Some(RealSign::Positive) => false,
+            Some(RealSign::Negative) => true,
+            Some(RealSign::Zero) => return Err(PhysicsError::ZeroVolume),
+            None => return Err(PhysicsError::UnknownSignedVolume),
+        };
+
+        let volume = if orientation_was_negative {
+            -signed_volume.clone()
+        } else {
+            signed_volume.clone()
+        };
+        let center_of_mass = div_vector_by_real(first_moment, &signed_volume)?;
+        if orientation_was_negative {
+            for row in &mut second_moments {
+                for value in row {
+                    *value = -value.clone();
+                }
+            }
+        }
+
+        let mass = &density * &volume;
+        let inertia_about_origin = inertia_from_second_moments(&second_moments).scale(&density);
+        let inertia_about_center_of_mass = inertia_about_origin
+            .clone()
+            .sub_parallel_axis(&mass, &center_of_mass);
+
+        Ok(MassPropertyReport3 {
+            density,
+            volume,
+            signed_volume,
+            mass,
+            center_of_mass,
+            inertia_about_origin,
+            inertia_about_center_of_mass,
+            certificate: MassPropertyCertificate3 {
+                triangle_count: self.triangle_count(),
+                signed_volume_sign: sign_certificate,
+                orientation_was_negative,
+            },
+        })
+    }
+
+    /// Computes mass properties using a material's certified exact density.
+    pub fn material_mass_properties(
+        &self,
+        material: &ExactMaterial,
+    ) -> PhysicsResult<MassPropertyReport3> {
+        self.uniform_density_mass_properties(material.density().clone())
+    }
+}
+
+/// Computes and retains exact uniform-density properties for native Hypermesh
+/// geometry.
+///
+/// Repeated queries against clones of the same immutable position and triangle
+/// buffers reuse the physics report. Geometry remains owned by Hypermesh;
+/// Hyperphysics retains only this bounded physical interpretation.
+pub fn triangle_mesh_uniform_density_mass_properties(
+    mesh: &hypermesh::TriangleMesh,
+    density: Real,
+) -> PhysicsResult<MassPropertyReport3> {
+    if let Some(report) = TRIANGLE_MESH_MASS_PROPERTIES.with_borrow(|entries| {
+        entries
+            .iter()
+            .find(|entry| {
+                Arc::ptr_eq(&entry.positions, &mesh.positions)
+                    && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
+                    && entry.density == density
+            })
+            .map(|entry| entry.report.clone())
+    }) {
+        return Ok(report);
+    }
+
+    let triangles = mesh
+        .triangles
+        .iter()
+        .map(|triangle| {
+            let [a, b, c] = triangle.indices();
+            let [Some(a), Some(b), Some(c)] = [
+                mesh.positions.get(a),
+                mesh.positions.get(b),
+                mesh.positions.get(c),
+            ] else {
+                return Err(PhysicsError::TriangleIndexOutOfBounds);
+            };
+            Ok(crate::Triangle3::new([
+                a.to_vector(),
+                b.to_vector(),
+                c.to_vector(),
+            ]))
+        })
+        .collect::<PhysicsResult<Vec<_>>>()?;
+    let report =
+        ClosedTriangleMesh3::new(triangles)?.uniform_density_mass_properties(density.clone())?;
+
+    TRIANGLE_MESH_MASS_PROPERTIES.with_borrow_mut(|entries| {
+        const CAPACITY: usize = 8;
+        if entries.len() == CAPACITY {
+            entries.remove(0);
+        }
+        entries.push(CachedTriangleMeshMassProperties {
+            positions: Arc::clone(&mesh.positions),
+            triangles: Arc::clone(&mesh.triangles),
+            density,
+            report: report.clone(),
+        });
+    });
+    Ok(report)
+}
+
+fn require_positive_density(density: &Real) -> PhysicsResult<()> {
+    match crate::strict_real_sign(density) {
+        Some(RealSign::Positive) => Ok(()),
+        Some(RealSign::Negative | RealSign::Zero) | None => Err(PhysicsError::NonPositiveDensity),
+    }
+}
+
+fn determinant3(a: &Vector3, b: &Vector3, c: &Vector3) -> Real {
+    Real::signed_product_sum(
+        [true, false, true, false, true, false],
+        [
+            [&a[0], &b[1], &c[2]],
+            [&a[0], &b[2], &c[1]],
+            [&a[1], &b[2], &c[0]],
+            [&a[1], &b[0], &c[2]],
+            [&a[2], &b[0], &c[1]],
+            [&a[2], &b[1], &c[0]],
+        ],
+    )
+}
+
+fn tetra_second_moment_numerator(
+    a: &Vector3,
+    b: &Vector3,
+    c: &Vector3,
+    vertex_sum: &Vector3,
+    row: usize,
+    col: usize,
+) -> Real {
+    // sum(p_row * q_col, p,q) + sum(p_row * p_col, p)
+    // is the original tetrahedral integral numerator with diagonal terms
+    // weighted twice. Factoring the first sum as vertex_sum[row] *
+    // vertex_sum[col] cuts nine products to four while preserving the exact
+    // polynomial.
+    Real::signed_product_sum(
+        [true; 4],
+        [
+            [&vertex_sum[row], &vertex_sum[col]],
+            [&a[row], &a[col]],
+            [&b[row], &b[col]],
+            [&c[row], &c[col]],
+        ],
+    )
+}
+
+fn inertia_from_second_moments(second: &[[Real; 3]; 3]) -> SymmetricInertia3 {
+    SymmetricInertia3 {
+        xx: second[1][1].clone() + second[2][2].clone(),
+        yy: second[0][0].clone() + second[2][2].clone(),
+        zz: second[0][0].clone() + second[1][1].clone(),
+        xy: -second[0][1].clone(),
+        xz: -second[0][2].clone(),
+        yz: -second[1][2].clone(),
+    }
+}
+
+fn div_vector_by_real(vector: Vector3, rhs: &Real) -> PhysicsResult<Vector3> {
+    Ok(Vector3::new([
+        div_real(&vector[0], rhs)?,
+        div_real(&vector[1], rhs)?,
+        div_real(&vector[2], rhs)?,
+    ]))
+}
+
+fn div_exact(value: &Real, denominator: i32) -> PhysicsResult<Real> {
+    div_real(value, &Real::from(denominator))
+}
+
+fn div_real(lhs: &Real, rhs: &Real) -> PhysicsResult<Real> {
+    (lhs / rhs).map_err(|_| PhysicsError::ZeroVolume)
+}
