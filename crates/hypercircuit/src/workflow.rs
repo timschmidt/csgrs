@@ -1,0 +1,306 @@
+//! Cohesive release reporting from one checked declarative design.
+//!
+//! This module composes the authoritative retained containers and their existing
+//! adapters. It deliberately introduces no alternate circuit or PCB IR.
+
+use std::fmt::{Display, Formatter};
+
+use hyperdrc::Severity;
+
+#[cfg(feature = "interchange")]
+use crate::SemanticDocument;
+use crate::{
+    AssemblyOutputs, AssemblyRoundTripReport, CheckedDesign, CheckedProject, Circuit,
+    DesignForTestIntent, DesignIntent, DrcReadinessPolicy, ErcReport,
+    FabricationCamRoundTripReport, FabricationExportOptions, FabricationIntegrityIssue,
+    FabricationPackage, FabricationPackageError, GeometryMaterializationError, HyperDrcHandoff,
+    HyperDrcReadinessReport, MaterializationContext, MaterializationOptions, PcbLayout,
+    PcbMaterialPropertyLibrary, PcbMaterializationReport, PlacementResolutionReport,
+};
+
+/// Policies used to turn one checked design into review and release evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ReleaseOptions {
+    /// Predicate policy selected for every topology decision in materialization.
+    pub materialization_context: MaterializationContext,
+    /// Geometry projection and production-process defaults.
+    pub materialization: MaterializationOptions,
+    /// Native HyperDRC readiness thresholds.
+    pub drc: DrcReadinessPolicy,
+    /// Source-attributed HyperPhysics material data used by PCB electrical checks.
+    pub pcb_materials: PcbMaterialPropertyLibrary,
+    /// Fabrication source-unit policy.
+    pub fabrication: FabricationExportOptions,
+}
+
+impl Default for ReleaseOptions {
+    fn default() -> Self {
+        Self {
+            materialization_context: MaterializationContext::STRICT,
+            materialization: MaterializationOptions::default(),
+            drc: DrcReadinessPolicy::default(),
+            pcb_materials: PcbMaterialPropertyLibrary::default(),
+            fabrication: FabricationExportOptions::default(),
+        }
+    }
+}
+
+/// A release gate that remains open after all evidence was produced.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ReleaseBlocker {
+    /// Electrical rule checking reported this many issues.
+    ElectricalRules(usize),
+    /// Retained intent could not be represented completely in HyperDRC.
+    DrcHandoffOmissions(usize),
+    /// HyperDRC reported this many release-blocking errors.
+    DrcErrors(usize),
+    /// HyperDRC could not certify this many required checks.
+    DrcCoverage(usize),
+    /// Fabrication files or their manifest failed integrity checks.
+    FabricationIntegrity(usize),
+    /// Production geometry still has details requiring review.
+    FabricationProductionOmissions(usize),
+    /// IPC-D-356 could not represent all retained connectivity.
+    FabricationConnectivityOmissions(usize),
+    /// Independent CAM re-import reported this many issues.
+    CamRoundTrip(usize),
+    /// Some fitted circuit instances have no placement output.
+    UnplacedInstances(usize),
+    /// Independent assembly CSV re-import reported this many issues.
+    AssemblyRoundTrip(usize),
+}
+
+/// Reviewable evidence produced from the exact retained layout used for release.
+#[derive(Debug)]
+pub struct ReleaseReport {
+    /// Placement solution used by every later stage.
+    pub placement: PlacementResolutionReport,
+    /// Clone of the authoritative layout with resolved placements applied.
+    pub resolved_layout: PcbLayout,
+    /// Electrical-rule evidence from authoritative connectivity.
+    pub erc: ErcReport,
+    /// Source-addressable csgrs geometry projection.
+    pub materialization: PcbMaterializationReport,
+    /// Typed retained-intent handoff into HyperDRC.
+    pub drc_handoff: HyperDrcHandoff,
+    /// Native HyperDRC findings.
+    pub drc: HyperDrcReadinessReport,
+    /// Gerber, Excellon, IPC-D-356, and manifest package.
+    pub fabrication: FabricationPackage,
+    /// Package byte and manifest integrity findings.
+    pub fabrication_integrity: Vec<FabricationIntegrityIssue>,
+    /// Independent CAM parse and semantic-reconciliation evidence.
+    pub cam_round_trip: FabricationCamRoundTripReport,
+    /// BOM, pick-and-place, and DNP outputs.
+    pub assembly: AssemblyOutputs,
+    /// Independent assembly CSV reconciliation evidence.
+    pub assembly_round_trip: AssemblyRoundTripReport,
+}
+
+impl ReleaseReport {
+    /// Returns every remaining release gate in deterministic workflow order.
+    pub fn release_blockers(&self) -> Vec<ReleaseBlocker> {
+        let mut blockers = Vec::new();
+        if !self.erc.issues.is_empty() {
+            blockers.push(ReleaseBlocker::ElectricalRules(self.erc.issues.len()));
+        }
+        if !self.drc_handoff.omissions.is_empty() {
+            blockers.push(ReleaseBlocker::DrcHandoffOmissions(
+                self.drc_handoff.omissions.len(),
+            ));
+        }
+        let drc_errors = self
+            .drc
+            .violations
+            .iter()
+            .filter(|violation| violation.severity == Severity::Error)
+            .count();
+        if drc_errors != 0 {
+            blockers.push(ReleaseBlocker::DrcErrors(drc_errors));
+        }
+        let drc_coverage = self.drc.coverage.blocking_count();
+        if drc_coverage != 0 {
+            blockers.push(ReleaseBlocker::DrcCoverage(drc_coverage));
+        }
+        if !self.fabrication_integrity.is_empty() {
+            blockers.push(ReleaseBlocker::FabricationIntegrity(
+                self.fabrication_integrity.len(),
+            ));
+        }
+        if !self.fabrication.production_omissions.is_empty() {
+            blockers.push(ReleaseBlocker::FabricationProductionOmissions(
+                self.fabrication.production_omissions.len(),
+            ));
+        }
+        if !self.fabrication.manifest.connectivity_omissions.is_empty() {
+            blockers.push(ReleaseBlocker::FabricationConnectivityOmissions(
+                self.fabrication.manifest.connectivity_omissions.len(),
+            ));
+        }
+        if !self.cam_round_trip.issues.is_empty() {
+            blockers.push(ReleaseBlocker::CamRoundTrip(
+                self.cam_round_trip.issues.len(),
+            ));
+        }
+        if !self.assembly.unplaced_instances.is_empty() {
+            blockers.push(ReleaseBlocker::UnplacedInstances(
+                self.assembly.unplaced_instances.len(),
+            ));
+        }
+        if !self.assembly_round_trip.issues.is_empty() {
+            blockers.push(ReleaseBlocker::AssemblyRoundTrip(
+                self.assembly_round_trip.issues.len(),
+            ));
+        }
+        blockers
+    }
+
+    /// True only when every electrical, geometry, DRC, CAM, and assembly gate is clean.
+    pub fn is_release_clean(&self) -> bool {
+        self.release_blockers().is_empty()
+    }
+}
+
+/// Failure that prevents complete release evidence from being constructed.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ReleaseError {
+    /// The retained semantic document has no PCB intent to release.
+    MissingPcb,
+    /// Placement constraints cannot establish one intended physical layout.
+    UnsatisfiedPlacement(PlacementResolutionReport),
+    /// Retained PCB intent could not be lowered into certified geometry.
+    Materialization(GeometryMaterializationError),
+    /// Certified geometry could not become a non-lossy fabrication package.
+    Fabrication(FabricationPackageError),
+}
+
+impl Display for ReleaseError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MissingPcb => formatter.write_str("semantic document has no PCB layout"),
+            Self::UnsatisfiedPlacement(report) => write!(
+                formatter,
+                "placement constraints are unsatisfied ({} issues)",
+                report.issues.len()
+            ),
+            Self::Materialization(error) => write!(formatter, "materialization failed: {error}"),
+            Self::Fabrication(error) => write!(formatter, "fabrication failed: {error}"),
+        }
+    }
+}
+
+impl std::error::Error for ReleaseError {}
+
+impl From<GeometryMaterializationError> for ReleaseError {
+    fn from(error: GeometryMaterializationError) -> Self {
+        Self::Materialization(error)
+    }
+}
+
+impl From<FabricationPackageError> for ReleaseError {
+    fn from(error: FabricationPackageError) -> Self {
+        Self::Fabrication(error)
+    }
+}
+
+impl CheckedDesign {
+    /// Resolves placement and produces cohesive verification and release evidence.
+    ///
+    /// Rule findings are returned in [`ReleaseReport`], even when
+    /// they block release. Errors are reserved for stages whose evidence could
+    /// not be constructed.
+    pub fn release_report(&self, options: ReleaseOptions) -> Result<ReleaseReport, ReleaseError> {
+        release_report(&self.circuit, &self.layout, None, None, options)
+    }
+}
+
+impl CheckedProject {
+    /// Produces release evidence from the validated path-qualified flat view.
+    ///
+    /// Reusable definitions, scope maps, schematics, and source maps remain
+    /// available on this project while the existing composed
+    /// [`crate::Circuit`] and [`crate::PcbLayout`] drive release reporting.
+    pub fn release_report(&self, options: ReleaseOptions) -> Result<ReleaseReport, ReleaseError> {
+        release_report(
+            &self.composed.circuit,
+            &self.composed.layout,
+            None,
+            None,
+            options,
+        )
+    }
+}
+
+#[cfg(feature = "interchange")]
+impl SemanticDocument {
+    /// Produces release evidence directly from this validated retained document.
+    ///
+    /// This is the project-file entry point used by command-line and editor
+    /// workflows. It consumes the same authoritative [`Circuit`] and
+    /// [`PcbLayout`] as the checked authoring APIs and creates no alternate IR.
+    pub fn release_report(&self, options: ReleaseOptions) -> Result<ReleaseReport, ReleaseError> {
+        let layout = self.pcb.as_ref().ok_or(ReleaseError::MissingPcb)?;
+        release_report(
+            &self.circuit,
+            layout,
+            Some(&self.design_intent),
+            Some(&self.test_intent),
+            options,
+        )
+    }
+}
+
+fn release_report(
+    circuit: &Circuit,
+    layout: &PcbLayout,
+    design_intent: Option<&DesignIntent>,
+    test_intent: Option<&DesignForTestIntent>,
+    options: ReleaseOptions,
+) -> Result<ReleaseReport, ReleaseError> {
+    let placement = layout.resolve_placement_constraints(circuit);
+    if !placement.is_satisfied() {
+        return Err(ReleaseError::UnsatisfiedPlacement(placement));
+    }
+
+    let mut resolved_layout = layout.clone();
+    resolved_layout.placements.clone_from(&placement.placements);
+    let erc = circuit.electrical_rule_check();
+    let materialization = resolved_layout.materialize(
+        circuit,
+        &options.materialization_context,
+        options.materialization,
+    )?;
+    let drc_handoff = HyperDrcHandoff::from_materialization_with_context(
+        &resolved_layout,
+        &materialization,
+        circuit,
+        &options.pcb_materials,
+        design_intent,
+        test_intent,
+    );
+    let drc = drc_handoff.run_readiness(&options.drc);
+    let fabrication = FabricationPackage::from_materialization_with_options(
+        &resolved_layout,
+        &materialization,
+        options.fabrication,
+    )?;
+    let fabrication_integrity = fabrication.verify_integrity();
+    let cam_round_trip = fabrication.audit_cam_round_trip();
+    let assembly = AssemblyOutputs::from_design(circuit, &resolved_layout)
+        .expect("checked circuit and resolved release layout remain structurally valid");
+    let assembly_round_trip = assembly.audit_csv_round_trip();
+
+    Ok(ReleaseReport {
+        placement,
+        resolved_layout,
+        erc,
+        materialization,
+        drc_handoff,
+        drc,
+        fabrication,
+        fabrication_integrity,
+        cam_round_trip,
+        assembly,
+        assembly_round_trip,
+    })
+}
