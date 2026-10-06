@@ -136,10 +136,3 @@ required-features = ["comparative-benchmarks"]
 [[bench]]
 name = "pathological_regions"
 harness = false
-
-[patch.crates-io]
-hyperreal = { path = "../hyperreal" }
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
-hypersolve = { path = "../hypersolve" }
-hypertri = { path = "../hypertri" }

@@ -28,12 +28,6 @@ serde_stacker = "0.1.14"
 [dev-dependencies]
 proptest = "1.7.0"
 
-[patch.crates-io]
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
-hyperreal = { path = "../hyperreal" }
-hypersolve = { path = "../hypersolve" }
-
 [[bench]]
 name = "kernel"
 harness = false

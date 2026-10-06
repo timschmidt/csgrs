@@ -6901,3 +6901,15 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "hypercurve"
+version = "0.3.1"
+
+[[patch.unused]]
+name = "hyperphysics"
+version = "0.3.0"
+
+[[patch.unused]]
+name = "hypersolve"
+version = "0.3.1"
