@@ -104,6 +104,26 @@ The modular step is what is missing from all of these. Implement it first, then 
 
 **S7: collapse duplicated cusp chart variants.** The duplicated variants are `SelectedFiberRational` and `SelectedFiberParallel`, and the corresponding `*ParameterMap2` pairs: about 106 references, concentrated in `cusp_semicircle/parameters.rs`. This is structure and code size, with no performance effect.
 
+## 6. Public geometry for restricted boolean fragments
+
+Boolean results can carry Bezier and conic fragments that cut their source at algebraic, non-rational parameters. Such a fragment is a `CurveCarrier2::Restricted` or `CurveCarrier2::SourceRange` carrier, and the public API cannot describe it:
+- `Curve2::geometry()` returns `None`.
+- `Curve2::native_bezier_fragments()` returns `Blocked(ExactCurveBlocker { operation: NativeTopology, family: Some(QuadraticBezier), reason: Unsupported, .. })`.
+- `source_range()` and `retained_fragment()`, which hold the source curve and its exact parameter interval, are `pub(crate)`.
+
+**Effect.** The `hypercurve_ui` demo cannot edit or display these fragments. Two of its tests fail with "the demo cannot yet edit a QuadraticBezier boolean fragment" (likewise for `CubicBezier` and `RationalQuadraticBezier`):
+- `scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes`;
+- `scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes`.
+
+Any consumer that needs control points for a boolean result hits the same limit.
+
+**Options:**
+- A public accessor for the source curve plus its exact parameter interval as `CurveParameter2` endpoints. The consumer subdivides itself, or approximates for display.
+- Promotion of a restricted fragment to a native Bezier whose control points are exact algebraic `Real`s, so that `native_bezier_fragments` succeeds.
+- An explicit display-only approximation, named as such, that cannot re-enter exact operations.
+
+The first keeps the exact-only principal API smallest. The second makes the existing accessor total for these carriers.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:
