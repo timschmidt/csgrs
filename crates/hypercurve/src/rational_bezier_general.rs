@@ -351,6 +351,46 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         }
     }
 
+    /// [`Self::map_parameter_between_curves`] for a region parameter. Chart
+    /// correspondences map field values in their own field, promoting only
+    /// when a chart cannot decide; a general shared-image correspondence is
+    /// defined over global parameters and promotes first.
+    pub(crate) fn map_region_parameter_between_curves(
+        source: &RationalBezier2,
+        target: &RationalBezier2,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
+        let promoted = |parameter: &CurveParameter2| -> CurveResult<_> {
+            let parameter = match parameter.promoted_bezier_parameter_complete(policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(
+                Self::map_parameter_between_curves(source, target, &parameter, policy)?
+                    .map(|mapped| mapped.map(CurveParameter2::from)),
+            )
+        };
+        if parameter.as_bezier_parameter().is_some() || !parameter.is_retained_scalar() {
+            return promoted(parameter);
+        }
+        let correspondence = Self::new(source, target, policy);
+        if matches!(correspondence, Self::General { .. }) {
+            return promoted(parameter);
+        }
+        let Classification::Decided(unit) = BezierParameterRange2::try_new_with_policy(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+            &CurveContext::STRICT,
+        )?
+        else {
+            return promoted(parameter);
+        };
+        correspondence.map_region_parameter(parameter, &unit, &unit, true, policy)
+    }
+
     pub(crate) fn for_overlap(
         first: &RationalBezier2,
         second: &RationalBezier2,

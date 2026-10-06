@@ -3696,32 +3696,31 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                         "mapped rational source used a different predicate policy".into(),
                     ));
                 }
-                let source_parameter = match promote_curve_region_bezier_parameter(
-                    &contact.other_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match RationalBezierOverlapParameterCorrespondence2::map_parameter_between_curves(
+                match RationalBezierOverlapParameterCorrespondence2::map_region_parameter_between_curves(
                     &source.data.curve,
                     &target.data.curve,
-                    &source_parameter,
+                    &contact.other_parameter,
                     policy,
                 )? {
                     Classification::Decided(Some(parameter)) => {
                         let parameter = if self.map_reversed {
-                            parameter.unit_complement()
+                            match parameter.unit_complement() {
+                                Some(complement) => complement,
+                                None => match promote_curve_region_bezier_parameter(
+                                    &parameter, policy,
+                                )? {
+                                    Classification::Decided(parameter) => {
+                                        CurveParameter2::from(parameter.unit_complement())
+                                    }
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
+                                    }
+                                },
+                            }
                         } else {
                             parameter
                         };
-                        return retain_direct_overlap_parameter(
-                            CurveParameter2::from(parameter),
-                            &self.other_range,
-                            policy,
-                        );
+                        return retain_direct_overlap_parameter(parameter, &self.other_range, policy);
                     }
                     Classification::Decided(None) => {}
                     Classification::Uncertain(reason) => {
