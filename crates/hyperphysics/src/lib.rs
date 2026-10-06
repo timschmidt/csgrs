@@ -1,0 +1,108 @@
+//! Exact-aware physical carriers for the Hyper ecosystem.
+//!
+//! `hyperphysics` owns physical interpretation: materials, bodies, fixtures,
+//! and mass-property reports. Geometry and scalar truth remain in the lower
+//! crates. This crate therefore uses [`hyperreal::Real`] and
+//! [`hyperlattice::Vector3`] directly and keeps primitive floats out of the
+//! core API.
+//!
+//! Runtime engines may use lossy proposal data, but physical properties derived
+//! from authored geometry retain exact object facts and return explicit
+//! uncertainty or errors instead of silently accepting tolerance-based topology.
+
+pub mod body;
+pub mod contact;
+pub mod em;
+pub mod error;
+pub mod fluid;
+pub mod gjk;
+pub mod integration;
+pub mod mass;
+pub mod material;
+pub mod optics;
+pub mod photochemistry;
+pub mod property;
+pub mod residual;
+pub mod shape;
+pub mod thermal;
+
+pub use body::{BodyId, BodyKind, ExactBody3, ExactFixture3, FixtureId};
+pub use contact::{AabbContactReport3, ContactClassification, ContactMaterial};
+pub use em::{
+    BoundaryConditionKind, ElectromagneticBoundaryCondition3, ElectromagneticFieldRegion3,
+    ElectromagneticMaterial, ElectromagneticRegime, ElectromagneticReportStatus, FieldRegionKind,
+    LinearIsotropicElectricReport3,
+};
+pub use error::{PhysicsError, PhysicsResult};
+pub use fluid::{
+    FluidBoundary3, FluidBoundaryKind, FluidConservationReport3, FluidFixture3, FluidMaterial,
+    FluidParticle3, FluidPolicy, FluidReportStatus,
+};
+pub use gjk::{
+    ExactSupportMap3, GjkClassification3, GjkConfig3, GjkQueryReport3, GjkSupportPoint3,
+    GjkTermination3, gjk_query_3d, gjk_query_3d_with_config,
+};
+pub use hyperlattice::Vector3;
+pub use hyperreal::Real;
+pub use integration::{
+    CouplingPolicy, DiagnosticStatus, ForceAccumulator3, ForceContribution3, IntegrationPolicy,
+    StepReplayReport3, SystemDiagnostics3,
+};
+pub use mass::{
+    MassPropertyCertificate3, MassPropertyReport3, SymmetricInertia3,
+    triangle_mesh_uniform_density_mass_properties,
+};
+pub use material::{ExactMaterial, MaterialId};
+pub use optics::{
+    BeerLambertSlabReport, FresnelNormalReport, OpticalInterface3, OpticalMedium, OpticalRay3,
+    OpticalReportStatus, RayInterfaceClassification, SnellNormalReport,
+};
+pub use photochemistry::{
+    CureDecision, CureStatus, DiffusiveCourantReport, ExposureMode, PhotochemicalConcentrations,
+    PhotochemicalPolicy, ReactionDiffusionState, ReactionDiffusionTransport,
+    VatPhotopolymerWorkingCurve, WorkingCurveReport,
+};
+pub use property::{
+    ElasticDerivationReport, ExternalReplacementStatus, MaterialAssertion, MaterialPropertyGraph,
+    MaterialPropertyKind, MaterialState, PhysicalPort, PhysicsCertificationReport,
+    PropertyResolutionStatus, PropertyTensor, PropertyValue, ResolvedPropertyReport, SourceSpec,
+};
+pub use residual::{HypersolveResidualReplayReport, HypersolveResidualRow};
+pub use shape::{
+    AxisAlignedBox3, BoxPointClassification, ClosedTriangleMesh3, PhysicsShape3, Plane3,
+    PlanePointClassification, PlanePointReport3, Ray3, RayPlaneClassification, RayPlaneReport3,
+    Segment3, SegmentPlaneClassification, SegmentPlaneReport3, ShapeClassificationReport3,
+    SupportMapReport3, Triangle3, TrianglePointClassification, TrianglePointReport3,
+};
+pub use thermal::{
+    HeatFluxBoundary3, HeatSource3, LumpedRcThermalStepReport, LumpedThermalNode,
+    SteadySlabConductionReport, TemperatureField3, ThermalContactPair3, ThermalMaterial,
+    ThermalPolicy, ThermalPort3, ThermalReportStatus, TransientThermalStepReport,
+};
+
+pub(crate) const STRICT_PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    hyperlimit::PredicatePolicy::STRICT;
+pub(crate) const STRICT_MESH_CONTEXT: hypermesh::MeshContext =
+    hypermesh::MeshContext::new(STRICT_PREDICATE_POLICY);
+
+/// Classify a sign for report paths that promise exact/certified provenance.
+///
+/// These paths intentionally opt out of the workspace's temporary terminal
+/// approximation while still sharing Hyperlimit's structural and refinement
+/// pipeline.
+pub(crate) fn strict_real_sign(value: &hyperreal::Real) -> Option<hyperreal::RealSign> {
+    hyperlimit::classify_real_sign(value, STRICT_PREDICATE_POLICY)
+        .value()
+        .map(|sign| match sign {
+            hyperlimit::Sign::Negative => hyperreal::RealSign::Negative,
+            hyperlimit::Sign::Zero => hyperreal::RealSign::Zero,
+            hyperlimit::Sign::Positive => hyperreal::RealSign::Positive,
+        })
+}
+
+pub(crate) fn strict_real_cmp(
+    left: &hyperreal::Real,
+    right: &hyperreal::Real,
+) -> Option<std::cmp::Ordering> {
+    hyperlimit::compare_reals(left, right, STRICT_PREDICATE_POLICY).value()
+}

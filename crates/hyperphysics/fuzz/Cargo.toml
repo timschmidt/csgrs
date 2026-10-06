@@ -1,0 +1,27 @@
+[package]
+name = "hyperphysics-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+hyperphysics = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
+libfuzzer-sys = "0.4"
+
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+
+[[bin]]
+name = "physics_invariants"
+path = "fuzz_targets/physics_invariants.rs"
+test = false
+doc = false
+bench = false
