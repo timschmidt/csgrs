@@ -1539,6 +1539,9 @@ pub(crate) fn dense_sign_at_two_selected_roots(
         .map(|coefficient| LocalFieldElement::from_polynomial(vec![coefficient.clone()], &field))
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
+    if let Some(sign) = predicate_sign_by_isolation(&predicate, variable, &mut field) {
+        return Some(sign);
+    }
     let mut context = LocalFieldContext { field: &mut field };
     crate::root_sign::ordered_field_sign_at_selected_root(
         &defining,
@@ -1548,6 +1551,233 @@ pub(crate) fn dense_sign_at_two_selected_roots(
     )
     .ok()
     .flatten()
+}
+
+/// Bisection rounds spent separating a selected root from the predicate's
+/// own roots before the Sturm-Tarski chain of its defining polynomial.
+const TWO_ROOT_ISOLATION_BISECTIONS: usize = 64;
+
+/// Bisection at which an unseparated predicate is tested for an exact zero
+/// at the selected root. The rational norm test is cheap next to Bernstein
+/// subdivision over the wide coefficients of a narrow bracket.
+const TWO_ROOT_ZERO_TEST_BISECTION: usize = 0;
+
+/// Whether a rational polynomial is square-free with exactly one real root.
+/// `None` means a coefficient or count was not exactly decided.
+fn modulus_has_single_real_root(modulus: &[Real]) -> Option<bool> {
+    let derivative = modulus
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(power, coefficient)| coefficient * Real::from(power as u64))
+        .collect::<Vec<_>>();
+    if crate::integer_interpolation::primitive_integer_polynomial_gcd(modulus, &derivative)?.len()
+        > 1
+    {
+        return Some(false);
+    }
+    // Cauchy's bound encloses every real root strictly.
+    let magnitude = |value: &hyperreal::Rational| {
+        if *value < hyperreal::Rational::zero() {
+            -value
+        } else {
+            value.clone()
+        }
+    };
+    let leading = magnitude(modulus.last()?.exact_rational_ref()?);
+    if leading == hyperreal::Rational::zero() {
+        return None;
+    }
+    let mut bound = hyperreal::Rational::zero();
+    for coefficient in &modulus[..modulus.len() - 1] {
+        let ratio = magnitude(coefficient.exact_rational_ref()?) / leading.clone();
+        if ratio > bound {
+            bound = ratio;
+        }
+    }
+    let bound = Real::new(bound + hyperreal::Rational::one());
+    let sturm =
+        crate::root_isolation::UnivariateSturmSequence::new(modulus, PredicatePolicy::STRICT)?;
+    Some(sturm.count_distinct_roots(&-&bound, &bound, PredicatePolicy::STRICT)? == 1)
+}
+
+/// Whether every root of a rational polynomial in `(lower, upper]` is
+/// simple. `None` means the exact GCD or count was undecided.
+fn polynomial_root_is_simple(polynomial: &[Real], lower: &Real, upper: &Real) -> Option<bool> {
+    let derivative = polynomial
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(power, coefficient)| coefficient * Real::from(power as u64))
+        .collect::<Vec<_>>();
+    let repeated =
+        crate::integer_interpolation::primitive_integer_polynomial_gcd(polynomial, &derivative)?;
+    if repeated.len() <= 1 {
+        return Some(true);
+    }
+    let sturm =
+        crate::root_isolation::UnivariateSturmSequence::new(&repeated, PredicatePolicy::STRICT)?;
+    Some(sturm.count_distinct_roots(lower, upper, PredicatePolicy::STRICT)? == 0)
+}
+
+/// Whether `predicate` vanishes at the defining polynomial's only root in the
+/// open bracket `(lower, upper)`.
+///
+/// The norm of the predicate over the local field is a rational polynomial
+/// vanishing wherever the predicate does on some conjugate field sheet. A
+/// rational GCD with the defining polynomial, having no root in the bracket,
+/// proves a nonzero value without field arithmetic. Otherwise the usually
+/// small common factor replaces the defining polynomial in a local-field GCD
+/// with the predicate, which decides the selected sheet. `None` means a step
+/// was undecided.
+fn predicate_vanishes_at_isolated_root(
+    predicate: &[LocalFieldElement],
+    variable: &AlgebraicRootRepresentation,
+    lower: &Real,
+    upper: &Real,
+    field: &mut LocalAlgebraicField,
+) -> Option<bool> {
+    let fiber = predicate
+        .iter()
+        .map(|coefficient| {
+            coefficient
+                .denominator
+                .is_none()
+                .then(|| coefficient.numerator.clone())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let source = field.modulus().to_vec();
+    let norm =
+        crate::resultant::quotient_ring_fiber_resultant_polynomial(&source, &fiber, source.len())?;
+    if norm
+        .iter()
+        .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        return None;
+    }
+    let common = crate::integer_interpolation::primitive_integer_polynomial_gcd(
+        &variable.polynomial_coefficients,
+        &norm,
+    )?;
+    if common.len() <= 1 {
+        return Some(false);
+    }
+    let sturm =
+        crate::root_isolation::UnivariateSturmSequence::new(&common, PredicatePolicy::STRICT)?;
+    if sturm.count_distinct_roots(lower, upper, PredicatePolicy::STRICT)? == 0 {
+        return Some(false);
+    }
+    // The norm is c * prod_i P(beta_i, x) over the conjugates of the field
+    // generator. When the generator is the modulus' only real root and the
+    // real x0 is a simple norm root, exactly one conjugate pairs with x0: a
+    // non-real one would bring its complex conjugate and a double root.
+    if modulus_has_single_real_root(&source)? && polynomial_root_is_simple(&norm, lower, upper)? {
+        return Some(true);
+    }
+    let common = common
+        .into_iter()
+        .map(|coefficient| LocalFieldElement::from_polynomial(vec![coefficient], field))
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+    let divisor =
+        local_polynomial_greatest_common_divisor(common, predicate.to_vec(), field).ok()?;
+    if divisor.len() <= 1 {
+        return Some(false);
+    }
+    match count_local_polynomial_roots(
+        divisor,
+        lower,
+        upper,
+        FiberIntervalEndpoints::IncludeRoots,
+        field,
+    )
+    .ok()?
+    {
+        LocalRootCountOutcome::Counted { count, .. } => Some(count != 0),
+        LocalRootCountOutcome::IdenticallyZeroFiber
+        | LocalRootCountOutcome::EndpointRoot { .. } => None,
+    }
+}
+
+/// Signs a local-field predicate at a selected rational-coefficient root by
+/// excluding the predicate's roots from a shrinking bracket of that root.
+///
+/// The root's defining polynomial may have much higher degree than the
+/// predicate, making a Sturm-Tarski chain over it expensive. Instead the
+/// root's isolator is bisected by exact rational signs of its defining
+/// polynomial while de Casteljau subdivision follows the predicate's
+/// Bernstein controls on the bracket. Controls sharing one strict sign prove
+/// that sign throughout the bracket, hence at the root. `None` leaves an
+/// exact zero, a root without a rational sign change, or an unseparated
+/// bracket to the complete chain.
+fn predicate_sign_by_isolation(
+    predicate: &[LocalFieldElement],
+    variable: &AlgebraicRootRepresentation,
+    field: &mut LocalAlgebraicField,
+) -> Option<Ordering> {
+    use crate::ordered_field_roots::{
+        bernstein_common_strict_sign, midpoint_subdivide, power_to_bernstein_on_interval,
+    };
+    let interval = &variable.interval;
+    if let Some(root) = &interval.exact_root {
+        return local_polynomial_sign_at(predicate, root, field).ok();
+    }
+    if interval.distinct_root_count != 1 || predicate.is_empty() {
+        return None;
+    }
+    let defining_sign = |point: &Real| -> Option<Ordering> {
+        let value = Real::eval_poly(&variable.polynomial_coefficients, point);
+        value
+            .exact_rational_ref()?
+            .partial_cmp(&hyperreal::Rational::zero())
+    };
+    let mut lower = interval.lower.clone();
+    let mut upper = interval.upper.clone();
+    let lower_sign = defining_sign(&lower)?;
+    let upper_sign = defining_sign(&upper)?;
+    if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal || lower_sign == upper_sign {
+        return None;
+    }
+    let mut context = LocalFieldContext { field };
+    let mut controls =
+        power_to_bernstein_on_interval(predicate, &lower, &upper, &mut context).ok()??;
+    for bisection in 0..TWO_ROOT_ISOLATION_BISECTIONS {
+        if let Some(sign) = bernstein_common_strict_sign(&controls, &mut context).ok()? {
+            return Some(sign);
+        }
+        if bisection == TWO_ROOT_ZERO_TEST_BISECTION {
+            // Controls that do not separate often mean the predicate
+            // vanishes at the root. The selected root is
+            // the defining polynomial's only root in this bracket, so a
+            // common divisor with a root here proves that zero; one without
+            // proves a nonzero value that further halving must separate.
+            match predicate_vanishes_at_isolated_root(
+                predicate,
+                variable,
+                &lower,
+                &upper,
+                context.field,
+            ) {
+                Some(true) => return Some(Ordering::Equal),
+                Some(false) => {}
+                None => return None,
+            }
+        }
+        let midpoint = Real::average_pair(&lower, &upper);
+        let midpoint_sign = defining_sign(&midpoint)?;
+        if midpoint_sign == Ordering::Equal {
+            return local_polynomial_sign_at(predicate, &midpoint, context.field).ok();
+        }
+        let (left, right) = midpoint_subdivide(controls, &mut context).ok()?;
+        if midpoint_sign == lower_sign {
+            lower = midpoint;
+            controls = right;
+        } else {
+            upper = midpoint;
+            controls = left;
+        }
+    }
+    None
 }
 
 /// Isolate a local-field polynomial by exact Bernstein subdivision.
@@ -4921,6 +5151,58 @@ mod tests {
         root.validation = validate_algebraic_root_representation(&root, policy);
         assert!(root.is_valid());
         root
+    }
+
+    #[test]
+    fn two_selected_roots_prove_a_zero_on_the_single_real_sheet() {
+        // beta is the only real root of y^3 - 2; x0 = 2^(1/3) is the only
+        // root of x^6 - 4 in [1, 2]. The predicate x - y vanishes at
+        // (beta, x0) while each Bernstein bracket of x0 stays unseparated.
+        let beta = represented_root(
+            vec![real(-2), real(0), real(0), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let x0 = represented_root(
+            vec![
+                real(-4),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(1),
+            ],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let sources = [beta, x0];
+        let tensor = |terms: &[((usize, usize), i64)]| {
+            let layout = crate::tensor_resultant::DenseTensorPolynomial::zero(vec![2, 2]).unwrap();
+            let mut coefficients = vec![Real::zero(); 4];
+            for ((first, second), value) in terms {
+                coefficients[layout.storage_index(&[*first, *second]).unwrap()] = real(*value);
+            }
+            crate::tensor_resultant::DenseTensorPolynomial::try_new(vec![2, 2], coefficients)
+                .unwrap()
+        };
+        let check = |polynomial: crate::tensor_resultant::DenseTensorPolynomial| {
+            dense_sign_at_two_selected_roots(&polynomial, &sources)
+        };
+        assert_eq!(
+            check(tensor(&[((0, 1), 1), ((1, 0), -1)])),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            check(tensor(&[((0, 1), 2), ((1, 0), -2), ((0, 0), 1)])),
+            Some(Ordering::Greater)
+        );
+        assert_eq!(
+            check(tensor(&[((0, 1), -1), ((1, 0), -1)])),
+            Some(Ordering::Less)
+        );
     }
 
     #[test]

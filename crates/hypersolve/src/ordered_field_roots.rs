@@ -304,7 +304,7 @@ fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     Ok((polynomial, had_root))
 }
 
-fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+pub(crate) fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     polynomial: &[C],
     lower: &Real,
     upper: &Real,
@@ -366,7 +366,7 @@ fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>
     Ok(Some(controls))
 }
 
-fn midpoint_subdivide<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+pub(crate) fn midpoint_subdivide<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     mut work: Vec<C>,
     field: &mut F,
 ) -> Result<(Vec<C>, Vec<C>), F::Error> {
@@ -397,6 +397,27 @@ fn midpoint_subdivide<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     }
     right.reverse();
     Ok((left, right))
+}
+
+/// The common strict sign of Bernstein control coefficients, read only from
+/// already separated signs. A polynomial whose controls on an interval share
+/// one strict sign is that sign throughout the interval.
+pub(crate) fn bernstein_common_strict_sign<C, F: OrderedFieldPolynomialContext<C>>(
+    controls: &[C],
+    field: &mut F,
+) -> Result<Option<Ordering>, F::Error> {
+    let mut common = None;
+    for control in controls {
+        match field.sign_if_separated(control)? {
+            Some(sign @ (Ordering::Less | Ordering::Greater))
+                if common.is_none_or(|common| common == sign) =>
+            {
+                common = Some(sign);
+            }
+            _ => return Ok(None),
+        }
+    }
+    Ok(common)
 }
 
 fn bernstein_sign_variations<C, F: OrderedFieldPolynomialContext<C>>(
