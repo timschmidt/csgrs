@@ -1,0 +1,145 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "fused exact trivariate construction and retained oblique-contact replay",
+  "implementation_revision": "05e74e30fa84e8f0004a12b1c21830141e6ef503",
+  "correctness_equivalent_baseline_revision": "20e064dbd3b36033cd1d5dabdf471dfd34c7abb9",
+  "preceding_checkpoint": "2026-08-07-general-oblique-cusp-chord-reoffset.json",
+  "benchmark_source_changed": false,
+  "dependency_revisions_changed": false,
+  "lower_layer_modified": false,
+  "hypermesh_modified_or_benchmarked": false,
+  "scope": {
+    "changed": [
+      "short signed sums of trivariate products now convolve directly into one bounded result tensor",
+      "short affine combinations used by retained coordinate, linear-form, derived-point, and equality replay now accumulate into one bounded result tensor",
+      "radical sign replay can borrow rational and radical components without cloning a retained dense tensor",
+      "the oblique circle/chord construction, radical magnitude comparison, and derived replay use the fused primitives"
+    ],
+    "unchanged": [
+      "the selected-root refinement and exact sign authority",
+      "the 16384-control resource ceiling and Unsupported result on exhaustion",
+      "STRICT and APPROXIMATE_512 terminal policy handling",
+      "the retained contact representation, public API, and benchmark fixture"
+    ]
+  },
+  "exactness": {
+    "construction": "Each coefficient remains a hyperreal::Real and is accumulated with exact Real arithmetic. No floating preview, primitive element, or approximate coordinate is introduced.",
+    "cap": "Every fused result checks the same rectangular tensor control count before allocation; multiplication still materializes required intermediate powers when the old path did so for capability safety.",
+    "policy": "The fused helpers do not make decisions. All signs still terminate in the shared selected-root predicate path, including the APPROXIMATE_512 terminal only when exact proof remains unavailable.",
+    "mathematical_paths": "Positive, negative, zero, tangent, transverse, clipped, reversed, endpoint, and disjoint outcomes retain the pre-optimization branch filters and carriers."
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_boolean/oblique_cusp_chord_bevel_reoffset",
+    "baseline_executable": "target/release/deps/comparative-68819996ab3fdf67",
+    "current_executable": "target/oblique-opt-fused/release/deps/comparative-68819996ab3fdf67",
+    "cpu": 11,
+    "wall": "Nine process pairs per lane, one Runner sample per process, alternating baseline/current execution order; 16 timed iterations for evidence and the shared four-Boolean batch, 5 for Boolean plus re-offset. Every timed sample includes the Runner warm-up outside the reported interval.",
+    "perf": "perf stat -r 5 on one process with 64 timed iterations plus one warm-up for evidence/four, and 32 plus one warm-up for re-offset. Subtract the implementation-filter=disabled process, then divide by 65 or 33.",
+    "heap": "Heaptrack record-only with 32 timed iterations plus one warm-up. Subtract the disabled process and divide by 33. Temporary counts come from heaptrack_print; exact peaks come from Massif export.",
+    "size": "GNU size and stat on the correctness-equivalent all-feature comparative executables."
+  },
+  "wall_performance": {
+    "interpretation": "Wall time is neutral within process-to-process noise; the order-balanced medians do not establish a throughput regression or improvement. Retired exact work, allocation count, and linked size provide the stable win.",
+    "exact_evidence": {
+      "baseline_median_ns": 9856663.8,
+      "current_median_ns": 9810358.2,
+      "median_paired_delta_percent": -0.299508,
+      "paired_delta_percent_range": [-3.606485, 3.940646]
+    },
+    "exact_four_booleans": {
+      "baseline_median_ns": 10263379.1,
+      "current_median_ns": 10246115.9,
+      "median_paired_delta_percent": 0.663745,
+      "paired_delta_percent_range": [-4.096652, 3.783691]
+    },
+    "exact_boolean_reoffset": {
+      "baseline_median_ns": 28119984.4,
+      "current_median_ns": 28284293.2,
+      "median_paired_delta_percent": 0.132006,
+      "paired_delta_percent_range": [-3.881217, 6.019976]
+    }
+  },
+  "deterministic_perf": {
+    "raw_array_order": [
+      "instructions",
+      "cycles",
+      "branches",
+      "branch_misses",
+      "cache_misses"
+    ],
+    "current_raw_disabled_process": [471115920, 202562198, 90120497, 1239788, 956165],
+    "current_exact_evidence_raw_process": [6793914653, 2889139631, 1302714564, 14469042, 12157918],
+    "current_exact_evidence_normalized": [97273826.662, 41331960.508, 18655293.338, 203526.985, 172334.662],
+    "current_exact_four_booleans_raw_process": [6983077261, 3008739123, 1339171278, 15156853, 13519773],
+    "current_exact_four_booleans_normalized": [100184020.631, 43171952.692, 19216165.862, 214108.692, 193286.277],
+    "current_exact_boolean_reoffset_raw_process": [9203861990, 4129518074, 1761979164, 26873805, 20336681],
+    "current_exact_boolean_reoffset_normalized": [264628668.788, 118998662.909, 50662383.848, 776788.394, 587288.364],
+    "baseline_normalized_instructions": {
+      "exact_evidence": 98388602.400,
+      "exact_four_booleans": 101338171.246,
+      "exact_boolean_reoffset": 267776649.415
+    },
+    "instruction_delta_percent": {
+      "exact_evidence": -1.133033,
+      "exact_four_booleans": -1.138910,
+      "exact_boolean_reoffset": -1.175599
+    },
+    "interpretation": "All three exact lanes retire about 1.1% fewer instructions. Cycle, branch-miss, and cache-miss counts varied more between repeated perf sessions and are retained as raw evidence rather than claimed improvements."
+  },
+  "allocation_evidence": {
+    "disabled_raw": {
+      "allocation_calls": 778855,
+      "temporary_allocations": 97142,
+      "peak_heap_bytes": 1446491
+    },
+    "exact_evidence_raw": {
+      "allocation_calls": 6398982,
+      "temporary_allocations": 513140,
+      "peak_heap_bytes": 1447740
+    },
+    "exact_evidence_normalized": {
+      "allocation_calls": 170306.878788,
+      "temporary_allocations": 12606.0,
+      "peak_increment_bytes": 1249
+    },
+    "baseline_exact_evidence_normalized": {
+      "allocation_calls": 172229.878788,
+      "temporary_allocations": 12606.0,
+      "peak_increment_bytes": 1113
+    },
+    "allocation_call_delta": -1923.0,
+    "allocation_call_delta_percent": -1.116531,
+    "interpretation": "The fused construction removes 1923 allocation calls per evidence operation. Heaptrack's temporary-allocation definition is unchanged, and both incremental peaks remain approximately one kilobyte."
+  },
+  "linked_size": {
+    "baseline_file_bytes": 13144544,
+    "current_file_bytes": 13138192,
+    "file_delta_bytes": -6352,
+    "file_delta_percent": -0.048324,
+    "baseline_text_bytes": 10040371,
+    "current_text_bytes": 10033599,
+    "text_delta_bytes": -6772,
+    "text_delta_percent": -0.067448,
+    "baseline_data_bytes": 311016,
+    "current_data_bytes": 311088,
+    "data_delta_bytes": 72,
+    "baseline_bss_bytes": 5464,
+    "current_bss_bytes": 3984,
+    "bss_delta_bytes": -1480,
+    "baseline_allocated_total_bytes": 10356851,
+    "current_allocated_total_bytes": 10348671,
+    "allocated_total_delta_bytes": -8180,
+    "allocated_total_delta_percent": -0.078982
+  },
+  "verification": {
+    "all_features_library": "cargo test --all-features --lib: 486 passed, 0 failed, 1 ignored",
+    "public_promotion": "cargo test --all-features --test hypercurve_curve_region_promotion: 66 passed, 0 failed",
+    "minimal_library": "cargo test --no-default-features --lib: 324 passed, 0 failed",
+    "all_features_clippy": "cargo clippy --all-targets --all-features -- -D warnings: passed for Hypercurve; only the pre-existing Hypertri dependency dead-code warning was emitted",
+    "minimal_clippy": "cargo clippy --all-targets --no-default-features -- -D warnings: passed",
+    "benchmark_build": "cargo build --release --all-features --bench comparative: passed",
+    "direct_regression": "algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+    "public_regression": "rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts"
+  }
+}

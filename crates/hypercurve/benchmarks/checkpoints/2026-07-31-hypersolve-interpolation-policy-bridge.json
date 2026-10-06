@@ -1,0 +1,228 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "hypersolve-interpolation-policy-bridge",
+  "source_revision": "2652cad03ab8aecce0dac573f6217c73102abab6",
+  "parent_revision": "ec899fb885b8a777b9985c4c69c0f0dc3497d894",
+  "implementation_revisions": {
+    "hypercurve": [
+      "9b7c3abdeed963c72819054e160b5d128a181722",
+      "2652cad03ab8aecce0dac573f6217c73102abab6"
+    ],
+    "hypersolve": [
+      "c1348d7551873573859cde01ef4ccf2915b99d45",
+      "5cbce32bc652002105a5882f4910a31bf4ee5600"
+    ],
+    "hypercircuit": [
+      "265a38e384ab1451c0938134db71875f7fedb2fc"
+    ]
+  },
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "hypersolve_dense_policy_is_explicit": true,
+    "predicate_policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "policy_owned_by_caller": true,
+    "hypersolve_silently_selects_geometry_policy": false,
+    "solve_certainty_includes": [
+      "pivot selection",
+      "determinant construction",
+      "residual replay"
+    ],
+    "fast_path": "bounded fraction-free Bareiss pivot scan",
+    "authorized_terminal_path": "the caller policy extends an unresolved pivot or residual comparison through one approximate 512-bit terminal",
+    "strict_unresolved_path": "pivot-free exact determinant construction followed by exact Cramer solve when required",
+    "pivot_free_determinant": "Faddeev-LeVerrier over exact hyperreal::Real values, O(n^4) time and O(n^2) memory, with division only by proved nonzero exact integers",
+    "fraction_free_determinant_remains_policy_neutral": true,
+    "hypercurve_interpolation_solver_paths": 1,
+    "hypercurve_interpolation_solver": "hypersolve::solve_dense_linear_system_bareiss_multi_rhs",
+    "local_nonrational_cramer_fork_removed": true,
+    "rational_and_symbolic_inputs_share_the_same_solver": true,
+    "authoritative_authored_point_proof": "exact homogenized interpolation matrix residuals plus certified nonzero row denominators",
+    "redundant_postconstruction_point_replay_removed": true,
+    "strict_symbolic_terminal_result": "typed Interpolation/Predicate blocker",
+    "approximate_512_symbolic_terminal_result": "exact NURBS carrier with Approximate512Consumed",
+    "returned_geometry_is_not_sampled_or_rounded": true,
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "memory_evidence": {
+    "dense_residual_values_retained_once": true,
+    "dense_replay_row_duplicate_Real_removed": true,
+    "dense_replay_row_estimated_reduction_bytes_per_row": 8,
+    "uniform_interpolation_cached_parameter_slice_removed": true,
+    "interpolation_system_estimated_inline_reduction_bytes": 16,
+    "uniform_cache_capacity": 8,
+    "new_hypercurve_carrier_cache_or_buffer": false
+  },
+  "matched_historical_bspline_benchmarks": {
+    "command": "one warm-up final artifact followed by eleven default-feature release bspline executions pinned to CPU 9",
+    "benchmark_harness": "benches/bspline.rs",
+    "historical_checkpoint": "2026-07-31-spline-construction-interpolation-policy.json",
+    "uniform_global_interpolation": {
+      "curves_per_process": 1000,
+      "historical_median_ns_per_curve": 14322,
+      "candidate_ns_per_curve": [
+        8479,
+        9240,
+        8515,
+        8423,
+        8531,
+        11274,
+        8262,
+        14499,
+        8398,
+        8475,
+        8368
+      ],
+      "candidate_median_ns_per_curve": 8479,
+      "median_change_percent": -40.797374668342414,
+      "contract_equivalent": true
+    },
+    "symbolic_centripetal_interpolation": {
+      "curves_per_process": 100,
+      "historical_median_ns_per_curve": 275727,
+      "candidate_ns_per_curve": [
+        1560828,
+        1531063,
+        1662708,
+        1481291,
+        1454704,
+        1524313,
+        1451872,
+        1502523,
+        1436039,
+        1453743,
+        1425225
+      ],
+      "candidate_median_ns_per_curve": 1481291,
+      "median_change_percent": 437.23102924269295,
+      "candidate_over_historical_ratio": 5.3723102924269295,
+      "contract_equivalent": false,
+      "historical_contract": "strict local non-rational Cramer construction without Hypersolve residual replay",
+      "candidate_contract": "APPROXIMATE_512 exact multi-RHS solve with terminal equality certification and explicit consumption",
+      "interpretation": "the increase closes a previously missing exact-certification path and is not an equivalent-contract regression"
+    },
+    "interpretation": "The equivalent exact rational hot path improves 40.80%. Symbolic timing now measures the requested terminal proof rather than the historical unchecked construction path."
+  },
+  "direct_hypersolve_benchmarks": {
+    "command": "Criterion release benchmarks pinned to CPU 9 with 1 second warm-up, 2 second measurement, and 30 samples",
+    "benchmark_harness": "hypersolve/benches/certification.rs",
+    "rational_fraction_free_dense_solve_2": {
+      "estimate_ns": 1468.9,
+      "interval_ns": [
+        1464.5,
+        1473.3
+      ]
+    },
+    "pivot_free_terminal_determinant_2": {
+      "estimate_ns": 2639.2,
+      "interval_ns": [
+        2633.4,
+        2645.3
+      ]
+    },
+    "approximate_512_terminal_solve_and_replay_2": {
+      "estimate_ns": 7141.0,
+      "interval_ns": [
+        7112.6,
+        7176.8
+      ]
+    },
+    "interpretation": "The common exact-rational solve remains the fast path. The two terminal lanes are new correctness coverage with no historical equivalent."
+  },
+  "competitive_interpolation_benchmark": {
+    "command": "one release process pinned to CPU 9, eleven samples, 150 ms calibration target per sample",
+    "benchmark_harness": "benches/comparative.rs",
+    "group": "nurbs_interpolation/chord_length_collinear_degree_2",
+    "fixture": "four collinear integer points with identical exact chord parameters",
+    "hypercurve_contract": "exact hyperreal::Real construction, STRICT pivot and residual certification",
+    "curvo_contract": "f64 numeric chord-length interpolation",
+    "hypercurve_median_ns_per_curve": 16840.9,
+    "hypercurve_range_ns_per_curve": [
+      16706.7,
+      16923.2
+    ],
+    "curvo_median_ns_per_curve": 844.6,
+    "curvo_range_ns_per_curve": [
+      824.3,
+      855.0
+    ],
+    "hypercurve_over_curvo_ratio": 19.93949798721288,
+    "contract_equivalent": false,
+    "interpretation": "The 19.94x gap is a visible optimization target, not an exactness-parity comparison."
+  },
+  "release_artifact_size": {
+    "measurement": "default-feature release bspline executable measured with GNU size and strip",
+    "historical_revision": "82152f89f21a93f3f4ed14ca3a2f4c4ca57e2956",
+    "historical": {
+      "file_bytes": 4143048,
+      "stripped_file_bytes": 3206936,
+      "text_bytes": 2958586,
+      "data_bytes": 244456,
+      "bss_bytes": 4850,
+      "total_loaded_bytes": 3207892
+    },
+    "candidate": {
+      "file_bytes": 4138728,
+      "stripped_file_bytes": 3205320,
+      "text_bytes": 2956030,
+      "data_bytes": 245416,
+      "bss_bytes": 2370,
+      "total_loaded_bytes": 3203816
+    },
+    "delta": {
+      "file_bytes": -4320,
+      "stripped_file_bytes": -1616,
+      "text_bytes": -2556,
+      "data_bytes": 960,
+      "bss_bytes": -2480,
+      "total_loaded_bytes": -4076,
+      "total_loaded_percent": -0.12706163424454076
+    }
+  },
+  "caller_audit": {
+    "workspace_dense_api_search_excluding_hypermesh": "Hypercurve and Hypercircuit are the only external production callers",
+    "hypercurve_policy": "selected CurveContext policy",
+    "hypercircuit_policy": "STRICT",
+    "hypercircuit_mna_tests": "17/17 pass",
+    "hypercircuit_preexisting_unrelated_dirty_file": "Cargo.lock",
+    "compatibility_shim_added": false,
+    "hypermesh_searched_or_modified": false
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-interpolation-policy-callgraph-2652cad --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22733,
+    "edges": 39116,
+    "artifact": "/tmp/hypercurve-interpolation-policy-callgraph-2652cad/callgraph.json",
+    "single_interpolation_solve_chain": [
+      "interpolate_with_precomputed_system",
+      "solve_interpolation_coordinates_bareiss",
+      "solve_dense_linear_system_bareiss_multi_rhs"
+    ],
+    "local_cramer_solver_node_present": false
+  },
+  "verification": {
+    "hypercurve_cargo_test_all_features": "pass",
+    "hypercurve_unit_tests": 262,
+    "hypercurve_generated_curve_region_boolean_tests": "7/7 pass",
+    "hypercurve_pathological_exact_booleans": "268/268 pass",
+    "hypercurve_release_scale_pcb_tests": "two explicitly ignored",
+    "hypercurve_clippy_all_features_all_targets_deny_warnings": "pass",
+    "hypercurve_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "hypercurve_check_no_default_features": "pass",
+    "hypercurve_doc_all_features_deny_warnings": "pass",
+    "hypercurve_no_default_lib_test_observation": "224 pass; 8 existing Bezier moment tests require predicate comparisons and fail when predicates are disabled; this is not a historical no-default test gate",
+    "hypersolve_cargo_test_all_features": "pass: 165 unit, 2 README, 131 residual property, 209 smoke, and doc tests",
+    "hypersolve_clippy_all_features_all_targets_deny_warnings": "pass",
+    "hypersolve_doc_all_features_deny_warnings": "pass",
+    "hypersolve_dense_fuzz_target_api": "migrated",
+    "hypersolve_fuzz_all_targets": "blocked by three unrelated pre-existing algebraic targets that import a PredicatePolicy variant as the type",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "next_action": "Begin the unified CurveRegion2 arrangement and interaction-kernel tranche; retain the dense exact solve as the shared linear certification substrate and extend Hypersolve only when a general curve interaction requires a reusable algebraic primitive."
+}

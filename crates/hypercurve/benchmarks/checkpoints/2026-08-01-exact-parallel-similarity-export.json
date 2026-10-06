@@ -1,0 +1,189 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-01",
+  "checkpoint": "exact parallel similarity and structural export",
+  "source_revision": "8fc9a70f0d419f7ac7442dfad8c831533067e3eb",
+  "previous_checkpoint_revision": "108380b",
+  "historical_binary_revision": "84645c9",
+  "hypersolve_revision": "66ad4fc928288ab1c7f51bcf9e01299b9159a581",
+  "scope": {
+    "included": [
+      "BezierParallel2 similarity transport",
+      "orientation-reversing signed-normal semantics",
+      "lossless BezierParallelSource2 plus distance structural export",
+      "exact finite-input Similarity2 canonicalization",
+      "all-feature and no-default policy matrices",
+      "matched carrier hot-path, size, allocation, and call-graph guards"
+    ],
+    "excluded": [
+      "parallel/parallel intersection",
+      "algebraic-endpoint parallel fragments",
+      "CurveRegion2 parallel traversal",
+      "raw offset regularization",
+      "fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "source_expression": "q(t)=p(t)+d*R90(p'(t))/sqrt(dot(p'(t),p'(t)))",
+    "orientation_preserving_similarity": "for A=sQ with det(Q)>0, q_transformed(t)=A*p(t)+translation+(s*d)*left_normal((A*p)'(t))",
+    "orientation_reversing_similarity": "for A=sQ with det(Q)<0, the transformed left normal is the negative image of the source left normal, so the retained signed distance is -s*d",
+    "parameterization": "the public [0,1] parameter and traversal direction are unchanged",
+    "source_families": [
+      "polynomial quadratic Bezier",
+      "polynomial cubic Bezier",
+      "arbitrary-degree rational Bezier"
+    ],
+    "retained_fast_fact": "a quadratic retained exact line image remains retained after a nonsingular similarity",
+    "finite_constructor_fix": "try_from_f64_affine first validates the supplied matrix at the finite boundary, then projects it to the nearest orientation component of the exact similarity subspace before promoting coefficients to Real",
+    "policy": "the transform is policy-free construction over an already STRICT-certified exact Similarity2; point and derivative covariance replay under both STRICT and APPROXIMATE_512, and no approximate decision is stored in the carrier"
+  },
+  "public_surface": {
+    "added": [
+      "BezierParallelSource2",
+      "BezierParallel2::from_source",
+      "BezierParallel2::source",
+      "BezierParallel2::transform_similarity",
+      "Similarity2::scale"
+    ],
+    "compatibility_shims": 0,
+    "structural_export": "source() plus distance() reconstructs the exact procedural carrier through from_source() without serializing lazy differential, power-basis, or PH caches",
+    "carrier_handle_bytes": 8
+  },
+  "storage_layout_bytes": {
+    "Real": 48,
+    "BezierParallel2_parent": 8,
+    "BezierParallel2_current": 8,
+    "Similarity2_parent": 296,
+    "Similarity2_current": 344,
+    "Similarity2_change": 48,
+    "interpretation": "one retained exact scale avoids rebuilding and allocating the same square root for every carrier in a batch transform; the transform object is shared by reference and no per-carrier storage grows"
+  },
+  "matched_release_guard": {
+    "method": "11 interleaved immutable parent/current processes pinned to CPU 11; all-feature release offset benchmark with byte-identical benches/offset.rs",
+    "parent_binary": "/tmp/offset-samepath-84645c9",
+    "current_binary": "/tmp/offset-samepath-8fc9a70",
+    "construction": {
+      "iterations_per_process": 100000,
+      "parent_median_nanoseconds": 68.27601,
+      "current_median_nanoseconds": 63.53324,
+      "change_percent": -6.946466
+    },
+    "repeated_evaluation": {
+      "iterations_per_process": 10000,
+      "parent_median_nanoseconds": 6066.5407,
+      "current_median_nanoseconds": 6165.0449,
+      "wall_change_percent": 1.623729
+    },
+    "ph_materialization": {
+      "iterations_per_process": 1000,
+      "parent_median_nanoseconds": 157.959,
+      "current_median_nanoseconds": 155.2,
+      "change_percent": -1.746656
+    },
+    "perf_instruction_guard": {
+      "processes_per_revision": 5,
+      "parent_median_instructions": 826039874,
+      "current_median_instructions": 826040169,
+      "change_percent": 0.000036,
+      "interpretation": "the matched carrier workload executes only 295 additional retired instructions in 826 million; the wall evaluation shift is code-placement or machine noise, not work added to the hot path"
+    },
+    "checksums_identical": true
+  },
+  "new_similarity_lane": {
+    "command": "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=bezier-transform target/release/deps/offset-ea116fee283cd918",
+    "source_mix": [
+      "one quadratic carrier",
+      "one cubic carrier",
+      "one rational cubic carrier"
+    ],
+    "processes": 11,
+    "transformations_per_process": 30000,
+    "elapsed_milliseconds": [
+      16.523806,
+      16.062358,
+      15.946566,
+      15.822074,
+      15.934886,
+      17.277165,
+      21.236073,
+      15.941496,
+      17.886863,
+      16.948207,
+      29.713811
+    ],
+    "median_nanoseconds_per_transform": 550.793533,
+    "representative_perf_instructions": 227807653,
+    "representative_perf_cycles": 68365264,
+    "representative_perf_branches": 41816561,
+    "checksum_per_process": 110000
+  },
+  "memory": {
+    "tool": "Heaptrack direct application trace",
+    "artifact": "/tmp/heaptrack.hypercurve-parallel-transform.zst",
+    "transformations": 30000,
+    "allocation_calls": 180100,
+    "steady_state_allocations_per_transform": 6.0,
+    "temporary_allocations_reported": 2,
+    "peak_heap_bytes": 84300,
+    "interpretation": "the mixed source batch creates transformed Point2 handles and one new clone-shared carrier; the rational lane additionally owns its new control and weight arrays. The retained Similarity2 scale is reused without per-carrier square-root construction"
+  },
+  "release_size": {
+    "artifact": "matched all-feature release offset executable before the benchmark-only lane was added",
+    "parent_file_bytes": 7607448,
+    "current_file_bytes": 7608344,
+    "file_change_bytes": 896,
+    "file_change_percent": 0.011778,
+    "parent_text_bytes": 5802527,
+    "current_text_bytes": 5804931,
+    "text_change_bytes": 2404,
+    "text_change_percent": 0.041431,
+    "parent_loadable_file_bytes": 6069888,
+    "current_loadable_file_bytes": 6072332,
+    "loadable_change_bytes": 2444,
+    "parent_loadable_memory_bytes": 6071504,
+    "current_loadable_memory_bytes": 6075596,
+    "loadable_memory_change_bytes": 4092,
+    "interpretation": "the exact transform/export surface adds 0.041 percent text and does not enlarge the one-word parallel carrier"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-parallel-transform-callgraph-final --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "previous_nodes": 30197,
+    "current_nodes": 30231,
+    "node_change": 34,
+    "previous_edges": 54493,
+    "current_edges": 54571,
+    "edge_change": 78,
+    "artifact": "/tmp/hypercurve-parallel-transform-callgraph-final/callgraph.json"
+  },
+  "competitive_context": {
+    "direct_equivalent": false,
+    "reason": "floating offset libraries materialize approximate paths and do not expose a retained exact procedural parallel that can commute with an exact similarity",
+    "guard": "the preceding capsule and open-cubic competitive controls remain the relevant end-to-end offset baselines; this checkpoint changes neither lane's executed instruction path"
+  },
+  "verification": {
+    "all_features": "passed: 332 library tests and every integration, adversarial, documentation, and feature target",
+    "no_default_features": "passed: 295 library tests and every available integration and documentation target",
+    "clippy_all_features": "passed with -D warnings",
+    "clippy_no_default_features": "passed with -D warnings",
+    "format": "passed",
+    "diff_check": "passed",
+    "policy_matrix": [
+      "orientation-preserving point covariance",
+      "orientation-preserving derivative covariance",
+      "orientation-reversing selected-normal covariance",
+      "retained exact line-image preservation",
+      "structural source/distance reconstruction"
+    ]
+  },
+  "remaining": [
+    "complete exact parallel/parallel contacts and shared components",
+    "retain algebraic-endpoint ranges as canonical parallel fragments",
+    "generalize CurveRegion2 traversal and Boolean dispatch to parallel spans",
+    "construct round, bevel, and bounded-miter raw pieces",
+    "regularize raw expansion, erosion, collapse, and self-contact topology through the sole arrangement",
+    "solver-driven fillet and chamfer",
+    "remaining scalar towers and caller cutover"
+  ]
+}

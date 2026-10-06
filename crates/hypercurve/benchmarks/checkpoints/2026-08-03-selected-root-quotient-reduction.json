@@ -1,0 +1,246 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "selected-root quotient reduction for trivariate winding",
+  "source_revision": "9250d7c2bf3c3fcf7d8037e5235b3fc06c99f579",
+  "semantic_revisions": [
+    "0f9f209",
+    "2eb2d5d",
+    "9250d7c"
+  ],
+  "comparison_revision": "664cb231700a7b2199fcee99f34d6d16b8eab1b8",
+  "comparison_evidence_revision": "2abf6ff",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "3ba5eeb617b55b7c8cbaa3cbf25d870b3299041c",
+    "hypertri": "d6014be5cc3ee4961929430d40b5cba83efc4813",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "exact reduction of every trivariate tensor axis modulo its selected root's defining polynomial",
+      "exact substitution of rational parameters through the degree-one relation x-value",
+      "descending in-place tensor-slice reduction with one relation vector and no per-fiber remainder tables",
+      "strict structural-zero, Bernstein, affine, and linear-resultant replay on the reduced tensor",
+      "all three tensor-axis reduction orders",
+      "identical STRICT and APPROXIMATE_512 proof graphs for supportable reduced identities",
+      "a cubic-field nonlinear-all-axes policy control that cannot be reduced by degree",
+      "matched policy, allocation, size, historical, competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "factor extraction from a reduced tensor that remains nonlinear in every retained field",
+      "general primitive-element or compositum construction across three selected algebraic fields",
+      "dense tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images whose point still contains the analytic radical",
+      "broader noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "axis_relation": "For a selected root x of f(x)=sum_j f_j*x^j with nonzero leading f_d, every high tensor power is replaced exactly by x^d=-sum_{j<d}(f_j/f_d)*x^j. An exact rational parameter uses the equivalent relation x-authored_value=0.",
+    "multivariate_remainder": "Each axis is reduced independently in descending power order. Because the defining relations use disjoint variables, sequential reductions commute and the final tensor has exactly the source value at the selected root tuple.",
+    "storage": "The bounded nested tensor is rectangularized once per reduced axis. High first-axis planes and second-axis rows are moved with mem::take; third-axis coefficients are moved with mem::replace. No table of quotient powers or per-fiber polynomial remainders is retained.",
+    "post_reduction_authority": "At the existing eight-refinement symbolic cut, a changed tensor first receives a STRICT structural-zero check and a STRICT Bernstein sign on the selected box, then the existing affine-relation and selected-root linear-resultant authorities. These are proofs about the reduced value at the selected tuple, never about equality away from the roots.",
+    "resource_bound": "Checked dimension products preserve the existing 16384-control ceiling; reduction can only shrink an axis and returns no authority when exact scalar division cannot be formed.",
+    "policy": "Supportable quotient-reduced zeros are Certified under STRICT and APPROXIMATE_512 without terminal consumption. A reduced tensor that remains genuinely nonlinear in all three cubic fields stays Predicate uncertainty in STRICT; only APPROXIMATE_512 may return On after recording the shared 512-bit terminal.",
+    "failure": "No floating tolerance, approximate quotient, guessed conjugate, compatibility shim, or second Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The deliberately factored non-affine control was quadratic in all three stored axes, so the sole-linear-axis authority could not run; STRICT was uncertain and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "Quadratic selected-root relations reduce the same tensor from 3x3x3 to 2x2x3, exposing a linear axis for exact selected-root resultant replay under both policies.",
+    "reduced_fixture": "The non-affine chord a*b-c*(a+b), multiplied by (1+a)*(1+b)*(1+c), now returns Certified Zero under STRICT and APPROXIMATE_512 without terminal consumption.",
+    "differential_axis_coverage": "A dense 4x3x5 tensor reduced modulo x^2-x on each possible axis preserves exact evaluation at x=1 and produces the expected degree bound.",
+    "remaining_policy_control": "For positive cubic roots a^3=1/2, b^3=1/3, c^3=1/6, the zero (a*b-c)*(1+a)*(1+b)*(1+c) remains quadratic in each degree-three field. STRICT remains explicitly uncertain and APPROXIMATE_512 consumes the terminal.",
+    "remaining_exactness_boundary": "Extract or prove a selected zero factor from quotient-reduced tensors that remain nonlinear in every field, then reserve a bounded compositum authority for irreducible cases.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "default-feature release unit-test or comparative executables pinned to CPU 11; exact fully-qualified unit-test filters; seven perf-stat repetitions for focused fixtures and three for fixed-work historical controls; retired instructions and branches are primary",
+    "quotient_reduced_nonlinear_zero": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 2.92,
+      "cycles": 7529940,
+      "instructions": 13212208,
+      "branches": 2688899,
+      "branch_misses": 62177,
+      "comparison_terminal_instructions": 177222887,
+      "comparison_terminal_branches": 31537716,
+      "instruction_change_percent": -92.544864,
+      "branch_change_percent": -91.474021,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "remaining_cubic_all_fields_terminal": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 53.01,
+      "cycles": 213630442,
+      "instructions": 644965484,
+      "branches": 106601508,
+      "branch_misses": 491847,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "Zero with Approximate512Consumed",
+      "interpretation": "This is the new explicit exactness and allocation boundary; degree reduction cannot change its 3x3x3 tensor."
+    },
+    "matched_linear_resultant_guard": {
+      "comparison_instructions": 3511071,
+      "current_instructions": 3462208,
+      "instruction_change_percent": -1.391684,
+      "current_branches": 696854
+    },
+    "matched_distinct_endpoint_classification_guard": {
+      "comparison_instructions": 30968641,
+      "current_instructions": 30957019,
+      "instruction_change_percent": -0.037528,
+      "current_branches": 6263945
+    },
+    "matched_same_field_classification_guard": {
+      "comparison_instructions": 11294600,
+      "current_instructions": 11263154,
+      "instruction_change_percent": -0.278416,
+      "current_branches": 2209576
+    },
+    "matched_analytic_contact_guard": {
+      "comparison_instructions": 27859527,
+      "current_instructions": 27813180,
+      "instruction_change_percent": -0.166360,
+      "current_branches": 5229445
+    },
+    "matched_affine_guards": {
+      "translated_comparison_instructions": 3262832,
+      "translated_current_instructions": 3214093,
+      "translated_change_percent": -1.493764,
+      "scaled_comparison_instructions": 3111808,
+      "scaled_current_instructions": 3063611,
+      "scaled_change_percent": -1.548842,
+      "interpretation": "Earlier affine authorities remain neutral or slightly improved after exact-name harness normalization."
+    },
+    "fixed_work_historical_controls": {
+      "method": "current release comparative executable pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1985560870,
+        "current_instructions": 1985161423,
+        "instruction_change_percent": -0.020118,
+        "current_branches": 402631515
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447692995,
+        "current_instructions": 3447691859,
+        "instruction_change_percent": -0.000033,
+        "current_branches": 649668936
+      },
+      "interpretation": "Both authoritative historical offset lanes remain instruction-neutral and do not execute the cold quotient reduction."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18103.0,
+        "cavalier_contours": 911.5,
+        "hypercurve_to_cavalier_ratio": 19.860669
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 30853098.8,
+        "hypercurve_chord_fallback": 1032601.1,
+        "curvo_heuristic": 8966.1,
+        "certified_to_curvo_ratio": 3441.083503,
+        "chord_fallback_to_curvo_ratio": 115.167252
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. Fixed-work instructions, not loaded-host wall time, show the quotient cut is isolated from these offset lanes."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct default-feature release-unit-test traces with exact fully-qualified filters; heaptrack_print summaries are authoritative",
+    "quotient_reduced_nonlinear_zero": {
+      "allocation_calls": 18571,
+      "temporary_allocations": 720,
+      "peak_heap_kib": 338.06,
+      "recorder_peak_rss_mib": 12.17,
+      "comparison_terminal_allocation_calls": 366480,
+      "allocation_change_percent": -94.932602,
+      "interpretation": "The exact path trades a modest 32.72 KiB of peak live heap for eliminating 347,909 allocation calls and the 512-bit terminal."
+    },
+    "remaining_cubic_all_fields_terminal": {
+      "allocation_calls": 1206015,
+      "temporary_allocations": 285784,
+      "peak_heap_kib": 285.02,
+      "recorder_peak_rss_mib": 12.26,
+      "interpretation": "Repeated cubic-field restriction to 512 bits is the dominant remaining focused allocation debt."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at 664cb23 and 9250d7c with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8321016,
+      "current_file_bytes": 8335904,
+      "file_change_bytes": 14888,
+      "file_change_percent": 0.178920,
+      "comparison_size_text_bytes": 6341921,
+      "current_size_text_bytes": 6353969,
+      "size_text_change_bytes": 12048,
+      "size_text_change_percent": 0.189974,
+      "comparison_actual_text_section_bytes": 4796903,
+      "current_actual_text_section_bytes": 4808903,
+      "actual_text_change_bytes": 12000,
+      "actual_text_change_percent": 0.250161
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7989528,
+      "current_file_bytes": 7989560,
+      "file_change_bytes": 32,
+      "file_change_percent": 0.000401,
+      "comparison_size_text_bytes": 6080389,
+      "current_size_text_bytes": 6080389,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4576151,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The predicate-enabled production artifact adds 12.0 KiB of actual .text for the single bounded quotient authority. Feature-disabled allocated text is byte-identical; its 32-byte file change is metadata."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-root-reduction --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-root-reduction/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23808,
+      "current_nodes": 23832,
+      "node_change_percent": 0.100806,
+      "comparison_edges": 44789,
+      "current_edges": 44857,
+      "edge_change_percent": 0.151823
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_reduce_selected_root_relations -> trivariate_reduce_axis_mod_defining",
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_structurally_zero -> STRICT exact coefficient signs",
+      "trivariate_parameter_triple_sign_by_refinement -> reduced trivariate_unit_cube_strict_bernstein_sign",
+      "trivariate_parameter_triple_sign_by_refinement -> reduced trivariate_linear_axis_resultant_sign -> bivariate_linear_root_resultant"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed at source revision: 396 tests",
+    "hypercurve_default_features_library": "passed after semantic cut: 392 tests",
+    "hypercurve_no_default_features_library": "passed after semantic cut: 320 tests",
+    "hypercurve_default_curve_region_boolean_integration": "passed after semantic cut: 29 tests",
+    "hypercurve_no_default_features_curve_region_boolean_integration": "passed after semantic cut: 12 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_default_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "latest_inline_fast_path_clippy": "passed all-feature library with -D warnings",
+    "strict_and_approximate": "passed quotient-reduced zero as Certified under both policies, dense exact axis differential coverage, existing affine/linear/nonzero guards, cubic-all-fields STRICT uncertainty, and APPROXIMATE_512 terminal consumption",
+    "release_builds": "passed default-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

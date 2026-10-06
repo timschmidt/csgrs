@@ -1,0 +1,9356 @@
+mod support;
+use hypercurve::{
+    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, CurvePoint2,
+};
+use hypercurve::{
+    BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
+    CurveCertainty, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveError,
+    CurveFamily2, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
+    FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, PredicatePolicy,
+    QuadraticBezier2, RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
+};
+use hyperreal::SymbolicDependencyMask;
+
+fn p(x: i64, y: i64) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
+}
+
+fn q(numerator: i64, denominator: i64) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn is_native(curve: &Curve2, family: CurveFamily2) -> bool {
+    curve.geometry().is_some() && curve.family() == family
+}
+
+fn represented_at(curve: &Curve2, start: bool, point: &Point2) -> bool {
+    let endpoint = if start { curve.start() } else { curve.end() };
+    endpoint.coordinates() == Some(point)
+}
+
+fn has_retained_rational_domain(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::RationalBezier
+        && curve.geometry().is_none()
+        && curve.parameter_domain().scalar_endpoints().is_none()
+}
+
+fn is_line(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::Line
+}
+
+fn is_circle_join(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::CircularArc
+}
+
+fn is_analytic_parallel(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::AnalyticParallel
+}
+
+fn is_parallel_support(previous: &Curve2, next: &Curve2) -> bool {
+    let support = |curve: &Curve2| is_line(curve) || curve.geometry().is_some();
+    (is_analytic_parallel(previous) && support(next))
+        || (support(previous) && is_analytic_parallel(next))
+}
+
+fn is_round_join(curve: &Curve2) -> bool {
+    is_native(curve, CurveFamily2::RationalQuadraticBezier) || is_circle_join(curve)
+}
+
+fn sharp_offset() -> OffsetCornerStyle2 {
+    OffsetCornerStyle2::Miter {
+        limit: Real::from(1_000),
+    }
+}
+
+fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> Contour2 {
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(min_x, min_y), p(max_x, min_y)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(max_x, min_y), p(max_x, max_y)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(max_x, max_y), p(min_x, max_y)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(min_x, max_y), p(min_x, min_y)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn circle(center_x: i64, center_y: i64, radius: i64) -> Contour2 {
+    let right = p(center_x + radius, center_y);
+    let left = p(center_x - radius, center_y);
+    let center = p(center_x, center_y);
+    Contour2::try_new(vec![
+        Segment2::Arc(
+            CircularArc2::try_from_center(right.clone(), left.clone(), center.clone(), false)
+                .unwrap(),
+        ),
+        Segment2::Arc(CircularArc2::try_from_center(left, right, center, false).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn curved_dumbbell() -> Contour2 {
+    let left_top = p(-1, 3);
+    let right_top = p(1, 3);
+    let right_bottom = p(1, -3);
+    let left_bottom = p(-1, -3);
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(left_top.clone(), right_top.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(right_top, right_bottom.clone(), p(5, 0), true).unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(right_bottom, left_bottom.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(left_bottom, left_top, p(-5, 0), true).unwrap(),
+        ),
+    ])
+    .unwrap()
+}
+
+fn reversed(contour: &Contour2) -> Contour2 {
+    Contour2::try_new_with_fill_rule(
+        contour
+            .segments()
+            .iter()
+            .rev()
+            .map(Segment2::reversed)
+            .collect(),
+        contour.fill_rule(),
+    )
+    .unwrap()
+}
+
+fn square_with_redundant_edge() -> Contour2 {
+    let points = [p(0, 0), p(2, 0), p(4, 0), p(4, 4), p(0, 4), p(0, 0)];
+    Contour2::try_new(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn right_isosceles_triangle() -> Contour2 {
+    let points = [p(0, 0), p(4, 0), p(0, 4), p(0, 0)];
+    Contour2::try_new(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn double_wound_square(fill_rule: FillRule) -> Contour2 {
+    let corners = [p(0, 0), p(10, 0), p(10, 10), p(0, 10), p(0, 0)];
+    let segments = corners
+        .windows(2)
+        .chain(corners.windows(2))
+        .map(|edge| Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap()))
+        .collect();
+    Contour2::try_new_with_fill_rule(segments, fill_rule).unwrap()
+}
+
+fn path_from_contour(contour: &Contour2) -> CurvePath2 {
+    CurvePath2::try_new(
+        contour
+            .segments()
+            .iter()
+            .map(|segment| match segment {
+                Segment2::Line(line) => Curve2::from(line.clone()),
+                Segment2::Arc(arc) => Curve2::from(arc.clone()),
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn full_circle_path(radius: i64) -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        Curve2::from(
+            CircularArc2::try_from_center(p(radius, 0), p(-radius, 0), p(0, 0), false).unwrap(),
+        ),
+        Curve2::from(
+            CircularArc2::try_from_center(p(-radius, 0), p(radius, 0), p(0, 0), false).unwrap(),
+        ),
+    ])
+    .unwrap()
+}
+
+fn double_wound_quadratic_cap() -> CurvePath2 {
+    let curve = Curve2::from(QuadraticBezier2::new(p(-2, 4), p(0, -4), p(2, 4)));
+    let close = Curve2::from(LineSeg2::try_new(p(2, 4), p(-2, 4)).unwrap());
+    CurvePath2::try_new(vec![curve.clone(), close.clone(), curve, close]).unwrap()
+}
+
+fn rational_cap_path() -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![p(-2, 0), p(0, 4), p(2, 0)],
+                vec![Real::one(), Real::from(2), Real::one()],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(2, -2), p(-2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-2, -2), p(-2, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn quadratic_fillet_path() -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0))),
+        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(2, -2), p(0, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(0, -2), p(0, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn bow_tie_path() -> CurvePath2 {
+    let points = [p(0, 0), p(4, 4), p(0, 4), p(4, 0), p(0, 0)];
+    CurvePath2::try_new(
+        points
+            .windows(2)
+            .map(|edge| Curve2::from(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap()))
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn self_crossing_cubic_path(rational_reparameterization: bool) -> CurvePath2 {
+    // The two self-contact parameters are the irrational roots of
+    // `t^2 - t + 1/8`, so region traversal exercises retained algebraic
+    // endpoints rather than only represented rational witnesses.
+    let controls = vec![p(3, 0), p(-5, 1), p(-5, -6), p(3, 3)];
+    let curve = if rational_reparameterization {
+        Curve2::from(
+            RationalBezier2::try_new(
+                controls,
+                vec![Real::one(), Real::from(2), Real::from(4), Real::from(8)],
+            )
+            .unwrap(),
+        )
+    } else {
+        Curve2::from(CubicBezier2::new(
+            controls[0].clone(),
+            controls[1].clone(),
+            controls[2].clone(),
+            controls[3].clone(),
+        ))
+    };
+    CurvePath2::try_new(vec![
+        curve,
+        Curve2::from(LineSeg2::try_new(p(3, 3), p(3, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn bow_tie_contour(fill_rule: FillRule) -> Contour2 {
+    let points = [p(0, 0), p(4, 4), p(0, 4), p(4, 0), p(0, 0)];
+    Contour2::try_new_with_fill_rule(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+        fill_rule,
+    )
+    .unwrap()
+}
+
+fn u_shape() -> Contour2 {
+    let points = [
+        p(0, 0),
+        p(10, 0),
+        p(10, 10),
+        p(7, 10),
+        p(7, 3),
+        p(3, 3),
+        p(3, 10),
+        p(0, 10),
+        p(0, 0),
+    ];
+    Contour2::try_new(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn dumbbell_shape() -> Contour2 {
+    let points = [
+        p(0, 0),
+        p(4, 0),
+        p(4, 1),
+        p(8, 1),
+        p(8, 0),
+        p(12, 0),
+        p(12, 4),
+        p(8, 4),
+        p(8, 3),
+        p(4, 3),
+        p(4, 4),
+        p(0, 4),
+        p(0, 0),
+    ];
+    Contour2::try_new(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn oblique_dumbbell_shape() -> Contour2 {
+    // Exact affine image `(x, y) -> (2x + y, y)` of `dumbbell_shape`.
+    // Horizontal neck width stays two while every formerly vertical support
+    // becomes oblique, excluding the historical orthogonal erosion route.
+    let points = [
+        p(0, 0),
+        p(8, 0),
+        p(9, 1),
+        p(17, 1),
+        p(16, 0),
+        p(24, 0),
+        p(28, 4),
+        p(20, 4),
+        p(19, 3),
+        p(11, 3),
+        p(12, 4),
+        p(4, 4),
+        p(0, 0),
+    ];
+    Contour2::try_new(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+trait IntoCertifiedClassification<T> {
+    fn into_certified_classification(self) -> Classification<T>;
+}
+
+impl<T> IntoCertifiedClassification<T> for Classification<T> {
+    fn into_certified_classification(self) -> Classification<T> {
+        self
+    }
+}
+
+impl<T> IntoCertifiedClassification<T> for support::Outcome<T> {
+    fn into_certified_classification(self) -> Classification<T> {
+        assert_eq!(self.certainty, CurveCertainty::Certified);
+        Classification::Decided(self.value)
+    }
+}
+
+/// A certified optional query result that must be present, such as the
+/// native line/arc view or the bounds of a nonempty region.
+#[track_caller]
+fn present<T>(outcome: support::Outcome<Option<T>>) -> T {
+    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+    outcome.value.expect("the queried view is present")
+}
+
+#[track_caller]
+fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
+    match classification.into_certified_classification() {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("expected decided result, got {reason:?}"),
+    }
+}
+
+trait IntoCertified<T> {
+    fn into_certified(self) -> T;
+}
+
+impl<T> IntoCertified<T> for support::Outcome<T> {
+    fn into_certified(self) -> T {
+        assert_eq!(self.certainty, CurveCertainty::Certified);
+        self.value
+    }
+}
+
+fn certified<T>(outcome: impl IntoCertified<T>) -> T {
+    outcome.into_certified()
+}
+
+fn boundary_vertex_at(
+    region: &CurveRegion2,
+    point: &Point2,
+    policy: &PredicatePolicy,
+) -> (usize, usize) {
+    let point = CurvePoint2::from(point.clone());
+    let paths = crate::support::under(policy, || region.boundary_paths())
+        .unwrap()
+        .into_value();
+    for (loop_index, path) in paths.iter().enumerate() {
+        assert_eq!(
+            path.curves().len(),
+            region.boundary_loops()[loop_index].len()
+        );
+        if let Some(vertex) = path.curves().iter().position(|curve| {
+            certified(crate::support::under_outcome_classification(policy, || {
+                curve.start().coincides_with(&point)
+            })) == Classification::Decided(true)
+        }) {
+            return (loop_index, vertex);
+        }
+    }
+    panic!("the intended corner must survive on the regularized boundary: {point:?}");
+}
+
+fn axis_aligned_algebraic_rectangle(policy: &PredicatePolicy) -> CurveRegion2 {
+    let polynomial = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
+        .unwrap(),
+    );
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
+    let horizontal = |height: Real| {
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), height.clone()),
+                Point2::new(Real::one(), height),
+            ],
+            vec![Real::one(); 2],
+        )
+        .unwrap()
+    };
+    let bottom_right = crate::support::under(policy, || {
+        hypercurve::Curve2::from(horizontal(Real::zero())).point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                parameter.clone(),
+            )),
+        )
+    })
+    .unwrap()
+    .into_value();
+    let top_right = crate::support::under(policy, || {
+        hypercurve::Curve2::from(horizontal(Real::one())).point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                parameter.clone(),
+            )),
+        )
+    })
+    .unwrap()
+    .into_value();
+    let bottom_left = CurvePoint2::from(p(0, 0));
+    let top_left = CurvePoint2::from(p(0, 1));
+    let chord = |start, end| {
+        crate::support::under(policy, || Curve2::try_line(start, end))
+            .unwrap()
+            .into_value()
+    };
+    let boundary = crate::support::under(policy, || {
+        CurvePath2::try_new(vec![
+            chord(bottom_left.clone(), bottom_right.clone()),
+            chord(bottom_right, top_right.clone()),
+            chord(top_right, top_left.clone()),
+            chord(top_left, bottom_left),
+        ])
+    })
+    .unwrap()
+    .into_value();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+// Independent boundary of [0, sqrt(1/2)] x [0, 1] dilated by a positive disk.
+// This constructs the lines and quarter circles directly, without offsetting.
+fn rounded_algebraic_rectangle_oracle(distance: &Real, policy: &PredicatePolicy) -> CurveRegion2 {
+    let width = q(1, 2).sqrt().unwrap();
+    let centers = [
+        p(0, 0),
+        Point2::new(width.clone(), Real::zero()),
+        Point2::new(width.clone(), Real::one()),
+        p(0, 1),
+    ];
+    let points = [
+        Point2::new(Real::zero(), -distance),
+        Point2::new(width.clone(), -distance),
+        Point2::new(&width + distance, Real::zero()),
+        Point2::new(&width + distance, Real::one()),
+        Point2::new(width, Real::one() + distance),
+        Point2::new(Real::zero(), Real::one() + distance),
+        Point2::new(-distance, Real::one()),
+        Point2::new(-distance, Real::zero()),
+    ];
+    let segments = (0..points.len())
+        .map(|index| {
+            let start = points[index].clone();
+            let end = points[(index + 1) % points.len()].clone();
+            if index % 2 == 0 {
+                Segment2::Line(LineSeg2::try_new(start, end).unwrap())
+            } else {
+                Segment2::Arc(
+                    CircularArc2::try_from_center(
+                        start,
+                        end,
+                        centers[index.div_ceil(2) % centers.len()].clone(),
+                        false,
+                    )
+                    .unwrap(),
+                )
+            }
+        })
+        .collect();
+    certified(
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![
+                Contour2::try_new(segments).unwrap(),
+            ])
+        })
+        .unwrap(),
+    )
+}
+
+// Find a boundary piece fully covered by the independent parabola y=x^2,
+// 0 <= x <= 2, and return its furthest endpoint beyond the original corner.
+// This remains valid when regularization subdivides the authored parabola.
+fn parabola_extension_contact(
+    region: &CurveRegion2,
+    policy: &PredicatePolicy,
+) -> Option<CurvePoint2> {
+    let parabola = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 4)));
+    let corner = p(1, 1).into();
+    let mut furthest: Option<CurvePoint2> = None;
+    for path in crate::support::under(policy, || region.boundary_paths())
+        .unwrap()
+        .into_value()
+    {
+        for curve in path.curves() {
+            let start = curve.start();
+            let end = curve.end();
+            let contact = if decided(
+                crate::support::under(policy, || {
+                    start.compare_coordinate(&end, hypercurve::Axis2::X)
+                })
+                .unwrap(),
+            )
+            .is_gt()
+            {
+                start
+            } else {
+                end
+            };
+            if decided(
+                crate::support::under(policy, || {
+                    contact.compare_coordinate(&corner, hypercurve::Axis2::X)
+                })
+                .unwrap(),
+            ) != std::cmp::Ordering::Greater
+            {
+                continue;
+            }
+            let Ok(outcome) =
+                crate::support::under(policy, || curve.intersection_topology(&parabola))
+            else {
+                // An unrelated support need not supply the positive witness.
+                continue;
+            };
+            if outcome.certainty != CurveCertainty::Certified {
+                continue;
+            }
+            let topology = outcome.value;
+            if topology.result().is_complete()
+                && topology.result().contacts().is_empty()
+                && topology.result().overlaps().len() == 1
+                && topology.first().len() == 1
+                && furthest.as_ref().is_none_or(|previous| {
+                    decided(
+                        crate::support::under(policy, || {
+                            contact.compare_coordinate(previous, hypercurve::Axis2::X)
+                        })
+                        .unwrap(),
+                    )
+                    .is_gt()
+                })
+            {
+                furthest = Some(contact);
+            }
+        }
+    }
+    furthest
+}
+
+fn has_certified_boundary_overlap(
+    region: &CurveRegion2,
+    reference: &Curve2,
+    policy: &PredicatePolicy,
+) -> bool {
+    crate::support::under(policy, || region.boundary_paths())
+        .unwrap()
+        .into_value()
+        .iter()
+        .flat_map(CurvePath2::curves)
+        .any(|curve| {
+            // Other boundary supports can have unfinished common dispatch.
+            // Accept only a complete certified positive-overlap witness.
+            crate::support::under(policy, || curve.intersect_curve(reference)).is_ok_and(
+                |outcome| {
+                    outcome.certainty == CurveCertainty::Certified
+                        && outcome.value.is_complete()
+                        && !outcome.value.overlaps().is_empty()
+                },
+            )
+        })
+}
+
+fn assert_boundary_bounds_contain_endpoints(region: &CurveRegion2, policy: &PredicatePolicy) {
+    for path in crate::support::under(policy, || region.boundary_paths())
+        .unwrap()
+        .into_value()
+    {
+        for curve in path.curves() {
+            let bounds = curve.bounds().expect("generated curve bounds remain exact");
+            let minimum = CurvePoint2::from(bounds.min().clone());
+            let maximum = CurvePoint2::from(bounds.max().clone());
+            for endpoint in [curve.start(), curve.end()] {
+                for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
+                    assert_ne!(
+                        decided(
+                            crate::support::under(policy, || endpoint
+                                .compare_coordinate(&minimum, axis))
+                            .unwrap()
+                        ),
+                        std::cmp::Ordering::Less,
+                    );
+                    assert_ne!(
+                        decided(
+                            crate::support::under(policy, || endpoint
+                                .compare_coordinate(&maximum, axis))
+                            .unwrap()
+                        ),
+                        std::cmp::Ordering::Greater,
+                    );
+                }
+            }
+        }
+    }
+}
+
+fn shifted_algebraic_rectangle_boundary(
+    min_x: i64,
+    min_y: i64,
+    max_x: i64,
+    max_y: i64,
+    reverse: bool,
+    parameter: &BezierAlgebraicParameter2,
+    policy: &PredicatePolicy,
+) -> CurvePath2 {
+    let point = |x: i64, y: i64| {
+        crate::support::under(policy, || {
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(vec![p(x, y), p(x + 1, y)], vec![Real::one(); 2]).unwrap(),
+            )
+            .point_at(&hypercurve::CurveParameter2::from(
+                hypercurve::BezierParameter2::Algebraic((parameter).clone()),
+            ))
+        })
+        .unwrap()
+        .into_value()
+    };
+    let points = [
+        point(min_x, min_y),
+        point(max_x, min_y),
+        point(max_x, max_y),
+        point(min_x, max_y),
+    ];
+    let fragments = (0..points.len())
+        .map(|index| {
+            crate::support::under(policy, || {
+                Curve2::try_line(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+            })
+            .unwrap()
+            .into_value()
+        })
+        .collect::<Vec<_>>();
+    let fragments = if reverse {
+        fragments
+            .into_iter()
+            .rev()
+            .map(|fragment| {
+                crate::support::under(policy, || fragment.reversed())
+                    .unwrap()
+                    .into_value()
+            })
+            .collect()
+    } else {
+        fragments
+    };
+    crate::support::under(policy, || CurvePath2::try_new(fragments))
+        .unwrap()
+        .into_value()
+}
+
+fn algebraic_material_hole_rectangle(
+    policy: &PredicatePolicy,
+    fill_rule: FillRule,
+    reverse: bool,
+) -> CurveRegion2 {
+    let polynomial = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
+        .unwrap(),
+    );
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
+    let boundaries = vec![
+        shifted_algebraic_rectangle_boundary(0, 0, 12, 4, reverse, &parameter, policy),
+        shifted_algebraic_rectangle_boundary(5, 1, 7, 3, reverse, &parameter, policy),
+    ];
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &boundaries,
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+            &[fill_rule; 2],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+#[test]
+fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let first = axis_aligned_algebraic_rectangle(&policy);
+        let second = crate::support::under(&policy, || {
+            first.transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &q(1, 4),
+                &q(1, 4),
+            )
+        })
+        .expect("the translated selected-field rectangle must remain exact")
+        .into_value();
+        let evidence = crate::support::under(&policy, || first.intersect_region(&second))
+            .expect("the two retained chord regions must intersect exactly");
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        assert!(
+            evidence.value.is_complete(),
+            "{:?}",
+            evidence.value.blockers()
+        );
+        assert!(
+            evidence
+                .value
+                .contacts()
+                .iter()
+                .filter(
+                    |contact| (contact.point()).is_some_and(|point| point.coordinates().is_none())
+                )
+                .count()
+                >= 1,
+            "the strict-interior line crossings must retain their exact selected points: {evidence:?}",
+        );
+
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
+            .expect("the two retained chord regions must Boolean exactly");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        let intersection = batch.value.intersection().clone();
+        let retained_selected_endpoints = |region: &CurveRegion2| {
+            region
+                .boundary_loops()
+                .iter()
+                .flat_map(|boundary| boundary.curves())
+                .filter_map(|curve| {
+                    (curve.family() == CurveFamily2::Line).then_some(
+                        usize::from(curve.start().coordinates().is_none())
+                            + usize::from(curve.end().coordinates().is_none()),
+                    )
+                })
+                .sum::<usize>()
+        };
+        assert!(retained_selected_endpoints(&intersection) >= 2);
+
+        let transformed = crate::support::under(&policy, || {
+            intersection.transform_affine(
+                &Real::zero(),
+                &Real::one(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::from(2),
+                &Real::from(-3),
+            )
+        })
+        .expect("correlated chord-pair endpoints must survive an exact affine transform");
+        assert_eq!(transformed.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || transformed
+                    .value
+                    .classify_point(&Point2::new(q(5, 2), q(-5, 2)).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Inside,
+        );
+        assert!(retained_selected_endpoints(&transformed.value) >= 2);
+
+        let expanded = crate::support::under(&policy, || {
+            transformed.value.offset(q(1, 20), &sharp_offset())
+        })
+        .expect("transformed chord-pair endpoints must survive an exact offset");
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        assert!(!expanded.value.is_empty());
+        assert!(retained_selected_endpoints(&expanded.value) >= 2);
+    }
+}
+
+fn axis_aligned_algebraic_l_region(policy: &PredicatePolicy) -> CurveRegion2 {
+    let polynomial = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
+        .unwrap(),
+    );
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
+    let selected = |height: Real| {
+        crate::support::under(policy, || {
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(
+                    vec![
+                        Point2::new(Real::zero(), height.clone()),
+                        Point2::new(Real::one(), height),
+                    ],
+                    vec![Real::one(); 2],
+                )
+                .unwrap(),
+            )
+            .point_at(&hypercurve::CurveParameter2::from(
+                hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+            ))
+        })
+        .unwrap()
+        .into_value()
+    };
+    let exact = |x, y| CurvePoint2::from(Point2::new(x, y));
+    let points = [
+        exact(Real::zero(), Real::zero()),
+        selected(Real::zero()),
+        selected(Real::one()),
+        exact(q(1, 2), Real::one()),
+        exact(q(1, 2), q(1, 2)),
+        exact(Real::zero(), q(1, 2)),
+    ];
+    let fragments = (0..points.len())
+        .map(|index| {
+            crate::support::under(policy, || {
+                Curve2::try_line(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+            })
+            .unwrap()
+            .into_value()
+        })
+        .collect();
+    let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments))
+        .unwrap()
+        .into_value();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+fn axis_aligned_algebraic_dumbbell_region(
+    policy: &PredicatePolicy,
+    fill_rule: FillRule,
+    reverse: bool,
+) -> CurveRegion2 {
+    let polynomial = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterPolynomial::try_new_power_basis(vec![
+                -q(1, 2),
+                Real::zero(),
+                Real::one(),
+            ])
+        })
+        .unwrap(),
+    );
+    let interval = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierParameterInterval::try_new(Real::zero(), Real::one())
+        })
+        .unwrap(),
+    );
+    let parameter = decided(
+        crate::support::under_classified_result(policy, || {
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+        })
+        .unwrap(),
+    );
+    let selected = |height: Real| {
+        crate::support::under(policy, || {
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(
+                    vec![
+                        Point2::new(Real::from(12), height.clone()),
+                        Point2::new(Real::from(13), height),
+                    ],
+                    vec![Real::one(); 2],
+                )
+                .unwrap(),
+            )
+            .point_at(&hypercurve::CurveParameter2::from(
+                hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+            ))
+        })
+        .unwrap()
+        .into_value()
+    };
+    let exact = |x, y| CurvePoint2::from(p(x, y));
+    let points = [
+        exact(0, 0),
+        exact(4, 0),
+        exact(4, 1),
+        exact(8, 1),
+        exact(8, 0),
+        selected(Real::zero()),
+        selected(Real::from(4)),
+        exact(8, 4),
+        exact(8, 3),
+        exact(4, 3),
+        exact(4, 4),
+        exact(0, 4),
+    ];
+    let fragments = (0..points.len())
+        .map(|index| {
+            crate::support::under(policy, || {
+                Curve2::try_line(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+            })
+            .unwrap()
+            .into_value()
+        })
+        .collect::<Vec<_>>();
+    let fragments = if reverse {
+        fragments
+            .iter()
+            .rev()
+            .map(|fragment| {
+                crate::support::under(policy, || fragment.reversed())
+                    .unwrap()
+                    .into_value()
+            })
+            .collect()
+    } else {
+        fragments
+    };
+    let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments))
+        .unwrap()
+        .into_value();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[fill_rule],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+#[test]
+fn unified_native_constructor_regularizes_zero_signed_area_self_crossing() {
+    let policy = PredicatePolicy::STRICT;
+    let contour = bow_tie_contour(FillRule::EvenOdd);
+
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![contour.clone()])
+    })
+    .unwrap()
+    .into_value();
+    let native =
+        present(crate::support::under(&policy, || region.native_contours_fast_path()).unwrap());
+
+    assert_eq!(native.material_contours().len(), 2);
+    assert_eq!(
+        decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+        Some(Real::from(8))
+    );
+    for point in [p(2, 1), p(2, 3)] {
+        assert_eq!(
+            decided(
+                crate::support::under(&policy, || region.classify_point(&point.clone().into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+    }
+    assert!(native.hole_contours().is_empty());
+}
+
+#[test]
+fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement() {
+    let policy = PredicatePolicy::STRICT;
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 4), p(2, 0))),
+        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(2, -2), p(-2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-2, -2), p(-2, 0)).unwrap()),
+    ])
+    .unwrap();
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value();
+    let exact = crate::support::under(&policy, || source.offset(Real::one(), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    assert!(!exact.is_empty());
+    assert!(exact.has_algebraic_fragments());
+    assert_eq!(
+        crate::support::under(&policy, || exact.classify_point(&p(0, 0).into()))
+            .unwrap()
+            .into_value(),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        crate::support::under(&policy, || exact.classify_point(&p(0, 5).into()))
+            .unwrap()
+            .into_value(),
+        RegionPointLocation::Outside
+    );
+    let options =
+        crate::support::under_value(&policy, || BezierFlatteningOptions::try_new(q(1, 32), 12))
+            .unwrap();
+
+    let segmented = crate::support::under(&policy, || source.segment_certified(&options))
+        .unwrap()
+        .into_value();
+    assert_eq!(segmented.evidence().max_source_chord_error(), &q(1, 32));
+    assert!(segmented.evidence().lossy_boundary());
+    assert_eq!(segmented.evidence().loop_evidence().len(), 1);
+    assert_eq!(
+        segmented.evidence().loop_evidence()[0].role(),
+        CurveRegionLoopRole::Material
+    );
+    assert_eq!(
+        segmented.evidence().loop_evidence()[0].fill_rule(),
+        FillRule::EvenOdd
+    );
+    assert!(segmented.evidence().loop_evidence()[0].output_segment_count() > 4);
+    assert!(
+        segmented
+            .region()
+            .native_contours_fast_path()
+            .unwrap()
+            .is_some()
+    );
+}
+
+#[test]
+fn repeated_region_offsets_compose_retained_exact_parallels_under_both_policies() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1))),
+        Curve2::from(QuadraticBezier2::new(p(0, 1), p(-1, 1), p(-1, 0))),
+        Curve2::from(QuadraticBezier2::new(p(-1, 0), p(-1, -1), p(0, -1))),
+        Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
+    ])
+    .unwrap();
+    let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::EvenOdd],
+    )
+    .unwrap();
+
+    let strict_first = source.offset(q(1, 10), &OffsetCornerStyle2::Round).unwrap();
+    assert!(
+        strict_first.boundary_loops()[0]
+            .curves()
+            .iter()
+            .all(|fragment| fragment.family() == CurveFamily2::AnalyticParallel)
+    );
+    assert_eq!(
+        decided(
+            crate::support::under(&PredicatePolicy::STRICT, || strict_first.loop_roles()).unwrap()
+        ),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let strict_repeated = crate::support::under(&PredicatePolicy::STRICT, || {
+        strict_first.offset(q(1, 5), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    let strict_direct = crate::support::under(&PredicatePolicy::STRICT, || {
+        source.offset(q(3, 10), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    assert_eq!(strict_repeated.certainty, CurveCertainty::Certified);
+    assert_eq!(strict_repeated.value, strict_direct.value);
+    let strict_partially_reversed = crate::support::under(&PredicatePolicy::STRICT, || {
+        strict_first.offset(-q(1, 20), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    let strict_smaller_direct = crate::support::under(&PredicatePolicy::STRICT, || {
+        source.offset(q(1, 20), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    assert_eq!(strict_partially_reversed.value, strict_smaller_direct.value);
+
+    let approximate_first = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+        source.offset(q(1, 10), &OffsetCornerStyle2::Round)
+    })
+    .unwrap()
+    .into_value();
+    let approximate_repeated = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+        approximate_first.offset(q(1, 5), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    assert_eq!(approximate_repeated.certainty, CurveCertainty::Certified);
+    assert_eq!(approximate_repeated.value, strict_direct.value);
+    for curve in approximate_repeated.value.boundary_loops()[0].curves() {
+        assert!(
+            is_analytic_parallel(curve),
+            "the composed non-PH quadratic parallel must stay analytic"
+        );
+    }
+}
+
+#[test]
+fn unified_region_offsets_general_rational_boundary_identically_under_both_policies() {
+    let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[rational_cap_path()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+    )
+    .unwrap();
+    let strict = crate::support::under(&PredicatePolicy::STRICT, || {
+        source.offset(Real::one(), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+        source.offset(Real::one(), &OffsetCornerStyle2::Round)
+    })
+    .unwrap();
+
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert_eq!(approximate.certainty, CurveCertainty::Certified);
+    assert_eq!(strict.value, approximate.value);
+    assert!(strict.value.has_algebraic_fragments());
+    assert_eq!(
+        certified(
+            crate::support::under(&PredicatePolicy::STRICT, || strict
+                .value
+                .classify_point(&p(0, 0).into()))
+            .unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&PredicatePolicy::STRICT, || strict
+                .value
+                .classify_point(&p(0, 5).into()))
+            .unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_offset_corner_styles_have_exact_area_and_miter_fallback() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)])
+    })
+    .unwrap()
+    .into_value();
+    let round = crate::support::under(&policy, || {
+        source.offset(Real::one(), &OffsetCornerStyle2::Round)
+    })
+    .unwrap()
+    .into_value();
+    let bevel = crate::support::under(&policy, || {
+        source.offset(Real::one(), &OffsetCornerStyle2::Bevel)
+    })
+    .unwrap()
+    .into_value();
+    let limited_miter = crate::support::under(&policy, || {
+        source.offset(
+            Real::one(),
+            &OffsetCornerStyle2::Miter { limit: Real::one() },
+        )
+    })
+    .unwrap()
+    .into_value();
+    let miter = crate::support::under(&policy, || source.offset(Real::one(), &sharp_offset()))
+        .unwrap()
+        .into_value();
+
+    let round_area = crate::support::under(&policy, || round.filled_area())
+        .unwrap()
+        .into_value()
+        .unwrap();
+    assert_eq!(
+        round_area
+            .certified_eq_until(&(Real::from(32) + Real::pi()), -512)
+            .as_bool(),
+        Some(true)
+    );
+    assert_eq!(
+        decided(crate::support::under(&policy, || bevel.filled_area()).unwrap()),
+        Some(Real::from(34))
+    );
+    assert_eq!(limited_miter, bevel);
+    assert_eq!(
+        decided(crate::support::under(&policy, || miter.filled_area()).unwrap()),
+        Some(Real::from(36))
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || miter.classify_point(&p(-1, -1).into())).unwrap()
+        ),
+        RegionPointLocation::Boundary
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || round.classify_point(&p(-1, -1).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_reuses_design_parameter_corner_solvers() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)])
+    })
+    .unwrap()
+    .into_value();
+
+    let CurveCornerSolutions2::Unique(chamfer) = crate::support::under(&policy, || {
+        source.chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            Real::one(),
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+        )
+    })
+    .unwrap()
+    .into_value() else {
+        panic!("a square vertex must have one trim-only chamfer");
+    };
+    assert_eq!(
+        decided(crate::support::under(&policy, || chamfer.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let chamfer_paths = crate::support::under(&policy, || chamfer.boundary_paths())
+        .unwrap()
+        .into_value();
+    assert_eq!(chamfer_paths[0].curves().len(), 5);
+    assert_eq!(
+        chamfer_paths[0].curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(3, 0).clone())
+    );
+    assert_eq!(
+        chamfer_paths[0].curves()[1].end(),
+        hypercurve::CurvePoint2::from(p(4, 1).clone())
+    );
+
+    let fillet = {
+        let solutions = crate::support::under(&policy, || {
+            source.fillet_loop_vertex(
+                0,
+                1,
+                &hypercurve::CurveFillet2::new(Real::one()),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let mut candidates = solutions.into_solutions();
+        assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+        candidates.pop().unwrap()
+    };
+    assert_eq!(
+        decided(crate::support::under(&policy, || fillet.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let fillet_native =
+        present(crate::support::under(&policy, || fillet.native_contours_fast_path()).unwrap());
+    assert_eq!(fillet_native.material_contours()[0].segments().len(), 5);
+    let Segment2::Arc(arc) = &fillet_native.material_contours()[0].segments()[1] else {
+        panic!("the region fillet must recover its exact circular carrier");
+    };
+    assert_eq!(arc.start(), &p(3, 0));
+    assert_eq!(arc.end(), &p(4, 1));
+    assert_eq!(arc.center(), &p(3, 1));
+    assert_eq!(arc.radius_squared(), Real::one());
+    assert!(!arc.is_clockwise());
+
+    let extended = {
+        let solutions = crate::support::under(&policy, || {
+            source.fillet_loop_vertex(
+                0,
+                1,
+                &hypercurve::CurveFillet2::new(Real::one()),
+                CurveCornerMode2::TrimOrExtend,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let candidates = solutions.into_solutions();
+        assert!(candidates.len() > 1, "expected multiple isolated fillets");
+        candidates
+    };
+    assert_eq!(extended.len(), 2);
+
+    let CurveCornerSolutions2::Unique(one_sided) = crate::support::under(&policy, || {
+        source.chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            Real::zero(),
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+        )
+    })
+    .unwrap()
+    .into_value() else {
+        panic!("a one-sided zero setback must retain its nondegenerate chamfer");
+    };
+    assert_eq!(
+        present(crate::support::under(&policy, || one_sided.native_contours_fast_path()).unwrap())
+            .material_contours()[0]
+            .segments()
+            .len(),
+        4,
+        "normalization coalesces the collinear one-sided chamfer"
+    );
+    assert_eq!(
+        decided(crate::support::under(&policy, || one_sided.filled_area()).unwrap()),
+        Some(Real::from(16))
+    );
+    assert_eq!(
+        decided(
+            crate::support::under(&policy, || one_sided.classify_point(&p(4, 1).into())).unwrap()
+        ),
+        RegionPointLocation::Boundary
+    );
+    assert!(
+        certified(
+            crate::support::under(&policy, || one_sided
+                .boolean_region(&source, hypercurve::BooleanOp::Xor))
+            .unwrap()
+        )
+        .is_empty()
+    );
+    assert_eq!(
+        crate::support::under(&policy, || source.chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            Real::zero(),
+            Real::zero(),
+            CurveCornerMode2::TrimOnly
+        ))
+        .unwrap()
+        .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+    assert_eq!(
+        (crate::support::under(&policy, || source.fillet_loop_vertex(
+            0,
+            1,
+            &hypercurve::CurveFillet2::new(Real::zero()),
+            CurveCornerMode2::TrimOnly
+        ))
+        .unwrap()
+        .into_value())
+        .no_solution_reason(),
+        Some(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+}
+
+fn expected_line_circle_chamfer(line_contact: Point2, circle_contact: Point2) -> Contour2 {
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(-2, 0), line_contact.clone()).unwrap()),
+        Segment2::Line(LineSeg2::try_new(line_contact, circle_contact.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(circle_contact, p(1, 1), p(1, 0), true).unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn expected_line_circle_fillet() -> Contour2 {
+    // The two circle centers are 3/2 apart. Their tangency lies 2/3
+    // of the way from the original unit-circle center to the new center.
+    let sqrt_two = Real::from(2).sqrt().unwrap();
+    let center = Point2::new(Real::one() - &sqrt_two, q(1, 2));
+    let line_contact = Point2::new(center.x().clone(), Real::zero());
+    let circle_contact = Point2::new(Real::one() - q(2, 3) * sqrt_two, q(1, 3));
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(-2, 0), line_contact.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(line_contact, circle_contact.clone(), center, false)
+                .unwrap(),
+        ),
+        Segment2::Arc(
+            CircularArc2::try_from_center(circle_contact, p(1, 1), p(1, 0), true).unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn assert_corner_region_survives_boundary_paths(
+    region: &CurveRegion2,
+    expected: CurveRegion2,
+    probes: &[(Point2, RegionPointLocation)],
+    policy: &PredicatePolicy,
+) {
+    let paths = crate::support::under(policy, || region.boundary_paths())
+        .unwrap()
+        .into_value();
+    assert_eq!(paths.len(), expected.len());
+    let restored = certified(
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd)
+        })
+        .unwrap(),
+    );
+    for (label, actual) in [("generated", region), ("restored", &restored)] {
+        for (point, location) in probes {
+            assert_eq!(
+                certified(
+                    crate::support::under(policy, || actual.classify_point(&point.clone().into()))
+                        .unwrap()
+                ),
+                *location,
+                "{label} corner region at {point:?}",
+            );
+        }
+        let difference = certified(
+            crate::support::under(policy, || {
+                actual.boolean_region(&expected, hypercurve::BooleanOp::Xor)
+            })
+            .unwrap_or_else(|error| panic!("{label} corner region exact comparison: {error:?}")),
+        );
+        assert!(
+            difference.is_empty(),
+            "{label} corner region differs from its independent construction"
+        );
+    }
+}
+
+#[test]
+fn unified_region_native_chamfer_uses_arc_sweep_evidence() {
+    let rounded = Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+        Segment2::Arc(CircularArc2::try_from_center(p(4, 0), p(5, 1), p(4, 1), false).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(5, 1), p(5, 4)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(5, 4), p(0, 4)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = certified(
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![rounded.clone()])
+            })
+            .unwrap(),
+        );
+        let CurveCornerSolutions2::Unique(chamfered) = certified(
+            crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    q(1, 2),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap(),
+        ) else {
+            panic!("the native line-arc vertex must have one exact chamfer");
+        };
+        // On the unit circle centered at (4,1), a unit chord from (4,0)
+        // reaches (4+sqrt(3)/2,1/2). The line setback is exactly 1/2.
+        let previous_cut = Point2::new(q(7, 2), Real::zero());
+        let next_cut = Point2::new(
+            Real::from(4) + q(1, 2) * Real::from(3).sqrt().unwrap(),
+            q(1, 2),
+        );
+        let expected = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(p(0, 0), previous_cut.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(previous_cut, next_cut.clone()).unwrap()),
+            Segment2::Arc(
+                CircularArc2::try_from_center(next_cut, p(5, 1), p(4, 1), false).unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(p(5, 1), p(5, 4)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(p(5, 4), p(0, 4)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
+        ])
+        .unwrap();
+        assert_corner_region_survives_boundary_paths(
+            &chamfered,
+            certified(
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_native_material_contours(vec![expected])
+                })
+                .unwrap(),
+            ),
+            &[
+                (p(4, 1), RegionPointLocation::Inside),
+                (p(4, 0), RegionPointLocation::Outside),
+                (p(5, 2), RegionPointLocation::Boundary),
+                (p(6, 2), RegionPointLocation::Outside),
+            ],
+            &policy,
+        );
+    }
+}
+
+#[test]
+fn unified_region_native_fillet_retains_certified_arc_contacts() {
+    let curved = Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+        Segment2::Arc(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = certified(
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![curved.clone()])
+            })
+            .unwrap(),
+        );
+        let filleted = {
+            let solutions = certified(
+                crate::support::under(&policy, || {
+                    source.fillet_loop_vertex(
+                        0,
+                        1,
+                        &hypercurve::CurveFillet2::new(q(1, 2)),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
+                .unwrap(),
+            );
+            let mut candidates = solutions.into_solutions();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
+        };
+        let expected = expected_line_circle_fillet();
+        assert_corner_region_survives_boundary_paths(
+            &filleted,
+            certified(
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_native_material_contours(vec![expected])
+                })
+                .unwrap(),
+            ),
+            &[
+                (
+                    Point2::new(-Real::one(), q(1, 2)),
+                    RegionPointLocation::Inside,
+                ),
+                (p(0, 0), RegionPointLocation::Outside),
+                (
+                    Point2::new(Real::from(-2), q(1, 2)),
+                    RegionPointLocation::Boundary,
+                ),
+                (p(2, 0), RegionPointLocation::Outside),
+            ],
+            &policy,
+        );
+    }
+}
+
+#[test]
+fn unified_region_corners_preserve_circular_geometry_across_representations() {
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let conic = crate::support::under(&PredicatePolicy::STRICT, || {
+        native_arc.rational_bezier_decomposition()
+    })
+    .map(certified)
+    .unwrap()
+    .spans()[0]
+        .curve()
+        .clone();
+    let elevated = RationalBezier2::from(conic.clone())
+        .elevated_to_degree(5)
+        .unwrap();
+    let carriers = [Curve2::from(conic), Curve2::from(elevated)];
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for carrier in &carriers {
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+                carrier.clone(),
+                Curve2::from(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+                Curve2::from(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+            ])
+            .unwrap();
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+            })
+            .map(certified)
+            .unwrap();
+
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    q(1, 2),
+                    q(1, 2),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .map(certified)
+            .unwrap() else {
+                panic!("the retained circular region corner must have one chamfer");
+            };
+            // A half-unit chord from (0,0) on the unit circle centered
+            // at (1,0) reaches (1/8,sqrt(15)/8), independently of its chart.
+            let previous_cut = Point2::new(q(-1, 2), Real::zero());
+            let next_cut = Point2::new(q(1, 8), q(1, 8) * Real::from(15).sqrt().unwrap());
+            let expected_chamfer = expected_line_circle_chamfer(previous_cut, next_cut);
+            let probes = [
+                (
+                    Point2::new(-Real::one(), q(1, 2)),
+                    RegionPointLocation::Inside,
+                ),
+                (p(0, 0), RegionPointLocation::Outside),
+                (
+                    Point2::new(Real::from(-2), q(1, 2)),
+                    RegionPointLocation::Boundary,
+                ),
+                (p(2, 0), RegionPointLocation::Outside),
+            ];
+            assert_corner_region_survives_boundary_paths(
+                &chamfered,
+                certified(
+                    crate::support::under(&policy, || {
+                        CurveRegion2::try_from_native_material_contours(vec![expected_chamfer])
+                    })
+                    .unwrap(),
+                ),
+                &probes,
+                &policy,
+            );
+
+            let filleted = {
+                let solutions = crate::support::under(&policy, || {
+                    source.fillet_loop_vertex(
+                        0,
+                        1,
+                        &hypercurve::CurveFillet2::new(q(1, 2)),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
+                .map(certified)
+                .unwrap();
+                let mut candidates = solutions.into_solutions();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
+            };
+            assert_corner_region_survives_boundary_paths(
+                &filleted,
+                certified(
+                    crate::support::under(&policy, || {
+                        CurveRegion2::try_from_native_material_contours(vec![
+                            expected_line_circle_fillet(),
+                        ])
+                    })
+                    .unwrap(),
+                ),
+                &probes,
+                &policy,
+            );
+        }
+    }
+}
+
+#[test]
+fn retained_circular_regions_chamfer_over_the_full_support() {
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let conic = crate::support::under(&PredicatePolicy::STRICT, || {
+        native_arc.rational_bezier_decomposition()
+    })
+    .map(certified)
+    .unwrap()
+    .spans()[0]
+        .curve()
+        .clone();
+    let elevated = RationalBezier2::from(conic.clone())
+        .elevated_to_degree(5)
+        .unwrap();
+    let carriers = [Curve2::from(conic), Curve2::from(elevated)];
+    let extension_y = -(Real::from(15_i8).sqrt().unwrap() / Real::from(8_i8)).unwrap();
+    let extension_point = Point2::new(q(1, 8), extension_y);
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for carrier in &carriers {
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+                carrier.clone(),
+                Curve2::from(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+                Curve2::from(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    crate::support::under(&policy, || path.reversed())
+                        .map(certified)
+                        .unwrap()
+                } else {
+                    path.clone()
+                };
+                let source = crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+                })
+                .map(certified)
+                .unwrap();
+                let (loop_index, corner) = boundary_vertex_at(&source, &p(0, 0), &policy);
+                let trim_count = crate::support::under(&policy, || {
+                    source.chamfer_loop_vertex_by_setbacks(
+                        loop_index,
+                        corner,
+                        q(1, 2),
+                        q(1, 2),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
+                .map(certified)
+                .expect("the retained circular corner has one finite chamfer")
+                .candidate_count();
+                let extended = crate::support::under(&policy, || source
+                    .chamfer_loop_vertex_by_setbacks(
+                        loop_index,
+                        corner,
+                        q(1, 2),
+                        q(1, 2),
+                        CurveCornerMode2::TrimOrExtend))
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the retained circular region must extend its chamfer exactly: policy={policy:?}, family={:?}, reversed={reversed}, error={error:?}",
+                            carrier.family(),
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(extended.value.candidate_count() > trim_count);
+                let validates_candidate = |candidate: &CurveRegion2| {
+                    assert_eq!(
+                        certified(
+                            crate::support::under(&policy, || candidate
+                                .classify_point(&Point2::new(q(-1, 1), q(1, 2)).into()))
+                            .unwrap()
+                        ),
+                        RegionPointLocation::Inside,
+                    );
+                    let paths = crate::support::under(&policy, || candidate.boundary_paths())
+                        .unwrap()
+                        .into_value();
+                    let line_contacts = [
+                        Point2::new(q(-1, 2), Real::zero()),
+                        Point2::new(q(1, 2), Real::zero()),
+                    ];
+                    let circle_contacts = [
+                        Point2::new(q(1, 8), -extension_point.y()),
+                        extension_point.clone(),
+                    ];
+                    let locate = |endpoint: &CurvePoint2, points: &[Point2]| {
+                        points.iter().position(|point| {
+                            decided(
+                                crate::support::under(&policy, || {
+                                    endpoint.coincides_with(&point.clone().into())
+                                })
+                                .unwrap(),
+                            )
+                        })
+                    };
+                    let mut selected = None;
+                    for curve in paths.iter().flat_map(CurvePath2::curves) {
+                        let start = curve.start();
+                        let end = curve.end();
+                        for (line_end, circle_end) in [(&start, &end), (&end, &start)] {
+                            if let (Some(line), Some(circle)) = (
+                                locate(line_end, &line_contacts),
+                                locate(circle_end, &circle_contacts),
+                            ) {
+                                assert!(
+                                    selected.replace((line, circle)).is_none(),
+                                    "one chamfer joins the two chosen setbacks"
+                                );
+                            }
+                        }
+                    }
+                    let (line, circle) =
+                        selected.expect("the exact boundary must retain its setback contacts");
+                    // A continued line or arc may still pass through the old
+                    // corner. Its raw span endpoints do not define the cut.
+                    let expected = expected_line_circle_chamfer(
+                        line_contacts[line].clone(),
+                        circle_contacts[circle].clone(),
+                    );
+                    assert_corner_region_survives_boundary_paths(
+                        candidate,
+                        certified(
+                            crate::support::under(&policy, || {
+                                CurveRegion2::try_from_native_material_contours(vec![expected])
+                            })
+                            .unwrap(),
+                        ),
+                        &[
+                            (
+                                Point2::new(-Real::one(), q(1, 2)),
+                                RegionPointLocation::Inside,
+                            ),
+                            (p(-3, 0), RegionPointLocation::Outside),
+                            (
+                                Point2::new(Real::from(-2), q(1, 2)),
+                                RegionPointLocation::Boundary,
+                            ),
+                        ],
+                        &policy,
+                    );
+                    circle == 1
+                };
+                let mut retained_extension = false;
+                match &extended.value {
+                    CurveCornerSolutions2::Unique(candidate) => {
+                        retained_extension |= validates_candidate(candidate);
+                    }
+                    CurveCornerSolutions2::Multiple(candidates) => {
+                        for candidate in candidates {
+                            retained_extension |= validates_candidate(candidate);
+                        }
+                    }
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the retained circular chamfer must have candidates: {reason:?}")
+                    }
+                }
+                assert!(retained_extension);
+            }
+        }
+    }
+}
+
+#[test]
+fn unified_region_corners_use_represented_bezier_incidence() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let filleted = {
+            let solutions = crate::support::under(&policy, || {
+                source.fillet_loop_vertex(
+                    0,
+                    1,
+                    &hypercurve::CurveFillet2::new(q(15, 4)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap()
+            .into_value();
+            let mut candidates = solutions.into_solutions();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
+        };
+        let fillet_paths = crate::support::under(&policy, || filleted.boundary_paths())
+            .unwrap()
+            .into_value();
+        assert_eq!(fillet_paths[0].curves().len(), 5);
+        assert_eq!(
+            fillet_paths[0].curves()[2].family(),
+            CurveFamily2::QuadraticBezier
+        );
+
+        let next_setback = (Real::from(657).sqrt().unwrap() / Real::from(16)).unwrap();
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            source.chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                next_setback,
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .unwrap()
+        .into_value() else {
+            panic!("the represented line/Bezier region corner must have one chamfer");
+        };
+        let chamfer_paths = crate::support::under(&policy, || chamfered.boundary_paths())
+            .unwrap()
+            .into_value();
+        assert_eq!(chamfer_paths[0].curves().len(), 5);
+        assert_eq!(
+            chamfer_paths[0].curves()[2].family(),
+            CurveFamily2::QuadraticBezier
+        );
+    }
+}
+
+fn expected_parabola_chamfer(two_cuts: bool, policy: &PredicatePolicy) -> CurveRegion2 {
+    // Q(t)=(t^2,2t), so the unit setback solves t^4+4t^2=1.
+    // Q(s+(1-s)u) is independently authored from its three exact controls.
+    let s_squared = Real::from(5).sqrt().unwrap() - Real::from(2);
+    let s = s_squared.clone().sqrt().unwrap();
+    let cut_y = Real::from(2) * &s;
+    let right = Point2::new(s_squared.clone(), cut_y.clone());
+    let right_tail = Curve2::from(QuadraticBezier2::new(
+        right.clone(),
+        Point2::new(s.clone(), Real::one() + &s),
+        p(1, 2),
+    ));
+    let line = |start, end| Curve2::from(LineSeg2::try_new(start, end).unwrap());
+    let curves = if two_cuts {
+        let left = Point2::new(-s_squared, cut_y);
+        vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(-1, 2),
+                Point2::new(-s.clone(), Real::one() + &s),
+                left.clone(),
+            )),
+            line(left, right),
+            right_tail,
+            line(p(1, 2), p(-1, 2)),
+        ]
+    } else {
+        vec![
+            line(p(-4, 0), p(-1, 0)),
+            line(p(-1, 0), right),
+            right_tail,
+            line(p(1, 2), p(-4, 2)),
+            line(p(-4, 2), p(-4, 0)),
+        ]
+    };
+    certified(
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[CurvePath2::try_new(curves).unwrap()],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap(),
+    )
+}
+
+#[test]
+fn unified_region_chamfer_retains_algebraic_bezier_cut() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .map(certified)
+        .unwrap();
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            source.chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .map(certified)
+        .unwrap() else {
+            panic!("the algebraic line/Bezier setback must have one retained chamfer");
+        };
+        assert_eq!(
+            decided(crate::support::under(&policy, || chamfered.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material]
+        );
+        assert_corner_region_survives_boundary_paths(
+            &chamfered,
+            expected_parabola_chamfer(false, &policy),
+            &[
+                (p(-2, 1), RegionPointLocation::Inside),
+                (p(0, 0), RegionPointLocation::Outside),
+                (p(-1, 0), RegionPointLocation::Boundary),
+            ],
+            &policy,
+        );
+    }
+}
+
+#[test]
+fn unified_region_chamfer_reenters_general_algebraic_chords() {
+    let bottom = Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap());
+    let curved = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
+    let top = Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap());
+    let left = Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap());
+    let paths = [
+        (CurvePath2::try_new(vec![
+            bottom.clone(),
+            curved.clone(),
+            top.clone(),
+            left.clone(),
+        ])
+        .unwrap(),),
+        (CurvePath2::try_new(vec![curved, top, left, bottom]).unwrap(),),
+        (CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(-4, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-4, 2), p(1, 2)).unwrap()),
+            Curve2::from(QuadraticBezier2::new(p(1, 2), p(0, 1), p(0, 0))),
+            Curve2::from(LineSeg2::try_new(p(0, 0), p(-4, 0)).unwrap()),
+        ])
+        .unwrap(),),
+    ];
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (path,) in &paths {
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(path),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .unwrap()
+            .into_value();
+            let (loop_index, corner) = boundary_vertex_at(&source, &p(0, 0), &policy);
+            let first = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap();
+            assert_eq!(first.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(first) = first.into_value() else {
+                panic!("the first Bezier setback must retain one algebraic chord");
+            };
+
+            let (loop_index, corner) = boundary_vertex_at(&first, &p(-1, 0), &policy);
+            let one_sided = crate::support::under(&policy, || {
+                first.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    Real::zero(),
+                    q(1, 4),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap();
+            assert_eq!(one_sided.certainty, CurveCertainty::Certified);
+            assert!(matches!(
+                one_sided.into_value(),
+                CurveCornerSolutions2::Unique(_)
+            ));
+            let (over_previous, over_next) = (q(1, 4), Real::from(2));
+            let over = crate::support::under(&policy, || {
+                first.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    over_previous,
+                    over_next,
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap();
+            assert_eq!(over.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                over.into_value(),
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+            );
+
+            // The next edit meets a represented line and the retained general
+            // chord. Its chord-side cut is a lazy exact unit-tangent displacement.
+            let second = crate::support::under(&policy, || {
+                first.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    q(1, 4),
+                    q(1, 4),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap();
+            assert_eq!(second.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(second) = second.into_value() else {
+                panic!("the materialized/algebraic-chord corner must have one chamfer");
+            };
+            assert_eq!(second.boundary_loops()[0].len(), 6);
+            assert_eq!(
+                second.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line
+                        && (fragment.start().coordinates().is_none()
+                            || fragment.end().coordinates().is_none()))
+                    .count(),
+                2
+            );
+
+            // The inserted chord and retained source chord now meet directly.
+            // Both have independently selected endpoints and neither requires a
+            // represented unit tangent.
+            let fragments = second.boundary_loops()[loop_index].curves();
+            let general_chord = |fragment: &Curve2| {
+                fragment.family() == CurveFamily2::Line
+                    && (fragment.start().coordinates().is_none()
+                        || fragment.end().coordinates().is_none())
+            };
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    general_chord(&fragments[*index])
+                        && general_chord(
+                            &fragments[(*index + fragments.len() - 1) % fragments.len()],
+                        )
+                })
+                .expect("the two general chords must share a vertex");
+            let third = crate::support::under(&policy, || {
+                second.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    q(1, 10),
+                    q(1, 10),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap();
+            assert_eq!(third.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(third) = third.into_value() else {
+                panic!("the algebraic-chord/algebraic-chord corner must have one chamfer");
+            };
+            assert_eq!(third.boundary_loops()[0].len(), 7);
+            assert_eq!(
+                third.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line
+                        && (fragment.start().coordinates().is_none()
+                            || fragment.end().coordinates().is_none()))
+                    .count(),
+                3
+            );
+            assert_eq!(
+                decided(crate::support::under(&policy, || third.loop_roles()).unwrap()),
+                vec![CurveRegionLoopRole::Material]
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || third.classify_point(&p(-2, 1).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Inside
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || third.classify_point(&p(0, 0).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Outside
+            );
+
+            let distant = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![square(10, 10, 12, 12)])
+            })
+            .unwrap()
+            .into_value();
+            let batch = crate::support::under(&policy, || third.boolean_regions(&distant))
+                .unwrap()
+                .into_value();
+            assert!(batch.intersection().is_empty());
+            assert_eq!(batch.union().boundary_loops().len(), 2);
+            assert_eq!(batch.difference().boundary_loops().len(), 1);
+            assert_eq!(batch.xor().boundary_loops().len(), 2);
+        }
+    }
+}
+
+#[test]
+fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
+    let previous = Curve2::from(QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0)));
+    let next = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
+    let close = Curve2::from(LineSeg2::try_new(p(1, 2), p(-1, 2)).unwrap());
+    let paths = [
+        (
+            CurvePath2::try_new(vec![previous.clone(), next.clone(), close.clone()]).unwrap(),
+            1,
+        ),
+        (CurvePath2::try_new(vec![next, close, previous]).unwrap(), 0),
+    ];
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (path, vertex_index) in &paths {
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(path),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .map(certified)
+            .unwrap();
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    *vertex_index,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .map(certified)
+            .unwrap() else {
+                panic!("two algebraic Bezier setbacks must define one retained chamfer");
+            };
+            let distant = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![square(10, 10, 12, 12)])
+            })
+            .map(certified)
+            .unwrap();
+            let evidence = crate::support::under(&policy, || chamfered.intersect_region(&distant))
+                .map(certified)
+                .unwrap();
+            assert!(evidence.is_disjoint());
+            assert_eq!(evidence.candidate_carrier_pair_count(), 0);
+            let batch = crate::support::under(&policy, || chamfered.boolean_regions(&distant))
+                .map(certified)
+                .unwrap();
+            assert!(batch.intersection().is_empty());
+            assert_eq!(batch.union().boundary_loops().len(), 2);
+            assert_eq!(batch.difference().boundary_loops().len(), 1);
+            assert_corner_region_survives_boundary_paths(
+                &chamfered,
+                expected_parabola_chamfer(true, &policy),
+                &[
+                    (p(0, 1), RegionPointLocation::Inside),
+                    (p(0, 0), RegionPointLocation::Outside),
+                    (p(-1, 2), RegionPointLocation::Boundary),
+                ],
+                &policy,
+            );
+        }
+    }
+}
+
+#[test]
+fn algebraic_chamfer_participates_in_a_disjoint_boolean_batch() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            source.chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .unwrap()
+        .into_value() else {
+            panic!("the algebraic line/Bezier setback must have one retained chamfer");
+        };
+        let distant = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![square(10, 10, 12, 12)])
+        })
+        .unwrap()
+        .into_value();
+
+        let evidence = crate::support::under(&policy, || chamfered.intersect_region(&distant))
+            .unwrap()
+            .into_value();
+        assert!(evidence.is_disjoint());
+        assert_eq!(evidence.candidate_carrier_pair_count(), 0);
+
+        let batch = crate::support::under(&policy, || chamfered.boolean_regions(&distant))
+            .unwrap()
+            .into_value();
+        assert!(batch.intersection().is_empty());
+        assert_eq!(batch.union().boundary_loops().len(), 2);
+        assert_eq!(batch.difference().boundary_loops().len(), 1);
+        assert_eq!(batch.xor().boundary_loops().len(), 2);
+        assert!(
+            batch.difference().boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+    }
+}
+
+#[test]
+fn one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+            source.chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .unwrap()
+        .into_value() else {
+            panic!("the algebraic line/Bezier setback must have one retained chamfer");
+        };
+        let regularized = crate::support::under(&policy, || chamfered.regularized_region())
+            .unwrap()
+            .into_value();
+        assert_eq!(regularized.boundary_loops().len(), 1);
+        assert!(
+            regularized.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || regularized.classify_point(&p(-2, 1).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+    }
+}
+
+#[test]
+fn unified_region_corners_use_canonical_spline_bezier_spans() {
+    let controls = vec![p(0, 0), p(0, 1), p(1, 2)];
+    let knots = vec![
+        Real::from(2),
+        Real::from(2),
+        Real::from(2),
+        Real::from(5),
+        Real::from(5),
+        Real::from(5),
+    ];
+    let carriers = [
+        (
+            CurveFamily2::PolynomialBSpline,
+            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone()).unwrap(),
+        ),
+        (
+            CurveFamily2::Nurbs,
+            Curve2::try_nurbs(2, controls, vec![Real::one(); 3], knots).unwrap(),
+        ),
+    ];
+    let expected_cut = Point2::new(q(9, 16), q(3, 2));
+    let expected_line_cut = Point2::new(-q(39, 16), Real::zero());
+    let next_setback = (Real::from(657).sqrt().unwrap() / Real::from(16)).unwrap();
+
+    for (family, carrier) in carriers {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+            carrier,
+            Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+        ])
+        .unwrap();
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&path),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .unwrap()
+            .into_value();
+            let source_paths = crate::support::under(&policy, || source.boundary_paths())
+                .unwrap()
+                .into_value();
+            let canonical_family = source_paths[0].curves()[1].family();
+            assert_eq!(
+                canonical_family,
+                match family {
+                    CurveFamily2::PolynomialBSpline => CurveFamily2::QuadraticBezier,
+                    CurveFamily2::Nurbs => CurveFamily2::RationalQuadraticBezier,
+                    _ => unreachable!(),
+                }
+            );
+            let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    Real::one(),
+                    next_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap()
+            .into_value() else {
+                panic!("the {family:?} region span must define one exact chamfer");
+            };
+            let chamfer_paths = crate::support::under(&policy, || chamfered.boundary_paths())
+                .unwrap()
+                .into_value();
+            assert_eq!(chamfer_paths[0].curves()[2].family(), canonical_family);
+            assert_eq!(
+                chamfer_paths[0].curves()[2].start(),
+                hypercurve::CurvePoint2::from(expected_cut.clone())
+            );
+
+            let fillets = crate::support::under(&policy, || {
+                source.fillet_loop_vertex(
+                    0,
+                    1,
+                    &hypercurve::CurveFillet2::new(q(15, 4)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .unwrap()
+            .into_value();
+            let has_expected =
+                |candidate: &CurveRegion2| {
+                    let paths = crate::support::under(&policy, || candidate.boundary_paths())
+                        .unwrap()
+                        .into_value();
+                    paths[0].curves()[2].family() == canonical_family
+                        && paths[0].curves()[1].family() == CurveFamily2::RationalQuadraticBezier
+                        && crate::support::under_outcome_classification(&policy, || {
+                            paths[0].curves()[0].end().coincides_with(
+                                &hypercurve::CurvePoint2::from(expected_line_cut.clone()),
+                            )
+                        })
+                        .into_value()
+                            == Classification::Decided(true)
+                        && crate::support::under_outcome_classification(&policy, || {
+                            paths[0].curves()[2].start().coincides_with(
+                                &hypercurve::CurvePoint2::from(expected_cut.clone()),
+                            )
+                        })
+                        .into_value()
+                            == Classification::Decided(true)
+                };
+            assert!(fillets.solutions().iter().any(has_expected));
+        }
+    }
+}
+
+#[test]
+fn unified_region_corner_solver_obeys_terminal_policy_once() {
+    let source = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)]).unwrap();
+    let undecidable_zero = support::terminally_unresolved_zero();
+    assert!(matches!(
+        crate::support::under(&PredicatePolicy::STRICT, || source.fillet_loop_vertex(
+            0,
+            1,
+            &hypercurve::CurveFillet2::new(undecidable_zero.clone()),
+            CurveCornerMode2::TrimOnly)),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::RealSign
+    ));
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+        source.fillet_loop_vertex(
+            0,
+            1,
+            &hypercurve::CurveFillet2::new(undecidable_zero),
+            CurveCornerMode2::TrimOnly,
+        )
+    })
+    .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        (approximate.value).no_solution_reason(),
+        Some(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+}
+
+#[test]
+fn unified_region_offset_corner_options_obey_the_terminal_policy() {
+    let source = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)]).unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        assert!(matches!(
+            crate::support::under(&policy, || source.offset(
+                Real::one(),
+                &OffsetCornerStyle2::Miter {
+                    limit: -Real::one(),
+                }
+            )),
+            Err(ExactCurveError::Invalid {
+                cause: CurveError::InvalidOffsetOptions,
+                ..
+            })
+        ));
+    }
+
+    let undecidable_zero = support::terminally_unresolved_zero();
+    let style = OffsetCornerStyle2::Miter {
+        limit: undecidable_zero,
+    };
+    assert!(matches!(
+        crate::support::under(&PredicatePolicy::STRICT, || source.offset(Real::one(), &style)),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::RealSign
+    ));
+    let approximate = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+        source.offset(Real::one(), &style)
+    })
+    .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        decided(
+            crate::support::under(&PredicatePolicy::STRICT, || approximate.value.filled_area())
+                .unwrap()
+        ),
+        Some(Real::from(34))
+    );
+}
+
+#[test]
+fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
+    let distance = q(1, 10);
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let expanded = crate::support::under(&policy, || source.offset(distance.clone(), &miter))
+            .expect("axis-aligned algebraic expansion must remain exact");
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        let expanded = expanded.value;
+        assert_eq!(expanded.boundary_loops().len(), 1);
+        assert!(
+            expanded.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded
+                    .classify_point(&Point2::new(-q(1, 20), q(1, 2)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded
+                    .classify_point(&Point2::new(-q(1, 5), q(1, 2)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded
+                    .classify_point(&Point2::new(Real::zero(), -distance.clone()).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Boundary
+        );
+
+        let repeated = crate::support::under(&policy, || expanded.offset(distance.clone(), &miter))
+            .expect("translated algebraic endpoint expressions must compose exactly");
+        assert_eq!(repeated.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || repeated
+                    .value
+                    .classify_point(&Point2::new(-q(3, 20), q(1, 2)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+
+        let contracted =
+            crate::support::under(&policy, || source.offset(-distance.clone(), &miter))
+                .expect("axis-aligned algebraic contraction must remain exact");
+        assert_eq!(contracted.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || contracted
+                    .value
+                    .classify_point(&Point2::new(q(1, 20), q(1, 2)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || contracted
+                    .value
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+
+        let beveled = crate::support::under(&policy, || {
+            source.offset(distance.clone(), &OffsetCornerStyle2::Bevel)
+        })
+        .expect("algebraic bevel joins must remain exact");
+        assert_eq!(beveled.certainty, CurveCertainty::Certified);
+        assert!(beveled.value.boundary_loops()[0].len() >= 8);
+
+        let limited_miter = crate::support::under(&policy, || {
+            source.offset(
+                distance.clone(),
+                &OffsetCornerStyle2::Miter { limit: Real::one() },
+            )
+        })
+        .expect("an exceeded algebraic miter limit must fall back to exact bevels");
+        assert_eq!(limited_miter.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || limited_miter
+                    .value
+                    .classify_point(&Point2::new(-q(9, 100), -q(9, 100)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+
+        let collapsed = crate::support::under(&policy, || source.offset(-q(2, 5), &miter))
+            .expect("an algebraic offset past the first collapse must regularize exactly");
+        assert_eq!(collapsed.certainty, CurveCertainty::Certified);
+        assert!(collapsed.value.is_empty());
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let round_offset = || {
+            crate::support::under(&policy, || {
+                source.offset(distance.clone(), &OffsetCornerStyle2::Round)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let rounded = hyperreal::dispatch_trace::with_recording(round_offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let rounded = round_offset();
+        let rounded = rounded.expect("selected-field algebraic round joins must remain exact");
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(
+                trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
+                0
+            );
+            assert_eq!(
+                trace.operation_count("hypercurve", "algebraic-circle-rational-pair"),
+                0
+            );
+        }
+        assert_eq!(rounded.certainty, CurveCertainty::Certified);
+        assert_eq!(rounded.value.boundary_loops().len(), 1);
+        // A convex-boundary proof can certify the construction without pair
+        // replay. Check its exact set against an independently authored boundary.
+        let expected = rounded_algebraic_rectangle_oracle(&distance, &policy);
+        for (first, second) in [(&rounded.value, &expected), (&expected, &rounded.value)] {
+            let xor = certified(
+                crate::support::under(&policy, || {
+                    first.boolean_region(second, hypercurve::BooleanOp::Xor)
+                })
+                .unwrap(),
+            );
+            assert!(xor.is_empty());
+        }
+        assert!(
+            rounded.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        );
+        for (point, expected) in [
+            (
+                Point2::new(-q(1, 20), -q(1, 20)),
+                RegionPointLocation::Inside,
+            ),
+            (
+                Point2::new(-q(9, 100), -q(9, 100)),
+                RegionPointLocation::Outside,
+            ),
+            (
+                Point2::new(Real::zero(), -distance.clone()),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || rounded
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let rounded = crate::support::under(&policy, || {
+            source.offset(q(1, 10), &OffsetCornerStyle2::Round)
+        })
+        .expect("the first selected-field round offset must remain exact")
+        .into_value();
+
+        let expanded = crate::support::under(&policy, || {
+            rounded.offset(q(1, 20), &OffsetCornerStyle2::Round)
+        })
+        .expect("retained selected circles must support a second exact offset");
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        assert!(
+            expanded.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded
+                    .value
+                    .classify_point(&Point2::new(Real::zero(), -q(3, 20)).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+        let expanded_again = crate::support::under(&policy, || {
+            expanded.value.offset(q(1, 100), &OffsetCornerStyle2::Round)
+        })
+        .expect("a certified convex selected-circle parallel must remain reusable");
+        assert_eq!(expanded_again.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded_again
+                    .value
+                    .classify_point(&Point2::new(q(1, 4), -q(4, 25)).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let contract = || {
+            crate::support::under(&policy, || {
+                rounded.offset(-q(1, 20), &OffsetCornerStyle2::Round)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let contracted = hyperreal::dispatch_trace::with_recording(contract);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let contracted = contract();
+        #[cfg(feature = "dispatch-trace")]
+        let contract_trace = hyperreal::dispatch_trace::take_trace();
+        let contracted = contracted.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "a retained selected circle must contract before its radius collapses under {policy:?}: {error:?}; {contract_trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!(
+                "a retained selected circle must contract before its radius collapses under {policy:?}: {error:?}"
+            );
+        });
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            contract_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-pair",
+                "retained-nonadjacent-endpoint-contact",
+            ) > 0,
+            "the contraction must retain its cross-component endpoint tangent: {contract_trace:?}",
+        );
+        assert_eq!(contracted.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || contracted
+                    .value
+                    .classify_point(&Point2::new(Real::zero(), -q(1, 20)).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+
+        for (actual, radius) in [
+            (&rounded, q(1, 10)),
+            (&expanded.value, q(3, 20)),
+            (&expanded_again.value, q(4, 25)),
+            (&contracted.value, q(1, 20)),
+        ] {
+            let expected = rounded_algebraic_rectangle_oracle(&radius, &policy);
+            for (first, second) in [(actual, &expected), (&expected, actual)] {
+                let xor = certified(
+                    crate::support::under(&policy, || {
+                        first.boolean_region(second, hypercurve::BooleanOp::Xor)
+                    })
+                    .unwrap(),
+                );
+                assert!(xor.is_empty());
+            }
+        }
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let collapse = || {
+            crate::support::under(&policy, || {
+                rounded.offset(-q(1, 10), &OffsetCornerStyle2::Round)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let collapsed_round = hyperreal::dispatch_trace::with_recording(collapse);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let collapsed_round = collapse();
+        #[cfg(feature = "dispatch-trace")]
+        let collapse_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let collapse_kernel_trace = collapse_trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let collapsed_round = collapsed_round.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "an exact selected-circle radius collapse must remove only the arc under {policy:?}: {error:?}; {collapse_kernel_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!(
+                    "an exact selected-circle radius collapse must remove only the arc under {policy:?}: {error:?}"
+                );
+            });
+        assert_eq!(
+            collapsed_round.certainty,
+            CurveCertainty::Certified,
+            "retained endpoint incidence must decide the collapse without a policy terminal",
+        );
+        let collapsed_round = collapsed_round.into_value();
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let structural_replays = collapse_trace.path_count(
+                "hypercurve",
+                "algebraic-chord-side-kernel",
+                "retained-endpoint-incidence",
+            ) + collapse_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-chord-normal-offset-tangent",
+            ) + collapse_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "retained-support-replay",
+            );
+            assert!(
+                structural_replays > 0,
+                "the collapsed circle must replay an exact retained support certificate: {collapse_kernel_trace:?}",
+            );
+            assert_eq!(
+                collapse_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-side-kernel",
+                    "approximate-512-terminal",
+                ),
+                0,
+                "the retained endpoint proof must precede every policy terminal: {collapse_kernel_trace:?}",
+            );
+        }
+        assert!(
+            collapsed_round.boundary_loops()[0]
+                .curves()
+                .iter()
+                .all(|fragment| fragment.family() != CurveFamily2::CircularArc)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || collapsed_round
+                    .classify_point(&Point2::new(q(1, 4), Real::zero()).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+
+        let past_collapse = crate::support::under(&policy, || {
+            rounded.offset(-q(3, 20), &OffsetCornerStyle2::Round)
+        })
+        .expect("a selected-circle parallel past its local collapse must regularize exactly");
+        assert_eq!(past_collapse.certainty, CurveCertainty::Certified);
+        for (point, expected) in [
+            (
+                Point2::new(q(1, 4), q(1, 20)),
+                RegionPointLocation::Boundary,
+            ),
+            (Point2::new(q(1, 4), q(1, 40)), RegionPointLocation::Outside),
+            (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || past_collapse
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected,
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_algebraic_round_join_retains_a_general_minor_cut() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let polynomial = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
+            .unwrap(),
+        );
+        let interval = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(&policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
+        let selected = crate::support::under(&policy, || {
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
+                    .unwrap(),
+            )
+            .point_at(&hypercurve::CurveParameter2::from(
+                hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+            ))
+        })
+        .unwrap()
+        .into_value();
+        let origin = CurvePoint2::from(p(0, 0));
+        let top = CurvePoint2::from(p(0, 1));
+        let chord = |start, end| {
+            crate::support::under(&policy, || Curve2::try_line(start, end))
+                .unwrap()
+                .into_value()
+        };
+        let boundary = crate::support::under(&policy, || {
+            CurvePath2::try_new(vec![
+                chord(origin.clone(), selected.clone()),
+                chord(selected, top.clone()),
+                chord(top, origin),
+            ])
+        })
+        .unwrap()
+        .into_value();
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[boundary],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset = || {
+            crate::support::under(&policy, || {
+                source.offset(q(1, 10), &OffsetCornerStyle2::Round)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let rounded = hyperreal::dispatch_trace::with_recording(offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let rounded = offset();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let rounded = rounded.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "a non-quadrant selected-field round join must remain exact: {error:?}; {trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("a non-quadrant selected-field round join must remain exact: {error:?}");
+        });
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent",
+                    "selected-chord-normal-contact",
+                ) >= 2,
+                "both orientations of the general chord-normal round join must use one authority: {trace:?}"
+            );
+            let exact_tangent_replays = trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-chord-normal-tangent",
+            ) + trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-chord-normal-offset-tangent",
+            ) + trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "retained-support-replay",
+            ) + trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "recursive-projective-retained-chord",
+            ) + trace.path_count(
+                "hypercurve",
+                "curve-region-exact-offset-regularization",
+                "convex-boundary-certificate",
+            );
+            assert!(
+                exact_tangent_replays > 0,
+                "regularization must reuse an exact tangent/support or convex-boundary certificate: {trace:?}"
+            );
+        }
+        assert_eq!(rounded.certainty, CurveCertainty::Certified);
+        assert!(
+            rounded.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        );
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let expand = || {
+            crate::support::under(&policy, || {
+                rounded.value.offset(q(1, 100), &OffsetCornerStyle2::Round)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let expanded = hyperreal::dispatch_trace::with_recording(expand);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let expanded = expand();
+        #[cfg(feature = "dispatch-trace")]
+        let expanded_trace = hyperreal::dispatch_trace::take_trace();
+        let expanded = expanded.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "a general selected chord-normal cut must re-offset exactly: {error:?}; {expanded_trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("a general selected chord-normal cut must re-offset exactly: {error:?}");
+        });
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            expanded_trace.path_count(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-dot",
+                "selected-chord-normal-algebraic-chord",
+            ) > 0,
+            "a general chord-normal re-offset must consume its exact tangent direction",
+        );
+
+        let scaled_quarter_turn = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2),
+            Real::from(2),
+            Real::zero(),
+            Real::from(2),
+            Real::from(3),
+        )
+        .unwrap();
+        let scaled_reflection = Similarity2::try_from_real_affine(
+            Real::from(-3),
+            Real::zero(),
+            Real::zero(),
+            Real::from(3),
+            Real::from(2),
+            Real::from(3),
+        )
+        .unwrap();
+        for (transform_name, transform) in [
+            ("scaled-quarter-turn", &scaled_quarter_turn),
+            ("scaled-reflection", &scaled_reflection),
+        ] {
+            let transformed =
+                crate::support::under(&policy, || rounded.value.transform_similarity(transform))
+                    .expect("a general selected chord-normal cut must survive exact similarity");
+            assert_eq!(transformed.certainty, CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let transformed_expand = || {
+                crate::support::under(&policy, || {
+                    transformed
+                        .value
+                        .offset(q(1, 100), &OffsetCornerStyle2::Round)
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let transformed_expanded =
+                hyperreal::dispatch_trace::with_recording(transformed_expand);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let transformed_expanded = transformed_expand();
+            #[cfg(feature = "dispatch-trace")]
+            let transformed_trace = hyperreal::dispatch_trace::take_trace();
+            let transformed_expanded = transformed_expanded.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "a {transform_name} selected chord-normal cut must remain reusable: {error:?}; {transformed_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!(
+                    "a {transform_name} selected chord-normal cut must remain reusable: {error:?}"
+                );
+            });
+            assert_eq!(transformed_expanded.certainty, CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                transformed_trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent-dot",
+                    "selected-chord-normal-algebraic-chord",
+                ) > 0,
+                "a transformed chord-normal re-offset must preserve one tangent authority",
+            );
+        }
+    }
+}
+
+#[test]
+fn algebraic_chords_and_round_centers_survive_exact_similarities() {
+    let quarter_turn = Similarity2::try_from_real_affine(
+        Real::zero(),
+        Real::from(-1),
+        Real::one(),
+        Real::zero(),
+        Real::from(2),
+        Real::from(3),
+    )
+    .unwrap();
+    let distance = q(1, 20);
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let transformed =
+            crate::support::under(&policy, || source.transform_similarity(&quarter_turn))
+                .expect("a nonsingular exact affine map must retain selected chord fields");
+        assert_eq!(transformed.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            transformed.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .filter(|fragment| fragment.family() == CurveFamily2::Line)
+                .count(),
+            4
+        );
+        for (point, expected) in [
+            (Point2::new(q(3, 2), q(13, 4)), RegionPointLocation::Inside),
+            (Point2::new(q(3, 2), q(15, 4)), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || transformed
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected,
+            );
+        }
+
+        let transformed_round = crate::support::under(&policy, || {
+            transformed
+                .value
+                .offset(distance.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("axis certificates must survive a cardinal similarity");
+        assert_eq!(transformed_round.certainty, CurveCertainty::Certified);
+        assert!(
+            transformed_round.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        );
+        let transformed_boundary = Point2::new(Real::from(2) + &distance, q(13, 4));
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || transformed_round
+                    .value
+                    .classify_point(&transformed_boundary.clone().into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+
+        let rounded = crate::support::under(&policy, || {
+            source.offset(distance.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("the selected-field round source must complete");
+        let rotated_round = crate::support::under(&policy, || {
+            rounded.value.transform_similarity(&quarter_turn)
+        })
+        .expect("direct selected circle centers must transform in their retained field");
+        assert_eq!(rotated_round.certainty, CurveCertainty::Certified);
+        assert!(
+            rotated_round.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || rotated_round
+                    .value
+                    .classify_point(&transformed_boundary.clone().into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+    }
+}
+
+#[test]
+fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
+    let radius = q(1, 20);
+    let translation = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        radius.clone(),
+        q(1, 40),
+    )
+    .unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let first = crate::support::under(&policy, || {
+            source.offset(radius.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("first selected round region must remain exact")
+        .into_value();
+        let second = crate::support::under(&policy, || first.transform_similarity(&translation))
+            .expect("translated selected round region must remain exact")
+            .into_value();
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersection_work =
+            || crate::support::under(&policy, || first.intersect_region(&second));
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersection_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let kernel_trace = trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let evidence = evidence
+            .expect("translated round boundaries must intersect exactly")
+            .into_value();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            evidence.is_complete(),
+            "translated round intersection blockers under {policy:?}: {:?}; trace: {kernel_trace:?}",
+            evidence.blockers(),
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
+        assert!(evidence.is_complete(), "{evidence:?}");
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            trace.path_count(
+                "hypercurve",
+                "represented-circle-pair-translation",
+                "retained-similarity-point",
+            ) > 0,
+            "translated chord-normal circles must cancel their shared retained center before materialization: {trace:?}",
+        );
+        assert!(!evidence.contacts().is_empty(), "{evidence:?}");
+        assert!(
+            evidence.contacts().iter().any(|contact| (contact.point()).is_some_and(|point| point.coordinates().is_none())),
+            "the translated round regions must retain exact selected contacts: {evidence:?}",
+        );
+
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
+            .expect("translated selected round regions must Boolean exactly");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        assert!(!batch.value.intersection().is_empty());
+        assert!(!batch.value.union().is_empty());
+        assert!(!batch.value.difference().is_empty());
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || batch
+                    .value
+                    .union()
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Inside,
+        );
+
+        let third = crate::support::under(&policy, || second.transform_similarity(&translation))
+            .expect("a second exact translation must retain selected round evidence")
+            .into_value();
+        let replay = crate::support::under(&policy, || {
+            batch.value.intersection().boolean_regions(&third)
+        })
+        .expect("a split cusp/chord contact must re-enter a later Boolean exactly");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert!(!replay.value.intersection().is_empty());
+    }
+}
+
+#[test]
+fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts() {
+    let radius = q(1, 20);
+    let rotation = Similarity2::try_from_real_affine(
+        q(3, 5),
+        -q(4, 5),
+        q(4, 5),
+        q(3, 5),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+    // Rotate the cardinal translation `(radius, radius / 2)` with the source.
+    let translated_in_rotated_frame = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        q(1, 100),
+        q(11, 200),
+    )
+    .unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let rounded = crate::support::under(&policy, || {
+            axis_aligned_algebraic_rectangle(&policy)
+                .offset(radius.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("the selected round region must remain exact")
+        .into_value();
+        let first = crate::support::under(&policy, || rounded.transform_similarity(&rotation))
+            .expect("a rational rotation must retain all selected fields")
+            .into_value();
+        let second = crate::support::under(&policy, || {
+            first.transform_similarity(&translated_in_rotated_frame)
+        })
+        .expect("the rotated selected fields must survive translation")
+        .into_value();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersection_work =
+            || crate::support::under(&policy, || first.intersect_region(&second));
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersection_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let kernel_trace = trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let evidence = evidence
+            .expect("rotated round boundaries must intersect through the exact oblique kernel");
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        let evidence = evidence.into_value();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            evidence.is_complete(),
+            "rotated round intersection blockers under {policy:?}: {:?}; trace: {kernel_trace:?}",
+            evidence.blockers(),
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
+        assert!(evidence.is_complete(), "{evidence:?}");
+        assert!(
+            evidence.contacts().iter().any(|contact| {
+                contact.point().is_some()
+                    && matches!(
+                        (
+                            contact.first().curve().family(),
+                            contact.second().curve().family()
+                        ),
+                        (CurveFamily2::CircularArc, CurveFamily2::Line)
+                            | (CurveFamily2::Line, CurveFamily2::CircularArc)
+                    )
+            }),
+            "the rotated round regions must retain an exact oblique cusp/chord contact: {evidence:?}",
+        );
+        for contact in evidence.contacts() {
+            let Some(point) = contact.point() else {
+                continue;
+            };
+            for (carrier, parameter) in [
+                (contact.first(), contact.first_parameter()),
+                (contact.second(), contact.second_parameter()),
+            ] {
+                let replay =
+                    crate::support::under(&policy, || carrier.curve().point_at(parameter)).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                let same = crate::support::under_outcome_classification(&policy, || {
+                    replay.value.coincides_with(point)
+                });
+                assert_eq!(same.certainty, CurveCertainty::Certified);
+                assert_eq!(same.value, Classification::Decided(true));
+            }
+        }
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-circle-pair-translation",
+                    "retained-similarity-point",
+                ) > 0,
+                "rotated chord-normal circles must retain their structural translation authority: {trace:?}",
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-side-kernel",
+                    "approximate-512-terminal",
+                ),
+                0,
+                "the represented oblique side replay must decide exactly before any policy terminal",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "recursive-projective-retained-chord",
+                ) > 0,
+                "the public rotated-region path must replay its certified oblique support exactly: {trace:?}",
+            );
+        }
+
+        let batch = crate::support::under(&policy, || first.boolean_regions(&second))
+            .expect("rotated selected round regions must Boolean exactly");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        assert!(!batch.value.union().is_empty());
+        assert!(!batch.value.intersection().is_empty());
+        assert!(!batch.value.difference().is_empty());
+        assert!(!batch.value.xor().is_empty());
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let reoffset_work = || {
+            crate::support::under(&policy, || {
+                batch
+                    .value
+                    .intersection()
+                    .offset(q(1, 500), &OffsetCornerStyle2::Bevel)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let reoffset = hyperreal::dispatch_trace::with_recording(reoffset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let reoffset = reoffset_work();
+        let reoffset =
+            reoffset.expect("an oblique retained cusp/chord boundary must re-offset exactly");
+        assert_eq!(reoffset.certainty, CurveCertainty::Certified);
+        assert!(!reoffset.value.is_empty());
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-span",
+                    "retained-oblique-algebraic-chord",
+                ) > 0,
+                "the reoffset must retain its oblique chord fast path: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent",
+                    "selected-circle-chord-contact",
+                ) > 0,
+                "the bevel must retain its exact circle/chord endpoint tangent: {trace:?}",
+            );
+        }
+    }
+}
+
+#[test]
+fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
+    let radius = q(1, 20);
+    let translation = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        radius.clone(),
+        q(1, 40),
+    )
+    .unwrap();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let first = crate::support::under(&policy, || {
+            axis_aligned_algebraic_rectangle(&policy)
+                .offset(radius.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("the first selected round region must remain exact")
+        .into_value();
+        let second = crate::support::under(&policy, || first.transform_similarity(&translation))
+            .expect("the translated selected round region must remain exact")
+            .into_value();
+        let intersection = crate::support::under(&policy, || first.boolean_regions(&second))
+            .expect("the selected round regions must Boolean exactly")
+            .into_value()
+            .intersection()
+            .clone();
+        assert!(intersection.boundary_loops().iter().any(|boundary| {
+            boundary.curves().windows(2).any(|pair| {
+                matches!(
+                    (pair[0].family(), pair[1].family()),
+                    (CurveFamily2::CircularArc, CurveFamily2::Line)
+                        | (CurveFamily2::Line, CurveFamily2::CircularArc)
+                )
+            })
+        }));
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let reoffset_work = || {
+            crate::support::under(&policy, || {
+                intersection.offset(q(1, 100), &OffsetCornerStyle2::Bevel)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let reoffset = hyperreal::dispatch_trace::with_recording(reoffset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let reoffset = reoffset_work();
+        let reoffset = reoffset.expect("a retained cusp/chord boundary must re-offset exactly");
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-span",
+                    "retained-oblique-algebraic-chord",
+                ) > 0,
+                "the cusp/chord re-offset must retain its exact chord spans: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent",
+                    "selected-circle-chord-contact",
+                ) > 0,
+                "the cusp/chord re-offset must retain its exact endpoint tangent: {trace:?}",
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-selected-fiber-projection",
+                    "general-resultant-fallback",
+                ),
+                0
+            );
+        }
+        assert_eq!(reoffset.certainty, CurveCertainty::Certified);
+        assert!(!reoffset.value.is_empty());
+    }
+}
+
+#[test]
+fn one_chord_orders_contacts_from_two_selected_round_corners() {
+    let radius = q(1, 20);
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let rounded = crate::support::under(&policy, || {
+            source.offset(radius.clone(), &OffsetCornerStyle2::Round)
+        })
+        .expect("the selected-field round source must complete")
+        .into_value();
+        let tall = crate::support::under(&policy, || {
+            source.transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::from(3),
+                &Real::zero(),
+                &Real::from(-1),
+            )
+        })
+        .expect("the tall selected-field cutter source must remain exact")
+        .into_value();
+        let cutter = crate::support::under(&policy, || {
+            tall.offset(
+                q(1, 40),
+                &OffsetCornerStyle2::Miter {
+                    limit: Real::from(2),
+                },
+            )
+        })
+        .expect("the cutter offset must retain certified axis chords")
+        .into_value();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersect = || crate::support::under(&policy, || rounded.intersect_region(&cutter));
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersect);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersect();
+        #[cfg(feature = "dispatch-trace")]
+        let contact_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(not(feature = "dispatch-trace"))]
+        let contact_trace = ();
+        let evidence = evidence.expect("both selected round corners must meet one chord exactly");
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        let evidence = evidence.into_value();
+        let blockers = evidence
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().curve().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().curve().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(evidence.is_complete(), "{blockers:?}");
+        let correlated_contacts = evidence
+            .contacts()
+            .iter()
+            .filter(|contact| (contact.point()).is_some_and(|point| point.coordinates().is_none()))
+            .count();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            contact_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "exact-chord-normal-frame-line",
+            ) > 0,
+            "rationalizable chord-normal contacts must use the exact scalar line/circle primitive: {contact_trace:?}",
+        );
+        assert_eq!(correlated_contacts, 2, "{contact_trace:?}");
+
+        let batch = crate::support::under(&policy, || rounded.boolean_regions(&cutter))
+            .expect("the shared chord contacts must enter all four Booleans");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        assert!(!batch.value.union().is_empty());
+        assert!(!batch.value.intersection().is_empty());
+        assert!(!batch.value.difference().is_empty());
+        assert!(!batch.value.xor().is_empty());
+        let retained_correlated_chord_endpoints = batch
+            .value
+            .intersection()
+            .boundary_loops()
+            .iter()
+            .flat_map(|boundary| boundary.curves())
+            .filter_map(|curve| {
+                (curve.family() == CurveFamily2::Line).then_some(
+                    usize::from(curve.start().coordinates().is_none())
+                        + usize::from(curve.end().coordinates().is_none()),
+                )
+            })
+            .sum::<usize>();
+        assert!(retained_correlated_chord_endpoints >= 2);
+        let replay_clip = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![square(-1, 0, 2, 2)])
+        })
+        .unwrap()
+        .into_value();
+        let replay_evidence = crate::support::under(&policy, || {
+            batch.value.intersection().intersect_region(&replay_clip)
+        })
+        .expect("the retained strict-interior contacts must enter a later intersection");
+        let replay_certainty = CurveCertainty::Certified;
+        assert_eq!(replay_evidence.certainty, replay_certainty);
+        let replay_blockers = replay_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().curve().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().curve().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(replay_evidence.value.is_complete(), "{replay_blockers:?}");
+        let replay = crate::support::under(&policy, || {
+            batch.value.intersection().boolean_regions(&replay_clip)
+        })
+        .expect("the retained strict-interior contacts must enter a later Boolean");
+        assert_eq!(replay.certainty, replay_certainty);
+        assert!(!replay.value.intersection().is_empty());
+
+        let collinear_min_x = -q(1, 40);
+        let collinear_corners = [
+            Point2::new(collinear_min_x.clone(), Real::zero()),
+            Point2::new(Real::from(2), Real::zero()),
+            Point2::new(Real::from(2), Real::one()),
+            Point2::new(collinear_min_x, Real::one()),
+        ];
+        let collinear_clip = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![
+                Contour2::try_new(
+                    (0..4)
+                        .map(|index| {
+                            Segment2::Line(
+                                LineSeg2::try_new(
+                                    collinear_corners[index].clone(),
+                                    collinear_corners[(index + 1) % 4].clone(),
+                                )
+                                .unwrap(),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            ])
+        })
+        .unwrap()
+        .into_value();
+        let collinear_evidence = crate::support::under(&policy, || {
+            batch.value.intersection().intersect_region(&collinear_clip)
+        })
+        .expect("the retained correlated chord must overlap a later exact line");
+        assert_eq!(collinear_evidence.certainty, replay_certainty);
+        let collinear_blockers = collinear_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().curve().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().curve().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            collinear_evidence.value.is_complete(),
+            "{collinear_blockers:?}"
+        );
+        assert!(!collinear_evidence.value.overlaps().is_empty());
+        let collinear_replay = crate::support::under(&policy, || {
+            batch.value.intersection().boolean_regions(&collinear_clip)
+        })
+        .expect("the retained correlated overlap must enter all four later Booleans");
+        assert_eq!(collinear_replay.certainty, replay_certainty);
+        assert!(!collinear_replay.value.union().is_empty());
+        assert!(!collinear_replay.value.intersection().is_empty());
+        if policy == PredicatePolicy::STRICT {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || batch
+                        .value
+                        .intersection()
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)).into()))
+                    .unwrap(),
+                ),
+                RegionPointLocation::Inside,
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
+    let setback = q(1, 100);
+    let repeated_setback = q(1, 200);
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let rounded = || {
+            crate::support::under(&policy, || {
+                axis_aligned_algebraic_rectangle(&policy)
+                    .offset(q(1, 10), &OffsetCornerStyle2::Round)
+            })
+            .expect("selected-field round joins must remain exact")
+            .into_value()
+        };
+        for cusp_is_next in [true, false] {
+            let source = rounded();
+            let fragments = source.boundary_loops()[0].curves();
+            let cusp_index = fragments
+                .iter()
+                .enumerate()
+                .find_map(|(index, fragment)| {
+                    (index > 0
+                        && index + 1 < fragments.len()
+                        && fragment.family() == CurveFamily2::CircularArc)
+                        .then_some(index)
+                })
+                .expect("the round offset must retain a non-seam cusp fragment");
+            let vertex = if cusp_is_next {
+                cusp_index
+            } else {
+                cusp_index + 1
+            };
+            let first = crate::support::under(&policy, || {
+                source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("both retained cusp endpoint orientations must chamfer exactly");
+            assert_eq!(first.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(first) = first.value else {
+                panic!("a retained cusp endpoint must have one interior setback cut");
+            };
+            assert_eq!(first.boundary_loops()[0].len(), fragments.len() + 1);
+            assert!(
+                first.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .any(|fragment| { fragment.family() == CurveFamily2::CircularArc })
+            );
+
+            let extended = crate::support::under(&policy, || {
+                rounded().chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOrExtend,
+                )
+            })
+            .expect("retained selected-circle chamfers must expose incident extensions");
+            assert_eq!(extended.certainty, CurveCertainty::Certified);
+            assert!(
+                extended.value.candidate_count() > 1,
+                "the trim and extension branches must both survive: policy={policy:?}, cusp_is_next={cusp_is_next}, result={:?}",
+                extended.value,
+            );
+            let diameter = q(1, 5);
+            let (previous_setback, next_setback) = if cusp_is_next {
+                (setback.clone(), diameter)
+            } else {
+                (diameter, setback.clone())
+            };
+            let antipodal = crate::support::under(&policy, || {
+                rounded().chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOrExtend,
+                )
+            })
+            .expect("a diameter setback must retain the selected-circle antipode");
+            assert_eq!(antipodal.certainty, CurveCertainty::Certified);
+            assert!(antipodal.value.candidate_count() > 0);
+
+            // Re-enter at the newly created cusp/chord junction. The first
+            // exact angular cut is now the corner parameter for the second.
+            let repeated = crate::support::under(&policy, || {
+                first.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    cusp_index + 1,
+                    repeated_setback.clone(),
+                    repeated_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a retained cusp chamfer endpoint must remain reusable");
+            assert_eq!(repeated.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(repeated) = repeated.value else {
+                panic!("the repeated retained cusp chamfer must be unique");
+            };
+            assert_eq!(repeated.boundary_loops()[0].len(), fragments.len() + 2);
+            let repeated_extended = crate::support::under(&policy, || {
+                first.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    cusp_index + 1,
+                    repeated_setback.clone(),
+                    repeated_setback.clone(),
+                    CurveCornerMode2::TrimOrExtend,
+                )
+            })
+            .expect("a mapped selected-circle chamfer must extend without promotion");
+            assert_eq!(repeated_extended.certainty, CurveCertainty::Certified);
+            assert!(
+                repeated_extended.value.candidate_count() > 1,
+                "mapped trim and extension branches must both survive: policy={policy:?}, cusp_is_next={cusp_is_next}, result={:?}",
+                repeated_extended.value,
+            );
+            for (point, expected) in [
+                (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),
+                (
+                    Point2::new(-Real::one(), -Real::one()),
+                    RegionPointLocation::Outside,
+                ),
+            ] {
+                assert_eq!(
+                    certified(
+                        crate::support::under(&policy, || repeated
+                            .classify_point(&point.clone().into()))
+                        .unwrap()
+                    ),
+                    expected,
+                );
+            }
+
+            let zero_source = rounded();
+            let (previous_setback, next_setback) = if cusp_is_next {
+                (setback.clone(), Real::zero())
+            } else {
+                (Real::zero(), setback.clone())
+            };
+            let zero = crate::support::under(&policy, || {
+                zero_source.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a zero cusp-side setback must retain the exact corner");
+            assert_eq!(zero.certainty, CurveCertainty::Certified);
+            assert!(matches!(zero.value, CurveCornerSolutions2::Unique(_)));
+
+            let over = crate::support::under(&policy, || {
+                rounded().chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a cusp over-setback must terminate exactly");
+            assert_eq!(over.certainty, CurveCertainty::Certified);
+            assert!(matches!(
+                over.value,
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+            ));
+        }
+
+        let source = rounded();
+        let paths = crate::support::under(&policy, || source.boundary_paths())
+            .unwrap()
+            .into_value();
+        let mut curves = paths[0].curves().to_vec();
+        let cusp_index = curves
+            .iter()
+            .position(|curve| curve.family() == CurveFamily2::CircularArc)
+            .expect("the round offset must retain a circular join");
+        curves.rotate_left(cusp_index);
+        let seam_corner = curves[0].start();
+        let seam_curve_count = curves.len();
+        let authored = crate::support::under(&policy, || CurvePath2::try_new(curves))
+            .unwrap()
+            .into_value();
+        for reverse in [false, true] {
+            let path = if reverse {
+                crate::support::under(&policy, || authored.reversed())
+                    .unwrap()
+                    .into_value()
+            } else {
+                authored.clone()
+            };
+            let region = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[path],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                )
+            })
+            .unwrap()
+            .into_value();
+            let paths = crate::support::under(&policy, || region.boundary_paths())
+                .unwrap()
+                .into_value();
+            let vertex = paths[0]
+                .curves()
+                .iter()
+                .position(|curve| {
+                    decided(
+                        crate::support::under(&policy, || {
+                            curve.start().coincides_with(&seam_corner)
+                        })
+                        .unwrap(),
+                    )
+                })
+                .expect("the authored cusp seam survives normalization");
+            let cut = crate::support::under(&policy, || {
+                region.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("either authored traversal must retain the exact cusp seam chamfer");
+            let CurveCornerSolutions2::Unique(cut) = certified(cut) else {
+                panic!("the authored seam cusp must have one exact chamfer");
+            };
+            assert_eq!(cut.boundary_loops()[0].len(), seam_curve_count + 1);
+            assert_eq!(
+                decided(
+                    crate::support::under(&policy, || cut
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)).into()))
+                    .unwrap()
+                ),
+                RegionPointLocation::Inside,
+            );
+        }
+    }
+}
+
+#[test]
+fn canonical_exact_chord_regions_fillet_without_line_demotion() {
+    let exact_chord_rectangle = |policy: &PredicatePolicy, x_offset: i64| {
+        let points = [
+            p(x_offset, 0),
+            p(x_offset + 4, 0),
+            p(x_offset + 4, 4),
+            p(x_offset, 4),
+            p(x_offset, 0),
+        ];
+        let fragments = points
+            .windows(2)
+            .map(|edge| {
+                crate::support::under(policy, || {
+                    Curve2::try_line(
+                        CurvePoint2::from(edge[0].clone()),
+                        CurvePoint2::from(edge[1].clone()),
+                    )
+                })
+                .unwrap()
+                .into_value()
+            })
+            .collect();
+        let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments))
+            .unwrap()
+            .into_value();
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[boundary],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap()
+        .into_value()
+    };
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let seam_source = exact_chord_rectangle(&policy, 0);
+            let seam_source = if reverse {
+                let paths = crate::support::under(&policy, || seam_source.boundary_paths())
+                    .unwrap()
+                    .into_value();
+                let boundary = crate::support::under(&policy, || paths[0].reversed())
+                    .unwrap()
+                    .into_value();
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        &[boundary],
+                        &[CurveRegionLoopRole::Material],
+                        &[FillRule::NonZero],
+                    )
+                })
+                .unwrap()
+                .into_value()
+            } else {
+                seam_source
+            };
+            let seam = crate::support::under(&policy, || {
+                seam_source.fillet_loop_vertex(
+                    0,
+                    0,
+                    &hypercurve::CurveFillet2::new(q(1, 8)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("the exact-chord loop seam must retain fillet semantics");
+            assert_eq!(seam.certainty, CurveCertainty::Certified);
+            let seam = {
+                let solutions = seam.value;
+                let mut candidates = solutions.into_solutions();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
+            };
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || seam
+                        .classify_point(&Point2::new(Real::from(2), Real::from(2)).into()))
+                    .unwrap(),
+                ),
+                RegionPointLocation::Inside,
+            );
+        }
+
+        let source = exact_chord_rectangle(&policy, 0);
+        let (loop_index, vertex_index) = boundary_vertex_at(&source, &p(4, 0), &policy);
+        let first = crate::support::under(&policy, || {
+            source.fillet_loop_vertex(
+                loop_index,
+                vertex_index,
+                &hypercurve::CurveFillet2::new(q(1, 2)),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("canonical exact chords must reuse the authoritative fillet solver");
+        assert_eq!(first.certainty, CurveCertainty::Certified);
+        let first = {
+            let solutions = first.value;
+            let mut candidates = solutions.into_solutions();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
+        };
+        let fragments = first.boundary_loops()[0].curves();
+        assert_eq!(fragments.len(), 5);
+        assert_eq!(
+            fragments
+                .iter()
+                .filter(|fragment| fragment.family() == CurveFamily2::Line)
+                .count(),
+            4,
+        );
+        assert!(
+            fragments
+                .iter()
+                .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
+        );
+        assert!(
+            certified(crate::support::under(&policy, || first.filled_area()).unwrap()).is_some()
+        );
+
+        let fragment_count = fragments.len();
+        let next_chord_corner = (0..fragment_count)
+            .find(|index| {
+                is_line(&fragments[(index + fragment_count - 1) % fragment_count])
+                    && is_line(&fragments[*index])
+            })
+            .expect("the once-filleted rectangle retains another chord/chord corner");
+        let second = crate::support::under(&policy, || {
+            first.fillet_loop_vertex(
+                0,
+                next_chord_corner,
+                &hypercurve::CurveFillet2::new(q(1, 4)),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("a later canonical chord corner must remain filletable");
+        assert_eq!(second.certainty, CurveCertainty::Certified);
+        let second = {
+            let solutions = second.value;
+            let mut candidates = solutions.into_solutions();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
+        };
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || second
+                    .classify_point(&Point2::new(Real::from(2), Real::from(2)).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Inside,
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || second
+                    .classify_point(&Point2::new(Real::from(-1), Real::from(-1)).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Outside,
+        );
+
+        let disjoint = exact_chord_rectangle(&policy, 10);
+        let replay = crate::support::under(&policy, || second.boolean_regions(&disjoint))
+            .expect("a retained fillet must re-enter the canonical Boolean kernel");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert_eq!(replay.value.union().boundary_loops().len(), 2);
+        assert!(replay.value.intersection().is_empty());
+    }
+}
+
+#[test]
+fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
+    let source = |policy: &PredicatePolicy, reverse: bool| {
+        let polynomial = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
+            .unwrap(),
+        );
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
+        let selected = |start: Point2, end: Point2| {
+            crate::support::under(policy, || {
+                hypercurve::Curve2::from(
+                    RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
+                )
+                .point_at(&hypercurve::CurveParameter2::from(
+                    hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+                ))
+            })
+            .unwrap()
+            .into_value()
+        };
+        let corner = CurvePoint2::from(p(0, 0));
+        let incoming = selected(p(-5, 0), p(-4, 0));
+        let outgoing = selected(p(0, 4), p(0, 5));
+        let chord = |start, end| {
+            crate::support::under(policy, || Curve2::try_line(start, end))
+                .unwrap()
+                .into_value()
+        };
+        let mut fragments = vec![
+            chord(incoming.clone(), corner.clone()),
+            chord(corner, outgoing.clone()),
+            chord(outgoing, incoming),
+        ];
+        if reverse {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| {
+                    crate::support::under(policy, || fragment.reversed())
+                        .unwrap()
+                        .into_value()
+                })
+                .collect();
+        }
+        let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments))
+            .unwrap()
+            .into_value();
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[boundary],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap()
+        .into_value()
+    };
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let region = source(&policy, reverse);
+            let fragments = region.boundary_loops()[0].curves();
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    is_line(previous)
+                        && is_line(next)
+                        && represented_at(previous, false, &p(0, 0))
+                        && represented_at(next, true, &p(0, 0))
+                })
+                .expect("the selected-endpoint triangle retains its represented corner");
+            let result = crate::support::under(&policy, || {
+                region.fillet_loop_vertex(
+                    0,
+                    corner,
+                    &hypercurve::CurveFillet2::new(Real::one()),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("selected-endpoint support chords must share the linear fillet kernel");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let filleted = {
+                let solutions = result.value;
+                let mut candidates = solutions.into_solutions();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
+            };
+            let fragments = filleted.boundary_loops()[0].curves();
+            assert_eq!(fragments.len(), 4);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line)
+                    .count(),
+                3,
+            );
+            assert!(
+                fragments
+                    .iter()
+                    .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted.classify_point(&p(-2, 1).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Inside,
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted.classify_point(&p(1, 1).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Outside,
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
+    let source = |policy: &PredicatePolicy, reverse: bool| {
+        let polynomial = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
+            .unwrap(),
+        );
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
+        let selected = |start: Point2, end: Point2| {
+            crate::support::under(policy, || {
+                hypercurve::Curve2::from(
+                    RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
+                )
+                .point_at(&hypercurve::CurveParameter2::from(
+                    hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+                ))
+            })
+            .unwrap()
+            .into_value()
+        };
+        let lower_left = selected(p(-3, 0), p(-2, 0));
+        let upper_left = selected(p(-3, 1), p(-2, 1));
+        let corner = CurvePoint2::from(p(0, 0));
+        let upper_right = CurvePoint2::from(p(1, 1));
+        let chord = |start, end| {
+            crate::support::under(policy, || Curve2::try_line(start, end))
+                .unwrap()
+                .into_value()
+        };
+
+        let arc =
+            Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap());
+        let mut fragments = vec![
+            chord(lower_left.clone(), corner),
+            arc,
+            chord(upper_right, upper_left.clone()),
+            chord(upper_left, lower_left),
+        ];
+        if reverse {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| {
+                    crate::support::under(policy, || fragment.reversed())
+                        .unwrap()
+                        .into_value()
+                })
+                .collect();
+        }
+        let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments))
+            .unwrap()
+            .into_value();
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[boundary],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap()
+        .into_value()
+    };
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let region = source(&policy, reverse);
+            let fragments = region.boundary_loops()[0].curves();
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    (is_line(previous)
+                        && is_native(next, CurveFamily2::RationalQuadraticBezier)
+                        && represented_at(previous, false, &p(0, 0))
+                        && represented_at(next, true, &p(0, 0)))
+                        || (is_native(previous, CurveFamily2::RationalQuadraticBezier)
+                            && is_line(next)
+                            && represented_at(previous, false, &p(0, 0))
+                            && represented_at(next, true, &p(0, 0)))
+                })
+                .expect("the mixed selected-chord/circular corner remains explicit");
+            let result = crate::support::under(&policy, || {
+                region.fillet_loop_vertex(
+                    0,
+                    corner,
+                    &hypercurve::CurveFillet2::new(q(1, 2)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a represented-support chord must reuse line/circle incidence");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let filleted = {
+                let solutions = result.value;
+                let mut candidates = solutions.into_solutions();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
+            };
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted
+                        .classify_point(&Point2::new(-Real::one(), q(1, 2)).into()))
+                    .unwrap()
+                ),
+                RegionPointLocation::Inside,
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted.classify_point(&p(2, 0).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Outside,
+            );
+        }
+    }
+}
+
+#[test]
+fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
+    fn source_path(line_end: Point2) -> CurvePath2 {
+        let corner = p(1, 1);
+        CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(q(1, 2), Real::zero()),
+                corner.clone(),
+            )),
+            Curve2::from(LineSeg2::try_new(corner, line_end.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(line_end, p(-2, 3)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-2, 3), p(-2, -2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-2, -2), p(0, -2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(0, -2), p(0, 0)).unwrap()),
+        ])
+        .unwrap()
+    }
+
+    fn corner_index(region: &CurveRegion2) -> usize {
+        let fragments = region.boundary_loops()[0].curves();
+        (0..fragments.len())
+            .find(|index| {
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[*index];
+                previous.geometry().is_some()
+                    && next.geometry().is_some()
+                    && represented_at(previous, false, &p(1, 1))
+                    && represented_at(next, true, &p(1, 1))
+            })
+            .expect("the line/parabola corner remains explicit")
+    }
+
+    fn candidates(solutions: hypercurve::CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {
+        let candidates = solutions.into_solutions();
+        assert!(!candidates.is_empty());
+        candidates
+    }
+
+    let exact_line_end = Point2::new(Real::one() + q(38280, 91901), Real::one() + q(83549, 91901));
+    let algebraic_line_end = Point2::new(q(23, 13), q(37, 13));
+    let exact_cut = Point2::new(q(6, 5), q(36, 25));
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let edit = |path: CurvePath2, radius: Real| {
+                let path = if reversed {
+                    certified(
+                        crate::support::under(&policy, || path.reversed())
+                            .expect("the exact fixture reverses"),
+                    )
+                } else {
+                    path
+                };
+                let region = certified(
+                    crate::support::under(&policy, || {
+                        CurveRegion2::try_from_boundary_paths(
+                            &[path],
+                            hypercurve::FillRule::EvenOdd,
+                        )
+                    })
+                    .expect("the exact fixture promotes"),
+                );
+                let corner = corner_index(&region);
+                candidates(certified(
+                    crate::support::under(&policy, || region
+                        .fillet_loop_vertex(
+                            0,
+                            corner,
+                            &hypercurve::CurveFillet2::new(radius),
+                            CurveCornerMode2::TrimOrExtend))
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the regular incident cell must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        }),
+                ))
+            };
+
+            let exact = edit(source_path(exact_line_end.clone()), q(299, 125))
+                .into_iter()
+                .find(|candidate| {
+                    parabola_extension_contact(candidate, &policy).is_some_and(|contact| {
+                        decided(
+                            crate::support::under(&policy, || {
+                                contact.coincides_with(&exact_cut.clone().into())
+                            })
+                            .unwrap(),
+                        )
+                    })
+                })
+                .expect("the represented exterior parabola cut must be retained");
+            assert_eq!(
+                crate::support::under(&policy, || exact.classify_point(&p(-1, -1).into()))
+                    .expect("the exact exterior fillet remains classifiable")
+                    .into_value(),
+                RegionPointLocation::Inside,
+            );
+
+            let algebraic = edit(source_path(algebraic_line_end.clone()), q(1, 2))
+                .into_iter()
+                .find(|candidate| parabola_extension_contact(candidate, &policy).is_some())
+                .expect("the irrational exterior parabola cut must remain exact");
+            assert_eq!(
+                crate::support::under(&policy, || algebraic.classify_point(&p(-1, -1).into()))
+                    .expect("the algebraic exterior fillet remains classifiable")
+                    .into_value(),
+                RegionPointLocation::Inside,
+            );
+            let disjoint = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)])
+            })
+            .unwrap()
+            .into_value();
+            for (name, filleted) in [("represented", &exact), ("selected", &algebraic)] {
+                assert_boundary_bounds_contain_endpoints(filleted, &policy);
+                let normalized =
+                    crate::support::under(&policy, || filleted.regularized_region()).unwrap();
+                assert_eq!(
+                    normalized.certainty,
+                    CurveCertainty::Certified,
+                    "{name} normalization: policy={policy:?}, reversed={reversed}"
+                );
+                let normalized = normalized.value;
+                let replay = crate::support::under(&policy, || filleted.boolean_regions(&disjoint))
+                    .expect("the exterior fillet must re-enter the Boolean kernel");
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                // Extension can make the authored walk self-cross. Its
+                // regularized components must all survive the disjoint union.
+                assert_eq!(
+                    replay.value.union().boundary_loops().len(),
+                    normalized.boundary_loops().len() + 1,
+                );
+                assert!(replay.value.intersection().is_empty());
+                let recovered = crate::support::under(&policy, || {
+                    replay
+                        .value
+                        .union()
+                        .boolean_region(&disjoint, hypercurve::BooleanOp::Difference)
+                })
+                .expect("the multi-component union re-enters difference");
+                assert_eq!(
+                    recovered.certainty,
+                    CurveCertainty::Certified,
+                    "{name} recovery: policy={policy:?}, reversed={reversed}"
+                );
+                let identity = crate::support::under(&policy, || recovered
+                    .value
+                    .boolean_region(&normalized, hypercurve::BooleanOp::Xor))
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "{name} fillet set identity: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(
+                    identity.certainty,
+                    CurveCertainty::Certified,
+                    "{name} set identity: policy={policy:?}, reversed={reversed}"
+                );
+                assert!(identity.value.is_empty());
+            }
+        }
+    }
+}
+
+#[test]
+fn arc_parabola_fillet_recovers_exact_complement_contacts() {
+    fn source_path() -> CurvePath2 {
+        let corner = p(1, 1);
+        let center = Point2::new(Real::one(), q(3923, 2150));
+        let arc_end = Point2::new(q(3923, 2150), q(3923, 2150));
+        CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(q(1, 2), Real::zero()),
+                corner.clone(),
+            )),
+            Curve2::from(
+                CircularArc2::try_from_center(corner, arc_end.clone(), center, false).unwrap(),
+            ),
+            Curve2::from(LineSeg2::try_new(arc_end, p(0, 3)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(0, 3), p(0, 0)).unwrap()),
+        ])
+        .unwrap()
+    }
+
+    fn corner_index(region: &CurveRegion2) -> usize {
+        let fragments = region.boundary_loops()[0].curves();
+        (0..fragments.len())
+            .find(|index| {
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[*index];
+                ((is_native(previous, CurveFamily2::QuadraticBezier)
+                    && is_native(next, CurveFamily2::RationalQuadraticBezier))
+                    || (is_native(previous, CurveFamily2::RationalQuadraticBezier)
+                        && is_native(next, CurveFamily2::QuadraticBezier)))
+                    && represented_at(previous, false, &p(1, 1))
+                    && represented_at(next, true, &p(1, 1))
+            })
+            .expect("the arc/parabola corner remains explicit")
+    }
+
+    fn candidates(solutions: hypercurve::CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {
+        let candidates = solutions.into_solutions();
+        assert!(!candidates.is_empty());
+        candidates
+    }
+
+    let exact_cut = Point2::new(q(6, 5), q(36, 25));
+    let authored_arc = source_path().curves()[1].clone();
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let path = if reversed {
+                crate::support::under(&policy, || source_path().reversed())
+                    .expect("the exact fixture reverses")
+                    .into_value()
+            } else {
+                source_path()
+            };
+            let region = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+            })
+            .expect("the exact fixture promotes")
+            .into_value();
+            let corner = corner_index(&region);
+            let edited = candidates(
+                crate::support::under(&policy, || region
+                    .fillet_loop_vertex(
+                        0,
+                        corner,
+                        &hypercurve::CurveFillet2::new(q(1, 2)),
+                        CurveCornerMode2::TrimOrExtend))
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the regular arc/parabola cells must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    })
+                    .into_value(),
+            );
+            let exact = edited
+                .iter()
+                .find(|candidate| {
+                    parabola_extension_contact(candidate, &policy).is_some_and(|contact| {
+                        decided(
+                            crate::support::under(&policy, || {
+                                contact.coincides_with(&exact_cut.clone().into())
+                            })
+                            .unwrap(),
+                        )
+                    })
+                })
+                .expect("the represented exterior parabola contact must be retained");
+            let inside = Point2::new(q(1, 4), q(3, 2));
+            let location = |candidate: &CurveRegion2| {
+                crate::support::under(&policy, || candidate.classify_point(&inside.clone().into()))
+                    .expect("the algebraic arc/parabola fillet remains classifiable")
+                    .into_value()
+            };
+            let complement = edited
+                .iter()
+                .find(|candidate| {
+                    parabola_extension_contact(candidate, &policy).is_some()
+                        && has_certified_boundary_overlap(candidate, &authored_arc, &policy)
+                        && location(candidate) == RegionPointLocation::Outside
+                })
+                .expect("the irrational complement-arc contact must remain exact");
+
+            assert_boundary_bounds_contain_endpoints(exact, &policy);
+            assert_boundary_bounds_contain_endpoints(complement, &policy);
+
+            let disjoint = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)])
+            })
+            .unwrap()
+            .into_value();
+            assert_eq!(location(exact), RegionPointLocation::Inside,);
+            let replay = crate::support::under(&policy, || exact.boolean_regions(&disjoint))
+                .expect("the represented arc/parabola fillet must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+            assert!(replay.value.intersection().is_empty());
+            assert_eq!(
+                location(complement),
+                RegionPointLocation::Outside,
+                "the complement extension winds the sample twice under even-odd fill",
+            );
+            let replay = crate::support::under(&policy, || complement.boolean_regions(&disjoint))
+                .expect("the complement-arc branch must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert!(replay.value.intersection().is_empty());
+        }
+    }
+}
+
+#[test]
+fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
+    let source = |policy: &PredicatePolicy, reverse: bool| {
+        let polynomial = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterPolynomial::try_new_power_basis(vec![
+                    -q(1, 2),
+                    Real::zero(),
+                    Real::one(),
+                ])
+            })
+            .unwrap(),
+        );
+        let interval = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierParameterInterval::try_new(Real::zero(), Real::one())
+            })
+            .unwrap(),
+        );
+        let parameter = decided(
+            crate::support::under_classified_result(policy, || {
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval)
+            })
+            .unwrap(),
+        );
+        let selected = |start: Point2, end: Point2| {
+            crate::support::under(policy, || {
+                hypercurve::Curve2::from(
+                    RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
+                )
+                .point_at(&hypercurve::CurveParameter2::from(
+                    hypercurve::BezierParameter2::Algebraic(parameter.clone()),
+                ))
+            })
+            .unwrap()
+            .into_value()
+        };
+        let lower_left = selected(p(-5, 0), p(-4, 0));
+        let upper_left = selected(p(-5, 2), p(-4, 2));
+        let corner = CurvePoint2::from(p(0, 0));
+        let upper_right = CurvePoint2::from(p(1, 2));
+        let chord = |start, end| {
+            crate::support::under(policy, || Curve2::try_line(start, end))
+                .unwrap()
+                .into_value()
+        };
+        let quadratic = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
+        let mut fragments = vec![
+            chord(lower_left.clone(), corner),
+            quadratic,
+            chord(upper_right, upper_left.clone()),
+            chord(upper_left, lower_left),
+        ];
+        if reverse {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| {
+                    crate::support::under(policy, || fragment.reversed())
+                        .unwrap()
+                        .into_value()
+                })
+                .collect();
+        }
+        let boundary = crate::support::under(policy, || CurvePath2::try_new(fragments))
+            .unwrap()
+            .into_value();
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[boundary],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap()
+        .into_value()
+    };
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let region = source(&policy, reverse);
+            let fragments = region.boundary_loops()[0].curves();
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    (is_line(previous)
+                        && is_native(next, CurveFamily2::QuadraticBezier)
+                        && represented_at(previous, false, &p(0, 0))
+                        && represented_at(next, true, &p(0, 0)))
+                        || (is_native(previous, CurveFamily2::QuadraticBezier)
+                            && is_line(next)
+                            && represented_at(previous, false, &p(0, 0))
+                            && represented_at(next, true, &p(0, 0)))
+                })
+                .expect("the mixed selected-chord/quadratic corner remains explicit");
+            let result = crate::support::under(&policy, || {
+                region.fillet_loop_vertex(
+                    0,
+                    corner,
+                    &hypercurve::CurveFillet2::new(q(15, 4)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a represented-support chord must reuse line/Bezier incidence");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let candidates = {
+                let solutions = result.value;
+                let candidates = solutions.into_solutions();
+                assert!(
+                    !candidates.is_empty(),
+                    "expected at least one isolated fillet"
+                );
+                candidates
+            };
+            let filleted = candidates
+                .into_iter()
+                .find(|candidate| {
+                    candidate.boundary_loops()[0]
+                        .curves()
+                        .iter()
+                        .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
+                })
+                .expect("one exact candidate must publish the circular fillet span");
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted.classify_point(&p(-3, 1).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Inside,
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted.classify_point(&p(2, 1).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Outside,
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
+    let clipping_region = |policy: &PredicatePolicy| {
+        let points = [
+            Point2::new(-Real::one(), -Real::one()),
+            Point2::new(q(3, 4), -Real::one()),
+            Point2::new(q(3, 4), Real::from(2)),
+            Point2::new(-Real::one(), Real::from(2)),
+            Point2::new(-Real::one(), -Real::one()),
+        ];
+        let contour = Contour2::try_new(
+            points
+                .windows(2)
+                .map(|edge| {
+                    Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+                })
+                .collect(),
+        )
+        .unwrap();
+        crate::support::under(policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![contour])
+        })
+        .unwrap()
+        .into_value()
+    };
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let rounded = crate::support::under(&policy, || {
+            axis_aligned_algebraic_rectangle(&policy).offset(q(1, 10), &OffsetCornerStyle2::Round)
+        })
+        .expect("the selected-field round source must remain exact")
+        .into_value();
+        let clipped = crate::support::under(&policy, || {
+            rounded.boolean_regions(&clipping_region(&policy))
+        })
+        .expect("the native line must clip the selected circle exactly");
+        assert_eq!(clipped.certainty, CurveCertainty::Certified);
+        let clipped = clipped.value.intersection().clone();
+        let fragments = clipped.boundary_loops()[0].curves();
+        let fragment_count = fragments.len();
+        let fragment_kinds = fragments
+            .iter()
+            .map(|fragment| fragment.family())
+            .collect::<Vec<_>>();
+        let corners = (0..fragment_count)
+            .filter(|index| {
+                let previous = &fragments[(index + fragment_count - 1) % fragment_count];
+                let next = &fragments[*index];
+                (is_line(previous) && is_circle_join(next))
+                    || (is_circle_join(previous) && is_line(next))
+            })
+            .collect::<Vec<_>>();
+        if corners.is_empty() {
+            panic!(
+                "the clipped round boundary must publish a support-chord/circle corner: {fragment_kinds:?}"
+            );
+        }
+        let cusp_count = fragments
+            .iter()
+            .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
+            .count();
+
+        let mut outcomes = Vec::new();
+        let mut filleted = Vec::new();
+        for corner in corners {
+            let result = crate::support::under(&policy, || clipped
+                .fillet_loop_vertex(
+                    0,
+                    corner,
+                    &hypercurve::CurveFillet2::new(q(1, 100)),
+                    CurveCornerMode2::TrimOnly))
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "selected-circle/support-chord corner {corner} must retain its exact fillet center: {error:?}"
+                    )
+                });
+            assert_eq!(
+                result.certainty,
+                CurveCertainty::Certified,
+                "policy={policy:?}, corner={corner}"
+            );
+            let candidate_count = { result.value.solutions().len() };
+            let no_solution_reason = result.value.no_solution_reason();
+            let mut candidates = result.value.into_solutions();
+            if candidates.len() == 1 {
+                filleted.push((corner, candidates.pop().unwrap()));
+            } else {
+                outcomes.push((corner, candidate_count, no_solution_reason));
+            }
+        }
+        assert_eq!(
+            filleted.len(),
+            2,
+            "both transverse selected-circle/support-chord orientations must have one fillet: {outcomes:?}"
+        );
+        for (_, filleted) in filleted {
+            assert_eq!(
+                filleted.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .filter(|fragment| { fragment.family() == CurveFamily2::CircularArc })
+                    .count(),
+                cusp_count + 1,
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)).into()))
+                    .unwrap(),
+                ),
+                RegionPointLocation::Inside,
+            );
+
+            let disjoint = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![square(2, 2, 3, 3)])
+            })
+            .unwrap()
+            .into_value();
+            let replay = crate::support::under(&policy, || filleted.boolean_regions(&disjoint))
+                .expect("the retained algebraic fillet must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+            assert!(replay.value.intersection().is_empty());
+        }
+    }
+}
+
+fn analytic_parallel_cap_region(policy: &PredicatePolicy) -> CurveRegion2 {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 4), p(2, 0))),
+        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(2, -2), p(-2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-2, -2), p(-2, 0)).unwrap()),
+    ])
+    .unwrap();
+    crate::support::under(policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value()
+}
+
+fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions(
+    policy: PredicatePolicy,
+    mode: CurveCornerMode2,
+    candidates_per_corner: usize,
+) {
+    let source = |policy: &PredicatePolicy| {
+        let offset = crate::support::under(policy, || {
+            analytic_parallel_cap_region(policy).offset(q(1, 10), &OffsetCornerStyle2::Bevel)
+        })
+        .unwrap();
+        assert_eq!(offset.certainty, CurveCertainty::Certified);
+        offset.into_value()
+    };
+
+    let region = source(&policy);
+    let fragments = region.boundary_loops()[0].curves();
+    let fragment_count = fragments.len();
+    let fragment_kinds = fragments
+        .iter()
+        .map(|fragment| fragment.family())
+        .collect::<Vec<_>>();
+    let corners = (0..fragment_count)
+        .filter(|index| {
+            let previous = &fragments[(index + fragment_count - 1) % fragment_count];
+            let next = &fragments[*index];
+            is_parallel_support(previous, next)
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        corners.len(),
+        2,
+        "the exact offset must retain both analytic/support corners: {fragment_kinds:?}"
+    );
+    let selected_circle_count = fragments
+        .iter()
+        .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        .count();
+
+    let disjoint = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![square(4, 4, 5, 5)])
+    })
+    .unwrap()
+    .into_value();
+    let mut filleted = Vec::new();
+    let mut outcomes = Vec::new();
+    for &corner in &corners {
+        let result = crate::support::under(&policy, || region
+                    .fillet_loop_vertex(0, corner, &hypercurve::CurveFillet2::new(q(1, 100)), mode))
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "analytic-parallel/support corner {corner} must fillet exactly in {mode:?}: {error:?}; fragments={fragment_kinds:?}",
+                        )
+                    });
+        assert_eq!(result.certainty, CurveCertainty::Certified);
+        if { result.value.solutions().len() } != candidates_per_corner {
+            outcomes.push((
+                corner,
+                { result.value.solutions().len() },
+                result.value.no_solution_reason(),
+            ));
+            continue;
+        }
+        if let Some(reason) = result.value.no_solution_reason() {
+            outcomes.push((corner, 0, Some(reason)));
+        }
+        let candidates = result.value.into_solutions();
+        filleted.extend(
+            candidates
+                .into_iter()
+                .enumerate()
+                .map(|(candidate, region)| (corner, candidate, region)),
+        );
+    }
+    assert_eq!(
+        filleted.len(),
+        corners.len() * candidates_per_corner,
+        "both analytic-parallel endpoint orientations must fillet in {mode:?}: {outcomes:?}; fragments={fragment_kinds:?}"
+    );
+    for (corner, candidate, filleted) in filleted {
+        // An incident extension can regularize into several loops. The
+        // inserted circle's chart ownership is independent of loop order.
+        let fillet_circle_count = filleted
+            .boundary_loops()
+            .iter()
+            .flat_map(|boundary| boundary.curves())
+            .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
+            .count();
+        assert!(
+            (selected_circle_count + 1..=selected_circle_count + 2).contains(&fillet_circle_count),
+            "one fillet may occupy one or both selected-circle half charts: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}"
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || filleted.classify_point(&p(10, 10).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Outside,
+        );
+        let replay = crate::support::under(&policy, || filleted
+            .boolean_regions(&disjoint))
+            .unwrap_or_else(|error| {
+                panic!(
+                    "the retained analytic fillet must re-enter the Boolean kernel: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}, error={error:?}"
+                )
+            });
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        // An incident extension can regularize into multiple loops. The
+        // disjoint square adds one boundary without discarding any of them.
+        assert_eq!(
+            replay.value.union().boundary_loops().len(),
+            filleted.boundary_loops().len() + disjoint.boundary_loops().len(),
+        );
+        assert!(replay.value.intersection().is_empty());
+
+        let filleted_kinds = filleted.boundary_loops()[0]
+            .curves()
+            .iter()
+            .map(|fragment| fragment.family())
+            .collect::<Vec<_>>();
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset_work = || {
+            crate::support::under(&policy, || {
+                filleted.offset(q(1, 1000), &OffsetCornerStyle2::Bevel)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let reoffset = hyperreal::dispatch_trace::with_recording(offset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let reoffset = offset_work();
+        let reoffset = reoffset.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                {
+                    let trace = hyperreal::dispatch_trace::take_trace();
+                    let paths = trace.dispatch.iter().filter(|entry| entry.layer == "hypercurve").collect::<Vec<_>>();
+                    eprintln!("retained analytic fillet re-offset paths: {paths:?}");
+                }
+                panic!(
+                    "the retained analytic fillet must re-enter the offset kernel: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}, source_fragments={fragment_kinds:?}, fragments={filleted_kinds:?}, error={error:?}",
+                )
+            });
+        assert_eq!(
+            reoffset.certainty,
+            CurveCertainty::Certified,
+            "retained analytic fillet re-offset certainty: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}",
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || reoffset.value.classify_point(&p(10, 10).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Outside,
+        );
+    }
+}
+
+#[test]
+fn strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
+    assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions(
+        PredicatePolicy::STRICT,
+        CurveCornerMode2::TrimOnly,
+        1,
+    );
+}
+
+#[test]
+fn strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions() {
+    assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions(
+        PredicatePolicy::STRICT,
+        CurveCornerMode2::TrimOrExtend,
+        2,
+    );
+}
+
+#[test]
+fn approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
+    assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions(
+        PredicatePolicy::APPROXIMATE_512,
+        CurveCornerMode2::TrimOnly,
+        1,
+    );
+}
+
+#[test]
+fn approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions()
+ {
+    assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions(
+        PredicatePolicy::APPROXIMATE_512,
+        CurveCornerMode2::TrimOrExtend,
+        2,
+    );
+}
+
+#[test]
+fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-2, 2), p(-1, 0), p(0, 0))),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(2, 2))),
+        Curve2::from(LineSeg2::try_new(p(2, 2), p(-2, 2)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let result = crate::support::under(&policy, || {
+            source.fillet_loop_vertex(
+                0,
+                1,
+                &hypercurve::CurveFillet2::new(q(1, 4)),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("a regular non-PH Bezier pair must retain its exact fillet");
+        let filleted = {
+            let solutions = result.into_value();
+            let mut candidates = solutions.into_solutions();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
+        };
+        assert_eq!(
+            filleted.boundary_loops()[0]
+                .curves()
+                .iter()
+                .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
+                .count(),
+            1,
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || filleted.classify_point(&p(0, 1).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Inside,
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || filleted.classify_point(&p(0, 0).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Outside,
+        );
+        let distant = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)])
+        })
+        .unwrap()
+        .into_value();
+        let batch = crate::support::under(&policy, || filleted.boolean_regions(&distant))
+            .expect("the general selected-circle fillet must re-enter the Boolean kernel")
+            .into_value();
+        assert!(batch.intersection().is_empty());
+        assert_eq!(batch.union().boundary_loops().len(), 2);
+
+        let cutter_points = [
+            Point2::new(q(-1, 1), q(1, 8)),
+            Point2::new(q(1, 1), q(1, 8)),
+            Point2::new(q(1, 1), q(3, 8)),
+            Point2::new(q(-1, 1), q(3, 8)),
+            Point2::new(q(-1, 1), q(1, 8)),
+        ];
+        let cutter_path = CurvePath2::try_new(
+            cutter_points
+                .windows(2)
+                .map(|edge| {
+                    Curve2::from(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+                })
+                .collect(),
+        )
+        .unwrap();
+        let cutter = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&cutter_path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .expect("the exact crossing cutter must form a region")
+        .into_value();
+        let crossing = crate::support::under(&policy, || filleted.boolean_regions(&cutter))
+            .expect("the local selected-fiber fillet contacts must complete Boolean topology")
+            .into_value();
+        assert!(!crossing.intersection().is_empty());
+        assert!(!crossing.difference().is_empty());
+        assert!(!crossing.xor().is_empty());
+
+        let curved_cutter_path = CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                cutter_points[0].clone(),
+                Point2::new(Real::zero(), q(1, 16)),
+                cutter_points[1].clone(),
+            )),
+            Curve2::from(
+                LineSeg2::try_new(cutter_points[1].clone(), cutter_points[2].clone()).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(cutter_points[2].clone(), cutter_points[3].clone()).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(cutter_points[3].clone(), cutter_points[4].clone()).unwrap(),
+            ),
+        ])
+        .unwrap();
+        let curved_cutter = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&curved_cutter_path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .expect("the curved exact cutter must form a region")
+        .into_value();
+        let curved_crossing =
+            crate::support::under(&policy, || filleted.boolean_regions(&curved_cutter))
+                .expect("general selected-fiber/rational contacts must complete Boolean topology")
+                .into_value();
+        assert!(!curved_crossing.intersection().is_empty());
+        assert!(!curved_crossing.difference().is_empty());
+        assert!(!curved_crossing.xor().is_empty());
+
+        let selected = [
+            curved_crossing.intersection(),
+            curved_crossing.difference(),
+            curved_crossing.xor(),
+            curved_crossing.union(),
+        ]
+        .into_iter()
+        .find(|region| {
+            region
+                .boundary_loops()
+                .iter()
+                .any(|boundary| boundary.curves().iter().any(has_retained_rational_domain))
+        })
+        .expect("the general retained-parameter Boolean must publish a selected-fiber fragment");
+        let transform = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-1),
+            Real::one(),
+            Real::zero(),
+            Real::from(7),
+            Real::from(-3),
+        )
+        .unwrap();
+        let transformed =
+            crate::support::under(&policy, || selected.transform_similarity(&transform))
+                .expect("selected-fiber contacts must survive one retained similarity")
+                .into_value();
+        assert!(
+            transformed
+                .boundary_loops()
+                .iter()
+                .any(|boundary| { boundary.curves().iter().any(has_retained_rational_domain) })
+        );
+        let projected = crate::support::under(&policy, || {
+            selected.project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-1).unwrap())
+        })
+        .expect("selected-fiber loops must cross the explicit finite-output boundary")
+        .into_value();
+        assert!(!projected.is_empty());
+    }
+}
+
+#[test]
+fn exact_high_degree_elevations_reenter_the_quadratic_corner_kernel() {
+    let elevated = |curve: QuadraticBezier2| {
+        RationalBezier2::try_new(
+            curve.control_points().into_iter().cloned().collect(),
+            vec![Real::one(); 3],
+        )
+        .unwrap()
+        .elevated_to_degree(12)
+        .unwrap()
+    };
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(elevated(QuadraticBezier2::new(p(-2, 2), p(-1, 0), p(0, 0)))),
+        Curve2::from(elevated(QuadraticBezier2::new(p(0, 0), p(0, 1), p(2, 2)))),
+        Curve2::from(LineSeg2::try_new(p(2, 2), p(-2, 2)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .unwrap()
+        .into_value();
+        assert_eq!(
+            region.boundary_loops()[0]
+                .curves()
+                .iter()
+                .filter(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
+                .count(),
+            2,
+        );
+        let filleted = crate::support::under(&policy, || {
+            region.fillet_loop_vertex(
+                0,
+                1,
+                &hypercurve::CurveFillet2::new(q(1, 4)),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("a structural elevation must reuse the quadratic fillet kernel");
+        assert_eq!(filleted.certainty, CurveCertainty::Certified);
+        assert!({ filleted.value.solutions().len() } > 0);
+    }
+}
+
+#[test]
+fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
+    let end = Point2::new(-q(14, 65), q(196, 325));
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            p(1, 1),
+        )),
+        Curve2::from(QuadraticBezier2::new(
+            p(1, 1),
+            Point2::new(q(99, 130), q(282, 325)),
+            end.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(end, p(0, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let (oriented_path, vertex_index) = if reversed {
+                (
+                    crate::support::under(&policy, || path.clone().reversed())
+                        .unwrap()
+                        .into_value(),
+                    2,
+                )
+            } else {
+                (path.clone(), 1)
+            };
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&oriented_path),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .unwrap()
+            .into_value();
+            let result = crate::support::under(&policy, || {
+                source.fillet_loop_vertex(
+                    0,
+                    vertex_index,
+                    &hypercurve::CurveFillet2::new(q(2, 5)),
+                    CurveCornerMode2::TrimOrExtend,
+                )
+            })
+            .expect("the algebraic Bezier-pair incident cells must remain retained");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let candidates = {
+                let solutions = result.into_value();
+                let candidates = solutions.into_solutions();
+                assert!(
+                    !candidates.is_empty(),
+                    "expected at least one isolated fillet"
+                );
+                candidates
+            };
+            let has_projective_selected_circle = |candidate: &&CurveRegion2| {
+                let curves = candidate
+                    .boundary_loops()
+                    .iter()
+                    .flat_map(|boundary| boundary.curves())
+                    .collect::<Vec<_>>();
+                curves
+                    .iter()
+                    .filter(|fragment| {
+                        fragment.geometry().is_none()
+                            && matches!(
+                                fragment.family(),
+                                CurveFamily2::QuadraticBezier
+                                    | CurveFamily2::CubicBezier
+                                    | CurveFamily2::RationalQuadraticBezier
+                                    | CurveFamily2::RationalBezier
+                            )
+                    })
+                    .count()
+                    >= 2
+                    && curves
+                        .iter()
+                        .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+            };
+            let filleted = candidates
+                .iter()
+                .find(has_projective_selected_circle)
+                .expect("both projective algebraic cuts and the selected circle must be retained");
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || filleted.classify_point(&p(10, 10).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Outside,
+            );
+            let distant = crate::support::under(&policy, || {
+                CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)])
+            })
+            .unwrap()
+            .into_value();
+            let replay = certified(
+                crate::support::under(&policy, || filleted.boolean_regions(&distant))
+                    .expect("the projective algebraic fillet must re-enter the Boolean kernel"),
+            );
+            assert!(replay.intersection().is_empty());
+            // The extended sources cross, so the regularized result can have
+            // several components. At companion parameter -1/4, the point is
+            // (279/260, 5501/5200). The parabola crosses this horizontal ray to
+            // its left, and the fillet circle lies above y = 11/10.
+            for (point, expected) in [
+                (
+                    Point2::new(q(279, 260) - q(1, 10400), q(5501, 5200)),
+                    RegionPointLocation::Inside,
+                ),
+                (
+                    Point2::new(q(279, 260) + q(1, 10400), q(5501, 5200)),
+                    RegionPointLocation::Outside,
+                ),
+                (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),
+            ] {
+                for region in [filleted, replay.union()] {
+                    assert_eq!(
+                        certified(
+                            crate::support::under(&policy, || region
+                                .classify_point(&point.clone().into()))
+                            .unwrap()
+                        ),
+                        expected,
+                        "policy={policy:?}, reversed={reversed}"
+                    );
+                }
+            }
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || replay
+                        .union()
+                        .classify_point(&Point2::new(q(17, 2), q(17, 2)).into()))
+                    .unwrap()
+                ),
+                RegionPointLocation::Inside,
+            );
+        }
+    }
+}
+
+#[test]
+fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = crate::support::under(&policy, || {
+            analytic_parallel_cap_region(&policy).offset(
+                q(1, 10),
+                &OffsetCornerStyle2::Miter {
+                    limit: Real::from(100),
+                },
+            )
+        })
+        .expect("the exact analytic miter must retain its tangent construction")
+        .into_value();
+        let assert_tangent_corners = |region: &CurveRegion2| {
+            let fragments = region.boundary_loops()[0].curves();
+            let corners = (0..fragments.len())
+                .filter(|index| {
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    is_parallel_support(previous, next)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(corners.len(), 2);
+            for corner in corners {
+                let result = crate::support::under(&policy, || {
+                    region.fillet_loop_vertex(
+                        0,
+                        corner,
+                        &hypercurve::CurveFillet2::new(q(1, 100)),
+                        CurveCornerMode2::TrimOnly,
+                    )
+                })
+                .expect("a certified tangent miter junction must be classified exactly");
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    (result.value).no_solution_reason(),
+                    Some(CurveCornerNoSolution2::NoTangentCircle)
+                );
+            }
+        };
+        assert_tangent_corners(&region);
+
+        let transformed = crate::support::under(&policy, || {
+            region.transform_affine(
+                &Real::zero(),
+                &Real::from(2),
+                &Real::from(2),
+                &Real::zero(),
+                &Real::from(3),
+                &Real::from(-1),
+            )
+        })
+        .expect("similarity and loop reversal must preserve exact tangent provenance")
+        .into_value();
+        assert_tangent_corners(&transformed);
+    }
+}
+
+#[test]
+fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = crate::support::under(&policy, || {
+            analytic_parallel_cap_region(&policy)
+                .offset(q(1, 10), &OffsetCornerStyle2::Miter { limit: Real::one() })
+        })
+        .expect("the rejected analytic miter must become an exact bevel")
+        .into_value();
+        let fragments = region.boundary_loops()[0].curves();
+        let corners = (0..fragments.len())
+            .filter(|index| {
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[*index];
+                is_parallel_support(previous, next)
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(corners.len(), 2);
+        for corner in corners {
+            let result = crate::support::under(&policy, || {
+                region.fillet_loop_vertex(
+                    0,
+                    corner,
+                    &hypercurve::CurveFillet2::new(q(1, 100)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            })
+            .expect("a rejected miter bevel must remain exactly filletable");
+            assert!(
+                result.value.solutions().len() == 1,
+                "policy={policy:?}, corner={corner}, result={result:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn exact_support_cutter_reenters_correlated_chord_collinearly() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let rounded = crate::support::under(&policy, || {
+            source.offset(q(1, 20), &OffsetCornerStyle2::Round)
+        })
+        .unwrap()
+        .into_value();
+        let wide = crate::support::under(&policy, || {
+            source.transform_affine(
+                &Real::from(4),
+                &Real::zero(),
+                &Real::zero(),
+                &q(7, 10),
+                &q(1, 10),
+                &q(3, 10),
+            )
+        })
+        .unwrap()
+        .into_value();
+        let cutter = crate::support::under(&policy, || {
+            wide.offset(
+                q(1, 40),
+                &OffsetCornerStyle2::Miter {
+                    limit: Real::from(2),
+                },
+            )
+        })
+        .unwrap()
+        .into_value();
+        let first = crate::support::under(&policy, || rounded.boolean_regions(&cutter)).unwrap();
+        assert_eq!(first.certainty, CurveCertainty::Certified);
+        let first = first.into_value().intersection().clone();
+        let fragments = first.boundary_loops()[0].curves();
+        let retained_index = fragments
+            .iter()
+            .enumerate()
+            .position(|(index, fragment)| {
+                fragment.family() == CurveFamily2::Line
+                    && is_circle_join(&fragments[(index + fragments.len() - 1) % fragments.len()])
+            })
+            .expect("the exact support must follow its incident selected circle");
+        let cusp_index = (retained_index + fragments.len() - 1) % fragments.len();
+        let mapped_chamfer = crate::support::under(&policy, || {
+            first.chamfer_loop_vertex_by_setbacks(
+                0,
+                retained_index,
+                q(1, 1000),
+                q(1, 1000),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("a Boolean-mapped selected-circle endpoint must chamfer exactly");
+        assert_eq!(mapped_chamfer.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(mapped_chamfer) = mapped_chamfer.value else {
+            panic!("the mapped cusp/chord junction must have one exact chamfer");
+        };
+        assert!(
+            mapped_chamfer.boundary_loops()[0]
+                .curves()
+                .iter()
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+        );
+        let mapped_reentry = crate::support::under(&policy, || {
+            mapped_chamfer.chamfer_loop_vertex_by_setbacks(
+                0,
+                retained_index,
+                q(1, 2000),
+                q(1, 2000),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .expect("a rotated mapped cusp endpoint must remain reusable");
+        assert_eq!(mapped_reentry.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(mapped_reentry) = mapped_reentry.value else {
+            panic!("the rotated mapped cusp endpoint must have one exact re-entry");
+        };
+        for (point, expected) in [
+            (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),
+            (
+                Point2::new(-Real::one(), Real::zero()),
+                RegionPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || mapped_reentry
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected,
+            );
+        }
+        let before_cusp_index = (cusp_index + fragments.len() - 1) % fragments.len();
+        let after_retained_index = (retained_index + 1) % fragments.len();
+        let paths = crate::support::under(&policy, || first.boundary_paths())
+            .unwrap()
+            .into_value();
+        let curves = paths[0].curves();
+        assert_eq!(curves.len(), fragments.len());
+        let closure = crate::support::under(&policy, || {
+            Curve2::try_line(
+                curves[after_retained_index].end(),
+                curves[before_cusp_index].start(),
+            )
+        })
+        .unwrap()
+        .into_value();
+        let retained_boundary = crate::support::under(&policy, || {
+            CurvePath2::try_new(vec![
+                curves[retained_index].clone(),
+                curves[after_retained_index].clone(),
+                closure,
+                curves[before_cusp_index].clone(),
+                curves[cusp_index].clone(),
+            ])
+        })
+        .unwrap()
+        .into_value();
+        let retained_region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[retained_boundary],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        let replay_points = [
+            Point2::new(-Real::one(), Real::zero()),
+            Point2::new(Real::one(), Real::zero()),
+            Point2::new(Real::one(), q(41, 40)),
+            Point2::new(-Real::one(), q(41, 40)),
+        ];
+        let replay_clip = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![
+                Contour2::try_new(
+                    (0..replay_points.len())
+                        .map(|index| {
+                            Segment2::Line(
+                                LineSeg2::try_new(
+                                    replay_points[index].clone(),
+                                    replay_points[(index + 1) % replay_points.len()].clone(),
+                                )
+                                .unwrap(),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            ])
+        })
+        .unwrap()
+        .into_value();
+        let mapped_replay =
+            crate::support::under(&policy, || mapped_reentry.boolean_regions(&replay_clip))
+                .expect("a re-chamfered mapped cusp endpoint must enter the Boolean kernel");
+        assert_eq!(mapped_replay.certainty, CurveCertainty::Certified);
+        assert!(!mapped_replay.value.union().is_empty());
+        assert!(!mapped_replay.value.intersection().is_empty());
+        let full_replay_evidence =
+            crate::support::under(&policy, || first.intersect_region(&replay_clip))
+                .expect("the complete retained intersection must replay the exact support");
+        assert_eq!(full_replay_evidence.certainty, CurveCertainty::Certified);
+        assert!(full_replay_evidence.value.is_complete());
+        assert_eq!(full_replay_evidence.value.overlaps().len(), 1);
+        let replay_evidence =
+            crate::support::under(&policy, || retained_region.intersect_region(&replay_clip))
+                .expect("the retained correlated chord must overlap its exact support line");
+        assert_eq!(replay_evidence.certainty, CurveCertainty::Certified);
+        let replay_blockers = replay_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().curve().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().curve().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(replay_evidence.value.is_complete(), "{replay_blockers:?}");
+        assert_eq!(replay_evidence.value.overlaps().len(), 1);
+
+        let replay =
+            crate::support::under(&policy, || retained_region.boolean_regions(&replay_clip))
+                .expect("the retained correlated overlap must enter all four later Booleans");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert!(!replay.value.union().is_empty());
+        assert!(!replay.value.intersection().is_empty());
+        assert!(replay.value.difference().is_empty());
+        assert!(!replay.value.xor().is_empty());
+
+        let touch_points = [
+            Point2::new(-Real::one(), q(41, 40)),
+            Point2::new(Real::from(2), q(41, 40)),
+            Point2::new(Real::from(2), Real::from(2)),
+            Point2::new(-Real::one(), Real::from(2)),
+        ];
+        let touch_box = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![
+                Contour2::try_new(
+                    (0..touch_points.len())
+                        .map(|index| {
+                            Segment2::Line(
+                                LineSeg2::try_new(
+                                    touch_points[index].clone(),
+                                    touch_points[(index + 1) % touch_points.len()].clone(),
+                                )
+                                .unwrap(),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            ])
+        })
+        .unwrap()
+        .into_value();
+        let touch_cut = crate::support::under(&policy, || touch_box.boolean_regions(&rounded))
+            .expect("the exact upper box must subtract the rounded operand");
+        assert_eq!(touch_cut.certainty, CurveCertainty::Certified);
+        let touch_region = touch_cut.into_value().difference().clone();
+        assert!(!touch_region.is_empty());
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let touch_intersection =
+            || crate::support::under(&policy, || first.intersect_region(&touch_region));
+        #[cfg(feature = "dispatch-trace")]
+        let touch_evidence = hyperreal::dispatch_trace::with_recording(touch_intersection);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let touch_evidence = touch_intersection();
+        #[cfg(feature = "dispatch-trace")]
+        let touch_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let touch_kernel_trace = touch_trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let touch_evidence = touch_evidence
+            .expect("the retained selected-circle/chord endpoint must support a point touch");
+        let touch_certainty = CurveCertainty::Certified;
+        assert_eq!(touch_evidence.certainty, touch_certainty);
+        let touch_blockers = touch_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().loop_index(),
+                    blocker.first().fragment_index(),
+                    blocker.first().curve().family(),
+                    blocker.second().loop_index(),
+                    blocker.second().fragment_index(),
+                    blocker.second().curve().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            touch_evidence.value.is_complete(),
+            "{touch_blockers:?}; {touch_kernel_trace:?}",
+        );
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            touch_trace.path_count(
+                "hypercurve",
+                "algebraic-chord-finite-parameter",
+                "strict-retained-endpoint",
+            ) > 0,
+            "support-level contacts must reclip through retained endpoint identity: {touch_kernel_trace:?}",
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
+        assert!(touch_evidence.value.is_complete(), "{touch_blockers:?}");
+        assert!(!touch_evidence.value.contacts().is_empty());
+        assert!(touch_evidence.value.overlaps().is_empty());
+
+        let touch = crate::support::under(&policy, || first.boolean_regions(&touch_region))
+            .expect("the correlated point touch must enter all four later Booleans");
+        assert_eq!(touch.certainty, touch_certainty);
+        assert!(!touch.value.union().is_empty());
+        assert!(touch.value.intersection().is_empty());
+        assert!(!touch.value.difference().is_empty());
+        assert!(!touch.value.xor().is_empty());
+    }
+}
+
+#[test]
+fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
+    let distance = q(1, 20);
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let transformed = crate::support::under(&policy, || {
+            axis_aligned_algebraic_rectangle(&policy).transform_affine(
+                &Real::from(2),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::from(3),
+                &Real::from(5),
+                &Real::from(-1),
+            )
+        })
+        .expect("an anisotropic nonsingular affine map preserves straight chords");
+        assert_eq!(transformed.certainty, CurveCertainty::Certified);
+        for (point, expected) in [
+            (p(6, 0), RegionPointLocation::Inside),
+            (p(7, 0), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || transformed
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected,
+            );
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset = || {
+            crate::support::under(&policy, || {
+                transformed
+                    .value
+                    .offset(distance.clone(), &OffsetCornerStyle2::Round)
+            })
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let rounded = hyperreal::dispatch_trace::with_recording(offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let rounded = offset();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let rounded = rounded.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "the transformed cardinal proof must remain usable by exact offsets under {policy:?}: {error:?}; {trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!(
+                "the transformed cardinal proof must remain usable by exact offsets under {policy:?}: {error:?}"
+            );
+        });
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            trace.path_count(
+                "hypercurve",
+                "curve-region-exact-offset-join",
+                "selected-chord-pair-round-chord-frame-fallback",
+            ) > 0,
+            "the exact-center chord join must exercise its retained chord-frame fallback: {trace:?}",
+        );
+        assert_eq!(rounded.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || rounded.value.classify_point(
+                    &Point2::new(Real::from(6), Real::from(-1) - &distance).into()
+                ))
+                .unwrap(),
+            ),
+            RegionPointLocation::Boundary,
+        );
+    }
+}
+
+#[test]
+fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_l_region(&policy);
+        let expanded = crate::support::under(&policy, || source.offset(q(1, 20), &miter)).unwrap();
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded
+                    .value
+                    .classify_point(&Point2::new(q(47, 100), q(3, 4)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || expanded
+                    .value
+                    .classify_point(&Point2::new(q(2, 5), q(4, 5)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let contract_work = || crate::support::under(&policy, || source.offset(-q(1, 20), &miter));
+        #[cfg(feature = "dispatch-trace")]
+        let contracted = hyperreal::dispatch_trace::with_recording(contract_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let contracted = contract_work();
+        #[cfg(feature = "dispatch-trace")]
+        let contract_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let contract_kernel_trace = contract_trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let contracted = contracted.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "nonconvex algebraic-chord contraction failed under {policy:?}: {error:?}; trace: {contract_kernel_trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("nonconvex algebraic-chord contraction failed under {policy:?}: {error:?}");
+        });
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-collinear-range",
+                    "exact-tangent-orientation",
+                ) > 0,
+                "a collinear retained-chord overlap must orient its exact tangent field: {contract_kernel_trace:?}",
+            );
+            assert!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-pair",
+                    "chord-overlap-complete",
+                ) > 0,
+                "the nonconvex contraction must complete its retained-chord overlap: {contract_kernel_trace:?}",
+            );
+            assert!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "recursive-projective-axis-order",
+                    "interval-separated",
+                ) > 0
+                    || contract_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-point-axis-order",
+                        "interval-separated",
+                    ) > 0,
+                "retained coordinates must use certified bounds before recursive expansion: {contract_kernel_trace:?}",
+            );
+            assert_eq!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-support-identity-conflict",
+                    "normal-offset-carrier",
+                ),
+                0,
+                "divergent rebuilt chords must not inherit an ancestral normal-offset support identity: {contract_kernel_trace:?}",
+            );
+            assert_eq!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-pair-side-kernel",
+                    "geometric-refinement-after-incidence-conflict",
+                ),
+                0,
+                "the corrected retained-support identity must make geometric conflict repair unnecessary: {contract_kernel_trace:?}",
+            );
+        }
+        assert_eq!(contracted.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || contracted
+                    .value
+                    .classify_point(&Point2::new(q(3, 5), q(3, 4)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || contracted
+                    .value
+                    .classify_point(&Point2::new(q(13, 25), q(3, 4)).into()))
+                .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+
+        let post_collapse =
+            crate::support::under(&policy, || source.offset(-q(3, 20), &miter)).unwrap();
+        assert_eq!(post_collapse.certainty, CurveCertainty::Certified);
+        assert_eq!(post_collapse.value.boundary_loops().len(), 1);
+        assert_eq!(post_collapse.value.boundary_loops()[0].len(), 4);
+        for (point, expected) in [
+            (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
+            (Point2::new(q(11, 20), q(1, 4)), RegionPointLocation::Inside),
+            (
+                Point2::new(q(14, 25), q(1, 4)),
+                RegionPointLocation::Outside,
+            ),
+            (Point2::new(q(3, 5), q(3, 4)), RegionPointLocation::Outside),
+            (
+                Point2::new(q(3, 20), q(1, 4)),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || post_collapse
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected
+            );
+        }
+
+        let fully_collapsed =
+            crate::support::under(&policy, || source.offset(-q(1, 4), &miter)).unwrap();
+        assert_eq!(fully_collapsed.certainty, CurveCertainty::Certified);
+        assert!(fully_collapsed.value.is_empty());
+    }
+}
+
+#[test]
+fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (PredicatePolicy::STRICT, FillRule::NonZero, false),
+        (PredicatePolicy::STRICT, FillRule::EvenOdd, true),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::NonZero, false),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        for radius in [Real::one(), q(11, 10)] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let offset_work = || crate::support::under(&policy, || source.offset(-radius, &miter));
+            #[cfg(feature = "dispatch-trace")]
+            let split = hyperreal::dispatch_trace::with_recording(offset_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let split = offset_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let split = split.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!("collapsed-neck offset failed: {error:?}; trace: {trace:?}");
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!("collapsed-neck offset failed: {error:?}");
+            });
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "recursive-projective-point",
+                        "cardinal-displacement-canonicalized",
+                    ) > 0,
+                    "cardinal procedural points must shed their artificial unit radical: {trace:?}",
+                );
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-side-kernel",
+                        "cardinal-coordinate-precedence",
+                    ) > 0,
+                    "cardinal supports must use their scalar coordinate authority: {trace:?}",
+                );
+                for path in [
+                    "all-on-after-geometric-check",
+                    "inconsistent-side-orientation",
+                ] {
+                    assert_eq!(
+                        trace.path_count("hypercurve", "algebraic-chord-pair-blocker", path),
+                        0,
+                        "collapsed-neck regularization must not leave a chord-pair blocker: {trace:?}",
+                    );
+                }
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "curve-region-exact-offset-blocker",
+                        "band-union",
+                    ),
+                    0,
+                    "collapsed-neck band union must remain complete: {trace:?}",
+                );
+            }
+            assert_eq!(split.certainty, CurveCertainty::Certified);
+            assert_eq!(split.value.boundary_loops().len(), 2);
+            assert_eq!(
+                certified(crate::support::under(&policy, || split.value.loop_roles()).unwrap()),
+                vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,]
+            );
+            assert!(
+                split
+                    .value
+                    .boundary_loops()
+                    .iter()
+                    .all(|boundary| boundary.len() == 4)
+            );
+            for (point, expected) in [
+                (p(2, 2), RegionPointLocation::Inside),
+                (p(10, 2), RegionPointLocation::Inside),
+                (p(6, 2), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    certified(
+                        crate::support::under(&policy, || split
+                            .value
+                            .classify_point(&point.clone().into()))
+                        .unwrap()
+                    ),
+                    expected
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly() {
+    for (policy, fill_rule, reverse) in [
+        (PredicatePolicy::STRICT, FillRule::NonZero, false),
+        (PredicatePolicy::STRICT, FillRule::EvenOdd, true),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::NonZero, false),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        for radius in [Real::one(), q(11, 10)] {
+            for corner_style in [
+                OffsetCornerStyle2::Bevel,
+                OffsetCornerStyle2::Round,
+                OffsetCornerStyle2::Miter { limit: Real::one() },
+            ] {
+                let split = crate::support::under(&policy, || source
+                    .offset(-radius.clone(), &corner_style))
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "algebraic {corner_style:?} erosion at radius {radius:?} must regularize through a collapsed neck under {policy:?}: {error:?}"
+                        )
+                    });
+                assert_eq!(split.certainty, CurveCertainty::Certified);
+                assert_eq!(split.value.boundary_loops().len(), 2);
+                assert_eq!(
+                    certified(crate::support::under(&policy, || split.value.loop_roles()).unwrap()),
+                    vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,]
+                );
+                for (point, expected) in [
+                    (p(2, 2), RegionPointLocation::Inside),
+                    (p(10, 2), RegionPointLocation::Inside),
+                    (p(6, 2), RegionPointLocation::Outside),
+                ] {
+                    assert_eq!(
+                        certified(
+                            crate::support::under(&policy, || split
+                                .value
+                                .classify_point(&point.clone().into()))
+                            .unwrap()
+                        ),
+                        expected,
+                        "{policy:?} {fill_rule:?} reverse={reverse} radius={radius:?} {corner_style:?} at {point:?}",
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
+    let cosine = q(3, 5);
+    let sine = q(4, 5);
+    let translation_x = Real::from(20);
+    let translation_y = Real::from(5);
+    let transform_point = |point: Point2| {
+        Point2::new(
+            &cosine * point.x() - &sine * point.y() + &translation_x,
+            &sine * point.x() + &cosine * point.y() + &translation_y,
+        )
+    };
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (PredicatePolicy::STRICT, FillRule::NonZero, false),
+        (PredicatePolicy::STRICT, FillRule::EvenOdd, true),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::NonZero, false),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        let rotated = crate::support::under(&policy, || {
+            source.transform_affine(
+                &cosine,
+                &-sine.clone(),
+                &sine,
+                &cosine,
+                &translation_x,
+                &translation_y,
+            )
+        })
+        .expect("a rational unit rotation must preserve exact retained chords");
+        assert_eq!(rotated.certainty, CurveCertainty::Certified);
+        let split = crate::support::under(&policy, || rotated
+            .value
+            .offset(-q(11, 10), &miter))
+            .unwrap_or_else(|error| {
+                panic!(
+                    "a rotated algebraic erosion must regularize through a collapsed neck under {policy:?}: {error:?}"
+                )
+            });
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let classify_roles =
+            || crate::support::under(&policy, || split.value.loop_roles()).unwrap();
+        #[cfg(feature = "dispatch-trace")]
+        let roles_outcome = hyperreal::dispatch_trace::with_recording(classify_roles);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let roles_outcome = classify_roles();
+        let roles_certainty = roles_outcome.certainty;
+        let actual_roles = roles_outcome.value;
+        let expected_roles = vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material];
+        #[cfg(feature = "dispatch-trace")]
+        if roles_certainty != CurveCertainty::Certified || actual_roles != expected_roles {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let curve_paths = trace
+                .dispatch
+                .iter()
+                .filter(|entry| entry.layer == "hypercurve")
+                .collect::<Vec<_>>();
+            panic!(
+                "rotated loop roles failed under {policy:?}, fill={fill_rule:?}, reverse={reverse}: certainty={roles_certainty:?}, actual={actual_roles:?}, expected={expected_roles:?}, curve_paths={curve_paths:#?}"
+            );
+        }
+        assert_eq!(roles_certainty, CurveCertainty::Certified);
+        assert_eq!(actual_roles, expected_roles);
+        for (point, expected) in [
+            (transform_point(p(2, 2)), RegionPointLocation::Inside),
+            (transform_point(p(10, 2)), RegionPointLocation::Inside),
+            (transform_point(p(6, 2)), RegionPointLocation::Outside),
+        ] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let classify = || {
+                crate::support::under(&policy, || {
+                    split.value.classify_point(&point.clone().into())
+                })
+                .unwrap()
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let point_outcome = hyperreal::dispatch_trace::with_recording(classify);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let point_outcome = classify();
+            let point_certainty = point_outcome.certainty;
+            let actual = point_outcome.value;
+            #[cfg(feature = "dispatch-trace")]
+            if point_certainty != CurveCertainty::Certified || actual != expected {
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let curve_paths = trace
+                    .dispatch
+                    .iter()
+                    .filter(|entry| entry.layer == "hypercurve")
+                    .collect::<Vec<_>>();
+                panic!(
+                    "rotated point classification failed under {policy:?} for {point:?}: certainty={point_certainty:?}, actual={actual:?}, expected={expected:?}, curve_paths={curve_paths:#?}"
+                );
+            }
+            assert_eq!(point_certainty, CurveCertainty::Certified);
+            assert_eq!(actual, expected);
+        }
+    }
+}
+
+#[test]
+fn sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
+    let transform_point =
+        |point: Point2| Point2::new(Real::from(2) * point.x() + point.y(), point.y().clone());
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(4),
+    };
+    for (policy, fill_rule, reverse) in [
+        (PredicatePolicy::STRICT, FillRule::NonZero, false),
+        (PredicatePolicy::STRICT, FillRule::EvenOdd, true),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::NonZero, false),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        let sheared = crate::support::under(&policy, || {
+            source.transform_affine(
+                &Real::from(2),
+                &Real::one(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+            )
+        })
+        .expect("an exact nonsimilarity shear must preserve retained chords");
+        assert_eq!(sheared.certainty, CurveCertainty::Certified);
+        assert!(
+            sheared.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+
+        let split = crate::support::under(&policy, || sheared
+            .value
+            .offset(-q(11, 10), &miter))
+            .unwrap_or_else(|error| {
+                panic!(
+                    "a sheared algebraic erosion must regularize through a collapsed neck under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        assert_eq!(
+            certified(crate::support::under(&policy, || split.value.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,]
+        );
+        for (point, expected) in [
+            (transform_point(p(2, 2)), RegionPointLocation::Inside),
+            (transform_point(p(10, 2)), RegionPointLocation::Inside),
+            (transform_point(p(6, 2)), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || split
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected
+            );
+        }
+    }
+}
+
+#[test]
+fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (PredicatePolicy::STRICT, FillRule::NonZero, false),
+        (PredicatePolicy::STRICT, FillRule::EvenOdd, true),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::NonZero, false),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let first = axis_aligned_algebraic_rectangle(&policy);
+        let second = crate::support::under(&policy, || {
+            first.transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::from(2),
+                &Real::zero(),
+            )
+        })
+        .expect("the second retained material loop must translate exactly")
+        .into_value();
+        let mut boundaries = crate::support::under(&policy, || first.boundary_paths())
+            .unwrap()
+            .into_value();
+        boundaries.extend(
+            crate::support::under(&policy, || second.boundary_paths())
+                .unwrap()
+                .into_value(),
+        );
+        if reverse {
+            boundaries = boundaries
+                .into_iter()
+                .map(|path| {
+                    crate::support::under(&policy, || path.reversed())
+                        .unwrap()
+                        .into_value()
+                })
+                .collect();
+        }
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &boundaries,
+                &[CurveRegionLoopRole::Material; 2],
+                &[fill_rule; 2],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        let merged = crate::support::under(&policy, || source
+            .offset(Real::one(), &miter))
+            .unwrap_or_else(|error| {
+                panic!(
+                    "coupled retained material loops must merge under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(merged.certainty, CurveCertainty::Certified);
+        assert_eq!(merged.value.boundary_loops().len(), 1);
+        assert_eq!(
+            certified(crate::support::under(&policy, || merged.value.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material]
+        );
+        assert!(
+            merged.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+        for (point, expected) in [
+            (Point2::new(q(1, 4), q(1, 2)), RegionPointLocation::Inside),
+            (Point2::new(q(3, 2), q(1, 2)), RegionPointLocation::Inside),
+            (Point2::new(q(9, 4), q(1, 2)), RegionPointLocation::Inside),
+            (
+                Point2::new(Real::from(-2), q(1, 2)),
+                RegionPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || merged
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected
+            );
+        }
+    }
+}
+
+#[test]
+fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (PredicatePolicy::STRICT, FillRule::NonZero, false),
+        (PredicatePolicy::STRICT, FillRule::EvenOdd, true),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::NonZero, false),
+        (PredicatePolicy::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = algebraic_material_hole_rectangle(&policy, fill_rule, reverse);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || source.classify_point(&p(2, 2).into())).unwrap()
+            ),
+            RegionPointLocation::Inside,
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || source.classify_point(&p(7, 2).into())).unwrap()
+            ),
+            RegionPointLocation::Outside,
+        );
+
+        let contacted = crate::support::under(&policy, || source
+            .offset(-q(1, 2), &miter))
+            .unwrap_or_else(|error| {
+                panic!(
+                    "retained material/hole bands must regularize at coincident contact under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(contacted.certainty, CurveCertainty::Certified);
+        assert_eq!(contacted.value.boundary_loops().len(), 2);
+        assert_eq!(
+            certified(crate::support::under(&policy, || contacted.value.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,],
+        );
+        assert!(
+            contacted
+                .value
+                .boundary_loops()
+                .iter()
+                .flat_map(|boundary| boundary.curves())
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+        for (point, expected) in [
+            (p(2, 2), RegionPointLocation::Inside),
+            (p(7, 2), RegionPointLocation::Outside),
+            (p(10, 2), RegionPointLocation::Inside),
+            (
+                Point2::new(Real::from(2), q(1, 2)),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(Real::from(10), q(1, 2)),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || contacted
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected,
+            );
+        }
+
+        let hole_collapsed = crate::support::under(&policy, || source
+            .offset(Real::one(), &miter))
+            .unwrap_or_else(|error| {
+                panic!(
+                    "the retained hole must collapse exactly under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(hole_collapsed.certainty, CurveCertainty::Certified);
+        assert_eq!(hole_collapsed.value.boundary_loops().len(), 1);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || hole_collapsed.value.loop_roles()).unwrap()
+            ),
+            vec![CurveRegionLoopRole::Material],
+        );
+        assert!(
+            hole_collapsed.value.boundary_loops()[0]
+                .curves()
+                .iter()
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || hole_collapsed
+                    .value
+                    .classify_point(&p(7, 2).into()))
+                .unwrap(),
+            ),
+            RegionPointLocation::Inside,
+        );
+    }
+}
+
+#[test]
+fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
+    let policy = PredicatePolicy::STRICT;
+    let native = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![square(-3, -2, 7, 5)])
+    })
+    .unwrap()
+    .into_value();
+    let native_bounds = present(crate::support::under(&policy, || native.bounds()).unwrap());
+    assert_eq!(native_bounds.min_x(), &Real::from(-3));
+    assert_eq!(native_bounds.min_y(), &Real::from(-2));
+    assert_eq!(native_bounds.max_x(), &Real::from(7));
+    assert_eq!(native_bounds.max_y(), &Real::from(5));
+
+    let curved = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[double_wound_quadratic_cap()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value();
+    let curved_bounds = present(crate::support::under(&policy, || curved.bounds()).unwrap());
+    assert_eq!(curved_bounds.min_x(), &Real::from(-2));
+    assert_eq!(curved_bounds.min_y(), &Real::zero());
+    assert_eq!(curved_bounds.max_x(), &Real::from(2));
+    assert_eq!(curved_bounds.max_y(), &Real::from(4));
+
+    assert!(
+        crate::support::under(&policy, || CurveRegion2::empty().bounds())
+            .unwrap()
+            .into_value()
+            .is_none()
+    );
+}
+
+#[test]
+fn unified_region_offset_regularizes_overlapping_expanded_components() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![
+            square(0, 0, 2, 2),
+            square(4, 0, 6, 2),
+        ])
+    })
+    .unwrap()
+    .into_value();
+
+    let offset = crate::support::under(&policy, || promoted.offset(Real::from(2), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    let native =
+        present(crate::support::under(&policy, || offset.native_contours_fast_path()).unwrap());
+
+    assert_eq!(native.material_contours().len(), 1);
+    assert!(native.hole_contours().is_empty());
+    assert_eq!(
+        decided(crate::support::under(&policy, || offset.filled_area()).unwrap()),
+        Some(Real::from(60))
+    );
+}
+
+#[test]
+fn unified_region_offset_regularizes_overlapping_expanded_voids() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 20, 16)],
+            vec![square(5, 5, 7, 7), square(9, 5, 11, 7)],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    let offset =
+        crate::support::under(&policy, || promoted.offset(Real::from(-2), &sharp_offset()))
+            .unwrap()
+            .into_value();
+    let native =
+        present(crate::support::under(&policy, || offset.native_contours_fast_path()).unwrap());
+
+    assert_eq!(native.material_contours().len(), 1);
+    assert_eq!(native.hole_contours().len(), 1);
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(8, 6).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_expansion_regularizes_a_closed_concavity() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![u_shape()])
+    })
+    .unwrap()
+    .into_value();
+
+    let offset = crate::support::under(&policy, || promoted.offset(Real::from(3), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    let native =
+        present(crate::support::under(&policy, || offset.native_contours_fast_path()).unwrap());
+
+    assert_eq!(native.material_contours().len(), 1);
+    assert!(native.hole_contours().is_empty());
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(5, 8).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(-2, -2).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(14, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![u_shape()])
+    })
+    .unwrap()
+    .into_value();
+
+    let eroded = crate::support::under(&policy, || source.offset(-Real::one(), &sharp_offset()))
+        .unwrap()
+        .into_value();
+
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || eroded.classify_point(&p(1, 1).into())).unwrap()
+        ),
+        RegionPointLocation::Boundary
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || eroded.classify_point(&p(5, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![u_shape()])
+    })
+    .unwrap()
+    .into_value();
+
+    let eroded = crate::support::under(&policy, || source.offset(Real::from(-2), &sharp_offset()))
+        .unwrap()
+        .into_value();
+
+    assert!(eroded.is_empty());
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || eroded.classify_point(&p(5, 1).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()])
+    })
+    .unwrap()
+    .into_value();
+
+    let eroded = crate::support::under(&policy, || source.offset(-q(3, 2), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    let native =
+        present(crate::support::under(&policy, || eroded.native_contours_fast_path()).unwrap());
+
+    assert_eq!(native.material_contours().len(), 2);
+    assert!(native.hole_contours().is_empty());
+    for point in [p(2, 2), p(10, 2)] {
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || eroded.classify_point(&point.clone().into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+    }
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || eroded.classify_point(&p(6, 2).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+
+#[test]
+fn unified_region_contraction_preserves_non_miter_corner_styles() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![u_shape()])
+        })
+        .unwrap()
+        .into_value();
+        let round = crate::support::under(&policy, || {
+            source.offset(-q(1, 2), &OffsetCornerStyle2::Round)
+        })
+        .expect("round reflex joins must remain exact");
+        let bevel = crate::support::under(&policy, || {
+            source.offset(-q(1, 2), &OffsetCornerStyle2::Bevel)
+        })
+        .expect("bevel reflex joins must remain exact");
+        let limited_miter = crate::support::under(&policy, || {
+            source.offset(-q(1, 2), &OffsetCornerStyle2::Miter { limit: Real::one() })
+        })
+        .expect("a limited reflex miter must fall back to an exact bevel");
+        let miter = crate::support::under(&policy, || source.offset(-q(1, 2), &sharp_offset()))
+            .expect("miter contraction must use the exact wavefront");
+        for outcome in [&round, &bevel, &limited_miter, &miter] {
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        }
+
+        assert_eq!(round.value.boundary_loops().len(), 1);
+        assert_eq!(bevel.value.boundary_loops().len(), 1);
+        assert_eq!(limited_miter.value.boundary_loops().len(), 1);
+        assert_eq!(miter.value.boundary_loops().len(), 1);
+        let round_fragments = round.value.boundary_loops()[0].curves();
+        let bevel_fragments = bevel.value.boundary_loops()[0].curves();
+        let limited_miter_fragments = limited_miter.value.boundary_loops()[0].curves();
+        let miter_fragments = miter.value.boundary_loops()[0].curves();
+        assert!(round_fragments.iter().any(is_round_join));
+        assert!(!bevel_fragments.iter().any(is_round_join));
+        assert_eq!(limited_miter_fragments.len(), bevel_fragments.len());
+        assert_eq!(
+            decided(crate::support::under(&policy, || limited_miter.value.filled_area()).unwrap()),
+            decided(crate::support::under(&policy, || bevel.value.filled_area()).unwrap())
+        );
+        assert!(bevel_fragments.len() > miter_fragments.len());
+    }
+}
+
+#[test]
+fn unified_region_non_miter_erosions_split_after_neck_collapse() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()])
+        })
+        .unwrap()
+        .into_value();
+        for corner_style in [
+            OffsetCornerStyle2::Bevel,
+            OffsetCornerStyle2::Round,
+            OffsetCornerStyle2::Miter { limit: Real::one() },
+        ] {
+            let eroded = crate::support::under(&policy, || source.offset(-q(3, 2), &corner_style))
+                .unwrap_or_else(|error| {
+                    panic!("{corner_style:?} must regularize through a collapsed neck: {error:?}")
+                });
+            assert_eq!(eroded.certainty, CurveCertainty::Certified);
+            assert_eq!(eroded.value.boundary_loops().len(), 2);
+            for point in [p(2, 2), p(10, 2)] {
+                let location = crate::support::under(&policy, || {
+                    eroded.value.classify_point(&point.clone().into())
+                })
+                .unwrap();
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+                assert_eq!(location.value, RegionPointLocation::Inside);
+            }
+            let location =
+                crate::support::under(&policy, || eroded.value.classify_point(&p(6, 2).into()))
+                    .unwrap();
+            assert_eq!(location.certainty, CurveCertainty::Certified);
+            assert_eq!(location.value, RegionPointLocation::Outside);
+        }
+    }
+}
+
+#[test]
+fn unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![oblique_dumbbell_shape()])
+        })
+        .unwrap()
+        .into_value();
+
+        let eroded = crate::support::under(&policy, || source.offset(-q(3, 2), &sharp_offset()))
+            .expect("the nonorthogonal medial split must be exact");
+        assert_eq!(eroded.certainty, CurveCertainty::Certified);
+        let native = present(
+            crate::support::under(&policy, || eroded.value.native_contours_fast_path()).unwrap(),
+        );
+        assert_eq!(native.material_contours().len(), 2);
+        assert!(native.hole_contours().is_empty());
+        for point in [p(6, 2), p(22, 2)] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || eroded
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                RegionPointLocation::Inside
+            );
+        }
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || eroded.value.classify_point(&p(14, 2).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+    }
+}
+
+#[test]
+fn unified_region_exact_neck_event_uses_post_event_topology() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![oblique_dumbbell_shape()])
+        })
+        .unwrap()
+        .into_value();
+
+        let eroded =
+            crate::support::under(&policy, || source.offset(Real::from(-1), &sharp_offset()))
+                .expect("the exact split time must select the post-event wavefront");
+        assert_eq!(eroded.certainty, CurveCertainty::Certified);
+        let native = present(
+            crate::support::under(&policy, || eroded.value.native_contours_fast_path()).unwrap(),
+        );
+        assert_eq!(native.material_contours().len(), 2);
+        assert!(native.hole_contours().is_empty());
+        for point in [p(6, 2), p(22, 2)] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || eroded
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                RegionPointLocation::Inside
+            );
+        }
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || eroded.value.classify_point(&p(14, 2).into()))
+                    .unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+    }
+}
+
+#[test]
+fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)])
+    })
+    .unwrap()
+    .into_value();
+
+    let near = crate::support::under(&policy, || source.offset(-q(3, 2), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    let near_bounds = present(crate::support::under(&policy, || near.bounds()).unwrap());
+    assert_eq!(near_bounds.min_x(), &q(3, 2));
+    assert_eq!(near_bounds.min_y(), &q(3, 2));
+    assert_eq!(near_bounds.max_x(), &q(5, 2));
+    assert_eq!(near_bounds.max_y(), &q(5, 2));
+    assert!(
+        crate::support::under(&policy, || source.offset(Real::from(-2), &sharp_offset()))
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
+    assert!(
+        crate::support::under(&policy, || source.offset(Real::from(-3), &sharp_offset()))
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
+}
+
+#[test]
+fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
+    let policy = PredicatePolicy::STRICT;
+    for contour in [reversed(&square(0, 0, 4, 4)), square_with_redundant_edge()] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![contour])
+        })
+        .unwrap()
+        .into_value();
+        let eroded =
+            crate::support::under(&policy, || source.offset(Real::from(-1), &sharp_offset()))
+                .unwrap()
+                .into_value();
+        let bounds = present(crate::support::under(&policy, || eroded.bounds()).unwrap());
+        assert_eq!(bounds.min_x(), &Real::one());
+        assert_eq!(bounds.min_y(), &Real::one());
+        assert_eq!(bounds.max_x(), &Real::from(3));
+        assert_eq!(bounds.max_y(), &Real::from(3));
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || eroded.classify_point(&p(2, 2).into())).unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+    }
+}
+
+#[test]
+fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![right_isosceles_triangle()])
+    })
+    .unwrap()
+    .into_value();
+    let root_two = Real::from(2).sqrt().unwrap();
+
+    let eroded = crate::support::under(&policy, || source.offset(Real::from(-1), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    let native =
+        present(crate::support::under(&policy, || eroded.native_contours_fast_path()).unwrap());
+    let vertices = native.material_contours()[0]
+        .segments()
+        .iter()
+        .map(|segment| segment.start().clone())
+        .collect::<Vec<_>>();
+    let far_axis_coordinate = 3.0 - std::f64::consts::SQRT_2;
+    for expected in [
+        (1.0, 1.0),
+        (far_axis_coordinate, 1.0),
+        (1.0, far_axis_coordinate),
+    ] {
+        assert!(vertices.iter().any(|vertex| {
+            let x = vertex.x().to_f64_lossy().unwrap();
+            let y = vertex.y().to_f64_lossy().unwrap();
+            (x - expected.0).abs() < 1.0e-12 && (y - expected.1).abs() < 1.0e-12
+        }));
+    }
+    assert!(
+        vertices
+            .iter()
+            .flat_map(|vertex| [vertex.x(), vertex.y()])
+            .any(|coordinate| {
+                let facts = coordinate.detailed_facts();
+                !facts.base.exact_rational
+                    && (facts
+                        .symbolic
+                        .dependencies
+                        .contains(SymbolicDependencyMask::SQRT)
+                        || facts
+                            .symbolic
+                            .dependencies
+                            .contains(SymbolicDependencyMask::OPAQUE))
+            }),
+        "the diagonal offset must remain an exact non-rational computable value"
+    );
+
+    let collapse_distance = Real::from(4) - Real::from(2) * root_two;
+    assert!(
+        crate::support::under(&policy, || source
+            .offset(-collapse_distance, &sharp_offset()))
+        .unwrap()
+        .into_value()
+        .is_empty(),
+        "the exact radical inradius must collapse the triangle without a blocker"
+    );
+    assert!(
+        crate::support::under(&policy, || source.offset(Real::from(-2), &sharp_offset()))
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
+}
+
+#[test]
+fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
+    let policy = PredicatePolicy::STRICT;
+    let source = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 20, 20)],
+            vec![square(5, 5, 15, 15)],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    let expanded = crate::support::under(&policy, || source.offset(Real::from(5), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    assert_eq!(
+        decided(crate::support::under(&policy, || expanded.loop_roles()).unwrap()).len(),
+        1
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || expanded.classify_point(&p(10, 10).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+}
+
+#[test]
+fn unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(
+                vec![square(0, 0, 12, 4)],
+                vec![square(5, 1, 7, 3)],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        let split = crate::support::under(&policy, || source.offset(-Real::one(), &sharp_offset()))
+            .expect("the exact material/hole contact event must split the erosion");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(crate::support::under(&policy, || split.value.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,],
+        );
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        for (point, expected) in [
+            (p(2, 2), RegionPointLocation::Inside),
+            (p(10, 2), RegionPointLocation::Inside),
+            (p(6, 2), RegionPointLocation::Outside),
+            (p(4, 2), RegionPointLocation::Boundary),
+            (p(8, 2), RegionPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || split
+                        .value
+                        .classify_point(&point.clone().into()))
+                    .unwrap()
+                ),
+                expected,
+            );
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_opens_a_hole_through_the_material_boundary() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(vec![circle(0, 0, 5)], vec![circle(3, 0, 1)])
+        })
+        .unwrap()
+        .into_value();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset =
+            || crate::support::under(&policy, || source.offset(-Real::one(), &sharp_offset()));
+        #[cfg(feature = "dispatch-trace")]
+        let opened = hyperreal::dispatch_trace::with_recording(offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let opened = offset();
+        let opened = opened.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "intersecting exact circular wavefronts must open the hole: {error:?}; trace={:?}",
+                hyperreal::dispatch_trace::take_trace()
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("intersecting exact circular wavefronts must open the hole: {error:?}");
+        });
+        assert_eq!(opened.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(crate::support::under(&policy, || opened.value.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material],
+        );
+        assert_eq!(opened.value.boundary_loops().len(), 1);
+        for (point, expected) in [
+            (p(-4, 0), RegionPointLocation::Boundary),
+            (p(-3, 0), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Inside),
+            (p(1, 0), RegionPointLocation::Boundary),
+            (p(2, 0), RegionPointLocation::Outside),
+            (p(4, 0), RegionPointLocation::Outside),
+        ] {
+            let location = crate::support::under(&policy, || {
+                opened.value.classify_point(&point.clone().into())
+            })
+            .unwrap();
+            if policy == PredicatePolicy::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, expected);
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_retains_the_exact_hole_boundary_contact() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(vec![circle(0, 0, 5)], vec![circle(3, 0, 1)])
+        })
+        .unwrap()
+        .into_value();
+
+        let tangent = crate::support::under(&policy, || source.offset(-q(1, 2), &sharp_offset()))
+            .expect("the exact circular material/hole tangency must remain representable");
+        assert_eq!(tangent.certainty, CurveCertainty::Certified);
+        assert_eq!(tangent.value.boundary_loops().len(), 2);
+        assert_eq!(
+            certified(crate::support::under(&policy, || tangent.value.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole,],
+        );
+        for (point, expected) in [
+            (p(-4, 0), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Inside),
+            (p(2, 0), RegionPointLocation::Outside),
+            (
+                Point2::new(q(3, 2), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(q(9, 2), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            let location = crate::support::under(&policy, || {
+                tangent.value.classify_point(&point.clone().into())
+            })
+            .unwrap();
+            assert_eq!(location.value, expected);
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_composes_merging_holes_and_material_crossings() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(
+                vec![circle(0, 0, 5)],
+                vec![circle(-2, 0, 1), circle(2, 0, 1)],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        let split = crate::support::under(&policy, || source.offset(-q(3, 2), &sharp_offset()))
+            .expect("merging circular holes must split the contracting material exactly");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        let roles = crate::support::under(&policy, || split.value.loop_roles()).unwrap();
+        if policy == PredicatePolicy::STRICT {
+            assert_eq!(roles.certainty, CurveCertainty::Certified);
+        }
+        assert_eq!(
+            roles.value,
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,],
+        );
+        for (point, expected) in [
+            (p(0, 3), RegionPointLocation::Inside),
+            (p(0, -3), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Outside),
+            (p(3, 0), RegionPointLocation::Outside),
+            (
+                Point2::new(Real::zero(), q(3, 2)),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(Real::zero(), -q(3, 2)),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            let location = crate::support::under(&policy, || {
+                split.value.classify_point(&point.clone().into())
+            })
+            .unwrap();
+            if policy == PredicatePolicy::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, expected);
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_contours(
+                vec![circle(0, 0, 5)],
+                vec![circle(-2, 0, 1), circle(2, 0, 1)],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        let split = crate::support::under(&policy, || source.offset(-Real::one(), &sharp_offset()))
+            .expect("simultaneous exact circular tangencies must retain regularized topology");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 3);
+        let roles = crate::support::under(&policy, || split.value.loop_roles()).unwrap();
+        if policy == PredicatePolicy::STRICT {
+            assert_eq!(roles.certainty, CurveCertainty::Certified);
+        }
+        assert_eq!(
+            roles.value,
+            vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Hole,
+                CurveRegionLoopRole::Hole,
+            ],
+        );
+        for (point, expected) in [
+            (p(0, 3), RegionPointLocation::Inside),
+            (p(0, -3), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Boundary),
+            (p(3, 0), RegionPointLocation::Outside),
+            (p(-4, 0), RegionPointLocation::Boundary),
+            (p(4, 0), RegionPointLocation::Boundary),
+        ] {
+            let location = crate::support::under(&policy, || {
+                split.value.classify_point(&point.clone().into())
+            })
+            .unwrap();
+            if policy == PredicatePolicy::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, expected);
+        }
+    }
+}
+
+#[test]
+fn unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let source = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![curved_dumbbell()])
+        })
+        .unwrap()
+        .into_value();
+        let split =
+            crate::support::under(&policy, || source.offset(-Real::from(4), &sharp_offset()))
+                .expect("a collapsed mixed line/arc neck must regularize into two components");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        let roles = crate::support::under(&policy, || split.value.loop_roles()).unwrap();
+        if policy == PredicatePolicy::STRICT {
+            assert_eq!(roles.certainty, CurveCertainty::Certified);
+        }
+        assert_eq!(
+            roles.value,
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,],
+        );
+        for (point, expected) in [
+            (p(-5, 0), RegionPointLocation::Inside),
+            (p(5, 0), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Outside),
+            (
+                Point2::new(q(-15, 4), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(q(15, 4), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            let location = crate::support::under(&policy, || {
+                split.value.classify_point(&point.clone().into())
+            })
+            .unwrap();
+            if policy == PredicatePolicy::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, expected);
+        }
+    }
+}
+
+#[test]
+fn unified_native_arrangement_returns_a_certified_region() {
+    let source = square(0, 0, 4, 4);
+    let result = crate::support::under(&PredicatePolicy::STRICT, || {
+        CurveRegion2::arrange_unordered_segments(source.segments(), FillRule::NonZero)
+    })
+    .unwrap();
+    assert_eq!(result.certainty, CurveCertainty::Certified);
+    let region = result.into_value();
+    assert_eq!(region.len(), 1);
+    assert!(
+        decided(crate::support::under(&PredicatePolicy::STRICT, || region.filled_area()).unwrap())
+            .is_some_and(|area| area == Real::from(16))
+    );
+    for (point, expected) in [
+        (p(2, 2), RegionPointLocation::Inside),
+        (p(0, 2), RegionPointLocation::Boundary),
+        (p(5, 2), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            crate::support::under(&PredicatePolicy::STRICT, || region
+                .classify_point(&point.into()))
+            .unwrap()
+            .into_value(),
+            expected
+        );
+    }
+}
+
+#[test]
+fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
+    let policy = PredicatePolicy::STRICT;
+    for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+        let contour = bow_tie_contour(fill_rule);
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![contour])
+        })
+        .map(certified)
+        .unwrap();
+        let native =
+            present(crate::support::under(&policy, || region.native_contours_fast_path()).unwrap());
+        assert_eq!(native.material_contours().len(), 2);
+        assert!(native.hole_contours().is_empty());
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || region.classify_point(&p(2, 3).into())).unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || region.classify_point(&p(2, 1).into())).unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || region.classify_point(&p(0, 2).into())).unwrap()
+            ),
+            RegionPointLocation::Outside
+        );
+        assert_eq!(
+            decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+            Some(Real::from(8))
+        );
+    }
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_regularizes_self_crossing_walks() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+            let raw = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[bow_tie_path()],
+                    &[CurveRegionLoopRole::Material],
+                    &[fill_rule],
+                )
+            })
+            .unwrap()
+            .into_value();
+            let region = crate::support::under(&policy, || raw.regularized_region())
+                .unwrap()
+                .into_value();
+            let native = present(
+                crate::support::under(&policy, || region.native_contours_fast_path()).unwrap(),
+            );
+            assert_eq!(native.material_contours().len(), 2);
+            assert!(native.hole_contours().is_empty());
+            for (point, expected) in [
+                (p(2, 3), RegionPointLocation::Inside),
+                (p(2, 1), RegionPointLocation::Inside),
+                (p(0, 2), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    certified(
+                        crate::support::under(&policy, || region
+                            .classify_point(&point.clone().into()))
+                        .unwrap()
+                    ),
+                    expected
+                );
+            }
+            assert_eq!(
+                decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+                Some(Real::from(8))
+            );
+        }
+    }
+}
+
+#[test]
+fn authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for rational_reparameterization in [false, true] {
+            let raw = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[self_crossing_cubic_path(rational_reparameterization)],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                )
+            })
+            .unwrap()
+            .into_value();
+            let region = crate::support::under(&policy, || raw.regularized_region())
+                .unwrap()
+                .into_value();
+            assert_eq!(region.boundary_loops().len(), 2);
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || region.classify_point(&p(2, 1).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Inside
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || region.classify_point(&p(-8, -8).into()))
+                        .unwrap()
+                ),
+                RegionPointLocation::Outside
+            );
+        }
+    }
+}
+
+#[test]
+fn native_self_overlap_regularization_honors_winding_multiplicity() {
+    let policy = PredicatePolicy::STRICT;
+
+    let nonzero = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![double_wound_square(
+            FillRule::NonZero,
+        )])
+    })
+    .map(certified)
+    .unwrap();
+    let native =
+        present(crate::support::under(&policy, || nonzero.native_contours_fast_path()).unwrap());
+    assert_eq!(native.material_contours().len(), 1);
+    assert!(native.hole_contours().is_empty());
+    assert_eq!(
+        decided(crate::support::under(&policy, || nonzero.filled_area()).unwrap()),
+        Some(Real::from(100))
+    );
+
+    let even_odd = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_material_contours(vec![double_wound_square(
+            FillRule::EvenOdd,
+        )])
+    })
+    .map(certified)
+    .unwrap();
+    assert!(even_odd.is_empty());
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let regularize = |fill_rule| {
+            let contour = double_wound_square(fill_rule);
+            let raw = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[path_from_contour(&contour)],
+                    &[CurveRegionLoopRole::Material],
+                    &[fill_rule],
+                )
+            })
+            .unwrap()
+            .into_value();
+            crate::support::under(&policy, || raw.regularized_region())
+                .unwrap()
+                .into_value()
+        };
+
+        let nonzero = regularize(FillRule::NonZero);
+        assert_eq!(
+            decided(crate::support::under(&policy, || nonzero.filled_area()).unwrap()),
+            Some(Real::from(100))
+        );
+        assert!(regularize(FillRule::EvenOdd).is_empty());
+    }
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_regularizes_signed_loop_composition() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let paths = [
+            path_from_contour(&square(0, 0, 4, 4)),
+            path_from_contour(&square(2, 0, 6, 4)),
+        ];
+        let union = crate::support::under(&policy, || {
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &paths,
+                    &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero, FillRule::NonZero],
+                )
+            })
+            .unwrap()
+            .into_value()
+            .regularized_region()
+        })
+        .unwrap()
+        .into_value();
+        assert_eq!(
+            decided(crate::support::under(&policy, || union.filled_area()).unwrap()),
+            Some(Real::from(24))
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || union.classify_point(&p(3, 2).into())).unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+
+        let cancellation = crate::support::under(&policy, || {
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[paths[0].clone(), paths[0].clone()],
+                    &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+                    &[FillRule::NonZero, FillRule::NonZero],
+                )
+            })
+            .unwrap()
+            .into_value()
+            .regularized_region()
+        })
+        .unwrap()
+        .into_value();
+        assert!(cancellation.is_empty());
+    }
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_regularizes_nonlinear_winding() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let regularize = |fill_rule| {
+            crate::support::under(&policy, || {
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        &[double_wound_quadratic_cap()],
+                        &[CurveRegionLoopRole::Material],
+                        &[fill_rule],
+                    )
+                })
+                .unwrap()
+                .into_value()
+                .regularized_region()
+            })
+            .unwrap()
+            .into_value()
+        };
+        let nonzero = regularize(FillRule::NonZero);
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || nonzero.classify_point(&p(0, 2).into())).unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            decided(crate::support::under(&policy, || nonzero.filled_area()).unwrap()),
+            Some(q(32, 3))
+        );
+        assert!(regularize(FillRule::EvenOdd).is_empty());
+    }
+}
+
+#[test]
+fn crossing_authored_loops_publish_the_regularized_even_odd_set() {
+    let curved = rational_cap_path();
+    let cutter = path_from_contour(&square(-1, 2, 1, 5));
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(
+                &[curved.clone(), cutter.clone()],
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .map(certified)
+        .unwrap();
+        assert!(
+            decided(crate::support::under(&policy, || region.filled_side_is_left()).unwrap())
+                .iter()
+                .all(|left| *left)
+        );
+        assert!(
+            decided(crate::support::under(&policy, || region.loop_roles()).unwrap())
+                .iter()
+                .all(|role| *role == CurveRegionLoopRole::Material)
+        );
+        for (point, expected) in [
+            (p(0, 0), RegionPointLocation::Inside),
+            (
+                Point2::new(Real::zero(), q(5, 2)),
+                RegionPointLocation::Outside,
+            ),
+            (p(0, 4), RegionPointLocation::Inside),
+            (p(3, 4), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                decided(
+                    crate::support::under(&policy, || region.classify_point(&point.clone().into()))
+                        .unwrap()
+                ),
+                expected
+            );
+        }
+    }
+}
+
+#[test]
+fn region_promotion_retains_explicit_roles_and_line_fast_path() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
+            Vec::new(),
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || promoted.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    assert_eq!(
+        decided(crate::support::under(&policy, || promoted.filled_side_is_left()).unwrap()),
+        &[true]
+    );
+    let profiles = crate::support::under(&policy, || promoted.boundary_profiles())
+        .unwrap()
+        .into_value();
+    assert_eq!(profiles.len(), 1);
+    assert!(profiles.iter().all(|profile| profile.holes().is_empty()));
+
+    for (point, expected) in [
+        (p(-1, 5), RegionPointLocation::Outside),
+        (p(1, 1), RegionPointLocation::Inside),
+        (p(5, 5), RegionPointLocation::Inside),
+    ] {
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || promoted.classify_point(&point.clone().into()))
+                    .unwrap()
+            ),
+            expected
+        );
+    }
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || promoted.classify_point(&p(5, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Inside,
+        "nested explicit material must not be reinterpreted as an even-odd hole"
+    );
+
+    assert!(matches!(
+        present(crate::support::under(&policy, || promoted.native_contours_fast_path()).unwrap()),
+        _
+    ));
+}
+
+#[test]
+fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
+            Vec::new(),
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    let transformed = crate::support::under(&policy, || {
+        promoted.transform_affine(
+            &Real::from(2),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::from(3),
+            &Real::from(5),
+            &Real::from(-4),
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || transformed.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || transformed.classify_point(&p(15, 11).into()))
+                .unwrap()
+        ),
+        RegionPointLocation::Inside,
+        "a transformed nested material island must retain its explicit role"
+    );
+
+    assert!(matches!(
+        present(
+            crate::support::under(&policy, || transformed.native_contours_fast_path()).unwrap()
+        ),
+        _
+    ));
+}
+
+#[test]
+fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
+    let policy = PredicatePolicy::STRICT;
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(vec![square(0, 0, 10, 10)], vec![square(2, 2, 8, 8)])
+    })
+    .unwrap()
+    .into_value();
+    let quarter_turn = Similarity2::try_from_real_affine(
+        Real::zero(),
+        Real::from(-1),
+        Real::one(),
+        Real::zero(),
+        Real::from(20),
+        Real::from(3),
+    )
+    .unwrap();
+
+    let rotated = crate::support::under(&policy, || region.transform_similarity(&quarter_turn))
+        .unwrap()
+        .into_value();
+
+    assert!(matches!(
+        present(crate::support::under(&policy, || rotated.native_contours_fast_path()).unwrap()),
+        _
+    ));
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || rotated.classify_point(&p(15, 4).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || rotated.classify_point(&p(15, 8).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+    assert_eq!(
+        decided(crate::support::under(&policy, || rotated.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+    );
+}
+
+#[test]
+fn exact_profiles_assign_holes_to_the_smallest_containing_material() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 20, 20), square(4, 4, 16, 16)],
+            vec![square(2, 2, 18, 18), square(6, 6, 14, 14)],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    let profiles = crate::support::under(&policy, || promoted.boundary_profiles())
+        .unwrap()
+        .into_value();
+
+    assert_eq!(profiles.len(), 2);
+    assert_eq!(profiles[0].material_loop_index(), 0);
+    assert_eq!(profiles[0].hole_loop_indices(), &[2]);
+    assert_eq!(profiles[1].material_loop_index(), 1);
+    assert_eq!(profiles[1].hole_loop_indices(), &[3]);
+    assert_eq!(
+        decided(crate::support::under(&policy, || promoted.filled_area()).unwrap()),
+        Some(Real::from(224))
+    );
+}
+
+#[test]
+fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
+    let policy = PredicatePolicy::STRICT;
+    for (fill_rule, expected) in [
+        (FillRule::NonZero, RegionPointLocation::Inside),
+        (FillRule::EvenOdd, RegionPointLocation::Outside),
+    ] {
+        let promoted = crate::support::under(&policy, || {
+            CurveRegion2::try_from_native_material_contours(vec![double_wound_square(fill_rule)])
+        })
+        .unwrap()
+        .into_value();
+        let transformed = crate::support::under(&policy, || {
+            promoted.transform_affine(
+                &Real::one(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        assert_eq!(
+            transformed.boundary_loops().len(),
+            usize::from(fill_rule == FillRule::NonZero)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || transformed.classify_point(&p(10, 5).into()))
+                    .unwrap()
+            ),
+            expected
+        );
+        assert!(matches!(
+            present(
+                crate::support::under(&policy, || transformed.native_contours_fast_path()).unwrap()
+            ),
+            _
+        ));
+    }
+}
+
+#[test]
+fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
+    let policy = PredicatePolicy::STRICT;
+    for (fill_rule, expected) in [
+        (FillRule::NonZero, RegionPointLocation::Inside),
+        (FillRule::EvenOdd, RegionPointLocation::Outside),
+    ] {
+        let path = path_from_contour(&double_wound_square(fill_rule));
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path],
+                &[CurveRegionLoopRole::Material],
+                &[fill_rule],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        assert_eq!(
+            region.boundary_loops().len(),
+            usize::from(fill_rule == FillRule::NonZero)
+        );
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || region.classify_point(&p(5, 5).into())).unwrap()
+            ),
+            expected
+        );
+        assert_eq!(
+            decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+            Some(if fill_rule == FillRule::NonZero {
+                Real::from(100)
+            } else {
+                Real::zero()
+            })
+        );
+    }
+}
+
+#[test]
+fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
+    let policy = PredicatePolicy::STRICT;
+    for (fill_rule, expected) in [
+        (FillRule::NonZero, RegionPointLocation::Inside),
+        (FillRule::EvenOdd, RegionPointLocation::Outside),
+    ] {
+        let region = crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[double_wound_quadratic_cap()],
+                &[CurveRegionLoopRole::Material],
+                &[fill_rule],
+            )
+        })
+        .unwrap()
+        .into_value();
+
+        let zero_offset =
+            crate::support::under(&policy, || region.offset(Real::zero(), &sharp_offset()))
+                .unwrap()
+                .into_value();
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || zero_offset.classify_point(&p(0, 2).into()))
+                    .unwrap()
+            ),
+            expected,
+            "zero offset preserves the exact filled set",
+        );
+        assert_eq!(
+            zero_offset.boundary_loops().len(),
+            usize::from(fill_rule == FillRule::NonZero),
+            "zero offset regularizes the authored winding",
+        );
+
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || region.classify_point(&p(0, 2).into())).unwrap()
+            ),
+            expected
+        );
+        assert_eq!(
+            decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+            Some(if fill_rule == FillRule::NonZero {
+                q(32, 3)
+            } else {
+                Real::zero()
+            })
+        );
+        let transformed = crate::support::under(&policy, || {
+            region.transform_affine(
+                &Real::one(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+            )
+        })
+        .unwrap()
+        .into_value();
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || transformed.classify_point(&p(2, 2).into()))
+                    .unwrap()
+            ),
+            expected
+        );
+    }
+}
+
+#[test]
+fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
+    let policy = PredicatePolicy::STRICT;
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[bow_tie_path()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+        Some(Real::from(8)),
+        "both triangles contribute filled area despite their canceling authored Green integrals"
+    );
+}
+
+#[test]
+fn native_contour_constructors_publish_regularized_membership() {
+    let policy = PredicatePolicy::STRICT;
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
+            vec![square(4, 4, 6, 6)],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || region.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || region.classify_point(&p(1, 1).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || region.classify_point(&p(3, 3).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || region.classify_point(&p(5, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || region.classify_point(&p(0, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Boundary
+    );
+    let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
+    let nested = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_boundary_contours(&boundaries, FillRule::EvenOdd)
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || nested.loop_role_counts()).unwrap()),
+        (1, 1)
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || nested.classify_point(&p(1, 1).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || nested.classify_point(&p(5, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+}
+#[test]
+fn authored_line_arc_paths_use_the_unified_offset_engine() {
+    let policy = PredicatePolicy::STRICT;
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[full_circle_path(5)],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    assert!(matches!(
+        present(crate::support::under(&policy, || region.native_contours_fast_path()).unwrap()),
+        _
+    ));
+    let expanded = crate::support::under(&policy, || region.offset(Real::from(2), &sharp_offset()))
+        .unwrap()
+        .into_value();
+    let bounds = present(crate::support::under(&policy, || expanded.bounds()).unwrap());
+    assert_eq!(bounds.min_x(), &Real::from(-7));
+    assert_eq!(bounds.min_y(), &Real::from(-7));
+    assert_eq!(bounds.max_x(), &Real::from(7));
+    assert_eq!(bounds.max_y(), &Real::from(7));
+}
+
+#[test]
+fn authored_nested_material_roles_certify_filled_sides_directly() {
+    let policy = PredicatePolicy::STRICT;
+    let outer = path_from_contour(&square(0, 0, 10, 10));
+    let inner = path_from_contour(&square(2, 2, 8, 8));
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[outer, inner],
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
+            &[FillRule::NonZero, FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || region.filled_side_is_left()).unwrap()),
+        &[true]
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || region.classify_point(&p(2, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert!(matches!(
+        present(crate::support::under(&policy, || region.native_contours_fast_path()).unwrap()),
+        _
+    ));
+}
+#[test]
+fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
+    let policy = PredicatePolicy::STRICT;
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[quadratic_fillet_path()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+        )
+    })
+    .unwrap()
+    .into_value();
+    assert!(
+        crate::support::under(&policy, || region.native_contours_fast_path())
+            .unwrap()
+            .into_value()
+            .is_none()
+    );
+
+    let (loop_index, corner) = boundary_vertex_at(&region, &p(4, 0), &policy);
+    let CurveCornerSolutions2::Unique(chamfered) = crate::support::under(&policy, || {
+        region.chamfer_loop_vertex_by_setbacks(
+            loop_index,
+            corner,
+            q(1, 2),
+            q(1, 2),
+            CurveCornerMode2::TrimOnly,
+        )
+    })
+    .unwrap()
+    .into_value() else {
+        panic!("the higher-order corner must have one trim-only chamfer");
+    };
+    let filleted = {
+        let solutions = crate::support::under(&policy, || {
+            region.fillet_loop_vertex(
+                loop_index,
+                corner,
+                &hypercurve::CurveFillet2::new(q(1, 2)),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .unwrap()
+        .into_value();
+        let candidates = solutions.into_solutions();
+        assert!(candidates.len() > 1, "expected multiple isolated fillets");
+        candidates
+    };
+
+    assert_eq!(chamfered.boundary_loops()[loop_index].len(), 3);
+    assert_eq!(filleted.len(), 2);
+    let fillet_fragment_counts = filleted
+        .iter()
+        .map(|candidate| candidate.boundary_loops()[loop_index].len())
+        .collect::<Vec<_>>();
+    assert!(
+        fillet_fragment_counts.iter().all(|count| *count >= 3),
+        "unexpected fillet fragment counts: {fillet_fragment_counts:?}"
+    );
+    for edited in std::iter::once(&chamfered).chain(filleted.iter()) {
+        assert_eq!(
+            decided(
+                crate::support::under(&policy, || edited.classify_point(&p(1, -1).into())).unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
+            decided(crate::support::under(&policy, || edited.loop_roles()).unwrap()),
+            vec![CurveRegionLoopRole::Material; region.len()]
+        );
+        assert_eq!(
+            decided(crate::support::under(&policy, || edited.filled_side_is_left()).unwrap()),
+            vec![true; edited.len()]
+        );
+        assert_eq!(
+            certified(crate::support::under(&policy, || edited.regularized_region()).unwrap()),
+            *edited
+        );
+    }
+}
+
+#[test]
+fn boundary_paths_obey_terminal_policy_once() {
+    let (start_x, end_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
+        Point2::new(start_x, Real::zero()),
+        p(0, 1),
+        Point2::new(end_x, Real::zero()),
+    ))])
+    .unwrap();
+    for _ in 0..2 {
+        let constructed = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+            )
+        })
+        .expect("the authorized terminal closes and cancels the retraced loop");
+        assert_eq!(
+            constructed.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert!(constructed.value.is_empty());
+        assert!(
+            crate::support::under(&PredicatePolicy::STRICT, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&path),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .is_err()
+        );
+    }
+}
+
+#[test]
+fn unified_region_offset_expands_material_and_contracts_holes() {
+    let policy = PredicatePolicy::STRICT;
+    let region = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(vec![square(0, 0, 10, 10)], vec![square(3, 3, 7, 7)])
+    })
+    .unwrap()
+    .into_value();
+
+    let offset = crate::support::under(&policy, || region.offset(Real::one(), &sharp_offset()))
+        .unwrap()
+        .into_value();
+
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(0, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(3, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Inside,
+        "positive region offset must contract a hole"
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || offset.classify_point(&p(5, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+    assert_eq!(
+        decided(crate::support::under(&policy, || offset.filled_area()).unwrap()),
+        Some(Real::from(140))
+    );
+}
+
+#[test]
+fn region_promotion_retains_hole_role_for_projection() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = crate::support::under(&policy, || {
+        CurveRegion2::try_from_native_contours(vec![square(0, 0, 10, 10)], vec![square(2, 2, 8, 8)])
+    })
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(crate::support::under(&policy, || promoted.loop_roles()).unwrap()),
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+    );
+    assert_eq!(
+        decided(crate::support::under(&policy, || promoted.filled_side_is_left()).unwrap()),
+        &[true, true]
+    );
+    assert_eq!(
+        certified(
+            crate::support::under(&policy, || promoted.classify_point(&p(5, 5).into())).unwrap()
+        ),
+        RegionPointLocation::Outside
+    );
+    let exact_profiles = crate::support::under(&policy, || promoted.boundary_profiles())
+        .unwrap()
+        .into_value();
+    assert_eq!(exact_profiles.len(), 1);
+    assert_eq!(exact_profiles[0].material_loop_index(), 0);
+    assert_eq!(exact_profiles[0].hole_loop_indices(), &[1]);
+    assert_eq!(exact_profiles[0].holes().len(), 1);
+
+    let options = FiniteProjectionOptions::try_new(0.01).unwrap();
+    let profiles = crate::support::under(&policy, || promoted.project_to_finite_profiles(&options))
+        .unwrap()
+        .into_value();
+    assert_eq!(profiles.len(), 1);
+    assert_eq!(profiles[0].holes().len(), 1);
+}
+
+#[test]
+fn empty_region_promotion_is_decided_and_reusable() {
+    let policy = PredicatePolicy::STRICT;
+    let promoted = CurveRegion2::empty();
+
+    assert!(promoted.is_empty());
+    assert!(decided(crate::support::under(&policy, || promoted.loop_roles()).unwrap()).is_empty());
+    assert!(
+        decided(crate::support::under(&policy, || promoted.filled_side_is_left()).unwrap())
+            .is_empty()
+    );
+    assert!(
+        present(crate::support::under(&policy, || promoted.native_contours_fast_path()).unwrap())
+            .material_contours()
+            .is_empty()
+    );
+    assert_eq!(CurveRegion2::empty(), CurveRegion2::default());
+}
+
+#[test]
+fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+    let policy = PredicatePolicy::STRICT;
+    let source = certified(
+        crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
+        })
+        .unwrap(),
+    );
+    let CurveCornerSolutions2::Unique(mut region) = certified(
+        crate::support::under(&policy, || {
+            source.chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+            )
+        })
+        .unwrap(),
+    ) else {
+        panic!("unique selected chamfer")
+    };
+    let mut prior = None;
+    for _ in 0..8 {
+        let paths = crate::support::under(&policy, || region.boundary_paths())
+            .unwrap()
+            .into_value();
+        assert_eq!(paths.len(), 1);
+        assert!(
+            paths[0]
+                .curves()
+                .iter()
+                .any(|curve| curve.geometry().is_none())
+        );
+        assert!(
+            paths[0]
+                .curves()
+                .iter()
+                .any(|curve| curve.parameter_domain().scalar_endpoints().is_none())
+        );
+        if let Some(previous) = &prior {
+            assert_eq!(paths[0].curves(), previous);
+        }
+        prior = Some(paths[0].curves().to_vec());
+        region = certified(
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd)
+            })
+            .unwrap(),
+        );
+    }
+    for (query, expected) in [
+        (p(-2, 1), RegionPointLocation::Inside),
+        (p(0, 0), RegionPointLocation::Outside),
+        (p(-1, 0), RegionPointLocation::Boundary),
+    ] {
+        assert_eq!(
+            certified(
+                crate::support::under(&policy, || region.classify_point(&query.clone().into()))
+                    .unwrap()
+            ),
+            expected
+        );
+    }
+    let paths = crate::support::under(&policy, || region.boundary_paths())
+        .unwrap()
+        .into_value();
+    let reversed = certified(crate::support::under(&policy, || paths[0].reversed()).unwrap());
+    let restored = certified(
+        crate::support::under(&policy, || {
+            CurveRegion2::try_from_boundary_paths(&[reversed], hypercurve::FillRule::EvenOdd)
+        })
+        .unwrap(),
+    );
+    assert!(
+        certified(
+            crate::support::under(&policy, || region
+                .boolean_region(&restored, hypercurve::BooleanOp::Xor))
+            .unwrap()
+        )
+        .is_empty()
+    );
+}
+
+#[test]
+fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (name, contours, roles, samples, loops) in [
+            (
+                "cancellation",
+                vec![square(0, 0, 4, 4), square(0, 0, 4, 4)],
+                vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+                vec![
+                    (p(0, 2), RegionPointLocation::Outside),
+                    (p(2, 2), RegionPointLocation::Outside),
+                ],
+                0,
+            ),
+            (
+                "filled seam",
+                vec![square(0, 0, 8, 8), square(2, 2, 6, 6)],
+                vec![CurveRegionLoopRole::Material; 2],
+                vec![
+                    (p(2, 4), RegionPointLocation::Inside),
+                    (p(4, 4), RegionPointLocation::Inside),
+                ],
+                1,
+            ),
+            (
+                "recursive islands",
+                vec![
+                    square(0, 0, 12, 12),
+                    square(2, 2, 10, 10),
+                    square(4, 4, 8, 8),
+                ],
+                vec![
+                    CurveRegionLoopRole::Material,
+                    CurveRegionLoopRole::Hole,
+                    CurveRegionLoopRole::Material,
+                ],
+                vec![
+                    (p(1, 6), RegionPointLocation::Inside),
+                    (p(3, 6), RegionPointLocation::Outside),
+                    (p(5, 6), RegionPointLocation::Inside),
+                ],
+                3,
+            ),
+        ] {
+            let paths = contours.iter().map(path_from_contour).collect::<Vec<_>>();
+            let rules = vec![FillRule::NonZero; paths.len()];
+            let (material, holes): (Vec<_>, Vec<_>) = contours
+                .into_iter()
+                .zip(&roles)
+                .partition(|(_, role)| **role == CurveRegionLoopRole::Material);
+            let constructed = [
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        &paths, &roles, &rules,
+                    )
+                })
+                .unwrap(),
+                crate::support::under(&policy, || {
+                    CurveRegion2::try_from_native_contours(
+                        material.into_iter().map(|(contour, _)| contour).collect(),
+                        holes.into_iter().map(|(contour, _)| contour).collect(),
+                    )
+                })
+                .unwrap(),
+            ];
+            for outcome in constructed {
+                assert_eq!(outcome.certainty, CurveCertainty::Certified, "{name}");
+                let region = outcome.into_value();
+                assert_eq!(region.len(), loops, "{name}");
+                assert!(
+                    decided(
+                        crate::support::under(&policy, || region.filled_side_is_left()).unwrap()
+                    )
+                    .iter()
+                    .all(|left| *left)
+                );
+                let exported = crate::support::under(&policy, || region.boundary_paths())
+                    .unwrap()
+                    .into_value();
+                let replay = crate::support::under(&policy, || {
+                    CurveRegion2::try_from_boundary_paths(&exported, hypercurve::FillRule::EvenOdd)
+                })
+                .unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert_eq!(replay.value.len(), loops);
+                for (point, expected) in &samples {
+                    for value in [&region, &replay.value] {
+                        assert_eq!(
+                            certified(
+                                crate::support::under(&policy, || value
+                                    .classify_point(&point.clone().into()))
+                                .unwrap()
+                            ),
+                            *expected,
+                            "{name}"
+                        );
+                    }
+                }
+            }
+        }
+        let twice = double_wound_quadratic_cap();
+        for outcome in [
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&twice),
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .unwrap(),
+            crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &[twice],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::EvenOdd],
+                )
+            })
+            .unwrap(),
+        ] {
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            assert!(outcome.value.is_empty());
+            for point in [p(0, 4), p(0, 2)] {
+                assert_eq!(
+                    certified(
+                        crate::support::under(&policy, || outcome
+                            .value
+                            .classify_point(&point.clone().into()))
+                        .unwrap()
+                    ),
+                    RegionPointLocation::Outside
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn region_corner_edits_publish_normalized_hole_openings() {
+    let square_path = |a, b| {
+        let points = [p(a, a), p(b, a), p(b, b), p(a, b)];
+        CurvePath2::try_new(
+            (0..4)
+                .map(|i| {
+                    LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap()
+    };
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for fillet in [false, true] {
+            let source = crate::support::under(&policy, || {
+                CurveRegion2::try_from_boundary_paths(
+                    &[square_path(0, 8), square_path(1, 3)],
+                    hypercurve::FillRule::EvenOdd,
+                )
+            })
+            .unwrap()
+            .into_value();
+            let (loop_index, vertex) = boundary_vertex_at(&source, &p(0, 0), &policy);
+            let region = if fillet {
+                let solutions = certified(
+                    crate::support::under(&policy, || {
+                        source.fillet_loop_vertex(
+                            loop_index,
+                            vertex,
+                            &hypercurve::CurveFillet2::new(Real::from(5)),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    })
+                    .unwrap(),
+                );
+                let mut candidates = solutions.into_solutions();
+                assert_eq!(candidates.len(), 1);
+                candidates.pop().unwrap()
+            } else {
+                let CurveCornerSolutions2::Unique(region) = certified(
+                    crate::support::under(&policy, || {
+                        source.chamfer_loop_vertex_by_setbacks(
+                            loop_index,
+                            vertex,
+                            Real::from(5),
+                            Real::from(5),
+                            CurveCornerMode2::TrimOnly,
+                        )
+                    })
+                    .unwrap(),
+                ) else {
+                    panic!("one in-domain chamfer");
+                };
+                region
+            };
+            assert_eq!(region.len(), 1, "the corner cut opens the hole");
+            assert!(
+                decided(crate::support::under(&policy, || region.filled_side_is_left()).unwrap())
+                    [0]
+            );
+            assert_eq!(
+                crate::support::under(&policy, || region.regularized_region())
+                    .unwrap()
+                    .value,
+                region
+            );
+            let mut samples = vec![
+                (p(6, 6), RegionPointLocation::Inside),
+                (p(0, 6), RegionPointLocation::Boundary),
+            ];
+            if fillet {
+                let coordinate = Real::from(5) - Real::from(5) * q(1, 2).sqrt().unwrap();
+                samples.extend([
+                    (p(1, 1), RegionPointLocation::Outside),
+                    (
+                        Point2::new(coordinate.clone(), coordinate),
+                        RegionPointLocation::Outside,
+                    ),
+                    (p(1, 2), RegionPointLocation::Boundary),
+                    (p(2, 1), RegionPointLocation::Boundary),
+                ]);
+            } else {
+                // The surviving void is a half-unit triangle; the outer
+                // five-unit corner cut removes an area of 25/2.
+                assert_eq!(
+                    decided(crate::support::under(&policy, || region.filled_area()).unwrap()),
+                    Some(Real::from(51))
+                );
+                samples.extend([
+                    (p(1, 2), RegionPointLocation::Outside),
+                    (p(2, 1), RegionPointLocation::Outside),
+                    (Point2::new(q(5, 2), q(5, 2)), RegionPointLocation::Outside),
+                    (p(2, 3), RegionPointLocation::Boundary),
+                    (p(3, 2), RegionPointLocation::Boundary),
+                ]);
+            }
+            for (point, expected) in samples {
+                assert_eq!(
+                    decided(
+                        crate::support::under(&policy, || region
+                            .classify_point(&point.clone().into()))
+                        .unwrap()
+                    ),
+                    expected
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn compound_fill_retains_signed_multiplicity_and_reversal_identity() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let once = path_from_contour(&square(0, 0, 4, 4));
+        let twice =
+            CurvePath2::try_new(once.curves().iter().chain(once.curves()).cloned().collect())
+                .unwrap();
+        let opposite = certified(crate::support::under(&policy, || once.reversed()).unwrap());
+        for reverse in [false, true] {
+            let paths = [twice.clone(), opposite.clone()].map(|path| {
+                if reverse {
+                    certified(crate::support::under(&policy, || path.reversed()).unwrap())
+                } else {
+                    path
+                }
+            });
+            for reverse_order in [false, true] {
+                let ordered = if reverse_order {
+                    vec![paths[1].clone(), paths[0].clone()]
+                } else {
+                    paths.to_vec()
+                };
+                for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                    let region = certified(
+                        crate::support::under(&policy, || {
+                            CurveRegion2::try_from_boundary_paths(&ordered, fill_rule)
+                        })
+                        .unwrap(),
+                    );
+                    assert_eq!(region.len(), 1);
+                    for (point, expected) in
+                        [(p(2, 2), Inside), (p(0, 2), Boundary), (p(5, 2), Outside)]
+                    {
+                        assert_eq!(
+                            certified(
+                                crate::support::under(&policy, || region
+                                    .classify_point(&point.into()))
+                                .unwrap()
+                            ),
+                            expected
+                        );
+                    }
+                    let area = crate::support::under(&policy, || region.filled_area())
+                        .unwrap()
+                        .into_value()
+                        .unwrap();
+                    assert_eq!(
+                        area.partial_cmp(&Real::from(16)),
+                        Some(std::cmp::Ordering::Equal)
+                    );
+                    let grown = certified(
+                        crate::support::under(&policy, || {
+                            region.offset(Real::one(), &OffsetCornerStyle2::Round)
+                        })
+                        .unwrap(),
+                    );
+                    for (point, expected) in
+                        [(p(-1, 2), Boundary), (p(0, 2), Inside), (p(-2, 2), Outside)]
+                    {
+                        assert_eq!(
+                            certified(
+                                crate::support::under(&policy, || grown
+                                    .classify_point(&point.into()))
+                                .unwrap()
+                            ),
+                            expected
+                        );
+                    }
+                    let difference = certified(
+                        crate::support::under(&policy, || {
+                            region.boolean_region(&region, hypercurve::BooleanOp::Difference)
+                        })
+                        .unwrap(),
+                    );
+                    assert!(difference.is_empty());
+                }
+            }
+        }
+        for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+            assert!(
+                certified(
+                    crate::support::under(&policy, || CurveRegion2::try_from_boundary_paths(
+                        &[],
+                        fill_rule
+                    ))
+                    .unwrap()
+                )
+                .is_empty()
+            );
+        }
+    }
+}
+
+#[test]
+fn compound_circle_fill_selects_exact_algebraic_overlap_and_canceled_seams() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let first = path_from_contour(&circle(0, 0, 2));
+        let second = path_from_contour(&circle(2, 0, 2));
+        for opposite in [false, true] {
+            let second = if opposite {
+                certified(crate::support::under(&policy, || second.reversed()).unwrap())
+            } else {
+                second.clone()
+            };
+            for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                let region = certified(
+                    crate::support::under(&policy, || {
+                        CurveRegion2::try_from_boundary_paths(
+                            &[first.clone(), second.clone()],
+                            fill_rule,
+                        )
+                    })
+                    .unwrap(),
+                );
+                let filled = fill_rule == FillRule::NonZero && !opposite;
+                for (point, expected) in [
+                    (p(-1, 0), Inside),
+                    (p(1, 0), if filled { Inside } else { Outside }),
+                    (p(3, 0), Inside),
+                    (p(0, 0), if filled { Inside } else { Boundary }),
+                    (p(2, 0), if filled { Inside } else { Boundary }),
+                    (p(5, 0), Outside),
+                ] {
+                    assert_eq!(
+                        certified(
+                            crate::support::under(&policy, || region.classify_point(&point.into()))
+                                .unwrap()
+                        ),
+                        expected
+                    );
+                }
+                let replay = certified(
+                    crate::support::under(&policy, || {
+                        CurveRegion2::try_from_boundary_paths(
+                            &crate::support::under(&policy, || region.boundary_paths())
+                                .unwrap()
+                                .into_value(),
+                            FillRule::NonZero,
+                        )
+                    })
+                    .unwrap(),
+                );
+                assert_eq!(
+                    certified(
+                        crate::support::under(&policy, || replay.classify_point(&p(1, 0).into()))
+                            .unwrap()
+                    ),
+                    if filled { Inside } else { Outside }
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn compound_fill_reuses_retained_rational_and_generated_boundaries() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let generated = axis_aligned_algebraic_rectangle(&policy);
+        let generated_paths = crate::support::under(&policy, || generated.boundary_paths())
+            .unwrap()
+            .into_value();
+        assert_eq!(generated_paths.len(), 1);
+        let fixtures = [
+            (rational_cap_path(), p(0, 0), p(2, -1), p(3, 0)),
+            (
+                generated_paths[0].clone(),
+                Point2::new(q(1, 2), q(1, 2)),
+                p(0, 0),
+                p(2, 0),
+            ),
+        ];
+        for (path, inside, boundary, outside) in fixtures {
+            let opposite = certified(crate::support::under(&policy, || path.reversed()).unwrap());
+            for (second, opposed) in [(path.clone(), false), (opposite, true)] {
+                for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                    let region = certified(
+                        crate::support::under(&policy, || {
+                            CurveRegion2::try_from_boundary_paths(
+                                &[path.clone(), second.clone()],
+                                fill_rule,
+                            )
+                        })
+                        .unwrap(),
+                    );
+                    let survives = fill_rule == FillRule::NonZero && !opposed;
+                    assert_eq!(region.is_empty(), !survives);
+                    for (point, expected) in [
+                        (&inside, if survives { Inside } else { Outside }),
+                        (&boundary, if survives { Boundary } else { Outside }),
+                        (&outside, Outside),
+                    ] {
+                        assert_eq!(
+                            certified(
+                                crate::support::under(&policy, || region
+                                    .classify_point(&point.clone().into()))
+                                .unwrap()
+                            ),
+                            expected
+                        );
+                    }
+                    let replay = certified(
+                        crate::support::under(&policy, || {
+                            region.boolean_region(
+                                &CurveRegion2::empty(),
+                                hypercurve::BooleanOp::Union,
+                            )
+                        })
+                        .unwrap(),
+                    );
+                    assert_eq!(replay.is_empty(), !survives);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn authored_region_sides_are_certified_before_offset_and_boolean_reentry() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for rational in [false, true] {
+            let vertices = [p(0, 0), p(4, 0), p(4, 4), p(0, 4), p(0, 0)];
+            let path = CurvePath2::try_new(
+                vertices
+                    .windows(2)
+                    .map(|edge| {
+                        if rational {
+                            let (dx, dy) = edge[0].delta_from(&edge[1]);
+                            let middle =
+                                Point2::new(edge[0].x() - dx * q(1, 2), edge[0].y() - dy * q(1, 2));
+                            RationalBezier2::try_new(
+                                vec![edge[0].clone(), middle, edge[1].clone()],
+                                vec![Real::one(), Real::from(2), Real::from(3)],
+                            )
+                            .unwrap()
+                            .into()
+                        } else {
+                            LineSeg2::try_new(edge[0].clone(), edge[1].clone())
+                                .unwrap()
+                                .into()
+                        }
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            for reverse in [false, true] {
+                let path = if reverse {
+                    certified(crate::support::under(&policy, || path.reversed()).unwrap())
+                } else {
+                    path.clone()
+                };
+                for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                    let region = certified(
+                        crate::support::under(&policy, || {
+                            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                                std::slice::from_ref(&path),
+                                &[CurveRegionLoopRole::Material],
+                                &[fill_rule],
+                            )
+                        })
+                        .unwrap(),
+                    );
+                    assert_eq!(region.len(), 1);
+                    assert_eq!(
+                        decided(crate::support::under(&policy, || region.loop_roles()).unwrap()),
+                        vec![CurveRegionLoopRole::Material]
+                    );
+                    assert_eq!(
+                        decided(
+                            crate::support::under(&policy, || region.filled_side_is_left())
+                                .unwrap()
+                        ),
+                        &[true]
+                    );
+                    let area = crate::support::under(&policy, || region.signed_area())
+                        .unwrap()
+                        .into_value()
+                        .unwrap();
+                    assert_eq!(
+                        area.partial_cmp(&Real::from(16)),
+                        Some(std::cmp::Ordering::Equal)
+                    );
+                    for (point, expected) in
+                        [(p(2, 2), Inside), (p(0, 2), Boundary), (p(-1, 2), Outside)]
+                    {
+                        assert_eq!(
+                            decided(
+                                crate::support::under(&policy, || region
+                                    .classify_point(&point.into()))
+                                .unwrap()
+                            ),
+                            expected
+                        );
+                    }
+                    let grown = certified(
+                        crate::support::under(&policy, || {
+                            region.offset(Real::one(), &OffsetCornerStyle2::Round)
+                        })
+                        .unwrap(),
+                    );
+                    for (point, expected) in [
+                        (Point2::new(-q(1, 2), Real::from(2)), Inside),
+                        (p(-1, 2), Boundary),
+                        (p(-2, 2), Outside),
+                    ] {
+                        assert_eq!(
+                            decided(
+                                crate::support::under(&policy, || grown
+                                    .classify_point(&point.into()))
+                                .unwrap()
+                            ),
+                            expected
+                        );
+                    }
+                    let recovered = certified(
+                        crate::support::under(&policy, || {
+                            grown.boolean_region(&region, hypercurve::BooleanOp::Intersection)
+                        })
+                        .unwrap(),
+                    );
+                    for (point, expected) in
+                        [(p(2, 2), Inside), (p(0, 2), Boundary), (p(-1, 2), Outside)]
+                    {
+                        assert_eq!(
+                            decided(
+                                crate::support::under(&policy, || recovered
+                                    .classify_point(&point.into()))
+                                .unwrap()
+                            ),
+                            expected
+                        );
+                    }
+                }
+            }
+        }
+    }
+}

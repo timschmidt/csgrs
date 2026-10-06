@@ -1,0 +1,193 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact-rational cusp cuts transported across unrelated retained maps",
+  "source_revision": "01672795c2082ef33458de75d347b90b119fb728",
+  "comparison_revision": "767e80cec5dfa92baaa5be60ec8ad209bca21d67",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "rational-valued cusp cuts authored by an unrelated rational mapped-circle carrier",
+      "rational-valued cusp cuts authored by an unrelated analytic-parallel mapped-circle carrier",
+      "transport from rational to analytic, analytic to rational, and through analytic-source reversal",
+      "reconstruction of exact point images for rational-valued mapped cusp fragment endpoints",
+      "rebuilt-map CurveRegion2 overlap clipping, Boolean regularization, operand swap, and reversal",
+      "STRICT and APPROXIMATE_512 execution of identical mathematical paths",
+      "retained-value caching measured against the same complete capability with caching disabled",
+      "matched existing-path guards, allocation evidence, linked-size evidence, and static callgraph evidence"
+    ],
+    "excluded": [
+      "non-rational cusp values authored in unrelated algebraic fields",
+      "generic cross-field primitive-element construction or multivariate elimination",
+      "finite projection of an exact mapped endpoint",
+      "distinct general-algebraic carrier joins",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "rational_source": "For an exactly rational native carrier parameter beta, form D(u)*diameter_side(alpha,beta)-A(u)*radius_squared_denominator(alpha,beta)=0 in the selected cusp field, where D(u)=(1-u)^2+u^2 and A(u)=1-2u. Hypersolve supplies all selected-field candidates. Only candidates that promote exactly to Real and compare Equal under the original unsquared retained map are accepted.",
+    "analytic_source": "For an exactly rational analytic-source parameter beta, retain the rational and radical diameter terms separately. Square rational(u)^2*speed_squared-radical(u)^2 only to enumerate candidates, then replay the original unsquared radical predicate. Conjugate selected roots, the opposite normal branch, and squaring artifacts therefore cannot pass STRICT.",
+    "uniqueness": "A mapped cut promotes only when exactly one rational cusp value survives original-map replay. No candidate yields None, multiple candidates yield a topology error, and any unresolved certified predicate remains Classification::Uncertain.",
+    "policy": "Every promotion, reduction, root isolation, comparison, radical sign, and replay receives CurveContext. STRICT accepts proof only. APPROXIMATE_512 can terminate solely through the shared 512-bit Hyperlimit/Hypersolve predicate boundary; neither path introduces binary floating-point geometry.",
+    "bounded_fallback": "A genuinely non-rational unrelated mapped value remains mapped and returns explicit Unsupported at cross-field inversion. It is never rounded into a parameter or point."
+  },
+  "capability": {
+    "comparison_revision": "A cusp cut could invert only through the same retained map or when already authored as Exact(Real). A rational-valued cut retained by another rational or analytic map therefore blocked overlap clipping.",
+    "source_revision": "Unrelated rational and analytic maps can prove and cache an exact rational cusp value, replay it through a rebuilt destination map, close a cusp fragment against its exact chord point, and complete CurveRegion2 intersection and Boolean topology.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release unit-test executable pinned to CPU 11 under seven perf-stat repetitions; retired instructions and branches are primary",
+    "expanded_cross_field_policy_matrix": {
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "coverage": "both policies; rational-authored and analytic-authored cross-field cuts; same-map controls; rebuilt rational and analytic maps; exact endpoint closure; CurveRegion2 intersections and Booleans; operand swaps; analytic reversal",
+      "task_clock_ms": 228.36,
+      "cycles": 917026156,
+      "instructions": 2241462337,
+      "branches": 388124655,
+      "branch_misses": 4619665,
+      "interpretation": "This fixture deliberately contains materially more operations than the comparison revision. It is capability coverage, not a same-work historical timing comparison."
+    },
+    "matched_cache_ablation": {
+      "method": "the identical source and release fixture with only cache lookup/insertion compile-time disabled",
+      "uncached_instructions": 2248343337,
+      "cached_instructions": 2241462337,
+      "instruction_reduction": 6881000,
+      "instruction_reduction_percent": 0.306048,
+      "uncached_branches": 389514730,
+      "cached_branches": 388124655,
+      "branch_reduction": 1390075,
+      "branch_reduction_percent": 0.356874,
+      "selection": "Retained. The cache also lowers allocation traffic and does not change measured peak heap."
+    },
+    "unchanged_rational_overlap_guard": {
+      "workload": "algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root",
+      "comparison_instructions": 31612012,
+      "current_instructions": 31624504,
+      "instruction_change_percent": 0.039517,
+      "comparison_branches": 6307682,
+      "current_branches": 6310336,
+      "branch_change_percent": 0.042076
+    },
+    "unchanged_analytic_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_instructions": 28748565,
+      "current_instructions": 28718456,
+      "instruction_change_percent": -0.104732,
+      "comparison_branches": 5414944,
+      "current_branches": 5409092,
+      "branch_change_percent": -0.108071
+    },
+    "competitive_context": {
+      "direct_guarantee_equivalent": false,
+      "latest_retained_open_cubic_offset_ns": {
+        "hypercurve_certified": 30521803.0,
+        "hypercurve_chord_fallback": 1045575.5,
+        "curvo_heuristic": 8719.7
+      },
+      "latest_retained_line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18417.4,
+        "cavalier_contours": 949.1
+      },
+      "interpretation": "The cross-field algebraic-cusp path is absent from both competitive sentinels. Curvo and Cavalier remain finite-throughput targets, not exact-policy peers."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces; recorder summaries are authoritative",
+    "workload": "the expanded two-policy cross-field matrix",
+    "uncached_allocation_calls": 3548814,
+    "cached_allocation_calls": 3534138,
+    "allocation_call_reduction": 14676,
+    "allocation_call_reduction_percent": 0.413547,
+    "uncached_temporary_allocations": 614602,
+    "cached_temporary_allocations": 613282,
+    "temporary_allocation_reduction": 1320,
+    "temporary_allocation_reduction_percent": 0.214773,
+    "uncached_peak_heap_mib": 1.74,
+    "cached_peak_heap_mib": 1.74,
+    "uncached_recorder_peak_rss_mib": 47.19,
+    "cached_recorder_peak_rss_mib": 46.59,
+    "profiles_retained": false,
+    "interpretation": "The per-map Vec cache is empty-allocation-free until used, avoids 14,676 repeated solver allocations in this fixture, and leaves measured peak heap unchanged."
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release executables against 767e80c with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8137704,
+      "current_file_bytes": 8165904,
+      "file_change_bytes": 28200,
+      "file_change_percent": 0.346535,
+      "comparison_text_bytes": 6197501,
+      "current_text_bytes": 6219749,
+      "text_change_bytes": 22248,
+      "text_change_percent": 0.358983,
+      "comparison_actual_text_section_bytes": 4675815,
+      "current_actual_text_section_bytes": 4694935,
+      "actual_text_change_bytes": 19120,
+      "actual_text_change_percent": 0.408913
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7911976,
+      "current_file_bytes": 7948728,
+      "file_change_bytes": 36752,
+      "file_change_percent": 0.464511,
+      "comparison_text_bytes": 6014197,
+      "current_text_bytes": 6037973,
+      "text_change_bytes": 23776,
+      "text_change_percent": 0.395331,
+      "comparison_actual_text_section_bytes": 4519623,
+      "current_actual_text_section_bytes": 4539111,
+      "actual_text_change_bytes": 19488,
+      "actual_text_change_percent": 0.431186
+    },
+    "interpretation": "Exact cross-field recovery and its cache add less than 0.47% to either representative executable."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/hypercurve-cross-field-callgraph-0167279 --crate-name hypercurve,hypersolve,hyperreal,hyperlimit --format json --per-library",
+    "artifact": "target/hypercurve-cross-field-callgraph-0167279/callgraph.json",
+    "nodes": 34160,
+    "edges": 60389,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircleMappedOverlap2::other_parameter_for_cusp -> BezierAlgebraicCuspSemicircleParameter2::represented_rational_value",
+      "BezierAlgebraicCuspSemicircleFragment2::endpoint_point_image -> BezierAlgebraicCuspSemicircleParameter2::represented_rational_value",
+      "BezierAlgebraicCuspSemicircleParameter2::represented_rational_value -> rational_mapped_cusp_represented_rational",
+      "BezierAlgebraicCuspSemicircleParameter2::represented_rational_value -> parallel_mapped_cusp_represented_rational",
+      "both source-specific authorities -> mapped_cusp_represented_rational_from_incidence",
+      "mapped_cusp_represented_rational_from_incidence -> candidate exact-rational promotion and original-map replay",
+      "both source-specific authorities -> Hypersolve-backed algebraic_cusp_reduced_fiber_parameters"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 383 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_all_features_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed all-feature unit-test, default-feature batch, and no-default-feature batch builds",
+    "strict_and_approximate": "passed the complete rational-to-analytic, analytic-to-rational, rebuilt-map, endpoint-closure, Boolean, operand-swap, and reversal matrix under both policies",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "retain and transport genuinely non-rational mapped cusp values across unrelated algebraic fields",
+    "support independent algebraic endpoint ranges without finite parameter collapse",
+    "complete direct cusp-carrier winding for every retained-field combination",
+    "broaden exact differential coverage for repeated stationary roots, multiplicities, and unrelated selected fields",
+    "reduce local-field, resultant, Sturm, bigint, and repeated-context scratch allocations",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean, offset, and corner machinery after differential coverage passes"
+  ]
+}

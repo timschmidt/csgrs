@@ -1,0 +1,151 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact radical-cusp offset and certified contact topology",
+  "source_revision": "bc3fbfa8ff54fcaff0d41182f5ed743072bcc512",
+  "semantic_revisions": [
+    "bc3fbfa"
+  ],
+  "comparison_revision": "52a41324aac3d349180a983e3d8ab8e9a80d8ef3",
+  "previous_checkpoint": "2026-08-02-algebraic-partition-exact-offset.json",
+  "scope": {
+    "included": [
+      "exact materialization of the supported polynomial-quadratic parallel cusp radical",
+      "exact U-turn round joins at represented cusp points",
+      "construction-certified tangent provenance and multiplicity-preserving line/circle incidence deflation",
+      "native retained-circle and tangent-line contact routing inside the authoritative CurveRegion2 arrangement",
+      "two-chart retained-conic parameter inversion for degree-elevated and general rational circle images",
+      "certified quotient-ring rational-image parameter recovery with dyadic Bernstein uniqueness and degree proofs",
+      "STRICT and APPROXIMATE_512 execution over the same exact carriers and topology",
+      "historical, competitive, allocation, release-size, and static-callgraph controls"
+    ],
+    "excluded": [
+      "general algebraic cusp coordinates outside the supported polynomial-quadratic radical family",
+      "offset runs whose true outer join boundary remains nonrepresented algebraic geometry",
+      "finite projection or export of general analytic offsets",
+      "solver-driven fillet and chamfer construction",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "quadratic_cusp": "For a polynomial-quadratic source, the selected parallel cusp equation is reduced to K(t)+S(t)^(3/2)=0. A candidate is retained only on the selected K<0 branch; then S(t)=cuberoot(K(t)^2) and the resulting quadratic equation is solved exactly over canonical Real. Every candidate is replayed against the original cusp identity before publication.",
+    "cusp_join": "When consecutive offset spans meet at the represented old cusp with structurally opposite limiting offset vectors, the round-join authority constructs the exact certified semicircle. It does not sample, fit, or infer a finite tolerance turn.",
+    "tangent_deflation": "Known construction tangencies are divided from supporting-line and supporting-circle incidence polynomials with their authored multiplicity. A residual root that coincides with the certified parameter replaces its representation with the exact construction witness and remains nontransverse; residual multiplicity can never turn a tangent into a crossing.",
+    "rational_image": "For a retained rational curve restricted by an algebraic source parameter, the quotient-ring multiplication matrices encode N-uD modulo the source polynomial. A local dyadic interval determinant is converted exactly from power to Bernstein form. One sign variation, nonzero endpoints, a certified nonzero global leading coefficient, and the selected image interval together prove one simple image root before constructing BezierParameterPolynomial evidence.",
+    "native_circle": "Retained conic provenance is parameterization-independent. Degree elevation and general rational storage recover the same minor circular image through exact two-chart inversion; native arc dispatch reuses the operation batch cache and falls back to the complete general authority on any unproved precondition.",
+    "policy": "STRICT and APPROXIMATE_512 retain identical exact cusp points, curve carriers, contact multiplicities, and region topology. APPROXIMATE_512 remains available only for an otherwise unresolved final equality/sign decision and never substitutes 512-bit coordinates for canonical Real geometry."
+  },
+  "capability": {
+    "52a4132": "The radical old-cusp join remains an explicit Boundary blocker because the limiting join point and branch contact topology are not materialized.",
+    "bc3fbfa": "The represented radical cusp offsets into a nonempty authoritative CurveRegion2 under both policies with identical exact fragment-family, loop-role, and fill-rule signatures.",
+    "fallback": "Every unproved conic chart, tangent factor, local determinant, sweep, or injectivity condition falls through to the pre-existing complete intersection/arrangement authority rather than becoming a negative result."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "radical_cusp_release_process": {
+      "method": "release integration-test executable pinned to CPU 11; eleven independent processes; each process constructs and offsets the radical-cusp region once under STRICT and once under APPROXIMATE_512, then verifies identical exact output signatures",
+      "command": "/usr/bin/time -f 'elapsed_s=%e peak_kib=%M' taskset -c 11 target/release/deps/hypercurve_analytic_parallel_region-c10512dfad7a7e1d radical_parallel_cusp_offsets_exactly_under_both_policies --exact",
+      "elapsed_samples_s": [0.42, 0.43, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42],
+      "elapsed_median_s": 0.42,
+      "interpretation": "This is an end-to-end two-policy capability baseline including fixture construction and test assertions. Revision 52a4132 returns Boundary for the operation, so no historical exact timing peer exists."
+    },
+    "comparative_open_cubic": {
+      "method": "release comparative executable pinned to CPU 11; three independent processes, each with eleven samples targeted at 100 ms",
+      "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=bezier_offset/open_cubic target/release/deps/comparative-b2bf500a69174bc4",
+      "certified_process_medians_ns": [30775728.5, 30377428.5, 31129614.2],
+      "certified_process_median_ns": 30775728.5,
+      "historical_certified_process_median_ns": 30605630.2,
+      "certified_change_percent": 0.555775,
+      "chord_fallback_process_medians_ns": [990058.9, 984428.6, 1006416.9],
+      "chord_fallback_process_median_ns": 990058.9,
+      "historical_chord_fallback_process_median_ns": 957077.0,
+      "chord_fallback_change_percent": 3.446107,
+      "curvo_process_medians_ns": [8513.0, 8575.4, 8789.1],
+      "curvo_process_median_ns": 8575.4,
+      "exact_to_curvo_ratio": 3588.84,
+      "interpretation": "The certified lane is within 0.56% of the prior checkpoint and is treated as neutral process noise. Curvo is a binary64 heuristic without an exact closed-region or canonical-Real contract; its ratio is a competitive throughput sentinel, not a like-for-like regression."
+    },
+    "comparative_line_arc_capsule": {
+      "method": "the same three-process, eleven-sample comparative protocol",
+      "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=line_arc_offset/capsule_inward target/release/deps/comparative-b2bf500a69174bc4",
+      "hypercurve_process_medians_ns": [18001.0, 18672.3, 17973.7],
+      "hypercurve_process_median_ns": 18001.0,
+      "historical_hypercurve_process_median_ns": 18288.9,
+      "historical_change_percent": -1.574179,
+      "cavalier_process_medians_ns": [941.4, 975.5, 957.7],
+      "cavalier_process_median_ns": 957.7,
+      "exact_to_cavalier_ratio": 18.7961,
+      "hot_path_audit": "An initial 19781.2 ns process median exposed an 8.16% regression: the new same-circle adjacency specialization classified two exact sweeps before testing structural endpoint adjacency. Gating first with the two orientation-relevant endpoint comparisons reduced the final median by 9.00% and preserves the exact degenerate-arc guard.",
+      "interpretation": "The final exact line/arc control is 1.57% faster than the historical median. Cavalier is a finite binary64 peer and does not share Hypercurve's exactness or policy contract."
+    }
+  },
+  "memory": {
+    "application_peak_rss": {
+      "tool": "/usr/bin/time",
+      "samples_kib": [11484, 11560, 11588, 11356, 11556, 11548, 11628, 11420, 11556, 11532, 11480],
+      "median_kib": 11548,
+      "median_mib": 11.277344,
+      "interpretation": "This is whole-process RSS for fixture construction, both policy executions, assertions, and the Rust test harness."
+    },
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-test trace",
+      "profile": "/tmp/hypercurve-radical-cusp-offset-20260802.zst",
+      "workload": "one end-to-end STRICT plus APPROXIMATE_512 radical-cusp test process",
+      "allocation_calls": 6086345,
+      "temporary_allocations": 980144,
+      "peak_heap": "2.60 MiB",
+      "bigint_growth_allocation_calls": 963029,
+      "interpretation": "The retained exact output is small; cost is temporary exact-arithmetic churn. Bigint RawVec growth is the largest single allocation root and remains a measured Phase 7 optimization target."
+    }
+  },
+  "release_size": {
+    "method": "same all-feature curve_region_boolean_batch release executable as the prior checkpoint",
+    "file_bytes": 7826248,
+    "text_bytes": 5925790,
+    "prior_file_bytes": 7693712,
+    "prior_text_bytes": 5825646,
+    "file_change_bytes": 132536,
+    "text_change_bytes": 100144,
+    "file_change_percent": 1.722654,
+    "text_change_percent": 1.719020,
+    "interpretation": "The capability adds visible production text for exact conic parameter recovery, tangent provenance, and certified local determinant arithmetic. No compatibility shim or duplicate public engine is introduced; outlining/deduplication remains explicit size debt after performance and completeness work."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-radical-cusp-20260802 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31606,
+    "edges": 58054,
+    "prior_nodes": 31317,
+    "prior_edges": 57359,
+    "artifact": "/tmp/hypercurve-callgraph-radical-cusp-20260802/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegion2::offset_exact_general_raw -> exact_offset_span_from_analytic_parallel",
+      "exact_offset_span_from_analytic_parallel -> exact_parallel_limiting_tangent",
+      "CurveRegionBooleanContext::pair_result -> BezierParallel2::circle_incidence",
+      "locally_certified_rational_image_parameter -> quotient_ring_rational_map_matrices",
+      "locally_certified_rational_image_parameter -> determinant_local_bernstein_signs_from_enclosures",
+      "locally_certified_rational_image_parameter -> BezierAlgebraicParameter2::from_certified_simple_power_basis"
+    ]
+  },
+  "verification": {
+    "all_feature_library": "passed: 350 tests",
+    "no_default_library": "passed: 312 tests",
+    "focused_integrations": "passed at bc3fbfa: 4 analytic-parallel region, 98 Bezier fit/offset, 29 CurveIntersection, and 29 CurveRegion Boolean tests",
+    "strict_and_approximate": "passed identical exact radical-cusp offset signatures and every new tangent/conic residual regression under both policies where applicable",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_benchmarks": "passed radical-cusp process, open-cubic comparative, line/arc capsule comparative, and representative size builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "reduce bigint and certified-interval allocation churn on general rational-image recovery",
+    "represent general algebraic cusp/outer-join points and limiting tangents beyond the supported polynomial-quadratic radical",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection/export for exact analytic offsets",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}

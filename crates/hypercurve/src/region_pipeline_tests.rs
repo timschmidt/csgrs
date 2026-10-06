@@ -1,0 +1,1368 @@
+use crate::FillRule;
+use crate::bezier_retained_measure::BezierRetainedCurveEnvelope2;
+use crate::{
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
+    BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierSplitFragment2, BezierSubcurve2, Classification, Curve2, CurveCertainty, CurveContext,
+    CurveError, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    RegionPointLocation,
+};
+use proptest::prelude::*;
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn policy() -> CurveContext {
+    CurveContext::STRICT
+}
+
+trait IntoCertifiedClassification<T> {
+    fn into_certified_classification(self) -> Classification<T>;
+}
+
+impl<T> IntoCertifiedClassification<T> for Classification<T> {
+    fn into_certified_classification(self) -> Classification<T> {
+        self
+    }
+}
+
+impl<T> IntoCertifiedClassification<T> for CurveOutcome<Classification<T>> {
+    fn into_certified_classification(self) -> Classification<T> {
+        assert_eq!(self.certainty, CurveCertainty::Certified);
+        self.value
+    }
+}
+
+fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
+    match classification.into_certified_classification() {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
+}
+
+fn assert_real_eq(left: &Real, right: &Real) {
+    assert_eq!(left.partial_cmp(right), Some(std::cmp::Ordering::Equal));
+}
+
+fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
+    let left = left.to_f64_lossy().expect("left Real is approximable");
+    let right = right.to_f64_lossy().expect("right Real is approximable");
+    assert!(
+        (left - right).abs() <= tolerance,
+        "expected {left} to be within {tolerance} of {right}"
+    );
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
+}
+
+fn graph(fragments: Vec<BezierArrangementFragment2>) -> BezierArrangementGraph2 {
+    BezierArrangementGraph2::from_certified_fragments(fragments)
+}
+
+fn split_graph(
+    splits: &[crate::bezier_split::BezierSplitMaterialization2],
+) -> BezierArrangementGraph2 {
+    let mut fragments = Vec::new();
+    for (source, split) in splits.iter().enumerate() {
+        for (index, fragment) in split.fragments().iter().enumerate() {
+            fragments.push(BezierArrangementFragment2::new(
+                source,
+                index,
+                fragment.clone(),
+            ));
+        }
+    }
+    graph(fragments)
+}
+
+/// Admits closed traversal chains through public even-odd path regularization.
+fn region_from_traversal(
+    graph: &BezierArrangementGraph2,
+    traversal: &crate::BezierArrangementTraversal2,
+    policy: &CurveContext,
+) -> crate::ExactCurveResult<crate::CurveOutcome<CurveRegion2>> {
+    let paths = traversal
+        .chains()
+        .iter()
+        .map(|chain| {
+            CurvePath2::try_new(
+                chain
+                    .fragment_indices()
+                    .iter()
+                    .map(|&index| {
+                        crate::Curve2::from_retained_fragment(
+                            graph.fragments()[index].fragment().clone(),
+                        )
+                    })
+                    .collect(),
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    CurveRegion2::try_from_boundary_paths_with_policy(&paths, FillRule::EvenOdd, policy)
+}
+
+fn loop_envelope(boundary: &CurveRegionBoundaryLoop2) -> BezierRetainedCurveEnvelope2 {
+    let region = CurveRegion2::new(vec![boundary.clone()]).unwrap();
+    decided(BezierRetainedCurveEnvelope2::from_region(
+        &region,
+        &policy(),
+    ))
+}
+
+fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveRegionBoundaryLoop2 {
+    CurveRegionBoundaryLoop2::new(fragments, &policy()).unwrap()
+}
+
+fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFragment2 {
+    assert!(matches!(
+        fragment,
+        BezierSplitFragment2::RetainedBezier { .. }
+    ));
+    fragment.reversed().unwrap()
+}
+
+fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(vec![r(-1), r(2)], &policy())
+            .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(2, 5), q(3, 5), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
+}
+
+fn algebraic_sqrt_half_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(
+            vec![r(-1), r(0), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(2, 3), q(3, 4), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
+}
+
+fn algebraic_sqrt_eighth_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(
+            vec![r(-1), r(0), r(8)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new_with_policy(q(1, 3), q(2, 5), &policy()).unwrap());
+    decided(
+        BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
+            .unwrap(),
+    )
+}
+
+fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
+    decided(
+        BezierAlgebraicEndpointImage2::quadratic(curve, &algebraic_midpoint_parameter(), &policy())
+            .unwrap(),
+    )
+}
+
+fn algebraic_endpoint_line(start: Point2, end: Point2) -> Curve2 {
+    let far = Point2::new(
+        end.x() + (end.x() - start.x()),
+        end.y() + (end.y() - start.y()),
+    );
+    Curve2::from(QuadraticBezier2::new(start, end, far))
+        .subcurve_with_policy(
+            Real::zero().into(),
+            BezierParameter2::Algebraic(algebraic_midpoint_parameter()).into(),
+            &policy(),
+        )
+        .unwrap()
+        .into_value()
+}
+
+fn line_midpoint_curve(start_x: i32, mid_x: i32, end_x: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(p(start_x, 0), p(mid_x, 0), p(end_x, 0))
+}
+
+fn materialized_line_fragment(
+    source_curve_index: usize,
+    start: Point2,
+    midpoint: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
+    materialized_line_fragment_at(source_curve_index, 0, start, midpoint, end)
+}
+
+fn materialized_line_fragment_at(
+    source_curve_index: usize,
+    source_fragment_index: usize,
+    start: Point2,
+    midpoint: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
+    BezierArrangementFragment2::new(
+        source_curve_index,
+        source_fragment_index,
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(r(0)),
+            end: BezierParameter2::Exact(r(1)),
+            curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, midpoint, end)),
+        },
+    )
+}
+
+fn quadratic_polygon_path(vertices: &[Point2]) -> CurvePath2 {
+    CurvePath2::try_new(
+        (0..vertices.len())
+            .map(|i| {
+                let start = &vertices[i];
+                let end = &vertices[(i + 1) % vertices.len()];
+                QuadraticBezier2::new(start.clone(), start.lerp(end, q(1, 2)), end.clone()).into()
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() {
+    let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
+    let upper_split = decided(
+        upper
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
+            .unwrap(),
+    );
+    let lower_split = decided(
+        lower
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
+            .unwrap(),
+    );
+    let graph = split_graph(&[upper_split, lower_split]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    let region = region_from_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
+
+    assert_eq!(region.len(), 1);
+    assert_eq!(region.boundary_loops()[0].len(), 4);
+    assert_eq!(
+        decided(region.signed_area_with_policy(&policy()).unwrap()),
+        Some(q(32, 3))
+    );
+}
+
+#[test]
+fn open_arrangement_chain_does_not_materialize_region() {
+    let first = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
+    let second = QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0));
+    let first_split = decided(first.split_at_parameters(&[], &policy()).unwrap());
+    let second_split = decided(second.split_at_parameters(&[], &policy()).unwrap());
+    let graph = split_graph(&[first_split, second_split]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+
+    // An open walk is invalid boundary input, not an unresolved predicate.
+    assert!(matches!(
+        region_from_traversal(&graph, &traversal, &policy()),
+        Err(crate::ExactCurveError::Invalid {
+            cause: CurveError::OpenCurvePath,
+            ..
+        })
+    ));
+}
+
+#[test]
+fn quarter_circle_rational_conic_area_is_exact_symbolic_sector() {
+    let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+    let weight = (sqrt_two / Real::from(2_i8)).unwrap();
+    let quarter =
+        RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), weight).unwrap();
+
+    let area = quarter
+        .signed_area_contribution()
+        .unwrap()
+        .expect("quarter-circle conic area is supported");
+    assert_real_close(&area, &(Real::pi() / Real::from(4_i8)).unwrap(), 1.0e-12);
+}
+
+#[test]
+fn exact_conic_splits_and_reversal_retain_denominator_and_area_facts() {
+    let weight = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+    let quarter =
+        RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), weight).unwrap();
+    let materialization = decided(
+        quarter
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 3))], &policy())
+            .unwrap(),
+    );
+    let mut area = Real::zero();
+    let mut reversed_area = Real::zero();
+    for fragment in materialization.fragments() {
+        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+            panic!("represented conic split must materialize exactly");
+        };
+        assert!(matches!(curve, BezierSubcurve2::RationalQuadratic(_)));
+        let contribution = decided(curve.signed_area_contribution(&policy()).unwrap())
+            .expect("split conic retains a certified affine denominator");
+        area += contribution;
+        reversed_area += decided(
+            curve
+                .reversed()
+                .signed_area_contribution(&policy())
+                .unwrap(),
+        )
+        .expect("reversed split conic retains a certified affine denominator");
+    }
+    let expected = (Real::pi() / Real::from(4_i8)).unwrap();
+    assert_real_close(&area, &expected, 1.0e-12);
+    assert_real_close(&reversed_area, &(-expected), 1.0e-12);
+}
+
+#[test]
+fn equal_weight_rational_quadratic_area_matches_polynomial_exactly() {
+    let conic =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 3), p(4, 0), r(1)).unwrap();
+    let polynomial = QuadraticBezier2::new(p(0, 0), p(2, 3), p(4, 0));
+    let rational_area = conic
+        .signed_area_contribution()
+        .unwrap()
+        .expect("equal-weight rational quadratic has polynomial denominator");
+
+    assert_real_eq(
+        &rational_area,
+        &polynomial.signed_area_contribution().unwrap(),
+    );
+}
+
+#[test]
+fn rational_quadratic_area_is_invariant_under_negative_projective_scale() {
+    let positive =
+        RationalQuadraticBezier2::try_new(p(-1, 2), p(3, 5), p(7, -2), r(1), r(2), r(3)).unwrap();
+    let negative =
+        RationalQuadraticBezier2::try_new(p(-1, 2), p(3, 5), p(7, -2), r(-1), r(-2), r(-3))
+            .unwrap();
+
+    assert_real_eq(
+        &positive
+            .signed_area_contribution()
+            .unwrap()
+            .expect("positive same-sign weights have a finite area"),
+        &negative
+            .signed_area_contribution()
+            .unwrap()
+            .expect("negative same-sign weights have the same finite area"),
+    );
+}
+
+#[test]
+fn conic_region_boundary_materializes_with_exact_area() {
+    let upper =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 2), p(4, 0), q(1, 2)).unwrap();
+    let lower = RationalQuadraticBezier2::try_unit_end_weights(p(4, 0), p(2, -2), p(0, 0), q(1, 2))
+        .unwrap();
+    let upper_split = decided(
+        upper
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
+            .unwrap(),
+    );
+    let lower_split = decided(
+        lower
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
+            .unwrap(),
+    );
+    let graph = split_graph(&[upper_split, lower_split]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    let region = region_from_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
+
+    assert_eq!(region.len(), 1);
+    assert_eq!(region.boundary_loops()[0].len(), 4);
+    let sqrt_three = Real::from(3_i8).sqrt().unwrap();
+    let expected = ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap()
+        - (Real::from(8_i8) / Real::from(3_i8)).unwrap();
+    let area = decided(region.signed_area_with_policy(&policy()).unwrap())
+        .expect("same-sign conic region area is supported");
+    assert_real_close(&area, &expected, 1.0e-12);
+}
+
+#[test]
+fn conic_area_rejects_uncertified_projective_denominator() {
+    let conic =
+        RationalQuadraticBezier2::try_new(p(0, 0), p(1, 2), p(2, 0), r(1), r(-1), r(1)).unwrap();
+
+    assert_eq!(conic.signed_area_contribution().unwrap(), None);
+}
+
+#[test]
+fn reversed_internal_overlap_traversal_materializes_union_boundary() {
+    let graph = graph(vec![
+        materialized_line_fragment_at(0, 0, p(0, 0), p(1, 0), p(2, 0)),
+        materialized_line_fragment_at(0, 1, p(2, 0), p(2, 1), p(2, 2)),
+        materialized_line_fragment_at(0, 2, p(2, 2), p(1, 2), p(0, 2)),
+        materialized_line_fragment_at(0, 3, p(0, 2), p(0, 1), p(0, 0)),
+        materialized_line_fragment_at(1, 0, p(2, 0), p(3, 0), p(4, 0)),
+        materialized_line_fragment_at(1, 1, p(4, 0), p(4, 1), p(4, 2)),
+        materialized_line_fragment_at(1, 2, p(4, 2), p(3, 2), p(2, 2)),
+        materialized_line_fragment_at(1, 3, p(2, 2), p(2, 1), p(2, 0)),
+    ]);
+
+    // Two closed squares share the edge x = 2 with opposite traversals.
+    let traversal = crate::BezierArrangementTraversal2::new(vec![
+        crate::bezier_arrangement::BezierArrangementChain2::new(vec![0, 1, 2, 3], true).unwrap(),
+        crate::bezier_arrangement::BezierArrangementChain2::new(vec![4, 5, 6, 7], true).unwrap(),
+    ])
+    .unwrap();
+    let retained = region_from_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
+    assert_eq!(retained.len(), 1);
+    assert_eq!(retained.boundary_loops()[0].len(), 4);
+    assert_eq!(
+        decided(retained.signed_area_with_policy(&policy()).unwrap()),
+        Some(r(8))
+    );
+    for (point, location) in [
+        (p(2, 1), RegionPointLocation::Inside),
+        (p(2, 0), RegionPointLocation::Boundary),
+        (p(5, 1), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            decided(
+                retained
+                    .classify_point_with_policy(&point.clone().into(), &policy())
+                    .unwrap()
+            ),
+            location
+        );
+    }
+}
+
+#[test]
+fn retained_exact_line_images_assign_nested_material_and_hole() {
+    let outer = quadratic_polygon_path(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
+    let same_orientation_inner = quadratic_polygon_path(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[outer, same_orientation_inner],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
+
+    let roles = decided(retained.loop_roles_with_policy(&policy()).unwrap());
+    assert_eq!(
+        roles,
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+    );
+    assert_eq!(
+        retained
+            .filled_area_with_policy(&policy())
+            .unwrap()
+            .into_value(),
+        Classification::Decided(Some(r(32)))
+    );
+}
+
+#[test]
+fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies() {
+    let exact_path = |points: &[(Point2, Point2)]| {
+        CurvePath2::try_new_with_policy(
+            points
+                .iter()
+                .cloned()
+                .map(|(start, end)| algebraic_endpoint_line(start, end))
+                .collect(),
+            &policy(),
+        )
+        .unwrap()
+        .into_value()
+    };
+    let paths = [
+        exact_path(&[
+            (p(0, 0), p(4, 0)),
+            (p(4, 0), p(4, 4)),
+            (p(4, 4), p(0, 4)),
+            (p(0, 4), p(0, 0)),
+        ]),
+        exact_path(&[
+            (p(2, -1), p(6, -1)),
+            (p(6, -1), p(6, 3)),
+            (p(6, 3), p(2, 3)),
+            (p(2, 3), p(2, -1)),
+        ]),
+    ];
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let outcome = CurveRegion2::try_from_boundary_paths_with_policy(
+            &paths,
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let retained = outcome.into_value();
+        assert_eq!(
+            decided(retained.loop_roles_with_policy(&policy).unwrap()),
+            vec![CurveRegionLoopRole::Material; 2]
+        );
+        assert_eq!(
+            decided(retained.filled_side_is_left_with_policy(&policy).unwrap()),
+            &[true; 2]
+        );
+        assert_eq!(
+            decided(retained.filled_area_with_policy(&policy).unwrap()),
+            Some(r(20))
+        );
+        for (point, expected) in [
+            (p(1, 1), RegionPointLocation::Inside),
+            (p(5, 1), RegionPointLocation::Inside),
+            (p(3, 1), RegionPointLocation::Outside),
+            (p(7, 1), RegionPointLocation::Outside),
+            (p(0, 2), RegionPointLocation::Boundary),
+            (p(2, 0), RegionPointLocation::Boundary),
+            (p(4, 3), RegionPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                decided(
+                    retained
+                        .classify_point_with_policy(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
+                expected
+            );
+        }
+        assert_eq!(
+            retained
+                .regularized_region_with_policy(&policy)
+                .unwrap()
+                .into_value(),
+            retained
+        );
+    }
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
+    assert_topology_error(CurveRegionBoundaryLoop2::new(
+        vec![
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
+                curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(0, 0),
+                    p(1, 0),
+                    p(2, 0),
+                )),
+            },
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
+                curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(3, 0),
+                    p(4, 0),
+                    p(5, 0),
+                )),
+            },
+        ],
+        &policy(),
+    ));
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_forged_materialized_range_order() {
+    assert_topology_error(CurveRegionBoundaryLoop2::new(
+        vec![BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(r(1)),
+            end: BezierParameter2::Exact(r(0)),
+            curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(0, 0),
+                p(1, 1),
+                p(0, 0),
+            )),
+        }],
+        &policy(),
+    ));
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
+    let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
+    let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
+    let forged_image = algebraic_image(&QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)));
+
+    assert_topology_error(CurveRegionBoundaryLoop2::new(
+        vec![BezierSplitFragment2::RetainedBezier {
+            reversed: false,
+            start: BezierParameter2::Exact(Real::zero()),
+            end: parameter,
+            source_curve: crate::BezierSubcurve2::Quadratic(source_curve),
+            start_image: None,
+            end_image: Some(forged_image),
+        }],
+        &policy(),
+    ));
+}
+
+#[test]
+fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
+    let outer = CurvePath2::try_new_with_policy(
+        vec![
+            algebraic_endpoint_line(p(0, 0), p(6, 0)),
+            algebraic_endpoint_line(p(6, 0), p(6, 6)),
+            algebraic_endpoint_line(p(6, 6), p(0, 6)),
+            algebraic_endpoint_line(p(0, 6), p(0, 0)),
+        ],
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
+    let same_orientation_inner = CurvePath2::try_new_with_policy(
+        vec![
+            algebraic_endpoint_line(p(2, 2), p(4, 2)),
+            algebraic_endpoint_line(p(4, 2), p(4, 4)),
+            algebraic_endpoint_line(p(4, 4), p(2, 4)),
+            algebraic_endpoint_line(p(2, 4), p(2, 2)),
+        ],
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[outer, same_orientation_inner],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
+    let clone = retained.clone();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let roles = decided(retained.loop_roles_with_policy(&policy).unwrap());
+        assert_eq!(
+            roles,
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+        );
+        let native = decided(
+            retained
+                .native_contours_fast_path_with_policy(&policy)
+                .unwrap(),
+        );
+        assert_eq!(native.material_contours().len(), 1);
+        assert_eq!(native.hole_contours().len(), 1);
+        assert_eq!(
+            retained
+                .filled_area_with_policy(&policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(Some(r(32)))
+        );
+        assert_eq!(
+            retained
+                .classify_point_with_policy(&p(1, 1).into(), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            retained
+                .classify_point_with_policy(&p(3, 3).into(), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            retained
+                .classify_point_with_policy(&p(2, 3).into(), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Boundary)
+        );
+        assert_eq!(
+            retained
+                .classify_point_with_policy(&p(7, 3).into(), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            clone
+                .classify_point_with_policy(&p(3, 3).into(), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+    }
+}
+
+#[test]
+fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
+    let policy = policy();
+    let upper = Curve2::from(QuadraticBezier2::new(p(-1, 0), p(0, 2), p(1, 0)));
+    let parameter = BezierParameter2::Algebraic(algebraic_sqrt_half_parameter()).into();
+    let split = upper.split_at_with_policy(parameter, &policy).unwrap();
+    assert_eq!(split.certainty, CurveCertainty::Certified);
+    let (first, second) = split.into_value();
+    assert!(first.end().coordinates().is_none());
+    assert!(second.start().coordinates().is_none());
+    assert!(decided(
+        first
+            .end()
+            .coincides_with_with_policy(&second.start(), &policy)
+    ));
+    let lower = Curve2::from(QuadraticBezier2::new(p(1, 0), p(0, -2), p(-1, 0)));
+    let path = CurvePath2::try_new_with_policy(vec![first, second, lower], &policy)
+        .unwrap()
+        .into_value();
+    let region = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy,
+    )
+    .unwrap()
+    .into_value();
+    let clone = region.clone();
+
+    assert!(region.has_algebraic_fragments());
+    assert_eq!(
+        region
+            .classify_point_with_policy(&p(0, 0).into(), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        region
+            .classify_point_with_policy(&p(0, 2).into(), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+    assert_eq!(
+        region
+            .classify_point_with_policy(&p(2, 0).into(), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+    assert_eq!(
+        region
+            .classify_point_with_policy(&p(0, 1).into(), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Boundary)
+    );
+    assert_eq!(
+        clone
+            .classify_point_with_policy(&p(0, 0).into(), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+}
+
+#[test]
+fn retained_certified_nonlinear_line_image_uses_authoritative_roles() {
+    let path = CurvePath2::try_new(vec![
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(4, 0)).into(),
+        QuadraticBezier2::new(p(4, 0), p(4, 2), p(4, 4)).into(),
+        QuadraticBezier2::new(p(4, 4), p(2, 4), p(0, 4)).into(),
+        QuadraticBezier2::new(p(0, 4), p(0, 2), p(0, 0)).into(),
+    ])
+    .unwrap();
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[path],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(retained.loop_roles_with_policy(&policy()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let native = decided(
+        retained
+            .native_contours_fast_path_with_policy(&policy())
+            .unwrap(),
+    );
+    assert_eq!(native.material_contours().len(), 1);
+    assert!(native.hole_contours().is_empty());
+    assert_eq!(
+        retained
+            .filled_area_with_policy(&policy())
+            .unwrap()
+            .into_value(),
+        Classification::Decided(Some(r(16)))
+    );
+}
+
+fn quadratic_lens_path(left_x: i32, right_x: i32, height: i32) -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        QuadraticBezier2::new(
+            p(left_x, 0),
+            p((left_x + right_x) / 2, height),
+            p(right_x, 0),
+        )
+        .into(),
+        QuadraticBezier2::new(
+            p(right_x, 0),
+            p((left_x + right_x) / 2, -height),
+            p(left_x, 0),
+        )
+        .into(),
+    ])
+    .unwrap()
+}
+
+#[test]
+fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
+    let material = quadratic_lens_path(0, 8, 4);
+    let same_orientation_inner = quadratic_lens_path(2, 6, 1);
+    let retained = CurveRegion2::try_from_boundary_paths_with_policy(
+        &[material, same_orientation_inner],
+        crate::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
+
+    assert_eq!(
+        decided(retained.loop_roles_with_policy(&policy()).unwrap()),
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+    );
+    let profiles = decided(retained.boundary_profiles_with_policy(&policy()).unwrap());
+    assert_eq!(profiles.len(), 1);
+    assert_eq!(profiles[0].material_loop_index(), 0);
+    assert_eq!(profiles[0].hole_loop_indices(), &[1]);
+    for (boundary, expected_area) in retained.boundary_loops().iter().zip([q(64, 3), q(-8, 3)]) {
+        let sources = boundary
+            .arrangement_sources()
+            .expect("normalized boundary retains its source provenance");
+        assert_eq!(sources.len(), boundary.len());
+        let area = decided(boundary.signed_area_with_policy(&policy()).unwrap())
+            .expect("quadratic lens has an exact signed area");
+        assert_real_eq(&area, &expected_area);
+    }
+}
+
+#[test]
+fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
+    let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
+    let graph = split_graph(&[
+        decided(upper.split_at_parameters(&[], &policy()).unwrap()),
+        decided(lower.split_at_parameters(&[], &policy()).unwrap()),
+    ]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    let retained = region_from_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
+
+    let envelope = decided(retained.bounds_with_policy(&policy()).unwrap().into_value());
+    assert_eq!(envelope.min(), &p(0, -2));
+    assert_eq!(envelope.max(), &p(4, 2));
+}
+
+#[test]
+fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[BezierParameter2::Algebraic(algebraic_sqrt_half_parameter())],
+                &policy(),
+            )
+            .unwrap(),
+    );
+    assert!(
+        split
+            .fragments()
+            .iter()
+            .any(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
+    );
+    let mut fragments = split.fragments().to_vec();
+    fragments.push(BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
+        curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(2, 0), p(0, 0))),
+    });
+    let loop_with_algebraic_boundary = retained_loop(fragments);
+
+    let curve_envelope = loop_envelope(&loop_with_algebraic_boundary);
+
+    assert_eq!(curve_envelope.envelope().min(), &p(0, 0));
+    assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
+}
+
+#[test]
+fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[BezierParameter2::Algebraic(algebraic_sqrt_half_parameter())],
+                &policy(),
+            )
+            .unwrap(),
+    );
+    let first_fragment = split.fragments()[0].clone();
+    let first_fragment_loop = retained_loop(vec![
+        first_fragment.clone(),
+        reversed_algebraic_fragment(&first_fragment),
+    ]);
+
+    let envelope = loop_envelope(&first_fragment_loop);
+
+    assert_eq!(envelope.envelope().min(), &p(0, 0));
+    assert_eq!(envelope.envelope().max(), &Point2::new(q(3, 1), q(2, 1)));
+}
+
+#[test]
+fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(0, 0), p(8, 0));
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[BezierParameter2::Algebraic(
+                    algebraic_sqrt_eighth_parameter(),
+                )],
+                &policy(),
+            )
+            .unwrap(),
+    );
+    let first_fragment = split.fragments()[0].clone();
+    let first_fragment_loop = retained_loop(vec![
+        first_fragment.clone(),
+        reversed_algebraic_fragment(&first_fragment),
+    ]);
+
+    let envelope = loop_envelope(&first_fragment_loop);
+
+    assert_eq!(envelope.envelope().min(), &p(0, 0));
+    assert_eq!(envelope.envelope().max(), &p(1, 0));
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
+    let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
+    let source = line_midpoint_curve(-1, 0, 1);
+    let partial = BezierSplitFragment2::RetainedBezier {
+        reversed: false,
+        start: BezierParameter2::Exact(Real::zero()),
+        end: parameter,
+        source_curve: BezierSubcurve2::Quadratic(source),
+        start_image: None,
+        end_image: None,
+    };
+
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![partial], &policy()));
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence() {
+    let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
+    let source_curve =
+        crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
+    let source_only = BezierSplitFragment2::RetainedBezier {
+        reversed: false,
+        start: BezierParameter2::Exact(Real::zero()),
+        end: parameter,
+        source_curve,
+        start_image: None,
+        end_image: None,
+    };
+
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![source_only], &policy()));
+}
+
+proptest! {
+    #[test]
+    fn symmetric_quadratic_lens_area_scales_exactly(
+        height in 1_i32..=12,
+    ) {
+        let upper = QuadraticBezier2::new(p(0, 0), p(2, height), p(4, 0));
+        let lower = QuadraticBezier2::new(p(4, 0), p(2, -height), p(0, 0));
+        let graph = split_graph(&[
+            decided(upper.split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy()).unwrap()),
+            decided(lower.split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy()).unwrap()),
+        ]);
+        let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+        let region = region_from_traversal(&graph, &traversal, &policy()).expect("regularized arrangement region")
+                .into_value();
+
+        prop_assert_eq!(
+            decided(region.signed_area_with_policy(&policy()).unwrap()),
+            Some(q(8 * height, 3))
+        );
+    }
+}
+
+#[test]
+fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (loops, loop_count, area, samples) in [
+            (
+                vec![
+                    vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4)],
+                    vec![p(2, 0), p(6, 0), p(6, 4), p(2, 4)],
+                ],
+                2,
+                r(16),
+                vec![
+                    (p(3, 0), RegionPointLocation::Outside),
+                    (p(3, 2), RegionPointLocation::Outside),
+                    (p(1, 2), RegionPointLocation::Inside),
+                    (p(5, 2), RegionPointLocation::Inside),
+                ],
+            ),
+            (
+                vec![vec![p(0, 0), p(4, 4), p(0, 4), p(4, 0)]],
+                2,
+                r(8),
+                vec![
+                    (p(2, 1), RegionPointLocation::Inside),
+                    (p(2, 3), RegionPointLocation::Inside),
+                    (p(0, 2), RegionPointLocation::Outside),
+                    (p(2, 2), RegionPointLocation::Boundary),
+                ],
+            ),
+            (
+                vec![
+                    vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4)],
+                    vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4)],
+                ],
+                0,
+                r(0),
+                vec![
+                    (p(0, 2), RegionPointLocation::Outside),
+                    (p(2, 2), RegionPointLocation::Outside),
+                ],
+            ),
+        ] {
+            let mut chains = Vec::new();
+            let mut fragments = Vec::new();
+            for points in loops {
+                let mut indices = Vec::new();
+                for i in 0..points.len() {
+                    let index = fragments.len();
+                    indices.push(index);
+                    let a = points[i].clone();
+                    let b = points[(i + 1) % points.len()].clone();
+                    fragments.push(materialized_line_fragment(
+                        index,
+                        a.clone(),
+                        a.lerp(&b, q(1, 2)),
+                        b,
+                    ));
+                }
+                chains.push(
+                    crate::bezier_arrangement::BezierArrangementChain2::new(indices, true).unwrap(),
+                );
+            }
+            let graph = graph(fragments);
+            let traversal = crate::BezierArrangementTraversal2::new(chains).unwrap();
+            let outcome = region_from_traversal(&graph, &traversal, &policy)
+                .expect("closed exact walks must publish their regularized set");
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let region = outcome.into_value();
+            assert_eq!(region.len(), loop_count);
+            assert_eq!(
+                decided(region.signed_area_with_policy(&policy).unwrap()),
+                Some(area)
+            );
+            assert!(
+                decided(region.filled_side_is_left_with_policy(&policy).unwrap())
+                    .iter()
+                    .all(|left| *left)
+            );
+            for (point, expected) in samples {
+                assert_eq!(
+                    decided(
+                        region
+                            .classify_point_with_policy(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
+                    expected
+                );
+            }
+            let replay = region.regularized_region_with_policy(&policy).unwrap();
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.into_value(), region);
+            let difference = region
+                .boolean_region_with_policy(&region, crate::BooleanOp::Difference, &policy)
+                .unwrap();
+            assert_eq!(difference.certainty, CurveCertainty::Certified);
+            assert!(difference.into_value().is_empty());
+        }
+    }
+}
+
+#[test]
+fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let upper = QuadraticBezier2::new(p(-1, 0), p(0, 2), p(1, 0));
+        let lower = QuadraticBezier2::new(p(1, 0), p(0, -2), p(-1, 0));
+        let split = decided(
+            upper
+                .split_at_parameters(
+                    &[BezierParameter2::Algebraic(algebraic_sqrt_half_parameter())],
+                    &policy,
+                )
+                .unwrap(),
+        );
+        assert!(
+            split
+                .fragments()
+                .iter()
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
+        );
+        let graph = split_graph(&[
+            split,
+            decided(lower.split_at_parameters(&[], &policy).unwrap()),
+        ]);
+        let traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
+        let outcome = region_from_traversal(&graph, &traversal, &policy)
+            .expect("selected exact curves close through arrangement admission");
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let region = outcome.into_value();
+        assert!(region.has_algebraic_fragments());
+        for (point, expected) in [
+            (p(0, 0), RegionPointLocation::Inside),
+            (p(0, 1), RegionPointLocation::Boundary),
+            (p(0, 2), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                decided(
+                    region
+                        .classify_point_with_policy(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
+                expected
+            );
+        }
+        let paths = decided(region.boundary_paths_with_policy(&policy).unwrap());
+        let reversed = paths
+            .iter()
+            .map(|path| {
+                let outcome = path.reversed_with_policy(&policy).unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                outcome.into_value()
+            })
+            .collect::<Vec<_>>();
+        let reconstructed = CurveRegion2::try_from_boundary_paths_with_policy(
+            &reversed,
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap();
+        assert_eq!(reconstructed.certainty, CurveCertainty::Certified);
+        let xor = region
+            .boolean_region_with_policy(&reconstructed.into_value(), crate::BooleanOp::Xor, &policy)
+            .unwrap();
+        assert_eq!(xor.certainty, CurveCertainty::Certified);
+        assert!(xor.into_value().is_empty());
+        let translated = region
+            .transform_affine_with_policy(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &r(6),
+                &Real::zero(),
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        let union = region
+            .boolean_region_with_policy(&translated, crate::BooleanOp::Union, &policy)
+            .unwrap()
+            .into_value();
+        let components = union.material_components_with_policy(&policy).unwrap();
+        assert_eq!(components.certainty, CurveCertainty::Certified);
+        assert_eq!(components.value.len(), 2);
+        for component in components.into_value() {
+            assert!(component.has_algebraic_fragments());
+            let replay = component.regularized_region_with_policy(&policy).unwrap();
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.into_value(), component);
+        }
+    }
+}
+
+#[test]
+fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
+    fn square(a: i32, b: i32) -> crate::CurvePath2 {
+        let points = [p(a, a), p(b, a), p(b, b), p(a, b)];
+        crate::CurvePath2::try_new(
+            (0..4)
+                .map(|i| {
+                    crate::LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap()
+    }
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let paths = [
+            square(4, 12),
+            square(6, 10),
+            square(0, 16),
+            square(2, 14),
+            square(20, 24),
+        ];
+        let region = CurveRegion2::try_from_boundary_paths_with_policy(
+            &paths,
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let outcome = region.material_components_with_policy(&policy).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let components = outcome.into_value();
+        assert_eq!(components.len(), 3);
+        let interior_samples = [
+            (p(1, 8), r(112), 2),
+            (p(5, 8), r(48), 2),
+            (p(22, 22), r(16), 1),
+        ];
+        for (point, expected_area, expected_loops) in interior_samples {
+            let owners = components
+                .iter()
+                .filter(|component| {
+                    decided(
+                        component
+                            .classify_point_with_policy(&point.clone().into(), &policy)
+                            .unwrap(),
+                    ) == RegionPointLocation::Inside
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(owners.len(), 1);
+            let component = owners[0];
+            assert_eq!(component.len(), expected_loops);
+            assert_eq!(
+                decided(component.signed_area_with_policy(&policy).unwrap()),
+                Some(expected_area)
+            );
+            let roles = decided(component.loop_roles_with_policy(&policy).unwrap());
+            assert_eq!(roles[0], CurveRegionLoopRole::Material);
+            assert!(
+                roles[1..]
+                    .iter()
+                    .all(|role| *role == CurveRegionLoopRole::Hole)
+            );
+            assert!(
+                decided(component.filled_side_is_left_with_policy(&policy).unwrap())
+                    .iter()
+                    .all(|left| *left)
+            );
+            assert_eq!(
+                component
+                    .material_components_with_policy(&policy)
+                    .unwrap()
+                    .into_value(),
+                vec![component.clone()]
+            );
+        }
+        for point in [p(3, 8), p(8, 8), p(18, 18)] {
+            for component in &components {
+                assert_eq!(
+                    decided(
+                        component
+                            .classify_point_with_policy(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
+                    RegionPointLocation::Outside
+                );
+            }
+        }
+        let mut recomposed = CurveRegion2::empty();
+        for (i, component) in components.iter().enumerate() {
+            for other in &components[i + 1..] {
+                assert!(
+                    component
+                        .boolean_region_with_policy(other, crate::BooleanOp::Intersection, &policy)
+                        .unwrap()
+                        .into_value()
+                        .is_empty()
+                );
+            }
+            recomposed = recomposed
+                .boolean_region_with_policy(component, crate::BooleanOp::Union, &policy)
+                .unwrap()
+                .into_value();
+        }
+        assert!(
+            region
+                .boolean_region_with_policy(&recomposed, crate::BooleanOp::Xor, &policy)
+                .unwrap()
+                .into_value()
+                .is_empty()
+        );
+        assert!(
+            CurveRegion2::empty()
+                .material_components_with_policy(&policy)
+                .unwrap()
+                .into_value()
+                .is_empty()
+        );
+
+        // Admission removes the inner filled seam before component extraction.
+        let authored = CurveRegion2::try_from_boundary_paths_with_loop_semantics_with_policy(
+            &[
+                quadratic_polygon_path(&[p(0, 0), p(8, 0), p(8, 8), p(0, 8)]),
+                quadratic_polygon_path(&[p(2, 2), p(6, 2), p(6, 6), p(2, 6)]),
+            ],
+            &[CurveRegionLoopRole::Material; 2],
+            &[crate::FillRule::NonZero; 2],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        assert_eq!(authored.len(), 1);
+        assert_eq!(
+            decided(
+                authored
+                    .classify_point_with_policy(&p(2, 4).into(), &policy)
+                    .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+        let components = authored
+            .material_components_with_policy(&policy)
+            .unwrap()
+            .into_value();
+        assert_eq!(components.len(), 1);
+        assert_eq!(components[0].len(), 1);
+        assert_eq!(
+            decided(
+                components[0]
+                    .classify_point_with_policy(&p(2, 4).into(), &policy)
+                    .unwrap()
+            ),
+            RegionPointLocation::Inside
+        );
+    }
+}

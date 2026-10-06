@@ -1,0 +1,163 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact algebraic-cusp semicircle and analytic-parallel intersections",
+  "source_revision": "a910846b0861331657b928779d7e7455de6c52b3",
+  "comparison_revision": "a7090800f5b3c7cb7061f1fc7e4b96e4003e4f19",
+  "previous_checkpoint": "2026-08-02-general-algebraic-cusp-point-images.json",
+  "scope": {
+    "included": [
+      "one shared retained-cusp resultant and local-field fiber projection authority for rational and analytic-parallel contacts",
+      "exact squared analytic-parallel circle projection followed by unsquared radical-branch replay",
+      "selected semicircle half, Start/End/Interior location, and tangent-cross classification",
+      "pair-shared monotone semicircle-parameter maps with exact witnesses or certified rational brackets",
+      "rational/PH/zero-distance fast-path reuse",
+      "STRICT and APPROXIMATE_512 policy coverage",
+      "matched parent runtime, linked-size, allocation, historical/competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "positive-dimensional squared-radical component overlap replay",
+      "algebraic-cusp versus algebraic-cusp contacts",
+      "CurveRegion2 fragment and arrangement admission",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "frame": "The cusp circle center C and unit diameter normal Nc are rational functions of one retained cusp root alpha with shared denominator Dc.",
+    "parallel": "For analytic parallel Q=P+eN at parameter beta, source tangent numerator H, squared speed S=H dot H, and common denominator DcW, delta=P-C is retained without evaluating sqrt(S).",
+    "circle_projection": "Writing the circle residual as R+K/sqrt(S), the complete polynomial candidate equation is R^2 S-K^2=0. Every candidate is replayed against the unsquared expression, so the opposite normal branch is never promoted.",
+    "half_selection": "Both the selected-half and diameter-side expressions are represented as A+B/sqrt(S). Their exact sign uses term signs and, only when they oppose, the sign of A^2 S-B^2 in the correlated local field.",
+    "tangent": "The circle/parallel tangent cross reduces to -turn*(Q-C) dot H times the exact analytic-parallel derivative-scale sign; the normal contribution vanishes by orthogonality.",
+    "parameter_map": "The normalized diameter coordinate equals (1-2u)/((1-u)^2+u^2), which is strictly decreasing on [0,1]. Exact radical-sign comparison therefore orders each correlated contact against rational u and bisects a certified bracket without constructing another algebraic tower.",
+    "degeneracy": "An identically zero squared radical projection is explicit DegenerateProjection unless the exact rational fast path proves a true coincident circle. It is not silently promoted to overlap.",
+    "policy": "STRICT accepts exact signs and local-field counts only. APPROXIMATE_512 follows the same graph and may terminate only through the configured 512-bit predicate boundary, which records consumption."
+  },
+  "capability": {
+    "comparison_revision": "The algebraic cusp carrier intersected rational Beziers but had no analytic-parallel pair kernel, so the principal exact offset family could not be checked against a general algebraic U-turn join.",
+    "source_revision": "General non-PH analytic parallels now have complete isolated-contact projection and exact selected-branch replay against the algebraic cusp semicircle.",
+    "fixtures": [
+      "a non-PH quadratic parallel tangent to the upper semicircle at its interior midpoint",
+      "a transverse non-PH quadratic parallel contact at the traversal start/end under reversal",
+      "an opposite-normal branch whose squared incidence vanishes but whose actual parallel is rejected",
+      "a reducible cusp polynomial whose foreign root is excluded from the selected local field"
+    ],
+    "intentional_boundary": "The carrier remains crate-internal. Positive-dimensional squared-radical projections stay explicit until selected-branch overlap ranges are replayed, and no partial family is admitted to CurveRegion2."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "focused_capability": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; each process executes both policies, the selected and opposite radical branches, tangent classification, parameter-map comparisons, and exact bracketing",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly --exact",
+      "task_clock_ms": 3.76,
+      "cycles": 11184625,
+      "instructions": 28712453,
+      "branches": 5408649,
+      "branch_misses": 82101,
+      "elapsed_seconds": 0.004063245,
+      "interpretation": "This is a new exact capability baseline. It includes test-harness setup and four full two-policy contact/map paths, not only one warm pair query."
+    },
+    "matched_parent_rational_cusp_guard": {
+      "workload": "unchanged two-policy general-cubic cusp/source rational-contact regression",
+      "method": "adjacent eleven-run perf-stat measurements of release unit-test executables pinned to CPU 11",
+      "comparison_revision": {
+        "task_clock_ms": 1388.16,
+        "cycles": 5661710530,
+        "instructions": 16815010567,
+        "branches": 2749590303,
+        "branch_misses": 21467275,
+        "elapsed_seconds": 1.393956228
+      },
+      "source_revision": {
+        "task_clock_ms": 1382.74,
+        "cycles": 5646001734,
+        "instructions": 16815961914,
+        "branches": 2749754897,
+        "branch_misses": 21485540,
+        "elapsed_seconds": 1.388802003
+      },
+      "change_percent": {
+        "task_clock": -0.39045,
+        "cycles": -0.27747,
+        "instructions": 0.00566,
+        "branches": 0.00599,
+        "branch_misses": 0.08508,
+        "elapsed": -0.36975
+      },
+      "interpretation": "Extracting the shared selected-root projection/fiber authority is instruction-neutral and slightly faster in wall time."
+    },
+    "historical_and_competitive_controls": {
+      "method": "three alternating source/comparison processes, each with eleven 100 ms samples pinned to CPU 11; values are medians of process medians",
+      "open_cubic_comparison_ns": 29616288.8,
+      "open_cubic_source_ns": 29761941.2,
+      "open_cubic_change_percent": 0.49178,
+      "line_arc_comparison_ns": 18882.9,
+      "line_arc_source_ns": 18854.4,
+      "line_arc_change_percent": -0.15093,
+      "current_curvo_open_cubic_ns": 8310.4,
+      "current_cavalier_line_arc_ns": 913.5,
+      "interpretation": "Existing exact offset guards remain within sub-percent process noise. Curvo and Cavalier remain finite binary64 controls and cannot retain the selected cusp root, correlated radical branch, exact contact map, or CurveRegion2 topology supplied here."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-unit-test trace",
+      "profile": "/tmp/hypercurve-algebraic-cusp-parallel-a910846.zst",
+      "workload": "complete two-policy selected/opposite radical contact and parameter-map fixture",
+      "allocation_calls": 39165,
+      "temporary_allocations": 2777,
+      "peak_heap": "315.54 KiB",
+      "instrumented_runtime_seconds": 0.05,
+      "interpretation": "The profile includes fixture construction, resultant projection, both policy executions, opposite-branch rejection, map construction, and exact bracket replay. Bigint/Sturm work remains the dominant allocation target."
+    }
+  },
+  "release_size": {
+    "method": "matched all-feature curve_region_boolean_batch release executables built against identical live dependency revisions",
+    "source_file_bytes": 7875160,
+    "comparison_file_bytes": 7875816,
+    "file_change_bytes": -656,
+    "aggregate_text_bytes": 5961394,
+    "aggregate_data_bytes": 266400,
+    "aggregate_bss_bytes": 4136,
+    "actual_text_section_bytes": 4436295,
+    "allocated_section_bytes": 6232686,
+    "comparison_actual_text_section_bytes": 4436295,
+    "comparison_allocated_section_bytes": 6232686,
+    "interpretation": "The still-internal general pair kernel is dead-stripped from the representative production executable. All allocated sections, including .text, are byte-identical; the smaller file delta is non-loadable metadata."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-cusp-parallel-a910846-clean --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31993,
+    "edges": 59121,
+    "artifact": "/tmp/hypercurve-callgraph-algebraic-cusp-parallel-a910846-clean/callgraph.json",
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections -> rational_intersections for exact rational/PH carriers",
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections -> parallel_system -> algebraic_cusp_projected_fiber_parameters",
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections -> algebraic_cusp_correlated_radical_sum_sign",
+      "algebraic_cusp_projected_fiber_parameters -> resultant_bivariate_polynomial_system -> count_bivariate_fiber_roots_at_algebraic_parameter_intervals"
+    ]
+  },
+  "verification": {
+    "focused_fixtures": "passed selected interior tangency, exact u=1/2 map, opposite radical rejection, transverse endpoint, and reversal under STRICT and APPROXIMATE_512",
+    "all_feature_library": "passed: 365 tests",
+    "no_default_library": "build and test compilation passed",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature focused unit, comparative, and curve_region_boolean_batch builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "implement algebraic-cusp versus algebraic-cusp contacts and overlap identity",
+    "define compact contact-cut and subfragment evidence without a third algebraic tower",
+    "admit the complete carrier to CurveRegion2 pair dispatch, splitting, winding, and traversal",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing bigint and local-field allocation churn"
+  ]
+}

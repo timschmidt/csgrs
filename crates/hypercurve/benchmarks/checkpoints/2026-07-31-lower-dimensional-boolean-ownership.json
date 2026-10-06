@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "lower-dimensional-boolean-ownership",
+  "source_revision": "fdf740a37c1ac11cef582c0fbaea18288949f6c6",
+  "implementation_revisions": [
+    "fdf740a"
+  ],
+  "historical_control_revision": "862b48666242a8785bda3ee934adc1e818e0952d",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "regularization_contract": "CurveRegion2 Boolean results are regularized two-dimensional sets; zero-area point and curve contacts remain in intersection evidence but are not published as region interiors",
+    "ownership_publication": "unchanged exact line-image output loops receive certified material/hole roles without rebuilding their retained geometry or provenance",
+    "single_compactor": "the separate affine and retained-line-image result compactors are replaced by one compact_line_image_result specialization under CurveRegionBooleanContext",
+    "empty_result": "the process-shared empty CurveRegion2 bypasses role attachment and remains allocation-free",
+    "public_api_growth": false,
+    "compatibility_shims_added": false
+  },
+  "mathematical_coverage": {
+    "affine_point_contact": "two squares sharing exactly one vertex retain a certified contact, have empty regularized intersection, and publish two material loops for union and xor",
+    "affine_complete_edge_contact": "two squares sharing one complete edge retain exact overlap evidence, have empty regularized intersection, and cancel the interior edge in union and xor",
+    "affine_partial_edge_contact": "attached and boundary-contained rectangles exercise partial codirected and opposed shared-edge ownership",
+    "external_conic_tangency": "two externally tangent exact circles preserve two material components and no point-sized region intersection",
+    "internal_conic_tangency": "an internally tangent exact circle remains a one-loop intersection and a material-plus-hole difference/xor",
+    "operations": [
+      "union",
+      "intersection",
+      "difference",
+      "xor"
+    ],
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ]
+  },
+  "exactness_and_policy": {
+    "contact_evidence": "point and positive-length overlap witnesses remain exact and complete even when regularization removes them from a region result",
+    "role_proof": "oriented exact line area determines each retained loop role; zero area is a typed invalid topology and an unresolved sign remains a policy-aware blocker",
+    "strict": "STRICT returns only certified exact side ownership and never turns an unresolved sign or endpoint relation into geometry",
+    "approximate_512": "APPROXIMATE_512 may terminate only the inherited equality/sign predicate at 512 bits; retained fragments and published coordinates remain exact",
+    "mutation_check": "returning an unchanged point-touch line result without attaching certified roles makes a deep interior query return Uncertain(Boundary), and the affine point-contact regression fails"
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 14 HYPERCURVE_PATHOLOGICAL_MODE=boolean {historical,candidate pathological_regions binary}",
+    "method": "one warm-up followed by eleven alternating-order process pairs; complete 67-cell all-family workload; matched dependency state and toolchain",
+    "cells_per_process": 67,
+    "historical_milliseconds": [
+      483.962990,
+      486.065997,
+      488.657509,
+      481.400206,
+      487.314361,
+      481.147993,
+      483.835249,
+      485.816654,
+      485.135391,
+      496.362641,
+      482.199471
+    ],
+    "candidate_milliseconds": [
+      486.803866,
+      485.095193,
+      484.577208,
+      482.822289,
+      488.718724,
+      487.703134,
+      480.667667,
+      486.026989,
+      484.344634,
+      484.017287,
+      487.874033
+    ],
+    "historical_median_milliseconds": 485.135391,
+    "candidate_median_milliseconds": 485.095193,
+    "median_change_percent": -0.008286,
+    "paired_geometric_mean_change_percent": -0.058398,
+    "interpretation": "the complete all-family workload is throughput-neutral"
+  },
+  "point_contact_shared_benchmark": {
+    "command": "taskset -c 14 HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=point-touch-rectangles HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=20000 HYPERCURVE_CURVE_REGION_BATCH_MODE=shared {historical,candidate curve_region_boolean_batch binary}",
+    "method": "one long warm-up followed by eleven alternating-order process pairs; one shared all-four Boolean batch per iteration",
+    "historical_nanoseconds_per_batch": [
+      55095,
+      53186,
+      54516,
+      54718,
+      53578,
+      53406,
+      53512,
+      54540,
+      54712,
+      53744,
+      53864
+    ],
+    "candidate_nanoseconds_per_batch": [
+      55252,
+      55085,
+      56378,
+      56277,
+      54106,
+      54269,
+      53993,
+      53269,
+      54348,
+      54233,
+      53595
+    ],
+    "historical_median_nanoseconds": 53864,
+    "candidate_median_nanoseconds": 54269,
+    "median_change_percent": 0.751894,
+    "paired_geometric_mean_change_percent": 0.988369,
+    "interpretation": "explicit role publication remains inside the established two-percent checkpoint gate"
+  },
+  "heaptrack": {
+    "all_family": {
+      "historical_allocation_calls": 8271997,
+      "candidate_allocation_calls": 8271997,
+      "historical_temporary_allocations": 1388763,
+      "candidate_temporary_allocations": 1388763,
+      "historical_peak_heap": "34.70M",
+      "candidate_peak_heap": "34.70M",
+      "historical_peak_rss": "65.10M",
+      "candidate_peak_rss": "65.09M",
+      "historical_total_leaked": "476.82K",
+      "candidate_total_leaked": "476.82K",
+      "interpretation": "allocation calls, temporary allocations, peak heap, and leaks are unchanged"
+    },
+    "point_contact_1000_shared_batches": {
+      "historical_allocation_calls": 419564,
+      "candidate_allocation_calls": 419566,
+      "historical_temporary_allocations": 10026,
+      "candidate_temporary_allocations": 10026,
+      "historical_peak_heap": "116.81K",
+      "candidate_peak_heap": "116.86K",
+      "historical_peak_rss": "8.35M",
+      "candidate_peak_rss": "8.34M",
+      "interpretation": "the two extra calls initialize process-lifetime one- and two-material role tables; there is no recurring allocation delta over 1000 batches"
+    }
+  },
+  "matched_pathological_binary": {
+    "historical_file_bytes": 7225024,
+    "candidate_file_bytes": 7234872,
+    "file_change_bytes": 9848,
+    "file_change_percent": 0.136304,
+    "historical_stripped_bytes": 5745584,
+    "candidate_stripped_bytes": 5749904,
+    "stripped_change_bytes": 4320,
+    "stripped_change_percent": 0.075188,
+    "historical_text_bytes": 5475550,
+    "candidate_text_bytes": 5479530,
+    "text_change_bytes": 3980,
+    "historical_data_bytes": 266160,
+    "candidate_data_bytes": 266496,
+    "historical_bss_bytes": 2792,
+    "candidate_bss_bytes": 2640,
+    "historical_loadable_bytes": 5744502,
+    "candidate_loadable_bytes": 5748666,
+    "loadable_change_bytes": 4164,
+    "loadable_change_percent": 0.072487
+  },
+  "matched_point_contact_binary": {
+    "historical_file_bytes": 6454800,
+    "candidate_file_bytes": 6458168,
+    "file_change_bytes": 3368,
+    "file_change_percent": 0.052178
+  },
+  "static_call_graph": {
+    "command": "hyper-callgraph --root {snapshot} --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_nodes": 23049,
+    "candidate_nodes": 23085,
+    "node_change": 36,
+    "historical_edges": 39818,
+    "candidate_edges": 39890,
+    "edge_change": 72,
+    "source_only_historical_nodes": 16949,
+    "source_only_candidate_nodes": 16957,
+    "source_only_node_change": 8,
+    "source_only_historical_edges": 28634,
+    "source_only_candidate_edges": 28660,
+    "source_only_edge_change": 26,
+    "historical_artifact": "/tmp/hypercurve-lower-dimensional-callgraph-parent-full/callgraph.json",
+    "candidate_artifact": "/tmp/hypercurve-lower-dimensional-callgraph-current-full/callgraph.json",
+    "interpretation": "the full delta is dominated by three integration regressions; production routing deletes two compactor entries and retains one authoritative line-image publication path"
+  },
+  "competitive_context": {
+    "rerun": false,
+    "reason": "the checkpoint changes exact regularization and result-role publication, not the competitive finite-geometry fixture contract",
+    "retained_reference": "the mixed-line/conic checkpoint records a 61.98x gap to Cavalier binary64 under explicitly unequal exactness and degeneracy guarantees"
+  },
+  "verification": {
+    "library_default_features": "264 passed",
+    "focused_curve_region_boolean_all_features": "25 passed",
+    "persistent_curve_region_boolean_fuzz_all_features": "11 passed",
+    "full_all_features": "pass; 268 unit tests plus all integration and documentation tests",
+    "clippy_all_targets_all_features_deny_warnings": "pass",
+    "clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "formatting": "pass",
+    "diff_check": "pass",
+    "no_default_test_execution": "the historical parent and candidate both retain eight predicate-dependent bezier_moment test failures when predicates are deliberately disabled; compilation and warning-denied Clippy pass",
+    "hypermesh_modified": false
+  },
+  "remaining_boundaries": [
+    "support shared components without a certified injective coordinate or retained inverse",
+    "publish native conic and arc results compactly inside the authoritative arrangement",
+    "reduce authoritative topology construction overhead for isolated single-operation calls without restoring a second engine",
+    "complete exact general offsets and solver-driven fillet/chamfer"
+  ]
+}

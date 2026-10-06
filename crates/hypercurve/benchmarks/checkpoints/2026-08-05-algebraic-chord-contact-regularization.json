@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-05",
+  "checkpoint": "algebraic-chord-contact-regularization",
+  "source_revision": "51a6f6bbe8867be4afe5bfd11058e114c67b06b8",
+  "implementation_revision": "a871457815e1a01b30c4246102b5285a3774c873",
+  "benchmark_revision": "828a173dae82178908c0620909e83713ba7c1cc0",
+  "optimization_revisions": [
+    "9b3c1b9c1cb1326784cdbcced707298cbd79e48d",
+    "06543fe4bd932897582afb090766d7891421be1f"
+  ],
+  "matched_control_revision": "51a6f6bbe8867be4afe5bfd11058e114c67b06b8",
+  "preceding_checkpoint": "2026-08-05-algebraic-curve-region-boolean.json",
+  "dependency_snapshot": {
+    "hyperreal": "e238dc1615e0c5945c8fc1f25c12fde6ef3eb756",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "d2dee8fb801e3255dbcef93eb054d897003c28cf",
+    "hypertri": "9e9b7ef06ca42e3d13e091539a303412ffb37cfb",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false,
+    "workspace_note": "The final control and candidate release artifacts were rebuilt against these exact live lower-layer revisions. Hypermesh was deliberately left out of scope."
+  },
+  "semantic_evidence": {
+    "authoritative_route": "CurveRegion2 Boolean and unary regularization continue through one CurveRegionBooleanContext arrangement. No second Boolean, offset, fillet, or chamfer engine was added.",
+    "chord_parameter": "BezierAlgebraicChordParameter2 represents either endpoint without allocation and represents a true interior point by shared exact algebraic evidence. Its exact axis/order comparison drives event ordering and split ranges.",
+    "native_lowering": "A retained algebraic chord with exact endpoints lowers directly to the native line carrier; it is not materialized as a synthetic Bezier parameter interval.",
+    "source_related_contact": "For a one-field chord/source pair, the exact homogeneous line-incidence polynomial is formed over the selected source field. Hypersolve deflates the authored diagonal endpoint root, counts residual closed-domain roots, isolates every residual source parameter, replays exact image incidence, and constructs the tangent-cross sign.",
+    "positive_dimensional_gate": "An identically zero or otherwise positive-dimensional source/chord incidence remains an explicit typed blocker. It is never sampled or treated as disjoint.",
+    "retained_range_winding": "Boundary-side and ray classification retain the original source parameter field and range. Exact bivariate ray incidence, Bernstein/local-field exclusion, selected-fiber isolation, range clipping, ahead-of-ray ordering, derivative parity, traversal reversal, and projective denominator signs decide the winding contribution.",
+    "multiplicity": "The first nonzero parameter derivative decides crossing parity, so simple, even, and higher odd contacts take distinct exact paths.",
+    "strict_policy": "STRICT uses only proof-producing field identities, exact polynomial arithmetic, isolated-root order, Sturm counts, exact signs, and certified topology. Unproved paths remain explicit errors.",
+    "approximate_512_policy": "APPROXIMATE_512 executes the same arrangement and algebraic graph. Every Hypersolve approximate certainty used by this route is observed by Hypercurve, and the only permitted approximation is the shared 512-bit terminal equality decision.",
+    "no_compatibility_shim": true,
+    "lower_layer_fix_required": false
+  },
+  "mathematical_paths_covered": [
+    "one-field adjacent chord/source pairs with no residual contact",
+    "one-field adjacent chord/source pairs with one or more isolated residual contacts",
+    "authored endpoint diagonal-root deflation",
+    "interior algebraic chord event ordering and splitting",
+    "exact source parameter and image-point replay",
+    "transverse tangent-cross orientation",
+    "retained algebraic source-range ray winding",
+    "simple, even-multiplicity, and higher odd-multiplicity ray contacts",
+    "forward and reversed retained source ranges",
+    "exact-endpoint algebraic chord native-line lowering",
+    "unary regularization under STRICT and APPROXIMATE_512",
+    "existing disjoint binary Boolean and corner fast paths"
+  ],
+  "explicit_remaining_blockers": [
+    "non-adjacent one-field chord/source contact scheduling",
+    "independent-field chord/source incidence",
+    "algebraic chord/chord isolated contacts",
+    "algebraic chord/chord and source/chord positive-dimensional overlap",
+    "collinear retained source overlap",
+    "finite projection and general exact transformation of retained algebraic endpoints",
+    "offset re-entry for retained algebraic chords",
+    "retained fillet circle and arc arrangement participation"
+  ],
+  "historical_behavior": {
+    "at_revision": "51a6f6b",
+    "residual_source_contact": "The one-field chord/source proof completed only when diagonal-root deflation proved a residual root count of zero. Any residual contact was Unsupported.",
+    "interior_chord_event": "Any interior chord split parameter was rejected because no authoritative algebraic chord-local parameter existed.",
+    "retained_range_winding": "An algebraic point could not obtain a winding contribution from a retained algebraic source range.",
+    "successful_historical_residual_contact_throughput": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "454 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "54 passed",
+    "cargo_check_no_default_features": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing ExactKernel::sub warning",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass",
+    "verification_dependency_note": "The 454-test library suite, 54-test promotion suite, and no-default check were repeated after Hyperreal advanced to e238dc1."
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "primary_metric": "retired userspace instructions from perf stat; wall time is secondary because the shared host can be preempted",
+    "matched_control": "Detached worktree .hypercurve-chord-contact-control at 51a6f6b, rebuilt with the same live path dependencies and release settings as the candidate",
+    "performance_dependency_refresh": "Both sides were rebuilt and remeasured after Hyperreal advanced from 14258dc to e238dc1 during evidence capture.",
+    "editing_candidate_executable": "target/release/deps/editing-1429e5261074e42b",
+    "editing_candidate_sha256": "93c3c4f1f21169930fcfb57887b46e6df838a5572eea7888bb301192388999dc",
+    "editing_control_sha256": "d6ac9617c87e6fe851092c9f4869f99cff2b8a0900823a295b234ab84784a266"
+  },
+  "dependency_refreshed_performance": {
+    "curve_region_line_quadratic_algebraic_regularize": {
+      "iterations": 20000,
+      "control_instructions": 16265415705,
+      "candidate_instructions": 16156029281,
+      "control_instructions_per_operation": 813270.78525,
+      "candidate_instructions_per_operation": 807801.46405,
+      "instruction_change_percent": -0.672509243,
+      "control_branches": 3172044122,
+      "candidate_branches": 3150366305,
+      "branch_change_percent": -0.683402127,
+      "control_wall_us_per_operation": 104.651,
+      "candidate_wall_us_per_operation": 103.579
+    },
+    "curve_region_two_quadratic_algebraic_disjoint_boolean": {
+      "iterations": 50000,
+      "control_instructions": 12748942444,
+      "candidate_instructions": 12505973538,
+      "control_instructions_per_operation": 254978.84888,
+      "candidate_instructions_per_operation": 250119.47076,
+      "instruction_change_percent": -1.905796556,
+      "control_branches": 2472682220,
+      "candidate_branches": 2425755001,
+      "branch_change_percent": -1.897826523,
+      "control_wall_us_per_operation": 26.329,
+      "candidate_wall_us_per_operation": 25.666
+    },
+    "curve_region_line_quadratic_design_chamfer": {
+      "iterations": 20000,
+      "control_instructions": 15021199480,
+      "candidate_instructions": 15021157922,
+      "control_instructions_per_operation": 751059.974,
+      "candidate_instructions_per_operation": 751057.8961,
+      "instruction_change_percent": -0.000276662,
+      "control_branches": 2855795742,
+      "candidate_branches": 2855793198,
+      "branch_change_percent": -0.000089082,
+      "control_wall_us_per_operation": 68.168,
+      "candidate_wall_us_per_operation": 67.856
+    },
+    "curve_region_aligned_conic_shared_boolean_batch": {
+      "iterations": 5000,
+      "control_instructions": 12694887723,
+      "candidate_instructions": 12670199306,
+      "control_instructions_per_operation": 2538977.5446,
+      "candidate_instructions_per_operation": 2534039.8612,
+      "instruction_change_percent": -0.194475269,
+      "control_branches": 2533423540,
+      "candidate_branches": 2529267636,
+      "branch_change_percent": -0.164043001,
+      "control_wall_us_per_operation": 342.667,
+      "candidate_wall_us_per_operation": 330.894
+    }
+  },
+  "new_exact_capability_performance": {
+    "curve_region_source_related_algebraic_chord_regularize": {
+      "iterations": 1000,
+      "instructions": 18916780149,
+      "instructions_per_operation": 18916780.149,
+      "branches": 3775847025,
+      "branches_per_operation": 3775847.025,
+      "wall_ms_per_operation": 2.312898,
+      "historical_successful_control": false,
+      "fixture": "C(t)=(1+t,t-t^3), retained source range [0,sqrt(1/2)], chord from C(sqrt(1/2)) to the origin, with residual contact at 1-sqrt(1/2)"
+    }
+  },
+  "allocation_evidence": {
+    "method": "Heaptrack record-only release processes, 1000 benchmark operations; counts include fixed process and fixture construction",
+    "source_related_residual_contact": {
+      "allocation_calls": 29850435,
+      "temporary_allocations": 2343073,
+      "peak_heap_kib": 444.96,
+      "peak_rss_mib_with_profiler": 13.46,
+      "dominant_route": "bivariate_fiber_strict_sign_on_parameter_range through retained-range algebraic ray winding",
+      "endpoint_parameter_refactor_saved_allocation_calls_per_operation": 15
+    },
+    "existing_algebraic_regularize_control": {
+      "allocation_calls": 1264760,
+      "temporary_allocations": 183658,
+      "peak_heap_kib": 268.0
+    },
+    "existing_algebraic_regularize_candidate": {
+      "allocation_calls": 1264764,
+      "temporary_allocations": 183659,
+      "peak_heap_kib": 268.0,
+      "interpretation": "The four-call and one-temporary process-level differences across 1000 operations are effectively zero per operation. True chord endpoint parameters allocate no heap storage."
+    }
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "matched 51a6f6b build against the dependency snapshot above",
+    "all_features": {
+      "candidate_sha256": "f4dec43f43fc130c4ff1aed10fe8c75fbbb3470d006d8a08eb4551dfdf0ac67f",
+      "control_sha256": "4004714717cf6ce49bcab80a9cdec5d841137d40c6c78d14c195acc0976eb015",
+      "candidate_text_bytes": 6703922,
+      "control_text_bytes": 6663442,
+      "text_change_bytes": 40480,
+      "text_change_percent": 0.607493845,
+      "candidate_file_bytes": 8767504,
+      "control_file_bytes": 8715960,
+      "file_change_bytes": 51544,
+      "file_change_percent": 0.591374903
+    },
+    "no_default_features": {
+      "candidate_sha256": "f7ac5d88dc1155719a4d908e8bebef354706470d6085c0cec6e06b18d6b618b3",
+      "control_sha256": "758f9b643e9e059e8cad08ebb9d32c80336af52907dcbe9389af0e1ebc7e55aa",
+      "candidate_text_bytes": 6082249,
+      "control_text_bytes": 6070177,
+      "text_change_bytes": 12072,
+      "text_change_percent": 0.198873937,
+      "candidate_file_bytes": 7999088,
+      "control_file_bytes": 7982648,
+      "file_change_bytes": 16440,
+      "file_change_percent": 0.205946698
+    },
+    "editing_benchmark_note": "The editing executable grew by 92,300 text bytes (1.14944%) because the benchmark revision deliberately links the new cold source-contact route; it is not the representative production-size artifact."
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-algebraic-chord-contact-06543fe --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-algebraic-chord-contact-06543fe/callgraph.json",
+    "nodes": 24828,
+    "edges": 47570,
+    "authoritative_route": "CurveRegion2::regularized_region -> regularized_region_raw -> CurveRegionBooleanContext::try_new_unary -> build_region_carriers -> build_regularized_region -> build_split_topology -> pair_result -> BezierAlgebraicChord2::source_related_intersections -> Hypersolve diagonal deflation/root count/projection -> split_algebraic_chord_carrier -> regularized_algebraic_chord_fragment_action -> algebraic_fragment_side_location -> retained algebraic ray winding",
+    "duplicate_boolean_engine_added": false
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "finite_peer_control": "Cavalier Contours, Curvo, and iOverlay cannot retain selected canonical-Real algebraic points, local-field Sturm evidence, or STRICT/APPROXIMATE_512 certainty. Demoting the fixture would change the operation contract and is not reported as a correctness-equivalent comparison.",
+    "preceding_cavalier_capsule_ratio": 21.637198,
+    "preceding_curvo_open_cubic_certified_ratio": 3557.125329,
+    "interpretation": "Finite engines remain optimization sentinels for comparable native and approximation lanes, not mathematical peers for this exact residual-contact checkpoint."
+  },
+  "next_priority": {
+    "correctness": "Generalize contact scheduling beyond adjacent one-field source/chord pairs, then implement independent-field chord/source and chord/chord contact/overlap evidence.",
+    "performance_and_memory": "Reduce repeated BigInt/Bernstein/Sturm work in bivariate_fiber_strict_sign_on_parameter_range without caching policy-derived certainty or weakening proof semantics."
+  }
+}

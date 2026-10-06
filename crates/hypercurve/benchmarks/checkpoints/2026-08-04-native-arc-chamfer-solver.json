@@ -1,0 +1,275 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-04",
+  "checkpoint": "exact-native-line-arc-and-arc-arc-chamfer-solver",
+  "source_revision": "87d7c6579da61214326346275cf4375d20ed921b",
+  "solver_revision": "4462da1",
+  "benchmark_revision": "543be70",
+  "certified_materialization_revision": "87d7c65",
+  "pre_materialization_optimization_revision": "543be70d5a01b10cd173046a961284a4bd7eb3a4",
+  "immediate_pre_capability_revision": "692f253f23e6dab06b20fd23ecf8d0c5bfc88d5f",
+  "historical_revision": "91002500fe24ff2c42ed98c476fdca8ec02ed835",
+  "dependency_snapshot": {
+    "hyperreal": "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "76281a340160f30ab86aa1f59b0fff4762d51dea",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "41631f652233e1337521822abc63bc29a6c0ce55",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "c74b77da3e725025b106cbadde1e5ab78c44d3ae",
+    "matched_release_build_note": "candidate, pre-materialization, immediate, and historical artifacts were rebuilt against the same live dependency sources after Hyperreal advanced to 3582c1e",
+    "concurrent_hypertri_state": "src/kernel.rs was externally modified while this checkpoint ran; its production change routes cmp through hyperlimit::compare_reals, while later cfg(test) additions do not affect release artifacts; no Hypertri edit was authored or committed by this checkpoint",
+    "hyperlimit_untracked_state": [
+      "fuzz/artifacts/",
+      "fuzz/corpus/",
+      "hyperlimit"
+    ],
+    "hypermesh_modified_by_checkpoint": false
+  },
+  "semantic_evidence": {
+    "authoritative_solver": "solve_exact_chamfer_corner",
+    "recognized_carriers": [
+      "native line",
+      "retained exact quadratic line image",
+      "native CircularArc2"
+    ],
+    "setback_construction": "intersect the corner-centered setback circle with each incident exact line or circle support",
+    "circle_circle_outcomes": [
+      "disjoint",
+      "tangent",
+      "secant",
+      "coincident",
+      "policy-blocked uncertain"
+    ],
+    "carrier_native_parameters": {
+      "line": "affine parameter",
+      "arc": "directed sweep fraction"
+    },
+    "curve_path_materialization": "converts a certified sweep to the public rational arc parameter only at materialization and retains the already-certified exact Cartesian endpoint",
+    "curve_region_materialization": "passes certified native parameters and exact cut points directly through CurveString2 and Contour2, avoiding point re-evaluation",
+    "trim_only": "accepts only strict interior cuts on each finite carrier sweep",
+    "trim_or_extend": "enumerates all valid one-turn arc and affine-line support choices in deterministic order",
+    "major_arc_behavior": "retains both distinct cuts when a major sweep crosses the setback circle twice",
+    "strict_policy": "all construction, incidence, sweep, domain, and degeneracy predicates remain exact-only; unresolved predicates return typed blockers",
+    "approximate_512_policy": "the identical exact proof graph runs first and only Hyperlimit's shared terminal policy may consume a 512-bit decision",
+    "returned_geometry_remains_hyperreal_exact": true,
+    "compatibility_shim_added": false
+  },
+  "mathematical_paths_covered": [
+    "line/arc and arc/line trims",
+    "arc/arc trims",
+    "minor and major sweeps",
+    "clockwise and counterclockwise orientation",
+    "four line/arc TrimOrExtend support combinations",
+    "original-corner inclusion on only the intended retained arc fragment",
+    "opposite finite-sweep endpoint rejection",
+    "two distinct major-arc cuts",
+    "diametric circle tangency",
+    "disjoint oversized setback circles",
+    "exact radical Cartesian cut coordinates",
+    "native CurveRegion sweep evidence",
+    "STRICT and APPROXIMATE_512 execution"
+  ],
+  "verification": {
+    "cargo_test_all_features_lib": "445 passed",
+    "cargo_test_default_lib": "441 passed",
+    "cargo_test_no_default_features_lib": "320 passed",
+    "cargo_test_all_features_hypercurve_curve": "24 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "46 passed",
+    "cargo_test_no_default_features_hypercurve_curve": "21 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion": "43 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass for Hypercurve; the externally dirty Hypertri dependency emits its existing dead-code warning",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass",
+    "hypercurve_worktree_before_checkpoint_file": "clean"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "iterations_per_repeat": 50000,
+    "repeats": 3,
+    "selector": "HYPERCURVE_EDIT_BENCH=native-arc-chamfer",
+    "counter_command": "taskset -c 11 perf stat -r 3 -x, -e instructions,branches env HYPERCURVE_EDIT_BENCH=native-arc-chamfer HYPERCURVE_EDIT_CORNER_LANE=<lane> HYPERCURVE_EDIT_ITERATIONS=50000 <editing-binary>",
+    "primary_metric": "retired instructions",
+    "wall_time_note": "wall samples are context only and include visible host-load noise; deterministic work counters are the acceptance metric",
+    "immediate_control_benchmark_diff_sha256": "80bcaa999a0b7205f292fe0b82dc65a8b182267c34d431caa61af9e766dc7f7f",
+    "historical_control_benchmark_diff_sha256": "e2927649c6a0825afeb6553b8ac52032e54b095b0d3f6845d93259c8952d6e6b"
+  },
+  "current_performance": {
+    "curve_path_line_arc_parameter_chamfer": {
+      "instructions": 12968822966,
+      "instructions_per_operation": 259376.45932,
+      "branches": 2794324094,
+      "branches_per_operation": 55886.48188,
+      "wall_us_samples": [28.590, 29.149, 28.926]
+    },
+    "curve_path_line_arc_design_chamfer": {
+      "instructions": 12291093869,
+      "instructions_per_operation": 245821.87738,
+      "branches": 2698600810,
+      "branches_per_operation": 53972.01620,
+      "wall_us_samples": [29.944, 33.635, 29.633],
+      "instructions_vs_parameter_percent": -5.225834,
+      "branches_vs_parameter_percent": -3.425633
+    },
+    "curve_path_arc_arc_parameter_chamfer": {
+      "instructions": 27481637742,
+      "instructions_per_operation": 549632.75484,
+      "branches": 6013350120,
+      "branches_per_operation": 120267.00240,
+      "wall_us_samples": [59.652, 60.261, 60.332]
+    },
+    "curve_path_arc_arc_design_chamfer": {
+      "instructions": 18523690323,
+      "instructions_per_operation": 370473.80646,
+      "branches": 4069131495,
+      "branches_per_operation": 81382.62990,
+      "wall_us_samples": [43.739, 46.141, 45.138],
+      "instructions_vs_parameter_percent": -32.596119,
+      "branches_vs_parameter_percent": -32.331705
+    },
+    "curve_region_line_arc_parameter_chamfer": {
+      "instructions": 16733431171,
+      "instructions_per_operation": 334668.62342,
+      "branches": 3642375572,
+      "branches_per_operation": 72847.51144,
+      "wall_us_samples": [38.689, 39.179, 38.982]
+    },
+    "curve_region_line_arc_design_chamfer": {
+      "instructions": 25591692253,
+      "instructions_per_operation": 511833.84506,
+      "branches": 5596429397,
+      "branches_per_operation": 111928.58794,
+      "wall_us_samples": [64.925, 64.582, 63.376],
+      "instructions_vs_parameter_percent": 52.937506,
+      "branches_vs_parameter_percent": 53.647785,
+      "interpretation": "this lane includes exact setback-circle solving and finite-sweep certification that the caller-supplied parameter lane does not perform"
+    }
+  },
+  "certified_materialization_optimization": {
+    "pre_optimization_region_design_instructions": 26063497472,
+    "candidate_region_design_instructions": 25591692253,
+    "instruction_change_percent": -1.810215,
+    "pre_optimization_region_design_branches": 5697354254,
+    "candidate_region_design_branches": 5596429397,
+    "branch_change_percent": -1.771434,
+    "pre_optimization_parameter_instructions": 16731473758,
+    "candidate_parameter_instructions": 16733431171,
+    "parameter_instruction_guard_percent": 0.011699,
+    "pre_optimization_parameter_branches": 3642378676,
+    "candidate_parameter_branches": 3642375572,
+    "parameter_branch_guard_percent": -0.000085
+  },
+  "unchanged_parameter_controls": {
+    "immediate_pre_capability": {
+      "curve_path_line_arc_instruction_change_percent": 0.000302,
+      "curve_path_line_arc_branch_change_percent": 0.000057,
+      "curve_path_arc_arc_instruction_change_percent": -0.000204,
+      "curve_path_arc_arc_branch_change_percent": 0.000005,
+      "curve_region_line_arc_instruction_change_percent": 0.007917,
+      "curve_region_line_arc_branch_change_percent": 0.002817
+    },
+    "historical": {
+      "curve_path_line_arc_instruction_change_percent": 0.018654,
+      "curve_path_line_arc_branch_change_percent": 0.190037,
+      "curve_path_arc_arc_instruction_change_percent": 0.086110,
+      "curve_path_arc_arc_branch_change_percent": 0.280433,
+      "curve_region_line_arc_instruction_change_percent": 0.096267,
+      "curve_region_line_arc_branch_change_percent": 0.352482
+    },
+    "interpretation": "the existing parameter paths remain effectively instruction-neutral; the new automatic design lanes did not exist in the controls"
+  },
+  "heaptrack_1000_operations": {
+    "curve_path_line_arc_parameter": {
+      "allocation_calls": 338992,
+      "temporary_allocations": 10056,
+      "peak_heap_kib": 107.76
+    },
+    "curve_path_line_arc_design": {
+      "allocation_calls": 481928,
+      "temporary_allocations": 26056,
+      "peak_heap_kib": 101.58,
+      "allocation_change_percent": 42.165007,
+      "peak_change_percent": -5.734967
+    },
+    "curve_path_arc_arc_parameter": {
+      "allocation_calls": 785050,
+      "temporary_allocations": 30056,
+      "peak_heap_kib": 113.98
+    },
+    "curve_path_arc_arc_design": {
+      "allocation_calls": 715920,
+      "temporary_allocations": 50056,
+      "peak_heap_kib": 101.25,
+      "allocation_change_percent": -8.805809,
+      "peak_change_percent": -11.168626
+    },
+    "curve_region_line_arc_parameter": {
+      "allocation_calls": 592061,
+      "temporary_allocations": 18058,
+      "peak_heap_kib": 113.44
+    },
+    "curve_region_line_arc_design": {
+      "allocation_calls": 970063,
+      "temporary_allocations": 41058,
+      "peak_heap_kib": 115.81,
+      "allocation_change_percent": 63.845111,
+      "peak_change_percent": 2.089210
+    },
+    "interpretation": "automatic exact solving increases short-lived scalar traffic on line/arc lanes but does not materially grow live heap; arc/arc design removes allocation calls despite doing the automatic solve"
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "all_features": {
+      "candidate_text_bytes": 4998839,
+      "immediate_text_bytes": 5000103,
+      "candidate_vs_immediate_bytes": -1264,
+      "candidate_vs_immediate_percent": -0.025279,
+      "historical_text_bytes": 4992903,
+      "candidate_vs_historical_bytes": 5936,
+      "candidate_vs_historical_percent": 0.118889,
+      "candidate_file_bytes": 8704280,
+      "candidate_vs_immediate_file_bytes": 10184,
+      "candidate_vs_historical_file_bytes": 25920
+    },
+    "no_default_features": {
+      "candidate_text_bytes": 4556615,
+      "immediate_text_bytes": 4550375,
+      "candidate_vs_immediate_bytes": 6240,
+      "candidate_vs_immediate_percent": 0.137132,
+      "historical_text_bytes": 4555431,
+      "candidate_vs_historical_bytes": 1184,
+      "candidate_vs_historical_percent": 0.025991,
+      "candidate_file_bytes": 7976688,
+      "candidate_vs_immediate_file_bytes": 11520,
+      "candidate_vs_historical_file_bytes": 3160
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-native-arc-chamfer-87d7c65 --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-native-arc-chamfer-87d7c65/callgraph.json",
+    "nodes": 24244,
+    "edges": 46047,
+    "immediate_nodes": 24193,
+    "immediate_edges": 45907,
+    "historical_nodes": 24058,
+    "historical_edges": 45596,
+    "curve_path_solver_entry": "CurvePath2::chamfer_vertex_by_setbacks_raw -> solve_exact_chamfer_corner",
+    "curve_region_solver_entry": "CurveRegion2::chamfer_loop_vertex_by_setbacks_raw -> solve_exact_chamfer_corner",
+    "native_certified_materialization_route_present": true
+  },
+  "competitive_context": {
+    "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=line_arc_offset/capsule_inward target/release/deps/comparative-68819996ab3fdf67",
+    "exact_line_arc_capsule_offset_hypercurve_median_ns": 19246.1,
+    "floating_polyline_capsule_offset_cavalier_contours_median_ns": 897.9,
+    "hypercurve_to_cavalier_ratio": 21.434570,
+    "scope_note": "this is a contextual round-corner/offset sentinel, not an equality-of-guarantees comparison; no competitor lane currently matches Hypercurve's exact automatic arc chamfer semantics"
+  },
+  "remaining_scope": [
+    "native line/arc, arc/line, and arc/arc automatic radius fillets",
+    "allocation reduction for automatic native corner solving",
+    "conic, polynomial, rational, spline, NURBS, and retained analytic corner pairs",
+    "complete degeneracy and branch matrix under both policies",
+    "semantically matched floating design-value corner controls",
+    "caller migration and historical public engine deletion"
+  ]
+}

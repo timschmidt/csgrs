@@ -1,0 +1,209 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-06",
+  "checkpoint": "correlated selected-circle/chord endpoint replay against a collinear exact support",
+  "implementation_revisions": [
+    "834840e2c459b4a86019fcd7d7c1cb445f3a61cc",
+    "7063667c7de1648d25a6cae3320f527b65210d60"
+  ],
+  "benchmark_revision": "4e40099e9a2f410278421303217b5ced68b3a780",
+  "superseded_benchmark_revision": "829d692f981d666f9adf89ed39361c4311f8c9e5",
+  "historical_semantic_revision": "568796ee4617acafebd5717a0f8a03914f8b69ee",
+  "historical_benchmark_worktree_revision": "c39a010f116cf251e1506d6d0e71ebb4d8c40aad",
+  "preceding_checkpoint": "2026-08-06-shared-chord-line-reentry.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "210a66c01f1f53f7ffb035a9643d57f81ee19171",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "ba524a4fedca2c007f66ad02eee3e38ea5d1d210",
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "exact source-parameter recovery when an AlgebraicCuspChord endpoint re-enters a collinear rational source",
+      "forward and reversed injective overlap, retraced noninjective overlap, and represented collinear point-touch replay under STRICT and APPROXIMATE_512",
+      "exact retained-boundary connectivity between a selected-circle fragment endpoint and its correlated chord point through shared mapped-contact identity",
+      "exact equality between a recomputed rational/selected-circle parameter and a retained selected-circle/chord parameter by replaying the original chord branch predicate",
+      "public CurveRegion2 construction that retains a horizontal exact support with a correlated selected-circle endpoint and re-enters it through a later collinear overlap",
+      "complete later intersection evidence and all four Boolean results under STRICT and APPROXIMATE_512",
+      "corrected matched historical rejection, competitive floating, deterministic perf, allocation, peak-heap, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "public all-four topology for a correlated collinear point-touch rather than the directly covered pair-kernel touch",
+      "collinear AlgebraicChordPair source replay",
+      "general oblique selected-circle/chord supports",
+      "non-cardinal correlated point transforms and offset re-entry",
+      "retained selected-circle fragment re-offsetting",
+      "general retained-algebraic fillet centers and arcs",
+      "coupled material and hole wavefront events",
+      "general non-orthogonal post-collapse scheduling"
+    ]
+  },
+  "authority": {
+    "source_replay_route": "BezierAlgebraicChord2::rational_intersections -> collinear_source_parameters_at_chord_endpoint -> retained AlgebraicCuspChord map -> BezierAlgebraicCuspSemicircle2::rational_intersections -> axis_chord_contact_minus_point_sign",
+    "parameter_equality_route": "BezierAlgebraicCuspSemicircleParameter2::cmp_by_refinement -> correlated_chord_rational_same_value -> rational_point_evidence_at_parameter -> axis_chord_contact_minus_point_sign",
+    "retained_endpoint_route": "retained_endpoint_equality -> BezierAlgebraicCuspSemicircleFragment2::shares_endpoint_point_evidence",
+    "proof_rule": "A correlated chord endpoint is not an independently represented point. Recompute contacts on the original selected-circle carrier and accept only those for which the original exact cardinal-chord branch predicate is zero. When independently constructed pair maps encode the same contact, replay that predicate before trying to separate their equal root intervals.",
+    "persistent_state_added": "one feature-gated Arc word per pair-shared rational parameter map; no state is duplicated per contact or retained endpoint",
+    "primitive_element_added": false,
+    "persistent_cache_added": false,
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "The direct overlap/touch matrix and public later Boolean complete from exact carrier identity, exact rational point reconstruction, and the existing exact branch-sign authority. No interval terminal is needed.",
+    "approximate_512": "The same proof graph completes as Certified for the supported fixtures. APPROXIMATE_512 remains observable only at the shared 512-bit terminal for otherwise unresolved equality; no approximate coordinate, parameter, support, or topology is retained.",
+    "construction_policy": "Every retained circle, chord, map, and endpoint is replayed only under its construction policy. The public fixture is rebuilt independently under STRICT and APPROXIMATE_512.",
+    "uncertainty_rule": "An uncertain point reconstruction or branch sign remains uncertain. The fast path returns equality only for an exact zero sign and cannot turn terminal approximation into reusable evidence."
+  },
+  "fixture": {
+    "source": "The material source is [0, sqrt(1/2)] x [0, 1], retaining its selected algebraic right coordinate.",
+    "rounded_operand": "Offset the source outward by exactly 1/20 with round corners.",
+    "wide_cutter": "Transform the source by x' = 4x + 1/10 and y' = 7y/10 + 3/10, then offset outward by exactly 1/40 with an exact miter.",
+    "first_result": "The first intersection retains the horizontal exact support y = 41/40 with an AlgebraicCuspChord endpoint adjacent to its original selected-circle fragment.",
+    "replay_clip": "The exact rectangle [-1, 1] x [0, 41/40] shares that horizontal support and forces collinear overlap replay.",
+    "expected_result": "Intersection evidence is complete with exactly one overlap. The later union, intersection, difference, and xor all complete as Certified; difference is empty and the other three are nonempty.",
+    "historical_failure": "At the direct pair kernel the historical revision cannot recover the correlated endpoint on a collinear source. In the corrected public fixture it first spends about 21 seconds trying to separate equal rational-map and chord-map selected-circle parameters, then returns Ordering uncertainty before publishing topology.",
+    "superseded_fixture_note": "Benchmark 829d692 used a clip whose historical path already completed, so it was not a valid capability denominator. Benchmark 4e40099 replaces it with the public wide-cutter fixture and is the authoritative lane."
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_boolean/shared_chord_collinear_reentry",
+    "cpu": 11,
+    "timing_scope": "Source construction, offsets, first-stage Boolean, replay clip construction, and semantic preflights are outside each timed loop. Timed operations rebuild either later exact intersection evidence or one later all-four Boolean batch.",
+    "current_wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/shared_chord_collinear_reentry <comparative-executable>",
+    "historical_evidence_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=3 HYPERCURVE_COMPARE_SAMPLE_MS=20 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/shared_chord_collinear_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_rejected_evidence <historical-comparative-executable>",
+    "historical_all_four_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=3 HYPERCURVE_COMPARE_ITERS=1 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/shared_chord_collinear_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_rejected_all_four <historical-comparative-executable>",
+    "perf_command": "taskset -c 11 perf stat -x, -e cycles,instructions -- env HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/shared_chord_collinear_reentry HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=<256-current-or-1-historical> HYPERCURVE_COMPARE_IMPL=<implementation> <comparative-executable>",
+    "perf_normalization": "Subtract the matched disabled process. Divide current by 257 and historical by 2 because Runner performs one warm-up operation before its fixed timed iterations.",
+    "heap_method": "Heaptrack --record-only captures 16 current fixed timed iterations. Subtract the matched disabled process and divide by 17 for the one-operation warm-up. heaptrack_print summaries are authoritative.",
+    "historical_control": "Revision 568796e with only the corrected benchmark revision 4e40099 cherry-picked as detached revision c39a010.",
+    "competitive_control": "Cavalier Contours uses binary64 polylines, floating round/miter offsets, a floating first-stage intersection, and four separate Boolean calls; it is not exactness- or topology-equivalent."
+  },
+  "matched_wall_performance": {
+    "current_samples_per_process": 11,
+    "current_target_milliseconds_per_sample": 100,
+    "current_4e40099": {
+      "exact_evidence_median_ns": 2847668.1,
+      "exact_evidence_min_ns": 2804768.2,
+      "exact_evidence_max_ns": 3042560.4,
+      "exact_evidence_iterations_per_sample": 48,
+      "exact_all_four_median_ns": 3993971.6,
+      "exact_all_four_min_ns": 3917401.5,
+      "exact_all_four_max_ns": 4167475.9,
+      "exact_all_four_iterations_per_sample": 32,
+      "cavalier_f64_four_calls_median_ns": 5488.0,
+      "cavalier_f64_four_calls_min_ns": 5327.2,
+      "cavalier_f64_four_calls_max_ns": 6129.6
+    },
+    "historical_568796e": {
+      "samples_per_operation": 3,
+      "rejected_evidence_median_ns": 21630024156.0,
+      "rejected_evidence_min_ns": 21425719777.0,
+      "rejected_evidence_max_ns": 22818047150.0,
+      "rejected_all_four_median_ns": 21440104335.0,
+      "rejected_all_four_min_ns": 21425182578.0,
+      "rejected_all_four_max_ns": 21457401837.0,
+      "iterations_per_sample": 1,
+      "rejection": "Both lanes return no usable result after exhausting the old equal-root refinement path."
+    },
+    "historical_rejection_over_current_evidence_ratio": 7595.697039,
+    "historical_rejection_over_current_all_four_ratio": 5368.116372,
+    "current_exact_over_cavalier_f64_ratio": 727.764504,
+    "interpretation": "Current is both complete and thousands of times faster because exact correlated equality bypasses futile root-interval separation. Cavalier remains only a floating throughput sentinel."
+  },
+  "deterministic_perf": {
+    "current_fixed_timed_iterations": 256,
+    "current_normalized_operation_invocations": 257,
+    "current_successful_all_four": {
+      "raw_operation_process": {"instructions": 8805706588, "cycles": 4345167470},
+      "raw_disabled_process": {"instructions": 120314671, "cycles": 62663473},
+      "normalized_per_batch": {"instructions": 33795299.288, "cycles": 16663439.677}
+    },
+    "historical_fixed_timed_iterations": 1,
+    "historical_normalized_operation_invocations": 2,
+    "historical_rejected_all_four": {
+      "raw_operation_process": {"instructions": 1278504511965, "cycles": 370777393915},
+      "raw_disabled_process": {"instructions": 639325017051, "cycles": 183426538684},
+      "normalized_per_rejection": {"instructions": 319589747457.0, "cycles": 93675427615.5}
+    },
+    "historical_over_current_ratio": {"instructions": 9456.633147, "cycles": 5621.614110},
+    "interpretation": "The old path spends hundreds of billions of instructions refining two exact aliases and still rejects. The new branch predicate both proves equality and allows the existing Boolean engine to finish four regions."
+  },
+  "allocation_evidence": {
+    "fixed_timed_iterations": 16,
+    "normalized_operation_invocations": 17,
+    "current_successful_all_four": {
+      "raw_operation_process": {"allocation_calls": 1118278, "temporary_allocations": 92968, "peak_heap_kib": 593.31},
+      "raw_disabled_process": {"allocation_calls": 210817, "temporary_allocations": 18458, "peak_heap_kib": 586.12},
+      "normalized_per_batch": {"allocation_calls": 53380.058824, "temporary_allocations": 4382.941176},
+      "peak_increment_over_fixture_kib": 7.19
+    },
+    "historical_trace": "Not collected: a single historical rejection retires about 319.6 billion fixture-subtracted instructions, and tracing that failed path would create disproportionate time and trace-volume cost without a correctness-equivalent allocation comparison.",
+    "persistent_map_cost": "One Arc word per predicates-enabled rational parameter map, shared by all contacts; zero added words in no-default builds and no per-contact cache.",
+    "interpretation": "The completed public all-four batch keeps peak incremental heap below 8 KiB. Allocation churn remains an optimization target after adjacent correctness boundaries are closed."
+  },
+  "linked_size": {
+    "artifact": "curve_region_boolean_batch release executable",
+    "all_features": {
+      "historical_file_bytes": 9086088,
+      "current_file_bytes": 9089672,
+      "file_delta_bytes": 3584,
+      "file_delta_percent": 0.039445,
+      "historical_text_bytes": 5272535,
+      "current_text_bytes": 5276599,
+      "text_delta_bytes": 4064,
+      "text_delta_percent": 0.077079,
+      "historical_allocated_total_bytes": 7252578,
+      "current_allocated_total_bytes": 7256666,
+      "allocated_total_delta_bytes": 4088,
+      "historical_bss_bytes": 208,
+      "current_bss_bytes": 208
+    },
+    "no_default_features": {
+      "historical_file_bytes": 8006296,
+      "current_file_bytes": 8006240,
+      "file_delta_bytes": -56,
+      "historical_text_bytes": 4570039,
+      "current_text_bytes": 4570039,
+      "text_delta_bytes": 0,
+      "historical_allocated_total_bytes": 6359497,
+      "current_allocated_total_bytes": 6359497,
+      "allocated_sections_identical": true
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-shared-chord-collinear-reentry --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "hypercurve/target/callgraph-shared-chord-collinear-reentry/callgraph.json",
+    "libraries_discovered": 1,
+    "nodes": 29107,
+    "edges": 55242,
+    "existing_cusp_parameter_comparator_calls_exact_cross_map_replay": true,
+    "cross_map_replay_calls_existing_rational_point_and_branch_sign_authorities": true,
+    "collinear_source_replay_calls_existing_selected_circle_intersection_and_branch_sign_authorities": true,
+    "retained_endpoint_equality_calls_compact_shared_contact_identity": true,
+    "duplicate_public_engine_found": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "474 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "62 passed",
+    "cargo_test_no_default_features_lib": "323 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "all_features_and_minimal_size_artifact_builds": "pass",
+    "known_external_warning": "Hypertri ExactKernel::sub remains pre-existing dead code; Hypertri and Hypermesh were not modified. Hyperlimit's pre-existing untracked fuzz artifacts were not modified."
+  },
+  "next_priority": {
+    "correctness": "Promote a public correlated collinear point-touch through all four Booleans, then admit collinear AlgebraicChordPair sources and general oblique selected-circle/chord supports.",
+    "offset_and_fillet": "Retain the same selected-circle fragment through re-offsetting, then reuse it for general retained-algebraic fillet centers and arcs without a second corner or arrangement engine.",
+    "performance_and_memory": "The exact identity replay removes a pathological 21-second refinement. After adjacent contact cases close, reduce the remaining roughly 53,380 allocations per completed batch without retaining per-contact state.",
+    "size": "The predicate-enabled path costs 4,064 text bytes and zero no-default text bytes. Prefer folding adjacent correlated-contact proofs into these three private authorities rather than adding new engines or carriers."
+  }
+}

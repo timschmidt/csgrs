@@ -1,0 +1,180 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-06",
+  "checkpoint": "strict-interior correlated selected-circle/chord contact re-entry against an exact line",
+  "implementation_revision": "321d736097791330b3cbf2d054a6193c9c09200d",
+  "benchmark_revision": "e0e4d87a914983bc0d69c3191b44b5d5bd353b68",
+  "historical_semantic_revision": "e0100b1e99090bd4cc1540f59718e14400567b50",
+  "historical_benchmark_worktree_revision": "4d589078ff0a115b5680d220d112f3784295b231",
+  "preceding_checkpoint": "2026-08-06-shared-chord-circle-ordering.json",
+  "dependency_revisions": {
+    "hyperreal": "492882c16ec6f649051285a5e215371750b3c967",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "210a66c01f1f53f7ffb035a9643d57f81ee19171",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "materialization of a selected round/miter Boolean result with two correlated AlgebraicCuspChord endpoints retained on one AlgebraicChord fragment",
+      "later noncollinear intersection of that finite correlated chord with a new exact line carrier",
+      "stable-support incidence elimination followed by exact containment against the current correlated finite endpoints",
+      "local traversal orientation and tangent-cross sign preservation for forward and reversed retained chords",
+      "complete later CurveRegion2 intersection evidence and all four Boolean results under STRICT and APPROXIMATE_512",
+      "matched historical rejection, competitive floating, deterministic perf, allocation, peak-heap, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "collinear exact-line overlap or point-touch re-entry for correlated finite chord endpoints",
+      "general oblique selected-circle/chord supports",
+      "non-cardinal correlated point transforms and offset re-entry",
+      "retained selected-circle fragment re-offsetting",
+      "general retained-algebraic fillet centers and arcs",
+      "coupled material and hole wavefront events",
+      "general non-orthogonal post-collapse scheduling"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::boolean_regions -> CurveRegionBooleanContext::pair_result AlgebraicChordPair -> BezierAlgebraicChord2::rational_intersections -> independent_incidence_system -> retained_support -> Hypersolve constrained trivariate/resultant replay -> parameter_at_certified_point -> split_algebraic_chord_carrier",
+    "support_rule": "A split changes the finite interval but not its supporting line. Incidence is therefore built from the stable root support's independently represented endpoint fields, in local traversal orientation; each resultant candidate is still admitted only by comparison with the current correlated finite endpoints.",
+    "primitive_element_added": false,
+    "persistent_cache_added": false,
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "The later evidence and all-four Boolean graphs complete as Certified using retained-support elimination and exact correlated endpoint ordering.",
+    "approximate_512": "The same graph completes and reports Approximate512Consumed only after the existing 512-step terminal equality path is used; no approximate coordinate, support, or finite boundary is retained.",
+    "construction_policy": "Every retained chord and correlated endpoint is replayed only under its construction policy. The public regression rebuilds the complete fixture independently under STRICT and APPROXIMATE_512.",
+    "lower_layer_matrix": "The direct kernel regression runs both policies, both chord traversal directions, exact source-parameter recovery, and tangent-cross orientation."
+  },
+  "fixture": {
+    "first_stage": "Offset [0, sqrt(1/2)] x [0, 1] outward by 1/20 with round corners. Intersect it with y -> 3y - 1 of the same retained source offset outward by 1/40 with a miter.",
+    "retained_boundary": "The first-stage intersection retains an AlgebraicChord whose two finite endpoints are strict-interior contacts with independent selected round-corner circles.",
+    "replay_clip": "The exact rectangle [-1, 2] x [0, 2]; its bottom line crosses the retained chord strictly between those two correlated endpoints.",
+    "historical_failure": "The historical first-stage result is complete, but later AlgebraicChord x QuadraticBezier replay returns Unsupported because generic incidence tries to normalize the correlated finite endpoints as independent support fields.",
+    "expected_result": "Later intersection evidence is complete and the later intersection region is nonempty. The all-four batch completes under both policies."
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_boolean/shared_chord_line_reentry",
+    "cpu": 11,
+    "timing_scope": "Source construction, offsets, first-stage all-four Boolean, replay clip construction, and semantic preflights are outside each timed loop. Timed operations rebuild either later public intersection evidence or one later all-four Boolean batch.",
+    "wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/shared_chord_line_reentry <comparative-executable>",
+    "perf_command": "taskset -c 11 perf stat -x, -e cycles,instructions -- env HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/shared_chord_line_reentry HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=256 HYPERCURVE_COMPARE_IMPL=<implementation> <comparative-executable>",
+    "perf_normalization": "Subtract the matched disabled process, then divide by 257 because Runner performs one warm-up operation before its 256 fixed timed iterations.",
+    "heap_method": "Heaptrack --record-only captures 16 fixed timed iterations. Subtract the matched disabled process and divide by 17 for the same one-operation warm-up.",
+    "historical_control": "Revision e0100b1 with only benchmark revision e0e4d87 cherry-picked as detached revision 4d58907.",
+    "competitive_control": "Cavalier Contours uses binary64 polylines, a floating first-stage intersection, and four separate Boolean calls against the clip; it is not exactness- or topology-equivalent."
+  },
+  "matched_wall_performance": {
+    "samples_per_process": 11,
+    "target_milliseconds_per_sample": 100,
+    "current_e0e4d87": {
+      "exact_evidence_median_ns": 1971841.7,
+      "exact_all_four_median_ns": 4326184.9,
+      "cavalier_f64_four_calls_median_ns": 4511.7
+    },
+    "historical_e0100b1": {
+      "rejected_evidence_median_ns": 1319923.6,
+      "rejected_all_four_median_ns": 1243088.8,
+      "cavalier_f64_four_calls_median_ns": 4486.4,
+      "rejection": "The exact intersection evidence contains an Unsupported blocker, and the all-four Boolean exits before constructing output regions."
+    },
+    "current_evidence_over_historical_rejection_ratio": 1.493906,
+    "current_success_over_historical_rejection_ratio": 3.480190,
+    "current_exact_over_cavalier_f64_ratio": 958.881331,
+    "interpretation": "Current builds complete exact topology while the historical control rejects; neither historical nor Cavalier ratios are correctness-equivalent performance regressions."
+  },
+  "deterministic_perf": {
+    "fixed_timed_iterations": 256,
+    "normalized_operation_invocations": 257,
+    "current_successful_all_four": {
+      "raw_operation_process": {"instructions": 10420074753, "cycles": 4791149833},
+      "raw_disabled_process": {"instructions": 151615053, "cycles": 92969243},
+      "normalized_per_batch": {"instructions": 39955096.109, "cycles": 18280858.327}
+    },
+    "historical_rejected_all_four": {
+      "raw_operation_process": {"instructions": 2825271356, "cycles": 1425516751},
+      "raw_disabled_process": {"instructions": 116780780, "cycles": 60888719},
+      "normalized_per_rejection": {"instructions": 10538873.837, "cycles": 5309836.700}
+    },
+    "success_over_rejection_ratio": {"instructions": 3.791211, "cycles": 3.442829},
+    "interpretation": "The ratios quantify completed candidate replay, splitting, classification, and four region builds after the former Unsupported exit; they are not equivalent-path slowdowns."
+  },
+  "allocation_evidence": {
+    "fixed_timed_iterations": 16,
+    "normalized_operation_invocations": 17,
+    "current_successful_all_four": {
+      "raw_operation_process": {"allocation_calls": 1291016, "temporary_allocations": 76214, "peak_heap_kib": 619.05},
+      "raw_disabled_process": {"allocation_calls": 251220, "temporary_allocations": 21018, "peak_heap_kib": 595.82},
+      "normalized_per_batch": {"allocation_calls": 61164.470588, "temporary_allocations": 3246.823529},
+      "peak_increment_over_fixture_kib": 23.23
+    },
+    "historical_rejected_all_four": {
+      "raw_operation_process": {"allocation_calls": 459089, "temporary_allocations": 43496, "peak_heap_kib": 536.28},
+      "raw_disabled_process": {"allocation_calls": 197989, "temporary_allocations": 18832, "peak_heap_kib": 513.07},
+      "normalized_per_rejection": {"allocation_calls": 15358.823529, "temporary_allocations": 1450.823529},
+      "peak_increment_over_fixture_kib": 23.21
+    },
+    "success_over_rejection_ratio": {"allocation_calls": 3.982367, "temporary_allocations": 2.237918},
+    "persistent_cache_added": false,
+    "interpretation": "Current returns four exact regions while the historical control exits at evidence construction. The nearly identical fixture-subtracted peak increment is useful context; allocation counts are not correctness-equivalent."
+  },
+  "linked_size": {
+    "artifact": "curve_region_boolean_batch release executable",
+    "all_features": {
+      "historical_file_bytes": 9085936,
+      "current_file_bytes": 9086032,
+      "file_delta_bytes": 96,
+      "file_delta_percent": 0.001057,
+      "historical_text_bytes": 6974838,
+      "current_text_bytes": 6974870,
+      "text_delta_bytes": 32,
+      "text_delta_percent": 0.000459,
+      "historical_bss_bytes": 2728,
+      "current_bss_bytes": 2696,
+      "bss_delta_bytes": -32,
+      "allocated_total_bytes_identical": true
+    },
+    "no_default_features": {
+      "historical_file_bytes": 8006360,
+      "current_file_bytes": 8006336,
+      "file_delta_bytes": -24,
+      "historical_text_bytes": 6088613,
+      "current_text_bytes": 6088613,
+      "allocated_sections_identical": true
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir /tmp/hypercurve-shared-chord-line-reentry-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-shared-chord-line-reentry-callgraph/callgraph.json",
+    "libraries_discovered": 1,
+    "nodes": 29065,
+    "edges": 55140,
+    "pair_result_calls_existing_chord_rational_kernel": true,
+    "rational_kernel_calls_existing_hypersolve_resultants": true,
+    "incidence_system_calls_retained_support": true,
+    "duplicate_public_engine_found": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "474 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "61 passed",
+    "cargo_test_no_default_features_lib": "323 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "all_features_and_minimal_size_artifact_builds": "pass",
+    "known_external_warning": "Hypertri ExactKernel::sub remains pre-existing dead code; Hypertri and Hypermesh were not modified."
+  },
+  "next_priority": {
+    "correctness": "Complete collinear exact-line overlap and point-touch re-entry for finite chords bounded by correlated evidence, then admit general oblique selected-circle/chord supports.",
+    "offset_and_fillet": "Retain the same selected-circle fragment through re-offsetting, then reuse it for general retained-algebraic fillet centers and arcs without a second corner or arrangement engine.",
+    "performance_and_memory": "The new route is already the existing Hypersolve/resultant authority. Profile collinear replay before adding state; prefer stable supports and compact boundary comparisons over copied endpoint fields.",
+    "size": "The correctness change shifts only 32 all-feature text bytes and no minimal allocated bytes. Keep the support rule private and reuse it in the collinear branch rather than adding a parallel exact-line engine."
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "represented-range repeated exact CurveRegion2 offsets",
+  "source_revision": "107a07144639c1b64742abb238f07905891ccb5b",
+  "semantic_revisions": [
+    "81d470a",
+    "107a071"
+  ],
+  "comparison_revision": "a88da701d6212c5e91c7d69031f12ae5fd2b60a8",
+  "performance_baseline_revision": "81d470a",
+  "previous_checkpoint": "2026-08-02-monotone-exact-offset-topology.json",
+  "scope": {
+    "included": [
+      "exact offset-of-offset composition for retained AnalyticParallel fragments with represented range endpoints",
+      "signed-distance composition that accounts for parallel derivative orientation and reversed boundary traversal",
+      "exact source-singularity rejection and re-splitting at every cusp introduced by the combined distance",
+      "one-sided limiting tangent selection on each side of a newly introduced cusp",
+      "lazy exact material/hole nesting for authoritative regularized filled-left multi-loop outputs",
+      "one-word BezierParallel2 carriers sharing distance-independent source power-basis and differential kernels",
+      "square-root-free represented-parameter derivative-scale classification",
+      "STRICT and APPROXIMATE_512 execution through the same exact proof graph",
+      "a release benchmark comparing composed and direct-equivalent exact region offsets"
+    ],
+    "excluded": [
+      "composition across retained algebraic range endpoints",
+      "join centers or endpoints requiring an unsupported algebraic coordinate tower",
+      "finite projection or export of general analytic offsets",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "composition": "For D(t)=C(t)+d*N_C(t), every retained regular cusp-free span has D'(t)=lambda(t) C'(t) with fixed nonzero sign. A signed left offset e along the retained traversal is therefore the same source carrier at d+e when the traversal normal agrees with N_C and at d-e otherwise.",
+    "orientation": "The sign of lambda is certified at one exact rational interior parameter. Reversed traversal flips the normal independently. Reversed split output reverses both each fragment traversal flag and the fragment vector order.",
+    "cusp_partition": "The combined-distance parallel runs the authoritative exact singularity analysis. Every new open-range cusp becomes a retained split boundary; source singularities on a nonzero-distance range remain explicit Unsupported evidence.",
+    "limiting_tangents": "At cusp endpoints the join engine receives the adjacent regular interval's source tangent multiplied by the certified parallel-scale and traversal signs, never a zero cusp derivative.",
+    "lazy_roles": "Only an authoritative filled-left arrangement walk can publish the regularized-topology marker. Multi-loop nesting is then derived exactly on demand using retained-curve ray classification and conservative exact bounds; ordinary completion does not pay for unused role evidence.",
+    "source_kernel": "Changing only the signed parallel distance allocates a new one-word carrier and distance-dependent PH cache while sharing immutable source geometry, polynomial power basis, and homogeneous differential evidence.",
+    "represented_scale_fast_path": "At represented parameters the derivative-scale sign is decided from exact H, H', W, d, |H|^2, and the same cusp polynomial identity used by the algebraic-parameter certificate. It constructs neither a normalized derivative nor a square root.",
+    "policy": "STRICT and APPROXIMATE_512 use identical construction and topology. APPROXIMATE_512 may decide only an otherwise unresolved terminal equality/sign; the rational benchmark fixture remains fully Certified under both policies."
+  },
+  "capability": {
+    "a88da70": "The first exact offset succeeds, but attempting to offset its retained AnalyticParallel fragments returns Unsupported.",
+    "81d470a": "Represented-range repeated offsets compose exactly, preserve traversal orientation, split newly introduced cusps, and publish enough topology for further exact operations.",
+    "107a071": "The same result shares its distance-independent source kernel and uses the represented scalar derivative-scale fast predicate."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release executable pinned to CPU 11; eleven independent process samples; one hundred operations per lane; fixture and first-offset construction excluded; a structural equality check between composed and direct-equivalent results runs before timing",
+    "command": "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-repeated target/release/deps/offset-ea116fee283cd918",
+    "fixture": "An even-odd material loop of four quadratic Beziers is first offset outward by 1/10. The composed lane offsets that exact analytic result by 1/5; the direct-equivalent lane offsets an independent authored source by 3/10. Both use exact round corners under STRICT and return structurally equal CurveRegion2 values.",
+    "current": {
+      "composed_samples_us": [220.543, 241.835, 252.033, 222.240, 227.324, 221.237, 219.119, 286.478, 311.551, 224.011, 216.514],
+      "composed_median_us": 224.011,
+      "composed_min_us": 216.514,
+      "composed_max_us": 311.551,
+      "direct_equivalent_samples_us": [236.410, 230.408, 231.902, 236.222, 230.196, 289.260, 229.234, 230.843, 229.884, 232.995, 231.279],
+      "direct_equivalent_median_us": 231.279,
+      "composed_speedup_over_direct_equivalent": 1.0324,
+      "composed_time_reduction_percent": 3.143
+    },
+    "pre_source_kernel_baseline": {
+      "revision": "81d470a plus the benchmark-only dispatcher",
+      "composed_median_us": 280.840,
+      "direct_equivalent_median_us": 238.862,
+      "optimized_composed_speedup": 1.2537,
+      "optimized_composed_time_reduction_percent": 20.236
+    },
+    "established_first_offset_guard": {
+      "current_direct_samples_us": [260.341, 254.424, 265.944, 257.551, 255.321, 253.229, 388.712, 252.450, 273.977, 298.419, 261.916],
+      "current_direct_median_us": 260.341,
+      "previous_checkpoint_median_us": 255.670,
+      "change_percent": 1.827,
+      "interpretation": "The ten-operation lane remains in the prior checkpoint's narrow microsecond envelope; the two adapter medians improve to 232.767 and 233.420 microseconds."
+    },
+    "historical_and_competitive_controls": {
+      "a88da70_repeated_exact": "Unsupported",
+      "9740a95_exact": "Even the first general curved region offset is Unsupported.",
+      "historical_certified_fitted_median_ms": 3.235874,
+      "historical_chord_fallback_median_ms": 5.407297,
+      "line_arc_capsule": "Hypercurve exact 19,760.2 ns versus Cavalier f64 956.6 ns",
+      "open_cubic": "Hypercurve certified 29,650,296.2 ns and chord fallback 981,952.2 ns versus Curvo heuristic f64 8,366.9 ns",
+      "contract_note": "Historical adapters and competitive f64 lanes do not preserve a canonical-Real exact closed-region result and are throughput controls, not exact peers."
+    }
+  },
+  "memory": {
+    "application_peak_rss": {
+      "tool": "/usr/bin/time",
+      "workload": "one hundred composed and one hundred direct-equivalent exact offsets plus two untimed equality-check operations",
+      "peak_kib": 6828
+    },
+    "allocation_profile": {
+      "tool": "Heaptrack direct application trace",
+      "profile": "/tmp/hypercurve-repeated-exact-source-kernel-group.zst",
+      "workload": "the same two one-hundred-operation lanes plus setup and equality checks",
+      "allocation_calls": 797594,
+      "temporary_allocations": 96426,
+      "peak_heap_kib": 138.43,
+      "instrumented_runtime_seconds": 0.314,
+      "interpretation": "Peak live storage remains small; most allocations are short-lived exact-scalar and arrangement construction work. Distance variants retain one shared source kernel instead of duplicating source caches."
+    },
+    "analytic_self_crossing_regression": {
+      "elapsed_seconds": 58.26,
+      "maximum_rss_kib": 578936,
+      "eager_role_nesting_elapsed_seconds": 89.56,
+      "previous_lazy_checkpoint_elapsed_seconds": 59.27,
+      "interpretation": "Deferring exact multi-loop role nesting restores the existing expensive resultant case while preserving on-demand role completeness."
+    }
+  },
+  "release_size": {
+    "method": "same all-feature curve_region_boolean_batch release executable as the prior checkpoint",
+    "file_bytes": 7697352,
+    "text_bytes": 5826222,
+    "prior_file_bytes": 7686568,
+    "prior_text_bytes": 5818350,
+    "file_change_bytes": 10784,
+    "text_change_bytes": 7872,
+    "file_change_percent": 0.1403,
+    "text_change_percent": 0.1353,
+    "interpretation": "Represented-range repeated-offset capability, lazy role proof, shared source kernels, the exact scalar fast predicate, and their production paths add 0.135% representative text."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-repeated.qAPJ0F --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31238,
+    "edges": 57207,
+    "prior_nodes": 31143,
+    "prior_edges": 56917,
+    "artifact": "/tmp/hypercurve-callgraph-repeated.qAPJ0F/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegion2::offset_exact_general_raw -> exact_offset_span_from_analytic_parallel",
+      "exact_offset_span_from_analytic_parallel -> BezierParallel2::with_distance",
+      "exact_offset_span_from_analytic_parallel -> BezierParallel2::regular_fragment_derivative_scale_sign",
+      "BezierParallel2::regular_fragment_derivative_scale_sign -> parallel_derivative_scale_sign_at_exact",
+      "CurveRegion2::loop_roles_raw -> regularized_retained_loop_roles_raw"
+    ]
+  },
+  "verification": {
+    "all_feature_library": "passed: 344 tests",
+    "no_default_library": "passed: 308 tests",
+    "focused_integrations": "passed: 3 analytic-parallel region, 98 Bezier fit/offset, 29 curve-intersection, 29 CurveRegion Boolean, and 43 CurveRegion promotion/regularization tests",
+    "strict_and_approximate": "passed repeated composition, reversal, newly introduced cusp partition, exact role nesting, represented-scale differential, and terminal-policy regressions under both policies",
+    "clippy_all_features": "passed with -D warnings",
+    "clippy_no_default_features": "passed with -D warnings",
+    "release_benchmarks": "passed: offset and curve_region_boolean_batch",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "compose retained analytic fragments whose range begins or ends at a nonrepresented algebraic parameter",
+    "support exact joins whose centers or endpoints require the remaining algebraic coordinate towers",
+    "extend structural parallel-pair differential coverage beyond the monotone simple-loop proof",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection/export for exact analytic offsets",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}

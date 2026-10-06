@@ -1,0 +1,613 @@
+//! Path publication of exact corner cuts through the shared chain machinery.
+
+use super::curve_corner_domain::parameter_order;
+use super::*;
+use crate::BezierSplitFragment2;
+use crate::bezier_region::curve_corner_chain::CurveCornerChain2;
+
+pub(super) fn corner_has_native_reconstruction(
+    curve: &Curve2,
+    cut: &CornerCut2,
+    retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
+) -> bool {
+    // Rational circle inverses certify a source parameter for an existing
+    // contact point. Re-evaluating that parameter during native subdivision
+    // loses its endpoint authority; the shared chain retains both witnesses.
+    // Circular extensions also carry endpoint markers, not affine parameters.
+    curve.geometry().is_some()
+        && retained_arc.is_none()
+        && cut.point.coordinates().is_some()
+        && (cut.placement == CornerPlacement2::Corner
+            || matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
+            || cut.exact_parameter().is_some())
+}
+
+/// The solver selects a cut in the complete authored domain before this
+/// conversion. Only reconstruction uses the source's rational chart partition.
+struct CornerSourceFragments2 {
+    fragments: Vec<BezierSplitFragment2>,
+    cut_index: usize,
+    cut: CornerTrimCut2,
+}
+
+impl CornerSourceFragments2 {
+    fn new(
+        curve: &Curve2,
+        cut: CornerCut2,
+        previous: bool,
+        defer_arc: bool,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        if let Some(fragment) = curve.retained_fragment() {
+            return Ok(Self {
+                fragments: vec![fragment.clone()],
+                cut_index: 0,
+                cut: cut.into_retained_evidence().ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        operation,
+                        curve.family(),
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?,
+            });
+        }
+
+        if let Some(spans) = curve.restricted_source_spans(policy, operation)? {
+            let mut cut = cut.into_retained_evidence().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    operation,
+                    curve.family(),
+                    crate::UncertaintyReason::Unsupported,
+                )
+            })?;
+            let cut_index = if cut.placement == CornerPlacement2::Extension {
+                if previous { spans.len() - 1 } else { 0 }
+            } else {
+                let mut selected = None;
+                for (index, span) in spans.iter().enumerate() {
+                    let local = local_parameter(
+                        &cut.parameter,
+                        &span.source_scale,
+                        &span.source_offset,
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?;
+                    let range = span.fragment.curve_region_parameter_range();
+                    let lower =
+                        parameter_order(&local, range.start(), operation, curve.family(), policy)?;
+                    let upper =
+                        parameter_order(&local, range.end(), operation, curve.family(), policy)?;
+                    let reversed = span.fragment.source_is_reversed();
+                    let at_start = if reversed {
+                        upper.is_eq()
+                    } else {
+                        lower.is_eq()
+                    };
+                    let at_end = if reversed {
+                        lower.is_eq()
+                    } else {
+                        upper.is_eq()
+                    };
+                    if lower.is_lt()
+                        || upper.is_gt()
+                        || (previous && at_start && index > 0)
+                        || (!previous && at_end && index + 1 < spans.len())
+                    {
+                        continue;
+                    }
+                    selected = Some(index);
+                    break;
+                }
+                selected.ok_or_else(|| {
+                    ExactCurveError::invalid(
+                        operation,
+                        curve.family(),
+                        CurveError::InvalidCurveParameter,
+                    )
+                })?
+            };
+            let span = &spans[cut_index];
+            cut.parameter = local_parameter(
+                &cut.parameter,
+                &span.source_scale,
+                &span.source_offset,
+                operation,
+                curve.family(),
+                policy,
+            )?;
+            // A logical interior cut may lie exactly at an internal chart
+            // seam. In the surviving chart it retains the complete span;
+            // there is no zero-width piece to split off.
+            let range = span.fragment.curve_region_parameter_range();
+            let endpoint = if previous != span.fragment.source_is_reversed() {
+                range.end()
+            } else {
+                range.start()
+            };
+            if cut.placement == CornerPlacement2::Trim
+                && parameter_order(&cut.parameter, endpoint, operation, curve.family(), policy)?
+                    .is_eq()
+            {
+                cut.placement = CornerPlacement2::Corner;
+            }
+            return Ok(Self {
+                fragments: spans.iter().map(|span| span.fragment.clone()).collect(),
+                cut_index,
+                cut,
+            });
+        }
+
+        let mut cut = cut;
+        let native = curve.native_bezier_fragments_for_operation(policy, operation)?;
+        let mut native_arc_cut = None;
+        let defer_native_arc =
+            defer_arc && matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)));
+        if !defer_native_arc && let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry() {
+            if cut.placement == CornerPlacement2::Extension {
+                let (start, end) = if previous {
+                    (arc.start().clone().into(), cut.point.clone())
+                } else {
+                    (cut.point.clone(), arc.end().clone().into())
+                };
+                let fragments = CurveCornerChain2::incident_circle_arc_fragments(
+                    arc, start, end, operation, policy,
+                )?;
+                let cut_index = if previous { fragments.len() - 1 } else { 0 };
+                cut.placement = CornerPlacement2::Corner;
+                cut.parameter = Some(if previous { Real::one() } else { Real::zero() }.into());
+                return Ok(Self {
+                    fragments,
+                    cut_index,
+                    cut: cut
+                        .into_retained_evidence()
+                        .expect("a circular extension keeps its endpoint"),
+                });
+            }
+            if cut.placement == CornerPlacement2::Trim {
+                // Native sweep contacts need the actual rational source
+                // parameter only when entering retained reconstruction. Keep
+                // the complete source here, including two cuts on one circle.
+                for (index, fragment) in native.iter().enumerate() {
+                    let rational = RationalBezier2::try_from_subcurve(fragment.native_curve())
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(operation, curve.family(), cause)
+                        })?;
+                    let Some(parameter) = RetainedRationalCornerArc2::parameter_at_incident_point(
+                        &rational,
+                        &cut.point,
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?
+                    else {
+                        continue;
+                    };
+                    let lower = parameter_order(
+                        &parameter,
+                        &Real::zero().into(),
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?;
+                    let upper = parameter_order(
+                        &parameter,
+                        &Real::one().into(),
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?;
+                    if lower.is_lt()
+                        || upper.is_gt()
+                        || (previous && lower.is_eq() && index > 0)
+                        || (!previous && upper.is_eq() && index + 1 < native.len())
+                    {
+                        continue;
+                    }
+                    native_arc_cut = Some((index, parameter));
+                    break;
+                }
+                if native_arc_cut.is_none() {
+                    return Err(ExactCurveError::blocked(
+                        operation,
+                        curve.family(),
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                }
+            }
+        }
+        let arc_parameter_is_local = native_arc_cut.is_some();
+        let mut cut_index = if let Some((index, parameter)) = native_arc_cut {
+            // Keep the selected inverse in its original chart. Mapping to a
+            // global parameter and back would repeat the same chart search
+            // and grow the exact expression without adding any information.
+            cut.parameter = Some(parameter);
+            Some(index)
+        } else if previous {
+            native.len().checked_sub(1)
+        } else {
+            (!native.is_empty()).then_some(0)
+        }
+        .ok_or_else(|| {
+            ExactCurveError::invalid(
+                operation,
+                curve.family(),
+                CurveError::Topology("a corner source has no incident chart".into()),
+            )
+        })?;
+        let mut cut = cut.into_retained_evidence().ok_or_else(|| {
+            ExactCurveError::blocked(
+                operation,
+                curve.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        if native.len() > 1
+            && cut.placement == CornerPlacement2::Trim
+            && !defer_native_arc
+            && !arc_parameter_is_local
+        {
+            let mut selected = None;
+            for (index, fragment) in native.iter().enumerate() {
+                let (start, end) = fragment.parameter_range();
+                let lower = parameter_order(
+                    &cut.parameter,
+                    &start.clone().into(),
+                    operation,
+                    curve.family(),
+                    policy,
+                )?;
+                let upper = parameter_order(
+                    &cut.parameter,
+                    &end.clone().into(),
+                    operation,
+                    curve.family(),
+                    policy,
+                )?;
+                if lower.is_lt()
+                    || upper.is_gt()
+                    || (previous && lower.is_eq() && index > 0)
+                    || (!previous && upper.is_eq() && index + 1 < native.len())
+                {
+                    continue;
+                }
+                selected = Some(index);
+                break;
+            }
+            cut_index = selected.ok_or_else(|| {
+                ExactCurveError::invalid(
+                    operation,
+                    curve.family(),
+                    CurveError::InvalidCurveParameter,
+                )
+            })?;
+        }
+        if !defer_native_arc {
+            let (start, end) = native[cut_index].parameter_range();
+            if !arc_parameter_is_local && (start != &Real::zero() || end != &Real::one()) {
+                cut.parameter = local_parameter(
+                    &cut.parameter,
+                    &(end - start),
+                    start,
+                    operation,
+                    curve.family(),
+                    policy,
+                )?;
+            }
+            let endpoint = CurveParameter2::from(if previous { Real::one() } else { Real::zero() });
+            if native.len() > 1
+                && cut.placement == CornerPlacement2::Trim
+                && parameter_order(&cut.parameter, &endpoint, operation, curve.family(), policy)?
+                    .is_eq()
+            {
+                cut.placement = CornerPlacement2::Corner;
+            }
+        }
+        Ok(Self {
+            fragments: native
+                .iter()
+                .map(|fragment| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: fragment.native_curve().clone(),
+                })
+                .collect(),
+            cut_index,
+            cut,
+        })
+    }
+}
+
+fn local_parameter(
+    parameter: &CurveParameter2,
+    scale: &Real,
+    offset: &Real,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveParameter2> {
+    let inverse = (Real::one() / scale)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))?;
+    match parameter
+        .affine_image_unbounded(&inverse, &(-offset * &inverse), policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(parameter) => Ok(parameter),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
+    }
+}
+
+impl CurvePath2 {
+    pub(super) fn reconstruct_selected_chamfer(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        solution: ChamferCorner2,
+        previous_retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
+        next_retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Self>> {
+        self.reconstruct_corner(
+            previous_index,
+            next_index,
+            solution.previous,
+            solution.next,
+            CurveOperation2::Chamfer,
+            None,
+            policy,
+            |chain, [previous_index, next_index], [previous_cut, next_cut], _| {
+                chain.reconstruct_chamfer(
+                    previous_index,
+                    next_index,
+                    previous_cut,
+                    next_cut,
+                    previous_retained_arc,
+                    next_retained_arc,
+                    policy,
+                )
+            },
+        )
+    }
+
+    pub(super) fn reconstruct_selected_fillet(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        solution: FilletCorner2,
+        radius: &Real,
+        retained_arcs: [Option<&crate::curve::RetainedRationalCornerArc2>; 2],
+        promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Self>> {
+        let deferred_arc = solution
+            .retained_frame
+            .as_ref()
+            .and_then(|frame| frame.anchor_evidence.as_ref())
+            .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+            .map(|contact| contact.arc_is_previous);
+        self.reconstruct_corner(
+            previous_index,
+            next_index,
+            solution.previous,
+            solution.next,
+            CurveOperation2::Fillet,
+            deferred_arc,
+            policy,
+            |chain, [previous_index, next_index], [previous_cut, next_cut], domains| {
+                chain.reconstruct_fillet(
+                    previous_index,
+                    next_index,
+                    previous_cut,
+                    next_cut,
+                    solution.center,
+                    solution.clockwise,
+                    solution.retained_frame,
+                    radius,
+                    retained_arcs,
+                    promoted_parallels,
+                    domains,
+                    policy,
+                )
+            },
+        )
+    }
+
+    fn reconstruct_corner(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        previous_cut: CornerCut2,
+        next_cut: CornerCut2,
+        operation: CurveOperation2,
+        deferred_arc: Option<bool>,
+        policy: &CurveContext,
+        rebuild: impl FnOnce(
+            &CurveCornerChain2<'_>,
+            [usize; 2],
+            [CornerTrimCut2; 2],
+            [std::ops::Range<usize>; 2],
+        ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>>,
+    ) -> ExactCurveResult<Option<Self>> {
+        let previous = CornerSourceFragments2::new(
+            &self.data.curves[previous_index],
+            previous_cut,
+            true,
+            deferred_arc == Some(true),
+            operation,
+            policy,
+        )?;
+        let next = CornerSourceFragments2::new(
+            &self.data.curves[next_index],
+            next_cut,
+            false,
+            deferred_arc == Some(false),
+            operation,
+            policy,
+        )?;
+        let same_curve = previous_index == next_index;
+        let next_cut_index = if same_curve {
+            next.cut_index
+        } else {
+            previous.fragments.len() + next.cut_index
+        };
+        let domains = [
+            0..previous.fragments.len(),
+            if same_curve {
+                0..previous.fragments.len()
+            } else {
+                previous.fragments.len()..previous.fragments.len() + next.fragments.len()
+            },
+        ];
+        let mut fragments = previous.fragments;
+        if !same_curve {
+            fragments.extend(next.fragments);
+        }
+        let Some(rebuilt) = rebuild(
+            &CurveCornerChain2::new(&fragments, same_curve),
+            [previous.cut_index, next_cut_index],
+            [previous.cut, next.cut],
+            domains,
+        )?
+        else {
+            return Ok(None);
+        };
+        let mut curves = Vec::with_capacity(self.data.curves.len() + rebuilt.len());
+        if previous_index < next_index {
+            curves.extend(self.data.curves[..previous_index].iter().cloned());
+        }
+        curves.extend(rebuilt.into_iter().map(Curve2::from_retained_fragment));
+        if previous_index < next_index {
+            curves.extend(self.data.curves[next_index + 1..].iter().cloned());
+        } else if !same_curve {
+            // At the closing vertex the reconstructed pair starts at the last
+            // curve's retained start. Preserve the same cyclic traversal.
+            curves.extend(
+                self.data.curves[next_index + 1..previous_index]
+                    .iter()
+                    .cloned(),
+            );
+        }
+        Self::try_new_raw(curves, policy)
+            .map(Some)
+            .map_err(|error| remap_operation(error, operation))
+    }
+}
+
+impl CurvePath2 {
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn publish_fillet_corner(
+        &self,
+        vertex_index: usize,
+        previous_index: usize,
+        next_index: usize,
+        solution: FilletCorner2,
+        radius: &Real,
+        retained_arcs: [Option<&crate::curve::RetainedRationalCornerArc2>; 2],
+        promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Self>> {
+        let previous = &self.data.curves[previous_index];
+        let next = &self.data.curves[next_index];
+        if previous_index == next_index
+            && !previous.corner_cuts_leave_authored_interval(
+                &solution.previous,
+                &solution.next,
+                CurveOperation2::Fillet,
+                policy,
+            )?
+        {
+            return Ok(None);
+        }
+        if !corner_has_native_reconstruction(previous, &solution.previous, retained_arcs[0])
+            || !corner_has_native_reconstruction(next, &solution.next, retained_arcs[1])
+            || solution.center.coordinates().is_none()
+            || solution
+                .retained_frame
+                .as_ref()
+                .and_then(|frame| frame.anchor_evidence.as_ref())
+                .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+                .is_some_and(|deferred| {
+                    let source = if deferred.arc_is_previous {
+                        previous
+                    } else {
+                        next
+                    };
+                    !matches!(source.geometry(), Some(CurveGeometry2::CircularArc(_)))
+                })
+        {
+            return self.reconstruct_selected_fillet(
+                previous_index,
+                next_index,
+                solution,
+                radius,
+                retained_arcs,
+                promoted_parallels,
+                policy,
+            );
+        }
+        let previous_point = solution.previous.exact_point().cloned().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                previous.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        let next_point = solution.next.exact_point().cloned().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                next.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        let center = solution.center.coordinates().cloned().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                previous.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        let fillet = Curve2::from(CircularArc2::new_with_certified_radius(
+            previous_point,
+            next_point,
+            center,
+            radius * radius,
+            solution.clockwise,
+            None,
+        ));
+        if previous_index == next_index {
+            return self
+                .with_single_curve_corner_replaced(
+                    previous_index,
+                    &solution.previous,
+                    &solution.next,
+                    fillet,
+                    CurveOperation2::Fillet,
+                    policy,
+                )
+                .map(Some);
+        }
+        let previous_trim = materialize_corner_side(
+            previous,
+            &solution.previous,
+            true,
+            CurveOperation2::Fillet,
+            policy,
+        )?;
+        let next_trim =
+            materialize_corner_side(next, &solution.next, false, CurveOperation2::Fillet, policy)?;
+        self.with_corner_replaced(
+            vertex_index,
+            previous_index,
+            next_index,
+            previous_trim,
+            fillet,
+            next_trim,
+            CurveOperation2::Fillet,
+            policy,
+        )
+        .map(Some)
+    }
+}

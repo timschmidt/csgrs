@@ -1,0 +1,5073 @@
+{
+  "schema": 1,
+  "date": "2026-09-07",
+  "title": "Recursive transformed bounds through the existing exact projective transform",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory",
+    "binary size",
+    "code size"
+  ],
+  "decision": "Retain the higher-priority exact-bounds completeness repair and delete duplicate arithmetic. No compatibility path or public API is introduced. All measured costs are retained; this is not a uniform speedup or release-readiness claim.",
+  "revisions": [
+    {
+      "repository": "hyperreal",
+      "revision": "da26e961bf76adf13829d8a26ced6cdaacb6b564"
+    },
+    {
+      "repository": "hyperlimit",
+      "revision": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5"
+    },
+    {
+      "repository": "hyperlattice",
+      "revision": "53427ce89f8c82c016e69a04e035787e2753adc8"
+    },
+    {
+      "repository": "hypertri",
+      "revision": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+    },
+    {
+      "repository": "hypersolve",
+      "revision": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e"
+    },
+    {
+      "repository": "hypercurve",
+      "revision": "92171deddc6c3f83f25710e33bcfc9b303e8c067"
+    },
+    {
+      "repository": "hypermesh",
+      "revision": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+    }
+  ],
+  "hypercurve_candidate": "da72dfe5ac9b79881434c0e5e5d5d7446ac5e3a3",
+  "source": {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "baseline_source_sha256": "af0be2b47d63dcf422f36c3a2c0ea34793bb1ad7db917ad6a2b189a6c8e1c17b",
+    "original_regression_source_sha256": "6e5eadd0461565eb6fd70fa957489c1b25a89b4fbe7aa1e225a6b2f1c1100562",
+    "candidate_source_sha256": "2145b159286af4ad3daa1c2322495987e7d774aa3fe1ed7bae9cf3564a2a14f2",
+    "original_production_sha256": "66cde5bf9af61e4b3e01d7daecbf9650e4b28a299898e268cbb4abcee4136ced",
+    "candidate_production_sha256": "15dd0afbe7501fa5d241426bb102aa93c088066e975e0503c7c399d3a76e6478",
+    "test_module_sha256": "9203eb57e08efd880973686d0bd0258dcc3cb7d79e13b2c648d1528dee7e42f9",
+    "matched_test_modules": true,
+    "matched_catalogs": true,
+    "catalog_sha256": "d83a0b04538dc56c1c3fe40bae603b27503138c696a53035a3beedc9521b81a1",
+    "unchanged_geometry_workloads": [
+      "selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+      "recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+      "recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel",
+      "selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+      "mapped_overlap_retains_distinct_selected_inverse_keys_and_rebuilds_expired_values"
+    ],
+    "production_lines": {
+      "baseline": 129365,
+      "candidate": 129335,
+      "delta": -30
+    },
+    "test_lines_delta": 42,
+    "source_lines_delta": 12,
+    "public_api": "Unchanged. One duplicate private derived_contact_bounds_refined implementation is removed; the map dispatch now calls the pre-existing rotated_radial_image and bounds_refined authorities. No cache, object field, representation, or shim added.",
+    "diagnosis": "The retained contact may extend the center's field by a discriminant root. multiply rejects unequal fields before zero/one shortcuts, including constant denominators. The former bounds helper multiplied across those fields and returned Unsupported. The existing exact projective transform lifts the center into the contact's field before arithmetic; reuse that path with zero perpendicular scale.",
+    "invariants": "Projective denominators retain their strict-positive certificate. bounds_refined uses certified dyadic or interval arithmetic, never sampled topology or an approximate terminal. Caller-policy validation and rotated-bounds dispatch are unchanged."
+  },
+  "regressions": {
+    "original": [
+      {
+        "name": "retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+        "exit": 0
+      },
+      {
+        "name": "retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+        "exit": 0
+      },
+      {
+        "name": "recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+        "exit": 101
+      },
+      {
+        "name": "retained_chord_fallback_affine_queries_match_certified_bounds",
+        "exit": 0
+      },
+      {
+        "name": "algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly",
+        "exit": 0
+      },
+      {
+        "name": "algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+        "exit": 101
+      },
+      {
+        "name": "pair_radial_circle_intersects_independent_field_chord_exactly",
+        "exit": 0
+      },
+      {
+        "name": "dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+        "exit": 0
+      }
+    ],
+    "candidate": [
+      {
+        "name": "retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+        "exit": 0
+      },
+      {
+        "name": "retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+        "exit": 0
+      },
+      {
+        "name": "recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+        "exit": 0
+      },
+      {
+        "name": "retained_chord_fallback_affine_queries_match_certified_bounds",
+        "exit": 0
+      },
+      {
+        "name": "algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly",
+        "exit": 0
+      },
+      {
+        "name": "algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+        "exit": 0
+      },
+      {
+        "name": "pair_radial_circle_intersects_independent_field_chord_exactly",
+        "exit": 0
+      },
+      {
+        "name": "dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+        "exit": 0
+      }
+    ],
+    "carrier_families": [
+      "axis",
+      "chord-normal-projective",
+      "oblique",
+      "recursive-quadratic-line",
+      "represented-oblique",
+      "retained-offset",
+      "selected-radial"
+    ],
+    "catalog": "920 tests, 0 benchmarks",
+    "exact_oracles": "Independent interval brackets for 2x-3y under six transforms: translation, positive/negative/zero unrotated radial scale, and two signed rotations, across all seven retained carrier families. Recursive translated contacts on exact y=-1 must enclose y=1 at refinement steps 0,2,16,64 under STRICT and APPROXIMATE_512 construction. Exact equality, policy and forced-strict replay guards remain.",
+    "evidence": "Both original recursive controls fail at the first translated-bounds query with Uncertain(Unsupported). The field diagnostic records direct_product=false and lifted_product=true. All eight candidate checks complete; original and candidate test modules and 920-test catalogs match byte for byte. Earlier failures are reproduced from the preserved previous oracle binary; its production prefix matches this baseline.",
+    "timeouts": "Focused original and candidate invocations use 120-second diagnostic limits; observed exit 101 denotes assertion failure, not timeout."
+  },
+  "diagnostics": {
+    "selected_radial": {
+      "original_libtest_seconds": 61.45,
+      "candidate_libtest_seconds": 61.68,
+      "previous_three_transform_libtest_seconds": 26.71,
+      "sampled_libtest_seconds": 65.97,
+      "samples": 6538,
+      "lost_samples": 0,
+      "flat_hotspots_percent": {
+        "biguint_div_rem_core": 43.28,
+        "biguint_shl2": 11.28,
+        "biguint_shr2": 5.16,
+        "rational_gcd_wide_magnitudes": 4.16
+      },
+      "scope": "The six-transform oracle adds complete work to an existing selected-radial test. Raw perf data and flat summary are retained. This single instrumented run occurred during qualification and is not a latency comparison or call-site attribution. Investigate the cost without removing correctness assertions; see FOLLOWUPS.md."
+    }
+  },
+  "validation": {
+    "gates": [
+      "fmt 0",
+      "full 0",
+      "clippy 0",
+      "minimal 0",
+      "minimal-clippy 0",
+      "docs 0",
+      "minimal-docs 0",
+      "fuzz-check 0",
+      "ui-tests 0",
+      "ui-clippy 0",
+      "ui-wasm 0"
+    ],
+    "all_features_include_ignored": {
+      "passed": 1770,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 46
+    },
+    "no_default_features": {
+      "passed": 1732,
+      "failed": 0,
+      "ignored": 4,
+      "suites": 46
+    },
+    "ui": {
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 1
+    },
+    "fuzz_targets_compiled": true,
+    "new_fuzz_campaign": false,
+    "fresh_coverage": false,
+    "lower_stack_or_hypermesh_requalification": false,
+    "scope": "Seven pinned source archives without live dependency symlinks. Full-feature opt-in cases run explicitly; minimal opt-in cases are covered by that full run. Concurrent Hyperreal drafts remain excluded and untouched. No browser requalification, push, publication, or external-worker termination."
+  },
+  "control": {
+    "source_root": "/home/tim/Documents/GitHub/workspace/hypercurve/target/recursive-bounds.tCa7hH/snapshot",
+    "unit_features": "all",
+    "native_features": "empty default feature set",
+    "ui_features": "UI defaults",
+    "profile_workloads": "The same-field recursive tangent test completes in both revisions with identical strengthened assertions and equal-length control-test/changed-test executable names. The newly complete recursive test is additionally profiled candidate-only; original Unsupported failures are never treated as equivalent performance controls."
+  },
+  "memory": {
+    "tangent": {
+      "baseline": {
+        "format": 3,
+        "records": 1841073,
+        "allocations": 755084,
+        "frees": 750771,
+        "untracked_frees": 2,
+        "allocated_bytes": 42656437,
+        "peak_live_bytes": 659994,
+        "end_live_bytes": 313224,
+        "peak_live_allocations": 7379,
+        "end_live_allocations": 4313
+      },
+      "candidate": {
+        "format": 3,
+        "records": 1841421,
+        "allocations": 755228,
+        "frees": 750915,
+        "untracked_frees": 2,
+        "allocated_bytes": 42665013,
+        "peak_live_bytes": 659994,
+        "end_live_bytes": 313224,
+        "peak_live_allocations": 7379,
+        "end_live_allocations": 4313
+      }
+    },
+    "newly_complete_recursive_candidate": {
+      "format": 3,
+      "records": 13396878,
+      "allocations": 5063698,
+      "frees": 5059638,
+      "untracked_frees": 2,
+      "allocated_bytes": 250035299,
+      "peak_live_bytes": 1277658,
+      "end_live_bytes": 294112,
+      "peak_live_allocations": 16596,
+      "end_live_allocations": 4060
+    },
+    "scope": "Single complete whole-libtest Heaptrack format-3 streams, not geometry-only attribution, ecosystem memory coverage, RSS causality, or leak proof. Final live allocation counts reconcile; compressed streams pass zstd integrity checks."
+  },
+  "instructions": {
+    "tangent": {
+      "baseline": 455963380,
+      "candidate": 455978519,
+      "change_percent": 0.003320222777536408
+    },
+    "newly_complete_recursive_candidate": 2943985967,
+    "scope": "Whole-libtest Callgrind; each summary equals total. Instrumented durations are not latency measurements. No recursive baseline ratio is defined."
+  },
+  "binary_size": {
+    "native": [
+      {
+        "fixture": "bezier_region",
+        "baseline": {
+          "bytes": 14815960,
+          "sections": {
+            ".interp": 28,
+            ".note.ABI-tag": 32,
+            ".note.gnu.build-id": 36,
+            ".dynsym": 1824,
+            ".gnu.version": 152,
+            ".gnu.version_r": 352,
+            ".gnu.hash": 28,
+            ".dynstr": 1155,
+            ".rela.dyn": 148224,
+            ".rela.plt": 48,
+            ".gcc_except_table": 1222724,
+            ".rodata": 207056,
+            ".eh_frame_hdr": 81412,
+            ".eh_frame": 758544,
+            ".text": 9357319,
+            ".init": 27,
+            ".fini": 13,
+            ".plt": 48,
+            ".tdata": 32,
+            ".tbss": 1224,
+            ".data.rel.ro": 113064,
+            ".fini_array": 8,
+            ".init_array": 16,
+            ".dynamic": 480,
+            ".got": 9888,
+            ".got.plt": 40,
+            ".relro_padding": 3752,
+            ".tm_clone_table": 0,
+            ".data": 197688,
+            ".bss": 232,
+            ".comment": 231,
+            ".annobin.notes": 247,
+            ".gnu.build.attributes": 324
+          },
+          "sha256": "69604a9991c50d4f1dec970e9ee770c445a7c41e962b41a05bd60723f14b5fbe"
+        },
+        "candidate": {
+          "bytes": 14813728,
+          "sections": {
+            ".interp": 28,
+            ".note.ABI-tag": 32,
+            ".note.gnu.build-id": 36,
+            ".dynsym": 1824,
+            ".gnu.version": 152,
+            ".gnu.version_r": 352,
+            ".gnu.hash": 28,
+            ".dynstr": 1155,
+            ".rela.dyn": 148224,
+            ".rela.plt": 48,
+            ".gcc_except_table": 1222436,
+            ".rodata": 207072,
+            ".eh_frame_hdr": 81404,
+            ".eh_frame": 758464,
+            ".text": 9355559,
+            ".init": 27,
+            ".fini": 13,
+            ".plt": 48,
+            ".tdata": 32,
+            ".tbss": 1224,
+            ".data.rel.ro": 113064,
+            ".fini_array": 8,
+            ".init_array": 16,
+            ".dynamic": 480,
+            ".got": 9888,
+            ".got.plt": 40,
+            ".relro_padding": 1784,
+            ".tm_clone_table": 0,
+            ".data": 197688,
+            ".bss": 232,
+            ".comment": 231,
+            ".annobin.notes": 247,
+            ".gnu.build.attributes": 324
+          },
+          "sha256": "b30add6b6e684c39eb5057248c8a0ff28c6df8cf388ac175a1b6e62aa1d3dbb1"
+        },
+        "text_change": -1760,
+        "file_change": -2232
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline": {
+          "bytes": 10446768,
+          "sections": {
+            ".interp": 28,
+            ".note.ABI-tag": 32,
+            ".note.gnu.build-id": 36,
+            ".dynsym": 1824,
+            ".gnu.version": 152,
+            ".gnu.version_r": 352,
+            ".gnu.hash": 28,
+            ".dynstr": 1155,
+            ".rela.dyn": 116160,
+            ".rela.plt": 48,
+            ".gcc_except_table": 1224472,
+            ".rodata": 160464,
+            ".eh_frame_hdr": 55668,
+            ".eh_frame": 491204,
+            ".text": 6067607,
+            ".init": 27,
+            ".fini": 13,
+            ".plt": 48,
+            ".tdata": 32,
+            ".tbss": 720,
+            ".data.rel.ro": 89080,
+            ".fini_array": 8,
+            ".init_array": 16,
+            ".dynamic": 480,
+            ".got": 7128,
+            ".got.plt": 40,
+            ".relro_padding": 3808,
+            ".tm_clone_table": 0,
+            ".data": 197304,
+            ".bss": 232,
+            ".comment": 231,
+            ".annobin.notes": 247,
+            ".gnu.build.attributes": 324
+          },
+          "sha256": "adf02b81858b800d5572e0cb89c36ae18f3b1f82a7f2a14d88a2809c117dda3b"
+        },
+        "candidate": {
+          "bytes": 10444584,
+          "sections": {
+            ".interp": 28,
+            ".note.ABI-tag": 32,
+            ".note.gnu.build-id": 36,
+            ".dynsym": 1824,
+            ".gnu.version": 152,
+            ".gnu.version_r": 352,
+            ".gnu.hash": 28,
+            ".dynstr": 1155,
+            ".rela.dyn": 116160,
+            ".rela.plt": 48,
+            ".gcc_except_table": 1224184,
+            ".rodata": 160496,
+            ".eh_frame_hdr": 55660,
+            ".eh_frame": 491124,
+            ".text": 6065847,
+            ".init": 27,
+            ".fini": 13,
+            ".plt": 48,
+            ".tdata": 32,
+            ".tbss": 720,
+            ".data.rel.ro": 89080,
+            ".fini_array": 8,
+            ".init_array": 16,
+            ".dynamic": 480,
+            ".got": 7128,
+            ".got.plt": 40,
+            ".relro_padding": 1808,
+            ".tm_clone_table": 0,
+            ".data": 197304,
+            ".bss": 232,
+            ".comment": 231,
+            ".annobin.notes": 247,
+            ".gnu.build.attributes": 324
+          },
+          "sha256": "f9c1875ec042681c7de84d87ecaf0d67777518618f4d5574a74d7c930b36a637"
+        },
+        "text_change": -1760,
+        "file_change": -2184
+      },
+      {
+        "fixture": "curve_region_boolean_batch",
+        "baseline": {
+          "bytes": 14255472,
+          "sections": {
+            ".interp": 28,
+            ".note.ABI-tag": 32,
+            ".note.gnu.build-id": 36,
+            ".dynsym": 1824,
+            ".gnu.version": 152,
+            ".gnu.version_r": 352,
+            ".gnu.hash": 28,
+            ".dynstr": 1155,
+            ".rela.dyn": 143448,
+            ".rela.plt": 48,
+            ".gcc_except_table": 1220864,
+            ".rodata": 197456,
+            ".eh_frame_hdr": 77468,
+            ".eh_frame": 721692,
+            ".text": 8952887,
+            ".init": 27,
+            ".fini": 13,
+            ".plt": 48,
+            ".tdata": 32,
+            ".tbss": 1224,
+            ".data.rel.ro": 109872,
+            ".fini_array": 8,
+            ".init_array": 16,
+            ".dynamic": 480,
+            ".got": 9352,
+            ".got.plt": 40,
+            ".relro_padding": 2008,
+            ".tm_clone_table": 0,
+            ".data": 197688,
+            ".bss": 232,
+            ".comment": 231,
+            ".annobin.notes": 247,
+            ".gnu.build.attributes": 324
+          },
+          "sha256": "31c1471185312ef456668df68261953b35c6735b3a5e0396281d870b1039a302"
+        },
+        "candidate": {
+          "bytes": 14253264,
+          "sections": {
+            ".interp": 28,
+            ".note.ABI-tag": 32,
+            ".note.gnu.build-id": 36,
+            ".dynsym": 1824,
+            ".gnu.version": 152,
+            ".gnu.version_r": 352,
+            ".gnu.hash": 28,
+            ".dynstr": 1155,
+            ".rela.dyn": 143448,
+            ".rela.plt": 48,
+            ".gcc_except_table": 1220576,
+            ".rodata": 197472,
+            ".eh_frame_hdr": 77460,
+            ".eh_frame": 721612,
+            ".text": 8951127,
+            ".init": 27,
+            ".fini": 13,
+            ".plt": 48,
+            ".tdata": 32,
+            ".tbss": 1224,
+            ".data.rel.ro": 109872,
+            ".fini_array": 8,
+            ".init_array": 16,
+            ".dynamic": 480,
+            ".got": 9352,
+            ".got.plt": 40,
+            ".relro_padding": 24,
+            ".tm_clone_table": 0,
+            ".data": 197688,
+            ".bss": 232,
+            ".comment": 231,
+            ".annobin.notes": 247,
+            ".gnu.build.attributes": 324
+          },
+          "sha256": "1a6b303f8fb019eec03258ebe7e6194ef050186ab7cc60aacd44704140b263aa"
+        },
+        "text_change": -1760,
+        "file_change": -2208
+      }
+    ],
+    "wasm": {
+      "baseline": {
+        "bytes": 16973976,
+        "sha256": "3b0a1ce7d301f9121b8a91502caebd0312a9d78c04a80776fad76cb1190a4b98"
+      },
+      "candidate": {
+        "bytes": 16972647,
+        "sha256": "2dbd1d538e0a139d515f22d33dcfc91ab3620d8bd7a2cf36a99636b4c135c41c"
+      },
+      "change_bytes": -1329
+    },
+    "scope": "Matched source paths and build profiles, with raw native section tables and frozen binaries retained."
+  },
+  "timing": {
+    "start_utc": "Mon Sep  7 05:19:31 UTC 2026",
+    "end_utc": "Mon Sep  7 05:30:02 UTC 2026",
+    "paired": {
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 60,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 5.86,
+          "user_s": 5.77,
+          "system_s": 0,
+          "max_rss_kib": 9112,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 5.94,
+          "user_s": 5.9,
+          "system_s": 0,
+          "max_rss_kib": 10156,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 5.8,
+          "user_s": 5.77,
+          "system_s": 0,
+          "max_rss_kib": 9136,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 5.91,
+          "user_s": 5.88,
+          "system_s": 0,
+          "max_rss_kib": 10068,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 5.93,
+          "user_s": 5.86,
+          "system_s": 0,
+          "max_rss_kib": 9260,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 5.85,
+          "user_s": 5.81,
+          "system_s": 0,
+          "max_rss_kib": 10104,
+          "exit": 0
+        },
+        {
+          "fixture": "capsules",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 4.63,
+          "user_s": 4.58,
+          "system_s": 0,
+          "max_rss_kib": 8368,
+          "exit": 0
+        },
+        {
+          "fixture": "capsules",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 4.5,
+          "user_s": 4.46,
+          "system_s": 0,
+          "max_rss_kib": 9392,
+          "exit": 0
+        },
+        {
+          "fixture": "capsules",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 4.53,
+          "user_s": 4.5,
+          "system_s": 0,
+          "max_rss_kib": 8352,
+          "exit": 0
+        },
+        {
+          "fixture": "capsules",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 4.53,
+          "user_s": 4.5,
+          "system_s": 0,
+          "max_rss_kib": 9340,
+          "exit": 0
+        },
+        {
+          "fixture": "capsules",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 4.55,
+          "user_s": 4.52,
+          "system_s": 0,
+          "max_rss_kib": 8400,
+          "exit": 0
+        },
+        {
+          "fixture": "capsules",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 4.62,
+          "user_s": 4.56,
+          "system_s": 0,
+          "max_rss_kib": 9400,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 17.22,
+          "user_s": 17.05,
+          "system_s": 0.03,
+          "max_rss_kib": 46736,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 12.27,
+          "user_s": 12.14,
+          "system_s": 0.02,
+          "max_rss_kib": 39424,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 17.37,
+          "user_s": 17.25,
+          "system_s": 0.02,
+          "max_rss_kib": 46412,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 13.82,
+          "user_s": 13.4,
+          "system_s": 0.03,
+          "max_rss_kib": 39424,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 17.4,
+          "user_s": 17.25,
+          "system_s": 0.02,
+          "max_rss_kib": 46268,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 11.84,
+          "user_s": 11.73,
+          "system_s": 0.03,
+          "max_rss_kib": 39064,
+          "exit": 0
+        },
+        {
+          "fixture": "circles",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 14.07,
+          "user_s": 13.97,
+          "system_s": 0,
+          "max_rss_kib": 7012,
+          "exit": 0
+        },
+        {
+          "fixture": "circles",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 14.01,
+          "user_s": 13.91,
+          "system_s": 0,
+          "max_rss_kib": 7620,
+          "exit": 0
+        },
+        {
+          "fixture": "circles",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 13.94,
+          "user_s": 13.82,
+          "system_s": 0,
+          "max_rss_kib": 7332,
+          "exit": 0
+        },
+        {
+          "fixture": "circles",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 13.91,
+          "user_s": 13.77,
+          "system_s": 0,
+          "max_rss_kib": 7532,
+          "exit": 0
+        },
+        {
+          "fixture": "circles",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 14.42,
+          "user_s": 14.24,
+          "system_s": 0.01,
+          "max_rss_kib": 7160,
+          "exit": 0
+        },
+        {
+          "fixture": "circles",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 13.9,
+          "user_s": 13.8,
+          "system_s": 0,
+          "max_rss_kib": 7428,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 11.62,
+          "user_s": 11.54,
+          "system_s": 0.01,
+          "max_rss_kib": 28016,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 11.45,
+          "user_s": 11.38,
+          "system_s": 0.01,
+          "max_rss_kib": 28076,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 11.66,
+          "user_s": 11.52,
+          "system_s": 0.03,
+          "max_rss_kib": 27716,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 11.48,
+          "user_s": 11.41,
+          "system_s": 0.02,
+          "max_rss_kib": 27860,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 11.66,
+          "user_s": 11.55,
+          "system_s": 0.01,
+          "max_rss_kib": 27636,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 11.58,
+          "user_s": 11.51,
+          "system_s": 0.01,
+          "max_rss_kib": 27892,
+          "exit": 0
+        },
+        {
+          "fixture": "mapped",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.01,
+          "user_s": 0,
+          "system_s": 0,
+          "max_rss_kib": 15088,
+          "exit": 0
+        },
+        {
+          "fixture": "mapped",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0,
+          "user_s": 0,
+          "system_s": 0,
+          "max_rss_kib": 15204,
+          "exit": 0
+        },
+        {
+          "fixture": "mapped",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0,
+          "user_s": 0,
+          "system_s": 0,
+          "max_rss_kib": 15316,
+          "exit": 0
+        },
+        {
+          "fixture": "mapped",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0,
+          "user_s": 0,
+          "system_s": 0,
+          "max_rss_kib": 15432,
+          "exit": 0
+        },
+        {
+          "fixture": "mapped",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0,
+          "user_s": 0,
+          "system_s": 0,
+          "max_rss_kib": 14632,
+          "exit": 0
+        },
+        {
+          "fixture": "mapped",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0,
+          "user_s": 0,
+          "system_s": 0,
+          "max_rss_kib": 15376,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 31.87,
+          "user_s": 31.7,
+          "system_s": 0.03,
+          "max_rss_kib": 50252,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 30.88,
+          "user_s": 30.72,
+          "system_s": 0.03,
+          "max_rss_kib": 50436,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 32.23,
+          "user_s": 31.95,
+          "system_s": 0.06,
+          "max_rss_kib": 49352,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 31.32,
+          "user_s": 31.05,
+          "system_s": 0.05,
+          "max_rss_kib": 50260,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 30.22,
+          "user_s": 30.01,
+          "system_s": 0.04,
+          "max_rss_kib": 50032,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 30.6,
+          "user_s": 30.39,
+          "system_s": 0.03,
+          "max_rss_kib": 50100,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31276,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31408,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31352,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31612,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31384,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31288,
+          "exit": 0
+        },
+        {
+          "fixture": "rectangles",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 1.08,
+          "user_s": 1.04,
+          "system_s": 0,
+          "max_rss_kib": 6884,
+          "exit": 0
+        },
+        {
+          "fixture": "rectangles",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 1.06,
+          "user_s": 1.05,
+          "system_s": 0,
+          "max_rss_kib": 7736,
+          "exit": 0
+        },
+        {
+          "fixture": "rectangles",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 1.06,
+          "user_s": 1.05,
+          "system_s": 0,
+          "max_rss_kib": 7172,
+          "exit": 0
+        },
+        {
+          "fixture": "rectangles",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 1.05,
+          "user_s": 1.04,
+          "system_s": 0,
+          "max_rss_kib": 8084,
+          "exit": 0
+        },
+        {
+          "fixture": "rectangles",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 1.08,
+          "user_s": 1.07,
+          "system_s": 0,
+          "max_rss_kib": 7316,
+          "exit": 0
+        },
+        {
+          "fixture": "rectangles",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 1.06,
+          "user_s": 1.05,
+          "system_s": 0,
+          "max_rss_kib": 8020,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 22.25,
+          "user_s": 22.14,
+          "system_s": 0,
+          "max_rss_kib": 18520,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 21.05,
+          "user_s": 20.94,
+          "system_s": 0,
+          "max_rss_kib": 18392,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 21.18,
+          "user_s": 21.03,
+          "system_s": 0,
+          "max_rss_kib": 18252,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 21.62,
+          "user_s": 21.38,
+          "system_s": 0.01,
+          "max_rss_kib": 18548,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 21.02,
+          "user_s": 20.88,
+          "system_s": 0,
+          "max_rss_kib": 18568,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 21.27,
+          "user_s": 21.14,
+          "system_s": 0,
+          "max_rss_kib": 18252,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.86,
+            5.8,
+            5.93
+          ],
+          "candidate": [
+            5.94,
+            5.91,
+            5.85
+          ],
+          "baseline_median": 5.86,
+          "candidate_median": 5.91,
+          "change_percent": 0.8532423208191142
+        },
+        {
+          "name": "capsules",
+          "baseline": [
+            4.63,
+            4.53,
+            4.55
+          ],
+          "candidate": [
+            4.5,
+            4.53,
+            4.62
+          ],
+          "baseline_median": 4.55,
+          "candidate_median": 4.53,
+          "change_percent": -0.4395604395604269
+        },
+        {
+          "name": "chord",
+          "baseline": [
+            17.22,
+            17.37,
+            17.4
+          ],
+          "candidate": [
+            12.27,
+            13.82,
+            11.84
+          ],
+          "baseline_median": 17.37,
+          "candidate_median": 12.27,
+          "change_percent": -29.36096718480139
+        },
+        {
+          "name": "circles",
+          "baseline": [
+            14.07,
+            13.94,
+            14.42
+          ],
+          "candidate": [
+            14.01,
+            13.91,
+            13.9
+          ],
+          "baseline_median": 14.07,
+          "candidate_median": 13.91,
+          "change_percent": -1.1371712864250205
+        },
+        {
+          "name": "contacts",
+          "baseline": [
+            11.62,
+            11.66,
+            11.66
+          ],
+          "candidate": [
+            11.45,
+            11.48,
+            11.58
+          ],
+          "baseline_median": 11.66,
+          "candidate_median": 11.48,
+          "change_percent": -1.5437392795883298
+        },
+        {
+          "name": "mapped",
+          "baseline": [
+            0.01,
+            0,
+            0
+          ],
+          "candidate": [
+            0,
+            0,
+            0
+          ],
+          "baseline_median": 0,
+          "candidate_median": 0,
+          "change_percent": null
+        },
+        {
+          "name": "radial",
+          "baseline": [
+            31.87,
+            32.23,
+            30.22
+          ],
+          "candidate": [
+            30.88,
+            31.32,
+            30.6
+          ],
+          "baseline_median": 31.87,
+          "candidate_median": 30.88,
+          "change_percent": -3.1063696266080965
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.35,
+            0.32,
+            0.32
+          ],
+          "candidate": [
+            0.32,
+            0.33,
+            0.32
+          ],
+          "baseline_median": 0.32,
+          "candidate_median": 0.32,
+          "change_percent": 0
+        },
+        {
+          "name": "rectangles",
+          "baseline": [
+            1.08,
+            1.06,
+            1.08
+          ],
+          "candidate": [
+            1.06,
+            1.05,
+            1.06
+          ],
+          "baseline_median": 1.08,
+          "candidate_median": 1.06,
+          "change_percent": -1.851851851851849
+        },
+        {
+          "name": "selected",
+          "baseline": [
+            22.25,
+            21.18,
+            21.02
+          ],
+          "candidate": [
+            21.05,
+            21.62,
+            21.27
+          ],
+          "baseline_median": 21.18,
+          "candidate_median": 21.27,
+          "change_percent": 0.4249291784702569
+        }
+      ],
+      "lane_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "total_ns": 3705696,
+          "ns_per_iter": 3.705696,
+          "output": "curve_region_clone: 1000000 iterations in 3.705696ms (3ns/iter), checksum=1000000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "total_ns": 2952368,
+          "ns_per_iter": 2.952368,
+          "output": "curve_region_empty: 1000000 iterations in 2.952368ms (2ns/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "total_ns": 258519755.99999997,
+          "ns_per_iter": 12925.987799999999,
+          "output": "cubic_bezier_exact_area_moments: 20000 iterations in 258.519756ms (12.925µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "total_ns": 359333165,
+          "ns_per_iter": 17966.65825,
+          "output": "cubic_bezier_prefix_area_moments: 20000 iterations in 359.333165ms (17.966µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "total_ns": 91242435,
+          "ns_per_iter": 4562.12175,
+          "output": "cubic_bezier_prefix_length_bounds: 20000 iterations in 91.242435ms (4.562µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "total_ns": 210519987,
+          "ns_per_iter": 210519.987,
+          "output": "curve_region_boolean_immediate_union: 1000 iterations in 210.519987ms (210.519µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "total_ns": 345158667,
+          "ns_per_iter": 345158.667,
+          "output": "curve_region_boolean_immediate_all_ops: 1000 iterations in 345.158667ms (345.158µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "total_ns": 21023509,
+          "ns_per_iter": 210235.09,
+          "output": "curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 21.023509ms (210.235µs/iter), checksum=1100"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "total_ns": 108865517,
+          "ns_per_iter": 54432.7585,
+          "output": "bezier_region_algebraic_ray_classification: 2000 iterations in 108.865517ms (54.432µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "total_ns": 55828363,
+          "ns_per_iter": 2791.41815,
+          "output": "bezier_region_materialization: 20000 iterations in 55.828363ms (2.791µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "total_ns": 67589246,
+          "ns_per_iter": 33794.623,
+          "output": "curve_region_cached_classification: 2000 iterations in 67.589246ms (33.794µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "total_ns": 1751510,
+          "ns_per_iter": 875.755,
+          "output": "curve_region_immediate_native_signed_depth: 2000 iterations in 1.75151ms (875ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "total_ns": 224343620,
+          "ns_per_iter": 11217.181,
+          "output": "bezier_retained_region_materialization: 20000 iterations in 224.34362ms (11.217µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "total_ns": 86702696,
+          "ns_per_iter": 43351.348,
+          "output": "curve_region_cached_algebraic_classification: 2000 iterations in 86.702696ms (43.351µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "total_ns": 255796244,
+          "ns_per_iter": 12789.8122,
+          "output": "bezier_retained_algebraic_source_envelope: 20000 iterations in 255.796244ms (12.789µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "total_ns": 111917967,
+          "ns_per_iter": 5595.89835,
+          "output": "bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 111.917967ms (5.595µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "total_ns": 2651606416,
+          "ns_per_iter": 132580.3208,
+          "output": "bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 2.651606416s (132.58µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "total_ns": 464532533,
+          "ns_per_iter": 23226.62665,
+          "output": "bezier_resolved_overlap_region_materialization: 20000 iterations in 464.532533ms (23.226µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "total_ns": 505328787,
+          "ns_per_iter": 25266.43935,
+          "output": "bezier_conic_region_exact_area: 20000 iterations in 505.328787ms (25.266µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "total_ns": 3611452,
+          "ns_per_iter": 3.611452,
+          "output": "curve_region_clone: 1000000 iterations in 3.611452ms (3ns/iter), checksum=1000000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "total_ns": 3010164,
+          "ns_per_iter": 3.010164,
+          "output": "curve_region_empty: 1000000 iterations in 3.010164ms (3ns/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "total_ns": 265637309.00000003,
+          "ns_per_iter": 13281.865450000001,
+          "output": "cubic_bezier_exact_area_moments: 20000 iterations in 265.637309ms (13.281µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "total_ns": 351679101,
+          "ns_per_iter": 17583.95505,
+          "output": "cubic_bezier_prefix_area_moments: 20000 iterations in 351.679101ms (17.583µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "total_ns": 75927844,
+          "ns_per_iter": 3796.3922,
+          "output": "cubic_bezier_prefix_length_bounds: 20000 iterations in 75.927844ms (3.796µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "total_ns": 176269766,
+          "ns_per_iter": 176269.766,
+          "output": "curve_region_boolean_immediate_union: 1000 iterations in 176.269766ms (176.269µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "total_ns": 355357908,
+          "ns_per_iter": 355357.908,
+          "output": "curve_region_boolean_immediate_all_ops: 1000 iterations in 355.357908ms (355.357µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "total_ns": 21233974,
+          "ns_per_iter": 212339.74,
+          "output": "curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 21.233974ms (212.339µs/iter), checksum=1100"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "total_ns": 108454615,
+          "ns_per_iter": 54227.3075,
+          "output": "bezier_region_algebraic_ray_classification: 2000 iterations in 108.454615ms (54.227µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "total_ns": 58051691,
+          "ns_per_iter": 2902.58455,
+          "output": "bezier_region_materialization: 20000 iterations in 58.051691ms (2.902µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "total_ns": 68257761,
+          "ns_per_iter": 34128.8805,
+          "output": "curve_region_cached_classification: 2000 iterations in 68.257761ms (34.128µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "total_ns": 1755359,
+          "ns_per_iter": 877.6795,
+          "output": "curve_region_immediate_native_signed_depth: 2000 iterations in 1.755359ms (877ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "total_ns": 270698892,
+          "ns_per_iter": 13534.9446,
+          "output": "bezier_retained_region_materialization: 20000 iterations in 270.698892ms (13.534µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "total_ns": 87444575,
+          "ns_per_iter": 43722.2875,
+          "output": "curve_region_cached_algebraic_classification: 2000 iterations in 87.444575ms (43.722µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "total_ns": 263922906,
+          "ns_per_iter": 13196.1453,
+          "output": "bezier_retained_algebraic_source_envelope: 20000 iterations in 263.922906ms (13.196µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "total_ns": 140174650,
+          "ns_per_iter": 7008.7325,
+          "output": "bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 140.17465ms (7.008µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "total_ns": 2703448092,
+          "ns_per_iter": 135172.4046,
+          "output": "bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 2.703448092s (135.172µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "total_ns": 476251520,
+          "ns_per_iter": 23812.576,
+          "output": "bezier_resolved_overlap_region_materialization: 20000 iterations in 476.25152ms (23.812µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "total_ns": 509385429,
+          "ns_per_iter": 25469.27145,
+          "output": "bezier_conic_region_exact_area: 20000 iterations in 509.385429ms (25.469µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "total_ns": 3554936,
+          "ns_per_iter": 3.554936,
+          "output": "curve_region_clone: 1000000 iterations in 3.554936ms (3ns/iter), checksum=1000000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "total_ns": 3032972,
+          "ns_per_iter": 3.032972,
+          "output": "curve_region_empty: 1000000 iterations in 3.032972ms (3ns/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "total_ns": 258727303,
+          "ns_per_iter": 12936.36515,
+          "output": "cubic_bezier_exact_area_moments: 20000 iterations in 258.727303ms (12.936µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "total_ns": 340475658,
+          "ns_per_iter": 17023.7829,
+          "output": "cubic_bezier_prefix_area_moments: 20000 iterations in 340.475658ms (17.023µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "total_ns": 74583267,
+          "ns_per_iter": 3729.16335,
+          "output": "cubic_bezier_prefix_length_bounds: 20000 iterations in 74.583267ms (3.729µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "total_ns": 172975431,
+          "ns_per_iter": 172975.431,
+          "output": "curve_region_boolean_immediate_union: 1000 iterations in 172.975431ms (172.975µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "total_ns": 350046462,
+          "ns_per_iter": 350046.462,
+          "output": "curve_region_boolean_immediate_all_ops: 1000 iterations in 350.046462ms (350.046µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "total_ns": 21348306,
+          "ns_per_iter": 213483.06,
+          "output": "curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 21.348306ms (213.483µs/iter), checksum=1100"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "total_ns": 109706259,
+          "ns_per_iter": 54853.1295,
+          "output": "bezier_region_algebraic_ray_classification: 2000 iterations in 109.706259ms (54.853µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "total_ns": 57963447,
+          "ns_per_iter": 2898.17235,
+          "output": "bezier_region_materialization: 20000 iterations in 57.963447ms (2.898µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "total_ns": 68348754,
+          "ns_per_iter": 34174.377,
+          "output": "curve_region_cached_classification: 2000 iterations in 68.348754ms (34.174µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "total_ns": 1770949,
+          "ns_per_iter": 885.4745,
+          "output": "curve_region_immediate_native_signed_depth: 2000 iterations in 1.770949ms (885ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "total_ns": 232875725,
+          "ns_per_iter": 11643.78625,
+          "output": "bezier_retained_region_materialization: 20000 iterations in 232.875725ms (11.643µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "total_ns": 87152805,
+          "ns_per_iter": 43576.4025,
+          "output": "curve_region_cached_algebraic_classification: 2000 iterations in 87.152805ms (43.576µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "total_ns": 261334804.00000003,
+          "ns_per_iter": 13066.740200000002,
+          "output": "bezier_retained_algebraic_source_envelope: 20000 iterations in 261.334804ms (13.066µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "total_ns": 111776916,
+          "ns_per_iter": 5588.8458,
+          "output": "bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 111.776916ms (5.588µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "total_ns": 2671938072,
+          "ns_per_iter": 133596.9036,
+          "output": "bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 2.671938072s (133.596µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "total_ns": 476339124,
+          "ns_per_iter": 23816.9562,
+          "output": "bezier_resolved_overlap_region_materialization: 20000 iterations in 476.339124ms (23.816µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "total_ns": 498916466,
+          "ns_per_iter": 24945.8233,
+          "output": "bezier_conic_region_exact_area: 20000 iterations in 498.916466ms (24.945µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "total_ns": 3628751,
+          "ns_per_iter": 3.628751,
+          "output": "curve_region_clone: 1000000 iterations in 3.628751ms (3ns/iter), checksum=1000000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "total_ns": 3024143,
+          "ns_per_iter": 3.024143,
+          "output": "curve_region_empty: 1000000 iterations in 3.024143ms (3ns/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "total_ns": 280162333,
+          "ns_per_iter": 14008.11665,
+          "output": "cubic_bezier_exact_area_moments: 20000 iterations in 280.162333ms (14.008µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "total_ns": 359853240,
+          "ns_per_iter": 17992.662,
+          "output": "cubic_bezier_prefix_area_moments: 20000 iterations in 359.85324ms (17.992µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "total_ns": 76988922,
+          "ns_per_iter": 3849.4461,
+          "output": "cubic_bezier_prefix_length_bounds: 20000 iterations in 76.988922ms (3.849µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "total_ns": 177328293,
+          "ns_per_iter": 177328.293,
+          "output": "curve_region_boolean_immediate_union: 1000 iterations in 177.328293ms (177.328µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "total_ns": 346827573,
+          "ns_per_iter": 346827.573,
+          "output": "curve_region_boolean_immediate_all_ops: 1000 iterations in 346.827573ms (346.827µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "total_ns": 20928065,
+          "ns_per_iter": 209280.65,
+          "output": "curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 20.928065ms (209.28µs/iter), checksum=1100"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "total_ns": 108058652,
+          "ns_per_iter": 54029.326,
+          "output": "bezier_region_algebraic_ray_classification: 2000 iterations in 108.058652ms (54.029µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "total_ns": 57982005,
+          "ns_per_iter": 2899.10025,
+          "output": "bezier_region_materialization: 20000 iterations in 57.982005ms (2.899µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "total_ns": 68809022,
+          "ns_per_iter": 34404.511,
+          "output": "curve_region_cached_classification: 2000 iterations in 68.809022ms (34.404µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "total_ns": 1737181,
+          "ns_per_iter": 868.5905,
+          "output": "curve_region_immediate_native_signed_depth: 2000 iterations in 1.737181ms (868ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "total_ns": 228735658,
+          "ns_per_iter": 11436.7829,
+          "output": "bezier_retained_region_materialization: 20000 iterations in 228.735658ms (11.436µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "total_ns": 88392680,
+          "ns_per_iter": 44196.34,
+          "output": "curve_region_cached_algebraic_classification: 2000 iterations in 88.39268ms (44.196µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "total_ns": 266095876.99999997,
+          "ns_per_iter": 13304.793849999998,
+          "output": "bezier_retained_algebraic_source_envelope: 20000 iterations in 266.095877ms (13.304µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "total_ns": 113291444,
+          "ns_per_iter": 5664.5722,
+          "output": "bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 113.291444ms (5.664µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "total_ns": 2740268428,
+          "ns_per_iter": 137013.4214,
+          "output": "bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 2.740268428s (137.013µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "total_ns": 465192708,
+          "ns_per_iter": 23259.6354,
+          "output": "bezier_resolved_overlap_region_materialization: 20000 iterations in 465.192708ms (23.259µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "total_ns": 503225511,
+          "ns_per_iter": 25161.27555,
+          "output": "bezier_conic_region_exact_area: 20000 iterations in 503.225511ms (25.161µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "total_ns": 3587804,
+          "ns_per_iter": 3.587804,
+          "output": "curve_region_clone: 1000000 iterations in 3.587804ms (3ns/iter), checksum=1000000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "total_ns": 3078618,
+          "ns_per_iter": 3.078618,
+          "output": "curve_region_empty: 1000000 iterations in 3.078618ms (3ns/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "total_ns": 263620997,
+          "ns_per_iter": 13181.04985,
+          "output": "cubic_bezier_exact_area_moments: 20000 iterations in 263.620997ms (13.181µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "total_ns": 361852373,
+          "ns_per_iter": 18092.61865,
+          "output": "cubic_bezier_prefix_area_moments: 20000 iterations in 361.852373ms (18.092µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "total_ns": 77229545,
+          "ns_per_iter": 3861.47725,
+          "output": "cubic_bezier_prefix_length_bounds: 20000 iterations in 77.229545ms (3.861µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "total_ns": 178334854,
+          "ns_per_iter": 178334.854,
+          "output": "curve_region_boolean_immediate_union: 1000 iterations in 178.334854ms (178.334µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "total_ns": 354104684,
+          "ns_per_iter": 354104.684,
+          "output": "curve_region_boolean_immediate_all_ops: 1000 iterations in 354.104684ms (354.104µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "total_ns": 22069017,
+          "ns_per_iter": 220690.17,
+          "output": "curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 22.069017ms (220.69µs/iter), checksum=1100"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "total_ns": 122493592,
+          "ns_per_iter": 61246.796,
+          "output": "bezier_region_algebraic_ray_classification: 2000 iterations in 122.493592ms (61.246µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "total_ns": 61241642,
+          "ns_per_iter": 3062.0821,
+          "output": "bezier_region_materialization: 20000 iterations in 61.241642ms (3.062µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "total_ns": 69342787,
+          "ns_per_iter": 34671.3935,
+          "output": "curve_region_cached_classification: 2000 iterations in 69.342787ms (34.671µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "total_ns": 1720702,
+          "ns_per_iter": 860.351,
+          "output": "curve_region_immediate_native_signed_depth: 2000 iterations in 1.720702ms (860ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "total_ns": 238580374,
+          "ns_per_iter": 11929.0187,
+          "output": "bezier_retained_region_materialization: 20000 iterations in 238.580374ms (11.929µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "total_ns": 90801735,
+          "ns_per_iter": 45400.8675,
+          "output": "curve_region_cached_algebraic_classification: 2000 iterations in 90.801735ms (45.4µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "total_ns": 276358644,
+          "ns_per_iter": 13817.9322,
+          "output": "bezier_retained_algebraic_source_envelope: 20000 iterations in 276.358644ms (13.817µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "total_ns": 120184911,
+          "ns_per_iter": 6009.24555,
+          "output": "bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 120.184911ms (6.009µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "total_ns": 2724122034,
+          "ns_per_iter": 136206.1017,
+          "output": "bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 2.724122034s (136.206µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "total_ns": 463270891,
+          "ns_per_iter": 23163.54455,
+          "output": "bezier_resolved_overlap_region_materialization: 20000 iterations in 463.270891ms (23.163µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "total_ns": 496314144,
+          "ns_per_iter": 24815.7072,
+          "output": "bezier_conic_region_exact_area: 20000 iterations in 496.314144ms (24.815µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "total_ns": 3556826,
+          "ns_per_iter": 3.556826,
+          "output": "curve_region_clone: 1000000 iterations in 3.556826ms (3ns/iter), checksum=1000000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "total_ns": 3009834,
+          "ns_per_iter": 3.009834,
+          "output": "curve_region_empty: 1000000 iterations in 3.009834ms (3ns/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "total_ns": 266324461.99999997,
+          "ns_per_iter": 13316.2231,
+          "output": "cubic_bezier_exact_area_moments: 20000 iterations in 266.324462ms (13.316µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "total_ns": 354850473,
+          "ns_per_iter": 17742.52365,
+          "output": "cubic_bezier_prefix_area_moments: 20000 iterations in 354.850473ms (17.742µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "total_ns": 76044987,
+          "ns_per_iter": 3802.24935,
+          "output": "cubic_bezier_prefix_length_bounds: 20000 iterations in 76.044987ms (3.802µs/iter)"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "total_ns": 175626590,
+          "ns_per_iter": 175626.59,
+          "output": "curve_region_boolean_immediate_union: 1000 iterations in 175.62659ms (175.626µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "total_ns": 343940401,
+          "ns_per_iter": 343940.401,
+          "output": "curve_region_boolean_immediate_all_ops: 1000 iterations in 343.940401ms (343.94µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "total_ns": 20839742,
+          "ns_per_iter": 208397.42,
+          "output": "curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 20.839742ms (208.397µs/iter), checksum=1100"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "total_ns": 108004055,
+          "ns_per_iter": 54002.0275,
+          "output": "bezier_region_algebraic_ray_classification: 2000 iterations in 108.004055ms (54.002µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "total_ns": 56965494,
+          "ns_per_iter": 2848.2747,
+          "output": "bezier_region_materialization: 20000 iterations in 56.965494ms (2.848µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "total_ns": 67966651,
+          "ns_per_iter": 33983.3255,
+          "output": "curve_region_cached_classification: 2000 iterations in 67.966651ms (33.983µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "total_ns": 1681605,
+          "ns_per_iter": 840.8025,
+          "output": "curve_region_immediate_native_signed_depth: 2000 iterations in 1.681605ms (840ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "total_ns": 226208522,
+          "ns_per_iter": 11310.4261,
+          "output": "bezier_retained_region_materialization: 20000 iterations in 226.208522ms (11.31µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "total_ns": 88412859,
+          "ns_per_iter": 44206.4295,
+          "output": "curve_region_cached_algebraic_classification: 2000 iterations in 88.412859ms (44.206µs/iter), checksum=4000"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "total_ns": 267421687.00000003,
+          "ns_per_iter": 13371.084350000001,
+          "output": "bezier_retained_algebraic_source_envelope: 20000 iterations in 267.421687ms (13.371µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "total_ns": 113211838,
+          "ns_per_iter": 5660.5919,
+          "output": "bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 113.211838ms (5.66µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "total_ns": 2686698671,
+          "ns_per_iter": 134334.93355,
+          "output": "bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 2.686698671s (134.334µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "total_ns": 468703218,
+          "ns_per_iter": 23435.1609,
+          "output": "bezier_resolved_overlap_region_materialization: 20000 iterations in 468.703218ms (23.435µs/iter), checksum=0"
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "total_ns": 517440376,
+          "ns_per_iter": 25872.0188,
+          "output": "bezier_conic_region_exact_area: 20000 iterations in 517.440376ms (25.872µs/iter), checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 3515882124,
+          "ns_per_iter": 3515882.124,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=3515882124, ns_per_iter=3515882, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 1098637132,
+          "ns_per_iter": 1098637.132,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=1098637132, ns_per_iter=1098637, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 3393870109,
+          "ns_per_iter": 3393870.109,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=3393870109, ns_per_iter=3393870, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 1108136970,
+          "ns_per_iter": 1108136.97,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=1108136970, ns_per_iter=1108136, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 3405683149,
+          "ns_per_iter": 3405683.149,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=3405683149, ns_per_iter=3405683, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 1120394170,
+          "ns_per_iter": 1120394.17,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=1120394170, ns_per_iter=1120394, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 3422233405,
+          "ns_per_iter": 3422233.405,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=3422233405, ns_per_iter=3422233, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 1101926836,
+          "ns_per_iter": 1101926.836,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=1101926836, ns_per_iter=1101926, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 3428522304,
+          "ns_per_iter": 3428522.304,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=3428522304, ns_per_iter=3428522, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 1115627417,
+          "ns_per_iter": 1115627.417,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=1115627417, ns_per_iter=1115627, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 3421216485,
+          "ns_per_iter": 3421216.485,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=3421216485, ns_per_iter=3421216, checksum=0"
+        },
+        {
+          "fixture": "capsules",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 1201115996,
+          "ns_per_iter": 1201115.996,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=1201115996, ns_per_iter=1201115, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 9441984394,
+          "ns_per_iter": 9441984.394,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=9441984394, ns_per_iter=9441984, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 4602811079,
+          "ns_per_iter": 4602811.079,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=4602811079, ns_per_iter=4602811, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 9256910462,
+          "ns_per_iter": 9256910.462,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=9256910462, ns_per_iter=9256910, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 4737847391,
+          "ns_per_iter": 4737847.391,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=4737847391, ns_per_iter=4737847, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 9327206503,
+          "ns_per_iter": 9327206.503,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=9327206503, ns_per_iter=9327206, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 4605005808,
+          "ns_per_iter": 4605005.808,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=4605005808, ns_per_iter=4605005, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 9310598392,
+          "ns_per_iter": 9310598.392,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=9310598392, ns_per_iter=9310598, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 4589076450,
+          "ns_per_iter": 4589076.45,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=4589076450, ns_per_iter=4589076, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 9605318057,
+          "ns_per_iter": 9605318.057,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=9605318057, ns_per_iter=9605318, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 4800071975,
+          "ns_per_iter": 4800071.975,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=4800071975, ns_per_iter=4800071, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 9250412057,
+          "ns_per_iter": 9250412.057,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=9250412057, ns_per_iter=9250412, checksum=0"
+        },
+        {
+          "fixture": "circles",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 4635496409,
+          "ns_per_iter": 4635496.409,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=4635496409, ns_per_iter=4635496, checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 6064804,
+          "ns_per_iter": 24259.216,
+          "output": "rational_bezier_exact_mixed_axis_monotonicity: 250 curves in 6.064804ms (24.259µs/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 148440,
+          "ns_per_iter": 593.76,
+          "output": "rational_bezier_exact_degree_12_axis_monotonicity: 250 curves in 148.44µs (593ns/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "iterations": 100000,
+          "total_ns": 426091,
+          "ns_per_iter": 4.26091,
+          "output": "rational_bezier_retained_mixed_axis_monotonicity: 100000 iterations in 426.091µs (4ns/iter), checksum=100000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "iterations": 2000,
+          "total_ns": 4996808,
+          "ns_per_iter": 2498.404,
+          "output": "rational_bezier_endpoint_sign_reversal_monotonicity: 2000 curves in 4.996808ms (2.498µs/curve), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_cached_point_incidence",
+          "iterations": 5000,
+          "total_ns": 728240,
+          "ns_per_iter": 145.648,
+          "output": "rational_bezier_cached_point_incidence: 5000 iterations in 728.24µs (145ns/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "iterations": 5000,
+          "total_ns": 19148357,
+          "ns_per_iter": 3829.6714,
+          "output": "rational_bezier_retained_lineage_partial_overlap: 5000 iterations in 19.148357ms (3.829µs/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "iterations": 500,
+          "total_ns": 5918134,
+          "ns_per_iter": 11836.268,
+          "output": "rational_bezier_algebraic_line_image_overlap: 500 iterations in 5.918134ms (11.836µs/iter), checksum=500"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "iterations": 250,
+          "total_ns": 68019447,
+          "ns_per_iter": 272077.788,
+          "output": "rational_bezier_algebraic_polynomial_graph_overlap: 250 iterations in 68.019447ms (272.077µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_cached_basis_resultant",
+          "iterations": 500,
+          "total_ns": 10465752,
+          "ns_per_iter": 20931.504,
+          "output": "rational_bezier_cached_basis_resultant: 500 iterations in 10.465752ms (20.931µs/iter), checksum=1000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_contact_replay",
+          "iterations": 250,
+          "total_ns": 5285387,
+          "ns_per_iter": 21141.548,
+          "output": "rational_bezier_algebraic_contact_replay: 250 iterations in 5.285387ms (21.141µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "iterations": 100,
+          "total_ns": 19634174,
+          "ns_per_iter": 196341.74,
+          "output": "rational_bezier_pi_conic_cubic_contacts: 100 iterations in 19.634174ms (196.341µs/iter), checksum=100"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "iterations": 250,
+          "total_ns": 53476,
+          "ns_per_iter": 213.904,
+          "output": "rational_bezier_algebraic_derivatives_1_through_3: 250 iterations in 53.476µs (213ns/iter), checksum=750"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "iterations": 20000,
+          "total_ns": 115240689,
+          "ns_per_iter": 5762.03445,
+          "output": "rational_bezier_exact_derivatives_1_through_3: 20000 iterations in 115.240689ms (5.762µs/iter), checksum=60000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "iterations": 2000,
+          "total_ns": 733969,
+          "ns_per_iter": 366.9845,
+          "output": "rational_bezier_disjoint_conic_cubic_candidates: 2000 iterations in 733.969µs (366ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "iterations": 2000,
+          "total_ns": 693003,
+          "ns_per_iter": 346.5015,
+          "output": "rational_bezier_disjoint_conic_cubic_cold_contacts: 2000 iterations in 693.003µs (346ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_immediate_contacts",
+          "iterations": 250,
+          "total_ns": 4971430,
+          "ns_per_iter": 19885.72,
+          "output": "rational_bezier_immediate_contacts: 250 iterations in 4.97143ms (19.885µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_immediate_topology",
+          "iterations": 250,
+          "total_ns": 26986190,
+          "ns_per_iter": 107944.76,
+          "output": "rational_bezier_immediate_topology: 250 iterations in 26.98619ms (107.944µs/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_degree_elevation",
+          "iterations": 1000,
+          "total_ns": 25564668,
+          "ns_per_iter": 25564.668,
+          "output": "rational_bezier_exact_degree_elevation: 1000 curves in 25.564668ms (25.564µs/curve), checksum=8000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_degree_elevation",
+          "iterations": 100000,
+          "total_ns": 1255004,
+          "ns_per_iter": 12.55004,
+          "output": "rational_bezier_retained_degree_elevation: 100000 iterations in 1.255004ms (12ns/iter), checksum=800000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 7334027,
+          "ns_per_iter": 733402.7,
+          "output": "rational_bezier_large_cold_evaluation_64_controls: 10 iterations in 7.334027ms (733.402µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 116982,
+          "ns_per_iter": 11698.2,
+          "output": "rational_bezier_large_cached_evaluation_64_controls: 10 iterations in 116.982µs (11.698µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "iterations": 10,
+          "total_ns": 6371863,
+          "ns_per_iter": 637186.3,
+          "output": "rational_bezier_large_exact_split_64_controls: 10 iterations in 6.371863ms (637.186µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 2525926,
+          "ns_per_iter": 10103.704,
+          "output": "rational_bezier_exact_mixed_axis_monotonicity: 250 curves in 2.525926ms (10.103µs/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 151529,
+          "ns_per_iter": 606.116,
+          "output": "rational_bezier_exact_degree_12_axis_monotonicity: 250 curves in 151.529µs (606ns/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "iterations": 100000,
+          "total_ns": 432071,
+          "ns_per_iter": 4.32071,
+          "output": "rational_bezier_retained_mixed_axis_monotonicity: 100000 iterations in 432.071µs (4ns/iter), checksum=100000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "iterations": 2000,
+          "total_ns": 4618623,
+          "ns_per_iter": 2309.3115,
+          "output": "rational_bezier_endpoint_sign_reversal_monotonicity: 2000 curves in 4.618623ms (2.309µs/curve), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_cached_point_incidence",
+          "iterations": 5000,
+          "total_ns": 769867,
+          "ns_per_iter": 153.9734,
+          "output": "rational_bezier_cached_point_incidence: 5000 iterations in 769.867µs (153ns/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "iterations": 5000,
+          "total_ns": 18669310,
+          "ns_per_iter": 3733.862,
+          "output": "rational_bezier_retained_lineage_partial_overlap: 5000 iterations in 18.66931ms (3.733µs/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "iterations": 500,
+          "total_ns": 6125050,
+          "ns_per_iter": 12250.1,
+          "output": "rational_bezier_algebraic_line_image_overlap: 500 iterations in 6.12505ms (12.25µs/iter), checksum=500"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "iterations": 250,
+          "total_ns": 67059233.00000001,
+          "ns_per_iter": 268236.93200000003,
+          "output": "rational_bezier_algebraic_polynomial_graph_overlap: 250 iterations in 67.059233ms (268.236µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_cached_basis_resultant",
+          "iterations": 500,
+          "total_ns": 10218959,
+          "ns_per_iter": 20437.918,
+          "output": "rational_bezier_cached_basis_resultant: 500 iterations in 10.218959ms (20.437µs/iter), checksum=1000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_contact_replay",
+          "iterations": 250,
+          "total_ns": 4915983,
+          "ns_per_iter": 19663.932,
+          "output": "rational_bezier_algebraic_contact_replay: 250 iterations in 4.915983ms (19.663µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "iterations": 100,
+          "total_ns": 17948969,
+          "ns_per_iter": 179489.69,
+          "output": "rational_bezier_pi_conic_cubic_contacts: 100 iterations in 17.948969ms (179.489µs/iter), checksum=100"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "iterations": 250,
+          "total_ns": 44427,
+          "ns_per_iter": 177.708,
+          "output": "rational_bezier_algebraic_derivatives_1_through_3: 250 iterations in 44.427µs (177ns/iter), checksum=750"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "iterations": 20000,
+          "total_ns": 117226414,
+          "ns_per_iter": 5861.3207,
+          "output": "rational_bezier_exact_derivatives_1_through_3: 20000 iterations in 117.226414ms (5.861µs/iter), checksum=60000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "iterations": 2000,
+          "total_ns": 685483,
+          "ns_per_iter": 342.7415,
+          "output": "rational_bezier_disjoint_conic_cubic_candidates: 2000 iterations in 685.483µs (342ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "iterations": 2000,
+          "total_ns": 741119,
+          "ns_per_iter": 370.5595,
+          "output": "rational_bezier_disjoint_conic_cubic_cold_contacts: 2000 iterations in 741.119µs (370ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_immediate_contacts",
+          "iterations": 250,
+          "total_ns": 4754184,
+          "ns_per_iter": 19016.736,
+          "output": "rational_bezier_immediate_contacts: 250 iterations in 4.754184ms (19.016µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_immediate_topology",
+          "iterations": 250,
+          "total_ns": 19059564,
+          "ns_per_iter": 76238.256,
+          "output": "rational_bezier_immediate_topology: 250 iterations in 19.059564ms (76.238µs/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_degree_elevation",
+          "iterations": 1000,
+          "total_ns": 24465682,
+          "ns_per_iter": 24465.682,
+          "output": "rational_bezier_exact_degree_elevation: 1000 curves in 24.465682ms (24.465µs/curve), checksum=8000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_degree_elevation",
+          "iterations": 100000,
+          "total_ns": 1276592,
+          "ns_per_iter": 12.76592,
+          "output": "rational_bezier_retained_degree_elevation: 100000 iterations in 1.276592ms (12ns/iter), checksum=800000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 6914936,
+          "ns_per_iter": 691493.6,
+          "output": "rational_bezier_large_cold_evaluation_64_controls: 10 iterations in 6.914936ms (691.493µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 116402,
+          "ns_per_iter": 11640.2,
+          "output": "rational_bezier_large_cached_evaluation_64_controls: 10 iterations in 116.402µs (11.64µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "iterations": 10,
+          "total_ns": 6463687,
+          "ns_per_iter": 646368.7,
+          "output": "rational_bezier_large_exact_split_64_controls: 10 iterations in 6.463687ms (646.368µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 2510968,
+          "ns_per_iter": 10043.872,
+          "output": "rational_bezier_exact_mixed_axis_monotonicity: 250 curves in 2.510968ms (10.043µs/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 142520,
+          "ns_per_iter": 570.08,
+          "output": "rational_bezier_exact_degree_12_axis_monotonicity: 250 curves in 142.52µs (570ns/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "iterations": 100000,
+          "total_ns": 426091,
+          "ns_per_iter": 4.26091,
+          "output": "rational_bezier_retained_mixed_axis_monotonicity: 100000 iterations in 426.091µs (4ns/iter), checksum=100000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "iterations": 2000,
+          "total_ns": 4637972,
+          "ns_per_iter": 2318.986,
+          "output": "rational_bezier_endpoint_sign_reversal_monotonicity: 2000 curves in 4.637972ms (2.318µs/curve), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_cached_point_incidence",
+          "iterations": 5000,
+          "total_ns": 761148,
+          "ns_per_iter": 152.2296,
+          "output": "rational_bezier_cached_point_incidence: 5000 iterations in 761.148µs (152ns/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "iterations": 5000,
+          "total_ns": 18552228,
+          "ns_per_iter": 3710.4456,
+          "output": "rational_bezier_retained_lineage_partial_overlap: 5000 iterations in 18.552228ms (3.71µs/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "iterations": 500,
+          "total_ns": 5676381,
+          "ns_per_iter": 11352.762,
+          "output": "rational_bezier_algebraic_line_image_overlap: 500 iterations in 5.676381ms (11.352µs/iter), checksum=500"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "iterations": 250,
+          "total_ns": 64096385,
+          "ns_per_iter": 256385.54,
+          "output": "rational_bezier_algebraic_polynomial_graph_overlap: 250 iterations in 64.096385ms (256.385µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_cached_basis_resultant",
+          "iterations": 500,
+          "total_ns": 10266966,
+          "ns_per_iter": 20533.932,
+          "output": "rational_bezier_cached_basis_resultant: 500 iterations in 10.266966ms (20.533µs/iter), checksum=1000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_contact_replay",
+          "iterations": 250,
+          "total_ns": 5079092,
+          "ns_per_iter": 20316.368,
+          "output": "rational_bezier_algebraic_contact_replay: 250 iterations in 5.079092ms (20.316µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "iterations": 100,
+          "total_ns": 18027594,
+          "ns_per_iter": 180275.94,
+          "output": "rational_bezier_pi_conic_cubic_contacts: 100 iterations in 18.027594ms (180.275µs/iter), checksum=100"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "iterations": 250,
+          "total_ns": 45827,
+          "ns_per_iter": 183.308,
+          "output": "rational_bezier_algebraic_derivatives_1_through_3: 250 iterations in 45.827µs (183ns/iter), checksum=750"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "iterations": 20000,
+          "total_ns": 114405836,
+          "ns_per_iter": 5720.2918,
+          "output": "rational_bezier_exact_derivatives_1_through_3: 20000 iterations in 114.405836ms (5.72µs/iter), checksum=60000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "iterations": 2000,
+          "total_ns": 687233,
+          "ns_per_iter": 343.6165,
+          "output": "rational_bezier_disjoint_conic_cubic_candidates: 2000 iterations in 687.233µs (343ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "iterations": 2000,
+          "total_ns": 713001,
+          "ns_per_iter": 356.5005,
+          "output": "rational_bezier_disjoint_conic_cubic_cold_contacts: 2000 iterations in 713.001µs (356ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_immediate_contacts",
+          "iterations": 250,
+          "total_ns": 5089511,
+          "ns_per_iter": 20358.044,
+          "output": "rational_bezier_immediate_contacts: 250 iterations in 5.089511ms (20.358µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_immediate_topology",
+          "iterations": 250,
+          "total_ns": 17884224,
+          "ns_per_iter": 71536.896,
+          "output": "rational_bezier_immediate_topology: 250 iterations in 17.884224ms (71.536µs/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_degree_elevation",
+          "iterations": 1000,
+          "total_ns": 25353382,
+          "ns_per_iter": 25353.382,
+          "output": "rational_bezier_exact_degree_elevation: 1000 curves in 25.353382ms (25.353µs/curve), checksum=8000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_degree_elevation",
+          "iterations": 100000,
+          "total_ns": 1205207,
+          "ns_per_iter": 12.05207,
+          "output": "rational_bezier_retained_degree_elevation: 100000 iterations in 1.205207ms (12ns/iter), checksum=800000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 6967333,
+          "ns_per_iter": 696733.3,
+          "output": "rational_bezier_large_cold_evaluation_64_controls: 10 iterations in 6.967333ms (696.733µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 123791,
+          "ns_per_iter": 12379.1,
+          "output": "rational_bezier_large_cached_evaluation_64_controls: 10 iterations in 123.791µs (12.379µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "iterations": 10,
+          "total_ns": 6684622,
+          "ns_per_iter": 668462.2,
+          "output": "rational_bezier_large_exact_split_64_controls: 10 iterations in 6.684622ms (668.462µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 2471680,
+          "ns_per_iter": 9886.72,
+          "output": "rational_bezier_exact_mixed_axis_monotonicity: 250 curves in 2.47168ms (9.886µs/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 137781,
+          "ns_per_iter": 551.124,
+          "output": "rational_bezier_exact_degree_12_axis_monotonicity: 250 curves in 137.781µs (551ns/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "iterations": 100000,
+          "total_ns": 426071,
+          "ns_per_iter": 4.26071,
+          "output": "rational_bezier_retained_mixed_axis_monotonicity: 100000 iterations in 426.071µs (4ns/iter), checksum=100000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "iterations": 2000,
+          "total_ns": 4712267,
+          "ns_per_iter": 2356.1335,
+          "output": "rational_bezier_endpoint_sign_reversal_monotonicity: 2000 curves in 4.712267ms (2.356µs/curve), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_cached_point_incidence",
+          "iterations": 5000,
+          "total_ns": 763227,
+          "ns_per_iter": 152.6454,
+          "output": "rational_bezier_cached_point_incidence: 5000 iterations in 763.227µs (152ns/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "iterations": 5000,
+          "total_ns": 20327956,
+          "ns_per_iter": 4065.5912,
+          "output": "rational_bezier_retained_lineage_partial_overlap: 5000 iterations in 20.327956ms (4.065µs/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "iterations": 500,
+          "total_ns": 6818622,
+          "ns_per_iter": 13637.244,
+          "output": "rational_bezier_algebraic_line_image_overlap: 500 iterations in 6.818622ms (13.637µs/iter), checksum=500"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "iterations": 250,
+          "total_ns": 66108087.99999999,
+          "ns_per_iter": 264432.35199999996,
+          "output": "rational_bezier_algebraic_polynomial_graph_overlap: 250 iterations in 66.108088ms (264.432µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_cached_basis_resultant",
+          "iterations": 500,
+          "total_ns": 10262876,
+          "ns_per_iter": 20525.752,
+          "output": "rational_bezier_cached_basis_resultant: 500 iterations in 10.262876ms (20.525µs/iter), checksum=1000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_contact_replay",
+          "iterations": 250,
+          "total_ns": 5768464,
+          "ns_per_iter": 23073.856,
+          "output": "rational_bezier_algebraic_contact_replay: 250 iterations in 5.768464ms (23.073µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "iterations": 100,
+          "total_ns": 18392979,
+          "ns_per_iter": 183929.79,
+          "output": "rational_bezier_pi_conic_cubic_contacts: 100 iterations in 18.392979ms (183.929µs/iter), checksum=100"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "iterations": 250,
+          "total_ns": 46536,
+          "ns_per_iter": 186.144,
+          "output": "rational_bezier_algebraic_derivatives_1_through_3: 250 iterations in 46.536µs (186ns/iter), checksum=750"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "iterations": 20000,
+          "total_ns": 120380067,
+          "ns_per_iter": 6019.00335,
+          "output": "rational_bezier_exact_derivatives_1_through_3: 20000 iterations in 120.380067ms (6.019µs/iter), checksum=60000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "iterations": 2000,
+          "total_ns": 708942,
+          "ns_per_iter": 354.471,
+          "output": "rational_bezier_disjoint_conic_cubic_candidates: 2000 iterations in 708.942µs (354ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "iterations": 2000,
+          "total_ns": 704902,
+          "ns_per_iter": 352.451,
+          "output": "rational_bezier_disjoint_conic_cubic_cold_contacts: 2000 iterations in 704.902µs (352ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_immediate_contacts",
+          "iterations": 250,
+          "total_ns": 4933822,
+          "ns_per_iter": 19735.288,
+          "output": "rational_bezier_immediate_contacts: 250 iterations in 4.933822ms (19.735µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_immediate_topology",
+          "iterations": 250,
+          "total_ns": 18205032,
+          "ns_per_iter": 72820.128,
+          "output": "rational_bezier_immediate_topology: 250 iterations in 18.205032ms (72.82µs/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_degree_elevation",
+          "iterations": 1000,
+          "total_ns": 24648030,
+          "ns_per_iter": 24648.03,
+          "output": "rational_bezier_exact_degree_elevation: 1000 curves in 24.64803ms (24.648µs/curve), checksum=8000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_degree_elevation",
+          "iterations": 100000,
+          "total_ns": 1270302,
+          "ns_per_iter": 12.70302,
+          "output": "rational_bezier_retained_degree_elevation: 100000 iterations in 1.270302ms (12ns/iter), checksum=800000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 7135721,
+          "ns_per_iter": 713572.1,
+          "output": "rational_bezier_large_cold_evaluation_64_controls: 10 iterations in 7.135721ms (713.572µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 154600,
+          "ns_per_iter": 15460,
+          "output": "rational_bezier_large_cached_evaluation_64_controls: 10 iterations in 154.6µs (15.46µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "iterations": 10,
+          "total_ns": 6434519,
+          "ns_per_iter": 643451.9,
+          "output": "rational_bezier_large_exact_split_64_controls: 10 iterations in 6.434519ms (643.451µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 2512208,
+          "ns_per_iter": 10048.832,
+          "output": "rational_bezier_exact_mixed_axis_monotonicity: 250 curves in 2.512208ms (10.048µs/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 137251,
+          "ns_per_iter": 549.004,
+          "output": "rational_bezier_exact_degree_12_axis_monotonicity: 250 curves in 137.251µs (549ns/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "iterations": 100000,
+          "total_ns": 426091,
+          "ns_per_iter": 4.26091,
+          "output": "rational_bezier_retained_mixed_axis_monotonicity: 100000 iterations in 426.091µs (4ns/iter), checksum=100000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "iterations": 2000,
+          "total_ns": 4779473,
+          "ns_per_iter": 2389.7365,
+          "output": "rational_bezier_endpoint_sign_reversal_monotonicity: 2000 curves in 4.779473ms (2.389µs/curve), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_cached_point_incidence",
+          "iterations": 5000,
+          "total_ns": 756358,
+          "ns_per_iter": 151.2716,
+          "output": "rational_bezier_cached_point_incidence: 5000 iterations in 756.358µs (151ns/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "iterations": 5000,
+          "total_ns": 18442435,
+          "ns_per_iter": 3688.487,
+          "output": "rational_bezier_retained_lineage_partial_overlap: 5000 iterations in 18.442435ms (3.688µs/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "iterations": 500,
+          "total_ns": 5648023,
+          "ns_per_iter": 11296.046,
+          "output": "rational_bezier_algebraic_line_image_overlap: 500 iterations in 5.648023ms (11.296µs/iter), checksum=500"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "iterations": 250,
+          "total_ns": 65104996,
+          "ns_per_iter": 260419.984,
+          "output": "rational_bezier_algebraic_polynomial_graph_overlap: 250 iterations in 65.104996ms (260.419µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_cached_basis_resultant",
+          "iterations": 500,
+          "total_ns": 10290075,
+          "ns_per_iter": 20580.15,
+          "output": "rational_bezier_cached_basis_resultant: 500 iterations in 10.290075ms (20.58µs/iter), checksum=1000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_contact_replay",
+          "iterations": 250,
+          "total_ns": 5062903,
+          "ns_per_iter": 20251.612,
+          "output": "rational_bezier_algebraic_contact_replay: 250 iterations in 5.062903ms (20.251µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "iterations": 100,
+          "total_ns": 18040174,
+          "ns_per_iter": 180401.74,
+          "output": "rational_bezier_pi_conic_cubic_contacts: 100 iterations in 18.040174ms (180.401µs/iter), checksum=100"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "iterations": 250,
+          "total_ns": 45707,
+          "ns_per_iter": 182.828,
+          "output": "rational_bezier_algebraic_derivatives_1_through_3: 250 iterations in 45.707µs (182ns/iter), checksum=750"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "iterations": 20000,
+          "total_ns": 114616312,
+          "ns_per_iter": 5730.8156,
+          "output": "rational_bezier_exact_derivatives_1_through_3: 20000 iterations in 114.616312ms (5.73µs/iter), checksum=60000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "iterations": 2000,
+          "total_ns": 691513,
+          "ns_per_iter": 345.7565,
+          "output": "rational_bezier_disjoint_conic_cubic_candidates: 2000 iterations in 691.513µs (345ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "iterations": 2000,
+          "total_ns": 699312,
+          "ns_per_iter": 349.656,
+          "output": "rational_bezier_disjoint_conic_cubic_cold_contacts: 2000 iterations in 699.312µs (349ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_immediate_contacts",
+          "iterations": 250,
+          "total_ns": 4805971,
+          "ns_per_iter": 19223.884,
+          "output": "rational_bezier_immediate_contacts: 250 iterations in 4.805971ms (19.223µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_immediate_topology",
+          "iterations": 250,
+          "total_ns": 18207521,
+          "ns_per_iter": 72830.084,
+          "output": "rational_bezier_immediate_topology: 250 iterations in 18.207521ms (72.83µs/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_exact_degree_elevation",
+          "iterations": 1000,
+          "total_ns": 24538478,
+          "ns_per_iter": 24538.478,
+          "output": "rational_bezier_exact_degree_elevation: 1000 curves in 24.538478ms (24.538µs/curve), checksum=8000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_retained_degree_elevation",
+          "iterations": 100000,
+          "total_ns": 1272533,
+          "ns_per_iter": 12.72533,
+          "output": "rational_bezier_retained_degree_elevation: 100000 iterations in 1.272533ms (12ns/iter), checksum=800000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 7056316,
+          "ns_per_iter": 705631.6,
+          "output": "rational_bezier_large_cold_evaluation_64_controls: 10 iterations in 7.056316ms (705.631µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 122702,
+          "ns_per_iter": 12270.2,
+          "output": "rational_bezier_large_cached_evaluation_64_controls: 10 iterations in 122.702µs (12.27µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "iterations": 10,
+          "total_ns": 6515283,
+          "ns_per_iter": 651528.3,
+          "output": "rational_bezier_large_exact_split_64_controls: 10 iterations in 6.515283ms (651.528µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 2497379,
+          "ns_per_iter": 9989.516,
+          "output": "rational_bezier_exact_mixed_axis_monotonicity: 250 curves in 2.497379ms (9.989µs/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "iterations": 250,
+          "total_ns": 137841,
+          "ns_per_iter": 551.364,
+          "output": "rational_bezier_exact_degree_12_axis_monotonicity: 250 curves in 137.841µs (551ns/curve), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "iterations": 100000,
+          "total_ns": 426091,
+          "ns_per_iter": 4.26091,
+          "output": "rational_bezier_retained_mixed_axis_monotonicity: 100000 iterations in 426.091µs (4ns/iter), checksum=100000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "iterations": 2000,
+          "total_ns": 4695158,
+          "ns_per_iter": 2347.579,
+          "output": "rational_bezier_endpoint_sign_reversal_monotonicity: 2000 curves in 4.695158ms (2.347µs/curve), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_cached_point_incidence",
+          "iterations": 5000,
+          "total_ns": 758178,
+          "ns_per_iter": 151.6356,
+          "output": "rational_bezier_cached_point_incidence: 5000 iterations in 758.178µs (151ns/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "iterations": 5000,
+          "total_ns": 19009667,
+          "ns_per_iter": 3801.9334,
+          "output": "rational_bezier_retained_lineage_partial_overlap: 5000 iterations in 19.009667ms (3.801µs/iter), checksum=5000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "iterations": 500,
+          "total_ns": 5637314,
+          "ns_per_iter": 11274.628,
+          "output": "rational_bezier_algebraic_line_image_overlap: 500 iterations in 5.637314ms (11.274µs/iter), checksum=500"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "iterations": 250,
+          "total_ns": 64717993.00000001,
+          "ns_per_iter": 258871.97200000004,
+          "output": "rational_bezier_algebraic_polynomial_graph_overlap: 250 iterations in 64.717993ms (258.871µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_cached_basis_resultant",
+          "iterations": 500,
+          "total_ns": 10142314,
+          "ns_per_iter": 20284.628,
+          "output": "rational_bezier_cached_basis_resultant: 500 iterations in 10.142314ms (20.284µs/iter), checksum=1000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_contact_replay",
+          "iterations": 250,
+          "total_ns": 4883705,
+          "ns_per_iter": 19534.82,
+          "output": "rational_bezier_algebraic_contact_replay: 250 iterations in 4.883705ms (19.534µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "iterations": 100,
+          "total_ns": 17798140,
+          "ns_per_iter": 177981.4,
+          "output": "rational_bezier_pi_conic_cubic_contacts: 100 iterations in 17.79814ms (177.981µs/iter), checksum=100"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "iterations": 250,
+          "total_ns": 45817,
+          "ns_per_iter": 183.268,
+          "output": "rational_bezier_algebraic_derivatives_1_through_3: 250 iterations in 45.817µs (183ns/iter), checksum=750"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "iterations": 20000,
+          "total_ns": 117812573,
+          "ns_per_iter": 5890.62865,
+          "output": "rational_bezier_exact_derivatives_1_through_3: 20000 iterations in 117.812573ms (5.89µs/iter), checksum=60000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "iterations": 2000,
+          "total_ns": 706952,
+          "ns_per_iter": 353.476,
+          "output": "rational_bezier_disjoint_conic_cubic_candidates: 2000 iterations in 706.952µs (353ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "iterations": 2000,
+          "total_ns": 709052,
+          "ns_per_iter": 354.526,
+          "output": "rational_bezier_disjoint_conic_cubic_cold_contacts: 2000 iterations in 709.052µs (354ns/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_immediate_contacts",
+          "iterations": 250,
+          "total_ns": 4779883,
+          "ns_per_iter": 19119.532,
+          "output": "rational_bezier_immediate_contacts: 250 iterations in 4.779883ms (19.119µs/iter), checksum=250"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_immediate_topology",
+          "iterations": 250,
+          "total_ns": 18248958,
+          "ns_per_iter": 72995.832,
+          "output": "rational_bezier_immediate_topology: 250 iterations in 18.248958ms (72.995µs/iter), checksum=2000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_exact_degree_elevation",
+          "iterations": 1000,
+          "total_ns": 24392558,
+          "ns_per_iter": 24392.558,
+          "output": "rational_bezier_exact_degree_elevation: 1000 curves in 24.392558ms (24.392µs/curve), checksum=8000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_retained_degree_elevation",
+          "iterations": 100000,
+          "total_ns": 1234916,
+          "ns_per_iter": 12.34916,
+          "output": "rational_bezier_retained_degree_elevation: 100000 iterations in 1.234916ms (12ns/iter), checksum=800000"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 7040808,
+          "ns_per_iter": 704080.8,
+          "output": "rational_bezier_large_cold_evaluation_64_controls: 10 iterations in 7.040808ms (704.08µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10,
+          "total_ns": 112982,
+          "ns_per_iter": 11298.2,
+          "output": "rational_bezier_large_cached_evaluation_64_controls: 10 iterations in 112.982µs (11.298µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "iterations": 10,
+          "total_ns": 6625766,
+          "ns_per_iter": 662576.6,
+          "output": "rational_bezier_large_exact_split_64_controls: 10 iterations in 6.625766ms (662.576µs/iter), checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 706584719,
+          "ns_per_iter": 706584.719,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=706584719, ns_per_iter=706584, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 1,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 343019744,
+          "ns_per_iter": 343019.744,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=343019744, ns_per_iter=343019, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 714582701,
+          "ns_per_iter": 714582.701,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=714582701, ns_per_iter=714582, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 1,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 349451313,
+          "ns_per_iter": 349451.313,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=349451313, ns_per_iter=349451, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 714950835,
+          "ns_per_iter": 714950.835,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=714950835, ns_per_iter=714950, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 2,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 346898518,
+          "ns_per_iter": 346898.518,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=346898518, ns_per_iter=346898, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 708569633,
+          "ns_per_iter": 708569.633,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=708569633, ns_per_iter=708569, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 2,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 343107098,
+          "ns_per_iter": 343107.098,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=343107098, ns_per_iter=343107, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 723176952,
+          "ns_per_iter": 723176.952,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=723176952, ns_per_iter=723176, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 3,
+          "variant": "baseline",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 353178807,
+          "ns_per_iter": 353178.807,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=353178807, ns_per_iter=353178, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_four_independent",
+          "iterations": 1000,
+          "total_ns": 711890446,
+          "ns_per_iter": 711890.446,
+          "output": "curve_region_boolean_four_independent: 1000 iterations, total_ns=711890446, ns_per_iter=711890, checksum=0"
+        },
+        {
+          "fixture": "rectangles",
+          "round": 3,
+          "variant": "candidate",
+          "name": "curve_region_boolean_shared_all_four",
+          "iterations": 1000,
+          "total_ns": 346628016,
+          "ns_per_iter": 346628.016,
+          "output": "curve_region_boolean_shared_all_four: 1000 iterations, total_ns=346628016, ns_per_iter=346628, checksum=0"
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            11836.268,
+            11352.762,
+            11296.046
+          ],
+          "candidate": [
+            12250.1,
+            13637.244,
+            11274.628
+          ],
+          "baseline_median": 11352.762,
+          "candidate_median": 12250.1,
+          "change_percent": 7.904138217642531
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            12925.987799999999,
+            12936.36515,
+            13181.04985
+          ],
+          "candidate": [
+            13281.865450000001,
+            14008.11665,
+            13316.2231
+          ],
+          "baseline_median": 12936.36515,
+          "candidate_median": 13316.2231,
+          "change_percent": 2.9363576676714187
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            5762.03445,
+            5720.2918,
+            5730.8156
+          ],
+          "candidate": [
+            5861.3207,
+            6019.00335,
+            5890.62865
+          ],
+          "baseline_median": 5730.8156,
+          "candidate_median": 5890.62865,
+          "change_percent": 2.7886615301319306
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3829.6714,
+            3710.4456,
+            3688.487
+          ],
+          "candidate": [
+            3733.862,
+            4065.5912,
+            3801.9334
+          ],
+          "baseline_median": 3710.4456,
+          "candidate_median": 3801.9334,
+          "change_percent": 2.46568228894124
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            366.9845,
+            343.6165,
+            345.7565
+          ],
+          "candidate": [
+            342.7415,
+            354.471,
+            353.476
+          ],
+          "baseline_median": 345.7565,
+          "candidate_median": 353.476,
+          "change_percent": 2.2326406011166755
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            25266.43935,
+            24945.8233,
+            24815.7072
+          ],
+          "candidate": [
+            25469.27145,
+            25161.27555,
+            25872.0188
+          ],
+          "baseline_median": 24945.8233,
+          "candidate_median": 25469.27145,
+          "change_percent": 2.0983398451315027
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            12789.8122,
+            13066.740200000002,
+            13817.9322
+          ],
+          "candidate": [
+            13196.1453,
+            13304.793849999998,
+            13371.084350000001
+          ],
+          "baseline_median": 13066.740200000002,
+          "candidate_median": 13304.793849999998,
+          "change_percent": 1.821828905728129
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            272077.788,
+            256385.54,
+            260419.984
+          ],
+          "candidate": [
+            268236.93200000003,
+            264432.35199999996,
+            258871.97200000004
+          ],
+          "baseline_median": 260419.984,
+          "candidate_median": 264432.35199999996,
+          "change_percent": 1.5407296853224395
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            43351.348,
+            43576.4025,
+            45400.8675
+          ],
+          "candidate": [
+            43722.2875,
+            44196.34,
+            44206.4295
+          ],
+          "baseline_median": 43576.4025,
+          "candidate_median": 44196.34,
+          "change_percent": 1.4226449739626945
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            346.5015,
+            356.5005,
+            349.656
+          ],
+          "candidate": [
+            370.5595,
+            352.451,
+            354.526
+          ],
+          "baseline_median": 349.656,
+          "candidate_median": 354.526,
+          "change_percent": 1.3927974923925168
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5595.89835,
+            5588.8458,
+            6009.24555
+          ],
+          "candidate": [
+            7008.7325,
+            5664.5722,
+            5660.5919
+          ],
+          "baseline_median": 5595.89835,
+          "candidate_median": 5664.5722,
+          "change_percent": 1.22721761019835
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.55004,
+            12.05207,
+            12.72533
+          ],
+          "candidate": [
+            12.76592,
+            12.70302,
+            12.34916
+          ],
+          "baseline_median": 12.55004,
+          "candidate_median": 12.70302,
+          "change_percent": 1.2189602582939996
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            132580.3208,
+            133596.9036,
+            136206.1017
+          ],
+          "candidate": [
+            135172.4046,
+            137013.4214,
+            134334.93355
+          ],
+          "baseline_median": 133596.9036,
+          "candidate_median": 135172.4046,
+          "change_percent": 1.1792945476619687
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            145.648,
+            152.2296,
+            151.2716
+          ],
+          "candidate": [
+            153.9734,
+            152.6454,
+            151.6356
+          ],
+          "baseline_median": 151.2716,
+          "candidate_median": 152.6454,
+          "change_percent": 0.9081678252890857
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            23226.62665,
+            23816.9562,
+            23163.54455
+          ],
+          "candidate": [
+            23812.576,
+            23259.6354,
+            23435.1609
+          ],
+          "baseline_median": 23226.62665,
+          "candidate_median": 23435.1609,
+          "change_percent": 0.8978240927638215
+        },
+        {
+          "name": "circles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            4602811.079,
+            4605005.808,
+            4800071.975
+          ],
+          "candidate": [
+            4737847.391,
+            4589076.45,
+            4635496.409
+          ],
+          "baseline_median": 4605005.808,
+          "candidate_median": 4635496.409,
+          "change_percent": 0.6621186220228115
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.705696,
+            3.554936,
+            3.587804
+          ],
+          "candidate": [
+            3.611452,
+            3.628751,
+            3.556826
+          ],
+          "baseline_median": 3.587804,
+          "candidate_median": 3.611452,
+          "change_percent": 0.6591218472357996
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            107944.76,
+            71536.896,
+            72830.084
+          ],
+          "candidate": [
+            76238.256,
+            72820.128,
+            72995.832
+          ],
+          "baseline_median": 72830.084,
+          "candidate_median": 72995.832,
+          "change_percent": 0.22758177788178013
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2791.41815,
+            2898.17235,
+            3062.0821
+          ],
+          "candidate": [
+            2902.58455,
+            2899.10025,
+            2848.2747
+          ],
+          "baseline_median": 2898.17235,
+          "candidate_median": 2899.10025,
+          "change_percent": 0.03201672943984324
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.26091,
+            4.26091,
+            4.26091
+          ],
+          "candidate": [
+            4.32071,
+            4.26071,
+            4.26091
+          ],
+          "baseline_median": 4.26091,
+          "candidate_median": 4.26091,
+          "change_percent": 0
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            213.904,
+            183.308,
+            182.828
+          ],
+          "candidate": [
+            177.708,
+            186.144,
+            183.268
+          ],
+          "baseline_median": 183.308,
+          "candidate_median": 183.268,
+          "change_percent": -0.021821197110871715
+        },
+        {
+          "name": "rectangles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            343019.744,
+            346898.518,
+            353178.807
+          ],
+          "candidate": [
+            349451.313,
+            343107.098,
+            346628.016
+          ],
+          "baseline_median": 346898.518,
+          "candidate_median": 346628.016,
+          "change_percent": -0.07797727172762503
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            33794.623,
+            34174.377,
+            34671.3935
+          ],
+          "candidate": [
+            34128.8805,
+            34404.511,
+            33983.3255
+          ],
+          "baseline_median": 34174.377,
+          "candidate_median": 34128.8805,
+          "change_percent": -0.13313044448477473
+        },
+        {
+          "name": "capsules/curve_region_boolean_four_independent",
+          "baseline": [
+            3515882.124,
+            3405683.149,
+            3428522.304
+          ],
+          "candidate": [
+            3393870.109,
+            3422233.405,
+            3421216.485
+          ],
+          "baseline_median": 3428522.304,
+          "candidate_median": 3421216.485,
+          "change_percent": -0.2130894406455086
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            733402.7,
+            696733.3,
+            705631.6
+          ],
+          "candidate": [
+            691493.6,
+            713572.1,
+            704080.8
+          ],
+          "baseline_median": 705631.6,
+          "candidate_median": 704080.8,
+          "change_percent": -0.21977473797941682
+        },
+        {
+          "name": "rectangles/curve_region_boolean_four_independent",
+          "baseline": [
+            706584.719,
+            714950.835,
+            723176.952
+          ],
+          "candidate": [
+            714582.701,
+            708569.633,
+            711890.446
+          ],
+          "baseline_median": 714950.835,
+          "candidate_median": 711890.446,
+          "change_percent": -0.4280558676457713
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            196341.74,
+            180275.94,
+            180401.74
+          ],
+          "candidate": [
+            179489.69,
+            183929.79,
+            177981.4
+          ],
+          "baseline_median": 180401.74,
+          "candidate_median": 179489.69,
+          "change_percent": -0.5055660771342785
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            24259.216,
+            10043.872,
+            10048.832
+          ],
+          "candidate": [
+            10103.704,
+            9886.72,
+            9989.516
+          ],
+          "baseline_median": 10048.832,
+          "candidate_median": 9989.516,
+          "change_percent": -0.5902775566354435
+        },
+        {
+          "name": "capsules/curve_region_boolean_shared_all_four",
+          "baseline": [
+            1098637.132,
+            1120394.17,
+            1115627.417
+          ],
+          "candidate": [
+            1108136.97,
+            1101926.836,
+            1201115.996
+          ],
+          "baseline_median": 1115627.417,
+          "candidate_median": 1108136.97,
+          "change_percent": -0.6714111616351492
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            20931.504,
+            20533.932,
+            20580.15
+          ],
+          "candidate": [
+            20437.918,
+            20525.752,
+            20284.628
+          ],
+          "baseline_median": 20580.15,
+          "candidate_median": 20437.918,
+          "change_percent": -0.6911125526295914
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            2.952368,
+            3.032972,
+            3.078618
+          ],
+          "candidate": [
+            3.010164,
+            3.024143,
+            3.009834
+          ],
+          "baseline_median": 3.032972,
+          "candidate_median": 3.010164,
+          "change_percent": -0.7520016670117591
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            637186.3,
+            668462.2,
+            651528.3
+          ],
+          "candidate": [
+            646368.7,
+            643451.9,
+            662576.6
+          ],
+          "baseline_median": 651528.3,
+          "candidate_median": 646368.7,
+          "change_percent": -0.7919226225476472
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            875.755,
+            885.4745,
+            860.351
+          ],
+          "candidate": [
+            877.6795,
+            868.5905,
+            840.8025
+          ],
+          "baseline_median": 875.755,
+          "candidate_median": 868.5905,
+          "change_percent": -0.818094101660849
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            345158.667,
+            350046.462,
+            354104.684
+          ],
+          "candidate": [
+            355357.908,
+            346827.573,
+            343940.401
+          ],
+          "baseline_median": 350046.462,
+          "candidate_median": 346827.573,
+          "change_percent": -0.9195605010857144
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            210519.987,
+            172975.431,
+            178334.854
+          ],
+          "candidate": [
+            176269.766,
+            177328.293,
+            175626.59
+          ],
+          "baseline_median": 178334.854,
+          "candidate_median": 176269.766,
+          "change_percent": -1.1579833967845565
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            17966.65825,
+            17023.7829,
+            18092.61865
+          ],
+          "candidate": [
+            17583.95505,
+            17992.662,
+            17742.52365
+          ],
+          "baseline_median": 17966.65825,
+          "candidate_median": 17742.52365,
+          "change_percent": -1.2475029962792372
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            54432.7585,
+            54853.1295,
+            61246.796
+          ],
+          "candidate": [
+            54227.3075,
+            54029.326,
+            54002.0275
+          ],
+          "baseline_median": 54853.1295,
+          "candidate_median": 54029.326,
+          "change_percent": -1.5018350046919426
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            4562.12175,
+            3729.16335,
+            3861.47725
+          ],
+          "candidate": [
+            3796.3922,
+            3849.4461,
+            3802.24935
+          ],
+          "baseline_median": 3861.47725,
+          "candidate_median": 3802.24935,
+          "change_percent": -1.533814552448809
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2498.404,
+            2318.986,
+            2389.7365
+          ],
+          "candidate": [
+            2309.3115,
+            2356.1335,
+            2347.579
+          ],
+          "baseline_median": 2389.7365,
+          "candidate_median": 2347.579,
+          "change_percent": -1.7641066284923013
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11217.181,
+            11643.78625,
+            11929.0187
+          ],
+          "candidate": [
+            13534.9446,
+            11436.7829,
+            11310.4261
+          ],
+          "baseline_median": 11643.78625,
+          "candidate_median": 11436.7829,
+          "change_percent": -1.7778010138239986
+        },
+        {
+          "name": "circles/curve_region_boolean_four_independent",
+          "baseline": [
+            9441984.394,
+            9327206.503,
+            9605318.057
+          ],
+          "candidate": [
+            9256910.462,
+            9310598.392,
+            9250412.057
+          ],
+          "baseline_median": 9441984.394,
+          "candidate_median": 9256910.462,
+          "change_percent": -1.9601169020953546
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            210235.09,
+            213483.06,
+            220690.17
+          ],
+          "candidate": [
+            212339.74,
+            209280.65,
+            208397.42
+          ],
+          "baseline_median": 213483.06,
+          "candidate_median": 209280.65,
+          "change_percent": -1.9684981094050258
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            21141.548,
+            20316.368,
+            20251.612
+          ],
+          "candidate": [
+            19663.932,
+            23073.856,
+            19534.82
+          ],
+          "baseline_median": 20316.368,
+          "candidate_median": 19663.932,
+          "change_percent": -3.211381089375809
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            593.76,
+            570.08,
+            549.004
+          ],
+          "candidate": [
+            606.116,
+            551.124,
+            551.364
+          ],
+          "baseline_median": 570.08,
+          "candidate_median": 551.364,
+          "change_percent": -3.28304799326411
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            25564.668,
+            25353.382,
+            24538.478
+          ],
+          "candidate": [
+            24465.682,
+            24648.03,
+            24392.558
+          ],
+          "baseline_median": 25353.382,
+          "candidate_median": 24465.682,
+          "change_percent": -3.501308030620931
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            19885.72,
+            20358.044,
+            19223.884
+          ],
+          "candidate": [
+            19016.736,
+            19735.288,
+            19119.532
+          ],
+          "baseline_median": 19885.72,
+          "candidate_median": 19119.532,
+          "change_percent": -3.85295578938053
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11698.2,
+            12379.1,
+            12270.2
+          ],
+          "candidate": [
+            11640.2,
+            15460,
+            11298.2
+          ],
+          "baseline_median": 12270.2,
+          "candidate_median": 11640.2,
+          "change_percent": -5.134390637479425
+        }
+      ],
+      "instructions": [
+        {
+          "fixture": "tangent",
+          "baseline": 455963380,
+          "candidate": 455978519,
+          "change_percent": 0.003320222777536408
+        }
+      ],
+      "range_guards": [
+        {
+          "fixture": "selected",
+          "variant": "baseline",
+          "ratio": 1.0585156993339677,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "selected",
+          "variant": "candidate",
+          "ratio": 1.0270783847980998,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "chord",
+          "variant": "baseline",
+          "ratio": 1.0104529616724738,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "chord",
+          "variant": "candidate",
+          "ratio": 1.1672297297297298,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "radial",
+          "variant": "baseline",
+          "ratio": 1.0665122435473195,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "radial",
+          "variant": "candidate",
+          "ratio": 1.0235294117647058,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "contacts",
+          "variant": "baseline",
+          "ratio": 1.0034423407917386,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "contacts",
+          "variant": "candidate",
+          "ratio": 1.011353711790393,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "mapped",
+          "variant": "baseline",
+          "ratio": null,
+          "limit": 1.5,
+          "passed": null
+        },
+        {
+          "fixture": "mapped",
+          "variant": "candidate",
+          "ratio": null,
+          "limit": 1.5,
+          "passed": null
+        },
+        {
+          "fixture": "bezier_region",
+          "variant": "baseline",
+          "ratio": 1.0224137931034483,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "bezier_region",
+          "variant": "candidate",
+          "ratio": 1.0153846153846156,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "rational_bezier",
+          "variant": "baseline",
+          "ratio": 1.09375,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "rational_bezier",
+          "variant": "candidate",
+          "ratio": 1.03125,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "rectangles",
+          "variant": "baseline",
+          "ratio": 1.0188679245283019,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "rectangles",
+          "variant": "candidate",
+          "ratio": 1.0095238095238095,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "circles",
+          "variant": "baseline",
+          "ratio": 1.0344332855093257,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "circles",
+          "variant": "candidate",
+          "ratio": 1.007913669064748,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "capsules",
+          "variant": "baseline",
+          "ratio": 1.0220750551876379,
+          "limit": 1.5,
+          "passed": true
+        },
+        {
+          "fixture": "capsules",
+          "variant": "candidate",
+          "ratio": 1.0266666666666666,
+          "limit": 1.5,
+          "passed": true
+        }
+      ]
+    },
+    "total_invocations": 60,
+    "total_lane_records": 282,
+    "scope": "Prespecified three alternating CPU-7 pairs across five unchanged geometry tests, two native matrices, and three Boolean batch fixtures, after owned builds/profiles finish. Every sample retained, without retries or favorable subrange selection. Within-binary process max/min limit 1.5 is reported, not proof of host stability. Scheduling, desktop activity, frequency scaling and thermal state remain uncontrolled."
+  },
+  "resources": {
+    "raw_root": "/home/tim/Documents/GitHub/workspace/hypercurve/target/recursive-bounds.tCa7hH",
+    "events": [
+      "The /tmp user quota prevented sandbox startup and the patch helper. Approved host execution used a workspace-local TMPDIR and the same apply_patch mechanism.",
+      "After independently rechecking all 1,639 prior proof entries and confirming no old workers remained, cargo clean removed only the previous chord-query experiment's completed build cache: 10,968 files, 3.8 GiB. All prior sources, logs, frozen binaries, and proof remain. Rebuilding regenerates the cache."
+    ],
+    "artifacts": {
+      "entries": 1530,
+      "sha256": "e31bb5c41d0e540f04fb0558ed99c8166607b041354bc25d2465e99354189543",
+      "manifest": "artifact-sha256.txt",
+      "independent_verification_log": "artifact-verification.log",
+      "excluded": [
+        "build",
+        "tmp",
+        "artifact-sha256.txt",
+        "artifact-manifest.json",
+        "artifact-verification.log",
+        "final-report.json"
+      ],
+      "scope": "Frozen sources, archived dependencies, scripts, catalogs, binaries and all experiment/qualification/measurement logs. Rebuildable cache and temporary files excluded.",
+      "independently_verified": true
+    }
+  },
+  "milestones": {
+    "exactcorelib_mining_and_recorded_uplift": "closed",
+    "preserved_recursive_transformed_bounds_failures": "resolved",
+    "hypercurve_full_release_readiness": "open",
+    "uniform_performance": "open",
+    "broader_memory_coverage": "open",
+    "concurrent_lower_stack_integration": "open",
+    "overall_goal": "active",
+    "next": "Investigate the expanded selected-radial oracle's rational-arithmetic cost without weakening its checks, plus recorded native-lane costs. Continue non-angular retained-policy and single-authority CurveRegion2 audits. The one-item coarse-sign loop remains separate; an undecided coarse comparison must still reach exact-fiber fallback. Requalify finalized lower-stack work with Hypermesh."
+  }
+}

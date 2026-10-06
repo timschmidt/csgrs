@@ -1,0 +1,240 @@
+hypercurve revision plan
+========================
+
+Goal
+----
+
+Make hypercurve a minimal, full-featured, exact, high-performance, provenance-preserving 2D CAD curve kernel. The primary top-level type is `Region2`. The crate should contain geometry carriers, cached Yap-style facts, acceleration data structures, and algorithms that operate on that geometry. It should not contain product policy, workspace-level APIs, SVG/reconstruction workflows, UI-facing reports, or csgrs orchestration.
+
+Target public surface
+---------------------
+
+1. Primary owned type:
+   - `Region2`: exact planar face with material loops, hole loops, fill semantics, source/provenance identity, cached facts, and optional internal acceleration caches.
+   - `Region2::new`, checked constructors from exact loops/contours, and exact replay validation.
+   - `Region2::as_view()` returning a borrowed `RegionView2`.
+
+2. Borrowed APIs:
+   - `RegionView2<'a>` as the preferred borrowed face API for classification, bounds, topology queries, and boolean/arrangement preflight without cloning.
+   - Borrowed curve/loop views for `CurveString`, `Contour`, `Segment`, and prepared caches.
+   - Prepared borrowed query objects for repeated point/loop/face classification.
+
+3. Core geometry:
+   - `Point2`, `LineSeg2`, `CircularArc2`, polynomial Beziers, rational quadratic Beziers/conics, retained B-spline/NURBS carriers, parameters, trim intervals, and exact transforms.
+   - Structural facts for each carrier: bounds, degeneracy, endpoints, parameter intervals, tangent/monotonicity, algebraic image, sweep/radius facts, source identity, and exact replay evidence.
+
+4. Kernel errors:
+   - Replace broad public policy/report status with `ExactCurveError`, `ExactCurveBlocker`, and `ExactDecision<T>`-style returns.
+   - Errors must say which exact predicate, construction, topology invariant, or unsupported curve family blocked progress.
+   - Preserve provenance in errors: source loop, segment index, parameter interval, and retained construction path where known.
+
+5. Crate root:
+   - Re-export only core primitives, `Region2`, `RegionView2`, borrowed views, facts, exact errors, and selected low-level algorithms.
+   - Remove public `ExactCurveWorkspace2`, `ExactCurveArrangement*`, `RegionBoolean*`, SVG/reconstruction/fitting/finite projection workflows, and broad report families from the default root.
+
+Performance architecture
+------------------------
+
+Performance is a first-order kernel contract. The implementation should follow the
+Yap-style retained-fact model already described by the README: exact decisions are
+made from native geometric objects plus cached construction evidence, and every
+expensive predicate should be fed by reusable facts before it reaches generic algebra.
+
+1. Retained fact discipline:
+   - Treat facts as replayable proof/evidence, not incidental memoization.
+   - Key facts by source identity, construction version, segment index, local parameter
+     interval, curve family, and exact scalar family.
+   - Store freshness state explicitly for borrowed-current, owned-snapshot, stale, and
+     replay-validated facts.
+   - Every exact topology branch should either consume already-retained facts, retain
+     newly-derived facts for later branches, or return an `ExactCurveBlocker` naming the
+     missing predicate/construction.
+
+2. Object-local cached facts:
+   - Scalars and parameters: exact rational/dyadic keys, algebraic expression family,
+     isolating intervals when exact roots are not yet materialized, endpoint-open/closed
+     interval flags, and comparison replay evidence.
+   - Points: canonical coordinate identity, exact equality/hash keys where available,
+     bbox cell keys, source/provenance, and predicate-filter handles.
+   - Lines/arcs/conics: endpoints, center/radius or implicit conic coefficients, sweep
+     interval, orientation, tangent and normal facts, exact bounding boxes, monotone
+     spans, degeneracy class, and low-degree relation fast-path data.
+   - Polynomial Beziers: degree, control hull, endpoint/tangent/curvature facts,
+     derivative roots, x/y monotone spans, convex-hull bounds, Bernstein sign-variation
+     facts, algebraic image, split tree identity, and certified length/area/moment
+     summaries.
+   - Rational Beziers/conics: homogeneous control facts, weight sign domains, conic
+     classification, denominator-zero blockers, monotone spans, and exact projected
+     low-degree relation data.
+   - B-splines/NURBS: knot-vector identity, span domains, Boehm/de Boor extraction
+     evidence, per-span Bezier carriers, retained unsupported-spans blockers, and
+     stable mapping between global and span-local parameters.
+
+3. Aggregate cached facts:
+   - `CurveString2` and `Contour2`: closure, endpoint buckets, signed area and moment
+     prefix sums, orientation, winding role candidates, segment-kind counts, exact AABB,
+     monotone span tables, self-contact summaries, and split-parameter inventories.
+   - `Region2`: material/hole loop roles, loop nesting graph, fill-rule facts, prepared
+     point-location/classification state, region AABB, fragment graph, source
+     provenance, and replay validation for all loop facts.
+   - Pair/session facts: exact bbox reject evidence, sweep event records, endpoint and
+     tangent buckets, curve-pair relation cache, overlap/equality keys, split-parameter
+     cache, arrangement vertices/halfedges/faces, face labels, containment/nesting
+     decisions, and output-fragment provenance.
+
+4. Arrangement and candidate-generation strategy:
+   - Model internal arrangements on the CGAL Arrangement_2 pattern: separate geometry
+     traits from topology, decompose curves into x-monotone subcurves, then represent
+     the arrangement with a DCEL/halfedge-style graph.
+   - Use sweep-line aggregate insertion/overlay for unordered inputs and region
+     booleans. Avoid quadratic pair scans except for small fixed thresholds or tests
+     that prove the broad phase is cheaper than index construction.
+   - For large sets, build exact AABB candidate generation with sweep events and/or
+     bbox indexes, then promote only surviving pairs to exact relation predicates.
+   - Keep event normalization deterministic: same exact coordinates, endpoint
+     coincidences, overlaps, and tangent ties must sort identically across runs.
+
+5. Curve intersection strategy:
+   - Dispatch line/line, line/arc, arc/arc, line/conic, and compatible conic/conic cases
+     through exact low-degree formulas first.
+   - Decompose Bezier, rational Bezier, B-spline, and NURBS carriers into cached
+     x-monotone Bezier spans before pair predicates.
+   - Use Bernstein/control-hull rejection, Bezier clipping/fat-line clipping,
+     subdivision, and sign-variation/root-isolation facts for free-form curve pairs.
+   - Materialize exact algebraic roots only when the scalar layer can represent them;
+     otherwise retain isolating parameter boxes and return typed blockers at topology
+     boundaries that require exact split points.
+   - Retain overlap/equality facts separately from isolated intersections because
+     shared-boundary booleans depend on exact interval relation, orientation, and split
+     provenance.
+
+6. Region boolean and classification strategy:
+   - Build booleans as arrangement overlay plus face labeling, not as tolerance-driven
+     boundary walking. Greiner-Hormann, Martinez, Vatti, and related polygon clippers
+     are historical references for traversal and degeneracy cases, not the core exact
+     policy.
+   - Use exact winding/point-in-region classification for face roles, cached containment
+     checks for loop nesting, and prepared point-location structures for repeated
+     region queries.
+   - Keep regularization/fill interpretation explicit. Product-level decisions about
+     open/closed display, flattening, SVG, and reconstruction belong in csgrs/adapters.
+
+7. Prepared query strategy:
+   - Borrowed prepared views are the default. Owned caches are justified only for
+     repeated sessions whose metrics show amortized wins.
+   - Prefer point-location strategies with retained structures: landmarks/walks for
+     small mutable arrangements and randomized trapezoidal maps or bbox-indexed
+     location for larger mostly-static arrangements.
+   - Prepared classifiers should cache loop AABBs, monotone edge tables, winding
+     accumulators, tangent ordering, and exact edge-hit predicates.
+
+8. Benchmark and audit counters:
+   - Track candidate pairs, AABB reject rate, sweep/index build cost, exact predicate
+     count, adaptive-filter fallbacks, low-degree fast-path hits, Bezier clipping
+     subdivision depth, algebraic isolating intervals, split fragments, arrangement
+     vertices/halfedges/faces, face-label decisions, point-location queries, cache hit
+     rate, memory bytes per retained fact, and borrowed-vs-owned cache use.
+   - Add benches for prepared vs unprepared classification, unordered arrangement
+     insertion, Bezier/conic intersection batches, boolean overlay with shared
+     boundaries, and B-spline/NURBS span extraction once those carriers are active.
+
+Refactor phases
+---------------
+
+1. Harden `Region2` without changing behavior.
+   - Treat existing `Region2` material/hole bins and `RegionView2` as the first-class owned/borrowed face API.
+   - Add any missing borrowed views around loops, contours, and segments instead of cloning from `Region2`.
+   - Migrate tests and docs away from workspace/report entry points and toward `Region2`/`RegionView2`.
+
+2. Separate kernel predicates from product policy.
+   - Replace public `CurvePolicy` use in core methods with an internal `PredicateContext` and exact/default context constructors.
+   - Keep preview/finite/authoring policy in csgrs or adapter features.
+   - Make all uncertainty paths produce typed blockers instead of loosely returning `UncertaintyReason::Unsupported`.
+
+3. Move workspace APIs up.
+   - Extract `ExactCurveWorkspace2`, arrangement requests, arrangement/evaluation/report objects, unordered region constructors, and named boolean request/result APIs from `src/region_nesting.rs` and `src/region_boolean.rs` into csgrs.
+   - Keep internal arrangement cache builders, loop role assignment, split markers, fragment selection, event normalization, and prepared cache machinery in hypercurve.
+
+4. Consolidate retained facts.
+   - Keep `src/facts.rs`, Bezier retained facts, B-spline span facts, pcurve face evidence, and prepared cache summaries.
+   - Store/cache them through `Region2` and borrowed views with explicit freshness/replay validation.
+   - Do not let finite adapters become topology authority.
+
+5. Split adapters.
+   - Move SVG, polyline reconstruction, fitting, flattening, finite projection, UI examples, and report-bearing import/export workflows to csgrs or adapter crates/features.
+   - Leave minimal exact promotion/validation helpers in hypercurve when they are needed to accept exact kernel objects.
+
+6. Keep high-performance algorithms.
+   - Retain exact AABB filters, prepared segment predicates, monotone Bezier spans,
+     tangent ordering, algebraic parameter images, exact segment intersections,
+     self-contact scans, split/trim assembly, loop nesting, pcurve equality, and
+     prepared point-location/classification facts.
+   - Replace broad quadratic scans with sweep-line, arrangement-overlay, or indexed
+     candidate generation while preserving exact decisions and deterministic ordering.
+   - Keep caches borrowed by default and owned only when repeated query-session metrics
+     justify the extra memory.
+   - Move line/arc/conic pairs through exact low-degree dispatch before any generic
+     Bezier/NURBS machinery.
+   - Convert B-spline/NURBS work to cached exact Bezier spans before intersection,
+     classification, and topology assembly.
+   - Keep Bezier clipping, Bernstein sign-variation, subdivision, and retained
+     isolating intervals as the free-form curve intersection path.
+
+7. Update tests and docs.
+   - Reframe README around `Region2`, `RegionView2`, exact primitives, facts, borrowed views, and csgrs ownership of workspace-level APIs.
+   - Split tests into kernel tests and adapter/csgrs tests.
+   - Preserve adversarial and proptest regression coverage before deleting old public APIs.
+
+Primary research conclusions
+----------------------------
+
+No local `references.txt` is currently present in this crate; until one is added, the
+README `References` section is the local bibliography. Add `references.txt` during the
+refactor and include these primary baselines with short implementation notes:
+
+- Yap exact geometric computation:
+  `https://doi.org/10.1016/0925-7721(95)00040-2`
+  Exact objects, predicates, and constructions must stay separated. Cached facts should
+  record enough provenance for exact replay, and uncertainty should surface as typed
+  blockers instead of approximate topology.
+- Shewchuk adaptive predicates:
+  `https://www.cs.cmu.edu/~quake/robust.html`
+  Use floating/adaptive filters only as sign-decision accelerators with exact fallback;
+  never let approximate predicates write topology facts.
+- CGAL Arrangement_on_surface_2:
+  `https://doc.cgal.org/latest/Arrangement_on_surface_2/index.html`
+  The arrangement model should use geometry/topology separation, x-monotone
+  decomposition, DCEL/halfedge topology, sweep insertion/overlay, curve history, and
+  extensible records for provenance and retained facts.
+- CGAL 2D Regularized Boolean Set Operations:
+  `https://doc.cgal.org/latest/Boolean_set_operations_2/index.html`
+  Region booleans should be arrangement overlay plus face labeling over weakly
+  x-monotone boundaries. Regularization and containment predicates must remain exact.
+- Bentley-Ottmann and de Berg et al.:
+  Use sweep-line candidate generation for large segment/curve sets. Exact AABB and
+  event facts are broad-phase filters; exact curve relation predicates decide the
+  surviving candidates.
+- Farouki-Rajan Bernstein algorithms and Sederberg-Nishita Bezier clipping:
+  Keep Bezier-freeform intersections in Bernstein form with convex-hull rejection,
+  subdivision, sign-variation/root isolation, and clipping before exact algebraic
+  materialization.
+- MIT Shape Interrogation / Patrikalakis-Maekawa-Cho:
+  `https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/`
+  Use NURBS/B-spline span extraction, subdivision, interval arithmetic, and global
+  solver classification as the CAD curve roadmap. Unsupported spans should be retained
+  as explicit blockers until exact span extraction and parameter mapping are complete.
+- Hormann-Agathos point-in-polygon:
+  Keep point/region classification explicit and exact, including arbitrary polygons and
+  boundary cases, and cache repeated point-location state.
+- Greiner-Hormann, Martinez, Vatti, Foster-Hormann-Popa:
+  Use these as degeneracy/traversal references for polygonal adapters and regression
+  tests. They should not become tolerance-driven core boolean policy.
+
+Definition of done
+------------------
+
+- `Region2` is the first documented type in README and crate root.
+- Core APIs support owned and borrowed use, with borrowed paths preferred for classification and repeated queries.
+- No default public API exposes workspace/request/report policy, SVG/reconstruction/finite projection workflow, or application-level boolean orchestration.
+- Every exact topology branch either decides, returns a useful typed blocker, or reports an explicitly unsupported exact construction.
+- Existing useful algorithms remain available to csgrs through narrow kernel APIs without making hypercurve a workspace layer.

@@ -1,0 +1,290 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "correlated algebraic-chord pair affine transport and exact offset re-entry",
+  "implementation_revision": "025dd99137f02ba433f6b7e36c50fdcb5d378c6b",
+  "benchmark_revisions": [
+    "1f283c2e8b859c5ee5e4638fa1f2fded4b0dbfad",
+    "a5712c23376d4421f92fa3b6e5ae6de72550444b"
+  ],
+  "historical_semantic_revision": "b467a8f90168d489ac885c41ae74d21dc646e87d",
+  "historical_benchmark_worktree_revision": "7c3d6fadbf1c165db0a29e17b02f42bae04f4541",
+  "preceding_checkpoint": "2026-08-06-shared-chord-collinear-reentry.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "43a2d815b9ed4c4310a0145a0bb61c832a622676",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "exact translation of AlgebraicChordPair endpoint evidence by transporting both retained defining supports",
+      "exact nonsingular affine transport of AlgebraicChordPair endpoint evidence, including determinant-certified side reversal under reflection",
+      "exact mixed coordinate ordering between correlated pair points and retained one-field algebraic evidence",
+      "conservative exact bounds refinement for remaining correlated endpoint coordinate comparisons with APPROXIMATE_512 confined to the shared terminal equality",
+      "allocation-free certified-axis reversal detection during retained miter adjustment",
+      "authored adjacent perpendicular chord and exact-line fast paths in the authoritative Boolean regularizer",
+      "public reflected correlated-pair region offset under STRICT and APPROXIMATE_512",
+      "matched historical rejection, competitive floating, deterministic perf, allocation, peak-heap, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "affine and translation transport of AlgebraicCuspChord endpoint evidence",
+      "general oblique selected-circle and retained-chord interaction",
+      "general oblique retained chord and analytic-parallel interaction",
+      "retained selected-circle fragment re-offsetting",
+      "general retained-algebraic fillet centers, tangency parameters, and arcs",
+      "coupled material and hole wavefront events",
+      "general non-orthogonal post-collapse scheduling"
+    ]
+  },
+  "authority": {
+    "transform_route": "CurveRegion2::transform_affine -> transform_retained_region_fragment -> BezierAlgebraicChord2::transform_affine -> affine_transformed_endpoint -> BezierAlgebraicChordPairPoint2::transform_affine",
+    "offset_route": "CurveRegion2::offset -> retained axis-aligned span construction -> translated_endpoint -> BezierAlgebraicChordPairPoint2::translated -> axis_aligned_offset_has_reversed_span -> CurveRegion2::regularized_region_raw -> CurveRegionBooleanContext",
+    "ordering_route": "BezierAlgebraicChord2::point_axis_order -> pair constant-axis support replay -> exact one-field predicate, then conservative exact bounds refinement when no compact support comparison applies",
+    "proof_rule": "A correlated point remains the unique intersection of its two transported exact supports. A nonsingular affine map preserves uniqueness and incidence; a negative exact determinant reverses every retained left/right side certificate. Offset translation preserves the construction-certified constant coordinate, so only the certified traversal axis must be compared.",
+    "persistent_state_added": "no fields, caches, or compatibility carriers; transported evidence uses existing Arc-backed chord and pair handles",
+    "primitive_element_added": false,
+    "persistent_cache_added": false,
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "Determinant sign, transformed axis certificates, interval separation, authored perpendicularity, and all reusable topology facts are evaluated with STRICT evidence only. Unresolved signs or orders remain typed uncertainty.",
+    "approximate_512": "The exact fixture follows the same proof graph and returns Certified without consuming a terminal. In the generic mixed-endpoint refinement fallback, only unresolved equality after the exact 512-step schedule may consume APPROXIMATE_512; no approximate coordinate, side, support, or direction is retained.",
+    "construction_policy": "Every transported chord and correlated point validates that the replay policy equals its construction policy. The public fixture is rebuilt independently for STRICT and APPROXIMATE_512.",
+    "orientation_rule": "The pair point computes the exact affine determinant under STRICT. Positive determinants preserve its two side arrays, negative determinants swap Left and Right, and exact zero is InvalidAffineTransform.",
+    "uncertainty_rule": "A determinant with no exact sign returns RealSign uncertainty even during an APPROXIMATE_512 attempt because side orientation is reusable structural evidence. STRICT coordinate refinement never promotes overlapping nonsingleton bounds to equality."
+  },
+  "fixture": {
+    "first_operand": "The exact rectangle [0, sqrt(1/2)] x [0, 1], represented by four retained algebraic chords with independently selected right endpoints.",
+    "second_operand": "An exact translation of the first operand by (1/4, 1/4).",
+    "first_result": "The authoritative Boolean intersection retains at least two AlgebraicChordPair boundary endpoints produced by strict-interior perpendicular support crossings.",
+    "transform": "The orientation-reversing affine map (x, y) -> (y + 2, x - 3), whose determinant is exactly -1.",
+    "offset": "Expand the transformed material region by exactly 1/20 with miter limit 2 through CurveRegion2::offset.",
+    "expected_result": "Transform and offset both return Certified nonempty exact regions under STRICT and APPROXIMATE_512, and at least two correlated pair endpoints survive each stage.",
+    "historical_failure": "The semantic parent constructs the same exact intersection, but BezierAlgebraicChord2::affine_transformed_endpoint returns Unsupported when it reaches AlgebraicChordPair evidence. The timed transform-plus-offset lane therefore stops at transform rejection and never enters offsetting."
+  },
+  "benchmark_method": {
+    "group": "algebraic_chord_pair/affine_transform_offset",
+    "cpu": 11,
+    "timing_scope": "Operand construction, first Boolean intersection, pair-endpoint preflight, completion preflights, and Cavalier first intersection are outside timed loops. Timed Hypercurve lanes rebuild either the exact reflected region or the reflection followed by exact offset. The Cavalier lane clones, reflects, and offsets its floating intersection.",
+    "wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=algebraic_chord_pair/affine_transform_offset <comparative-executable>",
+    "perf_current_command": "perf stat -x, -e cycles,instructions -- taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=1024 HYPERCURVE_COMPARE_GROUP=algebraic_chord_pair/affine_transform_offset HYPERCURVE_COMPARE_IMPL=hypercurve_exact_transform_offset <current-comparative-executable>",
+    "perf_historical_command": "perf stat -x, -e cycles,instructions -- taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=32768 HYPERCURVE_COMPARE_GROUP=algebraic_chord_pair/affine_transform_offset HYPERCURVE_COMPARE_IMPL=hypercurve_rejected_transform_offset <historical-comparative-executable>",
+    "perf_normalization": "Subtract the matched implementation-filter=disabled process. Divide current by 1025 and historical by 32769 because Runner performs one warm-up invocation before its fixed timed iterations.",
+    "heap_method": "Heaptrack --record-only directly profiles 64 current or 1024 historical fixed timed iterations. Subtract the matched disabled process and divide by 65 or 1025 for the one-operation warm-up. heaptrack_print summaries are authoritative.",
+    "historical_control": "Revision b467a8f with the two benchmark-only commits cherry-picked as detached revision 7c3d6fa.",
+    "competitive_control": "Cavalier Contours uses binary64 polylines, a floating first-stage intersection, explicit coordinate reflection, and floating parallel_offset; it does not retain independent selected fields, correlated support evidence, exact topology, or Hyper's terminal-policy trail."
+  },
+  "matched_wall_performance": {
+    "samples_per_process": 11,
+    "target_milliseconds_per_sample": 100,
+    "current_a5712c2": {
+      "exact_transform_median_ns": 68893.6,
+      "exact_transform_min_ns": 65474.5,
+      "exact_transform_max_ns": 71214.7,
+      "exact_transform_iterations_per_sample": 1536,
+      "exact_transform_offset_median_ns": 490765.2,
+      "exact_transform_offset_min_ns": 470128.3,
+      "exact_transform_offset_max_ns": 533130.8,
+      "exact_transform_offset_iterations_per_sample": 320,
+      "cavalier_f64_transform_offset_median_ns": 1208.4,
+      "cavalier_f64_transform_offset_min_ns": 1166.5,
+      "cavalier_f64_transform_offset_max_ns": 1320.6,
+      "cavalier_iterations_per_sample": 131072
+    },
+    "historical_b467a8f": {
+      "rejected_transform_median_ns": 7846.4,
+      "rejected_transform_min_ns": 7603.6,
+      "rejected_transform_max_ns": 8614.5,
+      "rejected_transform_iterations_per_sample": 16384,
+      "rejected_transform_offset_median_ns": 7972.2,
+      "rejected_transform_offset_min_ns": 7747.4,
+      "rejected_transform_offset_max_ns": 8288.4,
+      "rejected_transform_offset_iterations_per_sample": 16384,
+      "result": "Both Hypercurve lanes return no usable geometry after the transform reaches correlated pair evidence; the offset body is not entered."
+    },
+    "success_over_historical_rejection_ratio": {
+      "transform": 8.780281,
+      "transform_offset": 61.559570
+    },
+    "current_exact_over_cavalier_f64_ratio": 406.128103,
+    "interpretation": "The historical and Cavalier figures are capability context, not correctness-equivalent throughput controls. Current pays for exact transported evidence, complete offset regularization, and reusable policy-aware topology instead of returning Unsupported or floating geometry."
+  },
+  "deterministic_perf": {
+    "current_fixed_timed_iterations": 1024,
+    "current_normalized_operation_invocations": 1025,
+    "current_successful_transform_offset": {
+      "raw_operation_process": {
+        "instructions": 4276723483,
+        "cycles": 2292598604
+      },
+      "raw_disabled_process": {
+        "instructions": 15342429,
+        "cycles": 14136088
+      },
+      "normalized_per_operation": {
+        "instructions": 4157444.931,
+        "cycles": 2222890.260
+      }
+    },
+    "historical_fixed_timed_iterations": 32768,
+    "historical_normalized_operation_invocations": 32769,
+    "historical_rejected_transform_offset": {
+      "raw_operation_process": {
+        "instructions": 2542512560,
+        "cycles": 1215366011
+      },
+      "raw_disabled_process": {
+        "instructions": 11176626,
+        "cycles": 10684869
+      },
+      "normalized_per_rejection": {
+        "instructions": 77247.885,
+        "cycles": 36762.829
+      }
+    },
+    "success_over_rejection_ratio": {
+      "instructions": 53.819531,
+      "cycles": 60.465702
+    },
+    "interpretation": "The exact path completes both operations; the historical denominator is a fast Unsupported exit and is not an optimization baseline."
+  },
+  "allocation_evidence": {
+    "current_fixed_timed_iterations": 64,
+    "current_normalized_operation_invocations": 65,
+    "current_successful_transform_offset": {
+      "raw_operation_process": {
+        "allocation_calls": 443370,
+        "temporary_allocations": 38810,
+        "peak_heap_kib": 293.09
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 23906,
+        "temporary_allocations": 2086,
+        "peak_heap_kib": 280.47
+      },
+      "normalized_per_operation": {
+        "allocation_calls": 6453.292308,
+        "temporary_allocations": 564.984615
+      },
+      "peak_increment_over_fixture_kib": 12.62
+    },
+    "historical_fixed_timed_iterations": 1024,
+    "historical_normalized_operation_invocations": 1025,
+    "historical_rejected_transform_offset": {
+      "raw_operation_process": {
+        "allocation_calls": 172403,
+        "temporary_allocations": 10831,
+        "peak_heap_kib": 178.58
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 17627,
+        "temporary_allocations": 1607,
+        "peak_heap_kib": 178.56
+      },
+      "normalized_per_rejection": {
+        "allocation_calls": 151.000976,
+        "temporary_allocations": 8.999024
+      },
+      "peak_increment_over_fixture_kib": 0.02
+    },
+    "persistent_memory_cost": "No new persistent fields or caches. Each independently transformed occurrence currently reconstructs compact Arc-backed transported support evidence; interning repeated endpoint transport is a measured future allocation target only if profiles show reuse.",
+    "interpretation": "A completed reflected offset uses about 6,453 fixture-subtracted allocations and adds 12.62 KiB peak heap. The historical path allocates far less because it rejects before producing either transformed or offset geometry."
+  },
+  "linked_size": {
+    "artifact": "comparative release executable with identical benchmark source",
+    "all_features": {
+      "historical_file_bytes": 12866360,
+      "current_file_bytes": 12885040,
+      "file_delta_bytes": 18680,
+      "file_delta_percent": 0.145185,
+      "historical_text_bytes": 9816971,
+      "current_text_bytes": 9831367,
+      "text_delta_bytes": 14396,
+      "text_delta_percent": 0.146644,
+      "historical_data_bytes": 308776,
+      "current_data_bytes": 308880,
+      "data_delta_bytes": 104,
+      "historical_bss_bytes": 5816,
+      "current_bss_bytes": 3632,
+      "bss_delta_bytes": -2184,
+      "historical_allocated_total_bytes": 10131563,
+      "current_allocated_total_bytes": 10143879,
+      "allocated_total_delta_bytes": 12316,
+      "allocated_total_delta_percent": 0.121561
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "historical_file_bytes": 11395280,
+      "current_file_bytes": 11395536,
+      "file_delta_bytes": 256,
+      "historical_text_bytes": 8581842,
+      "current_text_bytes": 8581842,
+      "historical_data_bytes": 300560,
+      "current_data_bytes": 300560,
+      "historical_bss_bytes": 3832,
+      "current_bss_bytes": 3832,
+      "historical_allocated_total_bytes": 8886234,
+      "current_allocated_total_bytes": 8886234,
+      "allocated_sections_identical": true,
+      "interpretation": "The 256-byte file difference is nonallocated metadata; feature-disabled linked code and data are identical."
+    }
+  },
+  "static_callgraph": {
+    "current_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-chord-pair-transform-a5712c2 --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .benchmark-hypercurve-chord-pair-transform-parent --out-dir target/callgraph-hypercurve-chord-pair-transform-parent-7c3d6fa --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "current_artifact": "target/callgraph-hypercurve-chord-pair-transform-a5712c2/callgraph.json",
+    "historical_artifact": "target/callgraph-hypercurve-chord-pair-transform-parent-7c3d6fa/callgraph.json",
+    "current": {
+      "libraries_discovered": 1,
+      "nodes": 29270,
+      "edges": 55705
+    },
+    "historical": {
+      "libraries_discovered": 1,
+      "nodes": 29243,
+      "edges": 55617
+    },
+    "delta": {
+      "nodes": 27,
+      "edges": 88
+    },
+    "source_confirmed_route_reaches_existing_curve_region_transform": true,
+    "source_confirmed_route_reaches_existing_curve_region_offset_and_regularizer": true,
+    "offset_reversal_check_calls_existing_algebraic_chord_point_axis_order": true,
+    "mixed_pair_order_calls_one_field_replay_before_exact_bounds_refinement": true,
+    "duplicate_public_engine_found": false,
+    "tool_limitation": "The heuristic graph records point::transform_affine at the enum-dispatch call site rather than resolving that receiver edge to the private pair-point implementation; source and the public regression confirm the dynamic variant route."
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "478 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "63 passed",
+    "cargo_test_all_features_hypercurve_curve_region_boolean": "29 passed",
+    "cargo_test_all_features_hypercurve_curve_intersection": "29 passed",
+    "cargo_test_all_features_hypercurve_offset": "34 passed",
+    "cargo_test_all_features_hypercurve_analytic_parallel_region": "4 passed",
+    "cargo_test_no_default_features_lib": "324 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_comparative_benchmark_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "minimal_comparative_size_builds": "pass",
+    "aggregate_suite_note": "The aggregate all-feature command passed its ordinary suites through the authoritative Boolean integrations, then was intentionally interrupted in the repository's documented multi-hour curve_region_boolean_fuzz matrix. No full fuzz-matrix claim is made at this checkpoint.",
+    "known_external_warning": "Hypertri ExactKernel::sub and ExactKernel::cmp remain pre-existing dead code. Hypertri, Hypermesh, and every lower layer were not modified by this checkpoint."
+  },
+  "next_priority": {
+    "correctness": "Transport AlgebraicCuspChord endpoints or admit the next general oblique retained-carrier pair, selected by public offset and Boolean reachability rather than by isolated solver novelty.",
+    "offset_and_fillet": "Make retained selected-circle fragments survive re-offsetting, then reuse those carriers for general retained-algebraic fillet centers and tangency recovery without adding another corner engine.",
+    "performance_and_memory": "The completed transform-plus-offset costs about 4.16 million instructions, 6,453 allocations, and 12.62 KiB incremental peak heap. Profile repeated transported endpoint/support reconstruction before adding any cache; prefer operation-local interning if reuse is demonstrated.",
+    "size": "The predicates-enabled path adds 14,396 text bytes and no feature-disabled allocated bytes. Fold subsequent correlated transport into these private evidence methods and the existing CurveRegion2 authorities."
+  }
+}

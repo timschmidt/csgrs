@@ -1,0 +1,174 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "compact exact algebraic-cusp cuts and subfragments",
+  "source_revision": "685e3efc76bf1ba26effaaf3f9d8ef28e991dd61",
+  "comparison_revision": "d1edc5ca5b4d97dbc191a9e6f1fb1dda0451178d",
+  "previous_checkpoint": "2026-08-02-algebraic-cusp-semicircle-overlaps.json",
+  "scope": {
+    "included": [
+      "one exact local-cut carrier over rational, analytic-parallel, cusp-pair, and cusp-overlap contact evidence",
+      "shared-proof and exact-witness equality plus certified rational ordering and bracket refinement",
+      "Hyperlimit-aligned STRICT and APPROXIMATE_512 terminal behavior",
+      "one-word retained semicircle subfragment with traversal reversal, exact interior witness, point evaluation, and conservative bounds",
+      "focused performance, allocation, release-size, historical, competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "cross-evidence equality for unrelated irrational contacts",
+      "CurveRegion2 arrangement admission",
+      "selected positive-dimensional analytic-parallel radical replay",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "retained_cut": "An interior local parameter retains the exact contact predicate that orders it against every represented rational semicircle parameter. Structural endpoints remain represented zero or one. No primitive element is formed for independent selected cusp roots.",
+    "proof_identity": "Repeated wrappers around the same map allocation, contact evidence, operand side, and overlap boundary compare equal structurally. Exact represented bracket witnesses compare directly. Unrelated mapped evidence is never declared exactly equal from overlapping intervals alone.",
+    "ordering": "Distinct mapped parameters are refined through certified dyadic brackets until the intervals separate. Exact rational witnesses terminate immediately. The maximum bounded-refinement target is derived from Hyperlimit's -512 precision boundary.",
+    "policy": "STRICT returns explicit Ordering uncertainty when unrelated evidence still overlaps at the 512-bit boundary. APPROXIMATE_512 records terminal consumption and interprets the remaining overlap as equality, matching Hyperlimit's terminal zero interpretation. Evidence created under one predicate policy cannot be replayed under the other.",
+    "subfragment": "A fragment stores one selected semicircle, an ascending pair of exact cuts, and one traversal bit behind a shared pointer. Construction proves start < end and containment in [0,1]. A strict rational between the cuts supplies an exact evaluation witness without materializing either boundary field.",
+    "bounds": "The current fragment bound reuses the exact conservative bound of its full supporting semicircle. This is safe but intentionally not yet a tight subrange bound."
+  },
+  "capability": {
+    "comparison_revision": "Coincident-support overlap boundaries could be bracketed but not retained as one editable local fragment.",
+    "source_revision": "Every existing algebraic-cusp contact map can now produce a policy-bound cut, and overlap cuts can form a compact exact subfragment with stable proof identity and an exact rational interior sample.",
+    "fixtures": [
+      "irrational rational-curve contact retained as a mapped cut",
+      "general analytic-parallel contact retained and ordered under both policies",
+      "independent cusp-pair contact cuts on both operand domains",
+      "full overlap retained as a one-word fragment",
+      "partial overlap retained, sampled at exact u=3/4, reversed, and conservatively bounded",
+      "separately allocated wrappers around the same oblique u=1/3 overlap proof compare exactly equal",
+      "mapped evidence rejects replay under a different predicate policy"
+    ],
+    "intentional_boundary": "The carrier remains crate-internal and unadmitted. Arrangement admission waits for topology-backed equality of unrelated irrational contact evidence so a true multi-carrier vertex cannot become an ordering uncertainty."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "complete_three_fixture_group": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; all three algebraic-cusp pair fixtures execute under both policies",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> algebraic_cusp_semicircle_pair",
+      "task_clock_ms": 4.83,
+      "cycles": 14637902,
+      "instructions": 28699207,
+      "branches": 5942808,
+      "branch_misses": 111327,
+      "elapsed_seconds": 0.004734430,
+      "change_from_previous_percent": {
+        "task_clock": 5.00000,
+        "cycles": 5.28413,
+        "instructions": 3.38480,
+        "branches": 3.37711,
+        "branch_misses": 7.78518,
+        "elapsed": -5.38348
+      },
+      "interpretation": "The source fixture now retains both independent pair-contact cuts and exercises fragment operations. Deterministic work grows 3.38%; sub-5-ms elapsed and task-clock results remain dominated by process startup."
+    },
+    "focused_overlap_and_fragment_fixture": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; the fixture covers all coincident-support topology plus full and partial retained fragments under both policies",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "task_clock_ms": 2.60,
+      "cycles": 6458165,
+      "instructions": 11196482,
+      "branches": 2346873,
+      "branch_misses": 61404,
+      "elapsed_seconds": 0.003151845,
+      "change_from_previous_percent": {
+        "task_clock": -5.45455,
+        "cycles": -3.72838,
+        "instructions": 9.27278,
+        "branches": 9.05807,
+        "branch_misses": 14.35276,
+        "elapsed": 3.32021
+      },
+      "interpretation": "The additional 950,122 deterministic instructions are the newly measured capability: cut construction, stable proof equality, exact interior selection and point evaluation, fragment reversal, and bounds. Task-clock improves while elapsed remains within startup noise."
+    },
+    "focused_rational_cut_fixture": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> --exact bezier_offset::conversion_tests::algebraic_cusp_rational_parameter_map_brackets_an_interior_contact",
+      "task_clock_ms": 1.84,
+      "cycles": 3289138,
+      "instructions": 4817392,
+      "branches": 975264,
+      "branch_misses": 32722,
+      "elapsed_seconds": 0.002431583,
+      "interpretation": "This includes complete selected-root/rational contact construction, mapped-cut construction, cross-policy rejection, two exact order predicates, and a four-step certified bracket under both policies."
+    },
+    "historical_and_competitive_controls": {
+      "method": "current release comparative binary pinned to CPU 11; eleven calibrated 100 ms samples; fixture construction and warmup excluded",
+      "exact_open_cubic_offset_ns": 29272007.2,
+      "previous_exact_open_cubic_offset_ns": 29761941.2,
+      "exact_open_cubic_change_percent": -1.64618,
+      "native_line_arc_offset_ns": 17883.3,
+      "previous_native_line_arc_offset_ns": 18854.4,
+      "native_line_arc_change_percent": -5.15052,
+      "current_curvo_open_cubic_ns": 8313.7,
+      "current_cavalier_line_arc_ns": 898.0,
+      "interpretation": "Both production Hypercurve controls improve and the representative production text is unchanged. Binary64 competitors remain throughput controls only; neither carries selected-root exact cut evidence or policy-aware algebraic fragments."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-unit-test trace",
+      "profile": "/tmp/hypercurve-algebraic-cusp-cuts-685e3ef.zst.zst",
+      "workload": "the complete two-policy overlap and retained-fragment fixture",
+      "allocation_calls": 17347,
+      "temporary_allocations": 323,
+      "peak_heap": "236.78 KiB",
+      "instrumented_runtime_seconds": 0.054,
+      "interpretation": "Exact selected-root polynomial arithmetic dominates. Each retained fragment itself is one Arc pointer; mapped cuts share their larger map proof and allocate one small evidence wrapper."
+    },
+    "retained_fragment_handle": {
+      "bytes": 8,
+      "interpretation": "Clones share the semicircle, two cuts, traversal bit, and policy behind one pointer regardless of algebraic degree."
+    }
+  },
+  "release_size": {
+    "method": "representative all-feature curve_region_boolean_batch release executable compared with the immediately preceding checkpoint",
+    "source_file_bytes": 7875216,
+    "comparison_file_bytes": 7875288,
+    "file_change_bytes": -72,
+    "source_aggregate_text_bytes": 5961398,
+    "comparison_aggregate_text_bytes": 5961398,
+    "aggregate_data_bytes": 266400,
+    "aggregate_bss_bytes": 4136,
+    "source_actual_text_section_bytes": 4436295,
+    "comparison_actual_text_section_bytes": 4436295,
+    "interpretation": "The not-yet-admitted cut/fragment carrier is dead-stripped from the representative production executable. Aggregate text and the actual .text section are byte-identical; only non-allocated file metadata changes by 72 bytes."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-cusp-cuts-685e3ef-clean --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 32137,
+    "edges": 59453,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircleFragment2::try_new -> BezierAlgebraicCuspSemicircleParameter2::cmp_by_refinement",
+      "BezierAlgebraicCuspSemicircleFragment2::representative_parameter -> BezierAlgebraicCuspSemicircleParameter2::strict_rational_between",
+      "BezierAlgebraicCuspSemicircleFragment2::representative_point -> BezierAlgebraicCuspSemicircle2::point_at",
+      "BezierAlgebraicCuspSemicircleParameter2::cmp_by_refinement -> parameter_bracket",
+      "BezierAlgebraicCuspSemicircleParameter2::cmp_by_refinement -> CurveContext::observe_approximate_512",
+      "BezierAlgebraicCuspSemicircleParameter2::order_to_real -> rational/parallel/pair/overlap exact map predicates"
+    ]
+  },
+  "verification": {
+    "focused_fixtures": "passed rational, analytic-parallel, independent-pair, full-overlap, and partial-overlap cut paths under STRICT and APPROXIMATE_512",
+    "all_feature_library": "passed: 368 tests",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature focused unit, comparative, and curve_region_boolean_batch builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "intern arrangement topology vertices so unrelated contact proofs at one exact point share equality authority",
+    "admit the complete algebraic-cusp carrier to CurveRegion2 pair dispatch, splitting, winding, and traversal",
+    "tighten conservative subfragment bounds without materializing algebraic endpoints",
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing exact polynomial and local-field allocation churn"
+  ]
+}

@@ -1,0 +1,4256 @@
+{
+  "schema": 1,
+  "date": "2026-09-06",
+  "title": "Shared finite selected-fiber seeding preserves exact-center contacts",
+  "decision": "retain the exactness fix and seed consolidation; full release readiness remains open",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory",
+    "binary size",
+    "code size"
+  ],
+  "revisions": {
+    "hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+    "hyperlimit": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e",
+    "hypercurve": "92174eb8a518555d0ba232d4abe0bf6f58bcd88e",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "hypercurve_candidate": "this checkpoint's source hash and containing commit",
+  "source": {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "e97e07f95291eb005903baa1cc57421ba16cce1669f7cb3782d1901c6d8b914d",
+    "production_rust_net_lines": -14,
+    "test_rust_net_lines": 89,
+    "public_api": "unchanged; no compatibility interface, shim, or new root solver",
+    "behavior": "Scalar parameters, rational contacts, and analytic contacts share finite-fiber refinement, exact-center representation, complete Hypersolve isolation and status translation. The seed kernel borrows incidence and consumes the existing refinement parameter. Contact authorities keep their original ownership and retained-policy identity.",
+    "strict_construction": "Both circle seed paths now validate and isolate inside an explicit STRICT predicate pass; later contact predicates still receive the requested context."
+  },
+  "regression": {
+    "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact",
+    "construction": "A regular line support and certified algebraic representation of the linear root 1/2 define the unit circle centered at (1/2,0). Refinement represents the center exactly. The x=0 cutter has two irrational contacts at y=+/-sqrt(3)/2 in the selected left semicircle.",
+    "baseline": "one full-name exact-filter test fails at the algebraic-only assumption",
+    "candidate": "one test passes; both coordinate equalities and opposite oriented tangent signs are certified under STRICT and APPROXIMATE_512",
+    "excluded_invocations": [
+      {
+        "log": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/test-draft-build.log",
+        "reason": "Initial regression draft moved its center into a consuming assertion; corrected before the authoritative baseline replay."
+      },
+      {
+        "log": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/represented-center-after.log",
+        "reason": "Intermediate shared-dispatch proof preceded the ownership adjustment; final qualification uses represented-center-final.log and candidate-test."
+      }
+    ]
+  },
+  "validation": {
+    "all_features_include_ignored": {
+      "passed": 1751,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 46
+    },
+    "no_default_features": {
+      "passed": 1713,
+      "failed": 0,
+      "ignored": 4,
+      "suites": 46,
+      "ignored_coverage": "all four pass in the all-feature run"
+    },
+    "ui": {
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 1
+    },
+    "gates": "fmt 0\nclippy 0\nminimal 0\nminimal-clippy 0\ndocs 0\nminimal-docs 0\nfuzz-check 0\nui-tests 0\nui-clippy 0\nui-wasm 0\n",
+    "fuzz_targets_compiled": true,
+    "new_fuzz_campaign": false,
+    "new_lower_stack_or_hypermesh_qualification": false
+  },
+  "build_control": {
+    "native_and_test_features": "all features including dispatch-trace and comparative-benchmarks",
+    "wasm_features": "demo defaults",
+    "matched_native_and_wasm_source_root": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched.7w6q7o",
+    "matched_same_paths": true,
+    "baseline_unit_artifact": "Frozen candidate-test from the qualified 92174eb checkpoint, with identical production source and unchanged dependencies.",
+    "timings": "Three alternating pairs on CPU 7 after all owned build, qualification, heap and accounting workers finished; Callgrind controls subsequently run on CPU 3, twenty batch iterations per fixture.",
+    "dependencies": "same unchanged lower-stack revisions on both sides"
+  },
+  "timings": {
+    "total_invocations": 82,
+    "total_lane_measurements": 856,
+    "three_pairs": {
+      "lane_measurement_count": 282,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 54,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 6.34,
+          "user_s": 6.29,
+          "system_s": 0,
+          "max_rss_kib": 10856,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 6.3,
+          "user_s": 6.26,
+          "system_s": 0,
+          "max_rss_kib": 10884,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 6.65,
+          "user_s": 6.61,
+          "system_s": 0,
+          "max_rss_kib": 11068,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 6.48,
+          "user_s": 6.36,
+          "system_s": 0.01,
+          "max_rss_kib": 10964,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 6.61,
+          "user_s": 6.57,
+          "system_s": 0,
+          "max_rss_kib": 10988,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 6.62,
+          "user_s": 6.58,
+          "system_s": 0,
+          "max_rss_kib": 10852,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 17.14,
+          "user_s": 17.02,
+          "system_s": 0.02,
+          "max_rss_kib": 46688,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 17.13,
+          "user_s": 17,
+          "system_s": 0.03,
+          "max_rss_kib": 46660,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 17.4,
+          "user_s": 17.29,
+          "system_s": 0.02,
+          "max_rss_kib": 46724,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 17.21,
+          "user_s": 17.09,
+          "system_s": 0.03,
+          "max_rss_kib": 46704,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 17.2,
+          "user_s": 17.09,
+          "system_s": 0.02,
+          "max_rss_kib": 46844,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 17.08,
+          "user_s": 16.92,
+          "system_s": 0.03,
+          "max_rss_kib": 46644,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 11.57,
+          "user_s": 11.5,
+          "system_s": 0.01,
+          "max_rss_kib": 28156,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 11.4,
+          "user_s": 11.33,
+          "system_s": 0.02,
+          "max_rss_kib": 27908,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 11.6,
+          "user_s": 11.52,
+          "system_s": 0.01,
+          "max_rss_kib": 28696,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 11.39,
+          "user_s": 11.32,
+          "system_s": 0.02,
+          "max_rss_kib": 28384,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 11.69,
+          "user_s": 11.59,
+          "system_s": 0.01,
+          "max_rss_kib": 28396,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 11.38,
+          "user_s": 11.31,
+          "system_s": 0.01,
+          "max_rss_kib": 26904,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 29.94,
+          "user_s": 29.78,
+          "system_s": 0.03,
+          "max_rss_kib": 50388,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 30.34,
+          "user_s": 30.16,
+          "system_s": 0.03,
+          "max_rss_kib": 49376,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 30.81,
+          "user_s": 30.57,
+          "system_s": 0.05,
+          "max_rss_kib": 49512,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 30.23,
+          "user_s": 30.07,
+          "system_s": 0.02,
+          "max_rss_kib": 50504,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 29.89,
+          "user_s": 29.71,
+          "system_s": 0.05,
+          "max_rss_kib": 50328,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 29.67,
+          "user_s": 29.52,
+          "system_s": 0.03,
+          "max_rss_kib": 50300,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.33,
+          "system_s": 0.01,
+          "max_rss_kib": 31864,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31696,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31928,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.37,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31752,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31816,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.33,
+          "system_s": 0.01,
+          "max_rss_kib": 31816,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 20.74,
+          "user_s": 20.66,
+          "system_s": 0,
+          "max_rss_kib": 19232,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 20.53,
+          "user_s": 20.44,
+          "system_s": 0,
+          "max_rss_kib": 19044,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 20.93,
+          "user_s": 20.84,
+          "system_s": 0,
+          "max_rss_kib": 18876,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 20.67,
+          "user_s": 20.59,
+          "system_s": 0,
+          "max_rss_kib": 18864,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 20.86,
+          "user_s": 20.76,
+          "system_s": 0,
+          "max_rss_kib": 18120,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 20.62,
+          "user_s": 20.52,
+          "system_s": 0,
+          "max_rss_kib": 19132,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            6.34,
+            6.65,
+            6.61
+          ],
+          "candidate": [
+            6.3,
+            6.48,
+            6.62
+          ],
+          "baseline_median": 6.61,
+          "candidate_median": 6.48,
+          "change_percent": -1.9667170953101332
+        },
+        {
+          "name": "chord",
+          "baseline": [
+            17.14,
+            17.4,
+            17.2
+          ],
+          "candidate": [
+            17.13,
+            17.21,
+            17.08
+          ],
+          "baseline_median": 17.2,
+          "candidate_median": 17.13,
+          "change_percent": -0.40697674418604946
+        },
+        {
+          "name": "contacts",
+          "baseline": [
+            11.57,
+            11.6,
+            11.69
+          ],
+          "candidate": [
+            11.4,
+            11.39,
+            11.38
+          ],
+          "baseline_median": 11.6,
+          "candidate_median": 11.39,
+          "change_percent": -1.8103448275861966
+        },
+        {
+          "name": "radial",
+          "baseline": [
+            29.94,
+            30.81,
+            29.89
+          ],
+          "candidate": [
+            30.34,
+            30.23,
+            29.67
+          ],
+          "baseline_median": 29.94,
+          "candidate_median": 30.23,
+          "change_percent": 0.9686038744154857
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.35,
+            0.36,
+            0.36
+          ],
+          "candidate": [
+            0.35,
+            0.37,
+            0.35
+          ],
+          "baseline_median": 0.36,
+          "candidate_median": 0.35,
+          "change_percent": -2.777777777777779
+        },
+        {
+          "name": "selected",
+          "baseline": [
+            20.74,
+            20.93,
+            20.86
+          ],
+          "candidate": [
+            20.53,
+            20.67,
+            20.62
+          ],
+          "baseline_median": 20.86,
+          "candidate_median": 20.62,
+          "change_percent": -1.1505273250239645
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.10187,
+            12.00917,
+            11.89399
+          ],
+          "candidate": [
+            12.67963,
+            12.66883,
+            12.64114
+          ],
+          "baseline_median": 12.00917,
+          "candidate_median": 12.66883,
+          "change_percent": 5.492969122762026
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            26995.8871,
+            27348.13595,
+            27936.17755
+          ],
+          "candidate": [
+            28659.11495,
+            28436.1338,
+            27538.37635
+          ],
+          "baseline_median": 27348.13595,
+          "candidate_median": 28436.1338,
+          "change_percent": 3.9783254404949675
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            176.676,
+            176.576,
+            181.4016
+          ],
+          "candidate": [
+            183.2354,
+            193.1768,
+            178.1038
+          ],
+          "baseline_median": 176.676,
+          "candidate_median": 183.2354,
+          "change_percent": 3.712671783377486
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            12116.048,
+            12158.226,
+            12193.344
+          ],
+          "candidate": [
+            12580.476,
+            13149.458,
+            12091.37
+          ],
+          "baseline_median": 12158.226,
+          "candidate_median": 12580.476,
+          "change_percent": 3.472957321240777
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            21468.328,
+            22037.728,
+            21903.78
+          ],
+          "candidate": [
+            22616.612,
+            26507.34,
+            21388.652
+          ],
+          "baseline_median": 21903.78,
+          "candidate_median": 22616.612,
+          "change_percent": 3.254378924550938
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11900.2,
+            12323.1,
+            11993.2
+          ],
+          "candidate": [
+            12323.2,
+            12343.2,
+            13515.1
+          ],
+          "baseline_median": 11993.2,
+          "candidate_median": 12343.2,
+          "change_percent": 2.918320381549555
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            22285.992,
+            22386.804,
+            22542.094
+          ],
+          "candidate": [
+            22979.504,
+            23017.62,
+            22192.916
+          ],
+          "baseline_median": 22386.804,
+          "candidate_median": 22979.504,
+          "change_percent": 2.6475418286594277
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            281730.948,
+            292509.852,
+            286794.96
+          ],
+          "candidate": [
+            293140.488,
+            299261.304,
+            281472.408
+          ],
+          "baseline_median": 286794.96,
+          "candidate_median": 293140.488,
+          "change_percent": 2.2125660785670576
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.387877,
+            3.772981,
+            3.577145
+          ],
+          "candidate": [
+            3.648869,
+            3.812759,
+            3.438824
+          ],
+          "baseline_median": 3.577145,
+          "candidate_median": 3.648869,
+          "change_percent": 2.0050626966477525
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            366.065,
+            372.4595,
+            369.0345
+          ],
+          "candidate": [
+            378.549,
+            373.4895,
+            373.2245
+          ],
+          "baseline_median": 369.0345,
+          "candidate_median": 373.4895,
+          "change_percent": 1.2072042044849685
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            4152.797,
+            4048.0662,
+            4080.648
+          ],
+          "candidate": [
+            4115.3516,
+            4235.4534,
+            4128.1226
+          ],
+          "baseline_median": 4080.648,
+          "candidate_median": 4128.1226,
+          "change_percent": 1.1634083606329115
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.2362,
+            4.2939,
+            4.26361
+          ],
+          "candidate": [
+            4.72897,
+            4.2979,
+            4.22541
+          ],
+          "baseline_median": 4.26361,
+          "candidate_median": 4.2979,
+          "change_percent": 0.8042480433247956
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            60381.207,
+            59485.9085,
+            59291.0065
+          ],
+          "candidate": [
+            57704.665,
+            60003.083,
+            59837.284
+          ],
+          "baseline_median": 59485.9085,
+          "candidate_median": 59837.284,
+          "change_percent": 0.590686952356112
+        },
+        {
+          "name": "capsules/curve_region_boolean_four_independent",
+          "baseline": [
+            3723369.94,
+            3706628.389,
+            3784094.783
+          ],
+          "candidate": [
+            3744279.546,
+            3748465.939,
+            3704654.034
+          ],
+          "baseline_median": 3723369.94,
+          "candidate_median": 3744279.546,
+          "change_percent": 0.5615774509905469
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            6002.5686,
+            6083.4316,
+            6213.31965
+          ],
+          "candidate": [
+            5934.6488,
+            6117.18675,
+            7609.82935
+          ],
+          "baseline_median": 6083.4316,
+          "candidate_median": 6117.18675,
+          "change_percent": 0.5548702150279805
+        },
+        {
+          "name": "circles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            4812313.959,
+            4893449.342,
+            4850493.729
+          ],
+          "candidate": [
+            4847761.307,
+            4876823.013,
+            4877122.622
+          ],
+          "baseline_median": 4850493.729,
+          "candidate_median": 4876823.013,
+          "change_percent": 0.5428165764359782
+        },
+        {
+          "name": "capsules/curve_region_boolean_shared_all_four",
+          "baseline": [
+            1255485.881,
+            1199198.863,
+            1201969.254
+          ],
+          "candidate": [
+            1208032.717,
+            1223680.663,
+            1193508.654
+          ],
+          "baseline_median": 1201969.254,
+          "candidate_median": 1208032.717,
+          "change_percent": 0.5044607405573442
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            379.119,
+            394.538,
+            395.253
+          ],
+          "candidate": [
+            381.454,
+            396.0725,
+            397.7325
+          ],
+          "baseline_median": 394.538,
+          "candidate_median": 396.0725,
+          "change_percent": 0.38893591998743204
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            225112.26,
+            225783.01,
+            223712.95
+          ],
+          "candidate": [
+            221430.4,
+            225879.5,
+            225943.5
+          ],
+          "baseline_median": 225112.26,
+          "candidate_median": 225879.5,
+          "change_percent": 0.34082550634957354
+        },
+        {
+          "name": "rectangles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            377965.355,
+            392145.472,
+            388963.221
+          ],
+          "candidate": [
+            383033.317,
+            391292.73,
+            390268.531
+          ],
+          "baseline_median": 388963.221,
+          "candidate_median": 390268.531,
+          "change_percent": 0.33558699885405385
+        },
+        {
+          "name": "circles/curve_region_boolean_four_independent",
+          "baseline": [
+            9917275.818,
+            9807807.979,
+            9748450.543
+          ],
+          "candidate": [
+            9797503.837,
+            9852625.114,
+            9730463.177
+          ],
+          "baseline_median": 9807807.979,
+          "candidate_median": 9797503.837,
+          "change_percent": -0.10506060092186909
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            183423.11,
+            191728.65,
+            188227.79
+          ],
+          "candidate": [
+            187940.8,
+            190329.44,
+            185164.89
+          ],
+          "baseline_median": 188227.79,
+          "candidate_median": 187940.8,
+          "change_percent": -0.15246951579255263
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            10580.916,
+            10826.576,
+            11219.072
+          ],
+          "candidate": [
+            10958.728,
+            10740.06,
+            10576.072
+          ],
+          "baseline_median": 10826.576,
+          "candidate_median": 10740.06,
+          "change_percent": -0.7991076772564054
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            178.428,
+            225.664,
+            177.708
+          ],
+          "candidate": [
+            175.908,
+            176.948,
+            177.828
+          ],
+          "baseline_median": 178.428,
+          "candidate_median": 176.948,
+          "change_percent": -0.8294662272737452
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            37631.973,
+            38176.5805,
+            38398.69
+          ],
+          "candidate": [
+            36527.0235,
+            37801.556,
+            40108.8125
+          ],
+          "baseline_median": 38176.5805,
+          "candidate_median": 37801.556,
+          "change_percent": -0.9823417788819455
+        },
+        {
+          "name": "rectangles/curve_region_boolean_four_independent",
+          "baseline": [
+            760653.385,
+            771256.278,
+            787387.831
+          ],
+          "candidate": [
+            762919.25,
+            769353.829,
+            763357.26
+          ],
+          "baseline_median": 771256.278,
+          "candidate_median": 763357.26,
+          "change_percent": -1.0241755205524616
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            397777.625,
+            449430.961,
+            394704.776
+          ],
+          "candidate": [
+            379567.005,
+            427563.191,
+            393232.867
+          ],
+          "baseline_median": 397777.625,
+          "candidate_median": 393232.867,
+          "change_percent": -1.1425373661980043
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            3266.46635,
+            3275.69375,
+            3408.39965
+          ],
+          "candidate": [
+            3236.3028999999997,
+            3493.1343,
+            3226.70455
+          ],
+          "baseline_median": 3275.69375,
+          "candidate_median": 3236.3028999999997,
+          "change_percent": -1.2025193136568468
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            12284.2121,
+            12229.28085,
+            12618.6946
+          ],
+          "candidate": [
+            11958.37745,
+            12124.51055,
+            12320.4836
+          ],
+          "baseline_median": 12284.2121,
+          "candidate_median": 12124.51055,
+          "change_percent": -1.300055296179714
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            144160.51205,
+            154082.88165,
+            149706.9269
+          ],
+          "candidate": [
+            144111.82585,
+            147745.801,
+            158251.04115
+          ],
+          "baseline_median": 149706.9269,
+          "candidate_median": 147745.801,
+          "change_percent": -1.3099767262672923
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            673.112,
+            651.716,
+            675.436
+          ],
+          "candidate": [
+            1185.56,
+            661.716,
+            663.516
+          ],
+          "baseline_median": 673.112,
+          "candidate_median": 663.516,
+          "change_percent": -1.4256171335528145
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            20847.008,
+            23013.54,
+            21550.364
+          ],
+          "candidate": [
+            21240.904,
+            22457.26,
+            20604.784
+          ],
+          "baseline_median": 21550.364,
+          "candidate_median": 21240.904,
+          "change_percent": -1.4359850255893702
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            47874.42,
+            47893.1185,
+            48692.399
+          ],
+          "candidate": [
+            46937.1595,
+            52139.192,
+            47193.912
+          ],
+          "baseline_median": 47893.1185,
+          "candidate_median": 47193.912,
+          "change_percent": -1.459931033724604
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2964.3715,
+            2884.8525,
+            3041.7115
+          ],
+          "candidate": [
+            2917.705,
+            3460.5575,
+            2890.7765
+          ],
+          "baseline_median": 2964.3715,
+          "candidate_median": 2917.705,
+          "change_percent": -1.57424600796493
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            194878.068,
+            203817.185,
+            193134.937
+          ],
+          "candidate": [
+            192518.109,
+            190674.866,
+            190446.852
+          ],
+          "baseline_median": 194878.068,
+          "candidate_median": 190674.866,
+          "change_percent": -2.1568368586248443
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            6667.03905,
+            6976.4968,
+            6748.16195
+          ],
+          "candidate": [
+            6589.421849999999,
+            6830.4348,
+            6579.309050000001
+          ],
+          "baseline_median": 6748.16195,
+          "candidate_median": 6589.421849999999,
+          "change_percent": -2.3523457376419477
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            19253.97685,
+            19549.99055,
+            22395.85825
+          ],
+          "candidate": [
+            19076.6435,
+            19534.68005,
+            18799.05155
+          ],
+          "baseline_median": 19549.99055,
+          "candidate_median": 19076.6435,
+          "change_percent": -2.4212137023258085
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            80729.22,
+            82060.328,
+            79336.836
+          ],
+          "candidate": [
+            78683.44,
+            88505.648,
+            78703.4
+          ],
+          "baseline_median": 80729.22,
+          "candidate_median": 78703.4,
+          "change_percent": -2.5094011808859396
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            654671,
+            680735.3,
+            661073.6
+          ],
+          "candidate": [
+            648184.5,
+            644253.8,
+            643088.8
+          ],
+          "baseline_median": 661073.6,
+          "candidate_median": 644253.8,
+          "change_percent": -2.5443157917665937
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            3.024543,
+            3.111757,
+            3.150144
+          ],
+          "candidate": [
+            2.941828,
+            3.080489,
+            3.027633
+          ],
+          "baseline_median": 3.111757,
+          "candidate_median": 3.027633,
+          "change_percent": -2.703424464056803
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            26397.198200000003,
+            26844.683,
+            26535.4712
+          ],
+          "candidate": [
+            25560.3021,
+            26104.86325,
+            25689.7582
+          ],
+          "baseline_median": 26535.4712,
+          "candidate_median": 25689.7582,
+          "change_percent": -3.1871037586850948
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            27370.492,
+            27943.672,
+            27443.697
+          ],
+          "candidate": [
+            25865.035,
+            26824.129,
+            26297.956
+          ],
+          "baseline_median": 27443.697,
+          "candidate_median": 26297.956,
+          "change_percent": -4.174878479382727
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            834.2425,
+            854.2565,
+            870.3405
+          ],
+          "candidate": [
+            811.7195,
+            817.974,
+            959.864
+          ],
+          "baseline_median": 854.2565,
+          "candidate_median": 817.974,
+          "change_percent": -4.247260629564997
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            13797.6962,
+            14463.3136,
+            14461.4707
+          ],
+          "candidate": [
+            13710.01025,
+            14297.6499,
+            13798.0952
+          ],
+          "baseline_median": 14461.4707,
+          "candidate_median": 13798.0952,
+          "change_percent": -4.587192504563175
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            4120.1573,
+            4365.45445,
+            4279.35885
+          ],
+          "candidate": [
+            4062.41875,
+            4136.39415,
+            4069.9362
+          ],
+          "baseline_median": 4279.35885,
+          "candidate_median": 4069.9362,
+          "change_percent": -4.893785666046668
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            793656.5,
+            784096.2,
+            735263.6
+          ],
+          "candidate": [
+            733050.7,
+            757241.1,
+            735677.5
+          ],
+          "baseline_median": 784096.2,
+          "candidate_median": 735677.5,
+          "change_percent": -6.175096882244802
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            14845.60735,
+            15436.88975,
+            17435.21365
+          ],
+          "candidate": [
+            14303.10805,
+            14558.36105,
+            14307.83025
+          ],
+          "baseline_median": 15436.88975,
+          "candidate_median": 14307.83025,
+          "change_percent": -7.314034875451513
+        }
+      ],
+      "instructions": [
+        {
+          "fixture": "rectangles",
+          "baseline": 261174615,
+          "candidate": 260958875,
+          "change_percent": -0.08260374003039583
+        },
+        {
+          "fixture": "circles",
+          "baseline": 2628984240,
+          "candidate": 2630022991,
+          "change_percent": 0.039511495892430304
+        },
+        {
+          "fixture": "capsules",
+          "baseline": 978006135,
+          "candidate": 978169307,
+          "change_percent": 0.01668414891895509
+        }
+      ]
+    },
+    "seven_additional_native_pairs": {
+      "lane_measurement_count": 574,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 28,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 6.52,
+          "user_s": 6.49,
+          "system_s": 0,
+          "max_rss_kib": 10392,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 6.57,
+          "user_s": 6.53,
+          "system_s": 0,
+          "max_rss_kib": 10960,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 6.46,
+          "user_s": 6.43,
+          "system_s": 0,
+          "max_rss_kib": 10904,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 6.7,
+          "user_s": 6.65,
+          "system_s": 0,
+          "max_rss_kib": 10844,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 6.32,
+          "user_s": 6.29,
+          "system_s": 0,
+          "max_rss_kib": 10868,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 6.3,
+          "user_s": 6.26,
+          "system_s": 0,
+          "max_rss_kib": 10892,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 6.4,
+          "user_s": 6.37,
+          "system_s": 0,
+          "max_rss_kib": 10900,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 6.43,
+          "user_s": 6.4,
+          "system_s": 0,
+          "max_rss_kib": 10984,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 6.49,
+          "user_s": 6.45,
+          "system_s": 0,
+          "max_rss_kib": 11052,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 6.42,
+          "user_s": 6.39,
+          "system_s": 0,
+          "max_rss_kib": 10780,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 6.79,
+          "user_s": 6.75,
+          "system_s": 0,
+          "max_rss_kib": 11036,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 6.39,
+          "user_s": 6.35,
+          "system_s": 0,
+          "max_rss_kib": 10876,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 6.72,
+          "user_s": 6.68,
+          "system_s": 0,
+          "max_rss_kib": 11176,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 6.61,
+          "user_s": 6.57,
+          "system_s": 0,
+          "max_rss_kib": 11068,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.37,
+          "user_s": 0.36,
+          "system_s": 0.01,
+          "max_rss_kib": 31816,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31760,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31728,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31948,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31956,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.33,
+          "system_s": 0.01,
+          "max_rss_kib": 31672,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31808,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31784,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31880,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 0.37,
+          "user_s": 0.36,
+          "system_s": 0,
+          "max_rss_kib": 31868,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 0.37,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31688,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 0.38,
+          "user_s": 0.36,
+          "system_s": 0.01,
+          "max_rss_kib": 32040,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.33,
+          "system_s": 0.01,
+          "max_rss_kib": 31776,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0,
+          "max_rss_kib": 31792,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            6.52,
+            6.46,
+            6.32,
+            6.4,
+            6.49,
+            6.79,
+            6.72
+          ],
+          "candidate": [
+            6.57,
+            6.7,
+            6.3,
+            6.43,
+            6.42,
+            6.39,
+            6.61
+          ],
+          "baseline_median": 6.49,
+          "candidate_median": 6.43,
+          "change_percent": -0.924499229583986
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.37,
+            0.36,
+            0.35,
+            0.36,
+            0.36,
+            0.37,
+            0.35
+          ],
+          "candidate": [
+            0.35,
+            0.35,
+            0.35,
+            0.35,
+            0.37,
+            0.38,
+            0.35
+          ],
+          "baseline_median": 0.36,
+          "candidate_median": 0.35,
+          "change_percent": -2.777777777777779
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            11.95958,
+            11.86188,
+            11.77749,
+            11.89968,
+            11.87708,
+            13.34618,
+            11.92488
+          ],
+          "candidate": [
+            12.11237,
+            12.65283,
+            12.69673,
+            12.75513,
+            12.62304,
+            12.92661,
+            12.73912
+          ],
+          "baseline_median": 11.89968,
+          "candidate_median": 12.69673,
+          "change_percent": 6.69807927608137
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            12150.588,
+            12144.066,
+            12111.39,
+            11695.456,
+            12083.832,
+            12173.486,
+            12087.13
+          ],
+          "candidate": [
+            12114.408,
+            12217.002,
+            12769.022,
+            12161.146,
+            12893.974,
+            18326.622,
+            12904.354
+          ],
+          "baseline_median": 12111.39,
+          "candidate_median": 12769.022,
+          "change_percent": 5.429863954508951
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            4216.776,
+            2850.0495,
+            2872.9625,
+            2747.2415,
+            2877.2775,
+            3009.1735,
+            2952.7075
+          ],
+          "candidate": [
+            2963.5365,
+            3345.0455,
+            2835.8655,
+            2848.7795,
+            3021.8375,
+            4698.4425,
+            2823.2415
+          ],
+          "baseline_median": 2877.2775,
+          "candidate_median": 2963.5365,
+          "change_percent": 2.997938155078894
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            369.4695,
+            374.3745,
+            370.7145,
+            483.5915,
+            369.9745,
+            367.61,
+            370.4745
+          ],
+          "candidate": [
+            393.693,
+            380.499,
+            369.8195,
+            402.6975,
+            711.1415,
+            375.494,
+            373.4895
+          ],
+          "baseline_median": 370.4745,
+          "candidate_median": 380.499,
+          "change_percent": 2.705854249077877
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            27527.0332,
+            28542.21205,
+            27205.46175,
+            28148.67955,
+            27776.98055,
+            30055.2632,
+            28707.77115
+          ],
+          "candidate": [
+            28883.4881,
+            34544.1002,
+            27527.07765,
+            28966.30545,
+            27434.11655,
+            29919.38305,
+            27899.6406
+          ],
+          "baseline_median": 28148.67955,
+          "candidate_median": 28883.4881,
+          "change_percent": 2.61045477708739
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            286193.6,
+            283939.28,
+            286487.66,
+            292494.968,
+            293719.044,
+            322158.732,
+            283681.176
+          ],
+          "candidate": [
+            285200.032,
+            290861.804,
+            288560.16,
+            294258.728,
+            300522.58,
+            319068.704,
+            290693.412
+          ],
+          "baseline_median": 286487.66,
+          "candidate_median": 290861.804,
+          "change_percent": 1.526817594866059
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            147567.69295,
+            147068.5267,
+            145388.21495,
+            145773.57455,
+            149138.29115,
+            153241.7381,
+            157140.4015
+          ],
+          "candidate": [
+            151997.428,
+            151118.79975,
+            145551.3153,
+            148841.6585,
+            149601.3919,
+            145075.15795,
+            151016.1393
+          ],
+          "baseline_median": 147567.69295,
+          "candidate_median": 149601.3919,
+          "change_percent": 1.3781464691523304
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            4129.9686,
+            4212.67745,
+            4123.0126,
+            4172.4007,
+            4139.8549,
+            4815.5186,
+            4187.90415
+          ],
+          "candidate": [
+            4309.9633,
+            4248.432,
+            4079.4581,
+            4222.3463,
+            4279.2009,
+            4116.9875,
+            4202.4336
+          ],
+          "baseline_median": 4172.4007,
+          "candidate_median": 4222.3463,
+          "change_percent": 1.1970470621385898
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            79223.364,
+            80684.824,
+            79050.656,
+            77209.5,
+            82266.552,
+            80261.812,
+            77699.832
+          ],
+          "candidate": [
+            78725.68,
+            80146.3,
+            78138.12,
+            82839.872,
+            115215.172,
+            82615.488,
+            79768.328
+          ],
+          "baseline_median": 79223.364,
+          "candidate_median": 80146.3,
+          "change_percent": 1.1649795633520421
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            22080.804,
+            21566.996,
+            22147.8,
+            20927.444,
+            21459.488,
+            22287.712,
+            21427.528
+          ],
+          "candidate": [
+            21446.928,
+            21811.824,
+            21472.168,
+            22762.56,
+            23998.392,
+            31659.308,
+            21288.9
+          ],
+          "baseline_median": 21566.996,
+          "candidate_median": 21811.824,
+          "change_percent": 1.135197502702745
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            4074.8464,
+            4063.919,
+            4110.452,
+            4120.5072,
+            4243.2368,
+            4290.5336,
+            4043.5206
+          ],
+          "candidate": [
+            4143.6636,
+            4102.9284,
+            4133.2824,
+            4169.8,
+            4158.2226,
+            4166.3442,
+            4129.3406
+          ],
+          "baseline_median": 4110.452,
+          "candidate_median": 4143.6636,
+          "change_percent": 0.8079792684600129
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            390161.528,
+            388545.049,
+            386437.164,
+            390443.269,
+            392059.238,
+            449047.528,
+            414024.901
+          ],
+          "candidate": [
+            393583.693,
+            409775.442,
+            381933.143,
+            389402.261,
+            393642.08,
+            389936.574,
+            404794.484
+          ],
+          "baseline_median": 390443.269,
+          "candidate_median": 393583.693,
+          "change_percent": 0.8043227401622888
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            20808.692,
+            20851.208,
+            21193.268,
+            20345.404,
+            20483.916,
+            21860.5,
+            20166.416
+          ],
+          "candidate": [
+            20489.196,
+            20959.124,
+            20557.952,
+            20255.252,
+            36970.14,
+            22075.244,
+            21409.368
+          ],
+          "baseline_median": 20808.692,
+          "candidate_median": 20959.124,
+          "change_percent": 0.7229286684621972
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            59760.6245,
+            59325.4045,
+            58080.4395,
+            60213.0335,
+            60958.782,
+            60033.8205,
+            59611.925
+          ],
+          "candidate": [
+            60099.491,
+            60491.749,
+            59764.409,
+            59302.006,
+            59536.995,
+            61376.5385,
+            65472.038
+          ],
+          "baseline_median": 59760.6245,
+          "candidate_median": 60099.491,
+          "change_percent": 0.5670397570895602
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            190853.064,
+            189992.763,
+            187952.414,
+            194408.29,
+            197336.009,
+            209485.616,
+            191841.497
+          ],
+          "candidate": [
+            196502.427,
+            197156.062,
+            189911.559,
+            192749.934,
+            192767.643,
+            192224.44,
+            200715.977
+          ],
+          "baseline_median": 191841.497,
+          "candidate_median": 192767.643,
+          "change_percent": 0.4827662494731211
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            377.729,
+            385.5485,
+            377.984,
+            416.0315,
+            390.5485,
+            411.5915,
+            379.704
+          ],
+          "candidate": [
+            392.1085,
+            386.4135,
+            375.749,
+            392.648,
+            734.7695,
+            378.349,
+            386.7635
+          ],
+          "baseline_median": 385.5485,
+          "candidate_median": 386.7635,
+          "change_percent": 0.31513544988504005
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            186674.89,
+            191643.65,
+            183415.51,
+            188006.9,
+            189355.31,
+            196644.81,
+            187042.07
+          ],
+          "candidate": [
+            192617.08,
+            188597.16,
+            183631.3,
+            186083.33,
+            188974.33,
+            189588.99,
+            186089.33
+          ],
+          "baseline_median": 188006.9,
+          "candidate_median": 188597.16,
+          "change_percent": 0.31395656223256463
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            11642.96,
+            10634.028,
+            10605.392,
+            10658.308,
+            10475.48,
+            10566.796,
+            10450.44
+          ],
+          "candidate": [
+            10445.604,
+            10739.06,
+            10546.076,
+            10442.604,
+            10590.592,
+            10680.388,
+            10774.82
+          ],
+          "baseline_median": 10605.392,
+          "candidate_median": 10590.592,
+          "change_percent": -0.13955165447915308
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            174.57,
+            178.0796,
+            180.1456,
+            183.1896,
+            181.3954,
+            177.1198,
+            174.724
+          ],
+          "candidate": [
+            177.9098,
+            179.4418,
+            177.4278,
+            177.7698,
+            176.9838,
+            178.5636,
+            177.2678
+          ],
+          "baseline_median": 178.0796,
+          "candidate_median": 177.7698,
+          "change_percent": -0.17396714727571094
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.714205,
+            3.581365,
+            3.613032,
+            3.530888,
+            3.50015,
+            3.451883,
+            3.623142
+          ],
+          "candidate": [
+            3.476081,
+            3.586034,
+            3.554087,
+            3.688417,
+            3.646769,
+            3.567575,
+            3.528937
+          ],
+          "baseline_median": 3.581365,
+          "candidate_median": 3.567575,
+          "change_percent": -0.3850487174582806
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.26131,
+            4.2844,
+            4.30471,
+            4.23611,
+            4.23581,
+            4.3099,
+            4.23581
+          ],
+          "candidate": [
+            4.26101,
+            4.28801,
+            4.21101,
+            4.21111,
+            4.23591,
+            4.23591,
+            4.2911
+          ],
+          "baseline_median": 4.26131,
+          "candidate_median": 4.23591,
+          "change_percent": -0.5960608357523878
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            12431.3015,
+            12193.9003,
+            12056.6602,
+            12283.80665,
+            12356.34165,
+            12798.1398,
+            12239.3142
+          ],
+          "candidate": [
+            12061.51685,
+            12204.97105,
+            11944.5869,
+            12242.0495,
+            12166.3582,
+            12107.8577,
+            12928.600349999999
+          ],
+          "baseline_median": 12283.80665,
+          "candidate_median": 12166.3582,
+          "change_percent": -0.9561242157780092
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            7397.42295,
+            6992.80165,
+            6699.243800000001,
+            6758.30625,
+            6808.46835,
+            6935.4091,
+            6581.3709
+          ],
+          "candidate": [
+            6760.5691,
+            6683.5999,
+            6731.8091,
+            6686.6417,
+            6858.13995,
+            7062.87235,
+            6695.338599999999
+          ],
+          "baseline_median": 6808.46835,
+          "candidate_median": 6731.8091,
+          "change_percent": -1.1259397276922045
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            48749.38,
+            48130.6625,
+            47873.465,
+            48282.972,
+            48578.8415,
+            50222.769,
+            48914.6135
+          ],
+          "candidate": [
+            47977.378,
+            49767.325,
+            46801.519,
+            47763.488,
+            47668.344,
+            48054.493,
+            53269.955
+          ],
+          "baseline_median": 48578.8415,
+          "candidate_median": 47977.378,
+          "change_percent": -1.2381182453682138
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5976.8134,
+            6252.72595,
+            5875.38685,
+            6073.43525,
+            6121.94895,
+            6429.39535,
+            6099.789
+          ],
+          "candidate": [
+            6137.36335,
+            5995.5481,
+            5882.41985,
+            6012.94945,
+            5898.1883,
+            6076.76405,
+            6276.1273
+          ],
+          "baseline_median": 6099.789,
+          "candidate_median": 6012.94945,
+          "change_percent": -1.4236484245602532
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            38557.794,
+            38658.5675,
+            37297.506,
+            37960.835,
+            37960.165,
+            38381.641,
+            39159.268
+          ],
+          "candidate": [
+            37760.874,
+            39006.9185,
+            36933.3455,
+            37690.499,
+            37848.443,
+            37787.317,
+            38542.1455
+          ],
+          "baseline_median": 38381.641,
+          "candidate_median": 37787.317,
+          "change_percent": -1.5484590666667963
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            234273.23,
+            224449.9,
+            221314.61,
+            227447.69,
+            230542.19,
+            267631.53,
+            240867.57
+          ],
+          "candidate": [
+            227004.22,
+            226904.84,
+            223943.23,
+            224856.47,
+            229378.46,
+            223267.78,
+            236329.58
+          ],
+          "baseline_median": 230542.19,
+          "candidate_median": 226904.84,
+          "change_percent": -1.5777372462714934
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            3271.143,
+            3353.5769000000005,
+            3246.8041999999996,
+            3275.0853,
+            3293.88645,
+            3381.69795,
+            3337.7830000000004
+          ],
+          "candidate": [
+            3168.59705,
+            3218.6261,
+            3235.0465,
+            3190.80855,
+            3234.63055,
+            3283.6087,
+            3293.04505
+          ],
+          "baseline_median": 3293.88645,
+          "candidate_median": 3234.63055,
+          "change_percent": -1.798966081541764
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            761327.8,
+            735550.5,
+            746049.8,
+            733959.6,
+            794465.5,
+            759330.9,
+            733088.6
+          ],
+          "candidate": [
+            748236.6,
+            731644.8,
+            732700.8,
+            732205.8,
+            727256.1,
+            760898.8,
+            727317.1
+          ],
+          "baseline_median": 746049.8,
+          "candidate_median": 732205.8,
+          "change_percent": -1.8556401998901406
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            14568.40935,
+            14269.2109,
+            14101.3029,
+            14162.38175,
+            14174.85285,
+            14512.9187,
+            14293.85325
+          ],
+          "candidate": [
+            14267.06055,
+            13800.0346,
+            13614.58835,
+            14131.38735,
+            13817.01495,
+            13992.84985,
+            14704.52605
+          ],
+          "baseline_median": 14269.2109,
+          "candidate_median": 13992.84985,
+          "change_percent": -1.9367647723252834
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            178.188,
+            179.868,
+            176.788,
+            182.108,
+            174.788,
+            182.388,
+            179.428
+          ],
+          "candidate": [
+            172.348,
+            177.948,
+            174.428,
+            175.628,
+            174.788,
+            281.304,
+            177.544
+          ],
+          "baseline_median": 179.428,
+          "candidate_median": 175.628,
+          "change_percent": -2.117841139621468
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            674754.7,
+            664775.3,
+            664986.3,
+            735406.5,
+            659514.7,
+            655727,
+            675440.6
+          ],
+          "candidate": [
+            653543.1,
+            650225.4,
+            646041.6,
+            644939.8,
+            647828.5,
+            726174.1,
+            666727.2
+          ],
+          "baseline_median": 664986.3,
+          "candidate_median": 650225.4,
+          "change_percent": -2.2197299403010295
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            2.893621,
+            3.133285,
+            3.099478,
+            2.91639,
+            3.146714,
+            3.134985,
+            3.100488
+          ],
+          "candidate": [
+            2.962167,
+            3.001034,
+            3.082309,
+            3.031562,
+            3.024973,
+            3.088848,
+            3.272495
+          ],
+          "baseline_median": 3.100488,
+          "candidate_median": 3.031562,
+          "change_percent": -2.2230694006878826
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            29315.138,
+            27367.232,
+            27369.292,
+            27320.935,
+            29702.482,
+            27874.827,
+            27583.257
+          ],
+          "candidate": [
+            27092.231,
+            26774.453,
+            26322.234,
+            27124.849,
+            26080.661,
+            27718.888,
+            26136.377
+          ],
+          "baseline_median": 27583.257,
+          "candidate_median": 26774.453,
+          "change_percent": -2.9322280541416834
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            23927.718,
+            23141.252,
+            23116.454,
+            22353.106,
+            22883.15,
+            22666.284,
+            22692.522
+          ],
+          "candidate": [
+            22113.682,
+            22183.378,
+            22180.338,
+            21938.956,
+            22679.264,
+            22539.494,
+            22963.944
+          ],
+          "baseline_median": 22883.15,
+          "candidate_median": 22183.378,
+          "change_percent": -3.0580230431562105
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            30905.55435,
+            25457.94715,
+            25246.98615,
+            26425.367799999996,
+            26966.30465,
+            29054.93235,
+            27714.75325
+          ],
+          "candidate": [
+            27640.5439,
+            28276.2448,
+            25345.4149,
+            25666.3444,
+            26006.22955,
+            26301.4573,
+            25667.99075
+          ],
+          "baseline_median": 26966.30465,
+          "candidate_median": 26006.22955,
+          "change_percent": -3.5602768434940146
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            12700.1,
+            12835.1,
+            13383.1,
+            12150.1,
+            12412.2,
+            12420.1,
+            12315.1
+          ],
+          "candidate": [
+            12330.2,
+            11905.2,
+            11925.2,
+            11812.2,
+            16284.9,
+            19458.6,
+            11920.2
+          ],
+          "baseline_median": 12420.1,
+          "candidate_median": 11925.2,
+          "change_percent": -3.9846700107084465
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            19414.0794,
+            20154.3121,
+            19348.2224,
+            19698.50985,
+            19525.5532,
+            20684.75815,
+            20036.36265
+          ],
+          "candidate": [
+            19451.6783,
+            19819.97255,
+            18871.2971,
+            18855.4192,
+            18762.5156,
+            18902.89695,
+            21429.41055
+          ],
+          "baseline_median": 19698.50985,
+          "candidate_median": 18902.89695,
+          "change_percent": -4.038949677201087
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            863.9205,
+            846.8315,
+            859.761,
+            865.036,
+            839.862,
+            845.377,
+            866.9855
+          ],
+          "candidate": [
+            813.599,
+            822.4885,
+            843.1225,
+            839.7025,
+            819.799,
+            820.629,
+            862.641
+          ],
+          "baseline_median": 859.761,
+          "candidate_median": 822.4885,
+          "change_percent": -4.33521641479434
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            15148.34705,
+            16348.99465,
+            14932.5529,
+            14861.54175,
+            15112.1671,
+            15184.2311,
+            15672.36715
+          ],
+          "candidate": [
+            14888.0339,
+            14795.46925,
+            14323.5177,
+            14242.24425,
+            14407.19295,
+            14230.79155,
+            15623.5925
+          ],
+          "baseline_median": 15148.34705,
+          "candidate_median": 14407.19295,
+          "change_percent": -4.8926400851108
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            701.512,
+            1539.372,
+            670.316,
+            938.492,
+            710.192,
+            654.836,
+            682.912
+          ],
+          "candidate": [
+            669.312,
+            660.876,
+            661.076,
+            761.868,
+            678.236,
+            659.916,
+            659.676
+          ],
+          "baseline_median": 701.512,
+          "candidate_median": 661.076,
+          "change_percent": -5.7641209273683
+        }
+      ],
+      "driver": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x\"\nfor fiber_round in 1 2 3 4 5 6 7; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_fixture in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_fixture\" \\\n                > \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$fiber_fixture\" \"$fiber_round\" \"$fiber_variant\"\n        done\n    done\ndone\nnode \"$fiber_evidence/collect-results.mjs\" \"$fiber_evidence\" repeat 7 > \"$fiber_evidence/repeat-results.json\"\n",
+      "timing_context": "Seven additional alternating native benchmark pairs on CPU 7, after Callgrind and before artifact hashing; no owned build, test or profiling workers overlapped."
+    }
+  },
+  "full_heap_profiles": {
+    "workload": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+    "scope": "Complete libtest processes; requested allocation traffic and live requested heap, not allocator reservation or geometry-only counts. End-live bytes are not a leak diagnosis.",
+    "baseline": {
+      "accounting": {
+        "format": 3,
+        "records": 274387971,
+        "allocations": 137180221,
+        "frees": 137174092,
+        "untracked_frees": 2,
+        "temporary_allocations": 61248041,
+        "allocated_bytes": 21093473768,
+        "peak_live_bytes": 12806848,
+        "end_live_bytes": 443528,
+        "peak_live_allocations": 96338,
+        "end_live_allocations": 6129,
+        "trace_count": 19266,
+        "duration_ms": 72690,
+        "page_size": 4096,
+        "recorded_peak_rss_pages": 8269,
+        "record_counts": {
+          "+": 137180221,
+          "-": 137174094,
+          "I": 1,
+          "R": 7188,
+          "X": 1,
+          "c": 7188,
+          "m": 10,
+          "t": 19266,
+          "v": 1,
+          "x": 1
+        },
+        "module_records": [
+          "m 1 -",
+          "m 1 x 56546a526000 0 47de8c 47ee90 1129ea0 15a9d30 ac2d0 1656a48 306ac",
+          "m f linux-vdso.so.1 7fac2a6c9000 0 18fb",
+          "m 2c /usr/lib64/heaptrack/libheaptrack_preload.so 7fac2a6b4000 0 636d 7000 3ac4 b9d8 b50",
+          "m 14 /lib64/libgcc_s.so.1 7fac2a64a000 0 22e95 23000 6e78 2abb8 610",
+          "m 10 /lib64/libm.so.6 7fac2a555000 0 81505 82000 703b0 f3bb0 460",
+          "m 10 /lib64/libc.so.6 7fac2a362000 0 16ec6d 16f000 7507c 1e5b80 d0b0",
+          "m 1b /lib64/ld-linux-x86-64.so.2 7fac2a6cb000 0 29835 2a000 b05c 36260 3088",
+          "m 15 /lib64/libunwind.so.8 7fac2a347000 0 a115 b000 30c4 fb60 ae50",
+          "m 15 /lib64/libstdc++.so.6 7fac2a000000 0 1412b1 142000 11f391 262910 14738"
+        ]
+      },
+      "recording_time": "elapsed_s=72.73 user_s=65.80 system_s=6.63 max_rss_kib=63276 exit=0",
+      "accounting_time": "elapsed_s=13.85 user_s=15.96 system_s=2.15 max_rss_kib=9540 exit=0",
+      "attribution": {
+        "method": "Each symbol-address group is counted at most once per allocation stack; aliases at the same address stay grouped. Inlined source frames are unavailable in this optimized artifact.",
+        "nearest_exact_stack_owner": [
+          {
+            "allocations": 102783302,
+            "bytes": 18922271248,
+            "temporary": 53493348,
+            "allocation_percent": 74.92574457946091,
+            "start": 21562544,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational as core::cmp::PartialEq>::eq"
+            ]
+          },
+          {
+            "allocations": 26648846,
+            "bytes": 1479282224,
+            "temporary": 6018454,
+            "allocation_percent": 19.426157652858716,
+            "start": 21475328,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes"
+            ]
+          },
+          {
+            "allocations": 2998824,
+            "bytes": 312355328,
+            "temporary": 1403274,
+            "allocation_percent": 2.1860469229015167,
+            "start": 21350480,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::apply_lehmer_gcd_matrix::{closure#0}"
+            ]
+          },
+          {
+            "allocations": 1332548,
+            "bytes": 82177120,
+            "temporary": 0,
+            "allocation_percent": 0.971384934567207,
+            "start": 21393168,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::mul_wide_with_dyadic_denominator"
+            ]
+          },
+          {
+            "allocations": 905440,
+            "bytes": 80313104,
+            "temporary": 109692,
+            "allocation_percent": 0.6600368430664652,
+            "start": 21386352,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::add_sub_wide_dyadic"
+            ]
+          },
+          {
+            "allocations": 768118,
+            "bytes": 70793360,
+            "temporary": 157550,
+            "allocation_percent": 0.5599334907034448,
+            "start": 21401968,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::add_ref"
+            ]
+          },
+          {
+            "allocations": 270006,
+            "bytes": 24894416,
+            "temporary": 2262,
+            "allocation_percent": 0.19682575084931522,
+            "start": 21421824,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::multiply_magnitudes"
+            ]
+          },
+          {
+            "allocations": 224481,
+            "bytes": 12570936,
+            "temporary": 0,
+            "allocation_percent": 0.16363947977602397,
+            "start": 21498560,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts"
+            ]
+          }
+        ],
+        "nearest_hypercurve_owner": [
+          {
+            "allocations": 137168440,
+            "bytes": 21092376990,
+            "temporary": 61247848,
+            "allocation_percent": 99.99141202724844,
+            "start": 8999968,
+            "names": [
+              "hypercurve::bezier_offset::isolate_bivariate_fiber_roots_at_algebraic_parameter_complete"
+            ]
+          },
+          {
+            "allocations": 2633,
+            "bytes": 186768,
+            "temporary": 16,
+            "allocation_percent": 0.0019193729101806885,
+            "start": 7952752,
+            "names": [
+              "hypercurve::bezier_offset::polynomial_multiply"
+            ]
+          },
+          {
+            "allocations": 2212,
+            "bytes": 122840,
+            "temporary": 0,
+            "allocation_percent": 0.0016124773556094505,
+            "start": 13128384,
+            "names": [
+              "<hypercurve::bezier_parameter::BezierParameter2>::refined_isolating_interval"
+            ]
+          },
+          {
+            "allocations": 1953,
+            "bytes": 138632,
+            "temporary": 12,
+            "allocation_percent": 0.0014236746272627743,
+            "start": 8626000,
+            "names": [
+              "hypercurve::bezier_offset::algebraic_selected_fiber_root_predicate_sign"
+            ]
+          },
+          {
+            "allocations": 956,
+            "bytes": 80560,
+            "temporary": 0,
+            "allocation_percent": 0.0006968934683375382,
+            "start": 7946896,
+            "names": [
+              "hypercurve::bezier_offset::bivariate_combine"
+            ]
+          },
+          {
+            "allocations": 915,
+            "bytes": 64952,
+            "temporary": 4,
+            "allocation_percent": 0.0006670057777498405,
+            "start": 13333280,
+            "names": [
+              "hypercurve::bezier_parameter::power_to_bernstein_coefficients"
+            ]
+          },
+          {
+            "allocations": 646,
+            "bytes": 39760,
+            "temporary": 0,
+            "allocation_percent": 0.0004709133687720185,
+            "start": 7964144,
+            "names": [
+              "hypercurve::bezier_offset::bivariate_outer_product"
+            ]
+          },
+          {
+            "allocations": 623,
+            "bytes": 34088,
+            "temporary": 0,
+            "allocation_percent": 0.0004541471033203832,
+            "start": 8125728,
+            "names": [
+              "hypercurve::bezier_offset::bivariate_restrict_to_box_bounds"
+            ]
+          }
+        ]
+      }
+    },
+    "candidate": {
+      "accounting": {
+        "format": 3,
+        "records": 274393427,
+        "allocations": 137180221,
+        "frees": 137174092,
+        "untracked_frees": 2,
+        "temporary_allocations": 61248041,
+        "allocated_bytes": 21093473921,
+        "peak_live_bytes": 12806553,
+        "end_live_bytes": 443528,
+        "peak_live_allocations": 96336,
+        "end_live_allocations": 6129,
+        "trace_count": 24926,
+        "duration_ms": 71641,
+        "page_size": 4096,
+        "recorded_peak_rss_pages": 8263,
+        "record_counts": {
+          "+": 137180221,
+          "-": 137174094,
+          "I": 1,
+          "R": 7086,
+          "X": 1,
+          "c": 7086,
+          "m": 10,
+          "t": 24926,
+          "v": 1,
+          "x": 1
+        },
+        "module_records": [
+          "m 1 -",
+          "m 1 x 55a20ffbc000 0 47e77c 47f780 1129680 15a9e00 ac200 16569b8 306ac",
+          "m f linux-vdso.so.1 7f868e7f7000 0 18fb",
+          "m 2c /usr/lib64/heaptrack/libheaptrack_preload.so 7f868e7e2000 0 636d 7000 3ac4 b9d8 b50",
+          "m 14 /lib64/libgcc_s.so.1 7f868e778000 0 22e95 23000 6e78 2abb8 610",
+          "m 10 /lib64/libm.so.6 7f868e683000 0 81505 82000 703b0 f3bb0 460",
+          "m 10 /lib64/libc.so.6 7f868e490000 0 16ec6d 16f000 7507c 1e5b80 d0b0",
+          "m 1b /lib64/ld-linux-x86-64.so.2 7f868e7f9000 0 29835 2a000 b05c 36260 3088",
+          "m 15 /lib64/libunwind.so.8 7f868e475000 0 a115 b000 30c4 fb60 ae50",
+          "m 15 /lib64/libstdc++.so.6 7f868e000000 0 1412b1 142000 11f391 262910 14738"
+        ]
+      },
+      "recording_time": "elapsed_s=71.67 user_s=64.77 system_s=6.61 max_rss_kib=63452 exit=0",
+      "accounting_time": "elapsed_s=14.18 user_s=16.45 system_s=2.21 max_rss_kib=9652 exit=0",
+      "attribution": {
+        "method": "Each symbol-address group is counted at most once per allocation stack; aliases at the same address stay grouped. Inlined source frames are unavailable in this optimized artifact.",
+        "nearest_exact_stack_owner": [
+          {
+            "allocations": 102783302,
+            "bytes": 18922271248,
+            "temporary": 53493348,
+            "allocation_percent": 74.92574457946091,
+            "start": 21562752,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational as core::cmp::PartialEq>::eq"
+            ]
+          },
+          {
+            "allocations": 26648846,
+            "bytes": 1479282224,
+            "temporary": 6018454,
+            "allocation_percent": 19.426157652858716,
+            "start": 21475536,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes"
+            ]
+          },
+          {
+            "allocations": 2998824,
+            "bytes": 312355328,
+            "temporary": 1403274,
+            "allocation_percent": 2.1860469229015167,
+            "start": 21350688,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::apply_lehmer_gcd_matrix::{closure#0}"
+            ]
+          },
+          {
+            "allocations": 1332548,
+            "bytes": 82177120,
+            "temporary": 0,
+            "allocation_percent": 0.971384934567207,
+            "start": 21393376,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::mul_wide_with_dyadic_denominator"
+            ]
+          },
+          {
+            "allocations": 905440,
+            "bytes": 80313104,
+            "temporary": 109692,
+            "allocation_percent": 0.6600368430664652,
+            "start": 21386560,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::add_sub_wide_dyadic"
+            ]
+          },
+          {
+            "allocations": 768118,
+            "bytes": 70793360,
+            "temporary": 157550,
+            "allocation_percent": 0.5599334907034448,
+            "start": 21402176,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::add_ref"
+            ]
+          },
+          {
+            "allocations": 270006,
+            "bytes": 24894416,
+            "temporary": 2262,
+            "allocation_percent": 0.19682575084931522,
+            "start": 21422032,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::multiply_magnitudes"
+            ]
+          },
+          {
+            "allocations": 224481,
+            "bytes": 12570936,
+            "temporary": 0,
+            "allocation_percent": 0.16363947977602397,
+            "start": 21498768,
+            "names": [
+              "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts"
+            ]
+          }
+        ],
+        "nearest_hypercurve_owner": [
+          {
+            "allocations": 137168440,
+            "bytes": 21092376990,
+            "temporary": 61247848,
+            "allocation_percent": 99.99141202724844,
+            "start": 9002064,
+            "names": [
+              "hypercurve::bezier_offset::isolate_bivariate_fiber_roots_at_algebraic_parameter_complete"
+            ]
+          },
+          {
+            "allocations": 2633,
+            "bytes": 186768,
+            "temporary": 16,
+            "allocation_percent": 0.0019193729101806885,
+            "start": 7954656,
+            "names": [
+              "hypercurve::bezier_offset::polynomial_multiply"
+            ]
+          },
+          {
+            "allocations": 2212,
+            "bytes": 122840,
+            "temporary": 0,
+            "allocation_percent": 0.0016124773556094505,
+            "start": 13509584,
+            "names": [
+              "<hypercurve::bezier_parameter::BezierParameter2>::refined_isolating_interval"
+            ]
+          },
+          {
+            "allocations": 1953,
+            "bytes": 138632,
+            "temporary": 12,
+            "allocation_percent": 0.0014236746272627743,
+            "start": 8628080,
+            "names": [
+              "hypercurve::bezier_offset::algebraic_selected_fiber_root_predicate_sign"
+            ]
+          },
+          {
+            "allocations": 956,
+            "bytes": 80560,
+            "temporary": 0,
+            "allocation_percent": 0.0006968934683375382,
+            "start": 7948800,
+            "names": [
+              "hypercurve::bezier_offset::bivariate_combine"
+            ]
+          },
+          {
+            "allocations": 915,
+            "bytes": 64952,
+            "temporary": 4,
+            "allocation_percent": 0.0006670057777498405,
+            "start": 13714480,
+            "names": [
+              "hypercurve::bezier_parameter::power_to_bernstein_coefficients"
+            ]
+          },
+          {
+            "allocations": 646,
+            "bytes": 39760,
+            "temporary": 0,
+            "allocation_percent": 0.0004709133687720185,
+            "start": 7966048,
+            "names": [
+              "hypercurve::bezier_offset::bivariate_outer_product"
+            ]
+          },
+          {
+            "allocations": 623,
+            "bytes": 34088,
+            "temporary": 0,
+            "allocation_percent": 0.0004541471033203832,
+            "start": 8127632,
+            "names": [
+              "hypercurve::bezier_offset::bivariate_restrict_to_box_bounds"
+            ]
+          }
+        ]
+      }
+    },
+    "validation": "Both producers and tests completed successfully, zstd validated both complete streams, and the previously validated streaming counter checked live-state invariants. Independent stack attribution checked leaf sums against full raw event totals. Unique host FIFOs avoided the known sandbox-PID collision.",
+    "timing_caveat": "Profiling overlapped qualification; recording durations are not used as performance comparisons."
+  },
+  "size": {
+    "native": [
+      {
+        "fixture": "bezier_region",
+        "baseline": {
+          "text": 9748935,
+          "file": 15435800
+        },
+        "candidate": {
+          "text": 9749239,
+          "file": 15437168
+        },
+        "text_delta": 304,
+        "file_delta": 1368
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline": {
+          "text": 6376199,
+          "file": 10974536
+        },
+        "candidate": {
+          "text": 6377271,
+          "file": 10976232
+        },
+        "text_delta": 1072,
+        "file_delta": 1696
+      },
+      {
+        "fixture": "curve_region_boolean_batch",
+        "baseline": {
+          "text": 9345431,
+          "file": 14875256
+        },
+        "candidate": {
+          "text": 9345735,
+          "file": 14876624
+        },
+        "text_delta": 304,
+        "file_delta": 1368
+      }
+    ],
+    "wasm": {
+      "baseline": 17029778,
+      "candidate": 17029236,
+      "delta": -542
+    }
+  },
+  "limitations": [
+    "This checkpoint does not close uniform performance or full Hypercurve release readiness.",
+    "The full heap pair covers one additional affected contact workload, not every remaining slow or pathological case.",
+    "Native text growth is retained explicitly as a lower-priority cost of the exactness fix and consolidation.",
+    "ExactCorelib idea mining/uplift remains closed; the lower stack and Hypermesh are unchanged in this slice.",
+    "No push, publication or deployment.",
+    "Seven additional native pairs retain degree-elevation latency +6.6981% and algebraic line-image overlap +5.4299%; the initial radial control is +0.9686%, with circle/capsule instructions +0.03951%/+0.01668%. These are explicit costs/follow-ups, not a uniform no-regression result."
+  ],
+  "followups": [
+    "Rational equality accounts for 74.9257% of this workload's nearest exact-stack allocation ownership; audit the canonical/unreduced representation facts and reuse of its ordering path's leading-significand interval rejection before wide cross-products. These are not yet optimization results.",
+    "Audit STRICT replay of exact contacts constructed under APPROXIMATE_512: the rational contact map currently stores the requested policy directly. The new regression does not yet exercise cross-policy replay.",
+    "The one-item [0] coarse-sign loop can potentially lose zero-step clones, but an inconclusive coarse comparison must still reach its refined fallback."
+  ],
+  "reproduction": {
+    "full_suite_command": "CARGO_BUILD_JOBS=2 cargo test --release --locked --all-features --no-fail-fast -- --include-ignored --test-threads=2",
+    "timing_driver": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x\"\nfor fiber_round in 1 2 3; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_case in selected chord radial contacts; do\n        case \"$fiber_case\" in\n            contacts) fiber_test=\"bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber\" ;;\n            selected) fiber_test=\"bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans\" ;;\n            chord) fiber_test=\"bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict\" ;;\n            radial) fiber_test=\"bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel\" ;;\n        esac\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/paired-$fiber_case-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-test\" \"$fiber_test\" \\\n                --exact --include-ignored --test-threads=1 \\\n                > \"$fiber_evidence/paired-$fiber_case-$fiber_round-$fiber_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$fiber_case\" \"$fiber_round\" \"$fiber_variant\"\n        done\n    done\n    for fiber_bench in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/paired-$fiber_bench-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_bench\" \\\n                > \"$fiber_evidence/paired-$fiber_bench-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\n    for fiber_fixture in rectangles circles capsules; do\n        unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n        if [[ \"$fiber_fixture\" != rectangles ]]; then\n            export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$fiber_fixture\"\n        fi\n        for fiber_variant in $fiber_order; do\n            HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-curve_region_boolean_batch\" \\\n                > \"$fiber_evidence/paired-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\ndone\n",
+    "instruction_driver": "#!/usr/bin/env bash\nset -euo pipefail\ncd /home/tim/Documents/GitHub/workspace/hypercurve\nfor fiber_fixture in rectangles circles capsules; do\n    unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n    if [[ \"$fiber_fixture\" != rectangles ]]; then\n        export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$fiber_fixture\"\n    fi\n    for fiber_variant in baseline candidate; do\n        HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=20 \\\n            taskset -c 3 valgrind --tool=callgrind \\\n            --callgrind-out-file=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-$fiber_fixture-$fiber_variant.callgrind \\\n            /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/$fiber_variant-curve_region_boolean_batch \\\n            > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-refinement.fcoiQT/instructions-$fiber_fixture-$fiber_variant.log 2>&1\n        printf '%s %s passed\\n' \"$fiber_fixture\" \"$fiber_variant\"\n    done\ndone\n",
+    "result_collector": "import fs from \"node:fs\";\nconst root = process.argv[2];\nconst prefix = process.argv[3] ?? \"paired\";\nconst rounds = Number(process.argv[4] ?? \"3\");\nconst pattern = new RegExp(\"^\" + prefix + \"-(.+)-(\\\\d+)-(baseline|candidate)\\\\.log$\");\nconst files = fs.readdirSync(root);\nconst whole = [], lanes = [];\nfor (const name of files) {\n  const m = name.match(pattern);\n  if (!m) continue;\n  const fixture = m[1], round = Number(m[2]), variant = m[3];\n  const contents = fs.readFileSync(root + \"/\" + name, \"utf8\");\n  if ([\"selected\", \"chord\", \"radial\", \"contacts\"].includes(fixture) &&\n      !contents.includes(\"test result: ok. 1 passed; 0 failed; 0 ignored;\"))\n    throw new Error(\"Incomplete test: \" + name);\n  const time = root + \"/\" + name.replace(/\\.log$/, \".time\");\n  if (fs.existsSync(time)) {\n    const values = Object.fromEntries([...fs.readFileSync(time, \"utf8\").matchAll(/(\\w+)=([0-9.]+)/g)].map(m => [m[1], Number(m[2])]));\n    if (values.exit !== 0) throw new Error(\"Unsuccessful process: \" + name);\n    whole.push({fixture, round, variant, ...values});\n  }\n  for (const line of contents.split(\"\\n\")) {\n    let m = line.match(/^([^:]+): (\\d+) (?:iterations|curves) in ([0-9.]+)(ns|µs|ms|s) /);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]) * ({ns:1,\"µs\":1000,ms:1000000,s:1000000000})[m[4]];\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n      continue;\n    }\n    m = line.match(/^([^:]+): (\\d+) iterations, total_ns=(\\d+), ns_per_iter=(\\d+),/);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]);\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n    }\n  }\n}\nconst median = xs => { const sorted = xs.toSorted((a,b)=>a-b); return sorted[(sorted.length-1)/2]; };\nconst compare = (rows, key, value) => [...new Set(rows.map(key))].map(name => {\n  const baseline = rows.filter(r => key(r) === name && r.variant === \"baseline\").map(r=>r[value]);\n  const candidate = rows.filter(r => key(r) === name && r.variant === \"candidate\").map(r=>r[value]);\n  if (baseline.length !== rounds || candidate.length !== rounds) throw new Error(\"Unpaired \" + name);\n  const before = median(baseline), after = median(candidate);\n  return {name, baseline, candidate, baseline_median:before, candidate_median:after, change_percent:100*(after/before-1)};\n});\nconst instructions = [\"rectangles\",\"circles\",\"capsules\"].map(fixture => {\n  const values = [\"baseline\",\"candidate\"].map(variant => {\n    const contents = fs.readFileSync(root+\"/instructions-\"+fixture+\"-\"+variant+\".callgrind\",\"utf8\");\n    const summary = Number(contents.match(/^summary: (\\d+)$/m)?.[1]);\n    const total = Number(contents.match(/^totals: (\\d+)$/m)?.[1]);\n    if (!summary || summary !== total) throw new Error(\"Incomplete Callgrind result\");\n    return summary;\n  });\n  return {fixture, baseline:values[0], candidate:values[1], change_percent:100*(values[1]/values[0]-1)};\n});\nconsole.log(JSON.stringify({\n  cpu:7, alternating_order:Array.from({length:rounds}, (_, index) => index % 2 ? \"candidate,baseline\" : \"baseline,candidate\"),\n  invocations:files.filter(f=>pattern.test(f)).length,\n  whole_process_measurements:whole,\n  whole_process_summary:compare(whole,r=>r.fixture,\"elapsed_s\"),\n  lane_measurements:lanes,\n  lane_summary:compare(lanes,r=>r.fixture+\"/\"+r.name,\"ns_per_iter\").sort((a,b)=>b.change_percent-a.change_percent),\n  instructions\n}, null, 2));\n",
+    "gates": "#!/usr/bin/env bash\nset -uo pipefail\ncd /home/tim/Documents/GitHub/workspace/hypercurve\nexport CARGO_BUILD_JOBS=2\nfiber_failed=0\ncargo fmt --all --check > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-fmt.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'fmt' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo clippy --locked --all-targets --all-features -- -D warnings > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-clippy.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'clippy' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo test --release --locked --no-default-features --no-fail-fast -- --test-threads=2 > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-minimal.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'minimal' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo clippy --locked --all-targets --no-default-features -- -D warnings > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-minimal-clippy.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'minimal-clippy' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\nenv RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-docs.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'docs' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\nenv RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --no-default-features > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-minimal-docs.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'minimal-docs' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo check --locked --manifest-path fuzz/Cargo.toml --bins > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-fuzz-check.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'fuzz-check' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo test --locked --manifest-path examples/hypercurve_ui/Cargo.toml --no-fail-fast > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-ui-tests.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'ui-tests' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo clippy --locked --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-ui-clippy.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'ui-clippy' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-ui-wasm.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'ui-wasm' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\nexit \"$fiber_failed\"\n",
+    "heap_driver": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x\"\nfiber_test=\"bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber\"\nfor fiber_variant in baseline candidate; do\n    /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n        -o \"$fiber_evidence/heap-contacts-$fiber_variant.time\" \\\n        taskset -c 3 /usr/bin/heaptrack --raw --record-only \\\n        -o \"$fiber_evidence/heap-contacts-$fiber_variant\" \\\n        \"$fiber_evidence/$fiber_variant-test\" \"$fiber_test\" \\\n        --exact --include-ignored --test-threads=1 \\\n        > \"$fiber_evidence/heap-contacts-$fiber_variant.log\" 2>&1\n    zstd --test \"$fiber_evidence/heap-contacts-$fiber_variant.raw.zst\"\n    /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n        -o \"$fiber_evidence/heap-contacts-$fiber_variant-accounting.time\" \\\n        bash -o pipefail -c 'zstd -dc \"$1\" | \"$2\"' -- \\\n        \"$fiber_evidence/heap-contacts-$fiber_variant.raw.zst\" \\\n        \"$fiber_evidence/raw-allocation-traces\" \\\n        > \"$fiber_evidence/heap-contacts-$fiber_variant-accounting.json\"\n    printf '%s passed\\n' \"$fiber_variant\"\ndone\n",
+    "streaming_counter": "// Local evidence tool: streaming accounting for Heaptrack 1.5 raw format 3.\n// It does not symbolize or intern (size, trace) pairs; retained state is bounded\n// by trace definitions and currently live allocations, not allocation history.\n#include <algorithm>\n#include <array>\n#include <charconv>\n#include <cstdint>\n#include <iomanip>\n#include <iostream>\n#include <limits>\n#include <stdexcept>\n#include <string>\n#include <unordered_map>\n#include <vector>\n\nusing U = std::uint64_t;\nstruct Trace { U ip, parent, calls = 0, bytes = 0, temporary = 0; };\nstruct Allocation { U size, trace; };\n\nU number(const std::string& line, std::size_t& cursor) {\n    while (cursor < line.size() && line[cursor] == ' ') ++cursor;\n    U value = 0;\n    const auto result = std::from_chars(line.data() + cursor,\n                                        line.data() + line.size(), value, 16);\n    if (result.ec != std::errc{}) throw std::runtime_error(\"invalid hex field\");\n    cursor = result.ptr - line.data();\n    return value;\n}\nvoid add(U& total, U value) {\n    if (value > std::numeric_limits<U>::max() - total)\n        throw std::runtime_error(\"counter overflow\");\n    total += value;\n}\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::vector<Trace> traces(1);\n    std::unordered_map<U, Allocation> live;\n    live.reserve(16384);\n    std::vector<std::string> modules;\n    std::array<U, 256> modes{};\n    U allocations = 0, frees = 0, unknown_frees = 0, temporary = 0;\n    U traffic = 0, heap = 0, peak = 0, peak_blocks = 0, last = 0;\n    U page_size = 0, peak_rss_pages = 0, duration_ms = 0, lines = 0;\n    bool version = false;\n    std::string line;\n    try {\n        while (std::getline(std::cin, line)) {\n            ++lines;\n            if (line.empty()) throw std::runtime_error(\"empty record\");\n            const auto mode = static_cast<unsigned char>(line[0]);\n            ++modes[mode];\n            std::size_t cursor = 1;\n            switch (mode) {\n            case 'v':\n                (void)number(line, cursor);\n                if (number(line, cursor) != 3 || version || lines != 1)\n                    throw std::runtime_error(\"expected one format-3 header\");\n                version = true;\n                break;\n            case 't': {\n                const U ip = number(line, cursor), parent = number(line, cursor);\n                if (!version || parent >= traces.size())\n                    throw std::runtime_error(\"invalid trace parent\");\n                traces.push_back({ip, parent});\n                break;\n            }\n            case '+': {\n                const U size = number(line, cursor), trace = number(line, cursor);\n                const U pointer = number(line, cursor);\n                if (!version || trace == 0 || trace >= traces.size() || pointer == 0)\n                    throw std::runtime_error(\"invalid allocation\");\n                if (!live.emplace(pointer, Allocation{size, trace}).second)\n                    throw std::runtime_error(\"duplicate live pointer\");\n                add(allocations, 1);\n                add(traffic, size);\n                add(heap, size);\n                peak = std::max(peak, heap);\n                peak_blocks = std::max(peak_blocks, static_cast<U>(live.size()));\n                add(traces[trace].calls, 1);\n                add(traces[trace].bytes, size);\n                last = pointer;\n                break;\n            }\n            case '-': {\n                const U pointer = number(line, cursor);\n                const bool is_temporary = last == pointer;\n                last = 0;\n                const auto found = live.find(pointer);\n                if (found == live.end()) {\n                    add(unknown_frees, 1);\n                    break;\n                }\n                if (is_temporary) {\n                    add(temporary, 1);\n                    add(traces[found->second.trace].temporary, 1);\n                }\n                if (found->second.size > heap)\n                    throw std::runtime_error(\"heap underflow\");\n                heap -= found->second.size;\n                live.erase(found);\n                add(frees, 1);\n                break;\n            }\n            case 'I':\n                page_size = number(line, cursor);\n                (void)number(line, cursor);\n                break;\n            case 'R':\n                peak_rss_pages = std::max(peak_rss_pages, number(line, cursor));\n                break;\n            case 'c':\n                duration_ms = std::max(duration_ms, number(line, cursor));\n                break;\n            case 'm':\n                modules.push_back(line);\n                break;\n            case 'x': case 'X': case '#':\n                break;\n            default:\n                throw std::runtime_error(\"unsupported raw record mode\");\n            }\n        }\n        if (!std::cin.eof() || !version)\n            throw std::runtime_error(\"incomplete input read\");\n        U live_sum = 0;\n        for (const auto& [pointer, allocation] : live) add(live_sum, allocation.size);\n        if (live_sum != heap || allocations - frees != live.size())\n            throw std::runtime_error(\"final live-state invariant failed\");\n        std::vector<std::size_t> order;\n        for (std::size_t i = 1; i < traces.size(); ++i)\n            if (traces[i].calls) order.push_back(i);\n        std::sort(order.begin(), order.end(), [&](auto a, auto b) {\n            if (traces[a].calls != traces[b].calls) return traces[a].calls > traces[b].calls;\n            return a < b;\n        });\n        std::cout << \"{\\n\\\"format\\\":3,\\\"records\\\":\" << lines\n                  << \",\\\"allocations\\\":\" << allocations << \",\\\"frees\\\":\" << frees\n                  << \",\\\"untracked_frees\\\":\" << unknown_frees\n                  << \",\\\"temporary_allocations\\\":\" << temporary\n                  << \",\\\"allocated_bytes\\\":\" << traffic\n                  << \",\\\"peak_live_bytes\\\":\" << peak\n                  << \",\\\"end_live_bytes\\\":\" << heap\n                  << \",\\\"peak_live_allocations\\\":\" << peak_blocks\n                  << \",\\\"end_live_allocations\\\":\" << live.size()\n                  << \",\\\"trace_count\\\":\" << traces.size() - 1\n                  << \",\\\"duration_ms\\\":\" << duration_ms\n                  << \",\\\"page_size\\\":\" << page_size\n                  << \",\\\"recorded_peak_rss_pages\\\":\" << peak_rss_pages\n                  << \",\\n\\\"record_counts\\\":{\";\n        bool comma = false;\n        for (std::size_t i = 0; i < modes.size(); ++i) if (modes[i]) {\n            if (comma) std::cout << ',';\n            comma = true;\n            std::cout << std::quoted(std::string(1, static_cast<char>(i))) << ':' << modes[i];\n        }\n        std::cout << \"},\\n\\\"module_records\\\":[\";\n        for (std::size_t i = 0; i < modules.size(); ++i) {\n            if (i) std::cout << ',';\n            std::cout << std::quoted(modules[i]);\n        }\n        std::cout << \"],\\n\\\"top_allocation_traces\\\":[\";\n        order.resize(std::min<std::size_t>(32, order.size()));\n        for (std::size_t rank = 0; rank < order.size(); ++rank) {\n            if (rank) std::cout << ',';\n            auto index = order[rank];\n            const auto& trace = traces[index];\n            std::cout << \"\\n{\\\"trace\\\":\" << index << \",\\\"allocations\\\":\" << trace.calls\n                      << \",\\\"bytes\\\":\" << trace.bytes << \",\\\"temporary\\\":\" << trace.temporary\n                      << \",\\\"ips\\\":[\";\n            bool separated = false;\n            while (index) {\n                if (separated) std::cout << ',';\n                separated = true;\n                std::cout << '\"' << std::hex << traces[index].ip << std::dec << '\"';\n                index = traces[index].parent;\n            }\n            std::cout << \"]}\";\n        }\n        std::cout << \"],\\n\\\"trace_table\\\":[\";\n        for (std::size_t i = 0; i < traces.size(); ++i) {\n            if (i) std::cout << ',';\n            const auto& trace = traces[i];\n            std::cout << \"\\n[\\\"\" << std::hex << trace.ip << std::dec << \"\\\",\"\n                      << trace.parent << ',' << trace.calls << ','\n                      << trace.bytes << ',' << trace.temporary << ']';\n        }\n        std::cout << \"]\\n}\\n\";\n    } catch (const std::exception& error) {\n        std::cerr << \"Raw accounting rejected input at line \" << lines\n                  << \": \" << error.what() << '\\n';\n        return 1;\n    }\n}\n",
+    "allocation_attribution": "import fs from \"node:fs\";\nconst profile = JSON.parse(fs.readFileSync(process.argv[2], \"utf8\"));\nconst module = profile.module_records.find(line => /^m \\S+ x /.test(line));\nif (!module) throw new Error(\"No executable mapping\");\nconst base = BigInt(\"0x\" + module.split(\" \")[3]);\nconst groups = [];\nfor (const line of fs.readFileSync(process.argv[3], \"utf8\").split(\"\\n\")) {\n    const match = line.match(/^([0-9a-f]+)\\s+([0-9a-f]+)\\s+[tTwW]\\s+(.+)$/);\n    if (!match) continue;\n    const start = parseInt(match[1], 16), size = parseInt(match[2], 16), name = match[3];\n    let group = groups.at(-1);\n    if (!group || group.start !== start) {\n        group = {start, end: start + size, names: []};\n        groups.push(group);\n    }\n    group.end = Math.max(group.end, start + size);\n    if (!group.names.includes(name)) group.names.push(name);\n}\nconst resolve = ip => {\n    const relative = BigInt(\"0x\" + ip) - base;\n    if (relative < 0n || relative > 0xffffffffn) return -1;\n    const offset = Number(relative) - 1;\n    let low = 0, high = groups.length;\n    while (low < high) {\n        const middle = (low + high) >>> 1;\n        if (groups[middle].start <= offset) low = middle + 1;\n        else high = middle;\n    }\n    const index = low - 1;\n    return index >= 0 && offset < groups[index].end ? index : -1;\n};\nconst traceGroups = profile.trace_table.map(trace => resolve(trace[0]));\nconst inclusive = new Map(), nearestExact = new Map(), nearestCurve = new Map();\nconst exactGroup = groups.map(g => g.names.some(name => /<?(?:hyperreal|hypersolve|hypercurve|hyperlimit|hyperlattice|hypertri)::/.test(name)));\nconst curveGroup = groups.map(g => g.names.some(name => /<?hypercurve::/.test(name)));\nconst add = (map, group, trace) => {\n    if (group < 0) return;\n    let value = map.get(group);\n    if (!value) {\n        value = {allocations: 0, bytes: 0, temporary: 0};\n        map.set(group, value);\n    }\n    value.allocations += trace[2];\n    value.bytes += trace[3];\n    value.temporary += trace[4];\n};\nlet allocations = 0, bytes = 0, temporary = 0;\nfor (let index = 1; index < profile.trace_table.length; ++index) {\n    const trace = profile.trace_table[index];\n    allocations += trace[2]; bytes += trace[3]; temporary += trace[4];\n    if (!trace[2]) continue;\n    const seen = new Set();\n    let exact = -1, curve = -1;\n    for (let ancestor = index; ancestor; ancestor = profile.trace_table[ancestor][1]) {\n        const group = traceGroups[ancestor];\n        if (group < 0 || seen.has(group)) continue;\n        seen.add(group);\n        add(inclusive, group, trace);\n        if (exact < 0 && exactGroup[group]) exact = group;\n        if (curve < 0 && curveGroup[group]) curve = group;\n    }\n    add(nearestExact, exact, trace);\n    add(nearestCurve, curve, trace);\n}\nif (allocations !== profile.allocations || bytes !== profile.allocated_bytes ||\n    temporary !== profile.temporary_allocations)\n    throw new Error(\"Trace-table totals disagree with raw event accounting\");\nconst rows = map => [...map].map(([index, value]) => ({\n    ...value, allocation_percent: value.allocations * 100 / allocations,\n    start: groups[index].start, names: groups[index].names\n})).sort((a, b) => b.allocations - a.allocations);\nconst summary = {...profile};\ndelete summary.trace_table;\ndelete summary.top_allocation_traces;\nconsole.log(JSON.stringify({\n    summary,\n    method: \"Each symbol-address group is counted at most once per allocation stack; aliases at the same address stay grouped. Inlined source frames are unavailable in this optimized artifact.\",\n    inclusive: rows(inclusive), nearest_exact_stack_owner: rows(nearestExact),\n    nearest_hypercurve_owner: rows(nearestCurve)\n}, null, 2));\n"
+  },
+  "artifacts": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/attribute-allocations.mjs",
+      "bytes": 3696,
+      "sha256": "3e867e3a220d80bbe2cd16e9f5b3bc58c175b39c78124e305cd1a8952220a54a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/baseline-bezier_region",
+      "bytes": 15435800,
+      "sha256": "fcb213f2857e7b717e9116753b0f8331c71e4a98724da364cefc7330e3a6c815"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/baseline-curve_region_boolean_batch",
+      "bytes": 14875256,
+      "sha256": "b4c1b8c90e24986182dd03f6cd876428fc8df837133fd3924cddbaddaf5e27bb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/baseline-rational_bezier",
+      "bytes": 10974536,
+      "sha256": "9aa2a8b18d9c18db4368776d69668379fb74802cdd6025a556476a3674080a23"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/baseline-symbols.txt",
+      "bytes": 4274493,
+      "sha256": "19a559d6e3da74578dd06bd8c469ff3ddd8ab0b3aa636bd0c5afb85a3c2227c6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/baseline-test",
+      "bytes": 28089256,
+      "sha256": "0b18de9a27b5a25de438799f4ab259ffde15d009c6de1698c86205321e2230ad"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/baseline-ui.wasm",
+      "bytes": 17029778,
+      "sha256": "b58865c25c8fd626a13dc95f557ec6807a1f0b7641f482aef64174ba1a973f11"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-bezier_region",
+      "bytes": 15437168,
+      "sha256": "bf4a012007dba8881e72fba104aa3d46d3a49ffd16b5329fd8d45e7621125c31"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-curve_region_boolean_batch",
+      "bytes": 14876624,
+      "sha256": "9bae3ad5e82a21b71092cc75bd4db817f63b39aefdf7e919f5e3ae84785eb2c5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-full.log",
+      "bytes": 167101,
+      "sha256": "8d61bb50b26599710641c78154b27b0f2159f8463271a0de8aac76c16b00e04c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-clippy.log",
+      "bytes": 154,
+      "sha256": "43126a39850a775d57d12b45e10624e7fc1b83db025dd658146f8c2c9b4bb2fd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-docs.log",
+      "bytes": 247,
+      "sha256": "0fa8fffb27cafb3c9600af4c6ab79799ef0b3b6b8c60d43a857142a9306877f8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-fuzz-check.log",
+      "bytes": 244,
+      "sha256": "3da21d2667e165945ac22f8ed3c0d8dc3b28cb4f027fa59866b4643d3861ac29"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-gates.status",
+      "bytes": 110,
+      "sha256": "0e84b8f22c337c8d0467121d815fdf7530e63e9645b89d004de9c46fcb35dcf8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-minimal-clippy.log",
+      "bytes": 154,
+      "sha256": "d20fea194f813b9888d327fb7ceba8fd016da38dec2e12536ae3caec205caede"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-minimal-docs.log",
+      "bytes": 247,
+      "sha256": "73de4412b64d745d57ed9b0e952e71f12e9fdefbdf7c5f3434acfe8ff5842cfe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-minimal.log",
+      "bytes": 164926,
+      "sha256": "fe370955851811c299f3c79522165e3d8695f8e1cbdd74dcdd82857fcb3c6e4c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-ui-clippy.log",
+      "bytes": 260,
+      "sha256": "9191a0c44ed8090934cc23828daf3e2315177b32b85af37e48877d0753b0ea1a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-ui-tests.log",
+      "bytes": 3483,
+      "sha256": "7c107ae7c46d3ad49517b679a25a4a9d5d6f3b3e76a11a44dfe8e4cdd7518d67"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-hypercurve-ui-wasm.log",
+      "bytes": 251,
+      "sha256": "ace98cc0e6965f6b1dff02b3570126e6f0a1ff8ae1eb206296f35ed9f6adee5b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-rational_bezier",
+      "bytes": 10976232,
+      "sha256": "993726a74c5b18c640c1e0f17585fe12799131391a70445487b5345724c12429"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-symbols.txt",
+      "bytes": 4285082,
+      "sha256": "c892b00cd3227bca49a8d3586e1ed8147aa9872849242dcfd9b0473c747fe892"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-test",
+      "bytes": 28100792,
+      "sha256": "834d315e1a8ec6fb58abb48508b6132b51e0df6bf274fd8381a428bbbadbb489"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/candidate-ui.wasm",
+      "bytes": 17029236,
+      "sha256": "d36033a7bc8a32b567e9730a0c9ec7350c0f9e9fe94753962019192fe061be88"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/checkpoint.mjs",
+      "bytes": 11319,
+      "sha256": "2f2896437c12f779b7a5dd1870baba408b5105194a63de8e7d7630a062cf44cb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/collect-results.mjs",
+      "bytes": 3524,
+      "sha256": "a5524e610aaa99dca8dc6de3a8149fa2034294cee8f4db9d893e0d68712bd737"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-baseline-accounting.json",
+      "bytes": 612303,
+      "sha256": "b92b2838543d97569dab63e21a916e3701fe9b8cf0cfc18119c72f57ace365f9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-baseline-accounting.time",
+      "bytes": 67,
+      "sha256": "1d201556c0a86606b41ae83e609858e2f810ba72d5bd59ec118e3b05b7d10e1e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-baseline-attribution.json",
+      "bytes": 244941,
+      "sha256": "02231a2e2a59b21e0a29dac699528c03eb225077add812f342fc935bb0238327"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-baseline.log",
+      "bytes": 820,
+      "sha256": "1fb461df734b031ae363f6637017fa99851e8144c3b29234aecf19f9697547dd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-baseline.raw.zst",
+      "bytes": 197755722,
+      "sha256": "ce5fe0f391e8d044b2dc56400ed7c9ea93137293210e309e4d5f91373eb503be"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-baseline.time",
+      "bytes": 68,
+      "sha256": "34b08c0951c3f07fd22f89bd1d5e84d962d9e498ade6e5649ec0a93d7c0f2be9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-candidate-accounting.json",
+      "bytes": 788732,
+      "sha256": "436fffd8863cbeb52ad8585e5c8c3089ab1ac5e71ca20bb54044f782a4364520"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-candidate-accounting.time",
+      "bytes": 67,
+      "sha256": "7f3475b9170296ae5fa722c46572c629ee8b32271d434f82087e9d4335b0cec4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-candidate-attribution.json",
+      "bytes": 245562,
+      "sha256": "cfd0a92a5e51c9a61c3f477adc952e0ebc7e5df46b47ac2461bd1f85ff09a9c8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-candidate.log",
+      "bytes": 823,
+      "sha256": "7f6eb163261d3f752bc83c6f28d6ed59c47c4e2ef6e7abc5871b3ab932c867a8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-candidate.raw.zst",
+      "bytes": 199486542,
+      "sha256": "0166afac45a0b9fc558ef7e6ec18e1d8e66c43fc8b134ab31a66dcbd1b1e48ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts-candidate.time",
+      "bytes": 68,
+      "sha256": "a04023f5666955b7b2ddb18cd42911d7a1ddc7ae6c907d27e208f1efc55edee9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts.sh",
+      "bytes": 1281,
+      "sha256": "0e7c4970b050aa2b864eac9f2f169bf3051ea020d65dd184523c780fc9161b33"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/heap-contacts.status",
+      "bytes": 304,
+      "sha256": "d923dd3805007ddb7f649f2a31fbbace2edec4a905249b0f2f4771c1b43ee7b5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-capsules-baseline.callgrind",
+      "bytes": 383183,
+      "sha256": "5d3ea82513408281ad523c037ae30536f34c1f78c8e1dc7591ca8b06a6603a0c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-capsules-candidate.callgrind",
+      "bytes": 383183,
+      "sha256": "94eb5c37081d01dad08d4be915345059891ddd7b2b686e8c5b293cf3f59202f2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-circles-baseline.callgrind",
+      "bytes": 362382,
+      "sha256": "ddbfda1420a1145fcc125e53d017101639620ae625fbb476738d4e09644bc6f3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-circles-candidate.callgrind",
+      "bytes": 362447,
+      "sha256": "ddbf6eb5c008e25dc8de259eb928790d3a8309e1df4c319a42ed3c8121c780d3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-rectangles-baseline.callgrind",
+      "bytes": 242366,
+      "sha256": "68a0f86333cc8064b856967e5a5ee579a13ecb72f07db5db1f6e67182ccf2b6a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions-rectangles-candidate.callgrind",
+      "bytes": 242374,
+      "sha256": "8daa3123eb3b3ac236a7fad941cbd145392a46b1d558fe739bbb977f8c95fc74"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions.sh",
+      "bytes": 1020,
+      "sha256": "dfe767fb749dba00c412386d911f6df1c1d02f1448976d4b298bdf44cc43e83f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/instructions.status",
+      "bytes": 155,
+      "sha256": "7cfbfde12b9434024f5b125bbcac57c78b84bde29acfc9e84751a23529c3593d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/intermediate-test",
+      "bytes": 28098808,
+      "sha256": "20ebce020de0a0c2b611614691a201aeb467defdcf1892c2d8d8d5387d8e6a9f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched-baseline-benches.jsonl",
+      "bytes": 151248,
+      "sha256": "de1cc8b534fcacdf2cb89aa794f66aab852e4e8fcafb1157cb2598e6c19d5043"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched-baseline-benches.log",
+      "bytes": 4612,
+      "sha256": "a823308382b81b100e58064139676ceae4277f1b940069cdd7d519a1623f98c3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched-baseline-wasm.log",
+      "bytes": 4795,
+      "sha256": "818d49a44dcbb3ce18134b35dc33085bf4d10119cf5d53b9676f5515ba35e984"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched-candidate-benches.jsonl",
+      "bytes": 151101,
+      "sha256": "2f02003c72d35d8f85bf39417f7c04a13437a676cfa28bd13dc1f27f4359e05d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched-candidate-benches.log",
+      "bytes": 205,
+      "sha256": "be37f7e52bbc2b9bcc5b0a9861763c945da72e8a5877df44748e09196e67aa28"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/matched-candidate-wasm.log",
+      "bytes": 377,
+      "sha256": "8ead82155436a420c74a20eae1708daa4a4ecfdbd4d77c34a4c1ce1c54604c5c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-1-baseline.log",
+      "bytes": 1866,
+      "sha256": "09278f15b81ed071e2e5c1b5015e08c5e83f8aa24ba69ac2b98b496563c52573"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-1-baseline.time",
+      "bytes": 66,
+      "sha256": "ba02dd2ac4aee2841611af51103948225a2b64f81880f29129f4152c30f2bf85"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-1-candidate.log",
+      "bytes": 1863,
+      "sha256": "a14cf91795a23585c8260ba829986aa27377f136e9b8ee4591aa35577cead1b1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-1-candidate.time",
+      "bytes": 66,
+      "sha256": "7dc14ea2df0ead046ad9c44abbdc3dae4ef68a03a11f516ecfc827071da3c571"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-2-baseline.log",
+      "bytes": 1867,
+      "sha256": "bef15d91bb0afd4bc62aafa80321bf28a3d44ccc7407e08266f064f9407d0785"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-2-baseline.time",
+      "bytes": 66,
+      "sha256": "f53fc2a1ce73356702c3c04a6ea1a1d7fc5c2ce10cf61fc6c1ab00471da254a2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-2-candidate.log",
+      "bytes": 1868,
+      "sha256": "9dde169678f4e920a2c49bf5281b37ffb0df4ad5a7c1ce1ecea8eee513e67999"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-2-candidate.time",
+      "bytes": 66,
+      "sha256": "4821105f9b7b8c187dc2557674593d6fdbaf093b7f45407ef8fb6baa80abfb9f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-3-baseline.log",
+      "bytes": 1868,
+      "sha256": "599d492692112929121bea551653a3cd79d3af472dc8c88867b666ed3c55e60c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-3-baseline.time",
+      "bytes": 66,
+      "sha256": "7f5671b282b9486d56381b419263d59c76b8054bacea5a86850bc3177d5229ed"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-3-candidate.log",
+      "bytes": 1867,
+      "sha256": "4a2d9177492fca541e1cb952b05a9c9bea3aa29397bdd7a6e6181b38ff7ec478"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-bezier_region-3-candidate.time",
+      "bytes": 66,
+      "sha256": "89e8c200527a68f37d8628ff07978ba679aa877d4de5149c2207f10d27b2592f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-capsules-1-baseline.log",
+      "bytes": 217,
+      "sha256": "671833f7e60c911660ba6b38e661ae63844ce6c8df8770f9eb477324282b6648"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-capsules-1-candidate.log",
+      "bytes": 217,
+      "sha256": "c06ffcc919e7451bef988a57fe4666c13cbb61db9e90128eb257c5b365399086"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-capsules-2-baseline.log",
+      "bytes": 217,
+      "sha256": "d7c189a0a85f09242a101f8df7768ef36e4fe58f4888fa2232b4ba7a0b4423ec"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-capsules-2-candidate.log",
+      "bytes": 217,
+      "sha256": "95f70d098697eef475c98af3ef5d8790c74766ec28de0aba09eba4ff3b2b1973"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-capsules-3-baseline.log",
+      "bytes": 217,
+      "sha256": "6dd334e0b39791aabaff3ad844b83237947f106fa1ef1b7b7862fe7dc4d35a38"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-capsules-3-candidate.log",
+      "bytes": 217,
+      "sha256": "c17a74b097a04a45df40bd2b83a04fcd5728c02fabc7a7a0c12bce845a8a6d37"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-1-baseline.log",
+      "bytes": 240,
+      "sha256": "26a0e54b75610d4fe34b288e40f0cd25070e8d17c81ab46b8cff9ef1eed93ef2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-1-baseline.time",
+      "bytes": 68,
+      "sha256": "12b2c5ff93bb5c6e99a9b1d29cd74cebeddf0db341f143fe0c76c530516cb194"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-1-candidate.log",
+      "bytes": 240,
+      "sha256": "b69d2a917ed349c4888a152667c4510671256a866e277cf66f3fc4413d0f2510"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-1-candidate.time",
+      "bytes": 68,
+      "sha256": "816080745412562de2e26448f462183c970322062305b71b7eedc4872718fc33"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-2-baseline.log",
+      "bytes": 240,
+      "sha256": "2743abc2c7586eafb9c24c1b60a70780327ad2ac97d804a37a78332f1b283423"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-2-baseline.time",
+      "bytes": 68,
+      "sha256": "fa102815d2db5bca8d2929f6eb0cef9e09b6d8ef8696ec948d2ba37f21a7a846"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-2-candidate.log",
+      "bytes": 240,
+      "sha256": "6ec1287c37f3d6c067b0d1d31f97b7139275fb27004a20a3095d6458652d64e4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-2-candidate.time",
+      "bytes": 68,
+      "sha256": "442346ef79c8f5e80d02e30149792d009eb04a91007073aa2fd6e0e22541e57c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-3-baseline.log",
+      "bytes": 240,
+      "sha256": "82e003a202e6d95fd765a0525fb88134a978d6aeff53a6ba251d40b5552bb2cf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-3-baseline.time",
+      "bytes": 68,
+      "sha256": "2482c591f851311beea0eb88e9a4eb6462fe3f55fc4c6f82cca40bdb8acc9f48"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-3-candidate.log",
+      "bytes": 240,
+      "sha256": "e2ecd1dd95e8e5ac7003afaccf37ed729a77e12863c6954c1e5ba0303ef914b0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-chord-3-candidate.time",
+      "bytes": 68,
+      "sha256": "bf294a4137d93476309dd69f7d882bbadcdcb2a8f74979554c41a3b7b2f60d75"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-circles-1-baseline.log",
+      "bytes": 217,
+      "sha256": "0026ef6d7bd7c5d87220287a0c83c177279e89eee68ad3278ea5d3700317c564"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-circles-1-candidate.log",
+      "bytes": 217,
+      "sha256": "50c7b85faa887b17874e2f4239eeed949a882e72a48ffee2bfb393dbffffb88d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-circles-2-baseline.log",
+      "bytes": 217,
+      "sha256": "4043ecbbb12e9a0a78101ff7fd3a69930d43d3fd4d4e4fe19ff4b7826b904cd6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-circles-2-candidate.log",
+      "bytes": 217,
+      "sha256": "ad51d5800a00dcf39ceded48892b4145b1f02ff87451de2682d1b43bbe059811"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-circles-3-baseline.log",
+      "bytes": 217,
+      "sha256": "49fb04e2e0ad554c80802a7ed614fe6106deb5d322b56c1e8a8258d1afad1fa2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-circles-3-candidate.log",
+      "bytes": 217,
+      "sha256": "f087ad6ecf7a8246d7282cfa3ebb7bef01bc96c5810df9bcfda0d63ddecfc93e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-1-baseline.log",
+      "bytes": 239,
+      "sha256": "97be99479c4528f93919a3b34d25d17a0d29a0f7a2cbd734b57db86427c490d6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-1-baseline.time",
+      "bytes": 68,
+      "sha256": "9ad877f919c97bcf408041c5a2be7258764b7b0dbf6b2d1a28af9618c98b27d2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-1-candidate.log",
+      "bytes": 239,
+      "sha256": "c258e37fc984bccefc84009dd9bc6693ef30769f2a80b4871eaef5c8b5929982"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-1-candidate.time",
+      "bytes": 68,
+      "sha256": "2499b614b1b743d99ddd13aab2193578657630d32c8ab8883a3c82ce2977c84a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-2-baseline.log",
+      "bytes": 239,
+      "sha256": "2e371db56c7a8b6e82d77264c1b4110bf32df2552cbab459b9f15b6c6838fd0f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-2-baseline.time",
+      "bytes": 68,
+      "sha256": "7f800299ac35d3308bd9bb4c8a54ac45329fe1e4113f395837d989ea7f85380a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-2-candidate.log",
+      "bytes": 239,
+      "sha256": "f7d3b007b906aa76fa92a1df71e473c64015b1166f439996378c95425f0ca632"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-2-candidate.time",
+      "bytes": 68,
+      "sha256": "cf9385444c5d751e4feaaa992d6086c18cf8b3229ab3991ca6fc5455b47ab1c0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-3-baseline.log",
+      "bytes": 239,
+      "sha256": "4103a401db0889b4c3e4a6fdc188f65176e42ef21db6385843432b069a4a546d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-3-baseline.time",
+      "bytes": 68,
+      "sha256": "8dc929466407a27fe48445c04f7d794f8ea8a05155f4667ca37ddcaa23e81ba0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-3-candidate.log",
+      "bytes": 239,
+      "sha256": "7d1b26c3fe3abde6f3a7847b8197a5ce2890f4f7fa67d999c2745bbfa424bbea"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-contacts-3-candidate.time",
+      "bytes": 68,
+      "sha256": "3eaea12ef65f32dc508b4961749383de0d9f14f09b4ac1e465522f59ca37118f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-1-baseline.log",
+      "bytes": 230,
+      "sha256": "827f82f671b34005089318129a63720af65cc7dcd28e6c884f071c8af0a19fb6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-1-baseline.time",
+      "bytes": 68,
+      "sha256": "3d0679b96aec10ce66564e72daeaff692ff332ae69969d47bcdf7a74a9a4f2aa"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-1-candidate.log",
+      "bytes": 230,
+      "sha256": "fc5aecc33d221b4ba88605bc2134da3ab58710177d52f0fcf85cd9fa43664ee7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-1-candidate.time",
+      "bytes": 68,
+      "sha256": "d13a892d7e8fc6047a2af46af6af457a99600e8a22fd3d99404b56962fdb38bd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-2-baseline.log",
+      "bytes": 230,
+      "sha256": "59b861d23f2313992ad39efaaef37db7ed9e01ec9e560078b5fa030aefcc30e7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-2-baseline.time",
+      "bytes": 68,
+      "sha256": "258b304a1ba885a2464849a2623a93577dad25e46c5fce400e7e93f630323a95"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-2-candidate.log",
+      "bytes": 230,
+      "sha256": "e16d00ee8f75c41e24ad9fed239c6387b5ab04f54496d06b6b9e2ce236139018"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-2-candidate.time",
+      "bytes": 68,
+      "sha256": "7a9424a0a3782d335d19109221c25b79c35951d69eff0f68ee53629270f0e63e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-3-baseline.log",
+      "bytes": 230,
+      "sha256": "5805da8f25c4942b076943fa2d7a7eaac309f2364bcda06c4da631e7b884ecb5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-3-baseline.time",
+      "bytes": 68,
+      "sha256": "a5d4a810e2884002ac93dd94d4a7ee91b7b74ba74ad10aa5f6174f48f5e43022"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-3-candidate.log",
+      "bytes": 230,
+      "sha256": "a682b644876f48e99a8ec393e333bfc3063b8408ddc89e6653b075b65d1f315c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-radial-3-candidate.time",
+      "bytes": 68,
+      "sha256": "e81cc673d7525e1329fec80547973ba7cb0d3c250321fc27455a1146eae74d32"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-1-baseline.log",
+      "bytes": 2311,
+      "sha256": "ad8e318c9a059a59678b392d04cd99bdf76aea7ebff1687131f02baf41cd2089"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "6c783134fe2fb73c77f15951ad585b4bb847021c26a5ba3123048034a1cd1539"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-1-candidate.log",
+      "bytes": 2314,
+      "sha256": "2b36987527db88e3bd3857392512ff188d9556428bae5c58927325914f3db614"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "5cc2842284dded45626edf9dc64fd3d05cc7d0a5022b5af6f2997caafc12bfc7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-2-baseline.log",
+      "bytes": 2317,
+      "sha256": "336e5e76d79a883b2e09a51a0c8f6c954d95d4f1b9754f2530ce58bebc9672f3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "775bcfc959822c73a3b6ce94e7b3853ee74659419471e42ce67899c566639c5c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-2-candidate.log",
+      "bytes": 2315,
+      "sha256": "257f79c8bc72696edb3236d94719fcaf9e51f2f6701a7a5a901b0fb79755fd32"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "888dc80ecda18444b34f9b01cc34b45f01333d4aef694d52f7c3f2c0ca0efbf4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-3-baseline.log",
+      "bytes": 2316,
+      "sha256": "489357c8eb9a0b75c440449996e18d95ba8ab93b0f239f2f8f20de56ba9c98a7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "28ca07a0d784e3fbd0b98de215211e2f6ddd552fe91d4cc9f3e610c729ba993c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-3-candidate.log",
+      "bytes": 2318,
+      "sha256": "d35dcd2a4562e2f9011c2c6b2d33b8c049a77e29cd8353e6b524731436fa93a2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "1196478a94eb02429b4cf4d19298b0e7f43d406b83ea84af863fe780c782465f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rectangles-1-baseline.log",
+      "bytes": 213,
+      "sha256": "5a99a64fbf68f79d6355f5bb23ccabe2d49be8f97c616f8ebe7d43f9e0c0b776"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rectangles-1-candidate.log",
+      "bytes": 213,
+      "sha256": "8bd824781811acafd4fa0de1c843eee49d686eef237e4b1d76070d5464a27ea0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rectangles-2-baseline.log",
+      "bytes": 213,
+      "sha256": "6171e2c818523cb9e61e95a49ed0a4c42c950254abeaeccc6fe108bc5bbda302"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rectangles-2-candidate.log",
+      "bytes": 213,
+      "sha256": "f9b120496210669a9416ce6ab0c4c1011a2721cd1a9592ca4d7ac01c474f8cd6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rectangles-3-baseline.log",
+      "bytes": 213,
+      "sha256": "60720e159472682f3e1d965d5a2b479100087e0ee7ce78c2e426f44f3d77089c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-rectangles-3-candidate.log",
+      "bytes": 213,
+      "sha256": "33ad7b0c7fcb06eca191d1f29fe77b2d5ed61810398db3ef5af70c04a3fb6637"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-results.json",
+      "bytes": 129070,
+      "sha256": "8b550c7e7638099804780b4fcee3346469182c23c5ff3eafff9b5fa3982934c6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-1-baseline.log",
+      "bytes": 228,
+      "sha256": "bf41c131ee90600a0d170ffd930e7e75b88f54d6e19f74408789859dedf7d032"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-1-baseline.time",
+      "bytes": 68,
+      "sha256": "957738644ba3c85932c23ca066dd886d027f5a7f9312b4619ea2abfcd4a1751e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-1-candidate.log",
+      "bytes": 228,
+      "sha256": "f2cf699e5f336c58c42d9e26169efb799c780a0f343c9dd99aa312999b2bf5f1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-1-candidate.time",
+      "bytes": 68,
+      "sha256": "586fd59001e29f343dd750c1e96fefb93ccf81800f18b608af604b4733719d4a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-2-baseline.log",
+      "bytes": 228,
+      "sha256": "ae6a33e1d1157b9ba9ebd1fb6f2de5163cfb313dc4c909b9841394536d126a15"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-2-baseline.time",
+      "bytes": 68,
+      "sha256": "bda451bc30ba5686462c3180ef71987913c148885ce228906157404c18d80a5e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-2-candidate.log",
+      "bytes": 228,
+      "sha256": "9a2e6b0202179292046c328db06c05146a785dfde1e8ac3e0fb934cd0513377e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-2-candidate.time",
+      "bytes": 68,
+      "sha256": "0f3b233c337ff88a4dc363423c6968cbd47ef22c943d53c40b1d2f442eaae787"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-3-baseline.log",
+      "bytes": 228,
+      "sha256": "e31150daa170451daff1439cf84d05461e74196f66b8bdcf2639c5ff8903e832"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-3-baseline.time",
+      "bytes": 68,
+      "sha256": "fc263e2465c72cbe2b6820d7a1893021fe5eea02004ed4d247353e6326df1a03"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-3-candidate.log",
+      "bytes": 228,
+      "sha256": "23e70c6b29828f3e26f7a35b86fc6febd8246e759cd19489eccc31e28a117e79"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-selected-3-candidate.time",
+      "bytes": 68,
+      "sha256": "0e288a94ce899c4af67af1a61628d0013fbffa5264519ab188f3a7a30a40309f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired-timings.sh",
+      "bytes": 2594,
+      "sha256": "350ffdc1abe4d99ce0b08556b3541cb071d6824e02cddb7b160c2f5f93742709"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/paired.status",
+      "bytes": 630,
+      "sha256": "512d309a5d70ec8564f08c12ec517c51adf26409c8a0da047fa677851743f8cf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/qualify-hypercurve.sh",
+      "bytes": 3296,
+      "sha256": "0d35f084f5bd9dda59e408d5245b73f6a488eface1ca6b125226778273dc5ac8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/raw-allocation-traces",
+      "bytes": 39648,
+      "sha256": "24b5011d19c4b6f72828f5e6a8c9867e6d6d2f31736d21c9a18966722614e2f5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/raw-allocation-traces.cpp",
+      "bytes": 8356,
+      "sha256": "7431b3c84656977d9f1e59177fbdcaa00148e2cb9a2e8bf73ccf8aa206648244"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-1-baseline.log",
+      "bytes": 1865,
+      "sha256": "ebb793689824fe0502e3fccd773436b5d62c7efdb284e462e7c8b4fbd940d47d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-1-baseline.time",
+      "bytes": 66,
+      "sha256": "9702541a9347e29f67610a0db6857aa1bba8b9cadc689484e6bfd96e0206541b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-1-candidate.log",
+      "bytes": 1866,
+      "sha256": "6f6c822555a8dc98887d8d7d69ccfbea4f35646ded9f9103c407bf876ebdee9c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-1-candidate.time",
+      "bytes": 66,
+      "sha256": "988384bdd92d62351fc53d2ae5040305035b564f610d064887996f3600a23215"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-2-baseline.log",
+      "bytes": 1867,
+      "sha256": "bdddeea4a45fed2efc5549c8a85925a9903bacdf664a16f37477757e67d89d37"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-2-baseline.time",
+      "bytes": 66,
+      "sha256": "13cf9b1137b29b9ce9755ffff2485544cff71699232532c10ad0f10d8570eabc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-2-candidate.log",
+      "bytes": 1865,
+      "sha256": "2a2fbad3c172dd774946916e873ab718936e9eead602e07dafbaace8cb7d3fee"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-2-candidate.time",
+      "bytes": 66,
+      "sha256": "4d242789dc7e009a5bb86a289d612e81e0dee372c44b0489b3d5f3b3fdba51c7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-3-baseline.log",
+      "bytes": 1867,
+      "sha256": "af7a2f84866de8826b018c674d6f528e6525d83b8be56267d62859b761fcde73"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-3-baseline.time",
+      "bytes": 66,
+      "sha256": "ea5b1e385dbf8ab86278251a0d0df960f5e06dbc4e0b3ed79eb82f90bab6f6be"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-3-candidate.log",
+      "bytes": 1868,
+      "sha256": "2443b83a79c6f7117664190436a7cfe8672dd443c69e25725e8f21b37b54e164"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-3-candidate.time",
+      "bytes": 66,
+      "sha256": "39b4523d1e4329e2d0bec8edfa78fe78cd8d480ac5770f41e4c14f4daf0ac0a4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-4-baseline.log",
+      "bytes": 1865,
+      "sha256": "f1183a2587676826e890937ca391a083452356291de5596cb55885913c2d07de"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-4-baseline.time",
+      "bytes": 66,
+      "sha256": "452a2e33ad938043d0afc641a3477e0c25a194c21cf20146a7638ae67e34469b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-4-candidate.log",
+      "bytes": 1865,
+      "sha256": "bea7c901724ac2fbf5f7f87ed857822b762f4bf848b95184798479553bc860ed"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-4-candidate.time",
+      "bytes": 66,
+      "sha256": "96672e4582607e8f38dc6a434c1e6fd6b56daf481dbe46ab5b6586a5ee536973"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-5-baseline.log",
+      "bytes": 1866,
+      "sha256": "cd7938bb8ff7978fc1fad47ada7cb5af7e6fb1469519b2b5c197b5c326ad9af2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-5-baseline.time",
+      "bytes": 66,
+      "sha256": "0220bba67c8cbec835874a222cd59195f4515474a067558f4c3eee631acdd2e9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-5-candidate.log",
+      "bytes": 1867,
+      "sha256": "6a5cee5097ef104bf0bbab2387d0660eca1b1b8e60e65ef30354ed906699dc72"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-5-candidate.time",
+      "bytes": 66,
+      "sha256": "805907dbaf96145f9870e625cd578e5b1415734f946f4c31057938d6e57edf6e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-6-baseline.log",
+      "bytes": 1870,
+      "sha256": "f701284989e1ea5aa80bc70bf00d9112b14a51e6ccdef17743d4602eab881fc7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-6-baseline.time",
+      "bytes": 66,
+      "sha256": "3fdbe70d7d6b669c09a1800318e32598d87df7194cb5132e9c7fce794087faed"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-6-candidate.log",
+      "bytes": 1866,
+      "sha256": "7015a4650b34f62cde08153a5913363291c824069e4d4e8769e0ac7d631a187c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-6-candidate.time",
+      "bytes": 66,
+      "sha256": "710490f4aec0785e5c6d87de7a498b8ec23a7d6c73e1d0fdbc184fd0a01704a4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-7-baseline.log",
+      "bytes": 1864,
+      "sha256": "a00a24cef01c913641ec41aeb780b2567b0238623ccadf99d71e25b964a3f978"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-7-baseline.time",
+      "bytes": 66,
+      "sha256": "b9a6117665497909c3e8ecd401d273682c0811c5a8bde5559a71480a0f06dd34"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-7-candidate.log",
+      "bytes": 1868,
+      "sha256": "55348b1a061fdc0fb60ad3715119f1376ecf1d34dba95208e6e3b0ed84386cdf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-bezier_region-7-candidate.time",
+      "bytes": 66,
+      "sha256": "5fbe53120f9d0f54ccfca9575989bb73b7d001b58d68073d8acd12d2db823fbf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-native.sh",
+      "bytes": 999,
+      "sha256": "daf9e9bddade90ef2f1ebd10f761bee85cc68c5dfb8d083ca7ffe1b64a3411fc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-1-baseline.log",
+      "bytes": 2312,
+      "sha256": "09429ff2c62c9ea54179897c9f887220ce3de2bb750a52129aae1ef0860384ab"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "80d2e31551499faff4d373ed7c4ed2ac416036ac5681fe48fbfd15f0ba426b2a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-1-candidate.log",
+      "bytes": 2315,
+      "sha256": "26174d1446ea0ecacb119806b028f00ae5d786a4c3bcd001909deb36b45d8402"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "f5bf941588f70295b2713a50d650f7d9ff7221a85ca3d4dca0c4e899b8b944a4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-2-baseline.log",
+      "bytes": 2319,
+      "sha256": "24c12d673285daa7d4744d4468d3d17351c4719cd37a258fd6f3b2576505088a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "1fac6bee7bdee7472693b24bbefab92dc08ee8412c3d8371d3e6638bb74a369b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-2-candidate.log",
+      "bytes": 2320,
+      "sha256": "2900c3786353373b4c347a63c3f687c86dd4bfdaa04bd59a23af9cb4dad7e2a9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "d081d0f328ccb46d828c58f932efc0ae91f3dbc027731ec9ba43d89c16011098"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-3-baseline.log",
+      "bytes": 2316,
+      "sha256": "c2c3bef602ece27da75ea5b4276280f5c02b5bbe053e7983a1befbd081888dd0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "4d355ecf452f0fd9919a4b8b1748a89a36f47b3bba588194808c1de8baf9c3bf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-3-candidate.log",
+      "bytes": 2313,
+      "sha256": "aaf773f4beb410cdf43fd2f8fd31b1cd6ede5d3f62770c936d9d3d4428a87738"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "c1ead87b9c3cf84f6fefdf7990504a84a817704399f3e0fe293f583166185d27"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-4-baseline.log",
+      "bytes": 2316,
+      "sha256": "fa680286f387f4e9d8222e36313ab247b296567e4bd4f8bb571ba8c83c53380a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-4-baseline.time",
+      "bytes": 66,
+      "sha256": "48bc6a7fd62525085d2ea15dc3e568b2f6da2467cdc6ab165cf5d36e74f74103"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-4-candidate.log",
+      "bytes": 2316,
+      "sha256": "0b3b1676f6d21fe724ffc8853f2ceec2d755051b2b222dd7fcfded6601ee37d4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-4-candidate.time",
+      "bytes": 66,
+      "sha256": "916dc1719a8b2b0bc55cf69d82772b700b913c598855ba087e909671aa85d2bd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-5-baseline.log",
+      "bytes": 2319,
+      "sha256": "4fb31af29db6d8c1fc3a6d04d121f7d9c713ffbd9fe8a741fd541d284b0049eb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-5-baseline.time",
+      "bytes": 66,
+      "sha256": "03f44c3c64e237d93b2e04a5066dbd2625f332fc1ae830f037437f1182f70fdc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-5-candidate.log",
+      "bytes": 2318,
+      "sha256": "286a1fadcdc89a082592f866f0817cc442277eba9983620672dbb42d7b9e725b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-5-candidate.time",
+      "bytes": 66,
+      "sha256": "7811d67007f76e94863a9ae8f4503a1a7beec4445b6df51d1853a903efe8ef0e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-6-baseline.log",
+      "bytes": 2313,
+      "sha256": "ff1a4f876aa2d9492cfbdeef0066047c96c3c190ce6ce3280f44dc624b6fd8c6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-6-baseline.time",
+      "bytes": 66,
+      "sha256": "b732cfa761ff624bf28c4acdc55ebc495b00bf876900eb5502d0f5afae6a9c6a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-6-candidate.log",
+      "bytes": 2319,
+      "sha256": "dabdb8f3bed37fa8d655725661dedb9d23e11ceebb78cb95c54eb82ab1e1a11d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-6-candidate.time",
+      "bytes": 66,
+      "sha256": "8fc8d8327d4259780bd2b97218069a7a13393dc7e7678d04cf03e48436a92859"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-7-baseline.log",
+      "bytes": 2316,
+      "sha256": "7b8a8aa951cf3e4ce03912365de4f1386586cb65f84f8467a6e0236ce331a786"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-7-baseline.time",
+      "bytes": 66,
+      "sha256": "6ef7333c216cae51f1e2ad11a31aec46a6fa1855d66e74f0c3f523e9877aebc2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-7-candidate.log",
+      "bytes": 2318,
+      "sha256": "f9f94cdce07de3e5663859d98aa839135d99295528e3e01d5239d9351793baf0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-rational_bezier-7-candidate.time",
+      "bytes": 66,
+      "sha256": "2373520950c77b3f4f91c2cc621148c86ee3eb9201a2cbfbc1fb6b910b5d7063"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat-results.json",
+      "bytes": 235822,
+      "sha256": "76fb5d5ef71ab9651b2adbc5aa0c6a5991625e89afeedb990ecbba54fa43315e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/repeat.status",
+      "bytes": 938,
+      "sha256": "e6f958189b93dc63562a1f06490bb1f6461dd10ddf53904061513faa99e7b4fa"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/represented-center-after.log",
+      "bytes": 463,
+      "sha256": "04dc2df4c3eb62699c1a393265a0458b75fb5a45164a6ca78662ed5f028d78bf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/represented-center-before-test",
+      "bytes": 28080696,
+      "sha256": "8845e84bd27cc307061401856ee87f56037fe545c3f02e37705401d45d8db29b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/represented-center-before.log",
+      "bytes": 990,
+      "sha256": "65fea0535f75cf53f4493d89f2efea2985c11d80943ab6b9a117a29b403d35d4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/represented-center-final.log",
+      "bytes": 463,
+      "sha256": "d3ef071a63266298fa5d9ddcdde64543512ae0595a954544ca694bd64a63e814"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/test-draft-build.log",
+      "bytes": 1358,
+      "sha256": "662e604f2cbbfeb067ae5a92d9ee6103f96eb1ecf9f5f446ff5421a2be99285b"
+    }
+  ],
+  "artifact_integrity_audit": {
+    "verified_files": 216,
+    "exit": 0,
+    "manifest": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/artifact-sha256.manifest",
+    "manifest_sha256": "28a486a9745642472f59f144714961312362b88654779776c039ce7403c87c28",
+    "log": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-seeding.CIBz1x/artifact-sha256-audit.log",
+    "sha256": "ad712f920348dc340656ff6e960ae5d0da9c107ba80795f1ecc275b99658c685"
+  }
+}

@@ -1,0 +1,4637 @@
+{
+  "schema": 1,
+  "date": "2026-09-06",
+  "title": "Certified authored-circle components and endpoint correspondence",
+  "decision": "retain authored-circle support certification, complete conjugate residual contacts, and replay fixes while deleting duplicate seeding and redundant mapped-root ordering; overall release readiness remains open",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory",
+    "binary size",
+    "code size"
+  ],
+  "revisions": [
+    {
+      "repo": "hyperreal",
+      "revision": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c"
+    },
+    {
+      "repo": "hyperlimit",
+      "revision": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5"
+    },
+    {
+      "repo": "hyperlattice",
+      "revision": "53427ce89f8c82c016e69a04e035787e2753adc8"
+    },
+    {
+      "repo": "hypertri",
+      "revision": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+    },
+    {
+      "repo": "hypersolve",
+      "revision": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e"
+    },
+    {
+      "repo": "hypercurve",
+      "revision": "145fda9462f38f7438ded467d8a1102768900ab4"
+    }
+  ],
+  "hypercurve_candidate": "5156f67a4afc651a6f655d4ac2ba8a2317a7c3ff",
+  "milestone_status": {
+    "exactcorelib_mining_and_recorded_uplift": "closed before this checkpoint; no new milestone closure",
+    "hypercurve_release_readiness": "open",
+    "overall_goal": "active"
+  },
+  "source": {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "f0cbf167f7e512efc74c6050f5db70096e52aee1dfb0e83526c950ce737fe88a",
+    "production_rust_net_lines": 27,
+    "test_rust_net_lines": 361,
+    "public_api": "unchanged; no compatibility interface, alias, shim, or alternate solver",
+    "behavior": "Before a norm-zero circle component is admitted, the existing selected-field identity proof certifies the unsquared authored equation. A conjugate-only norm descends through its nonzero coefficient into the same finite-contact kernel. The identity helper borrows both coefficient polynomials. Rational-circle component boundaries use the shared complete finite-fiber authority, including centers that refine to Exact. On certified authored support, complete angular-root partitions certify strict cell order directly. Cell/contact evidence is classified before the one shared map captures the consumed construction policy; three polynomial clones and repeated mapped-root ordering are removed. One orientation-aware endpoint correspondence serves forward mapping, inversion, and location; point publication validates requested policy before returning evidence."
+  },
+  "regressions": {
+    "cases": [
+      "selected_fiber_rational_overlap_keeps_exact_center",
+      "selected_fiber_rational_overlap_replays_certified_policy",
+      "selected_fiber_rational_component_publishes_its_isolated_endpoint",
+      "selected_fiber_rational_component_rejects_the_conjugate_circle"
+    ],
+    "baseline": "All four tests fail with old production: exact-center boundary seeding panics; certified overlap and isolated component-contact publication reject STRICT replay after APPROXIMATE_512 construction; conjugate circles publish false overlap arcs instead of a tangent contact or empty result.",
+    "intermediate": "The seeding/publication-only candidate passes isolated-contact replay but the overlap matrices expose incorrect reversed endpoints. The first orientation-corrected candidate passed all eleven gates yet a follow-up geometric probe exposed false conjugate overlaps. Original main reproduces that defect too. Fifty-seven superseded qualification/profile/build artifacts plus their source diff remain under initial-qualification; they are not the final results. The support-before driver initially rejected ambiguous full/minimal executables (exit124, no regression ran); using Cargo’s reported executable produced the recorded false-overlap failure.",
+    "candidate": "All four pass across exact-refining and genuinely algebraic centers, both circle/source traversals and requested policies. Conjugate unit circles with center separations two/four retain exactly their tangent contact/no contacts, while genuine nonzero-offset authored quarters retain their overlaps. Exact endpoint/interior points and angular parameters, inverse correspondence, tangency and real terminal consumption/rejection are checked. The existing folded-component test and region Boolean consumers remain in the full suite.",
+    "artifacts_scope": "The early baseline has two new tests before formatting; matched-baseline has three. Authored-baseline carries the byte-identical final conversion_tests module with all four new tests and the same 907-test catalog as the candidate. Authored-baseline, not the early or intermediate binaries, supplies unit timing and heap controls."
+  },
+  "validation": {
+    "all_features_include_ignored": {
+      "passed": 1757,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 46
+    },
+    "no_default_features": {
+      "passed": 1719,
+      "failed": 0,
+      "ignored": 4,
+      "suites": 46,
+      "ignored_coverage": "all four opt-in tests pass in the full run"
+    },
+    "ui": {
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 1
+    },
+    "gates": [
+      "fmt 0",
+      "full 0",
+      "clippy 0",
+      "minimal 0",
+      "minimal-clippy 0",
+      "docs 0",
+      "minimal-docs 0",
+      "fuzz-check 0",
+      "ui-tests 0",
+      "ui-clippy 0",
+      "ui-wasm 0"
+    ],
+    "fuzz_targets_compiled": true,
+    "new_fuzz_campaign": false,
+    "fresh_coverage": false,
+    "lower_stack_or_hypermesh_requalification": false
+  },
+  "build_control": {
+    "source_root": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/snapshot",
+    "matched_paths": true,
+    "dependencies": "All six crate sources are archived from their recorded HEADs. No dependency points into a concurrent live worktree. All live Hyperreal edits are excluded, including formatting, inverse-trigonometric/hyperbolic, and logarithm drafts.",
+    "unit_features": "all features including dispatch-trace and comparative-benchmarks; matching 907-test catalogs and byte-identical measured folded-overlap test body",
+    "native_benchmark_features": "default features; three named release benchmarks",
+    "wasm_features": "UI defaults, release wasm32-unknown-unknown",
+    "timing_context": "Three alternating pairs and seven additional native pairs pinned to CPU 7 after owned qualification/build/profile workers completed. CPU-3 Callgrind and Heaptrack records may overlap qualification and are not wall-time comparisons."
+  },
+  "timings": {
+    "excluded_attempt": "The initial driver was stopped (exit143) after observing an external eight-thread audit on CPUs8-15, including CPU7's SMT sibling. Two selected-test invocations completed; a third chord invocation has no terminal result. Six raw artifacts and a README are preserved under contended-timing-attempt and excluded from all aggregates. The final matrix restarted after the external workers disappeared; an untruncated compact host-process snapshot during round2 also found no external build/test/profile workers. Desktop load and frequency scaling remain uncontrolled.",
+    "total_invocations": 88,
+    "total_lane_measurements": 856,
+    "three_pairs": {
+      "lane_measurement_count": 282,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 60,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 5.91,
+          "user_s": 5.81,
+          "system_s": 0,
+          "max_rss_kib": 9240,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 5.91,
+          "user_s": 5.82,
+          "system_s": 0.01,
+          "max_rss_kib": 9004,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 5.9,
+          "user_s": 5.87,
+          "system_s": 0,
+          "max_rss_kib": 9404,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 5.95,
+          "user_s": 5.92,
+          "system_s": 0,
+          "max_rss_kib": 9332,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 5.9,
+          "user_s": 5.86,
+          "system_s": 0,
+          "max_rss_kib": 9412,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 5.81,
+          "user_s": 5.77,
+          "system_s": 0,
+          "max_rss_kib": 9220,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 17.3,
+          "user_s": 17.16,
+          "system_s": 0.03,
+          "max_rss_kib": 46044,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 17.3,
+          "user_s": 17.18,
+          "system_s": 0.03,
+          "max_rss_kib": 45892,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 17.11,
+          "user_s": 16.92,
+          "system_s": 0.04,
+          "max_rss_kib": 45748,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 17.18,
+          "user_s": 16.99,
+          "system_s": 0.03,
+          "max_rss_kib": 45792,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 17.1,
+          "user_s": 17,
+          "system_s": 0.02,
+          "max_rss_kib": 45712,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 17.19,
+          "user_s": 17.05,
+          "system_s": 0.04,
+          "max_rss_kib": 46216,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 11.41,
+          "user_s": 11.32,
+          "system_s": 0.01,
+          "max_rss_kib": 26616,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 11.67,
+          "user_s": 11.58,
+          "system_s": 0.01,
+          "max_rss_kib": 26244,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 11.46,
+          "user_s": 11.38,
+          "system_s": 0.02,
+          "max_rss_kib": 26796,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 11.89,
+          "user_s": 11.82,
+          "system_s": 0.01,
+          "max_rss_kib": 26612,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 11.51,
+          "user_s": 11.42,
+          "system_s": 0.02,
+          "max_rss_kib": 26624,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 11.55,
+          "user_s": 11.46,
+          "system_s": 0.02,
+          "max_rss_kib": 26628,
+          "exit": 0
+        },
+        {
+          "fixture": "overlaps",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.05,
+          "user_s": 0.04,
+          "system_s": 0,
+          "max_rss_kib": 15300,
+          "exit": 0
+        },
+        {
+          "fixture": "overlaps",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.04,
+          "user_s": 0.04,
+          "system_s": 0,
+          "max_rss_kib": 14936,
+          "exit": 0
+        },
+        {
+          "fixture": "overlaps",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.04,
+          "user_s": 0.04,
+          "system_s": 0,
+          "max_rss_kib": 14992,
+          "exit": 0
+        },
+        {
+          "fixture": "overlaps",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.04,
+          "user_s": 0.04,
+          "system_s": 0,
+          "max_rss_kib": 15076,
+          "exit": 0
+        },
+        {
+          "fixture": "overlaps",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.04,
+          "user_s": 0.04,
+          "system_s": 0,
+          "max_rss_kib": 15156,
+          "exit": 0
+        },
+        {
+          "fixture": "overlaps",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.04,
+          "user_s": 0.04,
+          "system_s": 0,
+          "max_rss_kib": 14904,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 30.3,
+          "user_s": 30.12,
+          "system_s": 0.04,
+          "max_rss_kib": 49140,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 31.3,
+          "user_s": 31.1,
+          "system_s": 0.03,
+          "max_rss_kib": 49580,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 30.73,
+          "user_s": 30.51,
+          "system_s": 0.04,
+          "max_rss_kib": 48964,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 30.95,
+          "user_s": 30.75,
+          "system_s": 0.04,
+          "max_rss_kib": 49128,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 30.48,
+          "user_s": 30.29,
+          "system_s": 0.03,
+          "max_rss_kib": 49160,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 31.06,
+          "user_s": 30.87,
+          "system_s": 0.04,
+          "max_rss_kib": 49528,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31156,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.33,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31180,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31260,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31320,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31304,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31288,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 22.77,
+          "user_s": 22.64,
+          "system_s": 0.01,
+          "max_rss_kib": 18084,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 22.21,
+          "user_s": 22.1,
+          "system_s": 0.01,
+          "max_rss_kib": 17696,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 20.86,
+          "user_s": 20.74,
+          "system_s": 0.01,
+          "max_rss_kib": 17284,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 21.21,
+          "user_s": 21.09,
+          "system_s": 0.01,
+          "max_rss_kib": 17344,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 20.82,
+          "user_s": 20.72,
+          "system_s": 0,
+          "max_rss_kib": 17724,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 21.34,
+          "user_s": 21.22,
+          "system_s": 0.01,
+          "max_rss_kib": 17800,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.91,
+            5.9,
+            5.9
+          ],
+          "candidate": [
+            5.91,
+            5.95,
+            5.81
+          ],
+          "baseline_median": 5.9,
+          "candidate_median": 5.91,
+          "change_percent": 0.16949152542371504
+        },
+        {
+          "name": "chord",
+          "baseline": [
+            17.3,
+            17.11,
+            17.1
+          ],
+          "candidate": [
+            17.3,
+            17.18,
+            17.19
+          ],
+          "baseline_median": 17.11,
+          "candidate_median": 17.19,
+          "change_percent": 0.46756282875513033
+        },
+        {
+          "name": "contacts",
+          "baseline": [
+            11.41,
+            11.46,
+            11.51
+          ],
+          "candidate": [
+            11.67,
+            11.89,
+            11.55
+          ],
+          "baseline_median": 11.46,
+          "candidate_median": 11.67,
+          "change_percent": 1.8324607329842868
+        },
+        {
+          "name": "overlaps",
+          "baseline": [
+            0.05,
+            0.04,
+            0.04
+          ],
+          "candidate": [
+            0.04,
+            0.04,
+            0.04
+          ],
+          "baseline_median": 0.04,
+          "candidate_median": 0.04,
+          "change_percent": 0
+        },
+        {
+          "name": "radial",
+          "baseline": [
+            30.3,
+            30.73,
+            30.48
+          ],
+          "candidate": [
+            31.3,
+            30.95,
+            31.06
+          ],
+          "baseline_median": 30.48,
+          "candidate_median": 31.06,
+          "change_percent": 1.9028871391076008
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.35,
+            0.36,
+            0.32
+          ],
+          "candidate": [
+            0.33,
+            0.33,
+            0.32
+          ],
+          "baseline_median": 0.35,
+          "candidate_median": 0.33,
+          "change_percent": -5.714285714285705
+        },
+        {
+          "name": "selected",
+          "baseline": [
+            22.77,
+            20.86,
+            20.82
+          ],
+          "candidate": [
+            22.21,
+            21.21,
+            21.34
+          ],
+          "baseline_median": 20.86,
+          "candidate_median": 21.34,
+          "change_percent": 2.301054650047951
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            182465.584,
+            172073.127,
+            174510.24
+          ],
+          "candidate": [
+            186476.2,
+            181518.289,
+            172908.31
+          ],
+          "baseline_median": 174510.24,
+          "candidate_median": 181518.289,
+          "change_percent": 4.015838268287286
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2885.18265,
+            2917.3949,
+            2841.68855
+          ],
+          "candidate": [
+            2981.90245,
+            3952.7984,
+            2934.17275
+          ],
+          "baseline_median": 2885.18265,
+          "candidate_median": 2981.90245,
+          "change_percent": 3.3522938313801376
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            23072.9609,
+            23038.6552,
+            23275.129
+          ],
+          "candidate": [
+            23773.2213,
+            23751.4743,
+            23415.74985
+          ],
+          "baseline_median": 23072.9609,
+          "candidate_median": 23751.4743,
+          "change_percent": 2.940729639948403
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            2.9182,
+            3.389178,
+            2.956417
+          ],
+          "candidate": [
+            3.05556,
+            3.015843,
+            2.939148
+          ],
+          "baseline_median": 2.956417,
+          "candidate_median": 3.015843,
+          "change_percent": 2.0100682684479176
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.62604,
+            12.62524,
+            12.68863
+          ],
+          "candidate": [
+            12.78433,
+            13.018,
+            12.80732
+          ],
+          "baseline_median": 12.62604,
+          "candidate_median": 12.80732,
+          "change_percent": 1.43576291537173
+        },
+        {
+          "name": "circles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            4476829.694,
+            4533117.682,
+            4443299.084
+          ],
+          "candidate": [
+            4487303.516,
+            4530388.58,
+            4550935.03
+          ],
+          "baseline_median": 4476829.694,
+          "candidate_median": 4530388.58,
+          "change_percent": 1.1963574596500992
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            360.32,
+            356.1705,
+            358.5605
+          ],
+          "candidate": [
+            362.4505,
+            362.0405,
+            359.5705
+          ],
+          "baseline_median": 358.5605,
+          "candidate_median": 362.0405,
+          "change_percent": 0.9705475087188997
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            352.766,
+            349.276,
+            340.107
+          ],
+          "candidate": [
+            358.635,
+            351.9105,
+            350.251
+          ],
+          "baseline_median": 349.276,
+          "candidate_median": 351.9105,
+          "change_percent": 0.7542745565111808
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            55300.152,
+            61179.8835,
+            55075.3775
+          ],
+          "candidate": [
+            56612.402,
+            55705.794,
+            54803.406
+          ],
+          "baseline_median": 55300.152,
+          "candidate_median": 55705.794,
+          "change_percent": 0.7335278210446772
+        },
+        {
+          "name": "circles/curve_region_boolean_four_independent",
+          "baseline": [
+            9016986.823,
+            9242517.764,
+            9023822.595
+          ],
+          "candidate": [
+            9079174.908,
+            9146296.723,
+            9028813.023
+          ],
+          "baseline_median": 9023822.595,
+          "candidate_median": 9079174.908,
+          "change_percent": 0.6134020523704597
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            13048.793950000001,
+            13031.8401,
+            13458.57635
+          ],
+          "candidate": [
+            13121.89745,
+            12844.5615,
+            13186.153999999999
+          ],
+          "baseline_median": 13048.793950000001,
+          "candidate_median": 13121.89745,
+          "change_percent": 0.5602318519252858
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            343346.139,
+            348525.063,
+            345498.741
+          ],
+          "candidate": [
+            347138.329,
+            355222.094,
+            342066.487
+          ],
+          "baseline_median": 345498.741,
+          "candidate_median": 347138.329,
+          "change_percent": 0.47455686676440845
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            3891.0526,
+            3761.335,
+            3918.4772
+          ],
+          "candidate": [
+            4244.20535,
+            3904.5127,
+            3766.0757
+          ],
+          "baseline_median": 3891.0526,
+          "candidate_median": 3904.5127,
+          "change_percent": 0.34592439074199177
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            5.26394,
+            4.26081,
+            4.2608
+          ],
+          "candidate": [
+            4.26621,
+            4.26081,
+            4.3229
+          ],
+          "baseline_median": 4.26081,
+          "candidate_median": 4.26621,
+          "change_percent": 0.1267364656016179
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            181.788,
+            182.708,
+            186.108
+          ],
+          "candidate": [
+            182.308,
+            182.908,
+            181.708
+          ],
+          "baseline_median": 182.708,
+          "candidate_median": 182.308,
+          "change_percent": -0.21892856360969937
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            33951.136,
+            35694.042,
+            34339.1495
+          ],
+          "candidate": [
+            34241.576,
+            34811.697,
+            34153.507
+          ],
+          "baseline_median": 34339.1495,
+          "candidate_median": 34241.576,
+          "change_percent": -0.28414652494523907
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            25359.224,
+            9982.716,
+            10028.236
+          ],
+          "candidate": [
+            22991.224,
+            9998.792,
+            9878.964
+          ],
+          "baseline_median": 10028.236,
+          "candidate_median": 9998.792,
+          "change_percent": -0.2936109600930936
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3794.2358,
+            4123.3432,
+            3708.0118
+          ],
+          "candidate": [
+            3780.0328,
+            3965.192,
+            3700.3642
+          ],
+          "baseline_median": 3794.2358,
+          "candidate_median": 3780.0328,
+          "change_percent": -0.3743309785859905
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            18220.3252,
+            17002.92475,
+            17495.89945
+          ],
+          "candidate": [
+            17685.5639,
+            17415.07745,
+            17099.9961
+          ],
+          "baseline_median": 17495.89945,
+          "candidate_median": 17415.07745,
+          "change_percent": -0.46194824239230714
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            134228.2895,
+            134630.93835,
+            136418.57125
+          ],
+          "candidate": [
+            134916.56075,
+            133792.33735,
+            133985.0052
+          ],
+          "baseline_median": 134630.93835,
+          "candidate_median": 133985.0052,
+          "change_percent": -0.47978061945966877
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2337.1845,
+            2865.6885,
+            2343.6145
+          ],
+          "candidate": [
+            2326.97,
+            3743.5235,
+            2329.865
+          ],
+          "baseline_median": 2343.6145,
+          "candidate_median": 2329.865,
+          "change_percent": -0.5866792512164598
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            219427.05,
+            210538.26,
+            216569.14
+          ],
+          "candidate": [
+            222598.53,
+            215183.44,
+            209119.96
+          ],
+          "baseline_median": 216569.14,
+          "candidate_median": 215183.44,
+          "change_percent": -0.6398418537377992
+        },
+        {
+          "name": "capsules/curve_region_boolean_four_independent",
+          "baseline": [
+            3381256.982,
+            3415755.685,
+            3414365.47
+          ],
+          "candidate": [
+            3373902.736,
+            3387602.746,
+            3459003.069
+          ],
+          "baseline_median": 3414365.47,
+          "candidate_median": 3387602.746,
+          "change_percent": -0.7838271630599802
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11990.2,
+            12053.1,
+            11480.2
+          ],
+          "candidate": [
+            11947.2,
+            11735.2,
+            11846.2
+          ],
+          "baseline_median": 11990.2,
+          "candidate_median": 11846.2,
+          "change_percent": -1.2009808009874723
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            25309.52495,
+            25980.6464,
+            25447.87595
+          ],
+          "candidate": [
+            25134.89895,
+            27668.82915,
+            24943.50805
+          ],
+          "baseline_median": 25447.87595,
+          "candidate_median": 25134.89895,
+          "change_percent": -1.229874747169235
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11609.85865,
+            13339.516549999998,
+            11351.81235
+          ],
+          "candidate": [
+            11466.89095,
+            13205.391700000002,
+            11423.5969
+          ],
+          "baseline_median": 11609.85865,
+          "candidate_median": 11466.89095,
+          "change_percent": -1.2314335971695844
+        },
+        {
+          "name": "capsules/curve_region_boolean_shared_all_four",
+          "baseline": [
+            1119872.625,
+            1097896.713,
+            1105217.111
+          ],
+          "candidate": [
+            1083446.104,
+            1088268.583,
+            1107510.123
+          ],
+          "baseline_median": 1105217.111,
+          "candidate_median": 1088268.583,
+          "change_percent": -1.5335021355817546
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5683.9781,
+            5763.56415,
+            6065.56545
+          ],
+          "candidate": [
+            5664.12095,
+            5617.2962,
+            5765.23605
+          ],
+          "baseline_median": 5763.56415,
+          "candidate_median": 5664.12095,
+          "change_percent": -1.7253768226037636
+        },
+        {
+          "name": "rectangles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            347988.351,
+            348152.129,
+            366693.518
+          ],
+          "candidate": [
+            341010.52,
+            336595.442,
+            340463.566
+          ],
+          "baseline_median": 348152.129,
+          "candidate_median": 340463.566,
+          "change_percent": -2.208391780364505
+        },
+        {
+          "name": "rectangles/curve_region_boolean_four_independent",
+          "baseline": [
+            715122.698,
+            705692.495,
+            750287.495
+          ],
+          "candidate": [
+            698854.774,
+            733911.7,
+            692998.736
+          ],
+          "baseline_median": 715122.698,
+          "candidate_median": 698854.774,
+          "change_percent": -2.2748437499602314
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            22746.28,
+            20209.136,
+            19897.912
+          ],
+          "candidate": [
+            21563.16,
+            19732.924,
+            19687.088
+          ],
+          "baseline_median": 20209.136,
+          "candidate_median": 19732.924,
+          "change_percent": -2.356419393684117
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            11831.69,
+            12129.568,
+            11290.166
+          ],
+          "candidate": [
+            11546.628,
+            12930.274,
+            10934.25
+          ],
+          "baseline_median": 11831.69,
+          "candidate_median": 11546.628,
+          "change_percent": -2.4093092364657953
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            264662.644,
+            292011.092,
+            254324.436
+          ],
+          "candidate": [
+            259424.964,
+            258209.088,
+            255938.804
+          ],
+          "baseline_median": 264662.644,
+          "candidate_median": 258209.088,
+          "change_percent": -2.438408345984777
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            5908.4807,
+            6654.0206,
+            5699.2616
+          ],
+          "candidate": [
+            5683.8311,
+            5760.9393,
+            5761.6118
+          ],
+          "baseline_median": 5908.4807,
+          "candidate_median": 5760.9393,
+          "change_percent": -2.4971123287243713
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            1056.0875,
+            857.3765,
+            875.75
+          ],
+          "candidate": [
+            876.7695,
+            851.2715,
+            852.9015
+          ],
+          "baseline_median": 875.75,
+          "candidate_median": 852.9015,
+          "change_percent": -2.609020839280607
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            43880.4,
+            48794.058,
+            45463.9515
+          ],
+          "candidate": [
+            44197.6285,
+            44426.4775,
+            43915.8325
+          ],
+          "baseline_median": 45463.9515,
+          "candidate_median": 44197.6285,
+          "change_percent": -2.7853342224333555
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            650027.4,
+            682376.2,
+            634152.5
+          ],
+          "candidate": [
+            631794.6,
+            743563,
+            626503
+          ],
+          "baseline_median": 650027.4,
+          "candidate_median": 631794.6,
+          "change_percent": -2.8049279153463447
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            25645.651,
+            25378.569,
+            24839.106
+          ],
+          "candidate": [
+            24435.084,
+            24725.124,
+            24482.35
+          ],
+          "baseline_median": 25378.569,
+          "candidate_median": 24482.35,
+          "change_percent": -3.531400844547228
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            13914.4921,
+            13630.74505,
+            13628.07075
+          ],
+          "candidate": [
+            13066.03425,
+            13817.4992,
+            13036.726250000002
+          ],
+          "baseline_median": 13630.74505,
+          "candidate_median": 13066.03425,
+          "change_percent": -4.142919539090039
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            20064.424,
+            24362.648,
+            19372.272
+          ],
+          "candidate": [
+            19109.772,
+            19147.608,
+            19616.252
+          ],
+          "baseline_median": 20064.424,
+          "candidate_median": 19147.608,
+          "change_percent": -4.56936117378699
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            148.9958,
+            155.6592,
+            152.5334
+          ],
+          "candidate": [
+            144.72,
+            147.792,
+            145.13
+          ],
+          "baseline_median": 152.5334,
+          "candidate_median": 145.13,
+          "change_percent": -4.853625501037806
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            727556.1,
+            839337.4,
+            689592.7
+          ],
+          "candidate": [
+            691165.6,
+            972460.3,
+            687575.9
+          ],
+          "baseline_median": 727556.1,
+          "candidate_median": 691165.6,
+          "change_percent": -5.001744882628289
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            188537.97,
+            191905.33,
+            180781.2
+          ],
+          "candidate": [
+            185044.8,
+            175613.25,
+            175870.34
+          ],
+          "baseline_median": 188537.97,
+          "candidate_median": 175870.34,
+          "change_percent": -6.718874717914913
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            110305.312,
+            77336.936,
+            71875.232
+          ],
+          "candidate": [
+            71845.272,
+            71901.184,
+            71965.024
+          ],
+          "baseline_median": 77336.936,
+          "candidate_median": 71901.184,
+          "change_percent": -7.0286622164602015
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            4.183663,
+            4.38154,
+            3.566725
+          ],
+          "candidate": [
+            4.472793,
+            3.63974,
+            3.714125
+          ],
+          "baseline_median": 4.183663,
+          "candidate_median": 3.714125,
+          "change_percent": -11.223131499836391
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            667.512,
+            606.156,
+            571.764
+          ],
+          "candidate": [
+            532.044,
+            581.16,
+            536
+          ],
+          "baseline_median": 606.156,
+          "candidate_median": 536,
+          "change_percent": -11.573918265265037
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            20632.364,
+            23443.012,
+            23432.992
+          ],
+          "candidate": [
+            20713.178,
+            20689.122,
+            20500.074
+          ],
+          "baseline_median": 23432.992,
+          "candidate_median": 20689.122,
+          "change_percent": -11.709430874213588
+        }
+      ],
+      "instructions": [
+        {
+          "fixture": "rectangles",
+          "baseline": 233438307,
+          "candidate": 233304722,
+          "change_percent": -0.05722496950768541
+        },
+        {
+          "fixture": "circles",
+          "baseline": 2417956841,
+          "candidate": 2419017472,
+          "change_percent": 0.043864761438894284
+        },
+        {
+          "fixture": "capsules",
+          "baseline": 871334464,
+          "candidate": 870739312,
+          "change_percent": -0.06830350738886715
+        },
+        {
+          "fixture": "overlaps",
+          "baseline": 461831486,
+          "candidate": 462294556,
+          "change_percent": 0.10026817443971048
+        }
+      ]
+    },
+    "seven_additional_native_pairs": {
+      "lane_measurement_count": 574,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 28,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 5.8,
+          "user_s": 5.77,
+          "system_s": 0,
+          "max_rss_kib": 9268,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 5.95,
+          "user_s": 5.91,
+          "system_s": 0,
+          "max_rss_kib": 9104,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 5.84,
+          "user_s": 5.81,
+          "system_s": 0,
+          "max_rss_kib": 9368,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 5.89,
+          "user_s": 5.86,
+          "system_s": 0,
+          "max_rss_kib": 9432,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 5.81,
+          "user_s": 5.77,
+          "system_s": 0,
+          "max_rss_kib": 9252,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 5.88,
+          "user_s": 5.84,
+          "system_s": 0,
+          "max_rss_kib": 9364,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 5.92,
+          "user_s": 5.88,
+          "system_s": 0,
+          "max_rss_kib": 9352,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 5.77,
+          "user_s": 5.74,
+          "system_s": 0,
+          "max_rss_kib": 9256,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 5.81,
+          "user_s": 5.78,
+          "system_s": 0,
+          "max_rss_kib": 9304,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 5.85,
+          "user_s": 5.81,
+          "system_s": 0,
+          "max_rss_kib": 9360,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 5.87,
+          "user_s": 5.84,
+          "system_s": 0,
+          "max_rss_kib": 9204,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 5.92,
+          "user_s": 5.88,
+          "system_s": 0,
+          "max_rss_kib": 9340,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 5.86,
+          "user_s": 5.82,
+          "system_s": 0,
+          "max_rss_kib": 9312,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 5.85,
+          "user_s": 5.82,
+          "system_s": 0,
+          "max_rss_kib": 9420,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31328,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.31,
+          "user_s": 0.29,
+          "system_s": 0.01,
+          "max_rss_kib": 31212,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31332,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31332,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31460,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31320,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31328,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31352,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31196,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31388,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31268,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31408,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31308,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31268,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.8,
+            5.84,
+            5.81,
+            5.92,
+            5.81,
+            5.87,
+            5.86
+          ],
+          "candidate": [
+            5.95,
+            5.89,
+            5.88,
+            5.77,
+            5.85,
+            5.92,
+            5.85
+          ],
+          "baseline_median": 5.84,
+          "candidate_median": 5.88,
+          "change_percent": 0.6849315068493178
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.33,
+            0.32,
+            0.32,
+            0.33,
+            0.32,
+            0.32,
+            0.33
+          ],
+          "candidate": [
+            0.31,
+            0.32,
+            0.32,
+            0.32,
+            0.32,
+            0.32,
+            0.32
+          ],
+          "baseline_median": 0.32,
+          "candidate_median": 0.32,
+          "change_percent": 0
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            356.5255,
+            341.3365,
+            338.0715,
+            338.882,
+            350.281,
+            337.9915,
+            338.8315
+          ],
+          "candidate": [
+            363.21,
+            355.6305,
+            351.231,
+            350.991,
+            353.116,
+            354.041,
+            352.406
+          ],
+          "baseline_median": 338.882,
+          "candidate_median": 353.116,
+          "change_percent": 4.200282104095221
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            344705.566,
+            343412.804,
+            344199.981,
+            341763.908,
+            344931.68,
+            366442.195,
+            352909.423
+          ],
+          "candidate": [
+            358292.073,
+            353724.558,
+            364199.089,
+            345975.419,
+            345253.978,
+            354004.009,
+            355269.481
+          ],
+          "baseline_median": 344705.566,
+          "candidate_median": 354004.009,
+          "change_percent": 2.6975030046367143
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            23084.1556,
+            23678.24585,
+            23595.62605,
+            24032.66955,
+            23197.43035,
+            23425.2282,
+            23347.21955
+          ],
+          "candidate": [
+            24793.9648,
+            24025.3615,
+            23286.13475,
+            23520.73415,
+            23369.01605,
+            24528.34655,
+            24287.884
+          ],
+          "baseline_median": 23425.2282,
+          "candidate_median": 24025.3615,
+          "change_percent": 2.561910154625502
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            172592.941,
+            173240.157,
+            172570.913,
+            173729.293,
+            173910.461,
+            186515.437,
+            173505.309
+          ],
+          "candidate": [
+            182266.178,
+            177720.44,
+            178178.758,
+            174418.976,
+            174174.313,
+            176450.727,
+            179968.706
+          ],
+          "baseline_median": 173505.309,
+          "candidate_median": 177720.44,
+          "change_percent": 2.429395978886162
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            2.961217,
+            2.971876,
+            3.044371,
+            3.082629,
+            3.095667,
+            2.993665,
+            2.994104
+          ],
+          "candidate": [
+            3.0636,
+            2.970077,
+            3.103277,
+            3.073649,
+            3.079239,
+            2.991325,
+            3.003744
+          ],
+          "baseline_median": 2.994104,
+          "candidate_median": 3.0636,
+          "change_percent": 2.3210950588222756
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            268.26,
+            185.228,
+            181.748,
+            183.188,
+            181.948,
+            210.028,
+            181.628
+          ],
+          "candidate": [
+            207.784,
+            189.788,
+            182.988,
+            182.908,
+            187.948,
+            182.748,
+            187.428
+          ],
+          "baseline_median": 183.188,
+          "candidate_median": 187.428,
+          "change_percent": 2.3145620892198293
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            567.164,
+            535.564,
+            544.924,
+            544.44,
+            544.004,
+            545.164,
+            544.284
+          ],
+          "candidate": [
+            641.236,
+            556.564,
+            534.964,
+            564.88,
+            534.724,
+            559.48,
+            536.164
+          ],
+          "baseline_median": 544.44,
+          "candidate_median": 556.564,
+          "change_percent": 2.2268753214311765
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            342.2015,
+            356.7155,
+            360.3555,
+            355.641,
+            358.0905,
+            354.666,
+            354.826
+          ],
+          "candidate": [
+            363.625,
+            363.335,
+            360.0055,
+            364.35,
+            363.485,
+            361.0755,
+            362.435
+          ],
+          "baseline_median": 355.641,
+          "candidate_median": 363.335,
+          "change_percent": 2.1634176037071073
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.51524,
+            12.54454,
+            12.64553,
+            12.58504,
+            12.25316,
+            12.57673,
+            12.64703
+          ],
+          "candidate": [
+            12.72453,
+            12.80142,
+            12.79243,
+            12.74873,
+            12.93511,
+            12.79532,
+            12.29906
+          ],
+          "baseline_median": 12.57673,
+          "candidate_median": 12.79243,
+          "change_percent": 1.7150722008026031
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.543987,
+            3.758762,
+            3.580794,
+            3.523939,
+            3.515279,
+            3.79661,
+            3.532318
+          ],
+          "candidate": [
+            3.605793,
+            3.604203,
+            3.623501,
+            3.526728,
+            3.436074,
+            3.681147,
+            3.595063
+          ],
+          "baseline_median": 3.543987,
+          "candidate_median": 3.604203,
+          "change_percent": 1.6991032980651521
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2843.155,
+            2881.26785,
+            2882.2908,
+            2841.21815,
+            2956.6467,
+            2855.5316,
+            2869.0462
+          ],
+          "candidate": [
+            3330.2356000000004,
+            2913.97865,
+            2921.7381,
+            2844.2779,
+            2915.48105,
+            2888.1014,
+            2962.5558
+          ],
+          "baseline_median": 2869.0462,
+          "candidate_median": 2915.48105,
+          "change_percent": 1.6184769000931354
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            17198.3828,
+            17296.3681,
+            17282.71305,
+            17407.9919,
+            17058.5484,
+            18351.5497,
+            18218.67235
+          ],
+          "candidate": [
+            17394.1914,
+            17912.62835,
+            17497.12035,
+            17617.3026,
+            17493.3361,
+            17450.66105,
+            17679.5218
+          ],
+          "baseline_median": 17296.3681,
+          "candidate_median": 17497.12035,
+          "change_percent": 1.160661295130505
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            133557.41145,
+            135396.60535,
+            133728.1433,
+            137780.34085,
+            134465.79015,
+            132689.931,
+            134142.2149
+          ],
+          "candidate": [
+            136432.67625,
+            134846.0696,
+            136325.21315,
+            132131.4323,
+            135658.43235,
+            136406.78105,
+            133676.06285
+          ],
+          "baseline_median": 134142.2149,
+          "candidate_median": 135658.43235,
+          "change_percent": 1.130305960081479
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            13038.367199999999,
+            13065.6833,
+            13005.232950000001,
+            13049.846400000002,
+            12950.5402,
+            13522.38,
+            13019.36445
+          ],
+          "candidate": [
+            12957.582199999999,
+            13626.06535,
+            13044.5617,
+            13177.17615,
+            12999.577350000001,
+            13268.742850000002,
+            13242.99915
+          ],
+          "baseline_median": 13038.367199999999,
+          "candidate_median": 13177.17615,
+          "change_percent": 1.0646191188725007
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2915.235,
+            2309.2565,
+            2331.72,
+            2256.77,
+            2351.9985,
+            2241.7615,
+            2320.161
+          ],
+          "candidate": [
+            2330.735,
+            2388.926,
+            2340.5195,
+            2396.181,
+            2299.9475,
+            2393.8905,
+            2278.459
+          ],
+          "baseline_median": 2320.161,
+          "candidate_median": 2340.5195,
+          "change_percent": 0.8774606589801337
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            25338.4575,
+            25239.0873,
+            25454.792,
+            26541.79795,
+            25259.94485,
+            25609.91485,
+            25314.9781
+          ],
+          "candidate": [
+            26482.3605,
+            25488.4372,
+            25309.9434,
+            25019.01635,
+            25535.72595,
+            25461.30005,
+            25103.6811
+          ],
+          "baseline_median": 25338.4575,
+          "candidate_median": 25461.30005,
+          "change_percent": 0.48480674089967923
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5716.5499,
+            5713.7296,
+            5693.68995,
+            5692.31005,
+            5579.0903,
+            5700.5035,
+            5645.67075
+          ],
+          "candidate": [
+            5716.4384,
+            5835.37025,
+            5688.21185,
+            5735.5931,
+            5711.1678,
+            6218.0885,
+            5720.6646
+          ],
+          "baseline_median": 5693.68995,
+          "candidate_median": 5720.6646,
+          "change_percent": 0.47376394283640266
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3739.4736,
+            3722.6166,
+            3752.8946,
+            3864.0408,
+            3754.7544,
+            3748.0568,
+            3700.2382
+          ],
+          "candidate": [
+            3663.3908,
+            3718.069,
+            3724.3566,
+            3977.697,
+            3749.403,
+            3768.5396,
+            3782.8586
+          ],
+          "baseline_median": 3748.0568,
+          "candidate_median": 3749.403,
+          "change_percent": 0.03591727852150228
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            3772.29225,
+            3880.18785,
+            3821.1249,
+            3750.13675,
+            3734.0654,
+            4022.3876,
+            3892.587
+          ],
+          "candidate": [
+            3821.50085,
+            3837.91175,
+            3819.6655,
+            3776.123,
+            3828.10645,
+            3757.84325,
+            3857.88035
+          ],
+          "baseline_median": 3821.1249,
+          "candidate_median": 3821.50085,
+          "change_percent": 0.009838725763722245
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            45952.808,
+            44345.3085,
+            43582.8555,
+            43910.368,
+            44092.4805,
+            46526.6785,
+            43992.2725
+          ],
+          "candidate": [
+            47014.35,
+            44090.506,
+            44000.242,
+            44047.039,
+            43911.948,
+            44203.988,
+            44606.3205
+          ],
+          "baseline_median": 44092.4805,
+          "candidate_median": 44090.506,
+          "change_percent": -0.0044780878227013154
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            13208.221549999998,
+            12951.46315,
+            13056.090449999998,
+            12953.675000000001,
+            13012.896900000002,
+            13255.4663,
+            13398.209499999999
+          ],
+          "candidate": [
+            13033.0525,
+            13158.8819,
+            12906.8207,
+            12938.155549999998,
+            12908.449100000002,
+            13331.59055,
+            13064.3584
+          ],
+          "baseline_median": 13056.090449999998,
+          "candidate_median": 13033.0525,
+          "change_percent": -0.176453664197751
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            184734.03,
+            175578.36,
+            182513.58,
+            202235.43,
+            179733.57,
+            176383.3,
+            179797.27
+          ],
+          "candidate": [
+            179309.9,
+            177716.91,
+            178777.14,
+            189695.68,
+            179075.72,
+            181623.54,
+            180463.62
+          ],
+          "baseline_median": 179797.27,
+          "candidate_median": 179309.9,
+          "change_percent": -0.2710664071818192
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            9880.924,
+            9897.2,
+            10027.792,
+            9885.204,
+            9865.764,
+            9993.032,
+            10075.072
+          ],
+          "candidate": [
+            9683.496,
+            9862.56,
+            9970.516,
+            9775.928,
+            10208.18,
+            10012.792,
+            9784.528
+          ],
+          "baseline_median": 9897.2,
+          "candidate_median": 9862.56,
+          "change_percent": -0.34999797922645737
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            54988.5585,
+            54495.927,
+            54918.853,
+            54235.66,
+            54588.6055,
+            54989.543,
+            56497.9095
+          ],
+          "candidate": [
+            54696.138,
+            54207.107,
+            55060.8035,
+            54670.88,
+            57531.529,
+            54101.074,
+            54721.431
+          ],
+          "baseline_median": 54918.853,
+          "candidate_median": 54696.138,
+          "change_percent": -0.405534689517284
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            34720.8735,
+            34127.769,
+            34052.734,
+            34380.7915,
+            35093.818,
+            33913.114,
+            35275.1805
+          ],
+          "candidate": [
+            35002.119,
+            34228.537,
+            33936.087,
+            34403.17,
+            33657.276,
+            33873.712,
+            34699.3145
+          ],
+          "baseline_median": 34380.7915,
+          "candidate_median": 34228.537,
+          "change_percent": -0.44284757085945037
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            72521.268,
+            73464.12,
+            72754.892,
+            72722.812,
+            73276.812,
+            72792.844,
+            72590.74
+          ],
+          "candidate": [
+            71722.84,
+            73580.232,
+            78118.204,
+            72275.16,
+            71841.392,
+            74009.364,
+            72250.088
+          ],
+          "baseline_median": 72754.892,
+          "candidate_median": 72275.16,
+          "change_percent": -0.6593810901403097
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            20019.708,
+            20465.476,
+            20014.144,
+            19673.332,
+            20388.24,
+            19780.564,
+            20368.04
+          ],
+          "candidate": [
+            19866.196,
+            19649.092,
+            20073.704,
+            20031.268,
+            19513.86,
+            23013.664,
+            19517.664
+          ],
+          "baseline_median": 20019.708,
+          "candidate_median": 19866.196,
+          "change_percent": -0.7668043909531463
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11570.81235,
+            11368.46375,
+            11408.81745,
+            11436.798,
+            11690.05415,
+            11330.95425,
+            11578.5883
+          ],
+          "candidate": [
+            11449.26965,
+            11685.37795,
+            11182.189,
+            11257.9848,
+            11250.00285,
+            11346.17625,
+            11462.91875
+          ],
+          "baseline_median": 11436.798,
+          "candidate_median": 11346.17625,
+          "change_percent": -0.792369944804483
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            665681.3,
+            641792,
+            637901.2,
+            650446.4,
+            635558.4,
+            640295.1,
+            667072.3
+          ],
+          "candidate": [
+            651701.3,
+            628608.9,
+            635582.4,
+            627371.9,
+            759874.8,
+            675035.6,
+            632873.6
+          ],
+          "baseline_median": 641792,
+          "candidate_median": 635582.4,
+          "change_percent": -0.9675408855205347
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.28491,
+            4.3051,
+            4.3139,
+            4.23581,
+            4.26091,
+            4.3367,
+            4.3513
+          ],
+          "candidate": [
+            4.3587,
+            4.3123,
+            4.2892,
+            4.26071,
+            4.26071,
+            4.2609,
+            4.26091
+          ],
+          "baseline_median": 4.3051,
+          "candidate_median": 4.26091,
+          "change_percent": -1.0264569928689293
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11796.2,
+            11760.1,
+            11809.2,
+            12005.1,
+            11922.2,
+            11542.2,
+            12010.1
+          ],
+          "candidate": [
+            11685.2,
+            11582.2,
+            12380.2,
+            11677.2,
+            11926.2,
+            11481.2,
+            11879.2
+          ],
+          "baseline_median": 11809.2,
+          "candidate_median": 11685.2,
+          "change_percent": -1.050028791112012
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            23031.92,
+            21165.348,
+            20871.788,
+            20596.868,
+            20744.056,
+            20970.46,
+            25081.538
+          ],
+          "candidate": [
+            20952.662,
+            20469.736,
+            20731.018,
+            20729.958,
+            20448.658,
+            20749.698,
+            20420.938
+          ],
+          "baseline_median": 20970.46,
+          "candidate_median": 20729.958,
+          "change_percent": -1.1468608700047622
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            721507.5,
+            698784.1,
+            724054.3,
+            699679,
+            714850,
+            693516.4,
+            722433.4
+          ],
+          "candidate": [
+            688784.7,
+            706703.5,
+            705932.6,
+            707931.4,
+            691438.5,
+            705761.6,
+            684042.1
+          ],
+          "baseline_median": 714850,
+          "candidate_median": 705761.6,
+          "change_percent": -1.2713716164230338
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            25535.948,
+            25116.007,
+            24624.441,
+            25509.36,
+            24643.329,
+            24230.078,
+            25141.585
+          ],
+          "candidate": [
+            24266.776,
+            24959.408,
+            24944.079,
+            24777.33,
+            24662.758,
+            25513.8,
+            24480.381
+          ],
+          "baseline_median": 25116.007,
+          "candidate_median": 24777.33,
+          "change_percent": -1.3484508106722526
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            11403.538,
+            11433.656,
+            11109.358,
+            17544.596,
+            11337.724,
+            11058.362,
+            11188.214
+          ],
+          "candidate": [
+            10954.61,
+            10974.888,
+            11347.642,
+            11467.054,
+            11171.914,
+            11261.708,
+            11150.156
+          ],
+          "baseline_median": 11337.724,
+          "candidate_median": 11171.914,
+          "change_percent": -1.462462836456413
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            271307.112,
+            254555.26,
+            260337.14400000003,
+            266209.14,
+            262392.604,
+            262123.02,
+            265931.76
+          ],
+          "candidate": [
+            255236.612,
+            259438.128,
+            254387.592,
+            273628.548,
+            259374.208,
+            255403.4,
+            258189.17199999996
+          ],
+          "baseline_median": 262392.604,
+          "candidate_median": 258189.17199999996,
+          "change_percent": -1.601962835812254
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            893.1635,
+            906.723,
+            864.6355,
+            859.541,
+            841.3425,
+            865.2505,
+            856.691
+          ],
+          "candidate": [
+            850.2015,
+            880.6045,
+            849.3765,
+            848.682,
+            852.6465,
+            854.9965,
+            850.3315
+          ],
+          "baseline_median": 864.6355,
+          "candidate_median": 850.3315,
+          "change_percent": -1.6543387358025408
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            6020.61405,
+            5736.16655,
+            5730.5454,
+            6016.8773,
+            5777.6907,
+            5799.49825,
+            5899.30035
+          ],
+          "candidate": [
+            5459.8665,
+            5699.849,
+            5951.0703,
+            5631.5887,
+            5738.67435,
+            5754.1498,
+            5694.5874
+          ],
+          "baseline_median": 5799.49825,
+          "candidate_median": 5699.849,
+          "change_percent": -1.7182391597410973
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            155.5572,
+            149.1878,
+            153.5216,
+            151.1836,
+            151.5196,
+            149.3618,
+            150.6836
+          ],
+          "candidate": [
+            145.596,
+            151.7416,
+            154.6214,
+            147.608,
+            149.5378,
+            146.986,
+            144.5262
+          ],
+          "baseline_median": 151.1836,
+          "candidate_median": 147.608,
+          "change_percent": -2.3650713437171844
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            221693.39,
+            211823.27,
+            217717.66,
+            214140.51,
+            209435.14,
+            223020.51,
+            220634.47
+          ],
+          "candidate": [
+            217372.19,
+            212213.14,
+            227929.37,
+            207442.37,
+            208983.37,
+            207530.36,
+            216371.76
+          ],
+          "baseline_median": 217717.66,
+          "candidate_median": 212213.14,
+          "change_percent": -2.5282836495670535
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            19689.972,
+            20216.012,
+            21241.18,
+            24844.736,
+            20149.3,
+            19663.492,
+            19468.748
+          ],
+          "candidate": [
+            19532.5,
+            18989.896,
+            19462.144,
+            19461.264,
+            19260.716,
+            18686.2,
+            19814.28
+          ],
+          "baseline_median": 20149.3,
+          "candidate_median": 19461.264,
+          "change_percent": -3.414689344046695
+        }
+      ]
+    }
+  },
+  "memory": {
+    "scope": "Complete Heaptrack format-3 raw streams of one existing folded-overlap libtest invocation per variant, not geometry-only accounting or an ecosystem leak claim. Compressed streams validate and the streaming counter reconciles final live state. Identical test catalogs and measured test bodies; executable names differ.",
+    "workload": "selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+    "baseline": {
+      "allocations": 718910,
+      "frees": 712803,
+      "allocated_bytes": 52260475,
+      "peak_live_bytes": 1529585,
+      "end_live_bytes": 542168,
+      "peak_live_allocations": 18833,
+      "end_live_allocations": 6107,
+      "temporary_allocations": 19468,
+      "untracked_frees": 2
+    },
+    "candidate": {
+      "allocations": 719508,
+      "frees": 713401,
+      "allocated_bytes": 52258931,
+      "peak_live_bytes": 1528513,
+      "end_live_bytes": 542168,
+      "peak_live_allocations": 18831,
+      "end_live_allocations": 6107,
+      "temporary_allocations": 19596,
+      "untracked_frees": 2
+    },
+    "delta": {
+      "allocations": 598,
+      "frees": 598,
+      "allocated_bytes": -1544,
+      "peak_live_bytes": -1072,
+      "end_live_bytes": 0,
+      "peak_live_allocations": -2,
+      "end_live_allocations": 0,
+      "temporary_allocations": 128,
+      "untracked_frees": 0
+    },
+    "layout": "No retained object field was added. Publication temporarily stores boundary references/locations; the final shared map takes ownership of three formerly cloned polynomial expressions."
+  },
+  "size": {
+    "native": [
+      {
+        "fixture": "bezier_region",
+        "baseline": {
+          "text": 9405863,
+          "file": 14881960
+        },
+        "candidate": {
+          "text": 9404295,
+          "file": 14874048
+        },
+        "text_delta": -1568,
+        "file_delta": -7912
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline": {
+          "text": 6112631,
+          "file": 10509648
+        },
+        "candidate": {
+          "text": 6115191,
+          "file": 10511136
+        },
+        "text_delta": 2560,
+        "file_delta": 1488
+      },
+      {
+        "fixture": "curve_region_boolean_batch",
+        "baseline": {
+          "text": 9001463,
+          "file": 14319400
+        },
+        "candidate": {
+          "text": 9000391,
+          "file": 14314496
+        },
+        "text_delta": -1072,
+        "file_delta": -4904
+      }
+    ],
+    "wasm": {
+      "baseline": 17032621,
+      "candidate": 17029668,
+      "delta": -2953
+    }
+  },
+  "limitations": [
+    "Not a universal performance or full Hypercurve release-readiness claim.",
+    "Lower-stack and Hypermesh source are unchanged in this slice.",
+    "Concurrent Hyperreal changes remain owned by the separate reference audit and are neither committed nor qualified here.",
+    "Existing desktop processes were not stopped or controlled.",
+    "No push, publication, deployment, fresh fuzz campaign, or fresh coverage run."
+  ],
+  "followups": [
+    "Audit other mapped-circle query policies together with their retained caches; this change does not certify all map-publication paths.",
+    "The independent Hyperreal audit has formatting and inverse-trigonometric/hyperbolic/logarithm range repairs in its live worktree; qualify integration after that source is finalized.",
+    "Profile-driven rational equality wide-cross-product reduction remains a candidate; test delegation to the existing exact comparison authority before adding a parallel filter. The one-item coarse-sign cleanup is separate.",
+    "Continue the single authoritative CurveRegion2 kernel/API cleanup and full release/completeness audit; this checkpoint is progress, not goal completion."
+  ],
+  "reproduction": {
+    "snapshot.sh": "#!/usr/bin/env bash\nset -euo pipefail\noverlap_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\noverlap_workspace=/home/tim/Documents/GitHub/workspace\nmkdir \"$overlap_root/snapshot\"\nmkdir \"$overlap_root/snapshot/hyperreal\"\ngit -C \"$overlap_workspace/hyperreal\" archive bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c | tar -xf - -C \"$overlap_root/snapshot/hyperreal\"\nmkdir \"$overlap_root/snapshot/hyperlimit\"\ngit -C \"$overlap_workspace/hyperlimit\" archive dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5 | tar -xf - -C \"$overlap_root/snapshot/hyperlimit\"\nmkdir \"$overlap_root/snapshot/hyperlattice\"\ngit -C \"$overlap_workspace/hyperlattice\" archive 53427ce89f8c82c016e69a04e035787e2753adc8 | tar -xf - -C \"$overlap_root/snapshot/hyperlattice\"\nmkdir \"$overlap_root/snapshot/hypertri\"\ngit -C \"$overlap_workspace/hypertri\" archive 6a2092c066964f3b7528299a72ef0ed1af4b1ff0 | tar -xf - -C \"$overlap_root/snapshot/hypertri\"\nmkdir \"$overlap_root/snapshot/hypersolve\"\ngit -C \"$overlap_workspace/hypersolve\" archive 42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e | tar -xf - -C \"$overlap_root/snapshot/hypersolve\"\nmkdir \"$overlap_root/snapshot/hypercurve\"\ngit -C \"$overlap_workspace/hypercurve\" archive 145fda9462f38f7438ded467d8a1102768900ab4 | tar -xf - -C \"$overlap_root/snapshot/hypercurve\"\ncp \"$overlap_root/authored-baseline-bezier_offset.rs\" \"$overlap_root/snapshot/hypercurve/src/bezier_offset.rs\"\ncd \"$overlap_root/snapshot/hypercurve\"\nbash \"$overlap_root/test-regressions.sh\" authored-baseline\n",
+    "candidate.sh": "#!/usr/bin/env bash\nset -euo pipefail\noverlap_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\ncp \"$overlap_root/candidate-bezier_offset.rs\" \"$overlap_root/snapshot/hypercurve/src/bezier_offset.rs\"\nbash \"$overlap_root/test-regressions.sh\" candidate\nbash \"$overlap_root/qualify.sh\" > \"$overlap_root/candidate-gates.status\"\n",
+    "test-regressions.sh": "#!/usr/bin/env bash\nset -uo pipefail\noverlap_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\noverlap_label=\"$1\"\ncd \"$overlap_root/snapshot/hypercurve\"\nenv CARGO_BUILD_JOBS=2 cargo test --release --locked --all-features --lib --no-run > \"$overlap_root/$overlap_label-build.log\" 2>&1\noverlap_status=$?\nif (( overlap_status != 0 )); then exit \"$overlap_status\"; fi\nmapfile -t overlap_executables < <(rg '^  Executable unittests src/lib\\.rs \\(' \"$overlap_root/$overlap_label-build.log\" | rg -o 'target/release/deps/hypercurve-[0-9a-f]+')\nif (( ${#overlap_executables[@]} != 1 )); then exit 124; fi\ncp \"${overlap_executables[0]}\" \"$overlap_root/$overlap_label-test\"\noverlap_failed=0\nfor overlap_case in selected_fiber_rational_overlap_keeps_exact_center selected_fiber_rational_overlap_replays_certified_policy selected_fiber_rational_component_publishes_its_isolated_endpoint selected_fiber_rational_component_rejects_the_conjugate_circle; do\n    if [[ \"$overlap_label\" == baseline && \"$overlap_case\" == selected_fiber_rational_component_publishes_its_isolated_endpoint ]]; then continue; fi\n    if [[ ( \"$overlap_label\" == baseline || \"$overlap_label\" == matched-baseline ) && \"$overlap_case\" == selected_fiber_rational_component_rejects_the_conjugate_circle ]]; then continue; fi\n    \"$overlap_root/$overlap_label-test\" --exact \"bezier_offset::conversion_tests::$overlap_case\" --nocapture > \"$overlap_root/$overlap_label-$overlap_case.log\" 2>&1\n    overlap_status=$?\n    if ! rg -q 'test result: (ok\\. 1 passed; 0 failed;|FAILED\\. 0 passed; 1 failed;)' \"$overlap_root/$overlap_label-$overlap_case.log\"; then overlap_status=125; fi\n    printf '%s %s\\n' \"$overlap_case\" \"$overlap_status\"\n    if (( overlap_status != 0 )); then overlap_failed=1; fi\ndone\nexit \"$overlap_failed\"\n",
+    "qualify.sh": "#!/usr/bin/env bash\nset -uo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\ncd \"$replay_root/snapshot/hypercurve\"\nexport CARGO_BUILD_JOBS=2\nreplay_failed=0\nreplay_gate() {\n    local replay_gate_name=\"$1\"\n    shift\n    \"$@\" > \"$replay_root/candidate-$replay_gate_name.log\" 2>&1\n    local replay_gate_status=$?\n    printf '%s %s\\n' \"$replay_gate_name\" \"$replay_gate_status\"\n    if (( replay_gate_status != 0 )); then replay_failed=1; fi\n}\nreplay_gate fmt cargo fmt --all --check\nreplay_gate full cargo test --release --locked --all-features --no-fail-fast -- --include-ignored --test-threads=2\nreplay_gate clippy cargo clippy --locked --all-targets --all-features -- -D warnings\nreplay_gate minimal cargo test --release --locked --no-default-features --no-fail-fast -- --test-threads=2\nreplay_gate minimal-clippy cargo clippy --locked --all-targets --no-default-features -- -D warnings\nreplay_gate docs env RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features\nreplay_gate minimal-docs env RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --no-default-features\nreplay_gate fuzz-check cargo check --locked --manifest-path fuzz/Cargo.toml --bins\nreplay_gate ui-tests cargo test --locked --manifest-path examples/hypercurve_ui/Cargo.toml --no-fail-fast\nreplay_gate ui-clippy cargo clippy --locked --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings\nreplay_gate ui-wasm cargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown\nexit \"$replay_failed\"\n",
+    "build-benchmarks.sh": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\nreplay_label=\"$1\"\ncd \"$replay_root/snapshot/hypercurve\"\nenv CARGO_BUILD_JOBS=2 cargo build --release --locked --bench bezier_region --bench rational_bezier --bench curve_region_boolean_batch > \"$replay_root/$replay_label-bench-build.log\" 2>&1\nfor replay_bench in bezier_region rational_bezier curve_region_boolean_batch; do\n    replay_bins=(target/release/deps/\"$replay_bench\"-*)\n    replay_count=0\n    for replay_bin in \"${replay_bins[@]}\"; do\n        if [[ -x \"$replay_bin\" && \"$replay_bin\" != *.d ]]; then\n            cp \"$replay_bin\" \"$replay_root/$replay_label-$replay_bench\"\n            replay_count=$((replay_count + 1))\n        fi\n    done\n    if (( replay_count != 1 )); then\n        printf 'ambiguous benchmark %s: %s executables\\n' \"$replay_bench\" \"$replay_count\" >&2\n        exit 1\n    fi\ndone\nenv CARGO_BUILD_JOBS=2 cargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown > \"$replay_root/$replay_label-wasm-build.log\" 2>&1\ncp examples/hypercurve_ui/target/wasm32-unknown-unknown/release/hypercurve_ui.wasm \"$replay_root/$replay_label-ui.wasm\"\n",
+    "collect-build-evidence.sh": "#!/usr/bin/env bash\nset -euo pipefail\noverlap_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\nrustc -Vv > \"$overlap_root/rustc-version.txt\"\ncargo -V > \"$overlap_root/cargo-version.txt\"\nlscpu > \"$overlap_root/cpu.txt\"\nfor overlap_variant in baseline candidate; do\n    for overlap_bench in bezier_region rational_bezier curve_region_boolean_batch; do\n        size -A \"$overlap_root/$overlap_variant-$overlap_bench\" > \"$overlap_root/$overlap_variant-$overlap_bench.size\"\n    done\ndone\n",
+    "paired-timings.sh": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\nfor replay_round in 1 2 3; do\n    if (( replay_round % 2 )); then\n        replay_order=\"baseline candidate\"\n    else\n        replay_order=\"candidate baseline\"\n    fi\n    for replay_case in selected chord radial contacts overlaps; do\n        case \"$replay_case\" in\n            selected) replay_test=selected_fiber_genuinely_analytic_contacts_complete_region_booleans ;;\n            chord) replay_test=recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict ;;\n            radial) replay_test=recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel ;;\n            contacts) replay_test=selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber ;;\n            overlaps) replay_test=selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber ;;\n        esac\n        for replay_variant in $replay_order; do\n            replay_binary=\"$replay_root/$replay_variant-test\"\n            if [[ \"$replay_variant\" == baseline ]]; then replay_binary=\"$replay_root/authored-baseline-test\"; fi\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$replay_root/paired-$replay_case-$replay_round-$replay_variant.time\" \\\n                taskset -c 7 \"$replay_binary\" \\\n                \"bezier_offset::conversion_tests::$replay_test\" --exact --include-ignored --test-threads=1 \\\n                > \"$replay_root/paired-$replay_case-$replay_round-$replay_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$replay_case\" \"$replay_round\" \"$replay_variant\"\n        done\n    done\n    for replay_bench in bezier_region rational_bezier; do\n        for replay_variant in $replay_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$replay_root/paired-$replay_bench-$replay_round-$replay_variant.time\" \\\n                taskset -c 7 \"$replay_root/$replay_variant-$replay_bench\" \\\n                > \"$replay_root/paired-$replay_bench-$replay_round-$replay_variant.log\" 2>&1\n        done\n    done\n    for replay_fixture in rectangles circles capsules; do\n        unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n        if [[ \"$replay_fixture\" != rectangles ]]; then\n            export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$replay_fixture\"\n        fi\n        for replay_variant in $replay_order; do\n            HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 \\\n                taskset -c 7 \"$replay_root/$replay_variant-curve_region_boolean_batch\" \\\n                > \"$replay_root/paired-$replay_fixture-$replay_round-$replay_variant.log\" 2>&1\n        done\n    done\ndone\n",
+    "repeat-native.sh": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\"\nfor fiber_round in 1 2 3 4 5 6 7; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_fixture in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_fixture\" \\\n                > \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$fiber_fixture\" \"$fiber_round\" \"$fiber_variant\"\n        done\n    done\ndone\nnode \"$fiber_evidence/collect-results.mjs\" \"$fiber_evidence\" repeat 7 > \"$fiber_evidence/repeat-results.json\"\n",
+    "instructions.sh": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\nfor replay_fixture in rectangles circles capsules; do\n    unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n    if [[ \"$replay_fixture\" != rectangles ]]; then\n        export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$replay_fixture\"\n    fi\n    for replay_variant in baseline candidate; do\n        HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=20 \\\n            taskset -c 3 valgrind --tool=callgrind \\\n            --callgrind-out-file=\"$replay_root/instructions-$replay_fixture-$replay_variant.callgrind\" \\\n            \"$replay_root/$replay_variant-curve_region_boolean_batch\" \\\n            > \"$replay_root/instructions-$replay_fixture-$replay_variant.log\" 2>&1\n        printf '%s %s passed\\n' \"$replay_fixture\" \"$replay_variant\"\n    done\ndone\nbash \"$replay_root/instructions-overlaps.sh\"\n",
+    "instructions-overlaps.sh": "#!/usr/bin/env bash\nset -euo pipefail\noverlap_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\nfor overlap_variant in baseline candidate; do\n    overlap_binary=\"$overlap_root/$overlap_variant-test\"\n    if [[ \"$overlap_variant\" == baseline ]]; then overlap_binary=\"$overlap_root/authored-baseline-test\"; fi\n    taskset -c 3 valgrind --tool=callgrind \\\n        --callgrind-out-file=\"$overlap_root/instructions-overlaps-$overlap_variant.callgrind\" \\\n        \"$overlap_binary\" --exact bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber --test-threads=1 \\\n        > \"$overlap_root/instructions-overlaps-$overlap_variant.log\" 2>&1\n    rg -q 'test result: ok\\. 1 passed; 0 failed; 0 ignored;' \"$overlap_root/instructions-overlaps-$overlap_variant.log\"\ndone\n",
+    "heap-overlaps.sh": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3\"\nfiber_test=\"bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber\"\nfor fiber_variant in baseline candidate; do\n    fiber_binary=\"$fiber_evidence/$fiber_variant-test\"\n    if [[ \"$fiber_variant\" == baseline ]]; then fiber_binary=\"$fiber_evidence/authored-baseline-test\"; fi\n    /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n        -o \"$fiber_evidence/heap-overlaps-$fiber_variant.time\" \\\n        taskset -c 3 /usr/bin/heaptrack --raw --record-only \\\n        -o \"$fiber_evidence/heap-overlaps-$fiber_variant\" \\\n        \"$fiber_binary\" \"$fiber_test\" \\\n        --exact --include-ignored --test-threads=1 \\\n        > \"$fiber_evidence/heap-overlaps-$fiber_variant.log\" 2>&1\n    zstd --test \"$fiber_evidence/heap-overlaps-$fiber_variant.raw.zst\"\n    /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n        -o \"$fiber_evidence/heap-overlaps-$fiber_variant-accounting.time\" \\\n        bash -o pipefail -c 'zstd -dc \"$1\" | \"$2\"' -- \\\n        \"$fiber_evidence/heap-overlaps-$fiber_variant.raw.zst\" \\\n        \"$fiber_evidence/raw-allocation-traces\" \\\n        > \"$fiber_evidence/heap-overlaps-$fiber_variant-accounting.json\"\n    printf '%s passed\\n' \"$fiber_variant\"\ndone\n",
+    "collect-results.mjs": "import fs from \"node:fs\";\nconst root = process.argv[2];\nconst prefix = process.argv[3] ?? \"paired\";\nconst rounds = Number(process.argv[4] ?? \"3\");\nconst pattern = new RegExp(\"^\" + prefix + \"-(.+)-(\\\\d+)-(baseline|candidate)\\\\.log$\");\nconst files = fs.readdirSync(root);\nconst whole = [], lanes = [];\nfor (const name of files) {\n  const m = name.match(pattern);\n  if (!m) continue;\n  const fixture = m[1], round = Number(m[2]), variant = m[3];\n  const contents = fs.readFileSync(root + \"/\" + name, \"utf8\");\n  if ([\"selected\", \"chord\", \"radial\", \"contacts\", \"overlaps\"].includes(fixture) &&\n      !contents.includes(\"test result: ok. 1 passed; 0 failed; 0 ignored;\"))\n    throw new Error(\"Incomplete test: \" + name);\n  const time = root + \"/\" + name.replace(/\\.log$/, \".time\");\n  if (fs.existsSync(time)) {\n    const values = Object.fromEntries([...fs.readFileSync(time, \"utf8\").matchAll(/(\\w+)=([0-9.]+)/g)].map(m => [m[1], Number(m[2])]));\n    if (values.exit !== 0) throw new Error(\"Unsuccessful process: \" + name);\n    whole.push({fixture, round, variant, ...values});\n  }\n  for (const line of contents.split(\"\\n\")) {\n    let m = line.match(/^([^:]+): (\\d+) (?:iterations|curves) in ([0-9.]+)(ns|µs|ms|s) /);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]) * ({ns:1,\"µs\":1000,ms:1000000,s:1000000000})[m[4]];\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n      continue;\n    }\n    m = line.match(/^([^:]+): (\\d+) iterations, total_ns=(\\d+), ns_per_iter=(\\d+),/);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]);\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n    }\n  }\n}\nconst median = xs => { const sorted = xs.toSorted((a,b)=>a-b); return sorted[(sorted.length-1)/2]; };\nconst compare = (rows, key, value) => [...new Set(rows.map(key))].map(name => {\n  const baseline = rows.filter(r => key(r) === name && r.variant === \"baseline\").map(r=>r[value]);\n  const candidate = rows.filter(r => key(r) === name && r.variant === \"candidate\").map(r=>r[value]);\n  if (baseline.length !== rounds || candidate.length !== rounds) throw new Error(\"Unpaired \" + name);\n  const before = median(baseline), after = median(candidate);\n  return {name, baseline, candidate, baseline_median:before, candidate_median:after, change_percent:100*(after/before-1)};\n});\nconst instructions = [\"rectangles\",\"circles\",\"capsules\",\"overlaps\"].map(fixture => {\n  const values = [\"baseline\",\"candidate\"].map(variant => {\n    const contents = fs.readFileSync(root+\"/instructions-\"+fixture+\"-\"+variant+\".callgrind\",\"utf8\");\n    const summary = Number(contents.match(/^summary: (\\d+)$/m)?.[1]);\n    const total = Number(contents.match(/^totals: (\\d+)$/m)?.[1]);\n    if (!summary || summary !== total) throw new Error(\"Incomplete Callgrind result\");\n    return summary;\n  });\n  return {fixture, baseline:values[0], candidate:values[1], change_percent:100*(values[1]/values[0]-1)};\n});\nconsole.log(JSON.stringify({\n  cpu:7, alternating_order:Array.from({length:rounds}, (_, index) => index % 2 ? \"candidate,baseline\" : \"baseline,candidate\"),\n  invocations:files.filter(f=>pattern.test(f)).length,\n  whole_process_measurements:whole,\n  whole_process_summary:compare(whole,r=>r.fixture,\"elapsed_s\"),\n  lane_measurements:lanes,\n  lane_summary:compare(lanes,r=>r.fixture+\"/\"+r.name,\"ns_per_iter\").sort((a,b)=>b.change_percent-a.change_percent),\n  instructions\n}, null, 2));\n",
+    "verify-artifacts.sh": "#!/usr/bin/env bash\nset -euo pipefail\nverification_root=\"$1\"\nnode --input-type=module -e '\nimport fs from \"node:fs\";\nconst root=process.argv[1];\nconst report=JSON.parse(fs.readFileSync(root+\"/checkpoint.json\", \"utf8\"));\nconst seen=new Set();\nfor (const item of report.artifacts) {\n    if (!item.path.startsWith(root+\"/\") || /[\\r\\n\\\\]/.test(item.path) ||\n        !/^[0-9a-f]{64}$/.test(item.sha256) || seen.has(item.path) ||\n        fs.statSync(item.path).size !== item.bytes) throw Error(\"Invalid artifact: \"+item.path);\n    seen.add(item.path);\n    console.log(item.sha256+\"  \"+item.path);\n}\nif (!seen.size) throw Error(\"Empty artifact set\");\n' \"$verification_root\" > \"$verification_root/artifact-sha256.manifest\"\nsha256sum --check \"$verification_root/artifact-sha256.manifest\" > \"$verification_root/artifact-sha256-audit.log\"\n"
+  },
+  "artifacts": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-bezier_offset.rs",
+      "bytes": 7348335,
+      "sha256": "f149ad24cd6b3c5e9b9e8cd5c155d2278a0da2868bab14105bff4ae5aca4eaf1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-build.log",
+      "bytes": 291,
+      "sha256": "7bd9c41fa24bda437d7af9f33fb47cc265a7af9bb7c96db0fd74e996f3ff43e2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-selected_fiber_rational_component_publishes_its_isolated_endpoint.log",
+      "bytes": 708,
+      "sha256": "dfbff43d87bb4cad417ea26bd1956c7b8eaa625a0256a61c956f021812cd9b0b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-selected_fiber_rational_component_rejects_the_conjugate_circle.log",
+      "bytes": 637,
+      "sha256": "c4b550ec9e58e32435130d710a6048ebeaf58a1d4cb6c27140c5fdb93f2de8b3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 651,
+      "sha256": "47f1aa203fc250d974f4aadc075f1ad01b4f2c0b1be82f6ff34019fdbc0ee145"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 681,
+      "sha256": "163b6471f1b67f20cf98f96d9d5d80622e48740ac62863aff93fca4bfe42f344"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/authored-baseline-test",
+      "bytes": 28183696,
+      "sha256": "ae757cb12955287f1a758ad6a5075afc9e5892404b7b0d0b597801ff67a16b02"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-bench-build.log",
+      "bytes": 1492,
+      "sha256": "15d31f238dfd2a9442f1609553f6f60438bcae6155156e1e15300777ae923f81"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-bezier_offset.rs",
+      "bytes": 7336635,
+      "sha256": "764b318f0329076203653295d9a95dc6ddaf95994ea944c0d782e1535bc99b19"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-bezier_region",
+      "bytes": 14881960,
+      "sha256": "7414fd8a4004e5ee2ff8b6beddf4002f40c33008373e966d54f0131bdf174888"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-bezier_region.size",
+      "bytes": 1648,
+      "sha256": "f437d12eaa4731211e4248391f2ba103232c9b968d91074cd23734cd802d5393"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-build.log",
+      "bytes": 4698,
+      "sha256": "17bd901bc3c51a2bc8053612854d397fc2bf0f2f24e7312b99d5b8f7053115f3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-curve_region_boolean_batch",
+      "bytes": 14319400,
+      "sha256": "ec0c7bf0e533b116138a362a6419ba133dcac74d5714b756743fb6948cbdb1a8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-curve_region_boolean_batch.size",
+      "bytes": 1661,
+      "sha256": "3b887a2e3804cde0e1a6654c519a66d2ebff026f7234fa98cd1f9d71762405e4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-rational_bezier",
+      "bytes": 10509648,
+      "sha256": "03ca7464d7d3e3e5fb64855e6811694eb53363a1393196c8a55fb9a8b90fc014"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-rational_bezier.size",
+      "bytes": 1581,
+      "sha256": "51f0279f8f42a5c204345f9540cd2af5b609f1696090cb961bc670d90d91e360"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 653,
+      "sha256": "2d1ed4339823b8d1bde8ea780e11630e1bdbfd20c038f2e6b0a7b100e0be512b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 683,
+      "sha256": "d931aa8cc96d458e331cf16f42ce6d9bdd118a2995360f51e600c6720647f99f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-test",
+      "bytes": 28130216,
+      "sha256": "6bad9f08b643713a8a75e92e6a6da1fc08b91cbbe23b5a0e729daf6934e0af45"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-test-catalog.txt",
+      "bytes": 88536,
+      "sha256": "8cf6fc8a3295272371ac1af8305f8ff5e670da48020973d52fd06bbe63333fca"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-ui.wasm",
+      "bytes": 17032621,
+      "sha256": "83e2d328222ac609377a90e352da40bfcc6ac0b69d564c6216d8a58745a8c4a2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/baseline-wasm-build.log",
+      "bytes": 4795,
+      "sha256": "dc5c3a090474ae6eac15385f5ea80ed361b8dcc7af54a9a33f50a3facfdd891c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/build-benchmarks.sh",
+      "bytes": 1254,
+      "sha256": "0ad11bc0de3244be07ab64e0efe12a433c883ceb505fdd3221b2d17f15040fce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-bench-build.log",
+      "bytes": 261,
+      "sha256": "7438a0ec3549adc23c9c1c85298974c02c47a5b3b344e4d431ebc3e1929ba3a2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-bezier_offset.rs",
+      "bytes": 7349715,
+      "sha256": "f0cbf167f7e512efc74c6050f5db70096e52aee1dfb0e83526c950ce737fe88a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-bezier_region",
+      "bytes": 14874048,
+      "sha256": "6f4b307f877adb44aeadec06feff0428e758a0037e72f89d5bb250b3d4517fcb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-bezier_region.size",
+      "bytes": 1649,
+      "sha256": "69b9a0470677d502935c0d0b4459993f5777a181f73034de0f05f62a3c45351f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-build.log",
+      "bytes": 291,
+      "sha256": "352a9ef03e78e67d7015d3e3d3532632c2999c0937f38f5771ca4cc3309c358f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-clippy.log",
+      "bytes": 217,
+      "sha256": "924c51a669c71ac553a68105b9c73cccfc6a426a88f77501011e28a53ff3acf5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-curve_region_boolean_batch",
+      "bytes": 14314496,
+      "sha256": "75f6e0ab499e5b7d44b6ccde59c4dc34405bbbef2533ee10411ba8cb30c179b6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-curve_region_boolean_batch.size",
+      "bytes": 1662,
+      "sha256": "e2de3737c4a9a424dcc0e273effe41b83195640c0175a924c2ee146f0a9b9df1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-docs.log",
+      "bytes": 373,
+      "sha256": "42a3044f281a95f1d2302f03faf9763a87bd46cb65099b6b883a1f77cec80589"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-full.log",
+      "bytes": 167726,
+      "sha256": "0ae453f25b25a1937e090f1b6429bb3ecd81c5a318daed4fd2657079c442fae6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-fuzz-check.log",
+      "bytes": 370,
+      "sha256": "9b8e3cfe2812197c73f15dbf2575b83736c0998ec665cdf82170896eeb7c2fe9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-gates.status",
+      "bytes": 117,
+      "sha256": "8ea78b002bc11719b07258351ac35abceb639ce4825b6c3607396fe05f8d41ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-minimal-clippy.log",
+      "bytes": 217,
+      "sha256": "4bff60d58a8f0b6d2aecaccde2fe02428c94287e68b4acec58a058ea49863489"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-minimal-docs.log",
+      "bytes": 373,
+      "sha256": "b592dad13a31303bc6f00a18872460eccfee9190483902cbbaab4708e562780c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-minimal.log",
+      "bytes": 165551,
+      "sha256": "6f34b888053338ed49460b8862a0cbcaa9abe648454f4eee20163c4ef4eed481"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-rational_bezier",
+      "bytes": 10511136,
+      "sha256": "32c925ac1ae2e94a9b579067789df4845959f00c5cc2e9b45781cdaca3ea9522"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-rational_bezier.size",
+      "bytes": 1582,
+      "sha256": "d793242473916b3ba3126053458966bbeae76275b1f0384fc7a651a598e21baa"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-selected_fiber_rational_component_publishes_its_isolated_endpoint.log",
+      "bytes": 225,
+      "sha256": "7d66c1f2ea8a62071c7e31df9b07907a8cd55e6832dbc948aca3d820d0f26b45"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-selected_fiber_rational_component_rejects_the_conjugate_circle.log",
+      "bytes": 222,
+      "sha256": "6a4286fe7479b62db57ee2c0695d54312c10417b545b817c749070daa8a907de"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 210,
+      "sha256": "02a86d150fffeb30744d7abaf43d110733676683a3e75ad11134bafbb5eaae85"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 216,
+      "sha256": "cf9a3b33786d8b2590531af0f74123aae56c08a46573c71b513e77ebd511886b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-test",
+      "bytes": 28161432,
+      "sha256": "d2138673a6898e70f6d9cfb979b9809e5b43b75066c6bc52aaa818e178378956"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-test-catalog.txt",
+      "bytes": 88536,
+      "sha256": "8cf6fc8a3295272371ac1af8305f8ff5e670da48020973d52fd06bbe63333fca"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-ui-clippy.log",
+      "bytes": 386,
+      "sha256": "dc1f739354bac4f236a6f67b1ccb48288645a4a9cb1618fe4a270c4948e52a5a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-ui-prepare.log",
+      "bytes": 497,
+      "sha256": "ce96055ea05789e8fece41187afabdeeee7e884f387d99bfff56e7585b47a296"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-ui-tests.log",
+      "bytes": 3294,
+      "sha256": "8639d34dbfc20909d7c60ddd5a6078b1edaaa092d30f62ea0c4f0e9ecc08b077"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-ui-wasm.log",
+      "bytes": 62,
+      "sha256": "343c13e7f6f2d320993b573f830525e33b59b3c32656ef426e015b1e30f3fdc2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-ui.wasm",
+      "bytes": 17029668,
+      "sha256": "26b02ae685e28f2e1b57af2f3cf584b6d27b9d8f3a609a87b35de7c5dcc62049"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate-wasm-build.log",
+      "bytes": 377,
+      "sha256": "556467f10649e6dca57ca56a37b4e0ce4addb6fa8b9a3732b01300c0d0cfba30"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/candidate.sh",
+      "bytes": 369,
+      "sha256": "28b170b60678431818480889480b775cd35f2f6d3cd5260392506de079984f60"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/cargo-version.txt",
+      "bytes": 36,
+      "sha256": "f4f564f8936fa8eb53bca8bbe50666489252bbcbeaae0cb0dd54682444697e52"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/checkpoint.mjs",
+      "bytes": 15190,
+      "sha256": "8610f155d621ed5d57f5ff323e480ce4a1897892cf8cdef857ac8d4b81a7c466"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/collect-build-evidence.sh",
+      "bytes": 530,
+      "sha256": "b7cb79902222becbb6342f6a0007b174fc8ae2ddb5269dbf131f062089d8753e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/collect-results.mjs",
+      "bytes": 3547,
+      "sha256": "48b2f256838fe5e3bbde623ebac03af06d02fdcb6a15371b19c00ce8643e5960"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/cpu.txt",
+      "bytes": 3666,
+      "sha256": "9f520014ac1b8533dc0b2c7923d83a1af182dc0a053c47d6c7c718c3373a2e0d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-baseline-accounting.json",
+      "bytes": 1493919,
+      "sha256": "d3c3e93921073c456491f7486f39f2d2f407cbe9841f1cbd121919be97aad156"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-baseline-accounting.time",
+      "bytes": 65,
+      "sha256": "0baf63e76b0380e8fb0c7858ae1364e44d974c02b6954af2cff8360b41ae1ec5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-baseline.log",
+      "bytes": 837,
+      "sha256": "2823169920e61886c6601121c85abd9c70456990fea80967a7a2584b8f68503f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-baseline.raw.zst",
+      "bytes": 3091632,
+      "sha256": "a56ae1b3736cd66a2861a467e02052d74e5514efce8771af4360a61094286335"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-baseline.time",
+      "bytes": 66,
+      "sha256": "9155fbfa8913c3f64d6d8031cb05f170258bd3ae09b889e136eb88031d15b0b3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-candidate-accounting.json",
+      "bytes": 1591314,
+      "sha256": "e66fe33f33369f0be632366a79b6df0f0f24f32bce0e961379e347dd673ca403"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-candidate-accounting.time",
+      "bytes": 65,
+      "sha256": "836d8ca3f64e7749eb0631fe75736e1885c0311993b3d5ce64f94fdf6323686a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-candidate.log",
+      "bytes": 840,
+      "sha256": "040aad63747069cbe1f8a94a6c2d73c4307ee2e6dc358ca5d7ebd558460d725e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-candidate.raw.zst",
+      "bytes": 3126941,
+      "sha256": "cbc3392c6fef44304de40aa99290d83d81541c3f167f52151cde6b82c4e6e9ed"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps-candidate.time",
+      "bytes": 66,
+      "sha256": "67e771da8a0fd2d6645f8a95ba391365063d5620538f199bde73f576f189d01b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/heap-overlaps.sh",
+      "bytes": 1426,
+      "sha256": "5ab54915a2c4c824e27fda23db21f5c3acea8b8d55335f36dc7d5fddacc49290"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-capsules-baseline.callgrind",
+      "bytes": 373409,
+      "sha256": "a396e275f87779683d56d6de28a967b8c4f2dbd50a9b6942036059894998e293"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-capsules-baseline.log",
+      "bytes": 735,
+      "sha256": "5f02ff08aca565542d3109d7db81f3b932179635e9aa143e47301e90ad688f07"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-capsules-candidate.callgrind",
+      "bytes": 370360,
+      "sha256": "d082782ab9a1374a9789f6ec24d33a23f92295cc7f69bc04858acffb884aeab8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-capsules-candidate.log",
+      "bytes": 736,
+      "sha256": "6f962e34ebe5fe84d2b40acab62e0f5b16c942eb13d0a7e9ea130b06989acc45"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-circles-baseline.callgrind",
+      "bytes": 354746,
+      "sha256": "53b34f940296f8a7ac100ece9c411ac274718557254fc2db86fa462628df17e2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-circles-baseline.log",
+      "bytes": 739,
+      "sha256": "e03b68b60aad05e2abb38fc88ff90c485f01cdd16c457e9fb511781c4ee8b7bc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-circles-candidate.callgrind",
+      "bytes": 351474,
+      "sha256": "8ab8f7dfac6f01cdf341612fc25d344ec490b81ccb82af7baf1f439235d70133"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-circles-candidate.log",
+      "bytes": 741,
+      "sha256": "c18d3a39d04595c8707be4ab826cf294a11af8cbd7fb735c61e5cc6d751d2888"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-overlaps-baseline.callgrind",
+      "bytes": 442188,
+      "sha256": "b9760a5ffa33d33dbb6614d813c551c9caaff92c24e4c3055e90b6a21dee749a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-overlaps-baseline.log",
+      "bytes": 881,
+      "sha256": "662cd078395a78f519fb5d550dc8516dee38a3391662c7cf4fde8aaf5df8e3ad"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-overlaps-candidate.callgrind",
+      "bytes": 446891,
+      "sha256": "2b9644cb780b862d9cb1820792813a9b17284cf1c2539f595eefabc630b6b688"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-overlaps-candidate.log",
+      "bytes": 873,
+      "sha256": "20edf7e7b05f4565a5e522920ac9e81839d15593758b6ef735af29d1be5e8d10"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-overlaps.sh",
+      "bytes": 858,
+      "sha256": "2bf74a6d6e5650fc980a656c1bc676667e7ea9f4dcb40a6f205fb1ae53e32072"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-rectangles-baseline.callgrind",
+      "bytes": 238683,
+      "sha256": "85d94c139bab6cbb9022ae2eb15e4a0ce932c4f388bd20f49ac994b14c180084"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-rectangles-baseline.log",
+      "bytes": 733,
+      "sha256": "4d68198b340a3d9d36c1f13c52e93bd24f18180e892981d64cd65828936a1a19"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-rectangles-candidate.callgrind",
+      "bytes": 237336,
+      "sha256": "4ad5974623961c86d8bfeebe2d871d2e3604676f3ecfb7795ac0e3df4a82e970"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions-rectangles-candidate.log",
+      "bytes": 734,
+      "sha256": "881dff4d653d5275eca810cc052a9f2d6f13212035deb27e65ee49b5c6b5ba8e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/instructions.sh",
+      "bytes": 915,
+      "sha256": "52e486d1b2995493c53bff1da9a366ea31d4f3f1a5c38c25ce8a39e9f45f5c0a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/matched-baseline-bezier_offset.rs",
+      "bytes": 7342772,
+      "sha256": "5945e12937017f31ce5bfd71203edc1cbaaa099ee9383dbfbf014b1487dd4528"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/matched-baseline-build.log",
+      "bytes": 291,
+      "sha256": "f622a422604147d1038eb79dd28df551b6fb47fef9fb6b33d76587d0583587ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/matched-baseline-selected_fiber_rational_component_publishes_its_isolated_endpoint.log",
+      "bytes": 708,
+      "sha256": "e33ab4544c9737341833de9588e2c17fea167514116dd6d8f67aad0db1aa4aec"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/matched-baseline-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 651,
+      "sha256": "dbc2ef5f2ade0358adec8aeb6c6465e86155a758c5447b20d7ec050b91d19a1a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/matched-baseline-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 681,
+      "sha256": "922168281af3d741b0c51f74dc9a965b2b9a0851d240d6190b48674c9640bda9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/matched-baseline-test",
+      "bytes": 28139304,
+      "sha256": "2d4ace7e6645eeee268a487bc20d378f8b5b63c9575430ff82c44ba14d193998"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/orientation-before-bezier_offset.rs",
+      "bytes": 7342059,
+      "sha256": "f5f91f8242ad32dfc07562a6c0b0686f3ac7fb7f2175a4f6cd5a7bad1e7b12c9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/orientation-before-build.log",
+      "bytes": 291,
+      "sha256": "814cc5e7c7253590e3c1d7e77476f7e6da02392e777b042ffcd5821ec76f202b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/orientation-before-selected_fiber_rational_component_publishes_its_isolated_endpoint.log",
+      "bytes": 225,
+      "sha256": "5db9cd67b896991d1a6fba3776b52cb065ac594eda56935c50793000e742f0e9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/orientation-before-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 627,
+      "sha256": "bfcb482a601fce8371a47e98728aaa53ad102cdb639881a9221b70b99abebd62"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/orientation-before-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 645,
+      "sha256": "d3405aebe5d1f0ebdd1d195d324cfb7ad0e5aa480bf87293ed9a8c608a2f5344"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/orientation-before-test",
+      "bytes": 28178712,
+      "sha256": "c6b1172a19ed376404546b1b3d1a04acef41ac1a08a1b01e1595b6c41ea89b26"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-1-baseline.log",
+      "bytes": 1863,
+      "sha256": "08e7e2b278efdc69c54642fef04cd2a1730a33076e4f1560fde91e45a326569a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-1-baseline.time",
+      "bytes": 65,
+      "sha256": "f3ed4b4982fd82d8de43534e5108829ef9c8d25a0c4adb437732f9d1781202b2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-1-candidate.log",
+      "bytes": 1866,
+      "sha256": "8fa6904c6888943a0551a1dd946e14dc1e692cf082624edb8f411bb09cb02dd6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-1-candidate.time",
+      "bytes": 65,
+      "sha256": "805d4be488c201f2f338e309e9a53202d19eb150642ff22f5a8b5d390fcbc30b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-2-baseline.log",
+      "bytes": 1863,
+      "sha256": "a447daa556656bb3a4bd4bffe3357a84e25271002bb8dc4c171b2ca4549f4881"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-2-baseline.time",
+      "bytes": 65,
+      "sha256": "93a44d6701a96fb5e70a35156c18f841a7b385b5b8785fb62c3f06377a5d102d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-2-candidate.log",
+      "bytes": 1867,
+      "sha256": "78a1ab57682f635ad07bf7f401b7b005ea353a928274b6dc6e14afe48f9c3248"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-2-candidate.time",
+      "bytes": 65,
+      "sha256": "aa3415bc0258c1ee7f6233774c9afbd5ed71fb6c5db5e9b613fadefb3fc08026"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-3-baseline.log",
+      "bytes": 1864,
+      "sha256": "78fbc63cfd451eca5a45492f234f03379bafeaca3ca69c463dcee05ef918a706"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-3-baseline.time",
+      "bytes": 65,
+      "sha256": "0d63a775658baef3e668631ea407c653033052b5ee120465d109b50439e365d3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-3-candidate.log",
+      "bytes": 1867,
+      "sha256": "b713cc42f4790075695351b17c0016b6bd967f7b218ec11ea25da278be9335ed"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-bezier_region-3-candidate.time",
+      "bytes": 65,
+      "sha256": "fe240b372e3c157660287da088c304991b9fd85f38ede01513127c8fb19a9f7f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-capsules-1-baseline.log",
+      "bytes": 217,
+      "sha256": "dce24c8bb53322ace12aae8c826260a02ebde82ac175839ae7e4e8c0305c41af"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-capsules-1-candidate.log",
+      "bytes": 217,
+      "sha256": "1cc43328713929f659f290118411ed5742343b308b8a69323d25757e6cd5545c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-capsules-2-baseline.log",
+      "bytes": 217,
+      "sha256": "b0b0d416a6ff9fef60814ba5e8409583d3f1ab503537f4475931525d24f95f84"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-capsules-2-candidate.log",
+      "bytes": 217,
+      "sha256": "99db3e79210346cf94b305a7cd104aabb6b8e8a6197829a7ead5d7cfb0a0bf1d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-capsules-3-baseline.log",
+      "bytes": 217,
+      "sha256": "aa1ec52f07c6d3f9484424fa6459e7b4e4efd3bc56ee69295ec0aad291beb71f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-capsules-3-candidate.log",
+      "bytes": 217,
+      "sha256": "1fc4bc1b852f62316a6c265e7c44f66c48a9d5137372bffa49fe7279b958e6db"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-1-baseline.log",
+      "bytes": 240,
+      "sha256": "7da00c381ec0756b68b92c3c70782b5ffc8dbc5a42fa6edb1d97f183cac62cd3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-1-baseline.time",
+      "bytes": 68,
+      "sha256": "b89af6edcbaecc55fb311b1e79a4afbfeb1b294d99c9c54c0e0e130338b12c12"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-1-candidate.log",
+      "bytes": 240,
+      "sha256": "7da00c381ec0756b68b92c3c70782b5ffc8dbc5a42fa6edb1d97f183cac62cd3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-1-candidate.time",
+      "bytes": 68,
+      "sha256": "7844ff04db7c4ae97a1727a72d0b4c3f440caf20b3aa43d7eaac38ae016ab1c9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-2-baseline.log",
+      "bytes": 240,
+      "sha256": "52b9979d049d2641a02d6ff3f3b442083dcaef63795dc7cff1fcc5a63d340241"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-2-baseline.time",
+      "bytes": 68,
+      "sha256": "1257395b169c6263c2b0088057e3feb8cecabfe40c6db0839dc52f189e357903"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-2-candidate.log",
+      "bytes": 240,
+      "sha256": "6dd46bae9243a38d84eb319c26599e35ab20cd56b96a88ce35f51cda2fef3e2a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-2-candidate.time",
+      "bytes": 68,
+      "sha256": "8e8a0d4b9c8b5a797c6f896e72364229396d5cf5f2fa6c580d4e1a1fc657beb7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-3-baseline.log",
+      "bytes": 240,
+      "sha256": "6710f9da82540fbf6e93e43dd2c21e027fa13109476458678666d7471e8b6e1e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-3-baseline.time",
+      "bytes": 68,
+      "sha256": "5030322ae66adba4c82583be31faa8c71ef85e64a22800998777e09e33073a38"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-3-candidate.log",
+      "bytes": 240,
+      "sha256": "e0da4bbc1970d0c76187462c63de9df37f9730432e17be9911c7a0f82729f877"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-chord-3-candidate.time",
+      "bytes": 68,
+      "sha256": "809f9b367c9ecf689fabb5388d89c74feb36396f32257a6d552817844907a677"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-circles-1-baseline.log",
+      "bytes": 217,
+      "sha256": "a6d6d80c76ad5754de5f598803123ca19901024cb947c24a474250915728bb53"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-circles-1-candidate.log",
+      "bytes": 217,
+      "sha256": "37858b4b74fb80b2f7ea2ad87b9c5c8b6fa369e837b548a97360fac8a0de2654"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-circles-2-baseline.log",
+      "bytes": 217,
+      "sha256": "7e75910a88a6cd5ceb0102dee9680336c7b9094aba5489ed205ec3846ee6271d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-circles-2-candidate.log",
+      "bytes": 217,
+      "sha256": "b02c2ddef465dbd62448af1ba4d5fb91a6b2d4d40ebf3866c51b6e766a50c5e4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-circles-3-baseline.log",
+      "bytes": 217,
+      "sha256": "779e4b4993080fa867a8e3973f47b8515d78cdf7fd7458a2891394b04b7446f4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-circles-3-candidate.log",
+      "bytes": 217,
+      "sha256": "dab4afb3ddb159b359cc89d72ce4fcd1ba3667f3aab7578167bf41c5f8e1f4ab"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-1-baseline.log",
+      "bytes": 239,
+      "sha256": "6d7df315ee377ee79376e2e85e419722abb78c0ef9aaa10a0c556a84d3b0d0d1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-1-baseline.time",
+      "bytes": 68,
+      "sha256": "c992a1579498c3dea9b50eb7d5dda46c243618be1ee01c8fec6d18124fb507fe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-1-candidate.log",
+      "bytes": 239,
+      "sha256": "7abb6458a0b20950ce6df2a95844d89ca580eab08b2400a26622dd6dabd376e3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-1-candidate.time",
+      "bytes": 68,
+      "sha256": "7c9ca4488bc7521bfb2a57fe47150bd68e622dc057ecdcfabd101c1b878eb0c9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-2-baseline.log",
+      "bytes": 239,
+      "sha256": "9b1e39ce488a7cb8eb91c1708f987bdbee1ccb019c0b6b60581c38f027a2f818"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-2-baseline.time",
+      "bytes": 68,
+      "sha256": "5ac0fb870e67ac0774877e72a23b8ffdd89a36c1d5275c538a38fe38bd652e88"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-2-candidate.log",
+      "bytes": 239,
+      "sha256": "3d64ec00bffccdaa8fd2434c5ce5a4f4799cabbada36582e923ac281fac84523"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-2-candidate.time",
+      "bytes": 68,
+      "sha256": "36e9a618dd4b1efc4654ac0913f98f974dbe86ae76ed6b97054c2309f8a73691"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-3-baseline.log",
+      "bytes": 239,
+      "sha256": "b52d9f860460cba20f599175cf2f011fbe0cd842a0ab66584885f1ea9d9e8d2c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-3-baseline.time",
+      "bytes": 68,
+      "sha256": "55bd116b7c130d5b1da6339cf6f9160e78cefc874091d26e7eeb6d89ea113bc8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-3-candidate.log",
+      "bytes": 239,
+      "sha256": "8cef688ddf7c69fa61ee139a9f081fcd1252d05ecacfd3749f8dc8f080137856"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-contacts-3-candidate.time",
+      "bytes": 68,
+      "sha256": "a2be97e0c5a598b62579cfc43685d8875a16725fcfa2f7be0e13d6a2f2aee635"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-1-baseline.log",
+      "bytes": 238,
+      "sha256": "dd06a8848e270a005d347d856b41c606e021fb0ed1e36114fcb13bb31579afc8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-1-baseline.time",
+      "bytes": 66,
+      "sha256": "7f9ca7a3103abaf85c3ec74d20e281a83d57e2999cbb1a410cf9d96485bc5718"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-1-candidate.log",
+      "bytes": 238,
+      "sha256": "dd06a8848e270a005d347d856b41c606e021fb0ed1e36114fcb13bb31579afc8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-1-candidate.time",
+      "bytes": 66,
+      "sha256": "2c5d9ce9067e6154a54352b4f08246407687cf497d8abb168189b81cab71fbf0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-2-baseline.log",
+      "bytes": 238,
+      "sha256": "8ce9b8fa5a5380d0ba6a3c9a82b16f4987e03cf468f50de3115694e883ebf561"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-2-baseline.time",
+      "bytes": 66,
+      "sha256": "c480ad35308e0c07d6d54f037b40d3500d2b11cf62130b11ec81ed363bbafd1f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-2-candidate.log",
+      "bytes": 238,
+      "sha256": "8ce9b8fa5a5380d0ba6a3c9a82b16f4987e03cf468f50de3115694e883ebf561"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-2-candidate.time",
+      "bytes": 66,
+      "sha256": "5f38b863c04b664a6ef340b5b8108929a59d782194f3f378ffd8e125c0586401"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-3-baseline.log",
+      "bytes": 238,
+      "sha256": "8ce9b8fa5a5380d0ba6a3c9a82b16f4987e03cf468f50de3115694e883ebf561"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-3-baseline.time",
+      "bytes": 66,
+      "sha256": "a38c8fe7d096cdb3e00bfe4652f9067849f3340cbc5805c4eabfe0b5add05c7c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-3-candidate.log",
+      "bytes": 238,
+      "sha256": "8ce9b8fa5a5380d0ba6a3c9a82b16f4987e03cf468f50de3115694e883ebf561"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-overlaps-3-candidate.time",
+      "bytes": 66,
+      "sha256": "d2163faffd5e2f0bc5294814c18ae8ad4da28f8d095c88674ad6da296a4d3262"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-1-baseline.log",
+      "bytes": 230,
+      "sha256": "da3e5310616275542790be0ae2ff9ac879956e49496d12580debde1e8ce65b89"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-1-baseline.time",
+      "bytes": 68,
+      "sha256": "21afef3ddfd8353eb01fb7f8b38d39077a8f63a141ef32eff35783b4502062b9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-1-candidate.log",
+      "bytes": 230,
+      "sha256": "015beeecc0a419f8a4913dbb7258795273f0e26174ac8205f1074ec48ded4bd4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-1-candidate.time",
+      "bytes": 68,
+      "sha256": "ac6cba755d0cc29f0606ed17e3c6535527f062d8347d9d0b9e1cc51ae460da29"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-2-baseline.log",
+      "bytes": 230,
+      "sha256": "d044bfe54088f046fdba71258bc51a29faf1fb20c6a99f4829d78749d29070d7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-2-baseline.time",
+      "bytes": 68,
+      "sha256": "28f5a7dc434dfa826a33e43312ee4011b4812b013a2d2d3e426862f813af3c90"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-2-candidate.log",
+      "bytes": 230,
+      "sha256": "6e235fd411f55678555cefb888c075069aee14e4159efa02f7c64a0031a5a0fb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-2-candidate.time",
+      "bytes": 68,
+      "sha256": "fc0d77bd070ab2549c639aa51168a32ac844d3c29b13330798320ae6b0f60875"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-3-baseline.log",
+      "bytes": 230,
+      "sha256": "ec4e53113efd95a7d079da82c79ede79960bfb910dad2b9b9d16a1f54804fc3b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-3-baseline.time",
+      "bytes": 68,
+      "sha256": "34d06ed2cc4e198cfc2c02d53dbf133ed6d8cbf0eaf8c7d601998215d127e3d7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-3-candidate.log",
+      "bytes": 230,
+      "sha256": "4712b9348d1c8be14adade7f726865ec25b9e93962eedb88f26be85312a00ad4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-radial-3-candidate.time",
+      "bytes": 68,
+      "sha256": "37cba84f191861cb4c24cf9828b2db5f1796faa941af72d1dedcaa16f8feee3c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-1-baseline.log",
+      "bytes": 2318,
+      "sha256": "4ac679c9e98f6347adf09ba2833b28c307cb26aa458771d6c5483b98a1df2718"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "da206d62a3e5e15e07afef28b8f2f617d4736ae33c02da93bb36260164a26a3b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-1-candidate.log",
+      "bytes": 2313,
+      "sha256": "09c4fee8617247b9c228823b5870fdaaf24291eb042e1ba741ef73b259a99890"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "5aba1ffbf3b677072ce3ba116c638aca9ce15903fd230a57eb77cf5ddfc39b08"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-2-baseline.log",
+      "bytes": 2319,
+      "sha256": "37aba41de7831da9a7dad7b424011b91904142c5fa7af9fe07f1c9e9fabc07ea"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "40428803a861e501b7f7949661523d9bb46aab1543d176cabb8a4ea7b56d1ab4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-2-candidate.log",
+      "bytes": 2310,
+      "sha256": "4b1059c0dc2058946fafed02dfca0a4f77f784182f454f3748d0b02ca4951313"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "1719bfa17118d9e9b584dc26f54d12e27daaddf729e2d0ebac72e653e437be3a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-3-baseline.log",
+      "bytes": 2316,
+      "sha256": "cd173815923dcd6c39ac15cf718812e5f3879fbe1b78b81df40b686176c0502c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "9cb4ebc4818f883612afabe45cceb153cbd272465bd844c1b6edf606a794bc68"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-3-candidate.log",
+      "bytes": 2305,
+      "sha256": "3f732d5c43a428c7b22954ce06b1dc4ccb9f6622f30f463503c14827f3804194"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "94d3bf8382aaa2cd59617b44eebe6e824315d68f4da23666de0ec29b91cb8e7d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rectangles-1-baseline.log",
+      "bytes": 213,
+      "sha256": "08e4cf842dd6fd6e3378ccbe129c2d36809ba6fc616dc4f8d092cd15e26949d8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rectangles-1-candidate.log",
+      "bytes": 213,
+      "sha256": "2b1fada9f8eb208547cffcf673af26095228429f8990dc79d6ea525209df8490"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rectangles-2-baseline.log",
+      "bytes": 213,
+      "sha256": "de1469b8401f892c0feb4c82d6f8bb2579696d5dc106102bf1165f198cdb304b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rectangles-2-candidate.log",
+      "bytes": 213,
+      "sha256": "696bd2222bf50fc5fb8ce545d7375ae638b7d1bec3267d3dfe6250efdc60e346"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rectangles-3-baseline.log",
+      "bytes": 213,
+      "sha256": "4846235b97fa64411b40605ba64ae246f1c78e7b310e236539cbe9962e599a7d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-rectangles-3-candidate.log",
+      "bytes": 213,
+      "sha256": "ab4b8391d0dc8be15b7f7dddafef7b7289eaec99989c34706f654d2104b563f1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-results.json",
+      "bytes": 130652,
+      "sha256": "fdd409cc3955fa6fe3b6198458cfc253d99fa4a61daf0cbb2c6eb2dc31148112"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-1-baseline.log",
+      "bytes": 228,
+      "sha256": "253366d2cc5617fc7b78bcd0bf6b76df8edebe4e391f6aed4fe88b687d6edb77"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-1-baseline.time",
+      "bytes": 68,
+      "sha256": "5411fb5f980525cb6b130fc2383218c715efb496d107e5bb034325c40b584565"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-1-candidate.log",
+      "bytes": 228,
+      "sha256": "d97b74f146dfab58aa93321ce748e53f9303b1113c135b50912586fa033c71b4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-1-candidate.time",
+      "bytes": 68,
+      "sha256": "38dae22aa873a89683f715563dd11c17fcd787c98c4707cb73cca12db7c1ce98"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-2-baseline.log",
+      "bytes": 228,
+      "sha256": "2b495a0e7138f27d3e176bc37a9df743654c93d1716355a1fbfff4e1c6f96c39"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-2-baseline.time",
+      "bytes": 68,
+      "sha256": "106e10ffa672c4bd8ecb85fdb4817daf0ea0349a4c791fd4d7d8f2e8bf346d12"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-2-candidate.log",
+      "bytes": 228,
+      "sha256": "ffabb490a67c363781c7dcc3e64dd923d06a3bfb1a464b74b370f9b7a1ee522d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-2-candidate.time",
+      "bytes": 68,
+      "sha256": "76a9ee56c7517b4b1246bd4d28dd6cb3da41beb9d25c6d422a1a16d91ea540c9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-3-baseline.log",
+      "bytes": 228,
+      "sha256": "4f99d713ecd92c2be384915c77be1292d66948fd39bc77b09e7b7e1ae1368899"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-3-baseline.time",
+      "bytes": 68,
+      "sha256": "c5bddea8f54036b833af6076f59c227df7c59d654b74898f8c537be2c2df0e78"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-3-candidate.log",
+      "bytes": 228,
+      "sha256": "7852dceed75601d6435de19d833a004f1b674dd06b4a16c728d0d25d8315d071"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-selected-3-candidate.time",
+      "bytes": 68,
+      "sha256": "eba5f353928a921307dc7a1271bacd4b648ea43f374d1400f4d12c6f6b4bdabc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/paired-timings.sh",
+      "bytes": 2788,
+      "sha256": "5355e6601e614b7ae8ad7ac8c28e6af15465e0d66f47a5269739e800a6b492ae"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/pins.json",
+      "bytes": 457,
+      "sha256": "5027b5ede70e6b063b2c9009a6064ccd109c6521f4069dd60baf77ac2ac52707"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/processes-before-timings.txt",
+      "bytes": 41514,
+      "sha256": "826c6d30af0b85bdc7de941216c2d39d5ad5a0ac2f3a9d4dcf0d504e128457da"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/qualify.sh",
+      "bytes": 1614,
+      "sha256": "a5eef8774502c820328ecf3e12e3b972644e53b5b22619b30a85629c51a89934"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/quiet-timing-midpoint.txt",
+      "bytes": 347,
+      "sha256": "92d44fd3094b1d5d57c2015289d8a6ff54f63b57597d688fb6bf3c3bd98a1655"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/quiet-timing-start.txt",
+      "bytes": 392,
+      "sha256": "e8ad25e4709ca75f1cd27a7a43bc51330374450e4ee5f48f76ea1fda6b59d51d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/raw-allocation-traces",
+      "bytes": 40096,
+      "sha256": "4996e8d0886a45bdf1c43ed6be7b0744d33b60596533a7f5fc5c4dc59f1fc102"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/raw-allocation-traces.cpp",
+      "bytes": 8356,
+      "sha256": "7431b3c84656977d9f1e59177fbdcaa00148e2cb9a2e8bf73ccf8aa206648244"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-1-baseline.log",
+      "bytes": 1864,
+      "sha256": "00eb5577df5fb738ac230ba6aec6e89509bfbfd81efe22a0f3a650b9635b802a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-1-baseline.time",
+      "bytes": 65,
+      "sha256": "a3704e4a04a5d5f15d6cf78a7d853bf31ed0a27c99de1710b9aa38f8882ae948"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-1-candidate.log",
+      "bytes": 1862,
+      "sha256": "3888a38a4dd777980ec24ad389a4f8a47af3bcb4b3ff742c6fa7971083c84ced"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-1-candidate.time",
+      "bytes": 65,
+      "sha256": "e8dcbefbbbfdb2c8e45ef8e63e2db8f56fc175fb5192246cf736a867b4ac2a59"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-2-baseline.log",
+      "bytes": 1867,
+      "sha256": "b0d2baec1947cbaf64f241aa5c1525a67c7363b71429afb971c70075848a5489"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-2-baseline.time",
+      "bytes": 65,
+      "sha256": "bf84ae6a01886277ca1c9e3033c81c126dc21b93fb3df6101b96eb0c9480bc0d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-2-candidate.log",
+      "bytes": 1865,
+      "sha256": "52f60fc78790626e1a13ef1a35da2a142ffa2256df2bacdb18f5b94f697f5295"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-2-candidate.time",
+      "bytes": 65,
+      "sha256": "ac74fc99908e4c08565004fff14d15feae318d65e0227c26ec5b16d6bd6068e2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-3-baseline.log",
+      "bytes": 1867,
+      "sha256": "90ff4f1e98d535dd33e34c44cdad63389c1a3595223ebb73932e0c88fdef7940"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-3-baseline.time",
+      "bytes": 65,
+      "sha256": "55aeb53c0fa3fb2a49d51e1c01ef1dcc3d9e74f2cf217ab3d588334097a48548"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-3-candidate.log",
+      "bytes": 1862,
+      "sha256": "1322a6f091554c8edc66216463a0e7a5a3e972970b9f0ac63e942b3e53f805bb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-3-candidate.time",
+      "bytes": 65,
+      "sha256": "1dc7fb1ce537fb4c103d63dae7b8f2caa15af70a266af9736df92fc16053e68e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-4-baseline.log",
+      "bytes": 1860,
+      "sha256": "276421b8cc32f59b91c762e149441a133a7820bfbe9e7a00861de86f9031a022"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-4-baseline.time",
+      "bytes": 65,
+      "sha256": "cb81771515dcc120ce6efd49919ff001f092187df701cbcdfd59cb7574171044"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-4-candidate.log",
+      "bytes": 1864,
+      "sha256": "5f5b359e5e390d5478164748606486a1dae0bdf0a37366b7e1ef0846a0d47c2d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-4-candidate.time",
+      "bytes": 65,
+      "sha256": "b165abc674605756a6ebb1aa4a86db7c17ad54bf5b411edae1df71cf00438896"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-5-baseline.log",
+      "bytes": 1865,
+      "sha256": "ecb0e76ac62b4b3ad6a9c588ed4061fa842be9b261c609806062ddd7f2d1109b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-5-baseline.time",
+      "bytes": 65,
+      "sha256": "dae81062382626e398ee57338e7e928c1449ff5642ddd19eb056babc24c97cdb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-5-candidate.log",
+      "bytes": 1868,
+      "sha256": "fa3fe4a5af777ca27a11924e99e6af445ec021406d4b083a020963b61ad45e14"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-5-candidate.time",
+      "bytes": 65,
+      "sha256": "2e1bb3470d8921354ddceca576489dac2a1fddd11add41e7894e4a27dca6eafe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-6-baseline.log",
+      "bytes": 1860,
+      "sha256": "5b8ee695549285eaff18411e9a4efea6cda074e508b2e259157957edcd5633ca"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-6-baseline.time",
+      "bytes": 65,
+      "sha256": "754da98c9e35c00fc0d709b771f299425d42b6aaf0dfda0880bc50003e567364"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-6-candidate.log",
+      "bytes": 1865,
+      "sha256": "e78cc00c152911211382f74f815cbe17d5d5acaf1cdfae766711a4136b3a1ae6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-6-candidate.time",
+      "bytes": 65,
+      "sha256": "34d30c4b1ede9d284961f488a511136372e10e63c1b85de855385261b0ed0fce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-7-baseline.log",
+      "bytes": 1867,
+      "sha256": "ea39c30e44ca4f611836c9d45642a7740578f51128c93941a5f5aebbfa4ba099"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-7-baseline.time",
+      "bytes": 65,
+      "sha256": "ebeade0488ede6993172d05e84540bdd16639ece2fe9d603c082d396102c66dd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-7-candidate.log",
+      "bytes": 1867,
+      "sha256": "cd43bac781ee523d8d1e90dd78c717f64eff59b47ddae4b80830a4d892d25b78"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-bezier_region-7-candidate.time",
+      "bytes": 65,
+      "sha256": "132e50c7c9b396cb6a087d83876c3d385fb30e8af300adeb6d46bbcfe5d2c977"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-native.sh",
+      "bytes": 1005,
+      "sha256": "607daac4be0c8befbff162d9eca1d68191622b8cf59fd6a08ec5875b05a27425"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-1-baseline.log",
+      "bytes": 2315,
+      "sha256": "7d27f17427118819254697a6e88eef8a9aaca82a541a2dcb6a5ded73a47ed010"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "6adb46110801cab8c09948e3e764b78e5d0de80ee36b565bd72aa3f0778dfaaf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-1-candidate.log",
+      "bytes": 2310,
+      "sha256": "a1fc39742d2ae4e8721f12d7d134e783963461a5150b972a1de7fb2914dc97f2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "45acbc7f669e3f1047d14160cc7b8f44684ddfadc79fb1c3340ee489ed3c99d5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-2-baseline.log",
+      "bytes": 2313,
+      "sha256": "e34e3d533d043cee62a4adcee67bf94874d2c1bca61fec4205ba13c98c2c330b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "be637d05dd861cb1de9ade5e4d9136217ee45d55fa0e3de1bdbfc5d71699244c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-2-candidate.log",
+      "bytes": 2314,
+      "sha256": "cd8626903a0d741bbc5c00789fbc3a699f8e5e0efdb54c6a4b83bbd51b748f86"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "be637d05dd861cb1de9ade5e4d9136217ee45d55fa0e3de1bdbfc5d71699244c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-3-baseline.log",
+      "bytes": 2317,
+      "sha256": "2b83f071a8420a2fe419dccfc173624122402ed942f0291d3315eb5c2deeba87"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "96fc5401620b0404c51298ba394ebbd9594c8361fb50fcc0885ca7482e0602ac"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-3-candidate.log",
+      "bytes": 2315,
+      "sha256": "67f80844f748f3040790a8f1679c04839b716c8096b12cd7b52eb5b739d01866"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "03424a71eb1733c67b56db497974c80ee70b2a72d63532524acdec48e450ee47"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-4-baseline.log",
+      "bytes": 2315,
+      "sha256": "eb1be64038ecb24757e6a450b09fe0900364d53ac71fea16b0da6463a55565fd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-4-baseline.time",
+      "bytes": 66,
+      "sha256": "6adb46110801cab8c09948e3e764b78e5d0de80ee36b565bd72aa3f0778dfaaf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-4-candidate.log",
+      "bytes": 2313,
+      "sha256": "fc73194f188e316f4b0f4b46694e18b68dd1a6e2e964e819725115c683f48b74"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-4-candidate.time",
+      "bytes": 66,
+      "sha256": "c692ec84438350ad1982c4739181538b31f3c496c79ac41aba12a1f694e4b385"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-5-baseline.log",
+      "bytes": 2315,
+      "sha256": "30ea582d12fd4342cc1131e145adc2cca8c95561c327152bb094c1fecf9b18db"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-5-baseline.time",
+      "bytes": 66,
+      "sha256": "96a4ae25887361cdcc86ecd89e3fbeacaff2993fc0a692f4474e69763cffad50"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-5-candidate.log",
+      "bytes": 2318,
+      "sha256": "8ec7d8040f3ed9ee05dfebbfcb41931123576bf032eef28cf7290265184f1b80"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-5-candidate.time",
+      "bytes": 66,
+      "sha256": "e481f4ad95d6a241fdce5c42c09e0d506b28a443dc475f5deae2fa139ca65611"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-6-baseline.log",
+      "bytes": 2313,
+      "sha256": "ecc9fb6ed4abc5801b7feaaa6f9a8f98e3e9d50ee09b0803de06b1233305df5b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-6-baseline.time",
+      "bytes": 66,
+      "sha256": "b4b46e431248cccf57ee73a31a3583f371ab6c2fde1d45f6838435f7d8015f4b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-6-candidate.log",
+      "bytes": 2313,
+      "sha256": "42f2f3a8b76ab382768c0ca7257f8882ac70a6a6aca607467f3230af3e9e2bb2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-6-candidate.time",
+      "bytes": 66,
+      "sha256": "dd0f94580d76bd1d5f84f14139b728647cde20f6fae3db682c56acffbc4df108"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-7-baseline.log",
+      "bytes": 2312,
+      "sha256": "96d9dc071443ec7c0cfc07513bb5609b1f23a293d2f6bd0fab2c377f9e977eb9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-7-baseline.time",
+      "bytes": 66,
+      "sha256": "b3a059d293f94aadc59134a5917ddc2a030034a2e4369592827b13c896a02cde"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-7-candidate.log",
+      "bytes": 2313,
+      "sha256": "b6fdf8b3ab8d86571737d9e8d1169ca55a6a40566203d146d37ea3bac77a99cb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-rational_bezier-7-candidate.time",
+      "bytes": 66,
+      "sha256": "1ae0ca2a6b40f96fe20af0ef7818dc46e9e95625cc56fb0b1218b92eb5b92811"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/repeat-results.json",
+      "bytes": 235985,
+      "sha256": "6d5f62b2b370f3d67ee10f30785b4f18c6100aa58763e776aa1bcd2d74452ca3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/rustc-version.txt",
+      "bytes": 196,
+      "sha256": "a90721a3b031e0e1c8bfc34ece79b6608d2ae53166cfb77dad281a0eb5fa6bc8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/snapshot.sh",
+      "bytes": 1520,
+      "sha256": "5e27c842b9491998d9bc977f56a9c622cd561617cb088fc70de91cfad15d53e4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/source-commit.txt",
+      "bytes": 41,
+      "sha256": "74a991941ca0b060b1f09f2d3e9ebe899211558df974ae0046d7ad13ef9014bb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/source-diff.patch",
+      "bytes": 36832,
+      "sha256": "dedab59925f1fb1dfb559faf07f863b500c0fed6e916237a10a379aa6c2955d9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-bezier_offset.rs",
+      "bytes": 7345768,
+      "sha256": "1ab832973f3f2bdd174807a12a1ece695c385428bede49b5710df13ed0c1253c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-build.log",
+      "bytes": 146,
+      "sha256": "71dad2531a6a1eaa51a89d0164247af5ba7bc22187213b4f265558fc5ac2f93f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-selected_fiber_rational_component_publishes_its_isolated_endpoint.log",
+      "bytes": 225,
+      "sha256": "7eb8100df1131998e36a2f76cfbb99d57a8a5ac7e30537b2a9a19c41f8916111"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-selected_fiber_rational_component_rejects_the_conjugate_circle.log",
+      "bytes": 146792,
+      "sha256": "0a47287873581f94f38749df72c7a35d33a41568df18a0d06fb82146878f3de9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 210,
+      "sha256": "6cd7cc9940eb38087e4a4035e4f51a39f980d654484b0a5d13602065b04134dc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 216,
+      "sha256": "ffdc80613c8a1f20467454e1b1823c2f12a044c69dc6d6bf710d35c152bc92c3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/support-before-test",
+      "bytes": 28142744,
+      "sha256": "0f8e05b40bd7defc8609bf07fda060b97b9dd573a655f658073116f88bb5486c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/test-regressions.sh",
+      "bytes": 1820,
+      "sha256": "996bc34b609e8f28b05b628d2d5ee5dac72082bb921b29a746f52220217f12f5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/timing-end.txt",
+      "bytes": 328,
+      "sha256": "61ff1ee51f3a8ac8d6ee9f94c0242d2915478d11dd167674f31ba262c1f59c1b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/timing-workers.txt",
+      "bytes": 426,
+      "sha256": "85ec1d0800b42dcf870ab388f1ee0f0c588f5fb97110f0466fdb8bc24976843e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/verify-artifacts.sh",
+      "bytes": 828,
+      "sha256": "87815080d644237a098a46544194e5bfc03c72681bd3bbb2098e751083707e8c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/baseline-test-catalog.txt",
+      "bytes": 88434,
+      "sha256": "b8f763c10205e2c965986b62d74f9947a68b47ead7f978e577436dd05994205e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-bench-build.log",
+      "bytes": 261,
+      "sha256": "2258024e56f7e6793a17ceda6aa5638eca037e600f8cb4d1de7a3ae1124dbc05"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-bezier_offset.rs",
+      "bytes": 7342610,
+      "sha256": "13d1d524df8be370008a4933d0e273c2b5e633afb9bfc566ecb72957adc361af"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-bezier_region",
+      "bytes": 14874280,
+      "sha256": "70b4a123f725617dc564da1dbabffa80216c2830335f7f132dd997aa11f49f3f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-bezier_region.size",
+      "bytes": 1649,
+      "sha256": "b1310e21573775484b8ba408362c2c9ebe016a53dced930ff59b93a7ab4f3eb1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-build.log",
+      "bytes": 291,
+      "sha256": "bb0872eaa911e803cdceaf08ce1beefa82c9f3c2967212293a1fab2984c44fc3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-clippy.log",
+      "bytes": 4624,
+      "sha256": "59e72f2601a267d344572259be6a8664a5327970b3422c7c7dfd2af19351469b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-curve_region_boolean_batch",
+      "bytes": 14314736,
+      "sha256": "9e1dedc56f2283c4469d6d182956e344c9cfc1d5f6f7121a0c612ef3bd89f912"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-curve_region_boolean_batch.size",
+      "bytes": 1662,
+      "sha256": "6e46089b184c08747e0ad826a27b3dddc7254d36f11762a6b11cdc7c750b2c6b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-docs.log",
+      "bytes": 718,
+      "sha256": "e03ad6f8860939d5e4c4dc766b3a0b3539dd0e0e77e40737c41ab8265bbf53a2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-full.log",
+      "bytes": 167672,
+      "sha256": "f2f4b55d74665898a2e20a40f34c162675bbc898c43bcac0c45909729c67c3d3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-fuzz-check.log",
+      "bytes": 72,
+      "sha256": "736e2582f563605dd272e5fb977840b0c0767377d27b6940c440caf75eec7157"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-fuzz-prepare.log",
+      "bytes": 2144,
+      "sha256": "2b5add5a894ab1a324666715b32de752aff8c2354fa74c3c403527f939075884"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-gates.status",
+      "bytes": 117,
+      "sha256": "8ea78b002bc11719b07258351ac35abceb639ce4825b6c3607396fe05f8d41ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-minimal-clippy.log",
+      "bytes": 1502,
+      "sha256": "0753fe951531598bf89f387d5e5fee737aad61914570025b00c2dd42ca033112"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-minimal-docs.log",
+      "bytes": 1168,
+      "sha256": "088d313b7514523340c09394a51639e92a1ad48dce43e99e122dec30c4f4650d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-minimal.log",
+      "bytes": 165443,
+      "sha256": "e462e6e9224a424b4a6e95121731ecc6da402a698d5db456029350e4fe7b7726"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-rational_bezier",
+      "bytes": 10506760,
+      "sha256": "3d628b464b68653cffb0d6503d6eccee5772802ff17df19f4722a3547d0d6e8c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-rational_bezier.size",
+      "bytes": 1582,
+      "sha256": "f74ebfa8b0c505a25696d37c80a78ce7387a53e6946899835c9a102f9815fd7c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-selected_fiber_rational_component_publishes_its_isolated_endpoint.log",
+      "bytes": 225,
+      "sha256": "82e327f1e07e09ee117042aa510235462e0ae821deb1a6eed86e1143854e19a8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-selected_fiber_rational_overlap_keeps_exact_center.log",
+      "bytes": 210,
+      "sha256": "c0a4aec4d50074c559c1160cd6b549080ae1c806f52445de5f929012c50c5298"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-selected_fiber_rational_overlap_replays_certified_policy.log",
+      "bytes": 216,
+      "sha256": "fb9ae420b34e26d337b18e2d6bb746bbb86efb43d9e6260c05c88ac08f33b568"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-test",
+      "bytes": 28180248,
+      "sha256": "9e04d90a1010ed4388e458a1ceb84c5b92f3b11a7ecde10da45fb9cb74ad058d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-test-catalog.txt",
+      "bytes": 88434,
+      "sha256": "b8f763c10205e2c965986b62d74f9947a68b47ead7f978e577436dd05994205e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-ui-clippy.log",
+      "bytes": 9762,
+      "sha256": "746f3cbba8cbb91d9efb4eeea0a9d27e8651d4a6b7ff651a46dfb5f18e0a9dbf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-ui-prepare.log",
+      "bytes": 10380,
+      "sha256": "12df78646450ebc98faace4a4d09a2f5e0d2a6c00a502473d7e8451a568fac8e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-ui-tests.log",
+      "bytes": 3294,
+      "sha256": "9cefdc64fc26f80e05e851c50e456cf67af193053099a5ae31c84efed764a28b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-ui-wasm.log",
+      "bytes": 62,
+      "sha256": "92e06e4842c2fa9a2139c34892b15d58451290c4ed4fe3a60c23f8f551bc9ec1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-ui.wasm",
+      "bytes": 17029662,
+      "sha256": "662f033d4a9c81a85e058b998ec13656cd84592235a6ee2be8650c8bb1ae398c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/candidate-wasm-build.log",
+      "bytes": 377,
+      "sha256": "55730e23b2facf3162b706a83e96d04879382d02d4d794ee992514caac56c211"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-baseline-accounting.json",
+      "bytes": 1493919,
+      "sha256": "3e5dd74bcdd6b6672b990cfba0dbdb1ba1308dc1abef03b695fe23ac86c45c34"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-baseline-accounting.time",
+      "bytes": 65,
+      "sha256": "88579223da6be4b1da94bb6bd18f694d90f80f2f42e0c174e20621b6b696b443"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-baseline.log",
+      "bytes": 837,
+      "sha256": "2cb8422ce6842093867db4dc555ac89b895e9acf971a5a407965af4ac04b10d1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-baseline.raw.zst",
+      "bytes": 3093103,
+      "sha256": "c9be0ce981f7246b93f0496bcd806b26f5a1082c095286d79ee3422a0cfe96d3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-baseline.time",
+      "bytes": 66,
+      "sha256": "b9d66ae11e206a6a3192bd60a68b462bca6029304b98df457bb8bab93323ad57"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-candidate-accounting.json",
+      "bytes": 1562189,
+      "sha256": "cd992c4acc94d5c8c263fd313e1a4315a6e80bc3123c31510988e47fd69ee901"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-candidate-accounting.time",
+      "bytes": 65,
+      "sha256": "9500fd25e5fccdbed1270f4b4cb01af473209e7d2723be0d2a05715746a045eb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-candidate.log",
+      "bytes": 840,
+      "sha256": "28c9afa3a957a42ffddce4a0ba494fb461d1f5ef08ed8208b4544e4d6f7c9f21"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-candidate.raw.zst",
+      "bytes": 3115464,
+      "sha256": "8b2f3b709506c4a6f92c8ff433254e2e7bee757c31c6c8cd01ca51399c67e9cd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/heap-overlaps-candidate.time",
+      "bytes": 66,
+      "sha256": "8cf6f056cb978bf78e3bb93faeb3feb3bc687b99a70acf7820f768a98c5b8820"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-capsules-baseline.callgrind",
+      "bytes": 373273,
+      "sha256": "415ee7b02615b9a685a90946776353d3e6c1621040aeb335c2a63f245d9e3799"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-capsules-baseline.log",
+      "bytes": 735,
+      "sha256": "0b1123a91bb1a7fb70887b6ed97b53d47050fd3ec36b5022dbfc24a8644441f7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-capsules-candidate.callgrind",
+      "bytes": 370414,
+      "sha256": "24381b414c438b4d94b8fbddff262269f2b5d3e3003d335f1164cff822cf283b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-capsules-candidate.log",
+      "bytes": 736,
+      "sha256": "81f8be34ce0a357e6b1f6868b566afbf302a2af439fba029b7d92181a2a315cf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-circles-baseline.callgrind",
+      "bytes": 354874,
+      "sha256": "81c39d10050ff5bd8b85364669f9decba7fe858945bfbc52e34739828dcecc3b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-circles-baseline.log",
+      "bytes": 740,
+      "sha256": "a3631700507be3341f589313a6f53eb67fc66f985366ad0a414c9cb17f18be74"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-circles-candidate.callgrind",
+      "bytes": 351508,
+      "sha256": "f301832e31b7433853eae489c1bf7e58ec37e7e5c012892eb1d3159709fffaa0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-circles-candidate.log",
+      "bytes": 741,
+      "sha256": "6af86739d1e6044025ce5a062453c567cf01856c1993f272d2e2984885afe388"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-overlaps-baseline.callgrind",
+      "bytes": 442140,
+      "sha256": "e413d94707a97e6f48ba178fbf5b9b785f07802914ea27da1f5f80c98f830c4e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-overlaps-baseline.log",
+      "bytes": 880,
+      "sha256": "d1ed44177a9a46011656c639e7c6525577e3d0bb6873c4deba645de4df0cc96c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-overlaps-candidate.callgrind",
+      "bytes": 445884,
+      "sha256": "3f6de0736c0830a54ad1f42d1d2611c01573dbf287cda808667115e0bb208012"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-overlaps-candidate.log",
+      "bytes": 873,
+      "sha256": "d1b0d56cddde3405caee98f29e89b7f10e6103ba25ddd89bcef96be25a584f4d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-rectangles-baseline.callgrind",
+      "bytes": 238683,
+      "sha256": "2420a4ca3c5855699453efbf4eeb1bccc8ddceadedf6cb420fb18bcb7a81469d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-rectangles-baseline.log",
+      "bytes": 732,
+      "sha256": "16de370c95f369a735b0f03088dd443e4c42cdbfec717d9ba28e7ad8b47ce61d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-rectangles-candidate.callgrind",
+      "bytes": 237342,
+      "sha256": "7d13c14f429323fa84b4b7e25617ef43cf80909b026e7aefe7946ef875dd7c93"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/instructions-rectangles-candidate.log",
+      "bytes": 733,
+      "sha256": "f3f523c3b73fa0bd6e4bba5424501cdfd8b412967998a6267d71a2928f1f85df"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/initial-qualification/source-diff.patch",
+      "bytes": 27873,
+      "sha256": "e7f12a4a4f85cd2103cc07755aab3a85709bae6bdefac24e93d9a08ae55fdcae"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/paired-chord-1-baseline.log",
+      "bytes": 138,
+      "sha256": "ebad58c901cc036a25fc8138194f39818e7b3a47cd901114738789b498d7c486"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/paired-chord-1-baseline.time",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/paired-selected-1-baseline.log",
+      "bytes": 228,
+      "sha256": "c7e63a23b2746f33321f3960dc6e5b7e32fa2da3a6676ac97646a26bce2deb16"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/paired-selected-1-baseline.time",
+      "bytes": 68,
+      "sha256": "23d2a1fbfd956d61071f52eb9dc2fb5c95ec2cb1697765afeff1164145d82119"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/paired-selected-1-candidate.log",
+      "bytes": 228,
+      "sha256": "758632f3f7c0959909bdfde70be893c457c22666a499e733b2e2bdc4a346a4c3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/paired-selected-1-candidate.time",
+      "bytes": 68,
+      "sha256": "5f40a224e78da7c8bfba1bb7c6b4de0b9d02f3e2a2f302b7c6044df88aa7782a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-overlap-publication.NCgQY3/contended-timing-attempt/README.md",
+      "bytes": 725,
+      "sha256": "0b9439663650bfa9ad570711d30d86aa591eaaee8e52458b759dc49b031faadd"
+    }
+  ]
+}

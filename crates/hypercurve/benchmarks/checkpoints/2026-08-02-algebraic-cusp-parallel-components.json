@@ -1,0 +1,188 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "selected positive-dimensional algebraic-cusp/analytic-parallel circle components",
+  "source_revision": "7750037eef4f26a1b9ba3bba0134aeb5e88c7178",
+  "semantic_revisions": [
+    "dd3371de0eb7e39fe0916757238d8d403f3901cb",
+    "7750037eef4f26a1b9ba3bba0134aeb5e88c7178"
+  ],
+  "comparison_revision": "e989324a264fe8afa0ec9015bbcf618a02e6d5e2",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+  },
+  "scope": {
+    "included": [
+      "one exact selected-component replay behind algebraic-cusp/analytic-parallel pair dispatch",
+      "identically-zero squared circle fibers replayed against the authored unsquared normal branch",
+      "root-free branch sampling that cannot land on an isolated common zero",
+      "opposite radical branches reduced to their complete isolated common-zero candidates",
+      "selected semicircle half-plane boundary projection and exact unsquared filtering",
+      "full and authored analytic subrange overlaps with exact compact cusp endpoint maps",
+      "forward and reversed analytic source traversal with exact overlap orientation",
+      "PH/rational analytic parallels falling through the same component authority after the isolated-contact fast path reports coincidence",
+      "CurveRegion2 pair evidence, shared overlap-endpoint topology, and union/intersection/difference/xor consumption",
+      "STRICT and APPROXIMATE_512 execution of the same exact path",
+      "matched existing-path, allocation, linked-size, competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "clipping a published cusp/parallel overlap against an independently shortened algebraic-cusp carrier",
+      "coincident-circle overlap publication for a standalone rational carrier that is not retained as an analytic parallel",
+      "finite projection or export of algebraic-cusp carriers",
+      "independent algebraic endpoint ranges that cannot lower to represented subcurves",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "parallel_convention": "BezierParallel2 uses the signed left normal (-Hy,Hx)/sqrt(S). The circle, selected-half, and diameter radical coefficients use that same convention; this checkpoint corrects the three historical opposite signs and verifies actual offset endpoints against the selected circle.",
+    "component_detection": "After reduction in the retained cusp field, an identically-zero A^2 S-B^2 circle fiber is positive-dimensional. Source regularity certifies S>0 over the retained analytic range.",
+    "branch_selection": "The rational term A is first proved root-free by a strict fiber sign certificate when possible; otherwise all selected-fiber roots of A are projected. A rational sample is chosen in a certified root-free cell, so A+B/sqrt(S)=0 selects the authored branch without the possibility of sampling an isolated common zero.",
+    "opposite_branch": "If the sampled unsquared equation is nonzero, the opposite radical branch owns the component. Its only possible authored-branch contacts satisfy A=B=0, so the projected A roots are replayed as complete isolated candidates through the ordinary exact contact path.",
+    "semicircle_clipping": "On the selected circle branch, roots of the squared selected-half expression partition the analytic range. Each candidate and cell is replayed through the unsquared expression; positive cells become overlaps, negative cells are rejected, and surviving zero-only cells become endpoint contacts.",
+    "endpoint_mapping": "One shared reduced parameter map orders compact cusp parameters. Each contact carries one correlation bit: projected half-plane roots use their nondegenerate relation, while authored range endpoints use independent exact signs and never treat an identically-zero circle equation as root-identity evidence.",
+    "policy": "Every exact predicate receives CurveContext. STRICT accepts only certified decisions. APPROXIMATE_512 may terminate only through the shared Hyperlimit/Hypersolve 512-bit predicate boundary and records that consumption; no geometry is converted to binary floating point."
+  },
+  "capability": {
+    "comparison_revision": "A selected positive-dimensional general analytic circle returned DegenerateProjection; a PH materialization returned the separate CoincidentCircle sentinel. CurveRegion2 converted either route into a blocker.",
+    "source_revision": "General and PH analytic parallels publish exact selected cusp-circle overlap ranges, orientation, and compact endpoint evidence through one pair result. The retained test regions complete all four Booleans without blockers under both policies.",
+    "historical_exact_peer": false,
+    "bounded_failure": "A cusp/parallel overlap that must be shortened again by the cusp carrier currently returns explicit Unsupported from overlap clipping. Standalone rational-carrier coincidence remains an explicit Boundary blocker rather than fabricating contacts."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release unit-test executable pinned to CPU 11; seven perf-stat process repetitions; deterministic instructions and branches are primary",
+    "complete_component_matrix": {
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "coverage": "both policies; actual endpoint incidence; cached PH and forced-general selected circles; authored subrange; reversed source; retained-region pair evidence; all four Booleans; opposite radius branch",
+      "task_clock_ms": 18.82,
+      "cycles": 68176728,
+      "instructions": 146275470,
+      "branches": 30220676,
+      "branch_misses": 469789,
+      "historical_exact_peer": false
+    },
+    "unchanged_isolated_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_revision": "e989324a264fe8afa0ec9015bbcf618a02e6d5e2",
+      "comparison_instructions": 28739510,
+      "current_instructions": 28748019,
+      "instruction_change_percent": 0.029607,
+      "comparison_branches": 5412332,
+      "current_branches": 5414752,
+      "branch_change_percent": 0.044713
+    },
+    "retained_optimization_experiment": {
+      "workload": "the original semantic component fixture before PH-path expansion",
+      "semantic_instructions": 130309996,
+      "strict_fiber_sign_instructions": 129936053,
+      "instruction_change_percent": -0.286969,
+      "semantic_branches": 26912391,
+      "strict_fiber_sign_branches": 26828531,
+      "branch_change_percent": -0.311607,
+      "selection": "Retained. It supplies both a correctness guard against sampling a common zero and a small deterministic-work reduction. A half-plane fiber-sign prepass was rejected after increasing the expanded matrix to 165863227 instructions."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; eleven adaptive samples targeted at 100 ms; construction excluded",
+      "open_cubic": {
+        "hypercurve_certified_median_ns": 30055116.0,
+        "hypercurve_chord_fallback_median_ns": 1005792.5,
+        "curvo_heuristic_median_ns": 8743.1
+      },
+      "line_arc_capsule_inward": {
+        "hypercurve_exact_median_ns": 18793.2,
+        "cavalier_contours_median_ns": 972.0
+      },
+      "direct_guarantee_equivalent": false,
+      "interpretation": "The binary64 competitors cannot retain this selected algebraic cusp field or provide STRICT/APPROXIMATE_512 topology guarantees. They remain important throughput targets."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test trace; heaptrack_print summary is authoritative",
+    "profile": "/tmp/heaptrack.hypercurve-cusp-parallel-component-7750037.zst.zst",
+    "workload": "complete_component_matrix",
+    "allocation_calls": 252602,
+    "temporary_allocations": 7591,
+    "peak_heap_kib": 851.98,
+    "recorder_peak_rss_mib": 18.60,
+    "interpretation": "This is an intentionally broad two-policy topology fixture rather than a one-call microbenchmark. The endpoint authority retains one map allocation and one reduced polynomial set; the former duplicate independent-endpoint map was removed before this measurement. Resultant and bigint allocation remain explicit performance debt."
+  },
+  "release_size": {
+    "method": "matched default-feature and no-default-feature curve_region_boolean_batch release executables against e989324 with identical live dependency revisions",
+    "default_features": {
+      "current_file_bytes": 8094256,
+      "comparison_file_bytes": 8062000,
+      "file_change_bytes": 32256,
+      "file_change_percent": 0.400099,
+      "current_text_bytes": 6158841,
+      "comparison_text_bytes": 6130121,
+      "text_change_bytes": 28720,
+      "text_change_percent": 0.468506,
+      "current_actual_text_section_bytes": 4642215,
+      "comparison_actual_text_section_bytes": 4616823,
+      "actual_text_change_bytes": 25392,
+      "actual_text_change_percent": 0.549989
+    },
+    "no_default_features": {
+      "current_file_bytes": 7852832,
+      "comparison_file_bytes": 7832976,
+      "file_change_bytes": 19856,
+      "file_change_percent": 0.253492,
+      "current_text_bytes": 5966897,
+      "comparison_text_bytes": 5945853,
+      "text_change_bytes": 21044,
+      "text_change_percent": 0.353927,
+      "current_actual_text_section_bytes": 4480727,
+      "comparison_actual_text_section_bytes": 4461095,
+      "actual_text_change_bytes": 19632,
+      "actual_text_change_percent": 0.440071
+    },
+    "interpretation": "The complete production component and Boolean route costs 28.0 KiB aggregate default text and 20.6 KiB minimal text. Consolidating endpoint correlation into one map removes about 1.2 KiB aggregate text from the initial semantic implementation."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-cusp-parallel-component-7750037-clean --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-callgraph-cusp-parallel-component-7750037-clean/callgraph.json",
+    "discovered_crates": 11,
+    "nodes": 32932,
+    "edges": 61200,
+    "comparison_nodes": 32877,
+    "comparison_edges": 61073,
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::pair_result -> BezierAlgebraicCuspSemicircle2::parallel_intersections_in_range",
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections_in_range -> BezierAlgebraicCuspSemicircle2::parallel_intersections_with_range",
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections_with_range -> BezierAlgebraicCuspSemicircle2::replay_positive_dimensional_parallel_circle",
+      "BezierAlgebraicCuspSemicircle2::replay_positive_dimensional_parallel_circle -> algebraic_cusp_projected_fiber_parameters",
+      "BezierAlgebraicCuspSemicircle2::replay_positive_dimensional_parallel_circle -> algebraic_cusp_independent_radical_sum_sign",
+      "BezierAlgebraicCuspSemicircle2::replay_positive_dimensional_parallel_circle -> BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps",
+      "CurveRegionBooleanContext::build_split_topology -> CurveRegionBooleanContext::clipped_overlap_ranges"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 383 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_all_features_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed all-feature library unit test, comparative, and default/no-default curve_region_boolean_batch builds",
+    "strict_and_approximate": "passed selected/opposite, general/PH, full/subrange/reversed, pair-evidence, and all-four-Boolean checks under both policies",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "clip a positive-dimensional cusp/parallel overlap against partial carriers on either parameter domain with compact bidirectional correspondence evidence",
+    "publish coincident-circle overlap for standalone rational carriers through the same selected-half authority",
+    "support independent algebraic endpoint ranges without finite parameter collapse",
+    "complete direct cusp-carrier winding for every retained-field combination",
+    "reduce resultant, bigint, and retained-map allocation and linked-size debt",
+    "broaden repeated-tracing, nonmonotone, tangency, and randomized differential coverage",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean/offset/corner machinery after differential coverage passes"
+  ]
+}

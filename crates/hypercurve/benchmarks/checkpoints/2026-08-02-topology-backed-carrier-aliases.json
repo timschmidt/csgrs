@@ -1,0 +1,160 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "topology-backed carrier parameter aliases",
+  "source_revision": "7872abc94aa6a20fd6f4861c403c932d7d0b11e6",
+  "capability_revision": "c8b71d6789fcf9fd75b31e9b5ac25fc5edde943f",
+  "performance_comparison_revision": "026addb902f101ace68b455c44ea15212ad0a8c9",
+  "previous_checkpoint": "2026-08-02-algebraic-cusp-subfragment-winding.json",
+  "scope": {
+    "included": [
+      "one topology-vertex authority for equivalent contact evidence",
+      "deferred parameter ordering until transitive topology unions complete",
+      "certified injective-carrier parameter alias canonicalization",
+      "retention of distinct branches on noninjective carriers",
+      "STRICT and APPROXIMATE_512 fixtures",
+      "allocation-free polynomial Bezier injectivity proof",
+      "matched historical, competitive, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "Hypersolve algebraic-difference fallback for unrelated parameter representations",
+      "selected positive-dimensional analytic-parallel radical replay",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "topology_authority": "A topology vertex denotes one accepted geometric contact. Every decided-equal contact and every transitive vertex union is scanned before ambiguous point comparisons are validated, so pair processing order cannot discard an equality path.",
+    "injective_aliases": "If one carrier has a certified injective image, all events on that carrier assigned to one topology vertex denote one parameter event even when the retained parameter representations cannot be ordered locally.",
+    "noninjective_branches": "Topology equality alone never merges distinct parameters on a carrier whose image is not certified injective. Retraced and self-contact branches remain separate events.",
+    "uncertainty": "An ambiguous contact relation may be deferred while later exact relations transitively union its vertices. It remains an explicit Boolean blocker when the final vertices differ. Remaining unorderable events also block after canonicalization.",
+    "policy": "STRICT accepts only exact predicate evidence. APPROXIMATE_512 runs the same path and may consume Hyperlimit's terminal 512-bit comparison where the underlying predicate permits it; approximate cache evidence never answers a strict call.",
+    "polynomial_fast_proof": "For a polynomial Bezier coordinate, weakly monotone control values with distinct endpoints imply a one-signed, nonzero Bernstein derivative on the open unit interval. That coordinate is strictly monotone, hence the curve image is injective. All other polynomial, rational, and analytic-parallel cases retain the prior general certificate."
+  },
+  "capability": {
+    "comparison_revision": "An unorderable parameter comparison blocked immediately, before later carrier contacts could establish that both witnesses belonged to one topology vertex.",
+    "source_revision": "Contact evidence is unioned transitively first; injective-carrier aliases then canonicalize through the topology vertex, while unresolved different-vertex evidence remains blocked.",
+    "fixtures": [
+      "unorderable algebraic parameter witnesses at one injective carrier topology vertex under STRICT and APPROXIMATE_512",
+      "two decided-distinct parameters of a retraced quadratic retained at one topology vertex",
+      "a three-carrier contact chain that transitively merges two deferred injective-carrier events",
+      "forced general CurveRegion2 arrangement compared with the native fast path",
+      "monotone polynomial quadratic accepted by the allocation-free proof and a retraced quadratic rejected under both policies"
+    ]
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "matched_analytic_squares": {
+      "method": "Callgrind on equal-work all-feature production benchmark artifacts; one warmup plus ten measured shared all-four CurveRegion2 Boolean batches",
+      "command": "taskset -c 11 env HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=analytic-squares HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=10 HYPERCURVE_CURVE_REGION_BATCH_MODE=shared valgrind --tool=callgrind <artifact>",
+      "comparison_instructions": 71605608,
+      "source_instructions": 71626583,
+      "instruction_change_percent": 0.02929,
+      "interpretation": "The complete topology authority adds 20,975 deterministic instructions across the process fixture. This is the retained exactness cost on the analytic carrier path."
+    },
+    "matched_line_arc_fixed_work": {
+      "method": "seven perf-stat repetitions per equal-length release comparative artifact, pinned to CPU 11; one warmup plus 10,000 exact shared all-four capsule batches per repetition",
+      "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=10000 HYPERCURVE_COMPARE_GROUP=line_arc_boolean/capsules_all_four HYPERCURVE_COMPARE_IMPL=hypercurve_exact_batch perf stat -r 7 -e instructions,cycles,branches,branch-misses <artifact>",
+      "comparison_instructions": 33349633083,
+      "source_instructions": 33358487795,
+      "instruction_change_percent": 0.02655,
+      "comparison_branches": 6873983861,
+      "source_branches": 6879161190,
+      "branch_change_percent": 0.07532,
+      "interpretation": "The allocation-free polynomial proof recovers 83,251,092 instructions, or 0.24894 percent, from the initial topology implementation. Final deterministic work is 0.02655 percent above the historical code. Cycle and branch-miss samples moved in opposite directions across adjacent runs and are treated as scheduler and frequency noise."
+    },
+    "adaptive_historical_and_competitive": {
+      "method": "three all-feature processes per revision, each with eleven calibrated 100 ms samples pinned to CPU 11; values are medians of process medians",
+      "comparison_exact_batch_ns": 380968.8,
+      "source_exact_batch_ns": 375877.2,
+      "adaptive_change_percent": -1.33649,
+      "cavalier_four_finite_calls_ns": 8938.1,
+      "exact_to_finite_ratio": 42.053,
+      "interpretation": "The adaptive exact batch is 1.34 percent faster than the historical artifact in this sample. Cavalier remains a throughput sentinel rather than an equivalent contract: it does not provide canonical-Real exactness, topology witnesses, or STRICT/APPROXIMATE_512 semantics."
+    }
+  },
+  "memory": {
+    "analytic_squares": {
+      "tool": "Heaptrack direct release traces",
+      "workload": "one warmup plus 25 measured shared all-four batches",
+      "comparison_profile": "/tmp/hypercurve-topology-026addb-final.heaptrack.zst",
+      "source_profile": "/tmp/hypercurve-topology-7872abc.heaptrack.zst",
+      "comparison_allocation_calls": 132322,
+      "source_allocation_calls": 132322,
+      "comparison_temporary_allocations": 9296,
+      "source_temporary_allocations": 9296,
+      "comparison_peak_heap": "154.91 KiB",
+      "source_peak_heap": "154.91 KiB",
+      "interpretation": "The final exact topology path is allocation- and peak-neutral on the analytic carrier guard."
+    },
+    "line_arc": {
+      "tool": "Heaptrack direct release comparative traces",
+      "workload": "one warmup plus 100 measured shared all-four batches",
+      "comparison_allocation_calls": 325184,
+      "initial_topology_allocation_calls": 325689,
+      "source_allocation_calls": 324073,
+      "change_from_comparison_calls": -1111,
+      "change_from_comparison_percent": -0.34165,
+      "comparison_temporary_allocations": 5283,
+      "source_temporary_allocations": 5283,
+      "peak_heap": "192.61 KiB",
+      "interpretation": "The polynomial control-polygon proof removes eleven general RationalBezier2 construction allocations per batch and more than repays the initial topology storage cost."
+    }
+  },
+  "release_size": {
+    "representative_production": {
+      "method": "all-feature curve_region_boolean_batch release artifact",
+      "comparison_file_bytes": 7875216,
+      "source_file_bytes": 7849704,
+      "file_change_percent": -0.32395,
+      "comparison_aggregate_section_bytes": 6232690,
+      "source_aggregate_section_bytes": 6224478,
+      "aggregate_change_percent": -0.13176,
+      "comparison_text_section_bytes": 4436295,
+      "source_text_section_bytes": 4428807,
+      "text_change_percent": -0.16879,
+      "comparison_sha256": "96aa18c182f48804c216cdc5ba0460dd76adf88189b5be281e560845189a7870",
+      "source_sha256": "c96bbaa268506be4b2efd1e088ed2b4295f04cf6171a5c64fd9a7151c18b357c",
+      "interpretation": "The broader exact topology implementation still reduces representative production .text by 7,488 bytes and the complete file by 25,512 bytes."
+    }
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-topology-7872abc --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 32204,
+    "previous_nodes": 32153,
+    "edges": 59606,
+    "previous_edges": 59478,
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::build_split_topology -> existing_event_vertex_if_decided",
+      "CurveRegionBooleanContext::build_split_topology -> push_contact_carrier_event",
+      "CurveRegionBooleanContext::build_split_topology -> canonicalize_injective_topology_events",
+      "CurveRegionBooleanContext::build_split_topology -> validate_carrier_event_separation",
+      "carrier_has_certified_injective_image -> polynomial_control_polygon_has_certified_injective_axis",
+      "transitive_topology_merge_canonicalizes_deferred_injective_aliases -> replace_topology_vertex -> canonicalize_injective_topology_events -> validate_carrier_event_separation"
+    ]
+  },
+  "verification": {
+    "all_feature_library": "passed: 372 tests",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature comparative and curve_region_boolean_batch builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "engineering_decisions": {
+    "rejected_contact_incidence_deduplication": "A measured prototype added 0.0257 percent line/arc instructions and removed no allocation on that fixture, so it was discarded before commit.",
+    "next_authority": "Replace the bounded local algebraic-parameter comparison dead end with Hypersolve's exact algebraic-difference comparison before any APPROXIMATE_512 terminal is considered."
+  },
+  "remaining": [
+    "use Hypersolve algebraic-difference evidence to compare unrelated selected-root parameter representations",
+    "admit every retained algebraic-cusp subfragment through CurveRegion2 arrangement splitting and traversal",
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing exact polynomial and bigint allocation churn"
+  ]
+}

@@ -1,0 +1,580 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-09-05 04:42 UTC",
+  "title": "Exact common-scale Bernstein isolation and duplicate private helper deletion",
+  "status": "Retained on main; this checkpoint does not claim complete Hypercurve release readiness.",
+  "source_revisions": {
+    "hypercurve": "5b99315e2c3562b2caff6cec5611b41d5ea0abeb",
+    "hyperreal": "c2d147c4613540fe5c2a43dfdaa5c0d010455bba",
+    "hyperlimit": "7bf9261fea34bb2ddc96ca612c40babf4244f71f",
+    "hyperlattice": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0",
+    "hypersolve": "a20be2326e585f8224dfc5bfd7054c9e2970825f",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "changes": [
+    {
+      "commit": "fa67a7e",
+      "description": "Delete second_derivative_polynomials and the duplicate recursive_selected_radial_rational_component_system; callers use the existing implementations directly.",
+      "public_api_added": false,
+      "compatibility_layers_added": false,
+      "source_lines_removed_net": 20
+    },
+    {
+      "commit": "5b99315e2c3562b2caff6cec5611b41d5ea0abeb",
+      "description": "Clear the positive common denominator of exact rational Bernstein controls once with Hyperreal Rational::clear_common_denominator_slice. All subsequent midpoint averages remain dyadic. Keep the original power polynomial in every root certificate.",
+      "production_lines_added": 16,
+      "regression_lines_added": 133,
+      "public_api_added": false,
+      "compatibility_layers_added": false
+    }
+  ],
+  "exactness": {
+    "invariant": "A common positive coefficient scale commutes with every de Casteljau average and preserves every coefficient sign and exact zero. Variation counts, bisection choices, singleton intervals and endpoint/midpoint fallback remain unchanged.",
+    "representation": "The scaled Bernstein controls are temporary isolation work only. Returned algebraic parameters retain the original authored power-basis polynomial and its singleton certificate.",
+    "regressions": [
+      {
+        "name": "square_free_bernstein_preserves_wide_signed_scale_certificates",
+        "coverage": "Degree-12 product with four known nondyadic unit roots; four signed rational scales (including a 521-bit odd denominator and a 257-bit numerator), both policies; identical work traces and intervals, exact polynomial residuals, original-polynomial retention and singleton root counts."
+      },
+      {
+        "name": "square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback",
+        "coverage": "Six signed 521-bit denominator cases across both policies; exact endpoint/midpoint roots decline the accelerator and are recovered by the existing fallback without loss or duplication."
+      },
+      {
+        "name": "square_free_degree_128_bernstein_isolates_every_unit_root",
+        "coverage": "Existing arbitrary-degree coverage retained and executed."
+      }
+    ],
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ]
+  },
+  "profile": {
+    "fixture": "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel",
+    "fixture_unchanged": true,
+    "fixture_scope": "Both policies and both recursive radial carriers; complete contact enumeration, retained parameter brackets, tangent-dot decisions, incident-ray contacts and dispatch assertions.",
+    "initial_screen": {
+      "baseline_wall_seconds": 155.58,
+      "baseline_user_seconds": 154.63,
+      "baseline_peak_rss_kib": 48980,
+      "candidate_wall_seconds": 57.92,
+      "candidate_user_seconds": 57.66,
+      "candidate_peak_rss_kib": 48520,
+      "qualification": "Unpaired screening: baseline recorded under perf DWARF sampling, candidate unprofiled; not the headline matched comparison."
+    },
+    "instrumented_baseline": {
+      "wall_seconds": 164.66,
+      "user_seconds": 162.85,
+      "peak_rss_kib": 47324,
+      "samples": 16252,
+      "lost_samples": 0,
+      "features": "no-default-features",
+      "build": "CARGO_PROFILE_RELEASE_DEBUG=1 RUSTFLAGS='-C force-frame-pointers=yes' cargo test --release --locked --no-default-features --lib --no-run --target-dir /tmp/hypercurve-radial-profile.5RGDwj",
+      "record": "perf record -F 99 --call-graph fp",
+      "profile_file": "/tmp/hypercurve-recursive-radial-instrumented.perf",
+      "report": "/tmp/hypercurve-recursive-radial-instrumented-report.csv",
+      "test_log": "/tmp/hypercurve-recursive-radial-instrumented-test.log"
+    },
+    "inclusive_cycle_percent": {
+      "subdivide_scalar_bernstein_half": 64.26,
+      "rational_average_pair": 64.14,
+      "recursive_quadratic_polynomial_projection": 21.44,
+      "dense_two_square_root_projection": 20.05,
+      "selected_dense_last_axis_univariate": 9.16
+    },
+    "interpretation": "The common-scale change targets repeated rational normalization in Bernstein subdivision. Other projection and exact-arithmetic costs remain."
+  },
+  "radial_timing": {
+    "command": "/usr/bin/time -v taskset -c 7 EXECUTABLE bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel --exact --nocapture --test-threads=1",
+    "binary_features": "all-features",
+    "baseline_curve_revision": "91f4d97",
+    "candidate_curve_revision": "fa67a7e plus the 16 production lines committed in 5b99315; captured before the two new tests were added",
+    "same_existing_tests": true,
+    "headline": {
+      "baseline_sample": "baseline-2",
+      "candidate_sample": "candidate-3",
+      "baseline_wall_seconds": 169.92000000000002,
+      "candidate_wall_seconds": 60.4,
+      "wall_speedup": 2.813245033112583,
+      "baseline_user_seconds": 165.35,
+      "candidate_user_seconds": 58.67,
+      "user_speedup": 2.8183057780807905,
+      "baseline_peak_rss_kib": 49252,
+      "candidate_peak_rss_kib": 49216
+    },
+    "qualification": "The headline is one adjacent before/after pair after this turn's build, test and profiling jobs finished. Three candidate repeats agree. Baseline-1 overlapped builds and a benchmark on SMT sibling CPU 15 and is excluded from the headline. Candidate-1/2 are supporting repeats, not a claim of fully isolated machine state. Other users' machine activity was not controlled.",
+    "cpu_topology": "CPU 7 shares a physical core with CPU 15. No other job from this turn ran on either sibling during the final pair.",
+    "samples": [
+      {
+        "sample": "baseline-1",
+        "log": "/tmp/hypercurve-dyadic-bernstein-matched-baseline-1.log",
+        "passed": 1,
+        "test_seconds": 205.14,
+        "user_seconds": 193.53,
+        "system_seconds": 0.77,
+        "cpu_percent": 94,
+        "wall_seconds": 205.14,
+        "peak_rss_kib": 48944,
+        "involuntary_context_switches": 134078,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-1",
+        "log": "/tmp/hypercurve-dyadic-bernstein-matched-candidate-1.log",
+        "passed": 1,
+        "test_seconds": 61.16,
+        "user_seconds": 59.31,
+        "system_seconds": 0.2,
+        "cpu_percent": 97,
+        "wall_seconds": 61.16,
+        "peak_rss_kib": 49428,
+        "involuntary_context_switches": 42568,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-2",
+        "log": "/tmp/hypercurve-dyadic-bernstein-matched-candidate-2.log",
+        "passed": 1,
+        "test_seconds": 60.77,
+        "user_seconds": 59.07,
+        "system_seconds": 0.17,
+        "cpu_percent": 97,
+        "wall_seconds": 60.77,
+        "peak_rss_kib": 49264,
+        "involuntary_context_switches": 40338,
+        "exit_status": 0
+      },
+      {
+        "sample": "baseline-2",
+        "log": "/tmp/hypercurve-dyadic-bernstein-matched-baseline-2.log",
+        "passed": 1,
+        "test_seconds": 169.92,
+        "user_seconds": 165.35,
+        "system_seconds": 0.46,
+        "cpu_percent": 97,
+        "wall_seconds": 169.92000000000002,
+        "peak_rss_kib": 49252,
+        "involuntary_context_switches": 109808,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-3",
+        "log": "/tmp/hypercurve-dyadic-bernstein-matched-candidate-3.log",
+        "passed": 1,
+        "test_seconds": 60.4,
+        "user_seconds": 58.67,
+        "system_seconds": 0.18,
+        "cpu_percent": 97,
+        "wall_seconds": 60.4,
+        "peak_rss_kib": 49216,
+        "involuntary_context_switches": 41732,
+        "exit_status": 0
+      }
+    ],
+    "binaries": {
+      "baseline": {
+        "path": "/tmp/hypercurve-dyadic-bernstein-baseline-test",
+        "sha256": "3c3b8269bffdb8f7ad924d23e63c3111f3c637407ced3d0d17570c722e524823"
+      },
+      "candidate": {
+        "path": "/tmp/hypercurve-dyadic-bernstein-candidate-test",
+        "sha256": "6cf9920883087d0150d962e81f4f70f6d0509cafaf02973ce211162f46d958ea"
+      }
+    }
+  },
+  "parameter_workload": {
+    "selection": "bezier_parameter::conversion_tests --nocapture --test-threads=1",
+    "existing_tests": 31,
+    "same_test_selection_and_binary_features": true,
+    "callgrind": {
+      "command": "valgrind --tool=callgrind --vgdb=no --callgrind-out-file=OUTPUT EXECUTABLE bezier_parameter::conversion_tests --nocapture --test-threads=1",
+      "sequential_runs": true,
+      "baseline_instructions": 377852744,
+      "candidate_instructions": 347517584,
+      "instruction_reduction_percent": 8.028302157837441,
+      "baseline_log": "/tmp/hypercurve-dyadic-bernstein-baseline-parameters-clean-callgrind.log",
+      "candidate_log": "/tmp/hypercurve-dyadic-bernstein-candidate-parameters-clean-callgrind.log",
+      "qualification": "This is the complete unchanged 31-test parameter workload, not an instruction count for the 170-second radial fixture. Earlier parallel Callgrind runs had shared vgdb pipe cleanup warnings; the clean sequential runs disable vgdb."
+    },
+    "heaptrack": {
+      "baseline_allocations": 758460,
+      "candidate_allocations": 751292,
+      "baseline_temporary_allocations": 43104,
+      "candidate_temporary_allocations": 38864,
+      "baseline_peak_heap_reported": "1.15M",
+      "candidate_peak_heap_reported": "1.15M",
+      "baseline_live_at_exit_reported": "897.90K",
+      "candidate_live_at_exit_reported": "897.73K",
+      "qualification": "Values use heaptrack_print's rounded units. Live-at-exit storage is reported, not treated as proof of either a leak or leak freedom. It does not increase in this workload.",
+      "baseline_summary": "/tmp/hypercurve-dyadic-bernstein-baseline-parameters-heap-summary.log",
+      "candidate_summary": "/tmp/hypercurve-dyadic-bernstein-candidate-parameters-heap-summary.log"
+    }
+  },
+  "production_control": {
+    "benchmark": "benches/bezier_region.rs",
+    "benchmark_sha256": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+    "frozen_workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "baseline_curve_revision": "fa67a7e",
+    "candidate_change": "Only the 16 production preconditioning lines; no benchmark-driver or dependency changes.",
+    "command": "cargo bench --locked --bench bezier_region --no-run --message-format=json; then /usr/bin/time -v taskset -c 7 COPIED_EXECUTABLE",
+    "features": "default (empty)",
+    "runs_per_variant": 3,
+    "process_medians": {
+      "baseline_user_seconds": 5.75,
+      "candidate_user_seconds": 5.82,
+      "baseline_peak_rss_kib": 9908,
+      "candidate_peak_rss_kib": 9884
+    },
+    "interpretation": "All 19 benchmark checks match. Control lanes are mixed by a few percent; whole-driver user CPU rises from 5.75 to 5.82 seconds. This is not a blanket performance win across CurveRegion2 workloads.",
+    "excluded_initial_runs": "The earlier region-baseline-run.log and region-candidate-run.log overlapped the radial timing on SMT sibling CPU 15; they are not used for these medians.",
+    "samples": [
+      {
+        "sample": "baseline-1",
+        "log": "/tmp/hypercurve-dyadic-bernstein-region-matched-baseline-1.log",
+        "user_seconds": 5.75,
+        "system_seconds": 0.02,
+        "cpu_percent": 97,
+        "wall_seconds": 5.93,
+        "peak_rss_kib": 9824,
+        "involuntary_context_switches": 3718,
+        "exit_status": 0,
+        "row_count": 19
+      },
+      {
+        "sample": "candidate-1",
+        "log": "/tmp/hypercurve-dyadic-bernstein-region-matched-candidate-1.log",
+        "user_seconds": 5.82,
+        "system_seconds": 0.01,
+        "cpu_percent": 97,
+        "wall_seconds": 6,
+        "peak_rss_kib": 10036,
+        "involuntary_context_switches": 3899,
+        "exit_status": 0,
+        "row_count": 19
+      },
+      {
+        "sample": "candidate-2",
+        "log": "/tmp/hypercurve-dyadic-bernstein-region-matched-candidate-2.log",
+        "user_seconds": 5.79,
+        "system_seconds": 0.01,
+        "cpu_percent": 97,
+        "wall_seconds": 5.97,
+        "peak_rss_kib": 9812,
+        "involuntary_context_switches": 4005,
+        "exit_status": 0,
+        "row_count": 19
+      },
+      {
+        "sample": "baseline-2",
+        "log": "/tmp/hypercurve-dyadic-bernstein-region-matched-baseline-2.log",
+        "user_seconds": 5.75,
+        "system_seconds": 0.01,
+        "cpu_percent": 97,
+        "wall_seconds": 5.94,
+        "peak_rss_kib": 10068,
+        "involuntary_context_switches": 4173,
+        "exit_status": 0,
+        "row_count": 19
+      },
+      {
+        "sample": "baseline-3",
+        "log": "/tmp/hypercurve-dyadic-bernstein-region-matched-baseline-3.log",
+        "user_seconds": 5.77,
+        "system_seconds": 0.02,
+        "cpu_percent": 96,
+        "wall_seconds": 5.99,
+        "peak_rss_kib": 9908,
+        "involuntary_context_switches": 4351,
+        "exit_status": 0,
+        "row_count": 19
+      },
+      {
+        "sample": "candidate-3",
+        "log": "/tmp/hypercurve-dyadic-bernstein-region-matched-candidate-3.log",
+        "user_seconds": 5.84,
+        "system_seconds": 0.01,
+        "cpu_percent": 96,
+        "wall_seconds": 6.04,
+        "peak_rss_kib": 9884,
+        "involuntary_context_switches": 4344,
+        "exit_status": 0,
+        "row_count": 19
+      }
+    ],
+    "row_medians": [
+      {
+        "label": "curve_region_clone",
+        "iterations": 1000000,
+        "baseline_ns": 3.528069,
+        "candidate_ns": 3.646971,
+        "speedup": 0.9673970536096941,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_empty",
+        "iterations": 1000000,
+        "baseline_ns": 3.245638,
+        "candidate_ns": 3.137236,
+        "speedup": 1.0345533456839078,
+        "checks_identical": true
+      },
+      {
+        "label": "cubic_bezier_exact_area_moments",
+        "iterations": 20000,
+        "baseline_ns": 13460.8898,
+        "candidate_ns": 13616.50415,
+        "speedup": 0.9885716371628323,
+        "checks_identical": true
+      },
+      {
+        "label": "cubic_bezier_prefix_area_moments",
+        "iterations": 20000,
+        "baseline_ns": 17920.4021,
+        "candidate_ns": 17948.0122,
+        "speedup": 0.9984616625121303,
+        "checks_identical": true
+      },
+      {
+        "label": "cubic_bezier_prefix_length_bounds",
+        "iterations": 20000,
+        "baseline_ns": 4027.9653,
+        "candidate_ns": 3919.31625,
+        "speedup": 1.0277214297264223,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_boolean_immediate_union",
+        "iterations": 1000,
+        "baseline_ns": 187988.236,
+        "candidate_ns": 179905.358,
+        "speedup": 1.044928500684232,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_boolean_immediate_all_ops",
+        "iterations": 1000,
+        "baseline_ns": 364320.469,
+        "candidate_ns": 355235.169,
+        "speedup": 1.0255754519620774,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_boolean_retained_algebraic_all_ops",
+        "iterations": 100,
+        "baseline_ns": 210409.82,
+        "candidate_ns": 207434.83,
+        "speedup": 1.014341805568525,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_region_algebraic_ray_classification",
+        "iterations": 2000,
+        "baseline_ns": 54184.543,
+        "candidate_ns": 55024.4555,
+        "speedup": 0.9847356508598254,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_region_materialization",
+        "iterations": 20000,
+        "baseline_ns": 2961.43915,
+        "candidate_ns": 2939.4572,
+        "speedup": 1.0074782344168849,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_cached_classification",
+        "iterations": 2000,
+        "baseline_ns": 34877.707,
+        "candidate_ns": 34917.919,
+        "speedup": 0.9988483849796432,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_immediate_native_signed_depth",
+        "iterations": 2000,
+        "baseline_ns": 912.918,
+        "candidate_ns": 863.466,
+        "speedup": 1.057271508084858,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_retained_region_materialization",
+        "iterations": 20000,
+        "baseline_ns": 11613.74305,
+        "candidate_ns": 11616.7663,
+        "speedup": 0.9997397511560511,
+        "checks_identical": true
+      },
+      {
+        "label": "curve_region_cached_algebraic_classification",
+        "iterations": 2000,
+        "baseline_ns": 44613.2915,
+        "candidate_ns": 44555.201,
+        "speedup": 1.0013037871830046,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_retained_algebraic_source_envelope",
+        "iterations": 20000,
+        "baseline_ns": 13104.241200000002,
+        "candidate_ns": 13331.3342,
+        "speedup": 0.9829654709278838,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_retained_algebraic_exact_endpoint_envelope",
+        "iterations": 20000,
+        "baseline_ns": 5730.08005,
+        "candidate_ns": 5886.08185,
+        "speedup": 0.9734964949561481,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_retained_algebraic_line_authoritative_roles",
+        "iterations": 20000,
+        "baseline_ns": 136629.58315,
+        "candidate_ns": 139582.7964,
+        "speedup": 0.9788425699572816,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_resolved_overlap_region_materialization",
+        "iterations": 20000,
+        "baseline_ns": 24022.8677,
+        "candidate_ns": 24306.10635,
+        "speedup": 0.988347016756964,
+        "checks_identical": true
+      },
+      {
+        "label": "bezier_conic_region_exact_area",
+        "iterations": 20000,
+        "baseline_ns": 25492.6878,
+        "candidate_ns": 25647.9102,
+        "speedup": 0.993947951361745,
+        "checks_identical": true
+      }
+    ],
+    "binaries": {
+      "baseline": {
+        "path": "/tmp/hypercurve-dyadic-bernstein-region-baseline-benchmark",
+        "sha256": "0a8c807fb3f02e2a0439512d2bf10f18ce08745b0351ff1a4a905fbb04666dde",
+        "text_bytes": 11854286,
+        "data_bytes": 320440,
+        "bss_bytes": 4448,
+        "text_data_bss_bytes": 12179174,
+        "file_bytes": 14899128
+      },
+      "candidate": {
+        "path": "/tmp/hypercurve-dyadic-bernstein-region-candidate-benchmark",
+        "sha256": "3396872edb94164cc3973a42542373c2c9bb3eca9ac41dccd3ebfaf2138d2869",
+        "text_bytes": 11856042,
+        "data_bytes": 320496,
+        "bss_bytes": 2632,
+        "text_data_bss_bytes": 12179170,
+        "file_bytes": 14900944
+      }
+    },
+    "compiler": {
+      "rustc": "1.97.0 (2d8144b78 2026-07-07)",
+      "host": "x86_64-unknown-linux-gnu",
+      "llvm": "22.1.6"
+    }
+  },
+  "verification": {
+    "all_features": {
+      "targets": 45,
+      "passed": 1723,
+      "failed": 0,
+      "ignored": 9,
+      "test_seconds": 183.90999999999997,
+      "unit_passed": 881,
+      "unit_seconds": 88.38,
+      "command": "cargo test --release --locked --all-features",
+      "log": "/tmp/hypercurve-dyadic-bernstein-all-features.log",
+      "exit_status": 0
+    },
+    "minimal": {
+      "targets": 45,
+      "passed": 1694,
+      "failed": 0,
+      "ignored": 4,
+      "test_seconds": 199.87999999999994,
+      "unit_passed": 877,
+      "unit_seconds": 82.91,
+      "command": "cargo test --release --locked --no-default-features",
+      "log": "/tmp/hypercurve-dyadic-bernstein-minimal.log",
+      "exit_status": 0
+    },
+    "explicit_ignored_units": {
+      "passed": 6,
+      "seconds": 124.65,
+      "all_five_manual_drivers_complete": true,
+      "default_iterations_and_warmups": true,
+      "log": "/tmp/hypercurve-dyadic-bernstein-ignored-units.log",
+      "exit_status": 0
+    },
+    "explicit_ignored_stroke": {
+      "passed": 3,
+      "seconds": 71.7,
+      "log": "/tmp/hypercurve-dyadic-bernstein-ignored-stroke.log",
+      "exit_status": 0
+    },
+    "ui_tests": {
+      "passed": 37,
+      "log": "/tmp/hypercurve-dyadic-bernstein-ui-tests.log",
+      "exit_status": 0
+    },
+    "auxiliary": [
+      {
+        "command": "cargo clippy --locked --all-targets --all-features -- -D warnings",
+        "log": "/tmp/hypercurve-dyadic-bernstein-clippy.log",
+        "exit_status": 0
+      },
+      {
+        "command": "cargo clippy --locked --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings",
+        "log": "/tmp/hypercurve-dyadic-bernstein-ui-clippy.log",
+        "exit_status": 0
+      },
+      {
+        "command": "cargo check --locked --manifest-path fuzz/Cargo.toml --bins",
+        "log": "/tmp/hypercurve-dyadic-bernstein-fuzz-check.log",
+        "exit_status": 0
+      },
+      {
+        "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked --all-features --no-deps",
+        "log": "/tmp/hypercurve-dyadic-bernstein-docs.log",
+        "exit_status": 0
+      },
+      {
+        "command": "cargo bench --locked --all-features --no-run",
+        "log": "/tmp/hypercurve-dyadic-bernstein-bench-build.log",
+        "exit_status": 0
+      },
+      {
+        "command": "cargo fmt --check",
+        "exit_status": 0
+      }
+    ],
+    "qualification": "Suite runtimes were collected under concurrent build/test load and are not matched performance results. Bench compilation is not a claim that every benchmark target was executed. No downstream prepared API was removed, so this is not a cross-stack prepared-removal checkpoint."
+  },
+  "source_hashes": {
+    "src/bezier_parameter.rs": "7b7a05a1a3f3eda5a0bd22ee96aa9cd5de9165d60f22e0c33d08436bd3195232",
+    "src/bezier_parameter.rs production prefix, identical in main and frozen candidate": "a0393c385e703785bc1fd32135ba59a3b8a6e101827268152a755d0ee68eb31f",
+    "src/bezier_offset.rs": "844d90c5ac1517fea996607c119668f0de1786fc79a3480a7d0b0549962b9cf5",
+    "src/bezier_algebraic_image.rs": "a0ea92c850e4e8b1310c44fcda4099e10bb7a18927e73160db7343e403675c2b",
+    "Cargo.lock": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a"
+  },
+  "scope_and_remaining": {
+    "net_production_source_lines": -4,
+    "net_rust_lines_including_regressions": 129,
+    "other_repositories_changed": false,
+    "exactcorelib_mining_and_uplift": "Remains closed, unchanged by this checkpoint.",
+    "release_readiness": "Not newly claimed. Registry coordination and publication were not rechecked or attempted.",
+    "long_tests": "All ordinary and opt-in Hypercurve tests completed. The strict recursive radial/rational-quadratic test and this radial/analytic-parallel test still crossed 60 seconds under suite load.",
+    "next_profile_lead": "The baseline call graph also attributes about 21 percent to recursive quadratic projection. The fixed two-radical projection appears to form redundant squared norms when a radical coefficient is absent; this is a source-review lead, not a tested change or a proven speedup.",
+    "push_or_publication": false
+  }
+}

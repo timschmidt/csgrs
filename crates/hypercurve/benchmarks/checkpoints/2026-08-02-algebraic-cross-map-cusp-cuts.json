@@ -1,0 +1,189 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "algebraic cusp cuts across rebuilt, reversed, and aligned rational/analytic circle maps",
+  "source_revision": "a6b403b32933d43bdc1bc1eebb7ea0a8a62bb2e6",
+  "structural_reuse_revision": "8298279a56860cb1221ca9e224a03adca2e103f1",
+  "comparison_revision": "01672795c2082ef33458de75d347b90b119fb728",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "algebraic native parameters retained by rebuilt rational circle maps",
+      "algebraic native parameters retained by rebuilt analytic-parallel circle maps",
+      "structurally reversed rational and analytic map recovery",
+      "rational-to-analytic and analytic-to-rational algebraic cut transport when native parameters are equal or unit complements",
+      "exact source-reversal transport",
+      "target-overlap range validation before publishing a direct transported parameter",
+      "STRICT and APPROXIMATE_512 execution of the identical proof graph",
+      "matched existing-path guards, allocation evidence, linked-size evidence, and static callgraph evidence"
+    ],
+    "excluded": [
+      "arbitrary nonlinear native-parameter correspondence between unrelated circle parameterizations",
+      "mapped values whose source and destination cusp roots are independent selected fields",
+      "generic trivariate elimination or primitive-element construction",
+      "pair-map and pair-overlap-map cross-field materialization",
+      "finite parameter or point projection",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "rebuilt_maps": "A map copy is reusable only when cusp parameter, retained incidence, diameter-side equation, radius denominator, speed equation where applicable, and policy are structurally equal. Cache identity and contact correlation are not mathematical map identity and are excluded.",
+    "reversed_maps": "A reversed map is reusable only when every retained bivariate equation equals the other equation after exact substitution t -> 1-t. The transported isolated parameter is complemented exactly and retains its defining polynomial and reversed isolator.",
+    "cross_type_cut": "For a proposed same or complemented native parameter, compare the normalized rational diameter coordinate Rr/Qr with the analytic coordinate (Ra+B/sqrt(S))/Qa. Cross multiplication produces A+B/sqrt(S); exact evaluation at the selected cusp root and the isolated algebraic cut must be Zero under the original unsquared radical predicate. A squared equation is never used to authorize transport.",
+    "range": "A transported target parameter is published only after exact refinement proves it lies in the destination overlap's closed native range. A parameter outside that range remains a topology failure rather than silently extending the component.",
+    "policy": "All selected-root equality, bivariate signs, radical magnitudes, isolated-parameter comparisons, complements, and range checks receive CurveContext. STRICT accepts exact evidence only. APPROXIMATE_512 can terminate only at the common 512-bit predicate boundary and records that use.",
+    "fallback": "If neither structural same/reversed identity nor an unsquared same/complement cross-type equality is proved, exact-rational recovery and the existing selected-field inverse remain available. A genuinely algebraic arbitrary correspondence stays explicit Unsupported; no finite approximation is substituted."
+  },
+  "capability": {
+    "comparison_revision": "Only exact-rational mapped cusp coordinates could cross unrelated map allocations. An algebraic native cut remained mapped and blocked even when the rebuilt or reversed carrier had the same exact parameterization.",
+    "source_revision": "Algebraic cuts now survive rebuilt and reversed rational maps, rebuilt and reversed analytic maps, both aligned cross-type directions, and source reversal. The regression uses the positive unit root of t^2-1/2 and proves source/destination map allocations are distinct.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release unit-test executable pinned to CPU 11 under seven perf-stat repetitions; retired instructions and branches are primary",
+    "expanded_cross_map_policy_matrix": {
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "coverage": "the comparison matrix plus algebraic rebuilt rational, reversed rational, rebuilt analytic, reversed analytic, rational-to-analytic, analytic-to-rational, and cross-type reversal paths under both policies",
+      "task_clock_ms": 140.82,
+      "cycles": 568314813,
+      "instructions": 1436683336,
+      "branches": 258585752,
+      "branch_misses": 3317352,
+      "comparison_task_clock_ms": 228.36,
+      "comparison_cycles": 917026156,
+      "comparison_instructions": 2241462337,
+      "comparison_branches": 388124655,
+      "cycle_reduction_percent": 38.026325,
+      "instruction_reduction_percent": 35.904195,
+      "branch_reduction_percent": 33.375592,
+      "interpretation": "The source fixture performs every comparison operation plus the new algebraic and reversed-rational matrix. Its 35.90% instruction reduction is therefore a conservative lower bound for replacing repeated selected-field projection with direct certified transport."
+    },
+    "unchanged_rational_overlap_guard": {
+      "workload": "algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root",
+      "comparison_instructions": 31624504,
+      "current_instructions": 31624663,
+      "instruction_change_percent": 0.000503,
+      "comparison_branches": 6310336,
+      "current_branches": 6310409,
+      "branch_change_percent": 0.001157
+    },
+    "unchanged_analytic_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_instructions": 28718456,
+      "current_instructions": 28718563,
+      "instruction_change_percent": 0.000373,
+      "comparison_branches": 5409092,
+      "current_branches": 5409163,
+      "branch_change_percent": 0.001313
+    },
+    "competitive_context": {
+      "direct_guarantee_equivalent": false,
+      "latest_retained_open_cubic_offset_ns": {
+        "hypercurve_certified": 30521803.0,
+        "hypercurve_chord_fallback": 1045575.5,
+        "curvo_heuristic": 8719.7
+      },
+      "latest_retained_line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18417.4,
+        "cavalier_contours": 949.1
+      },
+      "interpretation": "Neither competitive sentinel exercises retained algebraic circle-map transport. They remain finite-throughput targets rather than STRICT/APPROXIMATE_512 peers."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces; heaptrack_print summaries are authoritative",
+    "comparison_allocation_calls": 3534138,
+    "current_allocation_calls": 2318701,
+    "allocation_call_reduction": 1215437,
+    "allocation_call_reduction_percent": 34.391328,
+    "comparison_temporary_allocations": 613282,
+    "current_temporary_allocations": 330701,
+    "temporary_allocation_reduction": 282581,
+    "temporary_allocation_reduction_percent": 46.076846,
+    "comparison_peak_heap_mib": 1.74,
+    "current_peak_heap_mib": 1.85,
+    "peak_heap_change_percent": 6.321839,
+    "current_recorder_peak_rss_mib": 42.70,
+    "profiles_retained": false,
+    "interpretation": "The larger capability fixture performs 34.39% fewer allocations and 46.08% fewer temporary allocations. Its 0.11 MiB peak increase retains additional algebraic/reversed fixtures and map evidence, not solver scratch growth."
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release executables against 0167279 with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8165904,
+      "current_file_bytes": 8182936,
+      "file_change_bytes": 17032,
+      "file_change_percent": 0.208575,
+      "comparison_text_bytes": 6219749,
+      "current_text_bytes": 6232233,
+      "text_change_bytes": 12484,
+      "text_change_percent": 0.200715,
+      "comparison_actual_text_section_bytes": 4694935,
+      "current_actual_text_section_bytes": 4705623,
+      "actual_text_change_bytes": 10688,
+      "actual_text_change_percent": 0.227650
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7948728,
+      "current_file_bytes": 7963272,
+      "file_change_bytes": 14544,
+      "file_change_percent": 0.182973,
+      "comparison_text_bytes": 6037973,
+      "current_text_bytes": 6050421,
+      "text_change_bytes": 12448,
+      "text_change_percent": 0.206162,
+      "comparison_actual_text_section_bytes": 4539111,
+      "current_actual_text_section_bytes": 4549799,
+      "actual_text_change_bytes": 10688,
+      "actual_text_change_percent": 0.235465
+    },
+    "interpretation": "The complete structural and aligned algebraic transport capability adds at most 0.24% to either representative linked artifact."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/hypercurve-algebraic-cross-map-a6b403b --crate-name hypercurve,hypersolve,hyperreal,hyperlimit --format json --per-library",
+    "artifact": "target/hypercurve-algebraic-cross-map-a6b403b/callgraph.json",
+    "nodes": 34185,
+    "edges": 60459,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircleMappedOverlap2::other_parameter_for_cusp -> same-type parameterization_orientation",
+      "same-type parameterization_orientation -> exact t-to-1-t bivariate composition",
+      "BezierAlgebraicCuspSemicircleMappedOverlap2::other_parameter_for_cusp -> rational_parallel_parameter_orientation_at_cut",
+      "rational_parallel_parameter_orientation_at_cut -> rational_parallel_parameters_match_at_cut",
+      "rational_parallel_parameters_match_at_cut -> algebraic_cusp_independent_radical_sum_sign",
+      "direct transported candidate -> overlap_parameter_is_in_range",
+      "unproved direct transport -> represented_rational_value and existing selected-field inverse fallback"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 383 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_all_features_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed all-feature unit-test, default-feature batch, and no-default-feature batch builds",
+    "strict_and_approximate": "passed rebuilt/reversed same-type maps, both aligned cross-type directions, target-range validation, and source reversal under both policies",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "construct arbitrary nonlinear cross-map parameter correspondences instead of requiring same or complemented native parameters",
+    "transport mapped values across independent selected cusp fields and pair maps without finite collapse",
+    "support independent algebraic endpoint ranges and direct cusp-carrier winding",
+    "broaden exact differential coverage for repeated stationary roots, multiplicities, and unrelated selected fields",
+    "reduce remaining local-field, resultant, Sturm, bigint, and retained-proof memory",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean, offset, and corner machinery after differential coverage passes"
+  ]
+}

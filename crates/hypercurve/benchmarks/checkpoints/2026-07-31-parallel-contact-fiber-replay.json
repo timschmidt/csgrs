@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "parallel-contact-fiber-replay",
+  "source_revision": "6124370dad56bb263afd6bac64b95e0574575c31",
+  "implementation_revisions": {
+    "hypercurve": "6124370dad56bb263afd6bac64b95e0574575c31",
+    "hypersolve": "4fa8a6b2ff552fbf7cee99faac366b67f061bad1"
+  },
+  "historical_controls": {
+    "hypercurve": "0c5265abc198aa8e87fda3315fa58a3db6fc603e",
+    "hypersolve": "9fad65713acac4b6227b30410b7df8b5b79c9433"
+  },
+  "scope": {
+    "operation": "exact contact replay between a general rational Bezier curve and the analytic parallel of a rational Bezier curve",
+    "new_case": "a coupled algebraic/algebraic parameter pair whose specialized bivariate system has a higher-nullity fiber",
+    "fast_paths_preserved": [
+      "direct represented-parameter replay",
+      "rank-one bivariate factor replay",
+      "retained-First nullity-one linear lift",
+      "retained-Second nullity-one linear lift as the final fallback"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "solver_primitive": "Hypersolve constructs exact positive-index fiber subresultant polynomials in both retained-parameter orientations",
+    "specialization_guard": "both source equations must retain their formal fiber degree at the retained algebraic parameter before a generic subresultant theorem is used",
+    "gcd_selection": "the first positive-index subresultant with a nonzero principal coefficient at the retained root is the specialized fiber GCD up to a nonzero scalar",
+    "pair_certificate": "direct exact bivariate substitution is preferred; otherwise an exact opposite-sign evaluation at the two endpoints of a singleton projected-root isolator proves that the specialized GCD contains that fiber candidate",
+    "rank_one_certificate": "all coefficient-matrix 2x2 cross-products must vanish under policy before a bivariate polynomial is evaluated as two exact univariate factors",
+    "strict": "STRICT accepts only exact signs, exact zero identities, and certified singleton root intervals",
+    "approximate_512": "APPROXIMATE_512 follows the identical proof graph and may terminate only an unresolved equality or sign at the inherited 512-bit terminal",
+    "unsupported_cases": "specialized fiber-degree drops, insufficient isolator evidence, and even-multiplicity roots without direct replay remain explicit Incomplete results",
+    "no_predicates_build": "without algebraic predicate support the higher-nullity fixture remains explicit Incomplete under both policies instead of being approximated"
+  },
+  "completion_change": {
+    "historical": "one retained candidate pair, zero contacts, explicit Incomplete",
+    "candidate": "one exact algebraic/algebraic Contact with algebraic point evidence under both STRICT and APPROXIMATE_512",
+    "false_positive_guard": "degree-drop fixtures in both retained orientations are rejected by the specialization guard under both policies"
+  },
+  "native_release_benchmark": {
+    "command": "taskset -c 9 env HYPERCURVE_OFFSET_BENCH_GROUP=bezier-intersection target/release/deps/offset-ea116fee283cd918",
+    "method": "five pinned-core release processes per revision after warmup; medians of fixed-iteration loops; the historical worktree uses the identical benchmark source and the same current dependency revisions",
+    "lanes": {
+      "exact_represented_contact": {
+        "iterations_per_process": 1000,
+        "historical_median_microseconds": {
+          "candidates": 39.885,
+          "contacts": 56.229
+        },
+        "candidate_samples_microseconds": {
+          "candidates": [39.181, 38.994, 39.610, 39.911, 39.151],
+          "contacts": [55.517, 55.632, 55.508, 57.485, 56.224]
+        },
+        "candidate_median_microseconds": {
+          "candidates": 39.181,
+          "contacts": 55.632
+        },
+        "median_change_percent": {
+          "candidates": -1.765075,
+          "contacts": -1.061730
+        }
+      },
+      "nullity_one_algebraic_lift": {
+        "iterations_per_process": 100,
+        "historical_median_microseconds": {
+          "candidates": 468.186,
+          "contacts": 1120.028
+        },
+        "candidate_samples_microseconds": {
+          "candidates": [465.357, 456.182, 460.240, 457.824, 468.585],
+          "contacts": [1132.381, 1160.332, 1126.226, 1120.352, 1125.557]
+        },
+        "candidate_median_microseconds": {
+          "candidates": 460.240,
+          "contacts": 1126.226
+        },
+        "median_change_percent": {
+          "candidates": -1.697189,
+          "contacts": 0.553379
+        }
+      },
+      "selected_branch_algebraic_contact": {
+        "iterations_per_process": 100,
+        "historical_median_microseconds": {
+          "candidates": 499.156,
+          "contacts": 1200.232
+        },
+        "candidate_samples_microseconds": {
+          "candidates": [489.405, 518.024, 503.391, 497.274, 496.799],
+          "contacts": [1185.066, 1175.115, 1181.467, 1181.323, 1199.603]
+        },
+        "candidate_median_microseconds": {
+          "candidates": 497.274,
+          "contacts": 1181.467
+        },
+        "median_change_percent": {
+          "candidates": -0.377036,
+          "contacts": -1.563448
+        }
+      },
+      "higher_nullity_fiber": {
+        "iterations_per_process": 100,
+        "historical_median_microseconds": {
+          "candidates": 809.814,
+          "contacts": 29630.080
+        },
+        "candidate_samples_microseconds": {
+          "candidates": [804.541, 805.554, 810.164, 797.520, 807.144],
+          "contacts": [2506.088, 2500.247, 2535.823, 2505.815, 2526.158]
+        },
+        "candidate_median_microseconds": {
+          "candidates": 805.554,
+          "contacts": 2506.088
+        },
+        "median_change_percent": {
+          "candidates": -0.526047,
+          "contacts": -91.542082
+        },
+        "historical_contact_checksum_per_process": 0,
+        "candidate_contact_checksum_per_process": 100,
+        "interpretation": "the new path is both complete and more than eleven times faster because it avoids an expensive failed reverse nullity-one lift"
+      }
+    }
+  },
+  "heaptrack": {
+    "command": "env HYPERCURVE_OFFSET_BENCH_GROUP=bezier-intersection heaptrack -o PROFILE target/release/deps/offset-ea116fee283cd918",
+    "scope": "one aggregate process containing every benchmark lane and its fixed iteration count",
+    "historical": {
+      "runtime_seconds": 25.799,
+      "allocation_calls": 80109047,
+      "temporary_allocations": 1223026,
+      "peak_heap_mebibytes_reported": 1.14,
+      "peak_rss_mebibytes_reported": 11.04,
+      "leaked_kibibytes_reported": 939.86
+    },
+    "candidate": {
+      "runtime_seconds": 3.676,
+      "allocation_calls": 10677466,
+      "temporary_allocations": 574226,
+      "peak_heap_mebibytes_reported": 1.29,
+      "peak_rss_mebibytes_reported": 10.82,
+      "leaked_kibibytes_reported": 581.12
+    },
+    "change_percent": {
+      "allocation_calls": -86.6713,
+      "temporary_allocations": -53.0487,
+      "peak_heap_rounded": 13.1579,
+      "peak_rss_rounded": -1.9928,
+      "leaked_bytes_rounded": -38.1695
+    },
+    "interpretation": "aggregate allocation traffic falls sharply; the rounded peak heap sentinel rises by about 0.15 MiB because the successful path retains subresultant evidence and one completed contact"
+  },
+  "release_size": {
+    "artifact": "matched all-feature offset release benchmark executable",
+    "historical_file_bytes": 6863464,
+    "candidate_file_bytes": 6875424,
+    "file_change_bytes": 11960,
+    "file_change_percent": 0.1743,
+    "historical_text_bytes": 5198147,
+    "candidate_text_bytes": 5217123,
+    "text_change_bytes": 18976,
+    "text_change_percent": 0.3651,
+    "historical_data_bytes": 261696,
+    "candidate_data_bytes": 262088,
+    "historical_bss_bytes": 1920,
+    "candidate_bss_bytes": 3016,
+    "interpretation": "the accepted linked-code cost is under 0.4 percent of text for reusable exact fiber subresultants and complete replay"
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "hypercurve_historical": {
+      "nodes": 17315,
+      "edges": 29487
+    },
+    "hypercurve_candidate": {
+      "nodes": 17331,
+      "edges": 29557
+    },
+    "hypersolve_historical": {
+      "nodes": 4208,
+      "edges": 6758
+    },
+    "hypersolve_candidate": {
+      "nodes": 4244,
+      "edges": 6832
+    },
+    "combined_delta": {
+      "nodes": 52,
+      "edges": 144
+    },
+    "caveat": "the utility is a static source approximation; benchmark-only functions are excluded from these default source-only scans"
+  },
+  "competitive_context": {
+    "equivalent_direct_peer": "none in the current comparison harness",
+    "reason": "the available Curvo lane approximates an open cubic offset and does not expose an exact analytic rational-parallel intersection/contact proof contract",
+    "related_checkpoint": "2026-07-31-exact-rational-bezier-parallel-carrier.json",
+    "comparison_rule": "heuristic offset throughput is retained as context, not reported as an interchangeable correctness benchmark"
+  },
+  "validation": {
+    "hypercurve_cargo_test_all_features": "pass: 276 library tests, every integration target, deterministic adversarial Boolean corpus, README tests, and doc tests",
+    "focused_all_features": "pass: 72/72",
+    "focused_no_default_features": "pass: 64/64",
+    "hypercurve_clippy_all_targets_all_features_deny_warnings": "pass",
+    "hypercurve_clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "hypercurve_cargo_fmt_check": "pass",
+    "hypercurve_git_diff_check": "pass",
+    "hypersolve_all_feature_and_no_default_test_matrices": "pass: 174 library, 2 README, 131 residual property, and 209 smoke tests in each applicable matrix",
+    "hypersolve_clippy_all_target_feature_matrices_deny_warnings": "pass"
+  },
+  "next_boundary": {
+    "correctness": "certify even-multiplicity higher-nullity fiber roots that cannot be proven by endpoint sign change",
+    "specialization": "construct a degree-drop-safe specialized resultant or subresultant path instead of leaving those fibers Incomplete",
+    "overlap": "classify shared bivariate components and parameter correspondences without treating a degenerate resultant as a point-contact set",
+    "topology": "feed every completed contact and overlap into the single CurveRegion2 arrangement before expanding offset corner and regularization coverage"
+  }
+}

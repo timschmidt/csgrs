@@ -1,0 +1,1688 @@
+{
+  "schema_version": 1,
+  "title": "Preserve selected-root ownership and reuse the owned identity kernel",
+  "status": "both exactness fixes committed and locally qualified; matched controls complete; broader release readiness remains unproven",
+  "commits": {
+    "hypersolve_baseline": "1841884f175254460cf15facd83f8c4947315ff5",
+    "hypersolve_first_stage": "8bd17304631bdea0f9a68bde58e98cfac1d8d961",
+    "hypersolve_final_candidate": "d897ff0a5d416daa16c83f1bfe32334077fd07de",
+    "hypercurve": "9e2796cbf36dde2f56087a717b34d31edbf80f51"
+  },
+  "change": {
+    "stage": "first refinement fix; final combined changes and qualification are recorded under owned_singleton",
+    "production_line_delta": -8,
+    "test_line_delta": 111,
+    "total_rust_line_delta": 103,
+    "public_api_changes": false,
+    "new_cache_fields": 0,
+    "summary": "Only the included upper endpoint may supply a new point witness. Excluded lower-endpoint roots use the existing square-free/Sturm refiner; known exact points retain authority. Fast and fallback refinements share one metadata/validation update. Rational kind requires an exact rational payload. Midpoints use Real::average_pair.",
+    "source_hashes": {
+      "hashes": [
+        {
+          "path": "hypersolve/src/algebraic_fiber.rs",
+          "current": "94e596ff79ad43529c44370b1f2804cf40b5da3540e34a8c3b4b5e6d25a2534d",
+          "frozen": "f24ee42241f221d2229e9332d510e63d50c280d251238d2de19f4304ad42a5e4"
+        },
+        {
+          "path": "hypersolve/src/root_isolation.rs",
+          "current": "25ef14f3f50bdbf713dd5c353a53da75f11aba90da5601d5574f4806c5476cbf",
+          "frozen": "25ef14f3f50bdbf713dd5c353a53da75f11aba90da5601d5574f4806c5476cbf"
+        },
+        {
+          "path": "hyperreal/src/computable/approximation/exp_sqrt.rs",
+          "current": "9ab63125e810fb8dc2401d1c217827f51c971be5eeb695bc1cc0ef90ad760658",
+          "frozen": "9ab63125e810fb8dc2401d1c217827f51c971be5eeb695bc1cc0ef90ad760658"
+        },
+        {
+          "path": "hyperreal/src/computable/node/exp_trig.rs",
+          "current": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d",
+          "frozen": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d"
+        },
+        {
+          "path": "hyperreal/src/rational/arithmetic/queries_conversion.rs",
+          "current": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+          "frozen": "12c5324dea14aab668fb6be5050d183cf4a4b3b9144912336b644da6a7d430f2"
+        },
+        {
+          "path": "hypercurve/benches/bezier_region.rs",
+          "current": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+          "frozen": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91"
+        }
+      ],
+      "production_lines_before": 3820,
+      "production_lines_after": 3812,
+      "test_line_delta": 111
+    }
+  },
+  "exactness": {
+    "pre_fix_failures": [
+      {
+        "test": "local_refinement_preserves_half_open_selected_root_ownership",
+        "actual": "Ok(Less)",
+        "expected": "Ok(Greater)"
+      },
+      {
+        "test": "local_fiber_count_preserves_half_open_selected_root_ownership",
+        "actual": "Some(0)",
+        "expected": "Some(1)"
+      },
+      {
+        "test": "local_refinement_preserves_nonrational_exact_point_kind",
+        "actual": "ExactRationalWitness",
+        "expected": "IsolatingInterval"
+      }
+    ],
+    "cases": {
+      "ownership": "x(x-alpha) on (0,1], alpha=1 or 1/2; both policies; independent shared-refiner oracle and exact sign query",
+      "public_count_queries": 16,
+      "public_count_scope": "Both parameter orientations and policies; count the selected diagonal root and exclude the foreign zero root.",
+      "metadata_and_point_authority_cases": 24,
+      "metadata_scope": "Rational 1/2, sqrt(2) and pi; upper endpoint, midpoint, repeated-root fallback and already-known exact point; both policies."
+    },
+    "admission_scope": "Structural/witness replay continues to trust the producer's unit-root certificate; this change does not add independent full root isolation to admission."
+  },
+  "native_validation": {
+    "status": "passed",
+    "local_field_tests_passed": 36,
+    "debug_minimal_passed": 783,
+    "debug_all_targets_passed": 786,
+    "release_all_features_passed": 784,
+    "representation_layouts": 4,
+    "representation_checks": 16,
+    "allocation_iterations": 4,
+    "scoped_live_allocation_growth": 0,
+    "script": "/tmp/hypersolve-local-refinement-gates.sh",
+    "additional_checks": [
+      "fmt including fuzz target",
+      "all-target/all-feature check",
+      "sanitizer fuzz-bin check",
+      "strict all-target/all-feature and fuzz clippy",
+      "strict rustdoc",
+      "all-benchmark compilation"
+    ],
+    "coverage": {
+      "status": "passed",
+      "percent": 86.15,
+      "threshold_percent": 85,
+      "executable_lines": 38449,
+      "hit_lines": 33123,
+      "missed_lines": 5326,
+      "log": "/tmp/hypersolve-local-refinement-coverage.log"
+    },
+    "concurrent_dependency_scope": "Current-workspace gates include ongoing Hyperreal queries_conversion.rs edits after d219a35. Paired timing artifacts instead freeze d219a35 production dependencies on both sides."
+  },
+  "profile": {
+    "status": "passed; diagnostic lead only",
+    "source": "current pre-fix Hypercurve with Hypersolve 1841884 and Hyperreal d219a35",
+    "path": "/tmp/hypercurve-current-selected-fiber-20260905.perf",
+    "fixture": "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+    "elapsed_seconds": 52.08,
+    "samples": 5162,
+    "lost_samples": 0,
+    "recorded_megabytes": 81.858,
+    "self_percent": {
+      "biguint_div_rem_core": 13.85,
+      "rational_gcd_wide_magnitudes": 12.83,
+      "biguint_shl2": 10.68,
+      "malloc_internal": 6.02
+    },
+    "caveat": "Optimized Rust call-chain unwinding is incomplete. Self samples identify arithmetic/allocation cost, but do not establish which caller should be changed."
+  },
+  "frozen_comparison": {
+    "status": "intermediate first-stage artifacts retained; final comparisons use the original frozen baseline and owned_singleton candidate artifacts",
+    "workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "hyperreal_production_revision": "d219a350462357af07d035fd316cba3b1cc339c9",
+    "script": "/tmp/hypercurve-local-refinement-matched.sh",
+    "build_script": "/tmp/hypercurve-local-refinement-frozen-build.sh",
+    "cpu": 7,
+    "order": [
+      "baseline-1",
+      "candidate-1",
+      "candidate-2",
+      "baseline-2",
+      "baseline-3",
+      "candidate-3"
+    ],
+    "artifacts": [
+      {
+        "role": "baseline-test",
+        "path": "/tmp/hypercurve-local-refinement-frozen-baseline-test",
+        "bytes": 27845336,
+        "sha256": "5805a22c4e8cd783a1a8b63b257cc027c67c8dc94693e2256e95323a5daf3f78"
+      },
+      {
+        "role": "candidate-test",
+        "path": "/tmp/hypercurve-local-refinement-frozen-candidate-test",
+        "bytes": 27852504,
+        "sha256": "5d8a815f75ac76bd64cd117bf5ad82091292158d24503a60077ea5c1408aecf8"
+      },
+      {
+        "role": "baseline-region",
+        "path": "/tmp/hypercurve-local-refinement-frozen-baseline-region",
+        "bytes": 15415528,
+        "sha256": "8bc685afe160400491ccc3d8ffdcf9aec13b6bb1738a9e31ea5fa953b30650af",
+        "text": 12306974,
+        "data": 321624,
+        "bss": 5392,
+        "combined": 12633990
+      },
+      {
+        "role": "candidate-region",
+        "path": "/tmp/hypercurve-local-refinement-frozen-candidate-region",
+        "bytes": 15422704,
+        "sha256": "9b99bf01c9c9009ee14dce92c51a3cfb19d917ac54d5444a767f9b178bae3b89",
+        "text": 12310526,
+        "data": 321616,
+        "bss": 1848,
+        "combined": 12633990
+      }
+    ],
+    "size_interpretation": "Region executable grows 7176 file bytes while text/data/BSS total is unchanged. Retained for the proven exactness fixes; no size or speed gain is claimed."
+  },
+  "downstream_validation": {
+    "status": "first-stage checks passed",
+    "script": "/tmp/hypercurve-local-refinement-gates.sh",
+    "all_features": {
+      "passed": 1731,
+      "failed": 0,
+      "ignored": 9,
+      "targets": 45
+    },
+    "minimal": {
+      "passed": 1702,
+      "failed": 0,
+      "ignored": 4,
+      "targets": 45
+    },
+    "ignored_units": {
+      "passed": 6,
+      "manual_drivers_complete": 5,
+      "elapsed_seconds": 54.55
+    },
+    "ignored_stroke": {
+      "passed": 3,
+      "elapsed_seconds": 54.77
+    },
+    "ui_tests": {
+      "passed": 37,
+      "elapsed_seconds": 36.32
+    },
+    "benchmark_executables_built": 25,
+    "additional_checks": [
+      "strict all-target/all-feature clippy",
+      "fuzz-bin check",
+      "strict docs",
+      "fmt",
+      "strict UI clippy",
+      "release UI WASM build"
+    ],
+    "scope": "Core matrices and opt-in fixtures preceded the second production change; ancillary builds spanned it. The completed final second-stage matrix is recorded under owned_singleton.downstream_validation."
+  },
+  "remaining": [
+    "ExactCorelib mining/uplift remains closed from previous work.",
+    "Full Hypercurve release readiness and uniformly competitive operation performance remain unproven.",
+    "Audit and remove the redundant root-kind tag if full consumer review confirms the current findings; no compatibility API should replace it.",
+    "Evaluate native Real::eval_poly reuse and identical private sign helpers with controlled benchmarks.",
+    "Full slow-fixture paired allocation accounting from the previous pass remains incomplete; only scoped RSS and small-fixture allocation evidence is claimed.",
+    "No push, registry publication or hosted deployment was performed by this pass."
+  ],
+  "owned_singleton": {
+    "status": "committed and locally qualified",
+    "commit": "d897ff0a5d416daa16c83f1bfe32334077fd07de",
+    "source_sha256": "ddda9aaad71dc60375ca959f13b2c7bc274aed39b79583cae6eca47b192b7f27",
+    "production_line_delta": -3,
+    "test_line_delta": 76,
+    "change": "All three local-field identity sites use polynomial_vanishes_at_owned_root, the existing selected-root identity kernel. A zero-width singleton without an optional point witness is no longer misread as an empty half-open interval.",
+    "red_failures": [
+      {
+        "test": "local_field_zero_test_recognizes_an_uncached_singleton",
+        "actual": "Ok(false)",
+        "expected": "Ok(true)"
+      },
+      {
+        "test": "local_fiber_count_preserves_uncached_singleton_identities",
+        "actual": "Counted; distinct_root_count=Some(0); certainty=Exact",
+        "expected": "IdenticallyZeroFiber; distinct_root_count=None; certainty=Exact"
+      }
+    ],
+    "cases": {
+      "points": [
+        "1/2",
+        "sqrt(2)",
+        "pi"
+      ],
+      "policies": 2,
+      "local_zero_and_nonzero_queries": 12,
+      "public_uncached_count_queries": 24,
+      "public_explicit_witness_controls": 24,
+      "parameter_orientations": 2
+    },
+    "native_validation": {
+      "status": "passed",
+      "local_field_tests_passed": 38,
+      "debug_minimal_passed": 785,
+      "debug_all_targets_passed": 788,
+      "release_all_features_passed": 786,
+      "representation_layouts": 4,
+      "representation_checks": 16,
+      "allocation_iterations": 4,
+      "script": "/tmp/hypersolve-owned-singleton-gates.sh",
+      "additional_checks": [
+        "fmt including fuzz target",
+        "all-target/all-feature check",
+        "sanitizer fuzz-bin check",
+        "strict all-target/all-feature and fuzz clippy",
+        "strict rustdoc",
+        "all-benchmark compilation"
+      ],
+      "coverage": {
+        "status": "passed",
+        "percent": 86.19,
+        "threshold_percent": 85,
+        "executable_lines": 38446,
+        "hit_lines": 33138,
+        "missed_lines": 5308,
+        "log": "/tmp/hypersolve-owned-singleton-coverage.log"
+      }
+    },
+    "downstream_validation": {
+      "status": "passed",
+      "script": "/tmp/hypercurve-owned-singleton-gates.sh",
+      "all_features": {
+        "passed": 1731,
+        "failed": 0,
+        "ignored": 9,
+        "targets": 45
+      },
+      "minimal": {
+        "passed": 1702,
+        "failed": 0,
+        "ignored": 4,
+        "targets": 45
+      },
+      "ignored_units": {
+        "passed": 6,
+        "manual_drivers_complete": 5,
+        "elapsed_seconds": 52.8
+      },
+      "ignored_stroke": {
+        "passed": 3,
+        "elapsed_seconds": 54.41
+      },
+      "ui_tests": {
+        "passed": 37,
+        "elapsed_seconds": 35.29
+      },
+      "benchmark_executables_built": 25,
+      "additional_checks": [
+        "strict all-target/all-feature clippy",
+        "fuzz-bin check",
+        "strict docs",
+        "fmt",
+        "strict UI clippy",
+        "release UI WASM build"
+      ],
+      "scope": "Final full native, Hypercurve and UI/WASM gates on the committed combined changes. Concurrent Hyperreal conversion edits remain separate from the frozen timing artifacts."
+    },
+    "frozen_candidate_artifacts": [
+      {
+        "kind": "test",
+        "path": "/tmp/hypercurve-owned-singleton-frozen-candidate-test",
+        "bytes": 27852504,
+        "sha256": "7b3fcff3f8556322519e8d08c17d64c2c644f2e5f4bbc72bc91071a301d6ca1b"
+      },
+      {
+        "kind": "region",
+        "path": "/tmp/hypercurve-owned-singleton-frozen-candidate-region",
+        "bytes": 15422704,
+        "sha256": "79a00f7222b9ffd3dae4585587b95af5f8d9cc600ac7b43749854cfd459e0f15"
+      }
+    ],
+    "region_sections": {
+      "text": 12310494,
+      "data": 321616,
+      "bss": 1880,
+      "combined": 12633990
+    },
+    "matched_script": "/tmp/hypercurve-owned-singleton-matched.sh",
+    "analysis_script": "/tmp/hypercurve-owned-singleton-analyze.mjs",
+    "combined_changes": {
+      "production_line_delta": -11,
+      "test_line_delta": 187,
+      "total_rust_line_delta": 176
+    },
+    "allocation_control": {
+      "fixture": "bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system",
+      "script": "/tmp/hypercurve-owned-singleton-small-heap-control.sh",
+      "baseline": {
+        "allocations": 11671,
+        "temporary_allocations": 471,
+        "reported_peak_heap": "243.57K",
+        "reported_end_live": "90.14K",
+        "log": "/tmp/hypercurve-owned-singleton-baseline-small-heap-summary.log"
+      },
+      "candidate": {
+        "allocations": 11668,
+        "temporary_allocations": 471,
+        "reported_peak_heap": "243.57K",
+        "reported_end_live": "89.98K",
+        "log": "/tmp/hypercurve-owned-singleton-candidate-small-heap-summary.log"
+      },
+      "scope": "Small unchanged fixture including process startup. This tiny difference is not allocation accounting for the full Boolean fixture or a scoped leak-freedom claim."
+    },
+    "matched_comparison": {
+      "status": "complete",
+      "original_quiet_start_utc": "2026-09-05 19:39:42 UTC",
+      "resumed_quiet_start_utc": "2026-09-05 19:53:50 UTC",
+      "pre_run_competing_workers": 0,
+      "resumed_script": "/tmp/hypercurve-owned-singleton-remaining-matched.sh",
+      "retained_clean_groups": [
+        "baseline-1",
+        "candidate-1",
+        "candidate-2"
+      ],
+      "interruption": "Independent Cargo/test/compiler jobs appeared around 19:45:42 UTC during baseline-2. The owned comparison script was stopped with exit 130 at 19:48:07 UTC. No competing workers were stopped. Original group order is preserved across the pause.",
+      "excluded_logs": [
+        "/tmp/hypercurve-owned-singleton-selected-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-chord-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-radial-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-region-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-selected-baseline-3-interrupted-1948.log"
+      ],
+      "resumed_groups": [
+        "baseline-2",
+        "baseline-3",
+        "candidate-3"
+      ],
+      "measurements": {
+        "selected": {
+          "baseline": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-selected-baseline-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 55.82,
+              "user_seconds": 55.6,
+              "system_seconds": 0,
+              "maximum_rss_kib": 17740,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-selected-baseline-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 52.29,
+              "user_seconds": 52.07,
+              "system_seconds": 0.01,
+              "maximum_rss_kib": 17956,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-selected-baseline-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 52.39,
+              "user_seconds": 52.17,
+              "system_seconds": 0.01,
+              "maximum_rss_kib": 18300,
+              "passed": 1
+            }
+          ],
+          "candidate": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-selected-candidate-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 53.85,
+              "user_seconds": 53.62,
+              "system_seconds": 0.01,
+              "maximum_rss_kib": 17708,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-selected-candidate-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 52.27,
+              "user_seconds": 52.06,
+              "system_seconds": 0.01,
+              "maximum_rss_kib": 18292,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-selected-candidate-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 52.19,
+              "user_seconds": 51.96,
+              "system_seconds": 0.01,
+              "maximum_rss_kib": 17756,
+              "passed": 1
+            }
+          ],
+          "median": {
+            "wall_seconds": {
+              "baseline": 52.39,
+              "candidate": 52.27,
+              "change_percent": -0.2290513456766563
+            },
+            "user_seconds": {
+              "baseline": 52.17,
+              "candidate": 52.06,
+              "change_percent": -0.2108491470193541
+            },
+            "system_seconds": {
+              "baseline": 0.01,
+              "candidate": 0.01,
+              "change_percent": 0
+            },
+            "maximum_rss_kib": {
+              "baseline": 17956,
+              "candidate": 17756,
+              "change_percent": -1.1138338159946581
+            }
+          }
+        },
+        "chord": {
+          "baseline": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-chord-baseline-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 17.19,
+              "user_seconds": 17.08,
+              "system_seconds": 0.02,
+              "maximum_rss_kib": 46136,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-chord-baseline-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 16.98,
+              "user_seconds": 16.87,
+              "system_seconds": 0.02,
+              "maximum_rss_kib": 45868,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-chord-baseline-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 24.84,
+              "user_seconds": 22.64,
+              "system_seconds": 0.04,
+              "maximum_rss_kib": 45432,
+              "passed": 1
+            }
+          ],
+          "candidate": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-chord-candidate-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 16.93,
+              "user_seconds": 16.8,
+              "system_seconds": 0.04,
+              "maximum_rss_kib": 46056,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-chord-candidate-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 18.43,
+              "user_seconds": 17.99,
+              "system_seconds": 0.04,
+              "maximum_rss_kib": 45460,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-chord-candidate-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 16.89,
+              "user_seconds": 16.77,
+              "system_seconds": 0.03,
+              "maximum_rss_kib": 45980,
+              "passed": 1
+            }
+          ],
+          "median": {
+            "wall_seconds": {
+              "baseline": 17.19,
+              "candidate": 16.93,
+              "change_percent": -1.512507271669583
+            },
+            "user_seconds": {
+              "baseline": 17.08,
+              "candidate": 16.8,
+              "change_percent": -1.6393442622950727
+            },
+            "system_seconds": {
+              "baseline": 0.02,
+              "candidate": 0.04,
+              "change_percent": 100
+            },
+            "maximum_rss_kib": {
+              "baseline": 45868,
+              "candidate": 45980,
+              "change_percent": 0.24417894828638875
+            }
+          }
+        },
+        "radial": {
+          "baseline": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-radial-baseline-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 29.39,
+              "user_seconds": 29.24,
+              "system_seconds": 0.04,
+              "maximum_rss_kib": 48996,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-radial-baseline-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 29.22,
+              "user_seconds": 29.06,
+              "system_seconds": 0.03,
+              "maximum_rss_kib": 49144,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-radial-baseline-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 30.31,
+              "user_seconds": 30.14,
+              "system_seconds": 0.03,
+              "maximum_rss_kib": 49092,
+              "passed": 1
+            }
+          ],
+          "candidate": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-radial-candidate-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 29.43,
+              "user_seconds": 29.28,
+              "system_seconds": 0.03,
+              "maximum_rss_kib": 48952,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-radial-candidate-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 30.1,
+              "user_seconds": 29.92,
+              "system_seconds": 0.05,
+              "maximum_rss_kib": 49228,
+              "passed": 1
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-radial-candidate-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 35.97,
+              "user_seconds": 34.93,
+              "system_seconds": 0.05,
+              "maximum_rss_kib": 48764,
+              "passed": 1
+            }
+          ],
+          "median": {
+            "wall_seconds": {
+              "baseline": 29.39,
+              "candidate": 30.1,
+              "change_percent": 2.4157876828853286
+            },
+            "user_seconds": {
+              "baseline": 29.24,
+              "candidate": 29.92,
+              "change_percent": 2.3255813953488413
+            },
+            "system_seconds": {
+              "baseline": 0.03,
+              "candidate": 0.05,
+              "change_percent": 66.66666666666667
+            },
+            "maximum_rss_kib": {
+              "baseline": 49092,
+              "candidate": 48952,
+              "change_percent": -0.2851788478774542
+            }
+          }
+        },
+        "region": {
+          "baseline": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-region-baseline-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 6.51,
+              "user_seconds": 6.46,
+              "system_seconds": 0,
+              "maximum_rss_kib": 10128,
+              "rows": [
+                {
+                  "name": "curve_region_clone",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.740094,
+                  "checksum": 1000000
+                },
+                {
+                  "name": "curve_region_empty",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.029352,
+                  "checksum": 0
+                },
+                {
+                  "name": "cubic_bezier_exact_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 15509.8878
+                },
+                {
+                  "name": "cubic_bezier_prefix_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 19700.77075
+                },
+                {
+                  "name": "cubic_bezier_prefix_length_bounds",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 4204.833
+                },
+                {
+                  "name": "curve_region_boolean_immediate_union",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 201051.541,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_immediate_all_ops",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 402650.914,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_retained_algebraic_all_ops",
+                  "iterations": 100,
+                  "nanoseconds_per_iteration": 217629.69,
+                  "checksum": 1100
+                },
+                {
+                  "name": "bezier_region_algebraic_ray_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 57634.363,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 3283.50065,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 38049.669,
+                  "checksum": 4000
+                },
+                {
+                  "name": "curve_region_immediate_native_signed_depth",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 826.4035,
+                  "checksum": 2000
+                },
+                {
+                  "name": "bezier_retained_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 12209.7863,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_algebraic_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 47505.2415,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_retained_algebraic_source_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14359.88505,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 6245.79625,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_line_authoritative_roles",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 147688.64305,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_resolved_overlap_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 25639.6386,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_conic_region_exact_area",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 30496.16495,
+                  "checksum": 0
+                }
+              ]
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-region-baseline-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 6.42,
+              "user_seconds": 6.39,
+              "system_seconds": 0,
+              "maximum_rss_kib": 10164,
+              "rows": [
+                {
+                  "name": "curve_region_clone",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.598454,
+                  "checksum": 1000000
+                },
+                {
+                  "name": "curve_region_empty",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.110427,
+                  "checksum": 0
+                },
+                {
+                  "name": "cubic_bezier_exact_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 15174.5553
+                },
+                {
+                  "name": "cubic_bezier_prefix_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 19660.98105
+                },
+                {
+                  "name": "cubic_bezier_prefix_length_bounds",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 4143.03275
+                },
+                {
+                  "name": "curve_region_boolean_immediate_union",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 193734.392,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_immediate_all_ops",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 396549.483,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_retained_algebraic_all_ops",
+                  "iterations": 100,
+                  "nanoseconds_per_iteration": 219388.87,
+                  "checksum": 1100
+                },
+                {
+                  "name": "bezier_region_algebraic_ray_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 56822.7085,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 3232.01965,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 37394.9795,
+                  "checksum": 4000
+                },
+                {
+                  "name": "curve_region_immediate_native_signed_depth",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 832.823,
+                  "checksum": 2000
+                },
+                {
+                  "name": "bezier_retained_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 12349.95675,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_algebraic_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 47326.304,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_retained_algebraic_source_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 13969.6648,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 6134.2739,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_line_authoritative_roles",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 146148.46535,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_resolved_overlap_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 25808.275600000004,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_conic_region_exact_area",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 29462.34785,
+                  "checksum": 0
+                }
+              ]
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-region-baseline-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 6.64,
+              "user_seconds": 6.6,
+              "system_seconds": 0,
+              "maximum_rss_kib": 9996,
+              "rows": [
+                {
+                  "name": "curve_region_clone",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.623631,
+                  "checksum": 1000000
+                },
+                {
+                  "name": "curve_region_empty",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.348631,
+                  "checksum": 0
+                },
+                {
+                  "name": "cubic_bezier_exact_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14592.4157
+                },
+                {
+                  "name": "cubic_bezier_prefix_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 19157.21955
+                },
+                {
+                  "name": "cubic_bezier_prefix_length_bounds",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 4197.55155
+                },
+                {
+                  "name": "curve_region_boolean_immediate_union",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 191937.106,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_immediate_all_ops",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 389845.942,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_retained_algebraic_all_ops",
+                  "iterations": 100,
+                  "nanoseconds_per_iteration": 220699.98,
+                  "checksum": 1100
+                },
+                {
+                  "name": "bezier_region_algebraic_ray_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 56370.4345,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 3296.80975,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 37684.7095,
+                  "checksum": 4000
+                },
+                {
+                  "name": "curve_region_immediate_native_signed_depth",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 842.1975,
+                  "checksum": 2000
+                },
+                {
+                  "name": "bezier_retained_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 12540.5927,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_algebraic_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 47983.139,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_retained_algebraic_source_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14070.28145,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 6125.4985,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_line_authoritative_roles",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 159400.33785,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_resolved_overlap_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 26301.9468,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_conic_region_exact_area",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 27312.2431,
+                  "checksum": 0
+                }
+              ]
+            }
+          ],
+          "candidate": [
+            {
+              "log": "/tmp/hypercurve-owned-singleton-region-candidate-1.log",
+              "repetition": 1,
+              "exit_status": 0,
+              "wall_seconds": 6.37,
+              "user_seconds": 6.33,
+              "system_seconds": 0,
+              "maximum_rss_kib": 10048,
+              "rows": [
+                {
+                  "name": "curve_region_clone",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.293865,
+                  "checksum": 1000000
+                },
+                {
+                  "name": "curve_region_empty",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.112046,
+                  "checksum": 0
+                },
+                {
+                  "name": "cubic_bezier_exact_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14828.786
+                },
+                {
+                  "name": "cubic_bezier_prefix_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 19403.7282
+                },
+                {
+                  "name": "cubic_bezier_prefix_length_bounds",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 4064.65965
+                },
+                {
+                  "name": "curve_region_boolean_immediate_union",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 195440.905,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_immediate_all_ops",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 390938.577,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_retained_algebraic_all_ops",
+                  "iterations": 100,
+                  "nanoseconds_per_iteration": 228183.58,
+                  "checksum": 1100
+                },
+                {
+                  "name": "bezier_region_algebraic_ray_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 57092.365,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 3388.7209,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 37637.7975,
+                  "checksum": 4000
+                },
+                {
+                  "name": "curve_region_immediate_native_signed_depth",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 841.232,
+                  "checksum": 2000
+                },
+                {
+                  "name": "bezier_retained_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 12373.43765,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_algebraic_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 48059.2885,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_retained_algebraic_source_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14038.4401,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 6136.69825,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_line_authoritative_roles",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 146394.24155,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_resolved_overlap_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 25538.47955,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_conic_region_exact_area",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 27079.05705,
+                  "checksum": 0
+                }
+              ]
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-region-candidate-2.log",
+              "repetition": 2,
+              "exit_status": 0,
+              "wall_seconds": 6.57,
+              "user_seconds": 6.53,
+              "system_seconds": 0,
+              "maximum_rss_kib": 10228,
+              "rows": [
+                {
+                  "name": "curve_region_clone",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.611513,
+                  "checksum": 1000000
+                },
+                {
+                  "name": "curve_region_empty",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 2.986576,
+                  "checksum": 0
+                },
+                {
+                  "name": "cubic_bezier_exact_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 15085.6179
+                },
+                {
+                  "name": "cubic_bezier_prefix_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 20326.78195
+                },
+                {
+                  "name": "cubic_bezier_prefix_length_bounds",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 4117.8885
+                },
+                {
+                  "name": "curve_region_boolean_immediate_union",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 213386.697,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_immediate_all_ops",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 424718.004,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_retained_algebraic_all_ops",
+                  "iterations": 100,
+                  "nanoseconds_per_iteration": 221831.21,
+                  "checksum": 1100
+                },
+                {
+                  "name": "bezier_region_algebraic_ray_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 57235.6105,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 3336.80395,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 39095.7775,
+                  "checksum": 4000
+                },
+                {
+                  "name": "curve_region_immediate_native_signed_depth",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 834.928,
+                  "checksum": 2000
+                },
+                {
+                  "name": "bezier_retained_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 12695.3306,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_algebraic_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 50330.043,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_retained_algebraic_source_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14226.5777,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 6134.00595,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_line_authoritative_roles",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 147164.47825,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_resolved_overlap_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 26789.48435,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_conic_region_exact_area",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 30543.7553,
+                  "checksum": 0
+                }
+              ]
+            },
+            {
+              "log": "/tmp/hypercurve-owned-singleton-region-candidate-3.log",
+              "repetition": 3,
+              "exit_status": 0,
+              "wall_seconds": 6.42,
+              "user_seconds": 6.38,
+              "system_seconds": 0,
+              "maximum_rss_kib": 10248,
+              "rows": [
+                {
+                  "name": "curve_region_clone",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.598443,
+                  "checksum": 1000000
+                },
+                {
+                  "name": "curve_region_empty",
+                  "iterations": 1000000,
+                  "nanoseconds_per_iteration": 3.136096,
+                  "checksum": 0
+                },
+                {
+                  "name": "cubic_bezier_exact_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14843.98195
+                },
+                {
+                  "name": "cubic_bezier_prefix_area_moments",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 19793.472
+                },
+                {
+                  "name": "cubic_bezier_prefix_length_bounds",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 4187.7347
+                },
+                {
+                  "name": "curve_region_boolean_immediate_union",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 195007.545,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_immediate_all_ops",
+                  "iterations": 1000,
+                  "nanoseconds_per_iteration": 397795.458,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_boolean_retained_algebraic_all_ops",
+                  "iterations": 100,
+                  "nanoseconds_per_iteration": 222009.5,
+                  "checksum": 1100
+                },
+                {
+                  "name": "bezier_region_algebraic_ray_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 60072.676,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 3319.76115,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 38704.0995,
+                  "checksum": 4000
+                },
+                {
+                  "name": "curve_region_immediate_native_signed_depth",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 837.4525,
+                  "checksum": 2000
+                },
+                {
+                  "name": "bezier_retained_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 12523.67035,
+                  "checksum": 0
+                },
+                {
+                  "name": "curve_region_cached_algebraic_classification",
+                  "iterations": 2000,
+                  "nanoseconds_per_iteration": 48592.952,
+                  "checksum": 4000
+                },
+                {
+                  "name": "bezier_retained_algebraic_source_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 14524.1858,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 6200.2384,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_retained_algebraic_line_authoritative_roles",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 147153.4466,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_resolved_overlap_region_materialization",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 25295.4152,
+                  "checksum": 0
+                },
+                {
+                  "name": "bezier_conic_region_exact_area",
+                  "iterations": 20000,
+                  "nanoseconds_per_iteration": 27156.78725,
+                  "checksum": 0
+                }
+              ]
+            }
+          ],
+          "median": {
+            "wall_seconds": {
+              "baseline": 6.51,
+              "candidate": 6.42,
+              "change_percent": -1.3824884792626668
+            },
+            "user_seconds": {
+              "baseline": 6.46,
+              "candidate": 6.38,
+              "change_percent": -1.2383900928792602
+            },
+            "system_seconds": {
+              "baseline": 0,
+              "candidate": 0,
+              "change_percent": null
+            },
+            "maximum_rss_kib": {
+              "baseline": 10128,
+              "candidate": 10228,
+              "change_percent": 0.9873617693522796
+            }
+          },
+          "median_rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "checksum": 1000000,
+              "baseline_nanoseconds": 3.623631,
+              "candidate_nanoseconds": 3.598443,
+              "change_percent": -0.6951038888893479
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "checksum": 0,
+              "baseline_nanoseconds": 3.110427,
+              "candidate_nanoseconds": 3.112046,
+              "change_percent": 0.05205073129830318
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "baseline_nanoseconds": 15174.5553,
+              "candidate_nanoseconds": 14843.98195,
+              "change_percent": -2.178471417874106
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "baseline_nanoseconds": 19660.98105,
+              "candidate_nanoseconds": 19793.472,
+              "change_percent": 0.6738776140573277
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "baseline_nanoseconds": 4197.55155,
+              "candidate_nanoseconds": 4117.8885,
+              "change_percent": -1.897845661955011
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "checksum": 0,
+              "baseline_nanoseconds": 193734.392,
+              "candidate_nanoseconds": 195440.905,
+              "change_percent": 0.8808518623786732
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "checksum": 0,
+              "baseline_nanoseconds": 396549.483,
+              "candidate_nanoseconds": 397795.458,
+              "change_percent": 0.3142041670496809
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "checksum": 1100,
+              "baseline_nanoseconds": 219388.87,
+              "candidate_nanoseconds": 222009.5,
+              "change_percent": 1.1945136505785436
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "checksum": 4000,
+              "baseline_nanoseconds": 56822.7085,
+              "candidate_nanoseconds": 57235.6105,
+              "change_percent": 0.7266496281147949
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 3283.50065,
+              "candidate_nanoseconds": 3336.80395,
+              "change_percent": 1.623368035575079
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "checksum": 4000,
+              "baseline_nanoseconds": 37684.7095,
+              "candidate_nanoseconds": 38704.0995,
+              "change_percent": 2.7050493781834772
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "checksum": 2000,
+              "baseline_nanoseconds": 832.823,
+              "candidate_nanoseconds": 837.4525,
+              "change_percent": 0.5558804211699186
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 12349.95675,
+              "candidate_nanoseconds": 12523.67035,
+              "change_percent": 1.4065927801730993
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "checksum": 4000,
+              "baseline_nanoseconds": 47505.2415,
+              "candidate_nanoseconds": 48592.952,
+              "change_percent": 2.289664183688034
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 14070.28145,
+              "candidate_nanoseconds": 14226.5777,
+              "change_percent": 1.1108253275203595
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 6134.2739,
+              "candidate_nanoseconds": 6136.69825,
+              "change_percent": 0.03952138491891688
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 147688.64305,
+              "candidate_nanoseconds": 147153.4466,
+              "change_percent": -0.36238158801339404
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 25808.275600000004,
+              "candidate_nanoseconds": 25538.47955,
+              "change_percent": -1.045385806403909
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "checksum": 0,
+              "baseline_nanoseconds": 29462.34785,
+              "candidate_nanoseconds": 27156.78725,
+              "change_percent": -7.825447624670545
+            }
+          ]
+        }
+      },
+      "interpretation": "Three samples per artifact and fixture, with contended/interrupted samples excluded and preserved. Selected-fiber median changes 52.39 to 52.27 seconds, chord 17.19 to 16.93, radial 29.39 to 30.10, and region 6.51 to 6.42. The radial control is 2.42% slower; individual region lanes are mixed. These are not a statistical or uniformly faster-operation claim. The fixes are retained for their demonstrated exactness value.",
+      "output_checks": "Every test invocation passed exactly one test; all 19 region rows preserved iteration counts and every emitted checksum."
+    },
+    "local_pages": {
+      "status": "passed",
+      "dist": "/tmp/hypercurve-pages-local-ownership.6KQQbz",
+      "build_log": "/tmp/hypercurve-owned-singleton-trunk.log",
+      "trunk_version": "0.21.14",
+      "build_command": "env -u NO_COLOR trunk --skip-version-check build index.html --release --locked --dist /tmp/hypercurve-pages-local-ownership.6KQQbz --public-url /hypercurve/",
+      "script": "/tmp/hypercurve-owned-singleton-pages-startup.mjs",
+      "report": {
+        "passed": true,
+        "dist": "/tmp/hypercurve-pages-local-ownership.6KQQbz",
+        "profile": "/tmp/hypercurve-browser-profile.ZEzuwV",
+        "state": {
+          "ready": true,
+          "title": "hypercurve UI",
+          "pathname": "/hypercurve/",
+          "baseURI": "http://127.0.0.1:45823/hypercurve/",
+          "width": 1100,
+          "height": 617
+        },
+        "requests": [
+          {
+            "pathname": "/hypercurve/",
+            "status": 200,
+            "bytes": 1691
+          },
+          {
+            "pathname": "/hypercurve/hypercurve_ui.js",
+            "status": 200,
+            "bytes": 72209
+          },
+          {
+            "pathname": "/hypercurve/hypercurve_ui_bg.wasm",
+            "status": 200,
+            "bytes": 12430851
+          }
+        ],
+        "exceptions": [],
+        "failures": [],
+        "consoleErrors": [],
+        "screenshot": "/tmp/hypercurve-owned-singleton-pages-startup.png"
+      },
+      "assets": [
+        {
+          "name": "index.html",
+          "bytes": 1691,
+          "sha256": "f6c1d5197fcca75fceb06fced0b76466bedc9a16943afbbe92aa4c56fa139c94"
+        },
+        {
+          "name": "hypercurve_ui.js",
+          "bytes": 72209,
+          "sha256": "941b5ce35852e0398c32572a64d5d6cd1e0044d8fe70907e739bd26868a37e7a"
+        },
+        {
+          "name": "hypercurve_ui_bg.wasm",
+          "bytes": 12430851,
+          "sha256": "4866d9dd9d982a6659a158c290da6dbcc871078da373bb9efb3e5699c5081aee"
+        }
+      ],
+      "screenshot_sha256": "70c7e48325ca9476f30710cc805d6fbed8db6ef2c6f975204b5a854c99db2cb1",
+      "script_sha256": "6ff7fa1414a23b99b96e743dee66d40546b37b77d9f9ee8646bafba468ddb53c",
+      "visual_inspection": "Default polyline/curved-region scene, controls and grid render correctly. Screenshot matches the previously inspected startup image byte-for-byte.",
+      "scope": "Local startup only, not interactive all-tab or hosted-deployment qualification."
+    }
+  },
+  "repository_audit_utc": "2026-09-05 19:55:35 UTC",
+  "repository_audit": {
+    "hyperlattice": {
+      "head": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0 Add retained fuzz and benchmark reporting",
+      "status": "## main...origin/main"
+    },
+    "hyperreal": {
+      "head": "2808bc886db969d487263ea073eb1cf9df562eac Preserve finite rational enclosures and avoid exact binade comparisons",
+      "status": "## main...origin/main"
+    },
+    "hyperlimit": {
+      "head": "0f1a32d54a1c063d134b0476082e49168516102a Test retained sign stages and certified primitive export bounds",
+      "status": "## main...origin/main"
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0 Reuse predicate policy for constraint intersections",
+      "status": "## main...origin/main"
+    },
+    "hypermesh": {
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee Remove lossy GPU zero fallbacks",
+      "status": "## main...origin/main"
+    },
+    "hypersolve": {
+      "head": "d897ff0a5d416daa16c83f1bfe32334077fd07de Use the owned-root identity kernel for local algebraic fields",
+      "status": "## main...origin/main"
+    },
+    "hypercurve": {
+      "head": "9e2796cbf36dde2f56087a717b34d31edbf80f51 Record native sign and single projection API qualification",
+      "status": "## main...origin/main"
+    }
+  },
+  "concurrent_hyperreal_update": {
+    "commit": "2808bc886db969d487263ea073eb1cf9df562eac",
+    "change": "Preserve finite rational enclosures at rounded MAX and avoid exact binade comparisons in the leading-word enclosure path.",
+    "production_file": "src/rational/arithmetic/queries_conversion.rs",
+    "production_sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+    "qualification": "The committed production hash matches the concurrent source already covered by native/downstream qualification. The other two commit files are its tests and benchmark.",
+    "attribution": "Frozen timing artifacts retain d219a35 production dependencies on both sides. No speedup is attributed to the concurrent conversion change."
+  },
+  "handoff_audit": {
+    "utc": "2026-09-05 20:06 UTC",
+    "branches": "All seven repositories remain on main at the recorded heads.",
+    "concurrent_changes": "After qualification and matched measurements completed, independent Hypersolve work is present in benches/certification.rs, src/polynomial.rs, benches/support/quadratic_extraction.rs and tests/quadratic_extraction.rs. It is preserved, not included in this pass, and not covered by this checkpoint's qualification claims.",
+    "source_verification": "The final algebraic_fiber.rs and concurrent Hyperreal conversion production hashes remain unchanged.",
+    "owned_workers": "All test, timing, packaging and browser workers started by this pass have finished. Independent downstream test work remains running."
+  },
+  "evidence_scope": "Temporary paths identify retained local artifacts and logs; exact source commits, hashes, raw matched samples and qualification results are embedded here for durable review."
+}

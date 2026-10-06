@@ -1,0 +1,258 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "curve-region2-query-outcomes",
+  "source_revision": "6369e62f06d9a3bea4af39a91dd8343fbb6bd246",
+  "parent_revision": "b514023bf6a8c531e3855e2cae8bfeada1cc43c1",
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "public_curve_region_query_apis_return_curve_outcome": [
+      "filled_side_is_left",
+      "line_image_role_evidence",
+      "signed_area_role_evidence",
+      "curved_nesting_role_evidence",
+      "loop_roles",
+      "loop_role_counts",
+      "boundary_profiles",
+      "native_contours_fast_path",
+      "classify_point",
+      "signed_depth",
+      "filled_area",
+      "bounds"
+    ],
+    "internal_composition_uses_raw_query_kernels": true,
+    "query_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "strict_symbolic_boundary_query": "Certified outcome containing explicit Classification::Uncertain",
+    "approximate_512_symbolic_boundary_query": "decided Boundary",
+    "approximate_512_terminal_consumption_observed": true,
+    "returned_coordinates_remain_exact_real_values": true,
+    "curve_region_handle_bytes": 8,
+    "persistent_curve_region_storage_added": false,
+    "compatibility_deref_or_implicit_value_shim_added": false
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 251,
+    "exact_curve_region2_fuzz_seconds": 161.61,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_check_all_features_all_targets": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_clippy_no_default_features_lib_deny_warnings": "pass",
+    "cargo_check_fuzz_bins": "pass",
+    "standalone_ui_tests": "37/37 pass in 323.96 seconds",
+    "standalone_ui_clippy_deny_warnings": "pass",
+    "standalone_ui_release_wasm": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_hypercurve_package": "pass",
+    "standalone_ui_fmt": "not claimed; pre-existing rustfmt drift remains in geometry.rs outside this checkpoint's changed lines",
+    "git_diff_check": "pass"
+  },
+  "matched_query_benchmarks": {
+    "command": "seven interleaved parent/candidate executions of the release bezier_region benchmark, reversing execution order on alternate pairs",
+    "parent_revision": "b514023bf6a8c531e3855e2cae8bfeada1cc43c1",
+    "candidate_revision": "6369e62f06d9a3bea4af39a91dd8343fbb6bd246",
+    "retained_classification_us": {
+      "parent_samples": [
+        34.671,
+        34.487,
+        34.464,
+        34.318,
+        34.070,
+        34.115,
+        34.457
+      ],
+      "candidate_samples": [
+        33.896,
+        33.472,
+        33.720,
+        34.067,
+        33.971,
+        33.269,
+        34.993
+      ],
+      "parent_median": 34.457,
+      "candidate_median": 33.896,
+      "change_percent": -1.6281
+    },
+    "native_signed_depth_us": {
+      "parent_samples": [
+        0.846,
+        0.829,
+        0.850,
+        0.849,
+        0.842,
+        0.846,
+        0.843
+      ],
+      "candidate_samples": [
+        0.817,
+        0.815,
+        0.863,
+        0.821,
+        0.826,
+        0.823,
+        0.816
+      ],
+      "parent_median": 0.846,
+      "candidate_median": 0.821,
+      "change_percent": -2.9551
+    },
+    "retained_algebraic_classification_us": {
+      "parent_samples": [
+        26.701,
+        27.144,
+        25.979,
+        26.210,
+        26.104,
+        26.027,
+        25.857
+      ],
+      "candidate_samples": [
+        26.078,
+        26.011,
+        25.516,
+        26.105,
+        25.420,
+        25.696,
+        25.694
+      ],
+      "parent_median": 26.104,
+      "candidate_median": 25.696,
+      "change_percent": -1.5630
+    },
+    "algebraic_line_role_evidence_us": {
+      "parent_samples": [
+        56.436,
+        57.415,
+        56.886,
+        56.211,
+        59.047,
+        55.809,
+        56.070
+      ],
+      "candidate_samples": [
+        55.435,
+        55.150,
+        57.580,
+        56.537,
+        58.414,
+        55.967,
+        57.860
+      ],
+      "parent_median": 56.436,
+      "candidate_median": 56.537,
+      "change_percent": 0.1790
+    },
+    "interpretation": "all four ranges overlap; the policy-observation boundary has no measured query regression, and no public wrapper is used by internal Boolean composition"
+  },
+  "pathological_curve_region2": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=67 target/release/deps/pathological_regions-524727024aa54dcb",
+    "method": "seven independent uncontended candidate processes",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "candidate_all_four_native_booleans_ms": [
+      471.813695,
+      465.112524,
+      465.088656,
+      479.469940,
+      477.154119,
+      470.507755,
+      462.957292
+    ],
+    "candidate_median_ms": 470.507755,
+    "preceding_checkpoint_median_ms": 475.984160,
+    "frozen_baseline_median_ms": 471.450000,
+    "change_from_preceding_checkpoint_percent": -1.1505,
+    "change_from_frozen_baseline_percent": -0.1999,
+    "candidate_build_ms": [
+      71.979145,
+      74.272358,
+      74.007946,
+      70.484218,
+      71.716683,
+      75.778185,
+      76.463298
+    ],
+    "candidate_build_median_ms": 74.007946,
+    "preceding_checkpoint_build_median_ms": 74.537181,
+    "build_change_percent": -0.7100,
+    "candidate_observed_rss_delta_mib_median": 34.6,
+    "interpretation": "deterministic topology is identical and the Boolean phase remains below both the preceding checkpoint and frozen medians"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "rectangle_union": {
+      "hypercurve": 4876.9,
+      "cavalier_contours": 876.9,
+      "i_overlay": 1016.9,
+      "geo": 1210.0,
+      "change_from_frozen_hypercurve_percent": 1.9845
+    },
+    "star64_intersection": {
+      "hypercurve": 35242.0,
+      "cavalier_contours": 27423.7,
+      "i_overlay": 34215.7,
+      "geo": 36085.4,
+      "change_from_frozen_hypercurve_percent": -1.1250
+    },
+    "star256_intersection": {
+      "hypercurve": 422337.5,
+      "cavalier_contours": 488280.8,
+      "i_overlay": 518636.5,
+      "geo": 517166.1,
+      "change_from_frozen_hypercurve_percent": 0.4057
+    },
+    "star1024_intersection": {
+      "hypercurve": 5016317.4,
+      "cavalier_contours": 19576883.0,
+      "i_overlay": 10191705.1,
+      "geo": 10075815.5,
+      "change_from_frozen_hypercurve_percent": -1.4863
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 18528.1,
+      "cavalier_contours": 900.7,
+      "change_from_frozen_hypercurve_percent": -3.9647
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29648884.3,
+      "curvo_heuristic": 8077.2,
+      "change_from_frozen_hypercurve_percent": 0.5558
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 910646.0,
+      "change_from_frozen_hypercurve_percent": -6.9948
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1549.6,
+      "curvo": 57.9,
+      "change_from_frozen_hypercurve_percent": -1.1735
+    },
+    "interpretation": "all exact Hypercurve lanes remain within 4.0 percent of the frozen baseline except the source-chord fallback, which improved 7.0 percent; competitive positioning is unchanged"
+  },
+  "release_pathological_binary": {
+    "preceding_checkpoint_bytes": 5506769,
+    "candidate_bytes": 5508360,
+    "delta_bytes": 1591,
+    "delta_percent": 0.0289,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -22933,
+    "delta_from_frozen_baseline_percent": -0.4146
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root . --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22268,
+    "edges": 38023,
+    "artifact": "/tmp/hypercurve-query-outcome-callgraph/callgraph.json",
+    "public_and_raw_query_nodes_present": true
+  }
+}

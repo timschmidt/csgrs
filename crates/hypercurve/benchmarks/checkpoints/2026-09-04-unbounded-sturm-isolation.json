@@ -1,0 +1,384 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-04",
+  "checkpoint": "unbounded certified Sturm isolation with retained boundary ownership",
+  "baseline_revision": "96a34ee",
+  "implementation_revision": "60321ec",
+  "final_dependency_revisions": {
+    "hyperreal": "3f57867",
+    "hyperlimit": "7bf9261",
+    "hyperlattice": "d783af0",
+    "hypersolve": "2bca88c",
+    "hypertri": "6a2092c"
+  },
+  "retained_change": "The general Sturm search no longer stops after 256 successful dyadic steps. It carries domain/represented-root boundary ownership through subdivision, constructs intervals only for retained singleton candidates, and discards certified-empty children immediately. Root-count differences and midpoint variation ordering are checked instead of saturating an inconsistent count to zero.",
+  "exactness": {
+    "reproduced_failure": "On 96a34ee, the public unit isolator returned Uncertain(Ordering) for the exact rational root 2^-300. The new regression was run and failed before the implementation change.",
+    "certificate": "Every continuing midpoint is a certified non-root whose variations partition its parent's count. Unavailable point or ordering evidence still returns explicit uncertainty. Represented midpoint roots still return for deflation; singletons retain the shared authoritative Sturm sequence.",
+    "boundary_ownership": "Every initial partition boundary is a domain endpoint or a previously represented root. Only these original sides retain their ownership flag after splitting; a certified non-root midpoint is never an original boundary. This replaces repeated scans and exact endpoint comparisons without weakening ownership.",
+    "regression_queries": {
+      "public_unit_interval": 72,
+      "finite_extension_intervals": 36,
+      "inverted_variation_rejections": 2,
+      "coverage": "Both policies; 300- and 600-bit boundary separations; rational dyadic and nondyadic roots; repeated roots; an irrational root; a root close to an already represented root; positive/negative rational and pi scaling; both ends of negative and exterior finite domains.",
+      "names": [
+        "unit_root_isolation_has_no_fixed_dyadic_depth_limit",
+        "finite_interval_isolation_has_no_fixed_dyadic_depth_limit",
+        "carried_sturm_variations_match_partition_root_counts"
+      ]
+    },
+    "trace_accounting": "Discarded empty children are now counted when their variation equality proves emptiness. The boundary benchmark keeps the same 130 bisections and maximum depth 130, but counts 263 intervals instead of 134: the old search discarded many queued empty children without visiting them when its represented-root return restarted isolation. No additional Sturm midpoint evaluations are introduced by this accounting.",
+    "public_api_added": false,
+    "compatibility_shims_added": false
+  },
+  "source_size": {
+    "production_delta_lines": 25,
+    "regression_delta_lines": 113,
+    "benchmark_delta_lines": 29,
+    "combined_rust_delta_lines": 167,
+    "scope": "Formatted physical source in 60321ec. The parameter production prefix grows from 4,288 to 4,313 lines. The extra checked proof handling and explicit retained scheduling are kept for completeness and measured performance; this is not a source-size reduction claim."
+  },
+  "measurement": {
+    "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "profile": "release",
+    "features": "all",
+    "frozen_dependency_revisions": {
+      "hyperreal": "93c44ab",
+      "hyperlimit": "7bf9261",
+      "hyperlattice": "d783af0",
+      "hypersolve": "1a742c6",
+      "hypertri": "6a2092c"
+    },
+    "method": "The existing archived six-repository workspace freezes every dependency. An identical boundary-root benchmark was added to both variants before the baseline executable was built and preserved. Only Hypercurve's production diff was then applied for the candidate. Both compiler-artifact records report rebuilt benchmark executables. Five alternating runs per variant use logical CPU 7.",
+    "benchmark_source_sha256": "58fc4e230631c19955d7e3abeee38104e1fc33a1335575f46cf22f0f5b566b71",
+    "benchmark_source_note": "Only rustfmt line wrapping differs from the checked-in benchmark.",
+    "candidate_production_prefix_sha256": "702fe73f770bebad9232287edcdd6846ee1786be6c3b8a1dce4eb7e762bf5f69",
+    "production_hash_scope": "The first 4,313 lines of bezier_parameter.rs, before its test module, match the final checked-in production source.",
+    "command": "/usr/bin/time -v taskset -c 7 <bezier_algebraic_parameter executable>",
+    "boundary_fixture": "The exact root 1/(3*2^128), isolated 2,000 times per run. Both variants completed this workload before and after the change; its throughput comparison is distinct from the formerly failing greater-than-256-depth regressions.",
+    "semantic_checks": "Each run preserves all degree, isolated-root, ordering, reconstruction, and transformed-image checksums. The boundary fixture additionally asserts its exact represented root before timing.",
+    "caveat": "The machine was not exclusive. A pre-run sample showed CPU 7 about 91 percent idle and sibling CPU 15 about 96 percent idle. The timed processes received 96-97 percent CPU. Medians describe these workloads, not a general speedup guarantee.",
+    "benchmark_medians": [
+      {
+        "label": "bezier_parameter_bernstein_32_to_power",
+        "baseline_ns": 22475,
+        "candidate_ns": 22757,
+        "speedup": 0.98760820846333
+      },
+      {
+        "label": "bezier_algebraic_parameter_sturm",
+        "baseline_ns": 4339,
+        "candidate_ns": 4420,
+        "speedup": 0.9816742081447963
+      },
+      {
+        "label": "bezier_algebraic_parameter_refined_ordering",
+        "baseline_ns": 14194,
+        "candidate_ns": 13957,
+        "speedup": 1.0169807265171598
+      },
+      {
+        "label": "bezier_algebraic_parameter_refined_even_root_ordering",
+        "baseline_ns": 71977,
+        "candidate_ns": 70936,
+        "speedup": 1.0146752001804444
+      },
+      {
+        "label": "bezier_parameter_quintic_unit_isolation",
+        "baseline_ns": 47127,
+        "candidate_ns": 46572,
+        "speedup": 1.0119170316928627
+      },
+      {
+        "label": "bezier_parameter_boundary_root_isolation",
+        "baseline_ns": 65236,
+        "candidate_ns": 55634,
+        "speedup": 1.1725922996728622
+      },
+      {
+        "label": "bezier_algebraic_parameter_exact_rational_reconstruction",
+        "baseline_ns": 36,
+        "candidate_ns": 35,
+        "speedup": 1.0285714285714285
+      },
+      {
+        "label": "bezier_algebraic_point_tangent_image",
+        "baseline_ns": 2702,
+        "candidate_ns": 2627,
+        "speedup": 1.0285496764370003
+      },
+      {
+        "label": "rational_bezier_algebraic_point_tangent_image",
+        "baseline_ns": 62,
+        "candidate_ns": 60,
+        "speedup": 1.0333333333333334
+      }
+    ],
+    "whole_driver_medians": {
+      "baseline_user_seconds": 1.64,
+      "candidate_user_seconds": 1.62,
+      "baseline_peak_rss_kib": 4644,
+      "candidate_peak_rss_kib": 4640,
+      "memory_interpretation": "Peak RSS is effectively unchanged at this measurement resolution; no material memory reduction is claimed."
+    },
+    "samples": [
+      {
+        "variant": "baseline",
+        "run": 1,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22640,
+          "bezier_algebraic_parameter_sturm": 4339,
+          "bezier_algebraic_parameter_refined_ordering": 14305,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 73779,
+          "bezier_parameter_quintic_unit_isolation": 47323,
+          "bezier_parameter_boundary_root_isolation": 64806,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2702,
+          "rational_bezier_algebraic_point_tangent_image": 65
+        },
+        "user_seconds": 1.65,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.72",
+        "peak_rss_kib": 4664,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "run": 1,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 24109,
+          "bezier_algebraic_parameter_sturm": 4420,
+          "bezier_algebraic_parameter_refined_ordering": 14062,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 70936,
+          "bezier_parameter_quintic_unit_isolation": 46295,
+          "bezier_parameter_boundary_root_isolation": 55839,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 35,
+          "bezier_algebraic_point_tangent_image": 2627,
+          "rational_bezier_algebraic_point_tangent_image": 58
+        },
+        "user_seconds": 1.64,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.69",
+        "peak_rss_kib": 4640,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "run": 2,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22164,
+          "bezier_algebraic_parameter_sturm": 4329,
+          "bezier_algebraic_parameter_refined_ordering": 14028,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 71938,
+          "bezier_parameter_quintic_unit_isolation": 46199,
+          "bezier_parameter_boundary_root_isolation": 65109,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 35,
+          "bezier_algebraic_point_tangent_image": 2739,
+          "rational_bezier_algebraic_point_tangent_image": 58
+        },
+        "user_seconds": 1.63,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.68",
+        "peak_rss_kib": 4452,
+        "cpu_percent": 97
+      },
+      {
+        "variant": "candidate",
+        "run": 2,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22699,
+          "bezier_algebraic_parameter_sturm": 4488,
+          "bezier_algebraic_parameter_refined_ordering": 13937,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 72921,
+          "bezier_parameter_quintic_unit_isolation": 46979,
+          "bezier_parameter_boundary_root_isolation": 55960,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 37,
+          "bezier_algebraic_point_tangent_image": 2601,
+          "rational_bezier_algebraic_point_tangent_image": 62
+        },
+        "user_seconds": 1.63,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.69",
+        "peak_rss_kib": 4684,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "run": 3,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22581,
+          "bezier_algebraic_parameter_sturm": 4361,
+          "bezier_algebraic_parameter_refined_ordering": 14059,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 72493,
+          "bezier_parameter_quintic_unit_isolation": 47127,
+          "bezier_parameter_boundary_root_isolation": 65236,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2710,
+          "rational_bezier_algebraic_point_tangent_image": 67
+        },
+        "user_seconds": 1.64,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.70",
+        "peak_rss_kib": 4860,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "run": 3,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22757,
+          "bezier_algebraic_parameter_sturm": 4370,
+          "bezier_algebraic_parameter_refined_ordering": 14098,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 70671,
+          "bezier_parameter_quintic_unit_isolation": 47245,
+          "bezier_parameter_boundary_root_isolation": 55607,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 35,
+          "bezier_algebraic_point_tangent_image": 2712,
+          "rational_bezier_algebraic_point_tangent_image": 60
+        },
+        "user_seconds": 1.61,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.67",
+        "peak_rss_kib": 4768,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "run": 4,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22475,
+          "bezier_algebraic_parameter_sturm": 4337,
+          "bezier_algebraic_parameter_refined_ordering": 14194,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 71977,
+          "bezier_parameter_quintic_unit_isolation": 46506,
+          "bezier_parameter_boundary_root_isolation": 65776,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2663,
+          "rational_bezier_algebraic_point_tangent_image": 62
+        },
+        "user_seconds": 1.64,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.69",
+        "peak_rss_kib": 4368,
+        "cpu_percent": 97
+      },
+      {
+        "variant": "candidate",
+        "run": 4,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22537,
+          "bezier_algebraic_parameter_sturm": 4312,
+          "bezier_algebraic_parameter_refined_ordering": 13957,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 70744,
+          "bezier_parameter_quintic_unit_isolation": 46572,
+          "bezier_parameter_boundary_root_isolation": 55397,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 34,
+          "bezier_algebraic_point_tangent_image": 2589,
+          "rational_bezier_algebraic_point_tangent_image": 58
+        },
+        "user_seconds": 1.6,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.66",
+        "peak_rss_kib": 4592,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "run": 5,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22433,
+          "bezier_algebraic_parameter_sturm": 4370,
+          "bezier_algebraic_parameter_refined_ordering": 14212,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 71923,
+          "bezier_parameter_quintic_unit_isolation": 47522,
+          "bezier_parameter_boundary_root_isolation": 67557,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2684,
+          "rational_bezier_algebraic_point_tangent_image": 60
+        },
+        "user_seconds": 1.63,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.70",
+        "peak_rss_kib": 4644,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "run": 5,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22941,
+          "bezier_algebraic_parameter_sturm": 4480,
+          "bezier_algebraic_parameter_refined_ordering": 13871,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 72288,
+          "bezier_parameter_quintic_unit_isolation": 46386,
+          "bezier_parameter_boundary_root_isolation": 55634,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 34,
+          "bezier_algebraic_point_tangent_image": 2714,
+          "rational_bezier_algebraic_point_tangent_image": 63
+        },
+        "user_seconds": 1.62,
+        "system_seconds": 0,
+        "wall_seconds": "0:01.68",
+        "peak_rss_kib": 4572,
+        "cpu_percent": 96
+      }
+    ],
+    "linked_size": {
+      "workload": "matched bezier_algebraic_parameter benchmark executables, excluding unit-test code",
+      "baseline": {
+        "text_bytes": 3713642,
+        "data_bytes": 252208,
+        "bss_bytes": 4080,
+        "allocated_bytes": 3969930
+      },
+      "candidate": {
+        "text_bytes": 3713598,
+        "data_bytes": 252144,
+        "bss_bytes": 4192,
+        "allocated_bytes": 3969934
+      },
+      "allocated_delta_bytes": 4,
+      "scope": "Identical frozen dependencies, benchmark source, and feature/profile settings. No matched library-archive baseline was preserved."
+    }
+  },
+  "validation": {
+    "release_all_features": {
+      "passed": 1721,
+      "failed": 0,
+      "ignored": 9,
+      "targets": 45,
+      "active_unit_tests": 879
+    },
+    "release_minimal": {
+      "passed": 1692,
+      "failed": 0,
+      "ignored": 4,
+      "targets": 45,
+      "active_unit_tests": 875
+    },
+    "parameter_units_passed": 31,
+    "parameter_integration_tests_passed": 28,
+    "explicit_ignored_units": {
+      "passed": 6,
+      "seconds": 98.35,
+      "manual_drivers_complete": true
+    },
+    "explicit_ignored_strokes": {
+      "passed": 3,
+      "seconds": 63.66
+    },
+    "other_gates_passed": [
+      "cargo fmt --all -- --check",
+      "cargo clippy --locked --all-targets --all-features -- -D warnings",
+      "RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features",
+      "cargo check --locked --manifest-path fuzz/Cargo.toml --bins",
+      "cargo bench --locked --all-features --no-run",
+      "Hypercurve UI: cargo test --locked --no-fail-fast (37 passed)",
+      "Hypercurve UI: cargo clippy --locked --all-targets -- -D warnings",
+      "Hypercurve UI: env -u NO_COLOR TRUNK_COLOR=never trunk build --release --locked",
+      "Hypermesh UI: env -u NO_COLOR TRUNK_COLOR=never trunk build --release --locked"
+    ],
+    "downstream_scope": "Only Hypercurve source changed in this checkpoint. Hypermesh's consuming demo was rebuilt. The mesh core and lower-stack sources are unchanged from the preceding retained-sign-refinement qualification; their full matrices were not rerun here."
+  },
+  "release_scope": "Local source qualification only. ExactCorelib mining and recorded uplift slices remain closed. No publication, push, dependency downgrade, compatibility layer, or old-API alias was introduced; registry coordination was not rechecked."
+}

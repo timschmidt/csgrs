@@ -1,0 +1,107 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-02",
+  "checkpoint": "truthful exact-Real algebraic image and parameter bridge",
+  "implementation_revision": "c652d51a8a830f9f0f00d4593a7713d53901f9fb (dirty scoped audit worktree)",
+  "dependency_revisions": {
+    "hyperreal": "7f1fa042f11a0ca3b5a74e73b743b8b6386087d5",
+    "hyperlattice": "ddbfa911179892f0f262edeb85e02909e0c7047c3",
+    "hyperlimit": "751e1b2cdd353a704414624e67ff459dc1a73cca4",
+    "hypersolve": "e308f146c27236401ac122ac969ee98c36b3aaa75",
+    "hypertri": "b14ca3d054173f9bc7d69f7a4e8356192b21f311"
+  },
+  "source_audit": {
+    "complete_files": {
+      "src/bezier_algebraic_image.rs": 2577,
+      "src/bezier_parameter.rs": 5673,
+      "tests/hypercurve_bezier_algebraic_image.rs": 399,
+      "benches/bezier_algebraic_parameter.rs": 204
+    },
+    "complete_lines": 8853,
+    "direct_consumers_checked": [
+      "src/bezier_tangent_order.rs exact arithmetic result and sign handoff",
+      "src/bezier_arrangement.rs exact tangent negation and endpoint equality",
+      "src/bezier_offset.rs represented-root kind construction and exact parameter relation",
+      "src/rational_bezier_general.rs represented parameter imports",
+      "all Hypercurve AlgebraicRootArithmeticStatus matches",
+      "all Hypercurve AlgebraicRootKind construction and inspection sites"
+    ]
+  },
+  "retained_changes": [
+    "ComputedExactRealWitness is a first-class successful arithmetic result in the strict-first adapter and every direct Hypercurve consumer",
+    "general exact Real points retain exact_root but use IsolatingInterval kind unless the Real stores an exact rational payload",
+    "duplicate tangent and arrangement exact-point constructors delegate to one truthful bridge constructor",
+    "an already-valid singleton representation with structurally identical lower and upper endpoints imports directly as BezierParameter2::Exact even when Hypersolve intentionally omits exact_root",
+    "the then-present exact_rational_witness and represented_rational_root compatibility names were identified as ambiguous and are deleted by the following exact-point payload reconciliation checkpoint",
+    "forged cached-valid evidence that does not replay under STRICT remains InvalidEvidence and cannot consume APPROXIMATE_512"
+  ],
+  "mathematical_authority": {
+    "exact_point_kind": "ExactRationalWitness is used only when Real::exact_rational_ref is present; a non-rational exact scalar remains an IsolatingInterval representation even when an exact point is stored.",
+    "collapsed_import": "A cached-valid unit singleton is collapsed only when lower == upper structurally. Merely policy-equal or approximately equal endpoints are not promoted.",
+    "arithmetic_status": "ComputedExactRationalWitness, ComputedExactRealWitness, and ComputedRepresentation are the only result-bearing success statuses. Consumers still reject a success report that omits both result carriers.",
+    "policy": "STRICT success returns before any approximate retry. Invalid cached evidence is replayed and rejected under STRICT even for an APPROXIMATE_512 caller.",
+    "coordinate_order": "The existing fixed [x,y] rational-image batch, common denominator, coefficient order, and retained curve-family cache identity are unchanged.",
+    "persistent_layout_delta_bytes": 0,
+    "approximate_geometry_added": false
+  },
+  "regression_evidence": {
+    "pre_fix": "Four new library regressions failed independently for wrong kind, rejected exact-Real tangent scalar, rejected exact-Real arrangement negation, and retained collapsed parameter wrapper. The public rational-point image also failed its new truthful parameter-kind assertion.",
+    "post_fix": {
+      "default_exact_real_filter": "7 passed, 0 failed",
+      "all_features_exact_real_filter": "7 passed, 0 failed",
+      "no_default_exact_real_filter": "7 passed, 0 failed",
+      "default_image_integration": "9 passed, 0 failed",
+      "all_features_image_integration": "9 passed, 0 failed",
+      "no_default_image_integration": "9 passed, 0 failed",
+      "parameter_module": "26 passed, 0 failed",
+      "policy_adapter": "2 passed, 0 failed",
+      "direct_offset_exact_relation": "passed",
+      "direct_offset_nonrational_kind": "passed"
+    }
+  },
+  "benchmark_method": {
+    "driver": "benches/bezier_algebraic_parameter.rs, release profile",
+    "baseline": "one complete pre-change process after release compilation",
+    "post": "five direct executions of the freshly built release benchmark; medians below",
+    "caveat": "The retained bridge changes do not alter the benchmark's work counts. The pre-change sample is not a multi-process statistical control, so small timing deltas are reported as noise rather than attributed speedups or regressions."
+  },
+  "wall_performance": {
+    "baseline_per_iteration": {
+      "bernstein_32_to_power_us": 19.152,
+      "sturm_us": 2.337,
+      "refined_ordering_us": 12.541,
+      "quintic_unit_isolation_us": 17.099,
+      "exact_rational_reconstruction_ns": 33,
+      "polynomial_point_tangent_image_us": 2.304,
+      "cached_rational_point_tangent_image_ns": 56
+    },
+    "post_five_run_median_per_iteration": {
+      "bernstein_32_to_power_us": 18.985,
+      "sturm_us": 2.336,
+      "refined_ordering_us": 12.510,
+      "quintic_unit_isolation_us": 17.616,
+      "exact_rational_reconstruction_ns": 35,
+      "polynomial_point_tangent_image_us": 2.304,
+      "cached_rational_point_tangent_image_ns": 59
+    },
+    "work_counts_unchanged": true,
+    "interpretation": "The existing parameter/image lanes remain timing-neutral at this measurement resolution. Exact-Real arithmetic now avoids a redundant APPROXIMATE_512 retry after STRICT success, but this private status path is not isolated by the public benchmark."
+  },
+  "release_artifacts": {
+    "default_rlib_bytes": 43082884,
+    "all_features_rlib_bytes": 44967768,
+    "comparative_delta_claimed": false,
+    "reason": "The reopened Hypercurve worktree already contains a concurrent 9500-line offset change, so no byte-matched pre-bridge artifact exists. Absolute artifacts are recorded without attributing their size to this slice."
+  },
+  "validation": {
+    "release_default": "passed with pre-existing concurrent offset warnings",
+    "release_all_features": "passed with pre-existing concurrent offset warnings",
+    "rustdoc_all_features_no_deps_deny_warnings": "passed",
+    "fmt": "passed",
+    "diff_check": "passed",
+    "strict_clippy": "blocked by 15 diagnostics in pre-existing concurrent src/bezier_offset.rs and src/bezier_region.rs changes; no diagnostic names a bridge-owned clean file",
+    "scoped_clippy": "all targets and all features pass with exactly the unrelated concurrent lint classes exempted",
+    "full_library": "An 851-test default run passed every bridge-owned parameter/image/tangent/arrangement test, exposed one stale policy fixture that was corrected, and exposed multiple failures in concurrent offset/region/boolean work. It was interrupted after several additional silent minutes and is not claimed as a complete green gate.",
+    "concurrent_work_caveat": "The offset, region, curve-region-boolean, classify, and policy diffs predate this slice. Their warnings and broad topology failures are recorded but not folded into the bridge result."
+  }
+}

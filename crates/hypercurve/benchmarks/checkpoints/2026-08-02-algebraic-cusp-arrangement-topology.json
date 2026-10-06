@@ -1,0 +1,230 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "general algebraic cusp admission to the authoritative CurveRegion2 arrangement",
+  "source_revision": "9b0c1c105f84d7572ab484676f4a51f1b02a3f07",
+  "semantic_revisions": [
+    "7854387497bc41dc814e092a4290636826e1c6fa",
+    "e60b302053822b93381fbb8e7cb5665260e69bb5",
+    "afa1458ab13103e478ff0f16f0fdca6d69bacb25",
+    "9b0c1c105f84d7572ab484676f4a51f1b02a3f07"
+  ],
+  "comparison_revision": "7854387497bc41dc814e092a4290636826e1c6fa",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+  },
+  "hypersolve_revisions": [
+    "f4e7b33689ada6af5f24c3d575034f7627d453d7",
+    "514160ac02c2aaf98d1ff0a7975c1901d7428a11"
+  ],
+  "scope": {
+    "included": [
+      "general algebraic cusp subfragments in the authoritative CurveRegion2 pair, split, retained half-edge, traversal, face-selection, and regularization graph",
+      "range-aware algebraic-cusp/analytic-parallel contact replay for direct and reversed sources",
+      "exact local-field deflation of the known correlated diagonal root and its full multiplicity",
+      "exact bivariate Bernstein fiber sign exclusion on retained parameter ranges",
+      "bounded quotient-ring fiber projection as the supported complete fallback",
+      "topology-backed simple-loop proof after completed split construction",
+      "STRICT and APPROXIMATE_512 execution over the same exact carriers and proof graph",
+      "feature-stable scalar sign/order policy through Hypersolve",
+      "matched historical instruction, allocation, release-size, competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "selected positive-dimensional analytic radical overlap replay beyond the exact rational fast path",
+      "partial cusp/cusp overlap admission to the arrangement",
+      "distinct-carrier algebraic join construction",
+      "finite projection or export of general algebraic cusp carriers",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "carrier": "A retained cusp semicircle is a one-word oriented subfragment of one clone-shared exact cusp frame. Its point, tangent, reversal, incidence, bounds, winding, and parameter cuts remain canonical-Real expressions tied to the selected source isolator.",
+    "diagonal_deflation": "For a source-related cusp/parallel pair, the authored source parameter is substituted into the bivariate system over its local quotient field. The exact factor y-alpha is divided until the residual is nonzero, preserving the complete known contact multiplicity rather than treating a correlated root as two independent algebraic values.",
+    "root_free_join": "After diagonal deflation, an exact tensor-Bernstein restriction over the retained parameter box may exclude every residual root only when all coefficients have one strict certified sign. Subdivision preserves this certificate; an endpoint sign reversal proves a root and cannot be accepted as a negative result.",
+    "projection_fallback": "When the local sign certificate does not decide the supported case, the fiber is projected through the quotient-ring multiplication determinant. Defining degree is capped at eight to bound matrix and coefficient growth; a declined cap is explicit uncertainty, never a negative intersection.",
+    "endpoint_contact": "A structurally shared source endpoint is authoritative construction evidence. It is not replayed as an independent-root radical equality; the tangent cross is retained as exact zero contact evidence.",
+    "topology": "Simple-loop acceptance inspects the completed split topology and certified successor graph. It does not infer simplicity from a parallel-only family shortcut.",
+    "policy": "STRICT accepts only exact or certified decisions. APPROXIMATE_512 traverses the same exact graph and may terminate only at Hyperlimit's 512-bit equality boundary; returned geometry remains exact and consumption is reported. Default and minimal builds use the same Hypersolve policy surface."
+  },
+  "capability": {
+    "comparison_revision": "General algebraic cusp carriers are retained as exact split fragments, but a complete CurveRegion2 loop containing them cannot pass pair/split/traversal regularization.",
+    "source_revision": "Direct cusp/parallel joins, their reversed-source equivalents, and one complementary two-cusp full-circle loop regularize through CurveRegion2 under both policies with exact retained topology.",
+    "no_primitive_element": "Topology-shared contacts use correlated local-field or structural endpoint evidence. No primitive-element tower is constructed for the admitted loop.",
+    "bounded_failure": "High-degree global resultants and unbounded local-field Sturm work were rejected after measuring an approximately 1.1 GiB allocation cliff and nontermination beyond one minute on the degree-12 workload. Declined bounded paths remain explicit rather than weakening exactness."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release executables pinned to CPU 11; seven perf-stat process repetitions; deterministic instruction and branch counts are authoritative because task clock and cycles varied with host frequency",
+    "new_capability": {
+      "workload": "one process constructs direct normal/reversed cusp-to-parallel joins and regularizes a complementary general-algebraic-cusp full circle under STRICT and APPROXIMATE_512",
+      "command": "taskset -c 11 perf stat -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 bezier_offset::conversion_tests::simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_field --exact",
+      "task_clock_ms": 87.75,
+      "cycles": 349827079,
+      "instructions": 823460541,
+      "branches": 168609024,
+      "branch_misses": 1636435,
+      "elapsed_seconds": 0.087986723,
+      "historical_exact_peer": false,
+      "interpretation": "This is the first complete exact capability baseline; the comparison revision blocks before producing equivalent topology."
+    },
+    "matched_existing_guard": {
+      "workload": "the unchanged algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly release unit test",
+      "current_instructions": 28734818,
+      "comparison_instructions": 28719271,
+      "instruction_change_percent": 0.054134,
+      "current_branches": 5411971,
+      "comparison_branches": 5410714,
+      "branch_change_percent": 0.023232,
+      "interpretation": "The small deterministic increase includes one additional registered unit test in the current harness; existing exact cusp/parallel work remains effectively neutral."
+    },
+    "fixed_work_historical_controls": {
+      "line_arc_capsule_inward": {
+        "iterations_per_process": 10000,
+        "current_instructions": 1984427316,
+        "comparison_instructions": 1984555406,
+        "instruction_change_percent": -0.006454,
+        "current_branches": 402453420,
+        "comparison_branches": 402394063,
+        "branch_change_percent": 0.014751
+      },
+      "certified_open_cubic_offset": {
+        "iterations_per_process": 10,
+        "current_instructions": 3447294694,
+        "comparison_instructions": 3447292753,
+        "instruction_change_percent": 0.000056,
+        "current_branches": 649584862,
+        "comparison_branches": 649583887,
+        "branch_change_percent": 0.000150
+      },
+      "interpretation": "Both unrelated production controls are instruction-neutral. Wall time and cycles are intentionally not used for the regression claim because matched processes observed large frequency and scheduler drift."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; eleven samples targeted at 100 ms; fixture construction excluded",
+      "open_cubic": {
+        "hypercurve_certified_median_ns": 30988535.5,
+        "hypercurve_chord_fallback_median_ns": 1122342.2,
+        "curvo_heuristic_median_ns": 9119.3,
+        "certified_to_chord_ratio": 27.6106,
+        "certified_to_curvo_ratio": 3398.13
+      },
+      "line_arc_capsule_inward": {
+        "hypercurve_exact_median_ns": 18626.9,
+        "cavalier_contours_median_ns": 1000.9,
+        "exact_to_cavalier_ratio": 18.6102
+      },
+      "direct_guarantee_equivalent": false,
+      "interpretation": "Curvo and Cavalier operate on finite binary64 geometry and do not retain canonical-Real algebraic carriers, exact region topology, or policy certainty. They are throughput targets rather than correctness peers."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces",
+    "new_capability": {
+      "profile": "/tmp/heaptrack.hypercurve-cusp-9b0c1c1.2.gz.zst",
+      "allocation_calls": 1464283,
+      "temporary_allocations": 45979,
+      "peak_heap_mib": 1.65,
+      "recorder_peak_rss_mib": 16.26,
+      "instrumented_runtime_seconds": 0.68,
+      "interpretation": "Exact tensor-Bernstein restriction and bigint/rational arithmetic dominate the new capability's allocation count; this is explicit performance debt for the next hardening tranche."
+    },
+    "matched_existing_guard": {
+      "current_profile": "/tmp/heaptrack.hypercurve-guard-current-9b0c1c1.2.gz.zst",
+      "comparison_profile": "/tmp/heaptrack.hypercurve-guard-parent-7854387-hs514160a.2.gz.zst",
+      "current_allocation_calls": 39179,
+      "comparison_allocation_calls": 39167,
+      "allocation_change_percent": 0.030638,
+      "current_temporary_allocations": 2777,
+      "comparison_temporary_allocations": 2777,
+      "current_peak_heap_kib": 316.74,
+      "comparison_peak_heap_kib": 315.63,
+      "peak_heap_change_percent": 0.351678,
+      "interpretation": "The unchanged exact guard is allocation-neutral; the twelve-call difference is consistent with the extra current test registration."
+    }
+  },
+  "release_size": {
+    "method": "matched curve_region_boolean_batch release executables at source and comparison revisions against identical live dependency contents",
+    "default_features": {
+      "current_file_bytes": 7955160,
+      "comparison_file_bytes": 7908712,
+      "file_change_bytes": 46448,
+      "file_change_percent": 0.587302,
+      "current_text_bytes": 6054109,
+      "comparison_text_bytes": 6014889,
+      "text_change_bytes": 39220,
+      "text_change_percent": 0.652049,
+      "current_data_bytes": 267704,
+      "comparison_data_bytes": 267144,
+      "current_bss_bytes": 4152,
+      "comparison_bss_bytes": 2968
+    },
+    "no_default_features": {
+      "current_file_bytes": 7769360,
+      "comparison_file_bytes": 7746216,
+      "file_change_bytes": 23144,
+      "file_change_percent": 0.298778,
+      "current_text_bytes": 5900553,
+      "comparison_text_bytes": 5890485,
+      "text_change_bytes": 10068,
+      "text_change_percent": 0.170920,
+      "current_data_bytes": 266784,
+      "comparison_data_bytes": 265984,
+      "current_bss_bytes": 2976,
+      "comparison_bss_bytes": 1552
+    },
+    "interpretation": "The exact capability adds modest but measurable linked text. No compatibility shim or second public engine is introduced; cold outlining and deletion of displaced machinery remain required size work."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-cusp-arrangement-9b0c1c1 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 11,
+    "nodes": 32611,
+    "edges": 60445,
+    "artifact": "/tmp/hypercurve-callgraph-cusp-arrangement-9b0c1c1/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::pair_result -> CurveRegionBooleanContext::parallel_intersections_in_range",
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections_with_range -> deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter",
+      "BezierAlgebraicCuspSemicircle2::parallel_intersections_with_range -> bivariate_fiber_strict_sign_on_parameter_range",
+      "CurveRegionBooleanContext::build_regularized_region -> CurveRegionBooleanContext::build_split_topology",
+      "CurveRegionBooleanContext::build_regularized_region -> CurveRegion2::from_certified_retained_arrangement_traversal",
+      "simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_field -> CurveRegion2::try_new_with_loop_topology -> regularized_region"
+    ]
+  },
+  "policy_feature_matrix": {
+    "latent_comparison_failure": "At the comparison revision, both default-feature policy tests pass, but the no-default-feature variants return Uncertain(RealSign) before reaching the expected ordering policy boundary.",
+    "cause": "The minimal build bypassed Hyperlimit and used an independent fixed -512 Real refinement fallback for scalar sign/order decisions.",
+    "fix": "Hypersolve reexports the authoritative scalar predicate outcome, sign, certainty, and policy functions; Hypercurve consumes that surface unconditionally and retains direct Hyperlimit only for optional geometric predicates.",
+    "strict": "The nested-radical comparison remains explicitly uncertain without consuming a terminal.",
+    "approximate_512": "The same comparison terminates as equal at the 512-bit boundary and reports Approximate512Consumed.",
+    "geometry": "No approximate coordinate or replacement curve is published."
+  },
+  "verification": {
+    "hypersolve_all_features_library": "passed: 212 tests",
+    "hypersolve_clippy_all_features": "passed with -D warnings",
+    "hypercurve_all_features_library": "passed: 377 tests",
+    "hypercurve_no_default_features_library": "passed: 319 tests",
+    "hypercurve_all_features_integration_compile_matrix": "passed every test target",
+    "hypercurve_no_default_features_integration_compile_matrix": "passed every test target",
+    "hypercurve_clippy_all_features": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features": "passed with -D warnings",
+    "strict_and_approximate": "passed direct/reversed cusp joins, complementary cusp-loop regularization, and feature-stable terminal policy regressions",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "replay selected positive-dimensional analytic radical overlaps before accepting or rejecting coincident support",
+    "admit partial and coincident cusp/cusp overlaps to the arrangement rather than only complete complementary simple loops",
+    "construct exact distinct-carrier algebraic joins in the sole raw-offset graph",
+    "reduce tensor-Bernstein and bigint allocation churn in general cusp pair replay",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection and export for exact analytic and algebraic offsets",
+    "implement radius-driven fillet and corner-option chamfer solving through Hypersolve",
+    "delete displaced historical Boolean, offset, and editing machinery after differential coverage closes",
+    "outline cold solver paths and repay the measured linked-text debt"
+  ]
+}

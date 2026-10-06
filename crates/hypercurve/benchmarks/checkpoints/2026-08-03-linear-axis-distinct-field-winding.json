@@ -1,0 +1,242 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "exact linear-axis distinct-field winding identities",
+  "source_revision": "664cb231700a7b2199fcee99f34d6d16b8eab1b8",
+  "semantic_revisions": [
+    "664cb23"
+  ],
+  "comparison_revision": "8dd786e6dd729ba5f6b7ab33056830a4bdbbd948",
+  "comparison_evidence_revision": "b8fc797",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "3ba5eeb617b55b7c8cbaa3cbf25d870b3299041c",
+    "hypertri": "d6014be5cc3ee4961929430d40b5cba83efc4813",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "exact trivariate predicates that are linear in at least one selected algebraic parameter and arbitrary in the other two",
+      "allocation-bounded exact homogenized resultants computed by bivariate Horner evaluation",
+      "selected-root validation by strict opposite endpoint signs on the one-root isolator",
+      "foreign-conjugate rejection when a defining polynomial has another root satisfying the resultant",
+      "all three possible sole-linear-axis orderings",
+      "existing exact bivariate authorities with a cold local common-fiber fallback only for resultant replay",
+      "identical STRICT and APPROXIMATE_512 proof graphs for supportable exact identities",
+      "an explicit nonlinear-in-all-retained-fields policy control",
+      "matched hot-path, allocation, linked-size, competitive, historical, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general reduction of a trivariate predicate modulo all selected-root defining polynomials",
+      "nonlinear-in-every-axis correlated identities that remain nonlinear after field reduction",
+      "general primitive-element or compositum construction across three selected algebraic fields",
+      "dense resultant tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images whose point still contains the analytic radical",
+      "general noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "linear_axis_decomposition": "For each candidate axis, Hypercurve exactly decomposes the restricted tensor as C(u,v)+x*L(u,v). No coefficient is approximated or projected out.",
+    "resultant": "For selected x with defining polynomial f of degree d, Hypercurve constructs L(u,v)^d*f(-C(u,v)/L(u,v)) by allocation-bounded bivariate Horner evaluation. Vanishing at the other two selected parameters is a necessary exact algebraic relation, never by itself a selected-root identity.",
+    "selected_root_replay": "After exact bivariate proof that the resultant vanishes, Hypercurve evaluates C+x*L at both exact rational endpoints of x's one-root isolator. Strictly opposite signs prove that the unique linear root is the selected root; equal, indeterminate, and same-sign endpoints are rejected. This distinguishes the selected root from foreign conjugates of f.",
+    "axis_schedule": "Candidate linear axes are tried in descending defining-polynomial degree so the likely dependent/compositum parameter is eliminated first. The authority runs only after the existing eight-step Bernstein schedule and affine-relation proof fail.",
+    "bivariate_authority": "Ordinary bivariate paths keep their prior schedule. The existing common-fiber root counter is invoked only inside the cold exact-first replay used by this trivariate resultant authority, preventing the unrelated cusp regressions observed from a global fallback.",
+    "resource_bound": "Checked dimension arithmetic and the existing 16384-control ceiling bound intermediate resultants before allocation.",
+    "policy": "STRICT and APPROXIMATE_512 use the same exact resultant and selected-root authorities. Supportable linear-axis zeros are Certified under both policies without consuming the approximate terminal. A still-unsupported nonlinear-in-all-axes zero remains Predicate uncertainty in STRICT; only APPROXIMATE_512 may resolve it as On after recording terminal consumption.",
+    "failure": "No floating tolerance, guessed conjugate correspondence, approximate coordinate projection, compatibility shim, or second Boolean engine is introduced. Unsupported algebraic structure and resource bounds remain explicit."
+  },
+  "capability": {
+    "comparison_revision": "The distinct-field winding engine exactly handled structural and rational-affine relations. The non-affine chord fixture reached explicit STRICT uncertainty or the APPROXIMATE_512 terminal.",
+    "source_revision": "Any retained trivariate predicate linear in one algebraic parameter can now be reduced to an exact bivariate resultant and certified against that parameter's selected one-root isolator.",
+    "non_affine_fixture": "For alpha=sqrt(1/2), beta=sqrt(1/3), and gamma=alpha*beta/(alpha+beta), with gamma satisfying x^4-10*x^2+1, the chord identity is now Certified On under STRICT and APPROXIMATE_512 without terminal consumption.",
+    "axis_coverage": "Exact differential fixtures place the sole linear dependence on each of the first, second, and third tensor axes.",
+    "foreign_conjugate_control": "A product defining polynomial containing both the selected root and a foreign root that satisfies the resultant is rejected when the selected one-root isolator does not contain the linear solution.",
+    "nonlinear_control": "A zero predicate made nonlinear in all three retained fields remains explicitly uncertain in STRICT and consumes the terminal only in APPROXIMATE_512.",
+    "remaining_exactness_boundary": "Reduce tensors modulo each selected defining polynomial, then handle identities that remain genuinely nonlinear in every field with a bounded compositum or equivalent exact authority.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "default-feature release unit-test or comparative executables pinned to CPU 11; seven perf-stat repetitions for focused policy fixtures and three for fixed-work historical controls; retired instructions and branches are primary because elapsed time varies with host load",
+    "linear_axis_non_affine_zero": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 1.61,
+      "cycles": 2307309,
+      "instructions": 3511071,
+      "branches": 707519,
+      "branch_misses": 24948,
+      "comparison_terminal_instructions": 161607390,
+      "instruction_change_percent": -97.827407,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "translated_affine_guard": {
+      "comparison_instructions": 3261698,
+      "current_instructions": 3262832,
+      "instruction_change_percent": 0.034767,
+      "current_branches": 660732,
+      "interpretation": "The earlier affine exact path remains neutral."
+    },
+    "scaled_affine_guard": {
+      "comparison_instructions": 3111077,
+      "current_instructions": 3111808,
+      "instruction_change_percent": 0.023497,
+      "current_branches": 627964,
+      "interpretation": "The earlier scaled-affine exact path remains neutral."
+    },
+    "nonlinear_all_axes_policy_terminal": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 14.63,
+      "instructions": 177222887,
+      "branches": 31537716,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "On with Approximate512Consumed",
+      "interpretation": "This explicit unsupported boundary is now the largest focused exactness and allocation debt."
+    },
+    "matched_distinct_endpoint_classification_guard": {
+      "comparison_instructions": 30966508,
+      "current_instructions": 30968641,
+      "instruction_change_percent": 0.006888,
+      "current_branches": 6243370
+    },
+    "matched_same_field_classification_guard": {
+      "comparison_instructions": 11293581,
+      "current_instructions": 11294600,
+      "instruction_change_percent": 0.009023,
+      "current_branches": 2206660
+    },
+    "matched_analytic_contact_guard": {
+      "comparison_instructions": 27857844,
+      "current_instructions": 27859527,
+      "instruction_change_percent": 0.006041,
+      "current_branches": 5237301
+    },
+    "fixed_work_historical_controls": {
+      "method": "current release comparative executable pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1984183824,
+        "current_instructions": 1985560870,
+        "instruction_change_percent": 0.069401,
+        "current_branches": 402601341
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447267610,
+        "current_instructions": 3447692995,
+        "instruction_change_percent": 0.012340,
+        "current_branches": 649670125
+      },
+      "interpretation": "Both authoritative historical offset lanes remain neutral; neither executes the cold winding resultant."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18627.6,
+        "cavalier_contours": 925.9,
+        "hypercurve_to_cavalier_ratio": 20.118371
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29943161.2,
+        "hypercurve_chord_fallback": 970187.3,
+        "curvo_heuristic": 8513.8,
+        "certified_to_curvo_ratio": 3517.014870,
+        "chord_fallback_to_curvo_ratio": 113.954674
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets, not correctness peers: their measured lanes do not retain algebraic fields or expose equivalent STRICT/APPROXIMATE_512 topology guarantees. The certified cubic lane remains the dominant performance debt."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct default-feature release-unit-test traces; heaptrack_print summaries are authoritative",
+    "linear_axis_non_affine_zero": {
+      "allocation_calls": 4676,
+      "temporary_allocations": 302,
+      "peak_heap_kib": 146.19,
+      "recorder_peak_rss_mib": 11.87,
+      "comparison_terminal_allocation_calls": 338437,
+      "allocation_change_percent": -98.618354
+    },
+    "nonlinear_all_axes_policy_terminal": {
+      "allocation_calls": 366480,
+      "temporary_allocations": 67872,
+      "peak_heap_kib": 305.34,
+      "recorder_peak_rss_mib": 12.35,
+      "interpretation": "Repeated exact refinement to 512 bits remains bounded in live memory but allocation-heavy."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at 8dd786e and 664cb23 with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8297096,
+      "current_file_bytes": 8321016,
+      "file_change_bytes": 23920,
+      "file_change_percent": 0.288294,
+      "comparison_size_text_bytes": 6326785,
+      "current_size_text_bytes": 6341921,
+      "size_text_change_bytes": 15136,
+      "size_text_change_percent": 0.239237,
+      "comparison_actual_text_section_bytes": 4783671,
+      "current_actual_text_section_bytes": 4796903,
+      "actual_text_change_bytes": 13232,
+      "actual_text_change_percent": 0.276608
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7989560,
+      "current_file_bytes": 7989528,
+      "file_change_bytes": -32,
+      "file_change_percent": -0.000401,
+      "comparison_size_text_bytes": 6080389,
+      "current_size_text_bytes": 6080389,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4576151,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "Predicate-enabled linked .text grows 13.2 KiB for the single cold resultant authority and its exact tests. The feature-disabled production code is unchanged; the 32-byte file difference is non-allocated metadata."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-linear-axis-resultants --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-linear-axis-resultants/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23766,
+      "current_nodes": 23808,
+      "node_change_percent": 0.176723,
+      "comparison_edges": 44673,
+      "current_edges": 44789,
+      "edge_change_percent": 0.259665
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_linear_axis_resultant_sign -> bivariate_linear_root_resultant",
+      "trivariate_linear_axis_resultant_sign -> signed_bivariate_at_parameter_pair_exact_first -> bivariate_parameter_pair_is_exact_common_root",
+      "bivariate_parameter_pair_is_exact_common_root -> count_bivariate_common_fiber_roots_at_algebraic_parameter",
+      "trivariate_linear_axis_resultant_sign -> parameter_bounds -> strict selected-root endpoint sign replay"
+    ]
+  },
+  "verification": {
+    "hypersolve_revision": "3ba5eeb; earlier checkpoint passed 213 all-feature library tests and warning-denied clippy",
+    "hypercurve_all_features_library": "passed: 394 tests",
+    "hypercurve_default_features_library": "passed: 390 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_default_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_no_default_features_curve_region_boolean_integration": "passed: 12 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_default_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed exact non-affine zero under both policies, all three sole-linear-axis orders, foreign-conjugate rejection, retained affine and nonzero guards, nonlinear-all-axes STRICT uncertainty, and APPROXIMATE_512 terminal consumption",
+    "release_builds": "passed default-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

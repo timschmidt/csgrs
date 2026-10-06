@@ -1,0 +1,159 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact algebraic-cusp semicircle pair intersections",
+  "source_revision": "86c81f4602c5cfbaa2cc96ad81fd5c06f57a6131",
+  "comparison_revision": "eb3eaeb676639f4792f902f9c5cf0c8bf5cddf11",
+  "previous_checkpoint": "2026-08-02-algebraic-cusp-analytic-parallel-intersections.json",
+  "scope": {
+    "included": [
+      "direct circle-circle support classification over two independent selected algebraic cusp roots",
+      "exact replay of both radical support branches against both selected semicircles",
+      "Start/End/Interior location and oriented tangent-cross classification",
+      "one pair-shared contact-to-parameter map returned with successful intersections",
+      "STRICT and APPROXIMATE_512 policy coverage",
+      "matched unchanged-path, allocation, release-size, historical/competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "selected coincident-support half-circle overlap ranges",
+      "algebraic cusp subfragments and arrangement admission",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "centers": "For centers C1 and C2 with retained denominators D1 and D2, Delta=(D1 X2-D2 X1) and s=Delta dot Delta represent (D1 D2)^2 |C2-C1|^2 without evaluating either algebraic center.",
+    "support": "With C=D1 D2, L=s+(r1^2-r2^2)C^2 and K=4 s r1^2 C^2-L^2, K<0 is disjoint support, K=0 is one tangent support point, and K>0 gives exactly the two branches [L Delta +/- sqrt(K) perp(Delta)]/(2 s C).",
+    "independent_roots": "The second cusp polynomial is retained as bivariate incidence evidence. Every zero or sign at the selected root pair is proved by interval refinement or a common-fiber count at the first selected root and second selected isolator; conjugate cusp roots cannot supply a false equality.",
+    "half_selection": "Each oriented half-plane and diameter predicate is A+B sqrt(K). Same-sign terms decide immediately; opposing terms use the exact reduced sign of A^2-B^2 K.",
+    "tangent": "For transverse support branches, sign(cross(T1,T2)) is branch*turn1*turn2. A zero discriminant is exactly tangent.",
+    "parameter_map": "The positive common denominator scales dot(Ri,X-Ci) and ri^2 together. Comparing that diameter coordinate with (1-2u)/((1-u)^2+u^2) orders and bisects both semicircle parameters without a primitive element or third algebraic tower.",
+    "degeneracy": "Coincident centers with unequal squared radii are disjoint. Equal squared radii produce explicit CoincidentSupportingCircle evidence for the subsequent selected-half overlap phase.",
+    "policy": "STRICT accepts exact two-field signs and fiber counts only. APPROXIMATE_512 follows the same graph and may terminate only at the configured 512-bit predicate boundary, which records consumption."
+  },
+  "capability": {
+    "comparison_revision": "The retained algebraic cusp semicircle could intersect rational curves and analytic parallels, but two such retained joins had no pair authority.",
+    "source_revision": "Two algebraic cusp semicircles now classify all zero-dimensional support paths directly and return their shared exact maps without rebuilding the high-degree pair system.",
+    "fixtures": [
+      "two unit semicircles whose centers use different selected roots of the same reducible cusp polynomial",
+      "one retained transverse upper-half contact and swapped-operand orientation",
+      "external endpoint tangency",
+      "strict support separation",
+      "support intersections rejected by opposite selected halves",
+      "coincident supporting circles"
+    ],
+    "intentional_boundary": "CoincidentSupportingCircle remains explicit until selected-half overlap orientation and ranges are implemented. The carrier remains crate-internal and is not partially admitted to CurveRegion2."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "focused_capability": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; each process executes both policies and the independent-root transverse, swapped, tangent, disjoint, opposite-half, coincident-support, map, and bracket paths",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> algebraic_cusp_semicircle_pair",
+      "task_clock_ms": 3.35,
+      "cycles": 9215548,
+      "instructions": 19414352,
+      "branches": 3989356,
+      "branch_misses": 63747,
+      "elapsed_seconds": 0.003627363,
+      "interpretation": "This is the initial exact capability baseline. Process and test-harness startup are included; the fixture performs every supported pair relation under both policies."
+    },
+    "matched_parent_analytic_parallel_guard": {
+      "workload": "unchanged two-policy algebraic-cusp/general-analytic-parallel contact, opposite-branch replay, map, and bracket regression",
+      "method": "adjacent eleven-run perf-stat measurements of pinned release unit-test executables",
+      "comparison_revision": {
+        "task_clock_ms": 3.76,
+        "cycles": 11184625,
+        "instructions": 28712453,
+        "branches": 5408649,
+        "branch_misses": 82101,
+        "elapsed_seconds": 0.004063245
+      },
+      "source_revision": {
+        "task_clock_ms": 3.87,
+        "cycles": 11231755,
+        "instructions": 28709060,
+        "branches": 5405620,
+        "branch_misses": 81768,
+        "elapsed_seconds": 0.004097671
+      },
+      "change_percent": {
+        "task_clock": 2.92553,
+        "cycles": 0.42138,
+        "instructions": -0.01182,
+        "branches": -0.05601,
+        "branch_misses": -0.4056,
+        "elapsed": 0.84725
+      },
+      "interpretation": "Instructions and branches are fractionally lower; task-clock and elapsed movement are process-startup noise at this sub-4 ms scale. The generalized two-term expression name and pair-only code do not regress the existing analytic-parallel path."
+    },
+    "historical_and_competitive_controls": {
+      "source": "inherited from 2026-08-02-algebraic-cusp-analytic-parallel-intersections.json because the representative production .text section is byte-size identical",
+      "exact_open_cubic_offset_ns": 29761941.2,
+      "native_line_arc_offset_ns": 18854.4,
+      "current_curvo_open_cubic_ns": 8310.4,
+      "current_cavalier_line_arc_ns": 913.5,
+      "interpretation": "The finite binary64 competitors remain throughput controls only: neither can retain two selected algebraic cusp fields, certify radical branch equality, or emit exact pair parameter evidence. Existing production controls are unaffected because this unadmitted carrier kernel is dead-stripped."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-unit-test trace",
+      "profile": "/tmp/hypercurve-algebraic-cusp-pair-86c81f4.zst.zst",
+      "workload": "both two-policy pair fixtures, including successful maps and every support relation",
+      "allocation_calls": 39392,
+      "temporary_allocations": 1717,
+      "peak_heap": "267.07 KiB",
+      "instrumented_runtime_seconds": 0.067,
+      "interpretation": "The contact result owns one shared map and does not repeat pair-system construction. Most remaining allocation traffic is exact polynomial/selected-root arithmetic plus test-fixture construction."
+    }
+  },
+  "release_size": {
+    "method": "matched all-feature curve_region_boolean_batch release executables built in adjacent source and detached-parent worktrees against identical live dependency revisions",
+    "source_file_bytes": 7875776,
+    "comparison_file_bytes": 7875160,
+    "file_change_bytes": 616,
+    "source_aggregate_text_bytes": 5961398,
+    "comparison_aggregate_text_bytes": 5961394,
+    "aggregate_data_bytes": 266400,
+    "aggregate_bss_bytes": 4136,
+    "source_actual_text_section_bytes": 4436295,
+    "comparison_actual_text_section_bytes": 4436295,
+    "source_allocated_section_bytes": 6232690,
+    "comparison_allocated_section_bytes": 6232686,
+    "interpretation": "The still-internal pair kernel is dead-stripped: executable .text is identical. Four unwind bytes and 612 non-loadable metadata bytes are the complete representative binary delta."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-cusp-pair-86c81f4-clean --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 32030,
+    "edges": 59234,
+    "artifact": "/tmp/hypercurve-callgraph-algebraic-cusp-pair-86c81f4-clean/callgraph.json",
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircle2::pair_intersections -> pair_system -> reduce_algebraic_cusp_pair_system",
+      "BezierAlgebraicCuspSemicircle2::pair_intersections -> algebraic_cusp_correlated_predicate_sign",
+      "BezierAlgebraicCuspSemicircle2::pair_intersections -> algebraic_cusp_correlated_square_root_sum_sign",
+      "algebraic_cusp_correlated_square_root_sum_sign -> bivariate_reduce_parameter_polynomials"
+    ]
+  },
+  "verification": {
+    "focused_fixtures": "passed every pair relation and both contact maps under STRICT and APPROXIMATE_512",
+    "all_feature_library": "passed: 367 tests",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature focused unit and curve_region_boolean_batch builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "classify and map selected coincident-support half-circle overlaps and endpoint-only contacts",
+    "define compact algebraic cusp contact cuts and subfragments",
+    "admit the complete carrier to CurveRegion2 pair dispatch, splitting, winding, and traversal",
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing exact polynomial and local-field allocation churn"
+  ]
+}

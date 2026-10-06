@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-04",
+  "checkpoint": "spline-corner-span-promotion",
+  "source_revision": "2d723cd01fa6b9e5e2be9c7570d35bf58ca49dae",
+  "implementation_revision": "373e1042315634793270e4d9e7aeeb3979736151",
+  "benchmark_revision": "2d723cd01fa6b9e5e2be9c7570d35bf58ca49dae",
+  "preceding_checkpoint": "2026-08-04-represented-bezier-corner-incidence.json",
+  "dependency_snapshot": {
+    "hyperreal": "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "76281a340160f30ab86aa1f59b0fff4762d51dea",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "73a3d9e34ee92c280731b4fcc1abb6e5515a3b5c",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "56ab9e983436c7e6f8365c05a219ed340ad04b02",
+    "hypermesh_modified_by_checkpoint": false,
+    "workspace_note": "Hypermesh advanced concurrently and remained outside this work. Existing untracked Hyperlimit fuzz artifacts were not touched."
+  },
+  "semantic_evidence": {
+    "new_public_families": [
+      "PolynomialBSpline",
+      "Nurbs"
+    ],
+    "path_route": "CurvePath2 selects only the first or last retained NativeBezierFragment2 incident to the edited vertex, dispatches it through the same BezierParallel2 incidence authority as direct Beziers, and maps a represented local parameter exactly through that span's authored knot interval before trimming the original spline carrier.",
+    "span_selection": "next curves use the first nonzero native span and previous curves use the last; a reversed two-span regression proves the last-span route and exact reversed public parameter transport.",
+    "source_family_retention": "Successful open-path edits retain PolynomialBSpline or Nurbs and their authored public domains; no Bezier replacement is exposed by CurvePath2.",
+    "region_canonicalization": "CurveRegion2 intentionally decomposes authored splines/NURBS into exact native Bezier boundary spans at construction. Region corner editing therefore consumes those canonical spans directly and does not retain or reconstruct the larger authored spline carrier.",
+    "mixed_interactions": "line/spline and line/NURBS chamfer and fillet use complete circle or supporting-line incidence on the incident span.",
+    "pair_interactions": "polynomial-spline/NURBS and all four polynomial/NURBS family pair combinations reach the same exact rational/PH parallel-intersection fast path when their incident spans qualify.",
+    "materialization_boundary": "Represented Real contacts trim the authored spline exactly. A non-Real algebraic trim remains typed Unsupported until the algebraic public result carrier lands; it is neither rounded nor omitted.",
+    "trim_or_extend": "Spline and NURBS spans remain trim-only until projective extension semantics are authoritative.",
+    "strict_policy": "Native-span promotion, incidence, local ordering, public knot transport, and spline subdivision use the caller's STRICT proof policy.",
+    "approximate_512_policy": "The same proof graph runs first; an expression-undecidable spline control blocks under STRICT and completes only after Hyperlimit's shared 512-bit equality terminal, reporting Approximate512Consumed.",
+    "carrier_layout_bytes_on_64_bit": 16,
+    "persistent_corner_carrier_allocation": false,
+    "compatibility_shim_added": false,
+    "lower_layer_fix_required": false
+  },
+  "historical_behavior": {
+    "at_revision": "dc7829702805728164281747074500e9e9ed3a0d",
+    "automatic_polynomial_spline_chamfer": "Unsupported",
+    "automatic_polynomial_spline_fillet": "Unsupported",
+    "automatic_nurbs_chamfer": "Unsupported",
+    "automatic_nurbs_fillet": "Unsupported",
+    "capability_change": "The represented-contact fixtures now complete exactly; historical finite throughput did not exist for these operations."
+  },
+  "mathematical_paths_covered": [
+    "line/polynomial-spline chamfer and fillet",
+    "line/NURBS chamfer and fillet",
+    "polynomial-spline/polynomial-spline, polynomial-spline/NURBS, NURBS/polynomial-spline, and NURBS/NURBS exact PH fillets",
+    "forward first-span and reversed last-span selection on a two-span spline",
+    "non-unit authored knot domains and exact local-to-public parameter transport",
+    "CurveRegion2 canonical polynomial and rational native-span reconstruction",
+    "STRICT and APPROXIMATE_512 execution, including actual shared-terminal consumption",
+    "represented rational contacts and explicit algebraic blockers"
+  ],
+  "verification": {
+    "cargo_test_all_features_lib": "445 passed",
+    "cargo_test_no_default_features_lib": "320 passed",
+    "cargo_test_all_features_hypercurve_curve": "38 passed",
+    "cargo_test_no_default_features_hypercurve_curve": "31 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "50 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion": "47 passed",
+    "cargo_check_all_features_editing_benchmark": "pass",
+    "cargo_check_no_default_features_editing_benchmark": "pass",
+    "cargo_clippy_all_features_all_targets_no_deps_deny_warnings": "Hypercurve pass; external Hypertri emitted its pre-existing ExactKernel::sub dead-code warning",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "iterations_per_repeat": 20000,
+    "repeats": 3,
+    "selector": "HYPERCURVE_EDIT_BENCH=represented-bezier-corner",
+    "counter_command": "taskset -c 11 perf stat -x, -r 3 -e instructions,branches env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=<lane> HYPERCURVE_EDIT_ITERATIONS=20000 <editing-binary>",
+    "primary_metric": "retired instructions",
+    "benchmark_executable": "target/release/deps/editing-1429e5261074e42b",
+    "benchmark_executable_sha256": "c21c60c1531f603774b23c3037bf257d306c16124cd4f6a591cebe973ea19fd8",
+    "benchmark_executable_file_bytes": 8922032,
+    "benchmark_executable_text_bytes": 5153607,
+    "benchmark_source_sha256": "b9bbc507f8a1c6653d35e5fb74949b4321898563f4acc945631d63ce8b3953da",
+    "artifact_build_revision": "2d723cd01fa6b9e5e2be9c7570d35bf58ca49dae",
+    "fixture_note": "The loop reuses one immutable path. The retained native-span decomposition is therefore cache-hot after the first of 20000 operations; the first operation remains included."
+  },
+  "current_performance": {
+    "curve_path_line_quadratic_design_chamfer": {
+      "instructions": 13036778252,
+      "instructions_per_operation": 651838.9126,
+      "branches": 2449278774,
+      "branches_per_operation": 122463.9387,
+      "wall_us_samples": [55.596, 56.317, 55.904]
+    },
+    "curve_path_line_polynomial_spline_design_chamfer": {
+      "instructions": 13898704715,
+      "instructions_per_operation": 694935.23575,
+      "branches": 2623132346,
+      "branches_per_operation": 131156.6173,
+      "instruction_change_percent_vs_direct_quadratic": 6.611499,
+      "branch_change_percent_vs_direct_quadratic": 7.098154,
+      "wall_us_samples": [61.175, 60.314, 60.743]
+    },
+    "curve_path_line_nurbs_design_chamfer": {
+      "instructions": 13809212798,
+      "instructions_per_operation": 690460.6399,
+      "branches": 2605760008,
+      "branches_per_operation": 130288.0004,
+      "instruction_change_percent_vs_direct_quadratic": 5.925042,
+      "branch_change_percent_vs_direct_quadratic": 6.388870,
+      "wall_us_samples": [60.031, 60.044, 61.399]
+    },
+    "curve_path_line_quadratic_design_fillet": {
+      "instructions": 9153507961,
+      "instructions_per_operation": 457675.39805,
+      "branches": 1806263186,
+      "branches_per_operation": 90313.1593,
+      "wall_us_samples": [43.124, 43.849, 43.808]
+    },
+    "curve_path_line_polynomial_spline_design_fillet": {
+      "instructions": 10028397122,
+      "instructions_per_operation": 501419.8561,
+      "branches": 1983505044,
+      "branches_per_operation": 99175.2522,
+      "instruction_change_percent_vs_direct_quadratic": 9.557966,
+      "branch_change_percent_vs_direct_quadratic": 9.812626,
+      "wall_us_samples": [50.370, 48.565, 49.525]
+    },
+    "curve_path_line_nurbs_design_fillet": {
+      "instructions": 10364799318,
+      "instructions_per_operation": 518239.9659,
+      "branches": 2055233126,
+      "branches_per_operation": 102761.6563,
+      "instruction_change_percent_vs_direct_quadratic": 13.233084,
+      "branch_change_percent_vs_direct_quadratic": 13.783702,
+      "wall_us_samples": [51.362, 51.092, 50.387]
+    },
+    "curve_path_cubic_ph_pair_design_fillet": {
+      "instructions": 42044555656,
+      "instructions_per_operation": 2102227.7828,
+      "branches": 8623703195,
+      "branches_per_operation": 431185.15975,
+      "wall_us_samples": [221.521, 222.889, 222.693]
+    },
+    "curve_path_polynomial_spline_nurbs_ph_pair_design_fillet": {
+      "instructions": 43390321382,
+      "instructions_per_operation": 2169516.0691,
+      "branches": 8899971902,
+      "branches_per_operation": 444998.5951,
+      "instruction_change_percent_vs_direct_cubic_ph_pair": 3.200809,
+      "branch_change_percent_vs_direct_cubic_ph_pair": 3.203597,
+      "wall_us_samples": [240.011, 238.577, 241.940]
+    }
+  },
+  "heaptrack_1000_operations": {
+    "method": "Heaptrack record-only final release benchmark processes; heaptrack_print summaries are authoritative and include fixed process and fixture construction.",
+    "direct_quadratic_chamfer": {
+      "allocation_calls": 1086738,
+      "temporary_allocations": 179020,
+      "peak_heap_kib": 132.91
+    },
+    "polynomial_spline_chamfer": {
+      "allocation_calls": 1124744,
+      "temporary_allocations": 181021,
+      "peak_heap_kib": 134.37,
+      "additional_calls_per_operation_vs_direct": 38.006
+    },
+    "nurbs_chamfer": {
+      "allocation_calls": 1144773,
+      "temporary_allocations": 188021,
+      "peak_heap_kib": 137.61,
+      "additional_calls_per_operation_vs_direct": 58.035
+    },
+    "direct_quadratic_fillet": {
+      "allocation_calls": 843650,
+      "temporary_allocations": 92020,
+      "peak_heap_kib": 125.84
+    },
+    "polynomial_spline_fillet": {
+      "allocation_calls": 881656,
+      "temporary_allocations": 94021,
+      "peak_heap_kib": 127.08,
+      "additional_calls_per_operation_vs_direct": 38.006
+    },
+    "nurbs_fillet": {
+      "allocation_calls": 952689,
+      "temporary_allocations": 107021,
+      "peak_heap_kib": 130.62,
+      "additional_calls_per_operation_vs_direct": 109.039
+    },
+    "direct_cubic_ph_pair_fillet": {
+      "allocation_calls": 1672895,
+      "temporary_allocations": 168008,
+      "peak_heap_kib": 159.12
+    },
+    "polynomial_spline_nurbs_ph_pair_fillet": {
+      "allocation_calls": 1721953,
+      "temporary_allocations": 173010,
+      "peak_heap_kib": 164.45,
+      "additional_calls_per_operation_vs_direct": 49.058
+    },
+    "next_optimization_target": "Exact authored-spline subdivision after a represented contact, especially NURBS subcurve materialization. The shared incidence kernel itself remains the direct-Bezier authority."
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "2026-08-04-represented-bezier-corner-incidence.json",
+    "all_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-873fdf750dbe978a",
+      "artifact_sha256": "0958db37f6bca30675bd42288a5b0a3a9cefc6bc4dc03f2428f53d3b0bec5816",
+      "candidate_text_bytes": 4984919,
+      "text_change_bytes": 2688,
+      "text_change_percent": 0.053952,
+      "candidate_file_bytes": 8672344,
+      "file_change_bytes": -1112,
+      "file_change_percent": -0.012821
+    },
+    "no_default_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-ec1852ae82ff67f7",
+      "artifact_sha256": "176111177fa88f76ddb4d759fa8410ade3caf940651b8f36973c4b689b5f5f98",
+      "candidate_text_bytes": 4542551,
+      "text_change_bytes": 16,
+      "text_change_percent": 0.000352,
+      "candidate_file_bytes": 7958056,
+      "file_change_bytes": -80,
+      "file_change_percent": -0.001005
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-spline-corner-2d723cd --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-spline-corner-2d723cd/callgraph.json",
+    "nodes": 24470,
+    "edges": 46678,
+    "authoritative_route": "CurvePath2 chamfer/fillet -> exact_corner_carrier -> Curve2::native_bezier_fragments_with_policy -> first/last NativeBezierFragment2 -> exact_corner_bezier_parallel -> existing complete mixed-incidence or rational/PH pair prefix -> materialize_corner_cut -> Curve2::subcurve_with_policy.",
+    "duplicate_spline_corner_engine_present": false,
+    "curve_region_route": "CurveRegion2 construction canonicalizes native spans once; higher-order corner editing materializes those spans and invokes the same CurvePath2 solver."
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "historical_throughput": "No throughput: automatic spline/NURBS design-parameter corners returned typed Unsupported before this checkpoint.",
+    "finite_peer_control": "The preceding represented-Bezier checkpoint records current Cavalier Contours and Curvo comparisons. Those finite f64/heuristic implementations remain optimization controls, not correctness-equivalent peers, and expose no canonical-Real exact spline corner result or STRICT/APPROXIMATE_512 evidence.",
+    "preceding_cavalier_capsule_ratio": 21.637198,
+    "preceding_curvo_open_cubic_certified_ratio": 3557.125329
+  },
+  "remaining_scope": [
+    "public algebraic parameter, point, circle/arc, and trimmed-curve carriers so non-rational contacts can materialize without rounding",
+    "complete bounded non-PH parallel-pair corner solving through the existing Hypersolve authority",
+    "projective TrimOrExtend semantics for represented rational and spline carriers",
+    "exact spline/NURBS subdivision allocation reduction",
+    "complete singularity, pole, cusp, coincident, and multi-contact branch matrices under both policies",
+    "single authoritative CurveRegion2 offset and Boolean engine consolidation",
+    "controlled caller migration without compatibility shims"
+  ]
+}

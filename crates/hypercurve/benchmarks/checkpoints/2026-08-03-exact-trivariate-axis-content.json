@@ -1,0 +1,220 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "exact separable axis content for trivariate winding",
+  "source_revision": "1403e8477e6c1460540db6b573dd7fb9ddd6625b",
+  "semantic_revisions": {
+    "hypersolve": [
+      "1509aa7"
+    ],
+    "hypercurve": [
+      "1403e84"
+    ]
+  },
+  "comparison_revision": "d0bdf9d",
+  "comparison_semantic_revision": "7aa75c8",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "1509aa7f6d79a89729e6892c54c9fd800f8689a2",
+    "hypertri": "74d739f78280fd8b4bf1a0c6170ac7c1f127e55e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "exact univariate content extraction from every tensor axis by the GCD of all nonzero coefficient fibers",
+      "exact tensor division by each extracted content polynomial",
+      "STRICT selected-root sign certification for every removed factor",
+      "structural-zero, Bernstein, affine, linear-resultant, and binary-relation replay on the primitive tensor",
+      "zero-factor short-circuit and exact reconstruction coverage",
+      "identical certified STRICT and APPROXIMATE_512 results for the supportable rational three-field identity",
+      "an explicitly coupled positive cofactor that retains the shared selected terminal policy",
+      "matched historical source replay plus allocation, linked-size, historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "multivariate factor extraction when every nonconstant factor couples at least two tensor axes",
+      "general primitive-element or compositum construction across three independent selected fields",
+      "dense tensors above the existing 16384-control resource ceiling",
+      "broader noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "axis_content": "For one tensor variable x, view the trivariate polynomial as a polynomial in the other two variables whose coefficients are univariate fibers in x. Their exact polynomial GCD is precisely the largest supported univariate factor in x shared by the whole tensor. Structurally zero fibers are omitted and a constant GCD makes no claim.",
+    "division": "Every fiber is divided by the content through Hypersolve exact polynomial division. The quotient is accepted only when every remainder is structurally zero; unsupported coefficients, overflow, or a failed division abandon the optional reduction without changing the predicate result.",
+    "factor_sign": "Each extracted univariate factor is evaluated at its authored selected parameter with the STRICT algebraic-root sign authority. A selected zero proves the original tensor zero. Decided nonzero signs are multiplied exactly; an unresolved factor sign can support only a primitive zero proof, never a nonzero sign claim.",
+    "primitive_replay": "After all three axis contents are stripped, the existing STRICT structural, Bernstein, affine selected-root, linear-axis resultant, and binary selected-root authorities are replayed on the primitive tensor. A primitive zero is independent of unresolved nonzero cofactor signs.",
+    "resource_bound": "All dimension arithmetic is checked and preserves the existing 16384-control ceiling. Axis division can only shrink the selected dimension. Fibers and the reconstructed quotient are retained only for the duration of the cold symbolic cut.",
+    "policy": "The separably obscured identity is Certified under STRICT and APPROXIMATE_512 without terminal consumption. The coupled-factor control remains Predicate uncertainty in STRICT and may be reported Zero only after APPROXIMATE_512 records Approximate512Consumed.",
+    "failure": "No tolerance, sampled factorization, guessed sign, compatibility shim, or alternate Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The exact zero (a*b-c*(a+b))*(1+a)*(1+b)*(1+c), with independently represented cubic roots and c=a*b/(a+b), was quadratic in every tensor axis. Pairwise sum/product recognition could not expose the rational relation, so STRICT was uncertain and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "Exact axis-content extraction removes (1+a), (1+b), and (1+c), proves their selected signs positive, and exposes the multi-affine primitive a*b-c*(a+b) to the existing linear-axis resultant authority.",
+    "certified_fixture": "The formerly terminal rational three-field fixture returns Certified Zero under STRICT and APPROXIMATE_512; neither policy consumes the approximate terminal.",
+    "exact_reconstruction": "The test directly verifies that stripping all three factors reconstructs exactly the authored primitive coefficient tensor and accumulates a Positive cofactor sign.",
+    "remaining_policy_control": "Multiplication by the strictly positive cube cofactor 1+a*b+a*c+b*c couples every tensor axis. It has no nonconstant univariate axis content; STRICT remains explicitly uncertain and APPROXIMATE_512 returns Zero only with Approximate512Consumed.",
+    "remaining_exactness_boundary": "Extract bounded multivariate factors or construct a bounded compositum only after quotient reduction, affine/resultant relations, selected sum/product relations, and univariate tensor content all fail.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "all-feature release unit-test and comparative executables pinned to CPU 11; exact fully-qualified filters; seven perf-stat repetitions for focused fixtures and three for fixed-work controls; median retired instructions and branches are primary",
+    "separable_rational_three_field_zero": {
+      "policy_evaluations": 2,
+      "explicit_exact_strip_reconstruction_checks": 1,
+      "median_task_clock_ms": 3.14,
+      "median_cycles": 7676278,
+      "median_instructions": 15266087,
+      "median_branches": 3185301,
+      "median_branch_misses": 62364,
+      "matched_comparison_instructions": 390831476,
+      "matched_comparison_branches": 65663488,
+      "recorded_comparison_checkpoint_instructions": 390817940,
+      "instruction_change_percent": -96.093946,
+      "branch_change_percent": -95.149053,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "coupled_factor_terminal": {
+      "policy_evaluations": 2,
+      "explicit_unsupported_preflight_checks": 2,
+      "median_task_clock_ms": 29.42,
+      "median_cycles": 118999996,
+      "median_instructions": 384881264,
+      "median_branches": 64410587,
+      "median_branch_misses": 361129,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "Zero with Approximate512Consumed"
+    },
+    "fixed_work_historical_controls": {
+      "method": "current release comparative executable pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1984854000,
+        "current_instructions": 1985260228,
+        "instruction_change_percent": 0.020466,
+        "current_branches": 402602020
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447283463,
+        "current_instructions": 3447689097,
+        "instruction_change_percent": 0.011767,
+        "current_branches": 649669028
+      },
+      "interpretation": "Both established offset lanes remain instruction-neutral. Each executable run acquired the same roughly 406K additional startup instructions while the cold axis-content path remained unreachable."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18033.9,
+        "cavalier_contours": 914.5,
+        "hypercurve_to_cavalier_ratio": 19.719956
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 31409023.5,
+        "hypercurve_chord_fallback": 972037.6,
+        "curvo_heuristic": 8666.6,
+        "certified_to_curvo_ratio": 3624.145974,
+        "chord_fallback_to_curvo_ratio": 112.159047
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. Retired-instruction controls, not loaded-host wall time, establish that the new proof is isolated from ordinary offset lanes."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct all-feature release-unit-test traces with exact fully-qualified filters; heaptrack_print summary is authoritative",
+    "separable_rational_three_field_zero": {
+      "allocation_calls": 21267,
+      "temporary_allocations": 1384,
+      "peak_heap_kib": 294.97,
+      "recorder_peak_rss_mib": 12.62,
+      "matched_comparison_allocation_calls": 722289,
+      "matched_comparison_temporary_allocations": 148898,
+      "matched_comparison_peak_heap_kib": 342.24,
+      "matched_comparison_recorder_peak_rss_mib": 12.71,
+      "allocation_change_percent": -97.055611,
+      "temporary_change_percent": -99.070505,
+      "peak_heap_change_percent": -13.811945,
+      "interpretation": "The certified path eliminates 701,022 allocation calls and 147,514 temporary allocations while reducing peak live heap by 47.27 KiB."
+    },
+    "coupled_factor_terminal": {
+      "allocation_calls": 713255,
+      "temporary_allocations": 148250,
+      "peak_heap_kib": 300.42,
+      "recorder_peak_rss_mib": 12.21,
+      "interpretation": "The intentionally unsupported coupled cofactor retains the 512-bit terminal and identifies the next exactness and allocation boundary."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at d0bdf9 and 1403e84",
+    "default_features": {
+      "comparison_file_bytes": 8339144,
+      "current_file_bytes": 8351544,
+      "file_change_bytes": 12400,
+      "file_change_percent": 0.148696,
+      "comparison_size_text_bytes": 6359421,
+      "current_size_text_bytes": 6370925,
+      "size_text_change_bytes": 11504,
+      "size_text_change_percent": 0.180897,
+      "comparison_actual_text_section_bytes": 4815447,
+      "current_actual_text_section_bytes": 4825735,
+      "actual_text_change_bytes": 10288,
+      "actual_text_change_percent": 0.213646
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7989592,
+      "current_file_bytes": 7989736,
+      "file_change_bytes": 144,
+      "file_change_percent": 0.001802,
+      "comparison_size_text_bytes": 6080389,
+      "current_size_text_bytes": 6080485,
+      "size_text_change_bytes": 96,
+      "size_text_change_percent": 0.001579,
+      "comparison_actual_text_section_bytes": 4576151,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The complete predicate-enabled axis-content package and exact Hypersolve wrappers add 10.05 KiB of actual production .text. Feature-disabled actual .text remains byte-identical; its file and allocated-text changes are non-code metadata."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-axis-content --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-axis-content/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23864,
+      "current_nodes": 23897,
+      "node_change_percent": 0.138284,
+      "comparison_edges": 44963,
+      "current_edges": 45034,
+      "edge_change_percent": 0.157908
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_strip_axis_contents",
+      "trivariate_strip_axis_contents -> trivariate_axis_content -> Hypersolve exact univariate GCD",
+      "trivariate_strip_axis_contents -> STRICT signed_coefficients_at_parameter",
+      "trivariate_strip_axis_contents -> trivariate_divide_axis_content -> Hypersolve exact univariate division",
+      "primitive tensor -> structural-zero, Bernstein, affine, linear-resultant, and binary selected-root authorities"
+    ]
+  },
+  "verification": {
+    "hypersolve_library": "passed at dependency revision: 215 tests",
+    "hypercurve_all_features_library": "passed at source revision: 401 tests",
+    "hypercurve_default_features_library": "passed at source revision: 397 tests",
+    "hypercurve_no_default_features_library": "passed at source revision: 320 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed separable rational identity as Certified under both policies, exact primitive reconstruction and positive factor signs, plus coupled-factor STRICT uncertainty and APPROXIMATE_512 terminal consumption",
+    "release_builds": "passed all-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

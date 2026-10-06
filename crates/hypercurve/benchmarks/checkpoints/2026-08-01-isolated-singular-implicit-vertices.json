@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-01",
+  "checkpoint": "isolated-singular-implicit-vertices",
+  "source_revision": "188a07894b4b71555361fdab65c3448f164bafc9",
+  "previous_checkpoint_revision": "1ce8492dcdec7fd5fa479355f898f9f218ceb06b",
+  "hypersolve_revision": "aa085f9ef0dee13384856febb3b57efa99bb2a51",
+  "scope": {
+    "operation": "exact square-clipped topology and overlap transport through isolated singular vertices of implicit Bezier parameter components",
+    "completed_families": [
+      "interior cusps with zero incidence on one side and two on the other",
+      "interior ordinary nodes with two incidences on each side",
+      "isolated real singular points with no incident real branch",
+      "singular vertices clipped by an authored parameter-domain edge or corner",
+      "public zero-distance BezierParallel2 overlap transport through a cusp",
+      "STRICT and APPROXIMATE_512 through one proof graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "authority": "the existing parameter_component_system production route remains authoritative; its ordered-graph fast path and one cylindrical-cell fallback now cover both smooth finite-event components and isolated singular vertices",
+    "singular_detection": "every retained-axis critical point is evaluated against the lifted derivative and every lifted-axis critical point is evaluated against the retained derivative; an exact zero marks a shared isolated singular vertex, while policy uncertainty remains explicit",
+    "event_identity": "the two critical systems and authored-domain systems merge exact-equivalent parameter pairs, OR-ing singular and domain-boundary provenance so a boundary singularity is classified once",
+    "interior_incidence": "a real algebraic curve has even local half-branch incidence at an isolated interior singularity; odd certified incidence is rejected rather than completed with missing topology",
+    "boundary_incidence": "clipping by the closed unit square may retain any number of the singular vertex's real half-branches, including one at a cusp corner",
+    "branch_transport": "every incoming and outgoing monotone cell terminates at the exact singular parameter pair; no arbitrary analytic branch pairing is guessed through a node or higher-valence vertex",
+    "isolated_points": "a selected singular event with zero in-square incidence is retained as one exact isolated parameter pair, so an acnode is not lost by distinct-root fiber counting",
+    "tube_certificate": "the existing disjoint exact event tubes, rootless horizontal edges, gap-rank invariants, and branch-sign proof apply unchanged on each punctured side of the singular fiber",
+    "strict": "STRICT uses exact resultants, derivative evaluation, root isolation, incidence counting, and replay without a fixed refinement cap",
+    "approximate_512": "APPROXIMATE_512 follows the same topology construction; only inherited Hyperreal equality terminals may stop at 512 bits, and no approximate parameter, orientation, incidence, or geometry is synthesized",
+    "failure_semantics": "positive-dimensional sharing between a component and either projection derivative, boundary-coincident components, and unsupported coefficient towers remain explicit boundaries"
+  },
+  "matched_historical_benchmark": {
+    "method": "five all-feature release processes per revision pinned to CPU 11; the identical cusp fixture was added to detached parent revision 1ce8492 and both revisions used Hypersolve aa085f9; the parent harness counted its explicit uncertainty instead of panicking",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "fixture": "P(v)=(v,v^2), source v=(t-1/2)^3, target v=(u-1/2)^2, giving the singular correspondence (u-1/2)^2=(t-1/2)^3",
+    "historical_candidate_rejection_microseconds": [
+      6864.267,
+      7070.800,
+      6800.997,
+      6823.101,
+      6852.905
+    ],
+    "historical_contact_rejection_microseconds": [
+      6684.785,
+      6815.388,
+      6596.817,
+      6604.512,
+      6602.989
+    ],
+    "current_candidates_microseconds": [
+      363188.347,
+      363798.667,
+      366436.920,
+      365340.407,
+      366146.288
+    ],
+    "current_contacts_microseconds": [
+      365009.390,
+      365176.162,
+      367249.388,
+      364985.364,
+      365861.942
+    ],
+    "historical_candidate_rejection_median_microseconds": 6852.905,
+    "historical_contact_rejection_median_microseconds": 6604.512,
+    "current_candidate_median_microseconds": 365340.407,
+    "current_contact_median_microseconds": 365176.162,
+    "historical_outcome": "all five candidate and all five contact queries returned explicit uncertainty without candidates, contacts, or overlap topology",
+    "current_outcome": "all queries completed; each contact iteration returned two exactly oriented overlap cells meeting at the cusp, so candidate checksum was 5 and contact checksum was 10",
+    "interpretation": "the timings are intentionally not presented as a speed ratio: the parent performs an early unsupported exit, while the current route constructs and certifies the complete exact topology"
+  },
+  "existing_lane_guards": [
+    {
+      "lane": "bezier_parallel_implicit_quadratic_component",
+      "historical_candidate_median_microseconds": 2642.416,
+      "historical_contact_median_microseconds": 2625.595,
+      "current_candidate_median_microseconds": 2660.676,
+      "current_contact_median_microseconds": 2618.449,
+      "candidate_change_percent": 0.691034,
+      "contact_change_percent": -0.272167,
+      "interpretation": "the global monotone-graph fast path remains within run noise"
+    },
+    {
+      "lane": "bezier_parallel_two_turning_implicit_graphs",
+      "historical_candidate_median_microseconds": 81571.743,
+      "historical_contact_median_microseconds": 80760.395,
+      "current_candidate_median_microseconds": 80990.001,
+      "current_contact_median_microseconds": 80040.068,
+      "candidate_change_percent": -0.713166,
+      "contact_change_percent": -0.891931,
+      "interpretation": "the smooth multi-graph general route improves slightly"
+    },
+    {
+      "lane": "bezier_parallel_closed_implicit_oval",
+      "historical_candidate_median_microseconds": 73897.720,
+      "historical_contact_median_microseconds": 73864.064,
+      "current_candidate_median_microseconds": 72800.219,
+      "current_contact_median_microseconds": 73448.895,
+      "candidate_change_percent": -1.485162,
+      "contact_change_percent": -0.562072,
+      "interpretation": "the smooth closed-component route does not regress"
+    }
+  ],
+  "memory": {
+    "method": "three alternating fresh pinned processes per revision under /usr/bin/time, running the complete Bezier-intersection benchmark group; the parent counted and continued past its cusp uncertainty",
+    "historical_max_rss_kib": [
+      11636,
+      11572,
+      11516
+    ],
+    "current_max_rss_kib": [
+      12656,
+      12712,
+      12884
+    ],
+    "historical_median_max_rss_kib": 11572,
+    "current_median_max_rss_kib": 12712,
+    "change_percent": 9.851365,
+    "interpretation": "whole-process peak RSS rises by about 1.1 MiB because the current process certifies the cusp topology whereas the parent exits that lane early"
+  },
+  "competitive_context": {
+    "direct_peer_lane": "none",
+    "reason": "the pinned finite competitors do not expose exact singular algebraic parameter-correspondence cells or STRICT/APPROXIMATE_512 semantics",
+    "policy": "no sampled floating-point curve intersection is treated as a correctness or throughput substitute; the established CurveRegion2 finite competitive corpus remains the broader throughput reference"
+  },
+  "release_size": {
+    "binary": "target/release/deps/offset-ea116fee283cd918",
+    "matched_historical_file_bytes": 7525224,
+    "current_file_bytes": 7527304,
+    "matched_historical_text_bytes": 5732355,
+    "current_text_bytes": 5734459,
+    "matched_historical_loadable_bytes": 5998395,
+    "current_loadable_bytes": 6000531,
+    "matched_historical_total_memory_bytes": 6002419,
+    "current_total_memory_bytes": 6002427,
+    "file_change_percent": 0.027640,
+    "text_change_percent": 0.036704,
+    "loadable_change_percent": 0.035610,
+    "total_memory_change_percent": 0.000133,
+    "interpretation": "with byte-identical benchmark source, isolated-singularity support adds about 2.1 KiB of text and eight bytes to the complete text/data/bss image"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, and fuzz targets",
+    "nodes": 30031,
+    "edges": 54059,
+    "change_from_previous_checkpoint": {
+      "nodes": 11,
+      "edges": 39
+    },
+    "artifact": "/tmp/hypercurve-isolated-singular-stack-callgraph/callgraph.json",
+    "interpretation": "the production route remains one component certifier below parameter_component_system; the added graph surface is principally singular classification plus cusp/node/acnode/boundary tests and the benchmark fixture"
+  },
+  "verification": {
+    "all_features_library_tests": 315,
+    "no_default_features_library_tests": 279,
+    "public_fixture": "parallel_rational_contacts_partition_an_implicit_cusp passes under STRICT and APPROXIMATE_512 in both feature configurations",
+    "internal_matrix": [
+      "interior cusp with two outgoing half-branches",
+      "irreducible rational interior node with four half-branches",
+      "isolated singular real point with zero incidence",
+      "domain-corner cusp with one retained half-branch",
+      "boundary-coincident component rejection"
+    ],
+    "full_all_features": "passed",
+    "full_no_default_features": "passed",
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "positive-dimensional component/derivative sharing, including axis-wide parameter components",
+    "boundary-coincident component representability",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization",
+    "solver-driven CurveRegion2 fillet and chamfer"
+  ]
+}

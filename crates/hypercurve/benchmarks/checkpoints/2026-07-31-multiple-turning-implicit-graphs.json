@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "multiple-turning-implicit-graphs",
+  "source_revision": "64f7657a9e44243f7e972186eea0c58039a45b63",
+  "previous_checkpoint_revision": "f4f68208bdedb6383ea39f5381292cdc2d936667",
+  "hypersolve_revision": "aa085f9ef0dee13384856febb3b57efa99bb2a51",
+  "scope": {
+    "operation": "exact branch assignment and public overlap transport for multiple regular implicit parameter graphs with turning events",
+    "completed_families": [
+      "every disjoint regular graph with finitely enumerated exact turning events",
+      "rational and coupled algebraic retained fibers",
+      "exact fiber-root rank including a root at the lifted-domain lower endpoint",
+      "independent selected-normal filtering for every ordered graph",
+      "zero-distance shared-component transport through the public BezierParallel2 intersection path",
+      "correlated overlap-boundary ownership without residual duplicate contacts",
+      "STRICT and APPROXIMATE_512 through one construction graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "regularity": "H and its lifted-parameter derivative have no common unit-square solution, so every component branch is a graph over the retained parameter and disjoint graphs cannot exchange fiber order",
+    "turn_assignment": "each exact retained fiber is specialized and ordered directly; each algebraic retained fiber refines a lifted isolator until local-field Sturm counting proves exactly one root inside, then a closed count from lifted parameter 0 to the isolator lower endpoint gives the invariant root rank",
+    "endpoint_multiplicity": "the closed local-field count deflates roots at rational interval endpoints and counts each distinct endpoint root once, so rank zero is preserved when a fiber contains lifted parameter 0",
+    "cell_partition": "turning events are inserted only into the graph with the same invariant rank; each graph is then partitioned into oriented monotone overlap cells",
+    "zero_distance": "distance zero has no selected normal sheet, so its exact component predicate is constant true and all source-image coincidences qualify",
+    "residual_ownership": "a residual candidate is suppressed only when both parameters equal the correlated start/start or end/end boundary of an already certified overlap",
+    "strict": "STRICT uses exact specialization, resultants, root isolation, local-field Sturm counts, replay, and unbounded separating refinement",
+    "approximate_512": "APPROXIMATE_512 follows the same proof graph; only inherited Hyperreal equality terminals may stop at 512 bits, their consumption is reported, and no approximate parameter, cell, orientation, or geometry is synthesized",
+    "failure_semantics": "projection folds, transverse authored-domain entry or exit, singular/shared-derivative components, boundary-coincident components, and unsupported coefficient towers remain explicit uncertainty"
+  },
+  "matched_historical_benchmark": {
+    "method": "five all-feature release processes pinned to CPU 11; the identical two-turning fixture was added as the only source change to detached Hypercurve revision f4f6820; both revisions used Hypersolve aa085f9 and five iterations per candidate/contact sublane",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "fixture": "P(v)=(v,v^2), source v=1/16+(t-1/2)^2/32, target v=u(1-u), giving H(t,u)=u^2-u+1/16+(t-1/2)^2/32",
+    "historical_candidates_microseconds": [
+      140815.126,
+      143785.664,
+      144193.808,
+      144528.533,
+      142310.671
+    ],
+    "historical_contacts_microseconds": [
+      143972.429,
+      144713.392,
+      142867.625,
+      144193.412,
+      142423.629
+    ],
+    "current_candidates_microseconds": [
+      82162.832,
+      81384.155,
+      81481.224,
+      81446.789,
+      81166.332
+    ],
+    "current_contacts_microseconds": [
+      81484.646,
+      81945.515,
+      81237.225,
+      82335.900,
+      81128.255
+    ],
+    "historical_candidate_median_microseconds": 143785.664,
+    "historical_contact_median_microseconds": 143972.429,
+    "current_candidate_median_microseconds": 81446.789,
+    "current_contact_median_microseconds": 81484.646,
+    "candidate_time_change_percent": -43.355418,
+    "contact_time_change_percent": -43.402604,
+    "historical_outcome": "candidate projection reports the component marker and contact replay remains incomplete with DegenerateResultant; both checksums are 5",
+    "current_outcome": "candidate projection retains the explicit component marker; contact replay is complete with four exactly oriented overlap cells per iteration, giving contact checksum 20",
+    "interpretation": "the completed route is about 1.76x faster while replacing an incomplete historical answer with exact topology"
+  },
+  "existing_lane_guard": {
+    "lane": "bezier_parallel_implicit_quadratic_component",
+    "previous_checkpoint_candidate_median_microseconds": 2667.239,
+    "previous_checkpoint_contact_median_microseconds": 2667.433,
+    "current_candidate_median_microseconds": 2694.453,
+    "current_contact_median_microseconds": 2674.601,
+    "candidate_change_percent": 1.020306,
+    "contact_change_percent": 0.268723,
+    "interpretation": "the established monotone route remains effectively flat; candidate movement is near one percent and contact movement is sub-percent"
+  },
+  "memory": {
+    "method": "one fresh pinned process per revision under /usr/bin/time, running the complete bezier-intersection benchmark group",
+    "historical_max_rss_kib": 20828,
+    "current_max_rss_kib": 10836,
+    "change_percent": -47.973881,
+    "interpretation": "this is process-level group evidence rather than lane-isolated allocation accounting; the authoritative component route avoids the historical failed-resultant peak"
+  },
+  "competitive_context": {
+    "direct_peer_lane": "none",
+    "reason": "the pinned finite competitors do not expose exact algebraic parameter-correspondence overlap cells or STRICT/APPROXIMATE_512 semantics",
+    "policy": "no floating-point point-sampling result is treated as a correctness or throughput substitute for this operation; the existing CurveRegion2 finite competitive corpus remains the throughput reference"
+  },
+  "release_size": {
+    "binary": "target/release/deps/offset-ea116fee283cd918",
+    "file_bytes": 7472424,
+    "text_bytes": 5687147,
+    "loadable_bytes": 5957371,
+    "change_from_previous_checkpoint_percent": {
+      "file": 0.213935,
+      "text": 0.235328,
+      "loadable": 0.275644
+    },
+    "combined_change_from_pre_implicit_retention_percent": {
+      "file": 1.242919,
+      "text": 1.223911,
+      "loadable": 1.182592
+    }
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, and fuzz targets",
+    "nodes": 29936,
+    "edges": 53882,
+    "change_from_previous_checkpoint": {
+      "nodes": 32,
+      "edges": 95
+    },
+    "artifact": "/tmp/hypercurve-multiple-turning-stack-callgraph/callgraph.json",
+    "interpretation": "the exact branch-rank path is directly called only by regular implicit-component certification; its algebraic path calls the open and closed Hypersolve local-field counters. This syntax graph is navigation and source-complexity evidence, not runtime reachability or binary-size evidence"
+  },
+  "verification": {
+    "all_features_library_tests": 305,
+    "no_default_features_library_tests": 270,
+    "public_fixture": "parallel_rational_contacts_partition_two_turning_implicit_graphs passes under STRICT and APPROXIMATE_512 in both feature configurations",
+    "full_all_features": "passed",
+    "full_no_default_features": "passed",
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "projection folds where H and its lifted-parameter derivative meet",
+    "transverse authored-domain entry and exit",
+    "singular/shared-derivative and boundary-coincident components",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization"
+  ]
+}

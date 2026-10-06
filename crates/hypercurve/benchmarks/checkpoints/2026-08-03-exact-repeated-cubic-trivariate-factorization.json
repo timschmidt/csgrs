@@ -1,0 +1,239 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "checkpoint": "exact repeated-cubic trivariate factorization for selected-root winding",
+  "captured_on": "2026-08-03",
+  "source_revision": "0c169acb69a1e14ab4587623d9824f731167160d",
+  "semantic_revisions": [
+    "63e87bb",
+    "851b753",
+    "f336184",
+    "0c169ac"
+  ],
+  "comparison_revision": "e8bc2e7",
+  "comparison_semantic_revision": "51ca61e",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "1509aa7f6d79a89729e6892c54c9fd800f8689a2",
+    "hypertri": "40c0783503c27a65a36d7be158130230055c6f4f",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "bounded exact factorization of a trivariate tensor that is cubic in at least one axis and has a repeated linear factor over the exact bivariate fraction field",
+      "exact non-triple repeated-root recovery from 2*(b^2-3*a*c)*x+(b*c-9*a*d)",
+      "exact triple-root recovery from 3*a*x+b after delta-zero and delta-one replay",
+      "an exact scalar specialization that can reject but never assert a global repeated factor",
+      "exact derivative-remainder and triple-root invariant rejection before component extraction",
+      "exact removal of separable and genuinely bivariate candidate content through the existing Hypersolve component authority",
+      "one exact division of the complete tensor and a second exact division of the quotient by the same factor",
+      "recursive replay of the existing quadratic factor authority on the verified quotient",
+      "original authored cubic factor replay before defining-polynomial quotient expansion",
+      "dense double- and triple-factor reconstruction on all three axes, arithmetic-progression square-free rejection, and delta-zero-only rejection",
+      "identical Certified STRICT and APPROXIMATE_512 results for the formerly terminal repeated-cubic rational three-field zero",
+      "a square-free cubic coupled control that retains the shared selected terminal policy",
+      "allocation, linked-size, historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general factorization of square-free cubic tensors",
+      "factorization of tensors quartic or higher in every axis",
+      "general multivariate factorization without a supported low-axis-degree invariant",
+      "general primitive-element or compositum construction across three independent selected fields",
+      "dense intermediate tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images, broader noncircular fields, and distinct-carrier joins",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "nontriple_repeated_root": "For P=a*x^3+b*x^2+c*x+d with delta0=b^2-3*a*c nonzero, a repeated root is (9*a*d-b*c)/(2*delta0). The proposed factor is therefore (b*c-9*a*d)+2*delta0*x.",
+    "triple_root": "When delta0 is identically zero, delta1=2*b^3-9*a*b*c+27*a^2*d must also vanish before 3*a*x+b may be proposed as a triple-root factor.",
+    "specialization_rejection": "A genuine repeated factor makes the cubic discriminant relation delta1^2-4*delta0^3 vanish identically. A nonzero exact value at the fixed bivariate specialization rejects repetition; a zero or unresolved value makes no positive claim.",
+    "derivative_remainder": "For a nontriple candidate B+D*x, the exact cleared derivative value 3*a*B^2-2*b*B*D+c*D^2 must be structurally zero before component extraction.",
+    "division_authority": "The normalized candidate must divide the complete trivariate tensor exactly and must divide the resulting quotient exactly. Every bivariate intermediate remainder is exact; invariants alone never authorize a factor or its multiplicity.",
+    "selected_sign": "Verified factors and quotients replay one bounded recursive authority composed from the existing structural, Bernstein, affine, linear-resultant, binary selected-root, quadratic-factor, and repeated-cubic paths. A selected zero factor proves the full product zero; decided nonzero signs multiply exactly.",
+    "quotient_order": "An authored four-coefficient cubic axis is replayed before defining-polynomial quotient reduction because reduction preserves the selected value but may expand the authored factorization. Failed square-free originals are recorded and are not retried later.",
+    "resource_bound": "All bivariate products and reconstructed trivariate tensors use checked dimensions and the existing 16384-control ceiling. Candidate content removal uses the shared Hypersolve authority. Factor materialization is delayed until both exact divisions pass.",
+    "policy": "A supportable repeated-cubic factorization is Certified under STRICT and APPROXIMATE_512 without terminal consumption. A square-free cubic control remains Predicate uncertainty in STRICT and may return Zero only after APPROXIMATE_512 records Approximate512Consumed.",
+    "failure": "Nonzero specialization, derivative, or triple-root invariants; unresolved exact coefficient signs; failed component extraction; either failed exact division; resource overflow; square-free unsupported cubics; and higher-degree axes make no exact claim. No tolerance, sampled positive factor, guessed root, compatibility shim, or second Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The tensor (a*b-c*(a+b))*(1+a*b+a*c+b*c)^2 is cubic in every axis. STRICT returned Predicate uncertainty and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "The repeated coupled cofactor is recovered on an authored cubic axis, proved repeated by exact quotient division, and its remaining quadratic quotient is split by the existing exact authority.",
+    "certified_fixture": "The formerly terminal repeated-cubic rational three-field fixture returns Certified Zero under STRICT and APPROXIMATE_512; neither policy consumes the approximate terminal.",
+    "differential_factor_coverage": "Dense authored double and triple products split and reconstruct exactly on all three axes. A square-free arithmetic-progression cubic that satisfies the root formula is rejected because the candidate does not divide twice. x^3+1 is rejected because delta-one is nonzero despite delta-zero vanishing.",
+    "remaining_policy_control": "The zero factor multiplied by two distinct strictly positive coupled multi-affine factors is square-free cubic on every axis. The bounded factor package deliberately declines it; STRICT remains explicitly uncertain and APPROXIMATE_512 returns Zero only with Approximate512Consumed.",
+    "remaining_exactness_boundary": "Recover bounded square-free cubic factors or construct a bounded compositum only when quotient, relation, axis-content, quadratic-factor, and repeated-cubic paths all fail.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "all-feature release unit-test and comparative executables pinned to CPU 11; exact fully-qualified filters; seven perf-stat repetitions for focused fixtures and three for fixed-work controls; median retired instructions and branches are primary",
+    "repeated_cubic_coupled_rational_zero": {
+      "policy_evaluations": 2,
+      "explicit_structural_preflight_checks": 2,
+      "median_task_clock_ms": 9.19,
+      "median_cycles": 31554871,
+      "median_instructions": 70658051,
+      "median_branches": 14651722,
+      "median_branch_misses": 219165,
+      "comparison_terminal_task_clock_ms": 55.52,
+      "comparison_terminal_cycles": 227151306,
+      "comparison_terminal_instructions": 723954162,
+      "comparison_terminal_branches": 118626716,
+      "comparison_terminal_branch_misses": 896859,
+      "instruction_change_percent": -90.239983,
+      "branch_change_percent": -87.648885,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "square_free_cubic_coupled_terminal": {
+      "policy_evaluations": 2,
+      "median_task_clock_ms": 67.49,
+      "median_cycles": 276095021,
+      "median_instructions": 866525174,
+      "median_branches": 141873167,
+      "median_branch_misses": 1032838,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "Zero with Approximate512Consumed",
+      "ungated_revision": "851b753",
+      "ungated_median_instructions": 22751911431,
+      "ungated_median_branches": 4293971964,
+      "exact_rejection_instruction_change_percent": -96.191418,
+      "exact_rejection_branch_change_percent": -96.695992,
+      "interpretation": "The exact specialization and invariant gates prevent unsupported square-free cubics from entering general component extraction. The surviving 512-bit terminal is the next focused exactness and allocation boundary."
+    },
+    "fixed_work_historical_controls": {
+      "method": "fresh 51ca61e disposable-worktree and final release comparative executables pinned to CPU 11; identical implementation-filtered commands; three complete perf-stat repetitions; fixture construction excluded from timed loops",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 2139890200,
+        "current_instructions": 2139897759,
+        "instruction_change": 7559,
+        "instruction_change_percent": 0.000353,
+        "comparison_branches": 438500388,
+        "current_branches": 438500662
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3485783207,
+        "current_instructions": 3485790679,
+        "instruction_change": 7472,
+        "instruction_change_percent": 0.000214,
+        "comparison_branches": 658685941,
+        "current_branches": 658685498
+      },
+      "interpretation": "Both established offset lanes are instruction-neutral and do not enter the cold repeated-cubic factor package. This fresh matched comparison supersedes the preceding checkpoint's underspecified fixed-work invocation."
+    },
+    "competitive_context": {
+      "method": "final release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded; retired-instruction controls remain primary because host wall time was loaded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 40509.7,
+        "cavalier_contours": 1685.9,
+        "hypercurve_to_cavalier_ratio": 24.028531
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 57102373.5,
+        "hypercurve_chord_fallback": 1897803.5,
+        "curvo_heuristic": 18301.7,
+        "certified_to_curvo_ratio": 3120.058437,
+        "chord_to_curvo_ratio": 103.695476
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. The matched retired-instruction controls establish that this cold exactness cut did not change ordinary offset execution despite loaded-host wall-time variance."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack record-only direct all-feature release-unit-test traces with exact fully-qualified filters; heaptrack_print summary is authoritative",
+    "repeated_cubic_coupled_rational_zero": {
+      "allocation_calls": 73921,
+      "temporary_allocations": 4803,
+      "peak_heap_kib": 846.69,
+      "recorder_peak_rss_mib": 14.59,
+      "comparison_terminal_allocation_calls": 1247768,
+      "comparison_terminal_temporary_allocations": 275726,
+      "comparison_terminal_peak_heap_kib": 713.11,
+      "comparison_terminal_recorder_peak_rss_mib": 14.28,
+      "allocation_change_percent": -94.075742,
+      "temporary_change_percent": -98.258053,
+      "peak_heap_change_percent": 18.732033,
+      "interpretation": "The certified path eliminates 1,173,847 allocation calls and 270,923 temporary allocations. Its denser exact factor tensors raise peak live heap by 133.58 KiB; Heaptrack attributes the largest live consumers to exact interval restriction and canonical Hyperreal rational storage rather than factor-array storage."
+    },
+    "square_free_cubic_coupled_terminal": {
+      "allocation_calls": 1427495,
+      "temporary_allocations": 301395,
+      "peak_heap_mib": 1.36,
+      "recorder_peak_rss_mib": 14.81,
+      "interpretation": "The square-free cubic terminal is the next dominant focused exactness, allocation, and peak-memory boundary."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at 51ca61e and 0c169ac",
+    "default_features": {
+      "comparison_file_bytes": 8395096,
+      "current_file_bytes": 8410000,
+      "file_change_bytes": 14904,
+      "file_change_percent": 0.177532,
+      "comparison_size_text_bytes": 6407489,
+      "current_size_text_bytes": 6421513,
+      "size_text_change_bytes": 14024,
+      "size_text_change_percent": 0.218869,
+      "comparison_actual_text_section_bytes": 4858471,
+      "current_actual_text_section_bytes": 4870583,
+      "actual_text_change_bytes": 12112,
+      "actual_text_change_percent": 0.249297
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7989736,
+      "current_file_bytes": 7989736,
+      "file_change_bytes": 0,
+      "file_change_percent": 0.0,
+      "comparison_size_text_bytes": 6080485,
+      "current_size_text_bytes": 6080485,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4576151,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The complete predicate-enabled repeated-cubic package adds 11.83 KiB of actual production .text. The minimal production artifact remains byte-for-byte identical."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-repeated-cubic-factor --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-repeated-cubic-factor/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23943,
+      "current_nodes": 23958,
+      "node_change_percent": 0.062649,
+      "comparison_edges": 45186,
+      "current_edges": 45246,
+      "edge_change_percent": 0.132784
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> original four-coefficient trivariate_content_and_bounded_factor_sign before quotient reduction",
+      "trivariate_bounded_factor_sign_with_budget -> quadratic or repeated-cubic axis factorization",
+      "trivariate_repeated_cubic_axis_factorizations -> exact specialization rejection -> delta-zero/delta-one or derivative-remainder replay",
+      "trivariate_repeated_cubic_axis_factorizations -> candidate content normalization -> Hypersolve axis/component extraction",
+      "trivariate_repeated_cubic_axis_factorizations -> exact tensor division -> exact quotient division by the same factor",
+      "verified quotient -> bounded recursive quadratic factorization -> existing selected-root sign authorities"
+    ]
+  },
+  "verification": {
+    "hypersolve_library": "passed at dependency revision: 215 tests",
+    "hypercurve_all_features_library": "passed at source revision: 408 tests",
+    "hypercurve_default_features_library": "passed at source revision: 404 tests",
+    "hypercurve_no_default_features_library": "passed at source revision: 320 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed the repeated-cubic coupled identity as Certified under both policies, dense double/triple products on all axes, square-free and delta-one rejection, and the distinct-factor square-free STRICT uncertainty plus APPROXIMATE_512 terminal",
+    "release_builds": "passed all-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

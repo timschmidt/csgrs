@@ -1,0 +1,130 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-02",
+  "checkpoint": "exact-point versus rational-payload alias reconciliation",
+  "implementation_revision": "c652d51a8a830f9f0f00d4593a7713d53901f9fb (dirty scoped audit worktree)",
+  "dependency_revisions": {
+    "hyperreal": "7f1fa042f11a0ca3b5a74e73b743b8b6386087d5",
+    "hyperlattice": "ddbfa911179892f0f262edeb85e02909e0c7047c3",
+    "hyperlimit": "751e1b2cdd353a704414624e67ff459dc1a73cca4",
+    "hypersolve": "3b3924b9c01f49844e47facac10fe3bba37444aa",
+    "hypertri": "b14ca3d054173f9bc7d69f7a4e8356192b21f311"
+  },
+  "source_audit": {
+    "exact_rational_witness_production_calls_classified": 39,
+    "ambiguous_parameter_apis_removed": [
+      "BezierAlgebraicParameter2::represented_rational_root",
+      "BezierParameter2::promote_represented_rational_root",
+      "BezierParameterRange2::promote_represented_rational_endpoints"
+    ],
+    "direct_consumers_checked": [
+      "src/bezier_algebraic_image.rs point, coordinate, tangent, comparison, and parameter-collapse paths",
+      "src/bezier_parameter.rs cache, linear exact-Real quotient, nonlinear rational reconstruction, range promotion, and isolation handoff",
+      "src/bezier_arrangement.rs endpoint equality",
+      "src/bezier_retained_measure.rs coordinate intervals",
+      "src/bezier_tangent_order.rs represented signs",
+      "src/rational_bezier_general.rs coordinate equality, incidence, overlap, and split promotion",
+      "src/bezier_region.rs retained endpoint materialization",
+      "src/bezier_split.rs represented boundary promotion",
+      "src/bezier_retained_overlap.rs exact overlap ranges",
+      "bounded src/bezier_offset.rs affine/tensor folding, dot/cross, unit-scale, circle-frame, recursive-field constant, and mapped-parameter paths"
+    ],
+    "rational_payload_result": "No surviving exact_rational_witness alias consumer required a rational numerator/denominator. Every consumer accepted an arbitrary exact Real point. Genuine rational-root theorem and reconstruction code already gates with Real::exact_rational_ref and remains unchanged."
+  },
+  "retained_changes": [
+    "BezierAlgebraicParameter2::represented_exact_point is the sole public represented-point query; represented_rational_root was deleted",
+    "BezierParameter2::promote_represented_exact_point and BezierParameterRange2::promote_represented_exact_endpoints are the sole public promotions; both historical rational-named methods were deleted",
+    "the shared OnceLock keeps the identical Option<Real> payload and cache behavior under an exact-point name",
+    "all production and benchmark consumers use AlgebraicRootRepresentation::exact_point_witness and the canonical Hypercurve exact-point APIs",
+    "the recursive represented-circle shortcut now states and tests its actual rule: materialized exact Real coordinates become tensor constants even without rational normal forms",
+    "private exact_rational_point, exact_rational_coordinate, exact_rational_vector, and exact_rational_center methods were renamed to exact_point, exact_coordinate, exact_vector, and exact_center without aliases",
+    "Hypersolve's exact_rational_witness compatibility alias was deleted; exact_point_witness is the sole point accessor and rational-only callers use Real::exact_rational_ref",
+    "four unused recursive projective target helpers and all 15 concurrent lint defects were deleted or simplified instead of being suppressed"
+  ],
+  "mathematical_authority": {
+    "exact_point": "A stored exact point is any exact Real expression. It is not evidence of a rational normal form.",
+    "rational_payload": "A caller that needs a rational payload must call Real::exact_rational_ref. Rational-root theorem denominator bounds, modular rejection, and reconstruction continue to do so explicitly.",
+    "linear_parameter": "A validated linear isolator may materialize its exact scalar-tower quotient, including a non-rational Real such as 1/pi, after exact polynomial and interval replay.",
+    "nonlinear_parameter": "The existing higher-degree path remains deliberately narrower: it reconstructs only rational roots of exact-rational coefficient polynomials and otherwise retains the algebraic carrier.",
+    "selected_field": "Only already-materialized exact points become constants. A represented root without an exact point remains an authored tensor/recursive-field axis, preserving correlation.",
+    "policy": "No policy branch, approximation permission, validation requirement, or uncertainty/error mapping changed.",
+    "coordinate_order": "Point [x,y], vector [dx,dy], coefficient, split-boundary, and overlap-range order are unchanged.",
+    "persistent_layout_delta_bytes": 0,
+    "approximate_geometry_added": false
+  },
+  "api_surface": {
+    "exact_point_query": "BezierAlgebraicParameter2::represented_exact_point",
+    "exact_point_promotion": "BezierParameter2::promote_represented_exact_point",
+    "exact_endpoint_promotion": "BezierParameterRange2::promote_represented_exact_endpoints",
+    "hypersolve_point_query": "AlgebraicRootRepresentation::exact_point_witness",
+    "rational_payload_gate": "Real::exact_rational_ref",
+    "compatibility_shims_retained": false
+  },
+  "regression_evidence": {
+    "pre_fix": "The new public non-rational linear-parameter regression failed to compile because represented_exact_point and promote_represented_exact_point did not exist; users had to call APIs whose names falsely implied a rational payload.",
+    "post_fix": {
+      "default_parameter_integration": "27 passed, 0 failed",
+      "all_features_parameter_integration": "27 passed, 0 failed",
+      "no_default_parameter_integration": "27 passed, 0 failed",
+      "parameter_module": "26 passed, 0 failed",
+      "default_exact_real_filter": "7 passed, 0 failed",
+      "all_features_exact_real_filter": "7 passed, 0 failed",
+      "no_default_exact_real_filter": "7 passed, 0 failed",
+      "default_image_integration": "9 passed, 0 failed",
+      "all_features_image_integration": "9 passed, 0 failed",
+      "no_default_image_integration": "9 passed, 0 failed",
+      "offset_exact_point_tensor_constant": "passed",
+      "rational_transcendental_endpoint": "passed",
+      "rational_represented_multi_split": "passed",
+      "retained_overlap_represented_incidence_promotion": "passed"
+    }
+  },
+  "benchmark_method": {
+    "driver": "benches/bezier_algebraic_parameter.rs, release profile",
+    "baseline": "the immediately preceding exact-Real bridge checkpoint's five-run post median",
+    "post": "ten direct executions of the freshly built release benchmark; medians below",
+    "caveat": "The measured hot paths perform identical work through the sole canonical names. Small timing movement is treated as process/frequency noise rather than an attributed speedup or regression."
+  },
+  "wall_performance": {
+    "baseline_per_iteration": {
+      "bernstein_32_to_power_us": 18.985,
+      "sturm_us": 2.336,
+      "refined_ordering_us": 12.510,
+      "quintic_unit_isolation_us": 17.616,
+      "exact_rational_reconstruction_ns": 35,
+      "polynomial_point_tangent_image_us": 2.304,
+      "cached_rational_point_tangent_image_ns": 59
+    },
+    "post_ten_run_median_per_iteration": {
+      "bernstein_32_to_power_us": 19.361,
+      "sturm_us": 2.320,
+      "refined_ordering_us": 12.686,
+      "quintic_unit_isolation_us": 17.187,
+      "exact_rational_reconstruction_ns": 33.774,
+      "polynomial_point_tangent_image_us": 2.280,
+      "cached_rational_point_tangent_image_ns": 58.018
+    },
+    "work_counts_unchanged": true,
+    "interpretation": "Canonical exact-point calls are timing-neutral at this measurement resolution."
+  },
+  "release_artifacts": {
+    "default_rlib_bytes": 43076812,
+    "all_features_rlib_bytes": 44962270,
+    "delta_from_pre_strip_bytes": {
+      "default": -7658,
+      "all_features": -8194
+    },
+    "reason": "The matched worktree loses the ambiguous public wrappers, Hypersolve alias use, four unused private projective helpers, and lint-only redundancy. The rlib delta is recorded as directional size evidence, not as a linked executable-size claim."
+  },
+  "validation": {
+    "all_targets_all_features_check": "passed through strict all-target Clippy",
+    "all_targets_no_default_check": "passed",
+    "release_default": "passed",
+    "release_all_features": "passed",
+    "rustdoc_all_features_no_deps_deny_warnings": "passed",
+    "strict_clippy": "all targets and all features passed with -D warnings after deleting four unused projective helpers and resolving all 15 concurrent diagnostics without allowances",
+    "rational_bezier_aggregate": "47 tests passed; the final unrelated polynomial_graph_replay_accepts_unequal_resultant_projection_counts case remained CPU-bound for several minutes and the aggregate run was interrupted. Both alias-dependent rational tests passed independently.",
+    "full_library": "not re-claimed; the preceding bridge checkpoint records the concurrent topology failures from its interrupted aggregate run",
+    "concurrent_work_caveat": "The user subsequently authorized fixing errors in the concurrent work. Those correctness and lint defects are deliberately assigned to the next bounded slice rather than misrepresented as part of this alias-only result."
+  }
+}

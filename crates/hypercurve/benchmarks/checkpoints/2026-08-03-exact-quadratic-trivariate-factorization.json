@@ -1,0 +1,218 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "exact quadratic trivariate factorization for selected-root winding",
+  "source_revision": "51ca61ea0ad0ead48596b2917c4ad4746bfb8cb3",
+  "semantic_revisions": [
+    "306290c",
+    "5054eeb",
+    "51ca61e"
+  ],
+  "comparison_revision": "cb7ce20",
+  "comparison_semantic_revision": "1403e84",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "1509aa7f6d79a89729e6892c54c9fd800f8689a2",
+    "hypertri": "74d739f78280fd8b4bf1a0c6170ac7c1f127e55e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "bounded exact factorization of a trivariate tensor that is quadratic in at least one axis",
+      "exact bivariate perfect-square discriminant recovery by descending lexicographic coefficients",
+      "exact removal of separable and genuinely bivariate coefficient content through the existing Hypersolve component authority",
+      "descending exact tensor division by each proposed linear-axis factor",
+      "structural, Bernstein, affine, linear-resultant, and binary selected-root sign replay on both exact factors",
+      "all three tensor axes, dense signed multi-affine products, nonsquare rejection, and nonzero factor-sign multiplication",
+      "identical Certified STRICT and APPROXIMATE_512 results for the previously coupled rational three-field zero",
+      "a degree-three-on-every-axis coupled factor control that retains the shared selected terminal policy",
+      "allocation, linked-size, historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "factorization of tensors cubic or higher in every axis",
+      "general multivariate factorization without a quadratic-axis discriminant",
+      "general primitive-element or compositum construction across three independent selected fields",
+      "dense intermediate tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images, broader noncircular fields, and distinct-carrier joins",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "quadratic_axis": "For P=A0+x*A1+x^2*A2 over the exact bivariate coefficient ring, any split into two linear-x factors has discriminant Delta=A1^2-4*A0*A2 equal to an exact bivariate square S^2.",
+    "square_root": "The square root is reconstructed from the leading exact term under lexicographic monomial order. Each next coefficient is forced by the leading root coefficient; the dense residual is updated exactly and acceptance requires a structurally zero final residual.",
+    "candidate_factors": "The quadratic formula supplies coefficient pairs (A1+S,2*A2) and (A1-S,2*A2). Exact univariate-axis content and Hypersolve positive-dimensional bivariate components are divided from each pair until primitive, because either raw pair may contain the other factor's leading coefficient.",
+    "division_authority": "Each proposed constant+linear*x factor is divided from the complete trivariate tensor by descending bivariate-coefficient division. Every intermediate bivariate remainder and the final constant remainder must be exactly zero; the discriminant alone never authorizes a factor.",
+    "selected_sign": "Both verified factors replay Hypercurve's existing STRICT structural, Bernstein, affine, selected-linear-resultant, and binary-relation authorities. A selected zero factor proves the product zero. Two decided nonzero signs are multiplied exactly.",
+    "resource_bound": "All bivariate products and reconstructed trivariate tensors use checked dimensions and the existing 16384-control ceiling. The complete package is cold and feature-local; minimal builds retain their prior code and storage graph byte-for-byte.",
+    "policy": "A supportable quadratic factorization is Certified under STRICT and APPROXIMATE_512 without terminal consumption. A higher-degree coupled control remains Predicate uncertainty in STRICT and may return Zero only after APPROXIMATE_512 records Approximate512Consumed.",
+    "failure": "Nonsquare discriminants, unresolved exact coefficient signs, failed component extraction, failed exact division, resource overflow, and higher-degree axes make no exact claim. No tolerance, sampled factor, guessed square root, compatibility shim, or second Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The zero (a*b-c*(a+b))*(1+a*b+a*c+b*c) has no univariate axis content and is quadratic in every axis. STRICT was Predicate uncertainty and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "The coupled tensor has an exact-square discriminant on every axis. Content removal recovers the two authored multi-affine factors, exact tensor division verifies them, and the existing linear-axis selected-root authority proves a*b-c*(a+b)=0.",
+    "certified_fixture": "The formerly terminal coupled rational three-field fixture returns Certified Zero under STRICT and APPROXIMATE_512; neither policy consumes the approximate terminal.",
+    "differential_factor_coverage": "Two dense signed products of independently authored multi-affine tensors split and reconstruct exactly on all three axes. A negative-times-positive product returns the exact Negative sign, and x^2+1 rejects its nonsquare discriminant.",
+    "remaining_policy_control": "The same zero factor multiplied by (1+a*b+a*c+b*c)^2 is cubic in every axis. The quadratic package deliberately declines it; STRICT remains explicitly uncertain and APPROXIMATE_512 returns Zero only with Approximate512Consumed.",
+    "remaining_exactness_boundary": "Extend exact factor recovery to bounded higher axis degrees, or construct a bounded compositum only when quotient, relation, axis-content, and quadratic-factor paths all fail.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "all-feature release unit-test and comparative executables pinned to CPU 11; exact fully-qualified filters; seven perf-stat repetitions for focused fixtures and three for fixed-work controls; median retired instructions and branches are primary",
+    "quadratic_coupled_rational_zero": {
+      "policy_evaluations": 2,
+      "explicit_unsupported_preflight_checks": 2,
+      "median_task_clock_ms": 3.00,
+      "median_cycles": 7742346,
+      "median_instructions": 14658959,
+      "median_branches": 3057675,
+      "median_branch_misses": 67275,
+      "comparison_terminal_instructions": 384881264,
+      "comparison_terminal_branches": 64410587,
+      "instruction_change_percent": -96.191304,
+      "branch_change_percent": -95.252838,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "higher_degree_coupled_terminal": {
+      "policy_evaluations": 2,
+      "median_task_clock_ms": 55.52,
+      "median_cycles": 227151306,
+      "median_instructions": 723954162,
+      "median_branches": 118626716,
+      "median_branch_misses": 896859,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "Zero with Approximate512Consumed"
+    },
+    "fixed_work_historical_controls": {
+      "method": "final release comparative executable pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1985260228,
+        "current_instructions": 1984933243,
+        "instruction_change_percent": -0.016471,
+        "current_branches": 402521961
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447689097,
+        "current_instructions": 3447691159,
+        "instruction_change_percent": 0.000060,
+        "current_branches": 649669277
+      },
+      "interpretation": "Both established offset lanes remain instruction-neutral and do not enter the cold quadratic factor package."
+    },
+    "competitive_context": {
+      "method": "semantic-revision 306290c release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded; final fixed-work instructions prove the two storage-only follow-ups neutral",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18776.7,
+        "cavalier_contours": 929.2,
+        "hypercurve_to_cavalier_ratio": 20.207383
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29482093.2,
+        "hypercurve_chord_fallback": 987983.9,
+        "curvo_heuristic": 8705.0,
+        "certified_to_curvo_ratio": 3386.799908,
+        "chord_fallback_to_curvo_ratio": 113.496140
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. Retired-instruction controls, not later loaded-host wall-time samples, establish the final package's isolation from ordinary offset lanes."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct all-feature release-unit-test traces with exact fully-qualified filters; heaptrack_print summary is authoritative",
+    "quadratic_coupled_rational_zero": {
+      "allocation_calls": 19801,
+      "temporary_allocations": 1550,
+      "peak_heap_kib": 266.41,
+      "recorder_peak_rss_mib": 13.23,
+      "comparison_terminal_allocation_calls": 713255,
+      "comparison_terminal_temporary_allocations": 148250,
+      "comparison_terminal_peak_heap_kib": 300.42,
+      "comparison_terminal_recorder_peak_rss_mib": 12.21,
+      "allocation_change_percent": -97.223854,
+      "temporary_change_percent": -98.954469,
+      "peak_heap_change_percent": -11.320818,
+      "interpretation": "The certified path eliminates 693,454 allocation calls and 146,700 temporary allocations while reducing peak live heap by 34.01 KiB. Recorder RSS varies by 1.02 MiB and includes heaptrack overhead."
+    },
+    "higher_degree_coupled_terminal": {
+      "allocation_calls": 1247768,
+      "temporary_allocations": 275726,
+      "peak_heap_kib": 713.11,
+      "recorder_peak_rss_mib": 14.28,
+      "interpretation": "The degree-three terminal is the next dominant focused exactness and allocation boundary."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at 1403e84 and 51ca61e",
+    "default_features": {
+      "comparison_file_bytes": 8351544,
+      "current_file_bytes": 8395096,
+      "file_change_bytes": 43552,
+      "file_change_percent": 0.521484,
+      "comparison_size_text_bytes": 6370925,
+      "current_size_text_bytes": 6407489,
+      "size_text_change_bytes": 36564,
+      "size_text_change_percent": 0.573920,
+      "comparison_actual_text_section_bytes": 4825735,
+      "current_actual_text_section_bytes": 4858471,
+      "actual_text_change_bytes": 32736,
+      "actual_text_change_percent": 0.678363
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7989736,
+      "current_file_bytes": 7989736,
+      "file_change_bytes": 0,
+      "file_change_percent": 0.0,
+      "comparison_size_text_bytes": 6080485,
+      "current_size_text_bytes": 6080485,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4576151,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The complete predicate-enabled quadratic factor package adds 31.97 KiB of actual production .text. The feature-local storage follow-up restores the minimal production artifact byte-for-byte."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-quadratic-factor --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-quadratic-factor/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23897,
+      "current_nodes": 23943,
+      "node_change_percent": 0.192493,
+      "comparison_edges": 45034,
+      "current_edges": 45186,
+      "edge_change_percent": 0.337523
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_quadratic_factor_sign",
+      "trivariate_quadratic_factor_sign -> trivariate_quadratic_axis_factorizations",
+      "trivariate_quadratic_axis_factorizations -> exact bivariate discriminant -> bivariate_exact_square_root",
+      "trivariate_quadratic_axis_factorizations -> bivariate_remove_common_factors -> Hypersolve axis/component extraction",
+      "trivariate_quadratic_axis_factorizations -> trivariate_divide_linear_axis_factor -> Hypersolve exact bivariate division",
+      "verified factors -> existing structural, Bernstein, affine, linear-resultant, and binary selected-root authorities"
+    ]
+  },
+  "verification": {
+    "hypersolve_library": "passed at dependency revision: 215 tests",
+    "hypercurve_all_features_library": "passed at source revision: 405 tests",
+    "hypercurve_default_features_library": "passed at source revision: 401 tests",
+    "hypercurve_no_default_features_library": "passed at source revision: 320 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed the quadratic coupled identity as Certified under both policies, dense products on all axes, nonsquare rejection, exact nonzero sign multiplication, and the degree-three STRICT uncertainty plus APPROXIMATE_512 terminal",
+    "release_builds": "passed all-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

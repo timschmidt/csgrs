@@ -1,0 +1,2107 @@
+{
+  "schema_version": 1,
+  "title": "Canonical native scalar API and removal of lattice compatibility infrastructure",
+  "completed_at": "2026-09-06 03:00:35 UTC",
+  "status": "Implementation committed on main and local functional qualification complete. Native scalar wins and machinery deletion are retained with small measured matrix regressions explicitly recorded. Full Hypercurve release readiness, uniform geometry performance, and full slow-fixture memory accounting remain open.",
+  "objective_status": "active",
+  "exactcorelib_mining_and_idea_uplift": "Already closed by preceding checkpoints; this follow-on API cleanup does not reopen or newly close that milestone.",
+  "commits": {
+    "hyperlattice_parent": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0",
+    "hyperlattice_candidate": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hyperlimit_parent": "0f1a32d54a1c063d134b0476082e49168516102a",
+    "hyperlimit_candidate": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+    "hypercurve_parent": "627ded88437312e8d24749129010d366ea3d3f31",
+    "hypercurve_candidate": "fb8aba8edfde74a3eff3c24128f6ed1f862653b8",
+    "qualified_heads": [
+      {
+        "repo": "hyperreal",
+        "head": "21e76ead8351f5f770f9c97165606ec969310cf9"
+      },
+      {
+        "repo": "hyperlimit",
+        "head": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5"
+      },
+      {
+        "repo": "hyperlattice",
+        "head": "53427ce89f8c82c016e69a04e035787e2753adc8"
+      },
+      {
+        "repo": "hypertri",
+        "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+      },
+      {
+        "repo": "hypersolve",
+        "head": "d9e21c6f0639bc0d92afe929e7c392a475c0e094"
+      },
+      {
+        "repo": "hypercurve",
+        "head": "fb8aba8edfde74a3eff3c24128f6ed1f862653b8"
+      },
+      {
+        "repo": "hypermesh",
+        "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+      }
+    ]
+  },
+  "change": {
+    "scalar_authority": "Hyperreal owns scalar construction, arithmetic, domain errors, cancellation attachment, and structural type names. Hyperlattice consumers call Real methods directly; Complex::i owns the imaginary unit.",
+    "type_names": {
+      "RealDomainFacts": "DomainFacts",
+      "RealDomainStatus": "DomainStatus",
+      "RealExpressionDegree": "ExpressionDegree",
+      "RealMagnitudeBits": "MagnitudeBits",
+      "RealFacts": "RealStructuralFacts",
+      "RealSymbolicDependencyMask": "SymbolicDependencyMask",
+      "RealZeroOneMinusOneStatus": "ZeroOneMinusOneStatus",
+      "ZeroStatus": "ZeroKnowledge"
+    },
+    "type_only_proof": "Map old names to canonical names, normalize renamed reexports, and remove whitespace. The thirteen production files below have equal normalized SHA256 before and after; no arithmetic or topology change is attributed to this renaming.",
+    "type_only_source_files": [
+      {
+        "file": "hypercurve/src/bezier.rs",
+        "normalized_sha256": "05c350cf5ed30c96fcc4938760c9b7d7a99c31a12a1143fafffdbf59c7185ee3"
+      },
+      {
+        "file": "hypercurve/src/bezier_arrangement.rs",
+        "normalized_sha256": "701d187bd957b5cf86ae5ab2752c1875ee7ccc9c2dbc4494bf4581061209ddf8"
+      },
+      {
+        "file": "hypercurve/src/bezier_offset.rs",
+        "normalized_sha256": "0fb99442568eec7be8d4492634eeaf997e740ff4a6efbc21a7ffdabcd26bea7d"
+      },
+      {
+        "file": "hypercurve/src/classify.rs",
+        "normalized_sha256": "90dcd3ddb94c95fb9b8b4a872fd7d5a8012a8f763fdac0421782dc4dd79a83cd"
+      },
+      {
+        "file": "hypercurve/src/contour.rs",
+        "normalized_sha256": "67f99d601d944afe97c4af0403d59a032452037ed1c113ff30a147bf1bd5d9a0"
+      },
+      {
+        "file": "hypercurve/src/lib.rs",
+        "normalized_sha256": "9552e4876aeef1f649aa507d2644636d55789244c2d963eb8dc1e296369693b4"
+      },
+      {
+        "file": "hypercurve/src/point.rs",
+        "normalized_sha256": "788a9e753d7370b3b706dc5b157c1547388bcc704084696641abd7c3d5dc4afa"
+      },
+      {
+        "file": "hypercurve/src/rational_bezier.rs",
+        "normalized_sha256": "cc17f3f6f5bc4a39adfc20bf49f1b257d307dda2be98d20ef87bc27702682ccb"
+      },
+      {
+        "file": "hypercurve/src/segment.rs",
+        "normalized_sha256": "57ae015b1d1a5f8f4fa8f74fdb3717e69579fd68862b61c8317c41f3c30d5d71"
+      },
+      {
+        "file": "hypercurve/src/straight_skeleton.rs",
+        "normalized_sha256": "578f0ae0ef0869aeb8e37fe146e8a42662b9a946aa8aa339b945b66e00d705ff"
+      },
+      {
+        "file": "hyperlimit/src/geometry/plane.rs",
+        "normalized_sha256": "d9d45f4d23fe540bc64782700ac60fa74e3d077ea2316a88e6f11fcf53e7f889"
+      },
+      {
+        "file": "hyperlimit/src/lib.rs",
+        "normalized_sha256": "bbef7a4d8f5968b469f4e805c9d1c0ec71c99b919708b54c118ae32f185fb20c"
+      },
+      {
+        "file": "hyperlimit/src/predicates/orient.rs",
+        "normalized_sha256": "b59cbed860953dbead30a5d4f62636c24147bee526e10695971b4f9f0bec93b7"
+      }
+    ],
+    "scalar_public_functions_removed": [
+      "zero_status",
+      "zero_status_with_abort",
+      "zero",
+      "one",
+      "e",
+      "pi",
+      "tau",
+      "i",
+      "reciprocal",
+      "reciprocal_ref",
+      "reciprocal_checked_with_abort",
+      "pow",
+      "powi",
+      "exp",
+      "ln",
+      "log10",
+      "log10_with_abort",
+      "sqrt",
+      "sin",
+      "cos",
+      "tan",
+      "sinh",
+      "cosh",
+      "tanh",
+      "asin",
+      "asin_with_abort",
+      "acos",
+      "acos_with_abort",
+      "atan",
+      "atan_with_abort",
+      "asinh",
+      "asinh_with_abort",
+      "acosh",
+      "acosh_with_abort",
+      "atanh",
+      "atanh_with_abort"
+    ],
+    "scalar_public_functions_retained": {
+      "reciprocal_checked": "Requires structural NonZero before Real::inverse; Unknown returns UnknownZero without refinement; Zero returns DivideByZero.",
+      "reciprocal_ref_checked": "Same structural-only contract without consuming the input. Native Real::inverse_ref may instead refine an Unknown divisor to prove nonzero."
+    },
+    "scalar_abort_api": "Attach a caller-owned AbortSignal with Real::abort before native scalar operations. Structural zero_status never refines or inspects cancellation.",
+    "duplicate_domain_preflights_removed": ["ln","log10","asin","acos"],
+    "private_matrix_helpers_removed": [
+      {
+        "name": "invert_matrix4_affine_linear_diagonal_checked_with_abort",
+        "base": "invert_matrix4_affine_linear_diagonal_checked"
+      },
+      {
+        "name": "divide_matrix4_by_affine_linear_diagonal_checked_with_abort",
+        "base": "divide_matrix4_by_affine_linear_diagonal_checked"
+      },
+      {
+        "name": "invert_matrix3_by_diagonal_checked_with_abort",
+        "base": "invert_matrix3_by_diagonal_checked"
+      },
+      {
+        "name": "invert_matrix3_upper_triangular_checked_with_abort",
+        "base": "invert_matrix3_upper_triangular_checked"
+      },
+      {
+        "name": "invert_matrix3_lower_triangular_checked_with_abort",
+        "base": "invert_matrix3_lower_triangular_checked"
+      },
+      {
+        "name": "divide_matrix3_by_affine_linear_diagonal_checked_with_abort",
+        "base": "divide_matrix3_by_affine_linear_diagonal_checked"
+      },
+      {
+        "name": "invert_matrix4_by_upper_triangular_checked_with_abort",
+        "base": "invert_matrix4_by_upper_triangular_checked"
+      },
+      {
+        "name": "invert_matrix4_by_lower_triangular_checked_with_abort",
+        "base": "invert_matrix4_by_lower_triangular_checked"
+      },
+      {
+        "name": "invert_matrix4_by_diagonal_checked_with_abort",
+        "base": "invert_matrix4_by_diagonal_checked"
+      },
+      {
+        "name": "divide_matrix3_by_affine_upper_triangular_checked_with_abort",
+        "base": "divide_matrix3_by_affine_upper_triangular_checked"
+      },
+      {
+        "name": "divide_matrix3_affine_by_affine_upper_triangular_checked_with_abort",
+        "base": "divide_matrix3_affine_by_affine_upper_triangular_checked"
+      },
+      {
+        "name": "divide_matrix3_by_upper_triangular_checked_with_abort",
+        "base": "divide_matrix3_by_upper_triangular_checked"
+      },
+      {
+        "name": "divide_matrix3_by_lower_triangular_checked_with_abort",
+        "base": "divide_matrix3_by_lower_triangular_checked"
+      },
+      {
+        "name": "divide_matrix3_by_diagonal_checked_with_abort",
+        "base": "divide_matrix3_by_diagonal_checked"
+      },
+      {
+        "name": "divide_matrix4_by_diagonal_checked_with_abort",
+        "base": "divide_matrix4_by_diagonal_checked"
+      },
+      {
+        "name": "divide_matrix4_by_affine_upper_triangular_checked_with_abort",
+        "base": "divide_matrix4_by_affine_upper_triangular_checked"
+      },
+      {
+        "name": "divide_matrix4_affine_by_affine_upper_triangular_checked_with_abort",
+        "base": "divide_matrix4_affine_by_affine_upper_triangular_checked"
+      },
+      {
+        "name": "divide_matrix4_by_upper_triangular_checked_with_abort",
+        "base": "divide_matrix4_by_upper_triangular_checked"
+      },
+      {
+        "name": "divide_matrix4_by_lower_triangular_checked_with_abort",
+        "base": "divide_matrix4_by_lower_triangular_checked"
+      },
+      {
+        "name": "divide_matrix4_affine_by_affine_linear_diagonal_checked_with_abort",
+        "base": "divide_matrix4_affine_by_affine_linear_diagonal_checked"
+      },
+      {
+        "name": "divide_matrix3_affine_by_affine_linear_diagonal_checked_with_abort",
+        "base": "divide_matrix3_affine_by_affine_linear_diagonal_checked"
+      }
+    ],
+    "private_matrix_helper_proof": "Nineteen bodies matched their checked counterparts after replacing the non-refining abort zero query; two additional forwarding bodies then matched. Arithmetic cancellation attachment remains in genuinely abort-aware paths. checked_pivot uses one native structural classifier, not a generic closure.",
+    "public_matrix_methods_removed": [
+      "Matrix3::upper_triangular_inverse_checked_with_abort",
+      "Matrix3::lower_triangular_inverse_checked_with_abort",
+      "Matrix3::div_upper_triangular_checked_with_abort",
+      "Matrix3::div_lower_triangular_checked_with_abort",
+      "Matrix4::upper_triangular_inverse_checked_with_abort",
+      "Matrix4::lower_triangular_inverse_checked_with_abort",
+      "Matrix4::div_upper_triangular_checked_with_abort",
+      "Matrix4::div_lower_triangular_checked_with_abort"
+    ],
+    "public_matrix_removal_reason": "These eight methods attached no signal to arithmetic and only routed through the non-refining zero-query wrapper. Checked triangular operations remain; no alias or replacement wrapper is added.",
+    "compatibility_shims_added": [],
+    "new_public_carriers": [],
+    "persistent_cache_or_layout_changes": [],
+    "hyperlattice_production_line_delta": -689,
+    "hyperlattice_scalar_module_lines": [347,64],
+    "hyperlattice_total_line_delta_including_documentation": -625,
+    "hyperlattice_diff": [
+      {
+        "path": "PERFORMANCE.md",
+        "added": 86,
+        "removed": 0
+      },
+      {
+        "path": "README.md",
+        "added": 17,
+        "removed": 11
+      },
+      {
+        "path": "benches/mathbench/comparisons.rs",
+        "added": 32,
+        "removed": 32
+      },
+      {
+        "path": "benches/mathbench/matrix_ops.rs",
+        "added": 2,
+        "removed": 142
+      },
+      {
+        "path": "benches/mathbench/scalar_ops.rs",
+        "added": 135,
+        "removed": 108
+      },
+      {
+        "path": "benches/regression_sentinels.rs",
+        "added": 3,
+        "removed": 3
+      },
+      {
+        "path": "examples/readme_quickstart.rs",
+        "added": 2,
+        "removed": 2
+      },
+      {
+        "path": "fuzz/fuzz_targets/complex_ops.rs",
+        "added": 6,
+        "removed": 6
+      },
+      {
+        "path": "fuzz/fuzz_targets/matrix_ops.rs",
+        "added": 3,
+        "removed": 3
+      },
+      {
+        "path": "fuzz/fuzz_targets/scalar_ops.rs",
+        "added": 24,
+        "removed": 30
+      },
+      {
+        "path": "fuzz/fuzz_targets/vector_ops.rs",
+        "added": 3,
+        "removed": 3
+      },
+      {
+        "path": "src/algebra2.rs",
+        "added": 38,
+        "removed": 35
+      },
+      {
+        "path": "src/complex.rs",
+        "added": 14,
+        "removed": 14
+      },
+      {
+        "path": "src/lib.rs",
+        "added": 8,
+        "removed": 16
+      },
+      {
+        "path": "src/matrix/core.rs",
+        "added": 67,
+        "removed": 458
+      },
+      {
+        "path": "src/point.rs",
+        "added": 8,
+        "removed": 8
+      },
+      {
+        "path": "src/scalar.rs",
+        "added": 12,
+        "removed": 295
+      },
+      {
+        "path": "src/vector.rs",
+        "added": 48,
+        "removed": 58
+      },
+      {
+        "path": "tests/adversarial_borrowed_owned.rs",
+        "added": 1,
+        "removed": 1
+      },
+      {
+        "path": "tests/adversarial_constraint_props.rs",
+        "added": 6,
+        "removed": 6
+      },
+      {
+        "path": "tests/adversarial_matrix_invariants.rs",
+        "added": 5,
+        "removed": 5
+      },
+      {
+        "path": "tests/adversarial_props.rs",
+        "added": 9,
+        "removed": 9
+      },
+      {
+        "path": "tests/adversarial_regressions.rs",
+        "added": 4,
+        "removed": 4
+      },
+      {
+        "path": "tests/adversarial_scalar_semantics.rs",
+        "added": 59,
+        "removed": 51
+      },
+      {
+        "path": "tests/api_surface_coverage.rs",
+        "added": 35,
+        "removed": 29
+      },
+      {
+        "path": "tests/common/mod.rs",
+        "added": 2,
+        "removed": 2
+      },
+      {
+        "path": "tests/complex.rs",
+        "added": 4,
+        "removed": 4
+      },
+      {
+        "path": "tests/matrix.rs",
+        "added": 60,
+        "removed": 112
+      },
+      {
+        "path": "tests/matrix_api_surface_coverage.rs",
+        "added": 6,
+        "removed": 38
+      },
+      {
+        "path": "tests/real_representations.rs",
+        "added": 49,
+        "removed": 0
+      },
+      {
+        "path": "tests/scalar.rs",
+        "added": 158,
+        "removed": 66
+      },
+      {
+        "path": "tests/vector.rs",
+        "added": 72,
+        "removed": 52
+      }
+    ],
+    "new_regressions": [
+      "Structural zero queries and checked scalar reciprocals preserve Zero, NonZero, and Unknown with active and inactive cancellation.",
+      "Native invalid-domain errors remain authoritative with active and inactive cancellation.",
+      "A structurally Unknown divisor stays rejected by the checked reciprocal until native inverse_ref refines and proves nonzero.",
+      "All 22 finite scalar certificate recipes, four signed scales, and both cancellation states retain every invalid ln/log10/asin/acos domain certificate.",
+      "Hypercurve endpoint tangents expose canonical ZeroKnowledge for zero, pi, and negative exact components."
+    ]
+  },
+  "source_integrity": {
+    "aggregate_algorithm": "SHA256(JSON.stringify(sorted tuples [relative path, SHA256(file bytes), byte length])). Files are Cargo.toml, Cargo.lock, and every src/**/*.rs, sorted by relative-path localeCompare. Final digests match those captured before functional qualification; test/fuzz source hashes are listed separately for Hyperlattice.",
+    "final_qualified_trees": [
+      {
+        "repo": "hyperreal",
+        "file_count": 80,
+        "sha256": "a06b7e26a942abf455656e60077fb8f30bb2b236b4cb0724d2faea7065c49531"
+      },
+      {
+        "repo": "hyperlattice",
+        "file_count": 22,
+        "sha256": "bbc3a99fa31456cf7246acc0d0b898ac9bdf8e4c0669a32a5736c1fe984b382b"
+      },
+      {
+        "repo": "hyperlimit",
+        "file_count": 36,
+        "sha256": "50e61b79e8b803afa5d9b42f8722a0184dc73583ee17b85a76e3b567d53c6e44"
+      },
+      {
+        "repo": "hypersolve",
+        "file_count": 66,
+        "sha256": "9548c6d94bf43a5f96c637b6b3f5c27469cfb8a0c72de0518b22757ffb1df28e"
+      },
+      {
+        "repo": "hypertri",
+        "file_count": 18,
+        "sha256": "b6250cc53a6d726dd9903946f16a97f895f15c4e68cae9086c059b4ecf211c7c"
+      },
+      {
+        "repo": "hypercurve",
+        "file_count": 64,
+        "sha256": "1127197a0eadf49d7a3e3257cb0533f987c9c58765da1ef6d8fdf790709a21a7"
+      },
+      {
+        "repo": "hypermesh",
+        "file_count": 23,
+        "sha256": "2a00d0be2bd9635b5d82e8a880e4c59fa3dcb7cb4aca9685e84c7bcfed0bd809"
+      }
+    ],
+    "hyperlattice_tested_files": [
+      {
+        "path": "README.md",
+        "sha256": "cccdc019592faae5c6af61cdaf704b6be3c51faf94ce59d0af1213f642e7c638",
+        "bytes": 14746
+      },
+      {
+        "path": "benches/mathbench/comparisons.rs",
+        "sha256": "80751ea4e1039718149168a0a333418339a7c823e758dd5966b50c040de029e8",
+        "bytes": 124164
+      },
+      {
+        "path": "benches/mathbench/matrix_ops.rs",
+        "sha256": "cc310d3827481dd194e13a8a8860af7e9bd32cf61ae9c9e3436cf9f3c24a0fc2",
+        "bytes": 154545
+      },
+      {
+        "path": "benches/mathbench/scalar_ops.rs",
+        "sha256": "baf70d2de42e7f85b8b076e4c60b14219d15fdf0c89e15ff601f6011123988a0",
+        "bytes": 47636
+      },
+      {
+        "path": "benches/regression_sentinels.rs",
+        "sha256": "42c3c458ccb70a9f23fa903c7fbee7fb84c9f3079ce7a8f85160cd76d9b7b299",
+        "bytes": 11874
+      },
+      {
+        "path": "examples/readme_quickstart.rs",
+        "sha256": "eaa92c86e6fc9fbe1ceb58e333a8305505530823ac6ea246b8c79bfcaa06c6ce",
+        "bytes": 458
+      },
+      {
+        "path": "fuzz/fuzz_targets/complex_ops.rs",
+        "sha256": "a616de88029f4eab7f2c344a3b7d252ae3de8a827ec8abf27db4f749147c21f4",
+        "bytes": 7696
+      },
+      {
+        "path": "fuzz/fuzz_targets/matrix_ops.rs",
+        "sha256": "5cb130cc969f30a8ee5e6faeb32337dbdecdd556f8776468ec63b2aec801ae03",
+        "bytes": 16622
+      },
+      {
+        "path": "fuzz/fuzz_targets/scalar_ops.rs",
+        "sha256": "ee2600cb3f17762a9584cb9f2399d10fd4136f00aa1fc0eefcbd89035be06447",
+        "bytes": 8322
+      },
+      {
+        "path": "fuzz/fuzz_targets/vector_ops.rs",
+        "sha256": "c43aea1258439fa3ce8c13be565898173e8bb84caadbd8803c92b3ab765d4623",
+        "bytes": 7342
+      },
+      {
+        "path": "src/algebra2.rs",
+        "sha256": "6ad9dda4944fbb8104ba3b1c9e8139361ee9ae88423cabeeed95b7a02ce35c40",
+        "bytes": 23082
+      },
+      {
+        "path": "src/complex.rs",
+        "sha256": "93977c0de29a4e1598f92e7437987a6b7fa4ba8eefb63864ef0e93ef1ba40923",
+        "bytes": 18488
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "e59f6a1c584b160b3ef5883c56a8f2d236cc06d0f52e68ad29d58b4fcca6b56b",
+        "bytes": 3293
+      },
+      {
+        "path": "src/matrix/core.rs",
+        "sha256": "021022c26871541d7118d5c2e0a68e98d5750cd5b2ecc0549f21ab81add5c1a8",
+        "bytes": 422262
+      },
+      {
+        "path": "src/point.rs",
+        "sha256": "e96e5296bdc902b744d889fd85064194d56e8cd90badc1a750e6e16af21f176c",
+        "bytes": 25098
+      },
+      {
+        "path": "src/scalar.rs",
+        "sha256": "d664754c28a243b6cb3450e91bed2f06cec33636e4b43105fa3d349864aec025",
+        "bytes": 2279
+      },
+      {
+        "path": "src/vector.rs",
+        "sha256": "10b40e2b9f5b7952586521b3de86ba9fac131e1144877db442afb5159d75b363",
+        "bytes": 86642
+      },
+      {
+        "path": "tests/adversarial_borrowed_owned.rs",
+        "sha256": "14fbcf1a8d7d2e8ae218f8935b73422d54d36baba0f08f7684f18ac77b51b639",
+        "bytes": 4278
+      },
+      {
+        "path": "tests/adversarial_constraint_props.rs",
+        "sha256": "86a1636cf41ff02e9dc6a2e233f82784cc1aef238a87786acff32366b55db4e9",
+        "bytes": 2654
+      },
+      {
+        "path": "tests/adversarial_matrix_invariants.rs",
+        "sha256": "df26a0cd4dbdd7ea606ea43a3f6430b0155c2124b90c3ef759296312534b50f0",
+        "bytes": 4959
+      },
+      {
+        "path": "tests/adversarial_props.rs",
+        "sha256": "3d87d1b4d0b7012bb3a6e9516794683ee0f7d1bbc44ee1c3c6afe42ccf68d8ca",
+        "bytes": 7270
+      },
+      {
+        "path": "tests/adversarial_regressions.rs",
+        "sha256": "51fe8413d5b123bc941a31441a18b414f1d8cae623748ec65c8c40760e076020",
+        "bytes": 4219
+      },
+      {
+        "path": "tests/adversarial_scalar_semantics.rs",
+        "sha256": "6b072ba071312480670371e3579f8e60890f72b3913b5a59bf9682cb86fa775e",
+        "bytes": 5689
+      },
+      {
+        "path": "tests/api_surface_coverage.rs",
+        "sha256": "f9e3740670fba398a02eb511f2082425360c48c161ca435830dc3151bdc7653e",
+        "bytes": 25940
+      },
+      {
+        "path": "tests/common/mod.rs",
+        "sha256": "ff601a882f3f04f9c8609e71e127e7c779c73ec8647fd06e6f6b0b23e44fa79b",
+        "bytes": 585
+      },
+      {
+        "path": "tests/complex.rs",
+        "sha256": "62412bb08f3fe7d4b205b491435dafccb97475f71e0c5e30f978031a6452408f",
+        "bytes": 2798
+      },
+      {
+        "path": "tests/matrix.rs",
+        "sha256": "5cd7bf49bc4d10d407e3997b96b51b1fb84a4c6427133fa8b137c1e02f1b4433",
+        "bytes": 59168
+      },
+      {
+        "path": "tests/matrix_api_surface_coverage.rs",
+        "sha256": "6ebc117d3ee4a77986804fe6361b0c252163f73fd6fd1d94b07d4cc3c3f73bba",
+        "bytes": 33075
+      },
+      {
+        "path": "tests/real_representations.rs",
+        "sha256": "8ec3c981583837c433e188ed7e2148594d3003114e5f58def12d3e65fca6131c",
+        "bytes": 19778
+      },
+      {
+        "path": "tests/scalar.rs",
+        "sha256": "1905efd522ea3bcdd01ad02b3caa91b6ca71f89997e0b3b1b72c3a9665060a71",
+        "bytes": 9283
+      },
+      {
+        "path": "tests/vector.rs",
+        "sha256": "b32b33fa4a3193cde0df06474014dfd2f6086c38a29caf9ac832dbd82aed26ce",
+        "bytes": 25622
+      }
+    ],
+    "frozen_baseline": {
+      "root": "/tmp/hyperlattice-native-scalar-control.bZA3IR/hyperlattice",
+      "file_count": 22,
+      "sha256": "447bb1b1be53707783bacf96170447e72e61ab73f634d35ef2a4acaa4b750a74",
+      "description": "Snapshot after canonical type renaming but before scalar facade and matrix-helper removal; sibling Hyperreal symlink points to unchanged qualified Hyperreal. The baseline is not the raw parent revision."
+    }
+  },
+  "validation": {
+    "scope": "All recorded processes finished. Test counts sum independent test binaries, including doctests when present; they are not deduplicated across feature configurations. Production fingerprints are unchanged after these gates.",
+    "commands_for_reproduction": [
+      {
+        "repo": "hyperlattice",
+        "commands": [
+          "cargo test --locked --all-targets",
+          "cargo test --locked --all-features --all-targets",
+          "cargo test --locked --release --all-features --lib --tests",
+          "cargo test --locked --doc",
+          "cargo clippy --locked --all-targets -- -D warnings",
+          "cargo clippy --locked --all-targets --all-features -- -D warnings",
+          "RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps",
+          "cargo check --manifest-path fuzz/Cargo.toml --bins",
+          "cargo fmt --all -- --check"
+        ]
+      },
+      {
+        "repo": "hypercurve",
+        "commands": [
+          "cargo test --locked --release --all-features --no-fail-fast -- --include-ignored --test-threads=2",
+          "cargo test --locked --release --no-default-features --no-fail-fast",
+          "cargo clippy --locked --all-targets --all-features -- -D warnings",
+          "RUSTDOCFLAGS='-D warnings' cargo doc --locked --all-features --no-deps",
+          "cargo check --locked --no-default-features --all-targets",
+          "cargo check --manifest-path fuzz/Cargo.toml --bins"
+        ]
+      }
+    ],
+    "hypercurve_opt_in_cases_passed": [
+      "bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver",
+      "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+      "exact_path_stroke_splits_an_interior_source_cusp",
+      "exact_path_stroke_preserves_an_even_multiplicity_stationary_source",
+      "exact_path_stroke_splits_a_nonuniform_rational_source_cusp"
+    ],
+    "logs": [
+      {
+        "path": "/tmp/hyperlattice-native-scalar-final-default-tests.log",
+        "sha256": "f27c25fc9dc0d7dc9c263b3e43662563a89f5d012a9ada16c91f99bfc14fac56",
+        "bytes": 117313,
+        "exit_code": 0,
+        "totals": {
+          "passed": 203,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s",
+          "test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-final-all-feature-tests.log",
+        "sha256": "dd2a75429433b4b18b81cf7c510ae6d268d63464cf0e04b5b324d96f2a249e18",
+        "bytes": 117671,
+        "exit_code": 0,
+        "totals": {
+          "passed": 205,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s",
+          "test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.60s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-release-tests.log",
+        "sha256": "0d855b9cad05265759f333421b56ce721ddc1ba97f4fb8f625867d49b6894d70",
+        "bytes": 18226,
+        "exit_code": 0,
+        "totals": {
+          "passed": 203,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+          "test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 12.71s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-doctests.log",
+        "sha256": "fdf0baa8ae12c0b1d860aaed83845495d534e2c92a978d1d62ccee30ac0cc710",
+        "bytes": 312,
+        "exit_code": 0,
+        "totals": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": ["test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"],
+        "build_results": ["    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-final-default-clippy.log",
+        "sha256": "268052af058c5d420496e870f4ea3e8693e964133e3d1e9fb6d69906060fecb6",
+        "bytes": 157,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-final-all-feature-clippy.log",
+        "sha256": "4ce8109cd7babc095166e186dfac8ea91b049b6e83c97589ffc209eda6fa8ac3",
+        "bytes": 157,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.26s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-final-fuzz-check.log",
+        "sha256": "5206e8a60b2c2eee8bf1d59d48153d9539fc5fb189a9b35706ddbf733881aee3",
+        "bytes": 167,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.10s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-fuzz-smoke.log",
+        "sha256": "29ceb353b60cf9a8f6e66ee164a9331558b08439b1e6c15bb124558cc8713a36",
+        "bytes": 3615,
+        "exit_code": 1,
+        "build_results": [
+          "    Finished `release` profile [optimized + debuginfo] target(s) in 26.72s",
+          "    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s",
+          "==131==LeakSanitizer has encountered a fatal error.",
+          "==131==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)"
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-fuzz-smoke-host.log",
+        "sha256": "d90f2b0e8a8626d8a45bb2f057e286aea5ef4948235a024fc0a66476abe54058",
+        "bytes": 13219,
+        "exit_code": 0,
+        "build_results": ["    Finished `release` profile [optimized + debuginfo] target(s) in 0.07s","    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-fuzz-extended-host.log",
+        "sha256": "15e68d5a6eb755fe3d2d131d0a33a167623d166f6a670da8df61381bd18b3d71",
+        "bytes": 39539,
+        "exit_code": 0,
+        "build_results": [
+          "    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s",
+          "    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s",
+          "#1024\tDONE   cov: 6859 ft: 17694 corp: 284/5276b lim: 64 exec/s: 341 rss: 386Mb",
+          "Done 1024 runs in 3 second(s)"
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-docs.log",
+        "sha256": "2698d19fe506ffac48d9c03e62f4b9b4f629a6570849f15baec101d813faf8a9",
+        "bytes": 389,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.99s"]
+      },
+      {
+        "path": "/tmp/hyperlimit-native-scalar-all-feature-tests.log",
+        "sha256": "d485d19ec64221875f1d534fca8f48abe0a0d7cdb981ef8c68f8892ee085801b",
+        "bytes": 35826,
+        "exit_code": 0,
+        "totals": {
+          "passed": 361,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 252 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 22.06s"]
+      },
+      {
+        "path": "/tmp/hyperlimit-native-scalar-minimal-tests.log",
+        "sha256": "ea2aa1b2535f6323d37471f9586ae49e6c0dac0b1a0891456c956c0e8ab26b0d",
+        "bytes": 34739,
+        "exit_code": 0,
+        "totals": {
+          "passed": 348,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 242 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 18.74s"]
+      },
+      {
+        "path": "/tmp/hyperlimit-native-scalar-clippy.log",
+        "sha256": "ffe4373010d5219e9b65cc4fdfa282a9799e9fa6581dced810ab86195d9249cf",
+        "bytes": 238,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.72s"]
+      },
+      {
+        "path": "/tmp/hyperlimit-native-scalar-fuzz-check.log",
+        "sha256": "8ce2c052f0c4ecb6c78122cc3d63ee11cb565b25591e43bcc2ea19fe70fd5ad0",
+        "bytes": 409,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.41s"]
+      },
+      {
+        "path": "/tmp/hyperlimit-native-scalar-minimal-check.log",
+        "sha256": "5006796fc3f1385bd84c6e989075f9bd358570ea0f4f3d1bfceae58a4698d6fb",
+        "bytes": 372,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.61s"]
+      },
+      {
+        "path": "/tmp/hyperlimit-native-scalar-docs.log",
+        "sha256": "6ea38f048cafc330126fe18858e378132d0156907da25da9e665429bffbb7baf",
+        "bytes": 412,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.47s"]
+      },
+      {
+        "path": "/tmp/hypertri-native-scalar-all-feature-tests.log",
+        "sha256": "23d51f54df83cc229fd7039c38281c14c1163ef6410a83156e0dae8854262303",
+        "bytes": 16895,
+        "exit_code": 0,
+        "totals": {
+          "passed": 191,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 119 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 21.09s"]
+      },
+      {
+        "path": "/tmp/hypersolve-native-scalar-all-feature-tests.log",
+        "sha256": "f7899a5da865d453dd9a36df1caffb9b8273844ff06aa2f176ddffb953371969",
+        "bytes": 72235,
+        "exit_code": 0,
+        "totals": {
+          "passed": 794,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 430 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 131 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s",
+          "test result: ok. 211 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 55.55s"]
+      },
+      {
+        "path": "/tmp/hypermesh-native-scalar-all-feature-tests.log",
+        "sha256": "528cf2096df987c7706589323d3a6b333d0acbdb4168ce6c872f5f904e57edab",
+        "bytes": 21953,
+        "exit_code": 0,
+        "totals": {
+          "passed": 222,
+          "failed": 0,
+          "ignored": 7
+        },
+        "test_summaries": [
+          "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s",
+          "test result: ok. 13 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 1.96s",
+          "test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 29.26s"]
+      },
+      {
+        "path": "/tmp/hypercurve-native-scalar-all-feature-including-ignored-tests.log",
+        "sha256": "b6fa6877962ecf84d4cfcf4dce0ccf93a2d9bb85701a46ddb3fd3987ebf9c76d",
+        "bytes": 166909,
+        "exit_code": 0,
+        "totals": {
+          "passed": 1747,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": [
+          "test result: ok. 897 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 195.40s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.46s",
+          "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 101 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.61s",
+          "test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 50.61s",
+          "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s",
+          "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.79s",
+          "test result: ok. 100 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.72s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 55.69s",
+          "test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.29s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.44s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 2m 19s"]
+      },
+      {
+        "path": "/tmp/hypercurve-native-scalar-clippy.log",
+        "sha256": "180b7093b385a52a69442e89a41a4f0118492ab4d68945baa848f2809a93d8a8",
+        "bytes": 478,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.05s"]
+      },
+      {
+        "path": "/tmp/hypercurve-native-scalar-docs.log",
+        "sha256": "aa847493c43ed8a925a38b382b17dd47e11a681e6dadc22a4bbcba38b0e79e8f",
+        "bytes": 302,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 27.88s"]
+      },
+      {
+        "path": "/tmp/hypercurve-native-scalar-fuzz-check.log",
+        "sha256": "b546c4ae1af630f1114cac34ed702e6da54781636bd4226c12da9a3fb7dad96c",
+        "bytes": 491,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.80s"]
+      },
+      {
+        "path": "/tmp/hypercurve-native-scalar-minimal-check.log",
+        "sha256": "59f6559d1828d029b6ed8a047d3dcfb3e28b172fc33232f30cabd311375e5ee9",
+        "bytes": 535,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 47.09s"]
+      },
+      {
+        "path": "/tmp/hypercurve-ui-native-scalar-tests.log",
+        "sha256": "89df88ed7e3cbd7eeff2a1b4583ce57e5fc2307aa1d3f0c4d86760e7a2c2cb22",
+        "bytes": 3707,
+        "exit_code": 0,
+        "totals": {
+          "passed": 37,
+          "failed": 0,
+          "ignored": 0
+        },
+        "test_summaries": ["test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 41.35s"],
+        "build_results": ["    Finished `test` profile [unoptimized + debuginfo] target(s) in 27.36s"]
+      },
+      {
+        "path": "/tmp/hypercurve-ui-native-scalar-clippy.log",
+        "sha256": "467151e27ec4700fda05ea92fc1978fd0b6f38d1916284d7039b220ff8932f3c",
+        "bytes": 508,
+        "exit_code": 0,
+        "build_results": ["    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.09s"]
+      },
+      {
+        "path": "/tmp/hypercurve-ui-native-scalar-wasm.log",
+        "sha256": "85f24162e4719422cc304056299c146c04d9fc8c8b7b2985eac3a5f0fa1044ae",
+        "bytes": 498,
+        "exit_code": 0,
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 1m 00s"]
+      },
+      {
+        "path": "/tmp/hypercurve-native-scalar-minimal-tests.log",
+        "sha256": "aa7546bd5f7edf40cf44974730e6ef1ac0fe319cb2b6a588544ce4936867b601",
+        "bytes": 164657,
+        "exit_code": 0,
+        "totals": {
+          "passed": 1709,
+          "failed": 0,
+          "ignored": 4
+        },
+        "test_summaries": [
+          "test result: ok. 887 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 153.32s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.40s",
+          "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 101 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.72s",
+          "test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 47.32s",
+          "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s",
+          "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.66s",
+          "test result: ok. 100 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.39s",
+          "test result: ok. 15 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.83s",
+          "test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.99s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.92s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.25s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "build_results": ["    Finished `release` profile [optimized] target(s) in 1m 52s"]
+      }
+    ],
+    "fuzz": {
+      "runs": 1024,
+      "seed": 20260905,
+      "max_input_bytes": 64,
+      "max_total_seconds": 30,
+      "per_input_timeout_seconds": 10,
+      "rss_limit_mb": 2048,
+      "command": "env CARGO_BUILD_JOBS=4 cargo +nightly fuzz run scalar_ops /tmp/hyperlattice-native-scalar-fuzz.nvP94n -- -runs=1024 -max_len=64 -len_control=0 -seed=20260905 -max_total_time=30 -timeout=10 -rss_limit_mb=2048 -artifact_prefix=/tmp/hyperlattice-native-scalar-fuzz.nvP94n/",
+      "scope": "Short deterministic smoke, not exhaustive fuzzing; generated corpus and artifacts are isolated in /tmp.",
+      "environment_failure": "Initial sandbox run failed because LeakSanitizer cannot operate under the sandbox ptrace restriction. The approved host reruns passed with the sanitizer enabled; the initial failure log is retained and is not counted as a successful test."
+    },
+    "retained_ignored_scope": "Hypermesh seven manual/external stress cases remain ignored. Hypercurve minimal configuration ignores four cases, all covered by the zero-ignored all-feature invocation.",
+    "no_new_hyperreal_suite": "Hyperreal source is unchanged; its full qualification is in the preceding native-affine-offset checkpoint."
+  },
+  "performance": {
+    "environment": {
+      "cpu": "AMD Ryzen 7 5800X3D",
+      "logical_cpus": 16,
+      "cores": 8,
+      "affinity_cpu": 7,
+      "rustc": "1.97.0 (2d8144b78 2026-07-07)",
+      "rustc_commit": "2d8144b7880597b6e6d3dfd63a9a9efae3f533d3",
+      "llvm": "22.1.6",
+      "target": "x86_64-unknown-linux-gnu",
+      "isolation": "Executables run serially, pinned to CPU 7, without compilation or test workers. Host process checks preceded timing. CPU governor and ASLR were not modified; process-to-process variation remains visible.",
+      "criterion": "0.7.0"
+    },
+    "build": {
+      "shared_target": "/tmp/hyperlattice-native-scalar-control.bZA3IR/hyperlattice/target",
+      "baseline_root": "/tmp/hyperlattice-native-scalar-control.bZA3IR/hyperlattice",
+      "candidate_root": "/home/tim/Documents/GitHub/workspace/hyperlattice",
+      "note": "Same source dependency, profile, compiler and feature selection; different package paths produce different metadata hashes. Baseline dependency build initially required a host-cache permission retry; final successful build logs follow.",
+      "logs": [
+        {
+          "path": "/tmp/hyperlattice-native-scalar-baseline-build.log",
+          "sha256": "a043501ab45f7cd42a74c335427f0d05c7ec06df7daeb74de86f17ae6b48c844",
+          "bytes": 3015,
+          "raw": "   Compiling zerocopy-derive v0.8.48\n   Compiling serde_derive v1.0.228\n   Compiling serde_json v1.0.149\n   Compiling simba v0.9.1\n   Compiling getrandom v0.4.2\n   Compiling anyhow v1.0.102\n   Compiling hashbrown v0.15.5\n   Compiling num-rational v0.4.2\n   Compiling rug v1.30.0\n   Compiling rustix v1.1.4\n   Compiling alloc-stdlib v0.2.2\n   Compiling libmimalloc-sys v0.1.47\n   Compiling tracing-attributes v0.1.31\n   Compiling smartstring v1.0.1\n   Compiling itertools v0.14.0\n   Compiling anstyle v1.0.14\n   Compiling log v0.4.29\n   Compiling allocator-api2 v0.2.21\n   Compiling ciborium-io v0.2.2\n   Compiling pin-project-lite v0.2.17\n   Compiling fixedbitset v0.5.7\n   Compiling foldhash v0.2.0\n   Compiling dyn-clone v1.0.20\n   Compiling plotters-backend v0.3.7\n   Compiling clap_lex v1.1.0\n   Compiling bitflags v1.3.2\n   Compiling lazy_static v1.5.0\n   Compiling colored v3.1.1\n   Compiling fastrand v2.4.1\n   Compiling petgraph v0.8.3\n   Compiling plotters-svg v0.3.7\n   Compiling sharded-slab v0.1.7\n   Compiling clap_builder v4.6.0\n   Compiling region v3.0.2\n   Compiling hashbrown v0.16.1\n   Compiling tracing v0.1.44\n   Compiling num v0.4.3\n   Compiling tracing-log v0.2.0\n   Compiling wasmtime-jit-icache-coherence v34.0.2\n   Compiling brotli-decompressor v5.0.0\n   Compiling matchers v0.2.0\n   Compiling zerocopy v0.8.48\n   Compiling wait-timeout v0.2.1\n   Compiling itertools v0.13.0\n   Compiling thread_local v1.1.9\n   Compiling nu-ansi-term v0.50.3\n   Compiling tempfile v3.27.0\n   Compiling same-file v1.0.6\n   Compiling quick-error v1.2.3\n   Compiling bit-vec v0.8.0\n   Compiling static_assertions v1.1.0\n   Compiling symbolica v1.5.1\n   Compiling cast v0.3.0\n   Compiling fnv v1.0.7\n   Compiling spec_math v0.1.6\n   Compiling rusty-fork v0.3.1\n   Compiling bit-set v0.8.0\n   Compiling brotli v8.0.2\n   Compiling walkdir v2.5.0\n   Compiling tracing-subscriber v0.3.23\n   Compiling clap v4.6.1\n   Compiling hyperreal v0.13.1 (/tmp/hyperlattice-native-scalar-control.bZA3IR/hyperreal)\n   Compiling plotters v0.3.7\n   Compiling serde v1.0.228\n   Compiling criterion-plot v0.6.0\n   Compiling rand_xorshift v0.4.0\n   Compiling regex v1.12.3\n   Compiling libloading v0.9.0\n   Compiling byteorder v1.5.0\n   Compiling tinytemplate v1.2.1\n   Compiling self_cell v1.2.2\n   Compiling unarray v0.1.4\n   Compiling append-only-vec v0.1.8\n   Compiling anes v0.1.6\n   Compiling bytes v1.11.1\n   Compiling oorandom v11.1.5\n   Compiling tinyjson v2.5.1\n   Compiling xprec v0.2.2\n   Compiling mimalloc v0.1.50\n   Compiling ppv-lite86 v0.2.21\n   Compiling ahash v0.8.12\n   Compiling half v2.7.1\n   Compiling ciborium-ll v0.2.2\n   Compiling rand_chacha v0.9.0\n   Compiling ciborium v0.2.2\n   Compiling rand v0.9.4\n   Compiling criterion v0.7.0\n   Compiling symjit v2.14.9\n   Compiling proptest v1.11.0\n   Compiling hyperlattice v0.6.1 (/tmp/hyperlattice-native-scalar-control.bZA3IR/hyperlattice)\n   Compiling numerica v1.4.3\n   Compiling graphica v1.2.1\n    Finished `bench` profile [optimized] target(s) in 3m 12s\n"
+        },
+        {
+          "path": "/tmp/hyperlattice-native-scalar-candidate-build.log",
+          "sha256": "d56d957e7895bec525b8cb07592813c3da6aad22db4ac95e7fe265dc4205cf47",
+          "bytes": 226,
+          "raw": "   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)\n   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)\n    Finished `bench` profile [optimized] target(s) in 55.87s\n"
+        },
+        {
+          "path": "/tmp/hyperlattice-native-scalar-inline-build.log",
+          "sha256": "63f18a1340057f6f079e0bf93d46ffef8ba19f7f233ed3ac033f7342f459ba50",
+          "bytes": 157,
+          "raw": "   Compiling hyperlattice v0.6.1 (/tmp/hyperlattice-native-scalar-control.bZA3IR/inline.r0VX0X)\n    Finished `bench` profile [optimized] target(s) in 51.01s\n"
+        }
+      ]
+    },
+    "fixture_definitions": {
+      "hyperreal": "Real::try_from(f64) for finite exact binary inputs",
+      "hyperreal_rational": "Real::from(value.to_string().parse::<Rational>()) for exact decimal-rational inputs",
+      "comparison": "Always match within the same fixture label; binary and decimal encodings are not assumed identical."
+    },
+    "statistic": "Median of three scalar or five extended matrix Criterion process point estimates. Individual interval endpoints and all process point estimates are retained. Criterion's automatic change reports refer to previous on-disk runs and are not used as matched evidence.",
+    "measurement_columns": ["benchmark","lower_ns","point_ns","upper_ns"],
+    "scalar": {
+      "filter": "^scalar_ops/hyperreal(-rational)?/(ln|exp|powi|zero_status|(log10|asin|acos)(_abort)?)$",
+      "sample_size": 40,
+      "warm_up_seconds": 0.1,
+      "measurement_seconds": 0.5,
+      "nresamples": 10000,
+      "order": [
+        "pair1-baseline",
+        "pair1-candidate",
+        "pair2-candidate",
+        "pair2-baseline",
+        "pair3-baseline",
+        "pair3-candidate"
+      ],
+      "rows": [
+        {
+          "name": "scalar_ops/hyperreal/powi",
+          "baseline": [58.244,57.726,58.713],
+          "candidate": [52.015,51.179,51.558],
+          "baseline_median_ns": 58.244,
+          "candidate_median_ns": 51.558,
+          "delta_pct": -11.479294004532658
+        },
+        {
+          "name": "scalar_ops/hyperreal/exp",
+          "baseline": [96.155,96.763,101.45],
+          "candidate": [97.608,98.287,98.299],
+          "baseline_median_ns": 96.763,
+          "candidate_median_ns": 98.287,
+          "delta_pct": 1.574982172938011
+        },
+        {
+          "name": "scalar_ops/hyperreal/ln",
+          "baseline": [1279.7,1273.2,1266.8999999999999],
+          "candidate": [1225.9,1236.5,1283.9],
+          "baseline_median_ns": 1273.2,
+          "candidate_median_ns": 1236.5,
+          "delta_pct": -2.8825007854225593
+        },
+        {
+          "name": "scalar_ops/hyperreal/log10",
+          "baseline": [1515.2,1501.9,1519.5],
+          "candidate": [1447.6,1450.2,1432],
+          "baseline_median_ns": 1515.2,
+          "candidate_median_ns": 1447.6,
+          "delta_pct": -4.461457233368538
+        },
+        {
+          "name": "scalar_ops/hyperreal/log10_abort",
+          "baseline": [1542.2,1529.7,1538.8999999999999],
+          "candidate": [1460.9,1471.7,1459.7],
+          "baseline_median_ns": 1538.8999999999999,
+          "candidate_median_ns": 1460.9,
+          "delta_pct": -5.0685554616934025
+        },
+        {
+          "name": "scalar_ops/hyperreal/asin",
+          "baseline": [169.02,169.56,171.19],
+          "candidate": [115.63,115.66,116.35],
+          "baseline_median_ns": 169.56,
+          "candidate_median_ns": 115.66,
+          "delta_pct": -31.78815758433593
+        },
+        {
+          "name": "scalar_ops/hyperreal/asin_abort",
+          "baseline": [191.72,189.47,190.27],
+          "candidate": [141.45,141.26,140.24],
+          "baseline_median_ns": 190.27,
+          "candidate_median_ns": 141.26,
+          "delta_pct": -25.758133179166453
+        },
+        {
+          "name": "scalar_ops/hyperreal/acos",
+          "baseline": [359.12,351.03,346.14],
+          "candidate": [296.24,302.12,295.69],
+          "baseline_median_ns": 351.03,
+          "candidate_median_ns": 296.24,
+          "delta_pct": -15.608352562459038
+        },
+        {
+          "name": "scalar_ops/hyperreal/acos_abort",
+          "baseline": [380.99,383.64,375.07],
+          "candidate": [322.3,322.6,320.41],
+          "baseline_median_ns": 380.99,
+          "candidate_median_ns": 322.3,
+          "delta_pct": -15.404603795375206
+        },
+        {
+          "name": "scalar_ops/hyperreal/zero_status",
+          "baseline": [1.3025,1.2249,1.2567],
+          "candidate": [1.0939,1.1019,1.1393],
+          "baseline_median_ns": 1.2567,
+          "candidate_median_ns": 1.1019,
+          "delta_pct": -12.317975650513235
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/powi",
+          "baseline": [66.195,61.404,60.406],
+          "candidate": [55.817,54.745,55.039],
+          "baseline_median_ns": 61.404,
+          "candidate_median_ns": 55.039,
+          "delta_pct": -10.365774216663414
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/exp",
+          "baseline": [99.728,100.48,96.409],
+          "candidate": [102.01,97.048,99.961],
+          "baseline_median_ns": 99.728,
+          "candidate_median_ns": 99.961,
+          "delta_pct": 0.2336354885287939
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/ln",
+          "baseline": [461.57,460.04,499.68],
+          "candidate": [407.21,404,406.41],
+          "baseline_median_ns": 461.57,
+          "candidate_median_ns": 406.41,
+          "delta_pct": -11.950516714691151
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/log10",
+          "baseline": [663.72,655.9,703.15],
+          "candidate": [592.14,590.78,582.01],
+          "baseline_median_ns": 663.72,
+          "candidate_median_ns": 590.78,
+          "delta_pct": -10.98957391671187
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/log10_abort",
+          "baseline": [737.67,679.71,697.25],
+          "candidate": [626.44,630.13,612.41],
+          "baseline_median_ns": 697.25,
+          "candidate_median_ns": 626.44,
+          "delta_pct": -10.155611330225877
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/asin",
+          "baseline": [186.91,169.86,169.46],
+          "candidate": [114.01,113.88,113.95],
+          "baseline_median_ns": 169.86,
+          "candidate_median_ns": 113.95,
+          "delta_pct": -32.915342046391146
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/asin_abort",
+          "baseline": [193.91,192.48,193.34],
+          "candidate": [142.63,141.12,138.53],
+          "baseline_median_ns": 193.34,
+          "candidate_median_ns": 141.12,
+          "delta_pct": -27.009413468501087
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/acos",
+          "baseline": [363.6,379.87,357.6],
+          "candidate": [297.23,300.59,292.13],
+          "baseline_median_ns": 363.6,
+          "candidate_median_ns": 297.23,
+          "delta_pct": -18.253575357535755
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/acos_abort",
+          "baseline": [398.33,426.54,384.06],
+          "candidate": [322.37,323.77,318.24],
+          "baseline_median_ns": 398.33,
+          "candidate_median_ns": 322.37,
+          "delta_pct": -19.069615645319203
+        },
+        {
+          "name": "scalar_ops/hyperreal-rational/zero_status",
+          "baseline": [1.1503,1.2336,1.2399],
+          "candidate": [1.1082,1.1233,1.0902],
+          "baseline_median_ns": 1.2336,
+          "candidate_median_ns": 1.1082,
+          "delta_pct": -10.165369649805445
+        }
+      ],
+      "exception": "The first baseline filter also selected two obsolete zero_status_abort rows. Those rows are retained in its measurements but excluded from the twenty matched scalar comparisons."
+    },
+    "matrix": {
+      "filter": "^matrix_ops/hyperreal(-rational)?/mat[34] (inverse_checked_abort|div_matrix_checked_abort)$",
+      "sample_size": 100,
+      "warm_up_seconds": 0.5,
+      "measurement_seconds": 2,
+      "nresamples": 20000,
+      "order": [
+        "extended1-baseline",
+        "extended1-candidate",
+        "extended2-candidate",
+        "extended2-baseline",
+        "extended3-baseline",
+        "extended3-candidate",
+        "extended4-candidate",
+        "extended4-baseline",
+        "extended5-baseline",
+        "extended5-candidate"
+      ],
+      "rows": [
+        {
+          "name": "matrix_ops/hyperreal/mat3 inverse_checked_abort",
+          "baseline": [4932.8,4884.9,5029.5,5169.6,5120.9],
+          "candidate": [4994.799999999999,5035.9,4908.7,5220.900000000001,5136.3],
+          "baseline_median_ns": 5029.5,
+          "candidate_median_ns": 5035.9,
+          "delta_pct": 0.1272492295456784
+        },
+        {
+          "name": "matrix_ops/hyperreal/mat3 div_matrix_checked_abort",
+          "baseline": [24151,23792,24143,23717,23739],
+          "candidate": [24648,24582,24024,24717,23978],
+          "baseline_median_ns": 23792,
+          "candidate_median_ns": 24582,
+          "delta_pct": 3.3204438466711395
+        },
+        {
+          "name": "matrix_ops/hyperreal/mat4 inverse_checked_abort",
+          "baseline": [7506.1,7682.299999999999,7592.1,7451.900000000001,7536],
+          "candidate": [7649.200000000001,7899,7624.3,8044.900000000001,7585.9],
+          "baseline_median_ns": 7536,
+          "candidate_median_ns": 7649.200000000001,
+          "delta_pct": 1.5021231422505332
+        },
+        {
+          "name": "matrix_ops/hyperreal/mat4 div_matrix_checked_abort",
+          "baseline": [39975,37975,37145,37313,37442],
+          "candidate": [38385,38421,38491,42457,39148],
+          "baseline_median_ns": 37442,
+          "candidate_median_ns": 38491,
+          "delta_pct": 2.801666577640094
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",
+          "baseline": [2862,2926.5,2847.6,2880.1,2996],
+          "candidate": [2858.2000000000003,3005.7,3034.4,2935.4,2868.3999999999996],
+          "baseline_median_ns": 2880.1,
+          "candidate_median_ns": 2935.4,
+          "delta_pct": 1.920072219714597
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",
+          "baseline": [6080.8,6620.3,6055.900000000001,6167.7,6426.700000000001],
+          "candidate": [6024.8,6054.1,6030.3,6472.1,6034.4],
+          "baseline_median_ns": 6167.7,
+          "candidate_median_ns": 6034.4,
+          "delta_pct": -2.1612594646302496
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",
+          "baseline": [6437.400000000001,6478,6348.7,6526,6576.3],
+          "candidate": [6193.5,6346.3,6318.6,6373.400000000001,6362.9],
+          "baseline_median_ns": 6478,
+          "candidate_median_ns": 6346.3,
+          "delta_pct": -2.0330348873108917
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",
+          "baseline": [9746.800000000001,10121,9738.4,9916.2,9909.2],
+          "candidate": [9795,9668,9747,10173,9684.5],
+          "baseline_median_ns": 9909.2,
+          "candidate_median_ns": 9747,
+          "delta_pct": -1.6368627134380254
+        }
+      ],
+      "earlier_controls": "Short pairs 3 and 4 suggested +6.69% Matrix3 and +4.85% Matrix4 f64-derived division; three extended pairs had a +5.02% rational Matrix3 inverse median. The extension to five longer pairs retains every run and outlier. Final matrix medians range from -2.16% to +3.32%; this is not a uniform speedup or proof of flat performance."
+    },
+    "rejected_inline_trial": {
+      "source_root": "/tmp/hyperlattice-native-scalar-control.bZA3IR/inline.r0VX0X",
+      "change": "Only #[inline(always)] on private checked_pivot; no live source changes.",
+      "decision": "Not applied. One exploratory matched pair improved f64-derived Matrix3 division 1.19%, but slowed rational Matrix3 division 5.23% and f64-derived Matrix4 inverse 2.88%; no overall improvement established. This is not a statistical proof from one pair.",
+      "rows": [
+        {
+          "name": "matrix_ops/hyperreal/mat3 inverse_checked_abort",
+          "control_ns": 4964.1,
+          "trial_ns": 4878.8,
+          "delta_pct": -1.7183376644306136
+        },
+        {
+          "name": "matrix_ops/hyperreal/mat3 div_matrix_checked_abort",
+          "control_ns": 24169,
+          "trial_ns": 23881,
+          "delta_pct": -1.1916090860192852
+        },
+        {
+          "name": "matrix_ops/hyperreal/mat4 inverse_checked_abort",
+          "control_ns": 7483.7,
+          "trial_ns": 7699.5,
+          "delta_pct": 2.8836003581116376
+        },
+        {
+          "name": "matrix_ops/hyperreal/mat4 div_matrix_checked_abort",
+          "control_ns": 38404,
+          "trial_ns": 38832,
+          "delta_pct": 1.1144672429955316
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",
+          "control_ns": 2874,
+          "trial_ns": 2871.5,
+          "delta_pct": -0.08698677800974552
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",
+          "control_ns": 6063.7,
+          "trial_ns": 6381.1,
+          "delta_pct": 5.234427824595556
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",
+          "control_ns": 6350.900000000001,
+          "trial_ns": 6302.900000000001,
+          "delta_pct": -0.7557983907792609
+        },
+        {
+          "name": "matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",
+          "control_ns": 9784.4,
+          "trial_ns": 9711.800000000001,
+          "delta_pct": -0.7419974653529948
+        }
+      ],
+      "executable": {
+        "path": "/tmp/hyperlattice-native-scalar-inline-mathbench",
+        "sha256": "7083a419ff70fb2d52b642fedd158dca3c6b3d9742708d148b17ba5aa371949b",
+        "sections": [24874065,645288,33348,25552701]
+      }
+    },
+    "logs": [
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended1-baseline.log",
+        "sha256": "ba34358e892369d27ccd583806fcc4b25d2a274b5b983e705a30e198eae1bd09",
+        "bytes": 5818,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4925.099999999999,4932.8,4941.5],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24042,24151,24286],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7483.799999999999,7506.1,7531.3],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37991,39975,42311],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2839.1000000000004,2862,2888.9],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6054.8,6080.8,6116],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6382.2,6437.400000000001,6502],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9695.1,9746.800000000001,9812.2]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended1-candidate.log",
+        "sha256": "64cacf74a142006983727dfd62473e23ba15dd23f0b4673a462b40536ec913e3",
+        "bytes": 5797,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4964.5,4994.799999999999,5033],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24596,24648,24699],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7626,7649.200000000001,7676.1],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",38046,38385,38801],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2849.2999999999997,2858.2000000000003,2869.3],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",5997.5,6024.8,6068.1],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6184.400000000001,6193.5,6204],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9736.1,9795,9864.5]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended2-baseline.log",
+        "sha256": "a23e141f2acb6f42040d2bf025294f05ffd24069fde90205587d277a708aa7b5",
+        "bytes": 5679,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4870.8,4884.9,4900.8],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23750,23792,23852],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7613.400000000001,7682.299999999999,7771.5],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37794,37975,38165],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2918.2999999999997,2926.5,2934.6],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6549.8,6620.3,6684.400000000001],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6441.6,6478,6526],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9939,10121,10364]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended2-candidate.log",
+        "sha256": "2fe9f663cfcf80b2774bfb6ea67029afd1c0ec04f94ca3b95a028a8539859002",
+        "bytes": 5826,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4957.200000000001,5035.9,5144.8],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24409,24582,24797],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7692.3,7899,8156.900000000001],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",38108,38421,38803],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2963.9,3005.7,3048.6],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6013.5,6054.1,6106.200000000001],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6251.400000000001,6346.3,6466.8],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9653.5,9668,9684.2]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended3-baseline.log",
+        "sha256": "98bfb73994f8104207edd80f803056be9971370045e4f81c22e683fdd09a03c3",
+        "bytes": 5807,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4953.700000000001,5029.5,5124.6],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23842,24143,24569],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7507.5,7592.1,7688.2],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37022,37145,37318],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2840.5,2847.6,2857.9],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6043.9,6055.900000000001,6068.1],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6314.8,6348.7,6393.3],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9705.7,9738.4,9785.1]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended3-candidate.log",
+        "sha256": "f89b309760617688d998beed2df78d44c3abcc737c9e7d98021061d00589c680",
+        "bytes": 5797,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4866.6,4908.7,4956.400000000001],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23983,24024,24079],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7576,7624.3,7682.400000000001],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",38070,38491,39013],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2981.3,3034.4,3104.5],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6020.3,6030.3,6041.599999999999],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6262.900000000001,6318.6,6387.7],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9690.9,9747,9817.5]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended4-baseline.log",
+        "sha256": "bd6f3e6d13716febf5f8e4d7db0e253f59194bd85692ef9d3886d1232b176ef2",
+        "bytes": 5824,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",5085.099999999999,5169.6,5247.5],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23677,23717,23765],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7436.7,7451.900000000001,7468.8],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37077,37313,37587],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2873.8,2880.1,2886.8],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6130.7,6167.7,6216.5],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6482.9,6526,6579.5],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9814.9,9916.2,10032]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended4-candidate.log",
+        "sha256": "0874d4943fe8d8c68a5e820585e2a4b08a7ee5cf258f842e7e177a72d80d3c12",
+        "bytes": 5767,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",5156.799999999999,5220.900000000001,5288.2],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24637,24717,24813],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7891.8,8044.900000000001,8190.599999999999],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",42030,42457,42884],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2901.1,2935.4,2972.5],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6279,6472.1,6709.2],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6352.9,6373.400000000001,6392.8],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",10064,10173,10305]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended5-baseline.log",
+        "sha256": "32a2ff8be4ce8c6b49044008e042fb1fc91ecdbeffd4d074266b3f5eca5e5bfa",
+        "bytes": 5840,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",5058,5120.9,5196.6],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23708,23739,23773],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7368.8,7536,7824.5],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37326,37442,37591],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2975,2996,3021.1],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6357.9,6426.700000000001,6504.2],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6552.2,6576.3,6605.6],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9851.6,9909.2,9977.6]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-extended5-candidate.log",
+        "sha256": "1582c060a62f7afd5890432c50b7e63e26ea85af6672fab2fa4c0969cd6c68df",
+        "bytes": 5707,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",5032.8,5136.3,5264.599999999999],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23947,23978,24013],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7548.9,7585.9,7630],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",38771,39148,39604],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2862.6,2868.3999999999996,2874.4],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6000.099999999999,6034.4,6079.5],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6313.900000000001,6362.9,6418.400000000001],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9653.7,9684.5,9717.800000000001]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-inline1-control.log",
+        "sha256": "47331ee65f606f785f4a8df265d58409d07eedc226db97813cabea468e9a7e34",
+        "bytes": 5816,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4948.599999999999,4964.1,4981.900000000001],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24118,24169,24241],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7461.1,7483.7,7509.9],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",38124,38404,38722],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2859,2874,2894.1],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6034,6063.7,6103.4],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6296.299999999999,6350.900000000001,6425.8],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9767.5,9784.4,9804.9]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-matrix-inline1-trial.log",
+        "sha256": "cfaabbe72f5dd314a41d5515577592917f3769a4a524a30fe3f2218562222692",
+        "bytes": 5744,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4830.099999999999,4878.8,4939],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23827,23881,23946],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7658.1,7699.5,7743.1],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",38445,38832,39259],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2833.6,2871.5,2911.7999999999997],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6281,6381.1,6496.3],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6248,6302.900000000001,6365.8],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9644.199999999999,9711.800000000001,9794.6]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair1-baseline.log",
+        "sha256": "6d7cd5fe530626916b52a4f83a6ed675a0d89934717aba37b315e63faa54f284",
+        "bytes": 10069,
+        "exit_code": 0,
+        "measurements": [
+          ["scalar_ops/hyperreal/powi",58.04,58.244,58.471],
+          ["scalar_ops/hyperreal/exp",95.037,96.155,97.588],
+          ["scalar_ops/hyperreal/ln",1276.3,1279.7,1283.9],
+          ["scalar_ops/hyperreal/log10",1512.8,1515.2,1517.8],
+          ["scalar_ops/hyperreal/log10_abort",1537.4,1542.2,1548.3],
+          ["scalar_ops/hyperreal/asin",167.94,169.02,170.64],
+          ["scalar_ops/hyperreal/asin_abort",191.16,191.72,192.32],
+          ["scalar_ops/hyperreal/acos",357.69,359.12,360.93],
+          ["scalar_ops/hyperreal/acos_abort",378.82,380.99,383.42],
+          ["scalar_ops/hyperreal/zero_status",1.2426,1.3025,1.3668],
+          ["scalar_ops/hyperreal/zero_status_abort",1.1983,1.2465,1.2968],
+          ["scalar_ops/hyperreal-rational/powi",64.167,66.195,68.409],
+          ["scalar_ops/hyperreal-rational/exp",99.385,99.728,100.13],
+          ["scalar_ops/hyperreal-rational/ln",460.03,461.57,463.06],
+          ["scalar_ops/hyperreal-rational/log10",658.03,663.72,669.07],
+          ["scalar_ops/hyperreal-rational/log10_abort",720.06,737.67,754.22],
+          ["scalar_ops/hyperreal-rational/asin",181.14,186.91,191.92],
+          ["scalar_ops/hyperreal-rational/asin_abort",191.4,193.91,198.62],
+          ["scalar_ops/hyperreal-rational/acos",362.08,363.6,365.68],
+          ["scalar_ops/hyperreal-rational/acos_abort",394.5,398.33,402.04],
+          ["scalar_ops/hyperreal-rational/zero_status",1.1204,1.1503,1.1888],
+          ["scalar_ops/hyperreal-rational/zero_status_abort",1.1376,1.1718,1.2063]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair1-candidate.log",
+        "sha256": "ed12f3a77236ef2874c154f0b64ccb03fc55a7ff75220731ded1c651ab9d5156",
+        "bytes": 12101,
+        "exit_code": 0,
+        "measurements": [
+          ["scalar_ops/hyperreal/powi",51.826,52.015,52.275],
+          ["scalar_ops/hyperreal/exp",97.291,97.608,97.957],
+          ["scalar_ops/hyperreal/ln",1217.1000000000001,1225.9,1238.6],
+          ["scalar_ops/hyperreal/log10",1436,1447.6,1465.9],
+          ["scalar_ops/hyperreal/log10_abort",1458.6,1460.9,1463.7],
+          ["scalar_ops/hyperreal/asin",113.39,115.63,118.37],
+          ["scalar_ops/hyperreal/asin_abort",140.93,141.45,142.15],
+          ["scalar_ops/hyperreal/acos",294.19,296.24,298.97],
+          ["scalar_ops/hyperreal/acos_abort",317.96,322.3,328.46],
+          ["scalar_ops/hyperreal/zero_status",1.0658,1.0939,1.1217],
+          ["scalar_ops/hyperreal-rational/powi",55.087,55.817,56.885],
+          ["scalar_ops/hyperreal-rational/exp",99.62,102.01,106.07],
+          ["scalar_ops/hyperreal-rational/ln",405.08,407.21,410.6],
+          ["scalar_ops/hyperreal-rational/log10",587.23,592.14,601.21],
+          ["scalar_ops/hyperreal-rational/log10_abort",618.59,626.44,639.78],
+          ["scalar_ops/hyperreal-rational/asin",112.57,114.01,115.81],
+          ["scalar_ops/hyperreal-rational/asin_abort",140.37,142.63,146.1],
+          ["scalar_ops/hyperreal-rational/acos",296.68,297.23,297.93],
+          ["scalar_ops/hyperreal-rational/acos_abort",321.71,322.37,323.23],
+          ["scalar_ops/hyperreal-rational/zero_status",1.0843,1.1082,1.133]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair2-baseline.log",
+        "sha256": "4cd190a3a60f3637f2e4dc5c5a60599bd5f4f9ffe0a54c0681a8cbeb53634f5e",
+        "bytes": 11857,
+        "exit_code": 0,
+        "measurements": [
+          ["scalar_ops/hyperreal/powi",57.47,57.726,58.137],
+          ["scalar_ops/hyperreal/exp",96.461,96.763,97.076],
+          ["scalar_ops/hyperreal/ln",1270,1273.2,1277],
+          ["scalar_ops/hyperreal/log10",1498.8,1501.9,1506],
+          ["scalar_ops/hyperreal/log10_abort",1524.8999999999999,1529.7,1535.4],
+          ["scalar_ops/hyperreal/asin",168.9,169.56,170.37],
+          ["scalar_ops/hyperreal/asin_abort",188.72,189.47,190.27],
+          ["scalar_ops/hyperreal/acos",350.3,351.03,351.75],
+          ["scalar_ops/hyperreal/acos_abort",382.59,383.64,385.09],
+          ["scalar_ops/hyperreal/zero_status",1.1804,1.2249,1.2742],
+          ["scalar_ops/hyperreal-rational/powi",60.256,61.404,62.791],
+          ["scalar_ops/hyperreal-rational/exp",99.613,100.48,101.84],
+          ["scalar_ops/hyperreal-rational/ln",459.38,460.04,460.96],
+          ["scalar_ops/hyperreal-rational/log10",654.03,655.9,657.94],
+          ["scalar_ops/hyperreal-rational/log10_abort",677.99,679.71,681.51],
+          ["scalar_ops/hyperreal-rational/asin",169.56,169.86,170.21],
+          ["scalar_ops/hyperreal-rational/asin_abort",190.84,192.48,195.09],
+          ["scalar_ops/hyperreal-rational/acos",369.39,379.87,389.79],
+          ["scalar_ops/hyperreal-rational/acos_abort",414.39,426.54,439.05],
+          ["scalar_ops/hyperreal-rational/zero_status",1.209,1.2336,1.261]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair2-candidate.log",
+        "sha256": "e07f9851ccaf1daa430049c9dfd739d24e4df9fc199801e140daa5e2e1fde13c",
+        "bytes": 12111,
+        "exit_code": 0,
+        "measurements": [
+          ["scalar_ops/hyperreal/powi",51.011,51.179,51.371],
+          ["scalar_ops/hyperreal/exp",96.563,98.287,100.55],
+          ["scalar_ops/hyperreal/ln",1226.6999999999998,1236.5,1252.3999999999999],
+          ["scalar_ops/hyperreal/log10",1446,1450.2,1455],
+          ["scalar_ops/hyperreal/log10_abort",1469.9,1471.7,1473.7],
+          ["scalar_ops/hyperreal/asin",113.73,115.66,118.96],
+          ["scalar_ops/hyperreal/asin_abort",140.87,141.26,141.74],
+          ["scalar_ops/hyperreal/acos",296.06,302.12,310.17],
+          ["scalar_ops/hyperreal/acos_abort",321.14,322.6,324.48],
+          ["scalar_ops/hyperreal/zero_status",1.0747,1.1019,1.1286],
+          ["scalar_ops/hyperreal-rational/powi",54.649,54.745,54.88],
+          ["scalar_ops/hyperreal-rational/exp",96.782,97.048,97.383],
+          ["scalar_ops/hyperreal-rational/ln",403.03,404,405.31],
+          ["scalar_ops/hyperreal-rational/log10",587.22,590.78,595.59],
+          ["scalar_ops/hyperreal-rational/log10_abort",619.35,630.13,643.74],
+          ["scalar_ops/hyperreal-rational/asin",113.49,113.88,114.38],
+          ["scalar_ops/hyperreal-rational/asin_abort",139.28,141.12,143.57],
+          ["scalar_ops/hyperreal-rational/acos",299.64,300.59,301.82],
+          ["scalar_ops/hyperreal-rational/acos_abort",320.66,323.77,329.72],
+          ["scalar_ops/hyperreal-rational/zero_status",1.0949,1.1233,1.1503]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair3-baseline.log",
+        "sha256": "53a815a532a4137e1b5133fe8e672824c7fc79798f253f276115b6cea8ea848b",
+        "bytes": 16457,
+        "exit_code": 0,
+        "measurements": [
+          ["scalar_ops/hyperreal/powi",58.121,58.713,59.77],
+          ["scalar_ops/hyperreal/exp",98.332,101.45,105.74],
+          ["scalar_ops/hyperreal/ln",1264.1,1266.8999999999999,1269.9],
+          ["scalar_ops/hyperreal/log10",1510,1519.5,1534],
+          ["scalar_ops/hyperreal/log10_abort",1535.6000000000001,1538.8999999999999,1542.4],
+          ["scalar_ops/hyperreal/asin",169.34,171.19,174.05],
+          ["scalar_ops/hyperreal/asin_abort",189.65,190.27,191.22],
+          ["scalar_ops/hyperreal/acos",344.62,346.14,348.21],
+          ["scalar_ops/hyperreal/acos_abort",373.88,375.07,376.44],
+          ["scalar_ops/hyperreal/zero_status",1.2157,1.2567,1.2955],
+          ["scalar_ops/hyperreal-rational/powi",59.836,60.406,61.287],
+          ["scalar_ops/hyperreal-rational/exp",96.088,96.409,96.819],
+          ["scalar_ops/hyperreal-rational/ln",489.1,499.68,509.15],
+          ["scalar_ops/hyperreal-rational/log10",686.25,703.15,724.62],
+          ["scalar_ops/hyperreal-rational/log10_abort",686.55,697.25,711.96],
+          ["scalar_ops/hyperreal-rational/asin",169.11,169.46,169.79],
+          ["scalar_ops/hyperreal-rational/asin_abort",191.64,193.34,196.89],
+          ["scalar_ops/hyperreal-rational/acos",353.68,357.6,361.97],
+          ["scalar_ops/hyperreal-rational/acos_abort",383.06,384.06,385.27],
+          ["scalar_ops/hyperreal-rational/zero_status",1.2005,1.2399,1.2821],
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4902.8,4922.6,4949.4],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23767,23828,23886],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7366,7379.2,7391.9],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37140,37768,38953],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2811.1000000000004,2816.3,2821.4],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6022,6045.6,6069],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6341.599999999999,6408.7,6481.099999999999],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9997.5,10217,10493]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair3-candidate.log",
+        "sha256": "c4c2f27f5f89b7a7fc1384eb2b3f94dfb4c50b9be6f172ff1d0d6aea5322a61d",
+        "bytes": 17441,
+        "exit_code": 0,
+        "measurements": [
+          ["scalar_ops/hyperreal/powi",51.453,51.558,51.689],
+          ["scalar_ops/hyperreal/exp",97.507,98.299,99.411],
+          ["scalar_ops/hyperreal/ln",1241.6000000000001,1283.9,1340.4],
+          ["scalar_ops/hyperreal/log10",1425,1432,1443.2],
+          ["scalar_ops/hyperreal/log10_abort",1455.6,1459.7,1464.2],
+          ["scalar_ops/hyperreal/asin",115.34,116.35,117.83],
+          ["scalar_ops/hyperreal/asin_abort",138.91,140.24,142.78],
+          ["scalar_ops/hyperreal/acos",292.28,295.69,300.64],
+          ["scalar_ops/hyperreal/acos_abort",316.54,320.41,326.56],
+          ["scalar_ops/hyperreal/zero_status",1.1128,1.1393,1.1677],
+          ["scalar_ops/hyperreal-rational/powi",54.756,55.039,55.44],
+          ["scalar_ops/hyperreal-rational/exp",98.771,99.961,101.67],
+          ["scalar_ops/hyperreal-rational/ln",400.85,406.41,413.84],
+          ["scalar_ops/hyperreal-rational/log10",579.62,582.01,584.71],
+          ["scalar_ops/hyperreal-rational/log10_abort",609.39,612.41,616.22],
+          ["scalar_ops/hyperreal-rational/asin",113.62,113.95,114.32],
+          ["scalar_ops/hyperreal-rational/asin_abort",138.31,138.53,138.75],
+          ["scalar_ops/hyperreal-rational/acos",291.59,292.13,292.75],
+          ["scalar_ops/hyperreal-rational/acos_abort",316.56,318.24,320.17],
+          ["scalar_ops/hyperreal-rational/zero_status",1.0705,1.0902,1.1126],
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4871.7,4889.2,4907.7],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24020,24131,24255],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7425.7,7452.6,7485.8],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",40347,41160,41912],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2831.1000000000004,2838.2999999999997,2847.7000000000003],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",5921.9,5971.7,6057],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6302.4,6348.8,6421.2],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9550.800000000001,9603.400000000001,9698]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair4-baseline.log",
+        "sha256": "a35a2ebede0bb799cb6cc755bd0e817a0472f6248ef0946d317f3f871dfd6989",
+        "bytes": 5737,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4832,4842.900000000001,4855.5],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",23773,24023,24380],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7473.8,7620.599999999999,7845.4],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37027,37354,37763],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2852.9,2863.4,2878.1],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",6093.9,6119.1,6151.3],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6480,6646.7,6837.4],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9584.8,9612.9,9655.5]
+        ]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-pair4-candidate.log",
+        "sha256": "22f17b9894c52f5dca71623ade5f8d21a2efa050e0ddb21e828c852e13d1f306",
+        "bytes": 5721,
+        "exit_code": 0,
+        "measurements": [
+          ["matrix_ops/hyperreal/mat3 inverse_checked_abort",4896,4912.8,4934],
+          ["matrix_ops/hyperreal/mat3 div_matrix_checked_abort",24600,26922,29180],
+          ["matrix_ops/hyperreal/mat4 inverse_checked_abort",7449.5,7560.2,7719.400000000001],
+          ["matrix_ops/hyperreal/mat4 div_matrix_checked_abort",37525,37609,37691],
+          ["matrix_ops/hyperreal-rational/mat3 inverse_checked_abort",2826.5,2846,2871.7000000000003],
+          ["matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort",5971,6010,6061.9],
+          ["matrix_ops/hyperreal-rational/mat4 inverse_checked_abort",6210.5,6234.3,6262.400000000001],
+          ["matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort",9580.4,9683.3,9839.7]
+        ]
+      }
+    ],
+    "interpretation": "Native scalar removal eliminates duplicate exact preflight work and improves the affected scalar rows materially. It retains small measured matrix regressions, unchanged allocation results in the scoped harness, and a substantial production-source reduction. No competitive end-to-end geometry or uniform performance milestone is claimed."
+  },
+  "memory": {
+    "exact_matched_row_comparisons": 24,
+    "csv_columns": [
+      "case",
+      "iterations",
+      "allocation_calls",
+      "allocated_bytes",
+      "extra_peak_live_bytes",
+      "end_live_growth_bytes",
+      "u64_checksum_as_string"
+    ],
+    "result": "All eight CSV files match byte-for-byte within each baseline/candidate iteration/mode pair. Each contains six cases, giving 24 comparisons. Scalar retained growth is zero; constant matrix cache setup does not grow between 64 and 256 iterations.",
+    "correctness_caveat": "Construction-only scalar checksums aggregate ZeroKnowledge tags and are not independent value proofs. Export hashes are compared as decimal strings without lossy JavaScript number conversion. Matrix cases assert exact multiplication by their inverse equals identity. Functional suites provide broader independent correctness coverage.",
+    "scope": "System counting allocator; four retained four-input scalar rows and two checked triangular-matrix inverse rows. It does not measure dense matrix division, all scalar representations, or full Hypercurve slow fixtures.",
+    "harness": {
+      "path": "/tmp/hyperlattice-native-scalar-memory.rs",
+      "sha256": "6cc1cc1931c9931a3d9a381810260231f7bde392beb3cd481a41f2e5f1faa4ee",
+      "bytes": 4617,
+      "source": "use hyperlattice::{Matrix3, Matrix4, Problem, Real};\nuse std::alloc::{GlobalAlloc, Layout, System};\nuse std::hint::black_box;\nuse std::sync::Arc;\nuse std::sync::atomic::{AtomicBool, AtomicIsize, AtomicUsize, Ordering::Relaxed};\n\nstruct Counting;\nstatic ENABLED: AtomicBool = AtomicBool::new(false);\nstatic CALLS: AtomicUsize = AtomicUsize::new(0);\nstatic BYTES: AtomicUsize = AtomicUsize::new(0);\nstatic LIVE: AtomicIsize = AtomicIsize::new(0);\nstatic PEAK: AtomicIsize = AtomicIsize::new(0);\n\nfn allocated(size: usize) {\n    let current = LIVE.fetch_add(size as isize, Relaxed) + size as isize;\n    if ENABLED.load(Relaxed) {\n        CALLS.fetch_add(1, Relaxed);\n        BYTES.fetch_add(size, Relaxed);\n        PEAK.fetch_max(current, Relaxed);\n    }\n}\n\nunsafe impl GlobalAlloc for Counting {\n    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {\n        let ptr = unsafe { System.alloc(layout) };\n        if !ptr.is_null() { allocated(layout.size()); }\n        ptr\n    }\n    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {\n        let ptr = unsafe { System.alloc_zeroed(layout) };\n        if !ptr.is_null() { allocated(layout.size()); }\n        ptr\n    }\n    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {\n        LIVE.fetch_sub(layout.size() as isize, Relaxed);\n        unsafe { System.dealloc(ptr, layout) };\n    }\n    unsafe fn realloc(&self, ptr: *mut u8, old: Layout, size: usize) -> *mut u8 {\n        let next = unsafe { System.realloc(ptr, old, size) };\n        if !next.is_null() {\n            LIVE.fetch_sub(old.size() as isize, Relaxed);\n            allocated(size);\n        }\n        next\n    }\n}\n\n#[global_allocator]\nstatic ALLOCATOR: Counting = Counting;\n\nfn measure(name: &str, iterations: usize, mut operation: impl FnMut() -> u64) {\n    // Warm immutable input certificates equally before counting steady-state work.\n    black_box(operation());\n    CALLS.store(0, Relaxed);\n    BYTES.store(0, Relaxed);\n    let initial = LIVE.load(Relaxed);\n    PEAK.store(initial, Relaxed);\n    ENABLED.store(true, Relaxed);\n    let mut checksum = 0_u64;\n    for _ in 0..iterations { checksum = checksum.wrapping_add(black_box(operation())); }\n    ENABLED.store(false, Relaxed);\n    let peak = PEAK.load(Relaxed) - initial;\n    let retained = LIVE.load(Relaxed) - initial;\n    println!(\"{name},{iterations},{},{},{peak},{retained},{checksum}\",\n        CALLS.load(Relaxed), BYTES.load(Relaxed));\n}\n\nfn main() {\n    let iterations: usize = std::env::args().nth(1).unwrap().parse().unwrap();\n    let export = std::env::args().nth(2).is_some_and(|arg| arg == \"export\");\n    #[cfg(baseline)]\n    let functions: [fn(Real) -> Result<Real, Problem>; 4] = [\n        hyperlattice::ln, hyperlattice::log10, hyperlattice::asin, hyperlattice::acos,\n    ];\n    #[cfg(not(baseline))]\n    let functions: [fn(Real) -> Result<Real, Problem>; 4] = [Real::ln, Real::log10, Real::asin, Real::acos];\n    for (index, name) in [\"ln\", \"log10\", \"asin\", \"acos\"].into_iter().enumerate() {\n        let floats = if index < 2 { [9.0, 1.0e-12, 1.0e12, std::f64::consts::E] }\n            else { [0.5, -0.999_999, 0.999_999, 1.0e-12] };\n        let values = floats.map(|x| Real::try_from(x).unwrap());\n        measure(name, iterations, || {\n            let mut sum = 0_u64;\n            for value in &values {\n                let result = black_box(functions[index](black_box(value.clone())).unwrap());\n                if export {\n                    sum = sum.wrapping_add(result.to_f64_lossy().unwrap().to_bits());\n                } else {\n                    sum += result.zero_status() as u64 + 1;\n                }\n            }\n            sum\n        });\n    }\n    let signal = Arc::new(AtomicBool::new(false));\n    let matrix3 = Matrix3::new([[2.into(), 3.into(), 5.into()], [0.into(), 7.into(), 11.into()], [0.into(), 0.into(), 13.into()]]);\n    let matrix4 = Matrix4::new([[2.into(), 3.into(), 5.into(), 7.into()], [0.into(), 11.into(), 13.into(), 17.into()], [0.into(), 0.into(), 19.into(), 23.into()], [0.into(), 0.into(), 0.into(), 29.into()]]);\n    measure(\"matrix3_checked_abort\", iterations, || {\n        let result = black_box(matrix3.clone()).inverse_checked_with_abort(&signal).unwrap();\n        assert_eq!(black_box(&matrix3) * &result, Matrix3::identity());\n        result[0][0].to_f64_lossy().unwrap().to_bits()\n    });\n    measure(\"matrix4_checked_abort\", iterations, || {\n        let result = black_box(matrix4.clone()).inverse_checked_with_abort(&signal).unwrap();\n        assert_eq!(black_box(&matrix4) * &result, Matrix4::identity());\n        result[0][0].to_f64_lossy().unwrap().to_bits()\n    });\n}\n"
+    },
+    "logs": [
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-baseline-256-construction.csv",
+        "sha256": "8f3c769e193f596c5fa085f8eea3fdb4e1c926e4df76d025a72c02bd7c0c07cb",
+        "bytes": 256,
+        "raw": "ln,256,52736,917504,392,0,2048\nlog10,256,62208,1384448,1040,0,2048\nasin,256,2304,133120,144,0,2048\nacos,256,14592,913408,1192,0,2048\nmatrix3_checked_abort,256,12,984,984,984,16140901064495857664\nmatrix4_checked_abort,256,7,512,512,512,16140901064495857664\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-baseline-256-export.csv",
+        "sha256": "c21bdf37b4194ce9d0ee1e14352b1b32f9fd3622e266b5751f0d4b97cd71fc9a",
+        "bytes": 321,
+        "raw": "ln,256,84992,1644544,568,0,7554506546894490112\nlog10,256,132096,2756608,1744,0,1897320200344898304\nasin,256,44800,1353728,544,0,4940814446278004224\nacos,256,57088,2197504,1192,0,5345218382895406080\nmatrix3_checked_abort,256,12,984,984,984,16140901064495857664\nmatrix4_checked_abort,256,7,512,512,512,16140901064495857664\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-baseline-64-construction.csv",
+        "sha256": "21de24c22af06a0b2ba00350e51356c27f1aee0d093cdd5630db7056d569854d",
+        "bytes": 242,
+        "raw": "ln,64,13184,229376,392,0,512\nlog10,64,15552,346112,1040,0,512\nasin,64,576,33280,144,0,512\nacos,64,3648,228352,1192,0,512\nmatrix3_checked_abort,64,12,984,984,984,17870283321406128128\nmatrix4_checked_abort,64,7,512,512,512,17870283321406128128\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-baseline-64-export.csv",
+        "sha256": "ad56de8e4d87ba0007c2ca023341ffed401deac5c1d0a279979887501e1326e7",
+        "bytes": 310,
+        "raw": "ln,64,21248,411136,568,0,1888626636723622528\nlog10,64,33024,689152,1744,0,474330050086224576\nasin,64,11200,338432,544,0,5846889629996888960\nacos,64,14272,549376,1192,0,15171362651006015232\nmatrix3_checked_abort,64,12,984,984,984,17870283321406128128\nmatrix4_checked_abort,64,7,512,512,512,17870283321406128128\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-candidate-256-construction.csv",
+        "sha256": "8f3c769e193f596c5fa085f8eea3fdb4e1c926e4df76d025a72c02bd7c0c07cb",
+        "bytes": 256,
+        "raw": "ln,256,52736,917504,392,0,2048\nlog10,256,62208,1384448,1040,0,2048\nasin,256,2304,133120,144,0,2048\nacos,256,14592,913408,1192,0,2048\nmatrix3_checked_abort,256,12,984,984,984,16140901064495857664\nmatrix4_checked_abort,256,7,512,512,512,16140901064495857664\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-candidate-256-export.csv",
+        "sha256": "c21bdf37b4194ce9d0ee1e14352b1b32f9fd3622e266b5751f0d4b97cd71fc9a",
+        "bytes": 321,
+        "raw": "ln,256,84992,1644544,568,0,7554506546894490112\nlog10,256,132096,2756608,1744,0,1897320200344898304\nasin,256,44800,1353728,544,0,4940814446278004224\nacos,256,57088,2197504,1192,0,5345218382895406080\nmatrix3_checked_abort,256,12,984,984,984,16140901064495857664\nmatrix4_checked_abort,256,7,512,512,512,16140901064495857664\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-candidate-64-construction.csv",
+        "sha256": "21de24c22af06a0b2ba00350e51356c27f1aee0d093cdd5630db7056d569854d",
+        "bytes": 242,
+        "raw": "ln,64,13184,229376,392,0,512\nlog10,64,15552,346112,1040,0,512\nasin,64,576,33280,144,0,512\nacos,64,3648,228352,1192,0,512\nmatrix3_checked_abort,64,12,984,984,984,17870283321406128128\nmatrix4_checked_abort,64,7,512,512,512,17870283321406128128\n"
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-memory-candidate-64-export.csv",
+        "sha256": "ad56de8e4d87ba0007c2ca023341ffed401deac5c1d0a279979887501e1326e7",
+        "bytes": 310,
+        "raw": "ln,64,21248,411136,568,0,1888626636723622528\nlog10,64,33024,689152,1744,0,474330050086224576\nasin,64,11200,338432,544,0,5846889629996888960\nacos,64,14272,549376,1192,0,15171362651006015232\nmatrix3_checked_abort,64,12,984,984,984,17870283321406128128\nmatrix4_checked_abort,64,7,512,512,512,17870283321406128128\n"
+      }
+    ]
+  },
+  "binary_size": {
+    "units": "bytes; GNU size text/data/bss and their total, plus executable file bytes",
+    "records": [
+      {
+        "path": "/tmp/hyperlattice-native-scalar-baseline-mathbench",
+        "sha256": "6b497721e58cabcd066896fd9e656fc98eafa17de9bcd180183834adfbdf999c",
+        "bytes": 32548160,
+        "sections": [25028629,646464,37356,25712449],
+        "section_columns": ["text","data","bss","total"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-baseline-memory",
+        "sha256": "40374d473ac15c82e132a95a76ccf7ed9c5a41e62025261f39da73bb742ec774",
+        "bytes": 6291280,
+        "sections": [1724151,224160,2552,1950863],
+        "section_columns": ["text","data","bss","total"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-baseline-sentinels",
+        "sha256": "287e917e0b6f84fe54a3c5d0d19d2aa307562c6e4a96bdd5391e86556c0f558e",
+        "bytes": 7449856,
+        "sections": [5335563,466504,3132,5805199],
+        "section_columns": ["text","data","bss","total"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-candidate-mathbench",
+        "sha256": "0ede80d4c437f437dc909cd78526a17be09a7938921cbc387845fe45456d12e1",
+        "bytes": 32364888,
+        "sections": [24883125,645400,36500,25565025],
+        "section_columns": ["text","data","bss","total"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-candidate-memory",
+        "sha256": "4a49bd92a415a3507da46e2e63c19247c4e75cdabc7d932f6a11b17b1d12cfc8",
+        "bytes": 6264176,
+        "sections": [1702771,224104,3488,1930363],
+        "section_columns": ["text","data","bss","total"]
+      },
+      {
+        "path": "/tmp/hyperlattice-native-scalar-candidate-sentinels",
+        "sha256": "1d8ba87dcdc1c7c7e130273d1d1c25be22ea12bc88d0664e1fc2189896f01cd8",
+        "bytes": 7449376,
+        "sections": [5336087,466608,2564,5805259],
+        "section_columns": ["text","data","bss","total"]
+      }
+    ],
+    "interpretation": "The unchanged sentinel total grows 60 bytes (+0.001%), while its file shrinks 480 bytes. The memory harness section total shrinks 20,500 bytes. Mathbench total shrinks 147,424 bytes and file shrinks 183,272 bytes, but deleted benchmark rows confound a library-only size claim. No general binary-size reduction is inferred."
+  },
+  "remaining_work": [
+    "Full Hypercurve release readiness and uniform geometry performance remain open.",
+    "Resolve the small retained matrix timing regressions with measured changes, not compatibility facades.",
+    "Full slow-fixture allocation, peak-memory and retained-cache accounting remains open.",
+    "Further authoritative-kernel consolidation and safe machinery deletion remain in scope.",
+    "Unedited API candidates include matrix reciprocal aliases, vector zeros, and private RealKernelExt forwarding methods; distinct panic/error and sparse-scheduling contracts must be preserved."
+  ],
+  "not_performed": ["push","publication","deployment","new browser run","new coverage run"]
+}

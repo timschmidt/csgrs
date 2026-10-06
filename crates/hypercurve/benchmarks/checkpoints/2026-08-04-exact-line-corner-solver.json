@@ -1,0 +1,282 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-04",
+  "checkpoint": "exact-line-image-design-value-corner-solver",
+  "source_revision": "b6668adc0a10dd2f9c1a70a080343eab81e84b68",
+  "pre_optimization_revision": "c17b31a98292f239ace3cdc5a2efe6dcf245eade",
+  "historical_revision": "91002500fe24ff2c42ed98c476fdca8ec02ed835",
+  "implementation_revisions": [
+    "f176d2f",
+    "a12cf39",
+    "2493f1c",
+    "ec6e7d3",
+    "c17b31a",
+    "b6668ad"
+  ],
+  "dependency_snapshot": {
+    "hyperreal": "8e2ed5315fd9f2567a5ee05e24ebfbd88a276e77",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "76281a340160f30ab86aa1f59b0fff4762d51dea",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "41631f652233e1337521822abc63bc29a6c0ce55",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "tracked_dependency_diffs": "clean",
+    "hyperlimit_untracked_state": [
+      "fuzz/artifacts/",
+      "fuzz/corpus/",
+      "hyperlimit"
+    ],
+    "hypermesh_modified_by_checkpoint": false
+  },
+  "semantic_evidence": {
+    "authoritative_solvers": [
+      "solve_line_chamfer_corner",
+      "solve_line_fillet_corner"
+    ],
+    "production_callers": [
+      "CurvePath2::chamfer_vertex_by_setbacks_raw",
+      "CurvePath2::fillet_vertex_by_radius_raw",
+      "CurveRegion2::chamfer_loop_vertex_by_setbacks_raw",
+      "CurveRegion2::fillet_loop_vertex_by_radius_raw"
+    ],
+    "curve_region_trim_only_route": "native LineArcRegion2 lookup, shared exact solver, native contour edit, and CurveRegion2 reconstruction",
+    "trim_or_extend_route": "the same shared solver enumerates both exact carrier sides and losslessly materializes extension candidates",
+    "line_images": [
+      "native lines",
+      "retained exact quadratic line images",
+      "radical-coordinate retained line images"
+    ],
+    "exact_axis_fast_path": "a structurally certified zero direction coordinate uses the other exact coordinate as the norm and never constructs a redundant square root",
+    "trim_only_fast_path": "the exact cross-product sign selects the sole offset side that can place both contacts in the open trim domains; TrimOrExtend still enumerates both sides",
+    "allocation_strategy": "zero-or-one exact candidates and the two per-edge chamfer cuts remain on the stack; a Vec is created only when the public result is genuinely Multiple",
+    "strict_policy": "all predicates remain exact-only and unresolved signs or orderings remain typed blockers",
+    "approximate_512_policy": "the same exact proof graph runs first and only the shared terminal policy may consume the 512-bit decision",
+    "returned_geometry_remains_hyperreal_exact": true,
+    "compatibility_shim_added": false
+  },
+  "mathematical_paths_covered": [
+    "positive and negative line turns",
+    "axis-aligned and exact oblique 3-4-5 directions",
+    "closed start/end seam",
+    "forward and reversed incident carriers",
+    "one-sided and two-sided setbacks",
+    "zero radius and zero setbacks",
+    "setbacks and radii outside trim domains",
+    "parallel tangents",
+    "degenerate inserted carriers",
+    "unique TrimOnly solutions",
+    "deterministically ordered multiple TrimOrExtend solutions",
+    "unsupported non-line-image pairs remain explicit",
+    "STRICT undecidable equality remains blocked",
+    "APPROXIMATE_512 supportable equality consumes exactly one terminal"
+  ],
+  "verification": {
+    "cargo_test_all_features_lib": "445 passed",
+    "cargo_test_default_lib": "441 passed",
+    "cargo_test_no_default_features_lib": "320 passed",
+    "cargo_test_all_features_hypercurve_curve": "22 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "45 passed",
+    "cargo_test_no_default_features_hypercurve_curve": "19 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion": "42 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass",
+    "minimal_selected_field_boundary": "the predicates-disabled radical parallel cusp offset integration case remains Unsupported at both the candidate and untouched historical control; selected-field cusp machinery remains an intentional predicates feature capability"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "iterations_per_repeat": 50000,
+    "repeats": 3,
+    "counter_command": "taskset -c 11 perf stat -r 3 -x, -e instructions,branches env HYPERCURVE_EDIT_BENCH=corner-solver HYPERCURVE_EDIT_CORNER_LANE=<lane> HYPERCURVE_EDIT_ITERATIONS=50000 <editing-binary>",
+    "primary_metric": "retired instructions",
+    "wall_time_note": "wall samples are retained for context but were host-load-sensitive; deterministic work counters are the acceptance metric",
+    "pre_optimization_control": "detached c17b31a worktree rebuilt against the exact dependency snapshot above",
+    "historical_control": "detached 9100250 worktree rebuilt against the exact dependency snapshot above",
+    "historical_benchmark_only_diff_sha256": "4bffbf348e1af7c8dcd13a2f519225adc57ef6c624cba68c57fe4d704b8bd2b2"
+  },
+  "matched_performance": {
+    "curve_region_design_fillet": {
+      "pre_optimization_instructions_per_operation": 155300.07886,
+      "candidate_instructions_per_operation": 143192.34232,
+      "change_percent": -7.796349,
+      "pre_optimization_branches_per_operation": 32247.23630,
+      "candidate_branches_per_operation": 29715.90608,
+      "branch_change_percent": -7.849759,
+      "pre_optimization_wall_us_samples": [
+        16.625,
+        16.653,
+        16.428
+      ],
+      "candidate_wall_us_samples": [
+        15.123,
+        15.094,
+        14.869
+      ]
+    },
+    "curve_region_design_chamfer": {
+      "pre_optimization_instructions_per_operation": 122818.54322,
+      "candidate_instructions_per_operation": 118759.96094,
+      "change_percent": -3.304535,
+      "pre_optimization_branches_per_operation": 25331.97506,
+      "candidate_branches_per_operation": 24427.95700,
+      "branch_change_percent": -3.568684,
+      "pre_optimization_wall_us_samples": [
+        12.583,
+        12.371,
+        12.666
+      ],
+      "candidate_wall_us_samples": [
+        11.633,
+        11.806,
+        11.763
+      ]
+    },
+    "unchanged_parameter_fillet_guard": {
+      "pre_optimization_instructions": 6237794745,
+      "candidate_instructions": 6237319519,
+      "change_percent": -0.007618,
+      "branch_change_percent": 0.014151
+    },
+    "unchanged_parameter_chamfer_guard": {
+      "pre_optimization_instructions": 5196230835,
+      "candidate_instructions": 5198065560,
+      "change_percent": 0.035309,
+      "branch_change_percent": 0.032808
+    },
+    "remaining_design_value_premium": {
+      "fillet_instructions_percent_over_parameter_api": 14.786762,
+      "chamfer_instructions_percent_over_parameter_api": 14.234766,
+      "interpretation": "this is the remaining exact norm, offset-line intersection, placement, and degeneracy proof cost absent from caller-supplied parameter APIs"
+    }
+  },
+  "historical_parameter_guards": {
+    "curve_region_parameter_fillet": {
+      "historical_instructions": 6238083443,
+      "candidate_instructions": 6237319519,
+      "instruction_change_percent": -0.012246,
+      "historical_branches": 1290906983,
+      "candidate_branches": 1291374582,
+      "branch_change_percent": 0.036223,
+      "historical_wall_us_samples": [
+        12.830,
+        12.547,
+        12.901
+      ]
+    },
+    "curve_region_parameter_chamfer": {
+      "historical_instructions": 5197557723,
+      "candidate_instructions": 5198065560,
+      "instruction_change_percent": 0.009771,
+      "historical_branches": 1067845963,
+      "candidate_branches": 1068198100,
+      "branch_change_percent": 0.032976,
+      "historical_wall_us_samples": [
+        10.028,
+        9.834,
+        10.281
+      ]
+    },
+    "interpretation": "both pre-existing parameter APIs remain instruction-neutral against the historical engine"
+  },
+  "heaptrack_1000_operations": {
+    "pre_optimization_design_fillet": {
+      "allocation_calls": 139196,
+      "temporary_allocations": 4014,
+      "peak_heap_kib": 95.31
+    },
+    "candidate_design_fillet": {
+      "allocation_calls": 133168,
+      "temporary_allocations": 4014,
+      "peak_heap_kib": 94.36,
+      "allocation_calls_removed": 6028
+    },
+    "candidate_parameter_fillet": {
+      "allocation_calls": 118165,
+      "temporary_allocations": 4014,
+      "peak_heap_kib": 94.22
+    },
+    "historical_parameter_fillet": {
+      "allocation_calls": 118161,
+      "temporary_allocations": 4010,
+      "peak_heap_kib": 94.22
+    },
+    "pre_optimization_design_chamfer": {
+      "allocation_calls": 128174,
+      "temporary_allocations": 5013,
+      "peak_heap_kib": 92.51
+    },
+    "candidate_design_chamfer": {
+      "allocation_calls": 125155,
+      "temporary_allocations": 4014,
+      "peak_heap_kib": 92.04,
+      "allocation_calls_removed": 3019
+    },
+    "candidate_parameter_chamfer": {
+      "allocation_calls": 109155,
+      "temporary_allocations": 4014,
+      "peak_heap_kib": 92.04
+    },
+    "historical_parameter_chamfer": {
+      "allocation_calls": 109151,
+      "temporary_allocations": 4010,
+      "peak_heap_kib": 92.05
+    }
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "all_features": {
+      "candidate_text_bytes": 4997383,
+      "pre_optimization_text_bytes": 5006231,
+      "candidate_vs_pre_optimization_bytes": -8848,
+      "candidate_vs_pre_optimization_percent": -0.176740,
+      "historical_text_bytes": 4990183,
+      "candidate_vs_historical_bytes": 7200,
+      "candidate_vs_historical_percent": 0.144283,
+      "candidate_file_bytes": 8690608,
+      "candidate_vs_pre_optimization_file_bytes": -21016,
+      "candidate_vs_historical_file_bytes": 15824
+    },
+    "no_default_features": {
+      "candidate_text_bytes": 4547319,
+      "pre_optimization_text_bytes": 4538103,
+      "candidate_vs_pre_optimization_bytes": 9216,
+      "candidate_vs_pre_optimization_percent": 0.203080,
+      "historical_text_bytes": 4552375,
+      "candidate_vs_historical_bytes": -5056,
+      "candidate_vs_historical_percent": -0.111063,
+      "candidate_file_bytes": 7961448,
+      "candidate_vs_pre_optimization_file_bytes": 17696,
+      "candidate_vs_historical_file_bytes": -8480
+    },
+    "interpretation": "the all-feature optimizer removes more linked text than the fast paths add; the minimal build accepts 9 KiB versus the immediate pre-optimization source for the measured speedup but remains smaller than the historical image"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-line-corner-optimized --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-line-corner-optimized/callgraph.json",
+    "nodes": 24193,
+    "edges": 45907,
+    "pre_optimization_nodes": 24179,
+    "pre_optimization_edges": 45894,
+    "historical_nodes": 24058,
+    "historical_edges": 45596,
+    "direct_production_callers_per_shared_solver": 2,
+    "curve_path_and_curve_region_share_one_solver_pair": true,
+    "native_curve_region_design_routes_present": true
+  },
+  "competitive_context": {
+    "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=line_arc_offset/capsule_inward target/release/deps/comparative-b2bf500a69174bc4",
+    "exact_line_arc_capsule_offset_hypercurve_median_ns": 18404.1,
+    "floating_polyline_capsule_offset_cavalier_contours_median_ns": 900.9,
+    "hypercurve_to_cavalier_ratio": 20.428571,
+    "scope_note": "this is a contextual round-corner/offset sentinel, not an equality-of-guarantees comparison; the harness has no competitor API with Hypercurve's exact design-value fillet/chamfer semantics",
+    "required_follow_up": "add explicitly labeled floating design-value corner controls where endpoint, branch, and topology semantics can be matched without implying exactness equivalence"
+  },
+  "remaining_scope": [
+    "line/arc and arc/line automatic fillet and chamfer systems",
+    "arc/arc automatic fillet and chamfer systems",
+    "conic, polynomial, rational, spline, and retained analytic pair systems",
+    "complete family-pair and degeneracy matrix under both policies",
+    "competitive design-value corner controls",
+    "caller migration and historical public engine deletion"
+  ]
+}

@@ -1,0 +1,384 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "exact transport and coalesced re-offset of correlated selected-circle partitions",
+  "implementation_revision": "28450bff3eeac74292b563fc49b4562f4d0a6e4e",
+  "semantic_revision": "80f811fb6e81d8f2386b24083a2a8ccd33ef8369",
+  "optimization_revision": "8b67c6b23408ea0aa0df2eb1bda4d7601c72d636",
+  "benchmark_source_revision": "73d389ba3352ffa53a60d02179e4c358a8a8cbb1",
+  "matched_pre_optimization_revision": "73d389ba3352ffa53a60d02179e4c358a8a8cbb1",
+  "historical_capability_revision": "7bb7f145cc3f584a72025444290410be6f0f2a0f",
+  "historical_instrumented_revision": "6904ebcfb77df80f70202bbcf87c7f548b61264a",
+  "preceding_checkpoint": "2026-08-07-cardinal-selected-circle-endpoint-translation.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "retained both selected-circle carriers in exact coincident-overlap endpoint maps so endpoint provenance identifies its owning carrier",
+      "replayed a mapped coincident-circle endpoint on a concentric target by exact signed-radius scaling, including contraction and a past-center sign crossing",
+      "cached the transported algebraic endpoint image on the result fragment and reused it through nested pair-overlap maps",
+      "guarded genuinely mapped point replay by carrier identity so a similarity-transformed fragment safely declines stale untransformed correlation evidence",
+      "coalesced traversal-contiguous fragments only when their selected-circle carrier, direction, policy, and shared cut agree",
+      "rotated cyclic processing away from a mapped storage seam when an exact traversal start is available",
+      "removed internal Boolean arrangement cuts before exact offset construction and unary regularization without adding another Boolean or offset engine",
+      "validated forward, reversed, and cyclic-seam loops under STRICT and APPROXIMATE_512",
+      "proved that an APPROXIMATE_512-only cut equality records Approximate512Consumed while STRICT declines the optimization"
+    ],
+    "remaining": [
+      "transport genuinely mapped correlation authorities through similarities instead of safely declining stale carrier evidence",
+      "construct algebraic endpoint tangents and joins for mapped cuts that are real geometric run boundaries rather than removable internal partitions",
+      "transport non-endpoint rational, parallel, pair, and chord mapped cuts whose point images do not reduce to coincident-circle endpoints",
+      "extend retained selected-circle evidence into the general fillet solver",
+      "reduce native circular-conic reconstruction cost after preserving complete regularization semantics",
+      "handle coupled material and hole wavefront events and all remaining global erosion cases"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::offset -> offset_exact_general_raw -> coalesced_algebraic_circle_offset_run -> BezierAlgebraicCuspSemicircleFragment2::coalesced_with_next -> exact_offset_span_from_algebraic_cusp_semicircle -> existing regularized_region_raw authority",
+    "semantic_endpoint_route": "exact_offset_algebraic_cusp_semicircle_endpoint -> concentric_offset_endpoint_point_image -> BezierAlgebraicCuspSemicircleParameter2::concentric_offset_point_image",
+    "coalescing_eligibility": "Both fragments must retain the requested policy, the same selected semicircle carrier, the same reversal state, and a shared traversal cut proven equal by retained evidence or the selected policy's parameter comparator.",
+    "cyclic_rule": "A closed loop may be cyclically rotated to an algebraic-circle fragment with an exact traversal start. Rotation changes only storage origin; it does not change authored order, fill semantics, or topology.",
+    "fallback": "A carrier or direction mismatch returns None. A STRICT-inconclusive cut comparison also returns None, leaving the complete per-fragment endpoint transport and regularization path authoritative. Errors and actual offset uncertainty are never relabeled as a mismatch.",
+    "join_safety": "Two contiguous fragments on the identical oriented circle have the same limiting tangent at their shared parameter, so the removed cut cannot be a geometric corner. Different carriers remain separate and still enter the existing corner join authority.",
+    "persistent_state_added_by_optimization": "None. Coalescing creates one temporary shared fragment record and preserves only the two outer endpoint caches.",
+    "semantic_memory_cost": "Exact coincident endpoint maps retain two carrier Arc handles per overlap data object, and parallel maps retain one selected-semicircle Arc under predicates. The public CurveRegion2 and selected-circle fragment handles remain one machine word.",
+    "compatibility_shim_added": false,
+    "duplicate_region_boolean_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "Shared correlated evidence is an exact constant-time identity. Independently reconstructed cuts coalesce only after certified comparison; an unresolved equality declines and preserves the complete fragment path.",
+    "approximate_512": "The same comparison graph is used. If equality remains unresolved at the terminal precision, the existing parameter comparator calls observe_approximate_512 before returning Equal, and the enclosing CurveOutcome reports Approximate512Consumed.",
+    "certified_fixture": "The mapped coincident-overlap fixture completes as Certified under both policies because its shared retained evidence proves equality without a terminal interpretation.",
+    "terminal_fixture": "The focused symbolic-cut regression uses 1/2 and 1/2 + ((pi+e)-(e+pi)): STRICT declines coalescing as Certified None, while APPROXIMATE_512 returns Some and reports Approximate512Consumed.",
+    "no_policy_upgrade": true
+  },
+  "benchmark_method": {
+    "fixture": "A certified full selected circle whose upper semicircle is split at an independently selected, exactly coincident circle-overlap parameter; offset distance is exact 1/2 and corner style is Round.",
+    "driver": "ignored all-features unit-test driver benchmark_correlated_circle_partition_offset_driver",
+    "modes": [
+      "mapped",
+      "unsplit",
+      "disabled",
+      "cavalier"
+    ],
+    "wall_method": "Seven interleaved fresh-process samples; mapped, unsplit, and historical modes use 4096 timed operations plus 257 warm-ups and one preflight; Cavalier uses 32768 timed operations.",
+    "matched_comparison": "The optimized 8b67c6b executable and detached 73d389b pre-optimization executable have identical benchmark source, release settings, dependencies, and semantic endpoint transport.",
+    "perf_method": "perf stat user-space instructions, cycles, branches, branch misses, and cache misses over 4096 timed operations, 257 warm-ups, and one preflight.",
+    "perf_normalization": "Subtract the matched disabled process retaining fixture construction, then divide by 4354 operation invocations.",
+    "heap_method": "Heaptrack record-only processes use 512 timed operations, one warm-up, and one preflight. Subtract the mapped disabled-process recorder counts and divide by 514; heaptrack_print supplies peak heap.",
+    "optimized_heap_artifacts": "/tmp/hypercurve-mapped-circle-opt.ydAHUi/{mapped-direct,disabled,unsplit}.zst",
+    "pre_optimization_heap_artifacts": "/tmp/hypercurve-mapped-circle.hKMa0X/current-{mapped,disabled,unsplit}.zst",
+    "competitive_caveat": "Cavalier Contours is a binary64 polyline throughput sentinel. It does not construct selected algebraic fields, exact circle carriers, policy evidence, or certified regularized CurveRegion2 topology.",
+    "historical_caveat": "The historical executable rejects the mapped offset. Its timing measures fast rejection and is capability context only, not an equivalent throughput baseline."
+  },
+  "matched_wall_performance": {
+    "samples_per_variant": 7,
+    "optimized_mapped_ns_samples": [
+      26858.141,
+      25434.178,
+      26542.374,
+      25556.765,
+      26640.074,
+      25801.919,
+      24674.806
+    ],
+    "pre_optimization_mapped_ns_samples": [
+      84838.190,
+      85786.263,
+      87308.947,
+      85769.733,
+      85190.976,
+      86802.052,
+      84565.726
+    ],
+    "optimized_unsplit_ns_samples": [
+      25693.574,
+      25294.251,
+      24907.937,
+      25960.336,
+      25542.562,
+      28289.703,
+      25960.624
+    ],
+    "historical_rejection_ns_samples": [
+      217.075,
+      211.675,
+      262.897,
+      264.186,
+      262.082,
+      276.355,
+      273.114
+    ],
+    "cavalier_f64_ns_samples": [
+      387.172,
+      444.535,
+      427.873,
+      439.773,
+      454.250,
+      430.411,
+      433.641
+    ],
+    "medians_ns": {
+      "optimized_mapped_complete": 25801.919,
+      "pre_optimization_mapped_complete": 85769.733,
+      "optimized_unsplit_complete": 25693.574,
+      "historical_mapped_rejection": 262.897,
+      "cavalier_f64_complete": 433.641
+    },
+    "optimization_speedup": 3.324161,
+    "optimization_time_reduction_percent": 69.917221,
+    "optimized_mapped_over_unsplit_ratio": 1.004217,
+    "optimized_mapped_over_unsplit_percent": 0.421681,
+    "optimized_exact_over_cavalier_f64_ratio": 59.500645,
+    "optimized_complete_over_historical_rejection_ratio": 98.144593,
+    "interpretation": "Coalescing makes the mapped complete operation effectively equal to its unsplit exact-circle control. Competitive and historical figures describe different semantics and are not correctness-equivalent speedup claims."
+  },
+  "deterministic_perf": {
+    "fixed_timed_iterations": 4096,
+    "warmups": 257,
+    "preflight_calls": 1,
+    "normalized_operation_invocations": 4354,
+    "optimized": {
+      "raw_mapped_process": {
+        "instructions": 947390072,
+        "cycles": 470291375,
+        "branches": 184425351,
+        "branch_misses": 985045,
+        "cache_misses": 4798794
+      },
+      "raw_disabled_process": {
+        "instructions": 3913785,
+        "cycles": 2718404,
+        "branches": 810991,
+        "branch_misses": 27821,
+        "cache_misses": 49327
+      },
+      "normalized_mapped_per_operation": {
+        "instructions": 216691.844,
+        "cycles": 107389.291,
+        "branches": 42171.419,
+        "branch_misses": 219.849,
+        "cache_misses": 1090.828
+      },
+      "raw_unsplit_process": {
+        "instructions": 943442381,
+        "cycles": 490600466,
+        "branches": 183585469,
+        "branch_misses": 1134025,
+        "cache_misses": 4676241
+      },
+      "normalized_unsplit_per_operation": {
+        "instructions": 215785.162,
+        "cycles": 112053.758,
+        "branches": 41978.520,
+        "branch_misses": 254.066,
+        "cache_misses": 1062.681
+      }
+    },
+    "pre_optimization": {
+      "raw_mapped_process": {
+        "instructions": 3086471754,
+        "cycles": 1511104391,
+        "branches": 623105172,
+        "branch_misses": 3041339,
+        "cache_misses": 14846407
+      },
+      "raw_disabled_process": {
+        "instructions": 3504580,
+        "cycles": 2497173,
+        "branches": 722606,
+        "branch_misses": 22147,
+        "cache_misses": 38070
+      },
+      "normalized_mapped_per_operation": {
+        "instructions": 708076.981,
+        "cycles": 346487.648,
+        "branches": 142945.008,
+        "branch_misses": 693.429,
+        "cache_misses": 3401.088
+      }
+    },
+    "pre_optimization_reduction_percent": {
+      "instructions": 69.397,
+      "cycles": 69.006,
+      "branches": 70.498,
+      "branch_misses": 68.295,
+      "cache_misses": 67.927
+    },
+    "optimized_mapped_over_unsplit_percent": {
+      "instructions": 0.420,
+      "cycles": -4.163,
+      "branches": 0.460,
+      "branch_misses": -13.468,
+      "cache_misses": 2.649
+    },
+    "interpretation": "Instruction and branch counts independently confirm that the wall-time improvement is algorithmic. Cycle and miss deltas against the nearly identical unsplit control are run noise; the deterministic instruction overhead is 0.42%."
+  },
+  "allocation_evidence": {
+    "fixed_timed_iterations": 512,
+    "warmups": 1,
+    "preflight_calls": 1,
+    "normalized_operation_invocations": 514,
+    "optimized": {
+      "raw_mapped_process": {
+        "allocation_calls": 114792,
+        "temporary_allocations": 9385,
+        "peak_heap_kib": 176.83
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 2698,
+        "temporary_allocations": 136,
+        "peak_heap_kib": 158.75
+      },
+      "raw_unsplit_process": {
+        "allocation_calls": 112438,
+        "temporary_allocations": 9340,
+        "peak_heap_kib": 158.75
+      },
+      "normalized_mapped_per_operation": {
+        "allocation_calls": 218.081712,
+        "temporary_allocations": 17.994163
+      },
+      "normalized_unsplit_per_operation": {
+        "allocation_calls": 213.501946,
+        "temporary_allocations": 17.906615
+      },
+      "mapped_over_unsplit_per_operation": {
+        "allocation_calls": 4.579767,
+        "temporary_allocations": 0.087549
+      },
+      "peak_increment_over_disabled_fixture_kib": 18.08
+    },
+    "pre_optimization": {
+      "raw_mapped_process": {
+        "allocation_calls": 682254,
+        "temporary_allocations": 41771,
+        "peak_heap_kib": 190.13
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 2704,
+        "temporary_allocations": 139,
+        "peak_heap_kib": 158.83
+      },
+      "raw_unsplit_process": {
+        "allocation_calls": 112444,
+        "temporary_allocations": 9344,
+        "peak_heap_kib": 158.83
+      },
+      "normalized_mapped_per_operation": {
+        "allocation_calls": 1322.081712,
+        "temporary_allocations": 80.996109
+      },
+      "peak_increment_over_disabled_fixture_kib": 31.30
+    },
+    "pre_optimization_reduction_percent": {
+      "allocation_calls": 83.504672,
+      "temporary_allocations": 77.783916
+    },
+    "profile_observation": "Before coalescing, the dominant stack was primitive_integer_pseudo_remainder and polynomial GCD under selected-circle overlap endpoint ordering during unary split topology. The optimized profile is again led by ordinary exact scalar and circular endpoint reconstruction work.",
+    "memory_interpretation": "The optimization removes repeated correlated ordering and its temporary polynomial state. Its remaining 4.58-call allocation overhead versus the unsplit control is the temporary coalesced fragment and retained mapped endpoint/cache bookkeeping, not a persistent public-layout increase."
+  },
+  "linked_size": {
+    "artifact": "matched comparative release executable with identical benchmark source",
+    "all_features": {
+      "pre_optimization_file_bytes": 12925560,
+      "optimized_file_bytes": 12928792,
+      "file_delta_bytes": 3232,
+      "file_delta_percent": 0.025005,
+      "pre_optimization_text_bytes": 9867427,
+      "optimized_text_bytes": 9870043,
+      "text_delta_bytes": 2616,
+      "text_delta_percent": 0.026511,
+      "pre_optimization_data_bytes": 309040,
+      "optimized_data_bytes": 309040,
+      "data_delta_bytes": 0,
+      "pre_optimization_bss_bytes": 4256,
+      "optimized_bss_bytes": 5744,
+      "bss_delta_bytes": 1488,
+      "pre_optimization_allocated_total_bytes": 10180723,
+      "optimized_allocated_total_bytes": 10184827,
+      "allocated_total_delta_bytes": 4104,
+      "allocated_total_delta_percent": 0.040311
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "pre_optimization_file_bytes": 11400224,
+      "optimized_file_bytes": 11400112,
+      "file_delta_bytes": -112,
+      "pre_optimization_text_bytes": 8584050,
+      "optimized_text_bytes": 8584050,
+      "text_delta_bytes": 0,
+      "pre_optimization_data_bytes": 300544,
+      "optimized_data_bytes": 300544,
+      "data_delta_bytes": 0,
+      "pre_optimization_bss_bytes": 1656,
+      "optimized_bss_bytes": 1656,
+      "bss_delta_bytes": 0,
+      "pre_optimization_allocated_total_bytes": 8886250,
+      "optimized_allocated_total_bytes": 8886250,
+      "allocated_total_delta_bytes": 0,
+      "interpretation": "Predicates-disabled allocated sections are byte-identical; the 112-byte file reduction is nonallocated metadata."
+    }
+  },
+  "static_callgraph": {
+    "optimized_revision": "8b67c6b23408ea0aa0df2eb1bda4d7601c72d636",
+    "pre_optimization_revision": "73d389ba3352ffa53a60d02179e4c358a8a8cbb1",
+    "optimized_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-mapped-circle-coalesced-8b67c6b-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "pre_optimization_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .benchmark-hypercurve-mapped-circle-preopt --out-dir target/callgraph-hypercurve-mapped-circle-preopt-73d389b-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "optimized_artifact": "target/callgraph-hypercurve-mapped-circle-coalesced-8b67c6b-all/callgraph.json",
+    "pre_optimization_artifact": "target/callgraph-hypercurve-mapped-circle-preopt-73d389b-all/callgraph.json",
+    "optimized": {
+      "libraries_discovered": 1,
+      "nodes": 29422,
+      "edges": 56115
+    },
+    "pre_optimization": {
+      "libraries_discovered": 1,
+      "nodes": 29401,
+      "edges": 56071
+    },
+    "delta": {
+      "nodes": 21,
+      "edges": 44
+    },
+    "authority_edge": "CurveRegion2::offset_exact_general_raw -> coalesced_algebraic_circle_offset_run -> coalesced_with_next",
+    "source_and_graph_confirm_existing_offset_authority": true,
+    "source_and_graph_confirm_existing_regularizer_fallback": true,
+    "duplicate_public_engine_found": false,
+    "caveat": "The utility is a syntax-level navigation and source-complexity graph, not runtime reachability or linked-size evidence."
+  },
+  "verification": {
+    "cargo_test_all_features_lib_at_implementation_revision": "482 passed, 1 ignored",
+    "cargo_test_all_features_terminal_policy_focus_at_implementation_revision": "1 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "64 passed",
+    "cargo_test_all_features_hypercurve_curve_region_boolean": "29 passed",
+    "cargo_test_all_features_hypercurve_curve_intersection": "29 passed",
+    "cargo_test_all_features_hypercurve_offset": "34 passed",
+    "cargo_test_all_features_hypercurve_analytic_parallel_region": "4 passed",
+    "cargo_test_no_default_features_lib": "324 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_release_no_default_comparative_benchmark_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "matched_all_features_comparative_builds": "pass",
+    "matched_no_default_comparative_builds": "pass",
+    "aggregate_suite_note": "No full multi-hour curve_region_boolean_fuzz matrix claim is made at this checkpoint.",
+    "known_external_warning": "Hypertri ExactKernel::sub and ExactKernel::cmp remain pre-existing dead code. No lower layer or Hypermesh was modified by this checkpoint."
+  },
+  "next_priority": {
+    "correctness": "Make retained mapped cut authorities similarity-transformable, then support mapped cuts that remain actual corners with exact point and limiting-tangent construction rather than assuming they are removable partitions.",
+    "performance_and_memory": "Profile and share native circular-conic reconstruction after the now-negligible partition overhead; preserve the complete regularizer for every non-certified global case.",
+    "fallback": "Keep carrier changes, noncoincident or nonendpoint maps, strict-inconclusive comparisons, true corners, holes, multiple loops, collapse, and every uncertain case on the existing authoritative path.",
+    "size": "The complete predicates-enabled fast path costs 2,616 text bytes in the matched representative executable; predicates-disabled allocated sections remain exactly unchanged."
+  }
+}

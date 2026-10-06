@@ -1,0 +1,148 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-08",
+  "checkpoint": "retained general oblique algebraic-chord cap exact repeated re-offset",
+  "implementation_revision": "25b7d289eb9aeac02f5795541fb6973d85658d24",
+  "benchmark_revision": "130d69f",
+  "preceding_checkpoint": "2026-08-08-nested-chord-mapped-cap-reoffset.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "repeated exact parallels of a retained finite oblique AlgebraicChord compose against their original carrier",
+      "independently selected rational endpoint fields certify one common affine support line coefficientwise under STRICT",
+      "the common-support proof supplies one reusable exact unit tangent without adjoining endpoint fields",
+      "selected-circle incidence uses the certified infinite support while finite containment remains owned by the retained chord",
+      "rational-map correlation retains exact chord-tangent provenance in the existing enum layout",
+      "nested coincident-circle overlap uses destination-semicircle tangent authority",
+      "construction records circle transversality in existing chord-data padding",
+      "concentric circle incidence proves parallel-chord endpoints through the exact Cauchy boundary identity",
+      "general chord/chord incidence refines four supporting sides in one batch and defers endpoint equality",
+      "speculative adjacency cannot consume APPROXIMATE_512 before later exact interior-disk evidence",
+      "STRICT and APPROXIMATE_512 both complete and certify construction, first offset, and repeated offset"
+    ],
+    "remaining": [
+      "mixed nested mapped cuts not reducible to the existing retained chord, pair, rational, or analytic-parallel authorities",
+      "general retained-algebraic fillet centers and remaining nonstructural corner combinations",
+      "a bounded complete representation beyond the dense 16384-control trivariate tensor ceiling",
+      "coupled material/hole wavefront events and remaining global erosion cases"
+    ]
+  },
+  "mathematical_authority": {
+    "support": "Two rational endpoint maps certify the same affine line only when every homogeneous support residual coefficient is exactly zero under CurveContext::STRICT. Failure rejoins the complete pair path.",
+    "finite_containment": "The support certificate proves only infinite-line incidence. Exact retained chord parameters and side tests remain authoritative for finite membership and order.",
+    "parallel_composition": "A derived chord parallel stores and composes its signed normal displacement against the original retained carrier, avoiding independent-field coordinate expansion on each repeated offset.",
+    "circle_incidence": "For concentric selected-circle replay, a parallel endpoint uses the exact radial Cauchy-boundary identity; construction-time transverse-circle facts exclude a hidden tangency branch.",
+    "tangent_provenance": "MapWithChordTangent records which certified chord unit tangent generated a rational image, so joins replay an exact orientation rather than compare unrelated radicals.",
+    "pair_refinement": "The general chord/chord fallback advances all four oriented support-side predicates together, accepts strict separation as soon as proved, and invokes terminal approximate equality only after all strict side work is exhausted.",
+    "terminal_discipline": "Optional adjacency is a speculative accelerator and therefore cannot consume the APPROXIMATE_512 terminal. Authoritative join classification may consume it after all strict alternatives are exhausted.",
+    "persistent_representation": "No public carrier, compatibility shim, duplicate Boolean/offset engine, or persistent allocation was added. The transversality fact occupies existing padding and all measured persistent layouts are unchanged.",
+    "approximate_geometry_added": false
+  },
+  "authority_routes": {
+    "support_proof": "RationalBezierAlgebraicPoint2::common_affine_support_line -> BezierAlgebraicChord2::try_new",
+    "parallel": "BezierAlgebraicChord2::parallel -> retained carrier composition",
+    "circle_chord": "BezierAlgebraicCuspSemicircle2::chord_intersections -> certified rational support-line fast path -> retained finite containment",
+    "chord_pair": "BezierAlgebraicChord2::intersections -> batched oriented-side refinement -> exact general fallback",
+    "offset": "CurveRegion2::offset -> offset_raw -> offset_exact_general_raw -> exact_offset_span_from_algebraic_chord -> append_exact_offset_join -> regularized_region_raw"
+  },
+  "policy_evidence": {
+    "strict": "Persistent support, tangent, carrier-composition, and transversality facts are structural or proved with CurveContext::STRICT. An unresolved exact predicate stays typed uncertainty.",
+    "approximate_512": "APPROXIMATE_512 is available only as the final shared 512-bit equality decision after every strict structural, sign, separation, and containment route. It cannot create reusable construction evidence.",
+    "regression": "A speculative endpoint-adjacency comparison formerly consumed the terminal before a later exact inside-disk proof. The speculative call now forbids terminal approximation; the public rotated three-field fixture is Certified again.",
+    "fixture_outcome": "STRICT and APPROXIMATE_512 both return CurveCertainty::Certified for the independent oblique support cap and its repeated bevel offset.",
+    "no_policy_upgrade": true
+  },
+  "capability_fixture": {
+    "geometry": "A selected circular arc is closed by a finite oblique chord whose two rational endpoints and selected circle live in independent exact fields.",
+    "operation": "Construct the CurveRegion2, bevel-offset outward by 1/8, then bevel-offset the retained exact result by 1/16.",
+    "current_result": "Certified, nonempty retained exact boundary under STRICT and APPROXIMATE_512.",
+    "first_complete_context": "The first complete development diagnostic took approximately 888 ms for the prebuilt repeated offset before carrier composition and predicate batching.",
+    "competitive_fixture": "Cavalier Contours 0.7.0 receives the analogous binary64 circular-bulge polyline and performs offsets -0.125 and -0.0625."
+  },
+  "benchmark_method": {
+    "driver": "ignored all-features release unit-test driver benchmark_independent_oblique_chord_cap_offset_driver",
+    "modes": [
+      "construct",
+      "prebuilt_exact_offset",
+      "prebuilt_reoffset",
+      "cavalier_f64_reoffset"
+    ],
+    "wall": "Current Hyper lanes were pinned to CPU 11. Construction and first offset use 256 operations after 10 warm-ups. Re-offset uses three fresh 64-operation processes after 5 warm-ups. Cavalier uses 1000000 operations after 1000 warm-ups.",
+    "historical_caveat": "The approximately 888-ms first-complete number is a development diagnostic, not a byte-matched artifact or correctness-equivalent rejecting control; only the current repeated-offset samples are used for the reported current median.",
+    "competitive_caveat": "Cavalier uses binary64 bulge geometry and supplies no selected-root proof, Hyper policy result, exact retained carrier, or guarantee-equivalent regularization. It is throughput context only."
+  },
+  "wall_performance": {
+    "current_construct_ns": 2530664.172,
+    "current_prebuilt_first_offset_ns": 3080174.625,
+    "current_prebuilt_reoffset_ns_samples": [
+      35574678.750,
+      35967242.484,
+      35819972.562
+    ],
+    "current_prebuilt_reoffset_median_ns": 35819972.562,
+    "first_complete_development_diagnostic_ns_approx": 888000000,
+    "first_complete_to_current_speedup_approx": 24.790639,
+    "cavalier_f64_reoffset_ns": 2466.880,
+    "current_over_cavalier_context_ratio": 14520.354684,
+    "interpretation": "The completed exact repeated offset is about 24.79x faster than the first complete diagnostic. It remains about 14520x the non-equivalent binary64 sentinel; exact general chord-pair predicates and unary regularization remain the dominant optimization targets."
+  },
+  "persistent_layout": {
+    "BezierAlgebraicChordData2_bytes": 56,
+    "rational_map_correlation_enum_bytes": 16,
+    "rational_map_contact_bytes": 72,
+    "delta_from_parent_bytes": 0,
+    "interpretation": "The two-bit transversality cache occupies existing padding; tangent provenance adds an enum case without changing the enum or contact size."
+  },
+  "linked_size": {
+    "artifact": "release all-features Hypercurve rlib, same dependency revisions and build configuration",
+    "parent_revision": "130d69f",
+    "parent_file_bytes": 35948586,
+    "current_file_bytes": 36219552,
+    "file_delta_bytes": 270966,
+    "parent_text_bytes": 8391116,
+    "current_text_bytes": 8457818,
+    "text_delta_bytes": 66702,
+    "parent_data_bytes": 129464,
+    "current_data_bytes": 130216,
+    "data_delta_bytes": 752,
+    "parent_allocated_total_bytes": 8520605,
+    "current_allocated_total_bytes": 8588059,
+    "allocated_total_delta_bytes": 67454,
+    "allocated_total_delta_percent": 0.791657,
+    "interpretation": "The completion batch costs 65.14 KiB of text and 0.79% allocated archive sections while leaving persistent object layouts unchanged."
+  },
+  "call_graph": {
+    "workspace_output": "/tmp/hypercurve-callgraph-20260808",
+    "repositories": [
+      "hypercurve",
+      "hyperreal",
+      "hyperlimit",
+      "hypersolve",
+      "hypertri",
+      "hyperbrep",
+      "hyperlattice"
+    ],
+    "nodes": 46996,
+    "edges": 93229,
+    "interpretation": "The retained chord fast paths converge on the existing CurveRegion2 Boolean, offset, join, and regularization authorities; no parallel public engine was introduced."
+  },
+  "validation": {
+    "all_features_library": "491 passed, 5 ignored, 0 failed",
+    "minimal_library": "324 passed, 0 failed",
+    "curve_region_promotion": "66 passed, 0 failed",
+    "focused_reoffset": "all four algebraic_cusp_semicircle_reoffsets variants passed under STRICT and APPROXIMATE_512",
+    "all_features_clippy": "Hypercurve clean with -D warnings; a pre-existing Hypertri dead-code warning is emitted while compiling the dependency",
+    "minimal_clippy": "clean with -D warnings",
+    "checks": "cargo check passes with all features and no default features; cargo fmt --check and git diff --check pass",
+    "aggregate_tests_caveat": "The aggregate all-features --tests command was intentionally interrupted inside the documented multi-hour Boolean fuzz matrix after ordinary suites and several fuzz cases passed. This checkpoint does not claim a complete rerun of that matrix."
+  }
+}

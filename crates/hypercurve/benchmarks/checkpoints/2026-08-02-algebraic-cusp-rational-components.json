@@ -1,0 +1,224 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "authoritative rational-carrier algebraic-cusp circle overlaps",
+  "source_revision": "d7b69af8691743d755260ddd7a358bcbe16a90d0",
+  "comparison_revision": "35601bfc020124522ad1d26f3e6deebbc4185225",
+  "preoptimization_revision": "3e20e06c443bcc53c1d810b4774938b36145e9f7",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "replacement of the standalone rational CoincidentCircle sentinel with exact positive-dimensional overlap evidence",
+      "one mapped cusp overlap representation shared by rational Bezier carriers and analytic parallels",
+      "one CurveRegion2 clipping route for both mapped-carrier kinds",
+      "complete selected-half and angular-stationary partitioning of a rational curve lying on the cusp support circle",
+      "forward, reversed, and noninjective repeated rational traversals",
+      "selected endpoint contacts when a coincident rational carrier traverses only the opposite semicircle",
+      "bidirectional exact cusp/rational parameter transport, including independently authored cusp cuts",
+      "full and shortened cusp/rational CurveRegion2 intersection evidence and Boolean regularization in both operand orders",
+      "STRICT and APPROXIMATE_512 execution of the same mathematical paths",
+      "Hypersolve quotient-ring projection with the complete resultant and Sturm authority retained as fallback",
+      "matched performance, allocation, linked-size, competitive-sentinel, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "cuts authored in unrelated mapped cusp fields without retained cross-field correspondence",
+      "independent algebraic endpoint ranges whose order is not retained by a shared field",
+      "finite projection or export of algebraic-cusp carriers",
+      "distinct general-algebraic carrier joins",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "circle_component": "After exact rational-circle incidence becomes identically zero on the selected cusp root, the rational common weight must have a certified nonzero constant sign. The selected-diameter polynomial and angular tangent cross product are reduced in the retained cusp field. Their complete unit-interval roots partition the rational domain into cells on which half selection and angular orientation are invariant.",
+    "cell_replay": "Every open root-free cell is sampled exactly. A selected cell is published with ascending rational and cusp ranges and an exact Same or Reversed orientation. Angular-stationary points split folds and repeated traversals, so equal geometric endpoints cannot erase a nonconstant traversal.",
+    "endpoint_contacts": "If no positive-length selected cell survives, exact roots of the selected diameter boundary are replayed. Contacts are retained only when their cusp parameter is a selected semicircle endpoint, so an opposite-half coincident carrier publishes its genuine endpoint incidence without fabricating overlap.",
+    "parameter_transport": "Rational-to-cusp transport evaluates the retained diameter-side ratio. Exact cusp-to-rational transport solves D*diameter_side-(1-2u)*radius_squared_denominator=0 in the retained cusp field, rejects conjugate-field norm roots with the same unsquared incidence, clips candidates to the published monotone cell, and requires one unique value.",
+    "projection_fast_path": "The component partition polynomials are already reduced in the selected cusp field. Hypersolve's quotient-ring norm supplies complete candidates directly; one correlated replay of the same unsquared polynomial removes roots contributed only by conjugate cusp roots. Degenerate or undecided quotient evidence falls back to the previous complete resultant plus batched local-field Sturm authority.",
+    "region_authority": "CurveRegionBooleanContext stores AlgebraicCuspMapped overlap evidence and invokes one bidirectional clip_cusp_mapped_overlap implementation. Analytic-parallel and rational carriers differ only in their retained map evidence; topology clipping and validation are shared.",
+    "policy": "All signs, comparisons, quotient projections, root isolations, and correlated replays receive CurveContext. STRICT accepts certified decisions only. APPROXIMATE_512 may terminate only at the shared 512-bit Hyperlimit/Hypersolve predicate boundary and records its use; no binary floating-point geometry is introduced."
+  },
+  "capability": {
+    "comparison_revision": "A rational curve coincident with the selected cusp support circle returned the standalone CoincidentCircle sentinel. CurveRegion2 therefore had no mapped ranges to clip or consume.",
+    "source_revision": "Coincident rational-circle carriers now publish exact monotone overlap cells and endpoint contacts through the same mapped overlap and CurveRegion2 clipping authority used by analytic parallels.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false,
+    "bounded_failure": "Only unrelated mapped fields without retained cross-field correspondence remain explicit Unsupported at this boundary; no finite approximation is substituted."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release unit-test executable pinned to CPU 11 under seven perf-stat repetitions; retired instructions and branches are primary",
+    "direct_rational_policy_matrix": {
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root",
+      "coverage": "both policies; foreign conjugate component rejection; selected quarter-circle overlap; exact 1/4 cusp cut to 1/3 rational inverse and round trip; source reversal; folded forward/reverse quartic traversal; opposite-half endpoint contact",
+      "task_clock_ms": 7.15,
+      "cycles": 22345115,
+      "instructions": 31612012,
+      "branches": 6307682,
+      "branch_misses": 128406
+    },
+    "same_capability_general_projection_reference": {
+      "revision": "3e20e06c443bcc53c1d810b4774938b36145e9f7",
+      "variant": "the committed complete implementation before component partition and exact inverse reused the reduced quotient-ring projection helper",
+      "task_clock_ms": 10.11,
+      "cycles": 32963533,
+      "instructions": 47764701,
+      "branches": 9649978,
+      "branch_misses": 156292,
+      "cycle_reduction_percent": 32.212621,
+      "instruction_reduction_percent": 33.817209,
+      "branch_reduction_percent": 34.635271,
+      "selection": "Retained. Candidate completeness still comes from Hypersolve and every uncertainty or degeneracy retains the prior general authority."
+    },
+    "expanded_region_matrix": {
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "coverage": "the prior analytic component matrix plus direct rational overlap publication, inverse transport, full and shortened rational regions, Boolean batch, and operand swap under both policies",
+      "task_clock_ms": 113.84,
+      "cycles": 455306651,
+      "instructions": 1184348548,
+      "branches": 207297589,
+      "branch_misses": 2584107,
+      "preoptimization_instructions": 1193304289,
+      "preoptimization_branches": 209185911,
+      "preoptimization_instruction_reduction_percent": 0.750499,
+      "preoptimization_branch_reduction_percent": 0.902700,
+      "comparison_revision_instructions": 1142074848,
+      "comparison_revision_branches": 199064770,
+      "instruction_change_for_expanded_capability_percent": 3.701482,
+      "branch_change_for_expanded_capability_percent": 4.135749,
+      "interpretation": "The comparison fixture lacked every rational-region operation added here, so the 3.7% retired-instruction increase is a capability cost rather than a same-work regression."
+    },
+    "unchanged_analytic_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_revision": "35601bfc020124522ad1d26f3e6deebbc4185225",
+      "comparison_instructions": 28747815,
+      "current_instructions": 28748565,
+      "instruction_change_percent": 0.002609,
+      "comparison_branches": 5414701,
+      "current_branches": 5414944,
+      "branch_change_percent": 0.004488
+    },
+    "competitive_context": {
+      "method": "three current release comparative processes per group, each with eleven calibrated 100 ms samples pinned to CPU 11; reported values are medians of process medians",
+      "direct_guarantee_equivalent": false,
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 30521803.0,
+        "hypercurve_chord_fallback": 1045575.5,
+        "curvo_heuristic": 8719.7,
+        "retained_historical_hypercurve_certified": 30055116.0,
+        "historical_change_percent": 1.552771
+      },
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18417.4,
+        "cavalier_contours": 949.1,
+        "retained_historical_hypercurve_exact": 18793.2,
+        "historical_change_percent": -1.999659
+      },
+      "interpretation": "The modified rational-cusp path is absent from both sentinels. Current values remain in normal adaptive-process variation. Curvo and Cavalier Contours remain useful finite-throughput targets but cannot retain the selected algebraic field or offer STRICT/APPROXIMATE_512 topology guarantees."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces; heaptrack_print summaries are authoritative",
+    "current_profile": "/tmp/heaptrack.hypercurve-cusp-rational-quotient.zst",
+    "reference_profile": "/tmp/heaptrack.hypercurve-cusp-rational-general-resultant.zst",
+    "current_allocation_calls": 57841,
+    "reference_allocation_calls": 89195,
+    "allocation_call_reduction_percent": 35.152195,
+    "current_temporary_allocations": 6102,
+    "reference_temporary_allocations": 5107,
+    "temporary_allocation_change_percent": 19.483062,
+    "current_peak_heap_kib": 371.30,
+    "reference_peak_heap_kib": 548.44,
+    "peak_heap_reduction_percent": 32.298884,
+    "current_recorder_peak_rss_mib": 13.46,
+    "reference_recorder_peak_rss_mib": 13.53,
+    "current_leaked_kib": 148.11,
+    "reference_leaked_kib": 229.99,
+    "interpretation": "The quotient route eliminates 31,354 allocation calls and 177.14 KiB of peak heap. Heaptrack classifies 995 more of the much smaller surviving allocation set as temporary, primarily Sturm and bigint scratch; performance and peak memory both improve materially, so the route is retained and this scratch remains visible debt."
+  },
+  "release_size": {
+    "method": "matched default-feature and no-default-feature curve_region_boolean_batch release executables against 35601bf with identical live dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8109112,
+      "current_file_bytes": 8137704,
+      "file_change_bytes": 28592,
+      "file_change_percent": 0.352591,
+      "comparison_text_bytes": 6171797,
+      "current_text_bytes": 6197501,
+      "text_change_bytes": 25704,
+      "text_change_percent": 0.416475,
+      "comparison_actual_text_section_bytes": 4653735,
+      "current_actual_text_section_bytes": 4675815,
+      "actual_text_change_bytes": 22080,
+      "actual_text_change_percent": 0.474458,
+      "fast_path_file_cost_bytes": 1400,
+      "fast_path_actual_text_cost_bytes": 1056
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7866616,
+      "current_file_bytes": 7911976,
+      "file_change_bytes": 45360,
+      "file_change_percent": 0.576614,
+      "comparison_text_bytes": 5980337,
+      "current_text_bytes": 6014197,
+      "text_change_bytes": 33860,
+      "text_change_percent": 0.566189,
+      "comparison_actual_text_section_bytes": 4491943,
+      "current_actual_text_section_bytes": 4519623,
+      "actual_text_change_bytes": 27680,
+      "actual_text_change_percent": 0.616214,
+      "fast_path_file_cost_bytes": 1392,
+      "fast_path_actual_text_cost_bytes": 1056
+    },
+    "interpretation": "Complete rational publication, inverse maps, shared clipping, and tests add less than 0.62% to either representative executable. The 1.03 KiB linked-text fast path buys a 33.8% direct instruction reduction."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-cusp-rational-d7b69af --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-callgraph-cusp-rational-d7b69af/callgraph.json",
+    "discovered_crates": 11,
+    "nodes": 33016,
+    "edges": 61463,
+    "comparison_nodes": 32971,
+    "comparison_edges": 61297,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircle2::rational_intersections_internal -> BezierAlgebraicCuspSemicircle2::replay_rational_circle_component",
+      "BezierAlgebraicCuspSemicircle2::replay_rational_circle_component -> algebraic_cusp_reduced_fiber_parameters",
+      "rational_overlap_parameter_for_exact_cusp -> algebraic_cusp_reduced_fiber_parameters",
+      "algebraic_cusp_reduced_fiber_parameters -> algebraic_cusp_quotient_ring_fiber_projection",
+      "algebraic_cusp_reduced_fiber_parameters -> algebraic_cusp_correlated_predicate_sign",
+      "algebraic_cusp_reduced_fiber_parameters -> algebraic_cusp_projected_fiber_parameters fallback",
+      "CurveRegionBooleanContext::clipped_overlap_ranges -> CurveRegionBooleanContext::clip_cusp_mapped_overlap",
+      "CurveRegionBooleanContext::clip_cusp_mapped_overlap -> mapped source other_parameter_for_cusp and cusp_parameter_for_other"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 383 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_all_features_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed all-feature unit-test, comparative, default-feature batch, and no-default-feature batch builds",
+    "strict_and_approximate": "passed foreign-component rejection, forward/reversed/folded rational overlaps, endpoint-only contact, exact inverse round trip, full and shortened region intersections, Boolean batch, and operand swap under both policies",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "retain cross-field correspondence for cuts authored by unrelated mapped cusp fields",
+    "support independent algebraic endpoint ranges without finite parameter collapse",
+    "complete direct cusp-carrier winding for every retained-field combination",
+    "broaden rational circle coverage with repeated stationary roots, poles outside certified common-sign carriers, tangency multiplicities, and randomized exact differential fixtures",
+    "reduce quotient-ring determinant, Sturm, bigint, and repeated-context scratch allocations",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean, offset, and corner machinery after differential coverage passes"
+  ]
+}

@@ -1,0 +1,3943 @@
+{
+  "schema": 1,
+  "date": "2026-09-06",
+  "title": "Certified contact replay and rational circle tangent orientation",
+  "decision": "retain the policy and tangent exactness fixes with duplicate contact construction removed; release readiness remains open",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory",
+    "binary size",
+    "code size"
+  ],
+  "revisions": {
+    "hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+    "hyperlimit": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e",
+    "hypercurve_baseline": "e44cfbdd81051a6946d80323abd2c7c2e03ae833"
+  },
+  "hypercurve_candidate": "this source hash and the containing commit",
+  "source": {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "aec90653e7ca8c4e816aa91ddf83cea773b1e600c8d4bdee250bb58dceaf57a8",
+    "production_rust_net_lines": -21,
+    "test_rust_net_lines": 153,
+    "public_api": "unchanged; no compatibility interface, alias, shim, or second kernel",
+    "behavior": "Rational and analytic selected-fiber contacts retain the weakest construction policy actually consumed. Their angle order/bracket queries use the requested replay policy. Rational tangent dot products use turn*cross(radius,target tangent), including retained pair-radial publication; existing turn-sign and contact factories replace duplicated construction."
+  },
+  "regressions": {
+    "cases": [
+      "selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact",
+      "selected_fiber_angle_query_observes_its_requested_policy",
+      "rational_circle_tangent_dot_follows_both_traversals",
+      "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+    ],
+    "baseline": "Both certified contact replay paths reject STRICT; an approximate angle query incorrectly remains STRICT. A separate pre-orientation candidate reproduces Positive where the independent horizontal-circle tangent oracle requires Negative.",
+    "candidate": "All four focused tests pass. Tests include both circle traversals, both horizontal cutter traversals, both requested policies, exact coordinate and tangent signs, actual sin(e)^2+cos(e)^2-1 terminal consumption, rejection of approximate retained evidence under STRICT, and preservation of strict evidence after an approximate query.",
+    "excluded_invocations": [
+      {
+        "log": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/unmodified-snapshot-sanity.log",
+        "reason": "Initial git apply from an unversioned archive ignored the regression paths. This is only an unmodified snapshot sanity pass; authoritative baseline regression logs come from the explicitly copied test source."
+      },
+      {
+        "prefix": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only",
+        "reason": "Intermediate policy fix passed analytic replay and requested-policy checks but the strengthened exact tangent assertion exposed the pre-existing orientation error. These artifacts are not the final candidate."
+      }
+    ]
+  },
+  "validation": {
+    "all_features_include_ignored": {
+      "passed": 1753,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 46
+    },
+    "no_default_features": {
+      "passed": 1715,
+      "failed": 0,
+      "ignored": 4,
+      "suites": 46,
+      "ignored_coverage": "all four opt-in tests pass in the full run"
+    },
+    "ui": {
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 1
+    },
+    "gates": "fmt 0\nfull 0\nclippy 0\nminimal 0\nminimal-clippy 0\ndocs 0\nminimal-docs 0\nfuzz-check 0\nui-tests 0\nui-clippy 0\nui-wasm 0\n",
+    "fuzz_targets_compiled": true,
+    "new_fuzz_campaign": false,
+    "fresh_coverage": false,
+    "lower_stack_or_hypermesh_requalification": false
+  },
+  "build_control": {
+    "source_root": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/snapshot",
+    "matched_paths": true,
+    "dependencies": "All six crate sources were archived from the recorded commits. No dependency points into a concurrent live worktree. Hyperreal's uncommitted formatter changes are deliberately excluded.",
+    "unit_features": "all features including dispatch-trace and comparative-benchmarks",
+    "native_benchmark_features": "default features, cargo build --release --locked --bench bezier_region --bench rational_bezier --bench curve_region_boolean_batch",
+    "wasm_features": "UI defaults, release wasm32-unknown-unknown",
+    "timing_context": "Three alternating pairs pinned to CPU 7 after owned build/test/profile workers completed. Instruction controls use CPU 3 and twenty batch iterations."
+  },
+  "timings": {
+    "total_invocations": 82,
+    "total_lane_measurements": 856,
+    "three_pairs": {
+      "lane_measurement_count": 282,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 54,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 5.99,
+          "user_s": 5.95,
+          "system_s": 0,
+          "max_rss_kib": 10404,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 5.91,
+          "user_s": 5.88,
+          "system_s": 0,
+          "max_rss_kib": 10500,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 5.84,
+          "user_s": 5.81,
+          "system_s": 0,
+          "max_rss_kib": 10624,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 5.86,
+          "user_s": 5.83,
+          "system_s": 0,
+          "max_rss_kib": 10048,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 5.89,
+          "user_s": 5.86,
+          "system_s": 0,
+          "max_rss_kib": 10456,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 5.79,
+          "user_s": 5.76,
+          "system_s": 0,
+          "max_rss_kib": 9984,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 17.39,
+          "user_s": 17.27,
+          "system_s": 0.03,
+          "max_rss_kib": 46600,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 17.46,
+          "user_s": 17.34,
+          "system_s": 0.03,
+          "max_rss_kib": 46544,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 16.99,
+          "user_s": 16.88,
+          "system_s": 0.02,
+          "max_rss_kib": 46640,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 17.23,
+          "user_s": 17.1,
+          "system_s": 0.03,
+          "max_rss_kib": 46912,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 17.18,
+          "user_s": 17.06,
+          "system_s": 0.03,
+          "max_rss_kib": 45984,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 17.4,
+          "user_s": 17.26,
+          "system_s": 0.03,
+          "max_rss_kib": 46868,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 11.49,
+          "user_s": 11.42,
+          "system_s": 0.01,
+          "max_rss_kib": 28256,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 11.41,
+          "user_s": 11.34,
+          "system_s": 0.02,
+          "max_rss_kib": 28436,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 11.8,
+          "user_s": 11.71,
+          "system_s": 0.02,
+          "max_rss_kib": 28236,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 11.74,
+          "user_s": 11.66,
+          "system_s": 0.01,
+          "max_rss_kib": 28356,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 11.58,
+          "user_s": 11.51,
+          "system_s": 0.01,
+          "max_rss_kib": 28212,
+          "exit": 0
+        },
+        {
+          "fixture": "contacts",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 11.39,
+          "user_s": 11.33,
+          "system_s": 0.01,
+          "max_rss_kib": 28316,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 31.13,
+          "user_s": 30.95,
+          "system_s": 0.03,
+          "max_rss_kib": 49424,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 30.55,
+          "user_s": 30.37,
+          "system_s": 0.04,
+          "max_rss_kib": 50632,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 30.82,
+          "user_s": 30.64,
+          "system_s": 0.04,
+          "max_rss_kib": 50312,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 30.67,
+          "user_s": 30.5,
+          "system_s": 0.03,
+          "max_rss_kib": 50832,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 31.9,
+          "user_s": 31.71,
+          "system_s": 0.03,
+          "max_rss_kib": 50356,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 30.86,
+          "user_s": 30.69,
+          "system_s": 0.03,
+          "max_rss_kib": 50552,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.29,
+          "system_s": 0.02,
+          "max_rss_kib": 31528,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.31,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31460,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31484,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.34,
+          "user_s": 0.33,
+          "system_s": 0.01,
+          "max_rss_kib": 31532,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31404,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31348,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 21.07,
+          "user_s": 20.98,
+          "system_s": 0,
+          "max_rss_kib": 18116,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 21.13,
+          "user_s": 21.05,
+          "system_s": 0,
+          "max_rss_kib": 19252,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 21.31,
+          "user_s": 21.21,
+          "system_s": 0,
+          "max_rss_kib": 19044,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 21.28,
+          "user_s": 21.17,
+          "system_s": 0.01,
+          "max_rss_kib": 18784,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 21.67,
+          "user_s": 21.56,
+          "system_s": 0,
+          "max_rss_kib": 19072,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 21.16,
+          "user_s": 21.07,
+          "system_s": 0,
+          "max_rss_kib": 18700,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.99,
+            5.84,
+            5.89
+          ],
+          "candidate": [
+            5.91,
+            5.86,
+            5.79
+          ],
+          "baseline_median": 5.89,
+          "candidate_median": 5.86,
+          "change_percent": -0.5093378607809784
+        },
+        {
+          "name": "chord",
+          "baseline": [
+            17.39,
+            16.99,
+            17.18
+          ],
+          "candidate": [
+            17.46,
+            17.23,
+            17.4
+          ],
+          "baseline_median": 17.18,
+          "candidate_median": 17.4,
+          "change_percent": 1.2805587892898762
+        },
+        {
+          "name": "contacts",
+          "baseline": [
+            11.49,
+            11.8,
+            11.58
+          ],
+          "candidate": [
+            11.41,
+            11.74,
+            11.39
+          ],
+          "baseline_median": 11.58,
+          "candidate_median": 11.41,
+          "change_percent": -1.4680483592400706
+        },
+        {
+          "name": "radial",
+          "baseline": [
+            31.13,
+            30.82,
+            31.9
+          ],
+          "candidate": [
+            30.55,
+            30.67,
+            30.86
+          ],
+          "baseline_median": 31.13,
+          "candidate_median": 30.67,
+          "change_percent": -1.4776742691936962
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.32,
+            0.32,
+            0.32
+          ],
+          "candidate": [
+            0.31,
+            0.34,
+            0.32
+          ],
+          "baseline_median": 0.32,
+          "candidate_median": 0.32,
+          "change_percent": 0
+        },
+        {
+          "name": "selected",
+          "baseline": [
+            21.07,
+            21.31,
+            21.67
+          ],
+          "candidate": [
+            21.13,
+            21.28,
+            21.16
+          ],
+          "baseline_median": 21.31,
+          "candidate_median": 21.16,
+          "change_percent": -0.7038948850304982
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11639.39545,
+            11432.71515,
+            11279.18015
+          ],
+          "candidate": [
+            12100.26585,
+            13480.74915,
+            11245.3575
+          ],
+          "baseline_median": 11432.71515,
+          "candidate_median": 12100.26585,
+          "change_percent": 5.838951563487527
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            10980.386,
+            10971.328,
+            11131.996
+          ],
+          "candidate": [
+            11071.54,
+            14975.932,
+            11579.486
+          ],
+          "baseline_median": 10980.386,
+          "candidate_median": 11579.486,
+          "change_percent": 5.4560923450232
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            9764.172,
+            9642.94,
+            9980.356
+          ],
+          "candidate": [
+            10285.696,
+            15785.276,
+            9808.448
+          ],
+          "baseline_median": 9764.172,
+          "candidate_median": 10285.696,
+          "change_percent": 5.341200462261408
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            176995.36,
+            176817.67,
+            176475.39
+          ],
+          "candidate": [
+            174201.15,
+            200369.36,
+            183177.03
+          ],
+          "baseline_median": 176817.67,
+          "candidate_median": 183177.03,
+          "change_percent": 3.5965636239862153
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            353.011,
+            352.456,
+            352.076
+          ],
+          "candidate": [
+            363.635,
+            696.5375,
+            362.1905
+          ],
+          "baseline_median": 352.456,
+          "candidate_median": 363.635,
+          "change_percent": 3.171743423292539
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            3.0612,
+            2.982635,
+            2.967376
+          ],
+          "candidate": [
+            3.964368,
+            3.05303,
+            3.041532
+          ],
+          "baseline_median": 2.982635,
+          "candidate_median": 3.05303,
+          "change_percent": 2.3601614009089333
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            72389.472,
+            71228.956,
+            71732.12
+          ],
+          "candidate": [
+            72959.556,
+            72413.152,
+            72949.156
+          ],
+          "baseline_median": 71732.12,
+          "candidate_median": 72949.156,
+          "change_percent": 1.6966402219814603
+        },
+        {
+          "name": "rectangles/curve_region_boolean_four_independent",
+          "baseline": [
+            708385.15,
+            762382.357,
+            716333.315
+          ],
+          "candidate": [
+            698393.896,
+            727697.326,
+            745760.977
+          ],
+          "baseline_median": 716333.315,
+          "candidate_median": 727697.326,
+          "change_percent": 1.586413860983149
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            3764.46075,
+            3697.50285,
+            3646.40085
+          ],
+          "candidate": [
+            3751.9821,
+            3689.5934,
+            3783.37745
+          ],
+          "baseline_median": 3697.50285,
+          "candidate_median": 3751.9821,
+          "change_percent": 1.4734065722221246
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            194.988,
+            181.708,
+            180.788
+          ],
+          "candidate": [
+            183.228,
+            186.468,
+            183.868
+          ],
+          "baseline_median": 181.708,
+          "candidate_median": 183.868,
+          "change_percent": 1.1887203645409183
+        },
+        {
+          "name": "capsules/curve_region_boolean_four_independent",
+          "baseline": [
+            3393500.066,
+            3437799.647,
+            3380703.674
+          ],
+          "candidate": [
+            3760400.844,
+            3431479.98,
+            3395121.985
+          ],
+          "baseline_median": 3393500.066,
+          "candidate_median": 3431479.98,
+          "change_percent": 1.119195911634896
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            639180.2,
+            641359,
+            644392.8
+          ],
+          "candidate": [
+            647293.6,
+            812497.3,
+            634092.5
+          ],
+          "baseline_median": 641359,
+          "candidate_median": 647293.6,
+          "change_percent": 0.9253163984601409
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.26091,
+            4.23591,
+            4.2838
+          ],
+          "candidate": [
+            4.2924,
+            7.3349,
+            4.23581
+          ],
+          "baseline_median": 4.26091,
+          "candidate_median": 4.2924,
+          "change_percent": 0.7390440070313531
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            149.5598,
+            146.9638,
+            151.0476
+          ],
+          "candidate": [
+            148.6958,
+            150.3116,
+            151.7916
+          ],
+          "baseline_median": 149.5598,
+          "candidate_median": 150.3116,
+          "change_percent": 0.5026751841069599
+        },
+        {
+          "name": "capsules/curve_region_boolean_shared_all_four",
+          "baseline": [
+            1109877.526,
+            1094259.137,
+            1091546.633
+          ],
+          "candidate": [
+            1099237.916,
+            1141743.82,
+            1078963.657
+          ],
+          "baseline_median": 1094259.137,
+          "candidate_median": 1099237.916,
+          "change_percent": 0.45499085469367095
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            23595.6117,
+            23245.41775,
+            23329.129
+          ],
+          "candidate": [
+            23421.8366,
+            23245.28775,
+            23773.0055
+          ],
+          "baseline_median": 23329.129,
+          "candidate_median": 23421.8366,
+          "change_percent": 0.3973898896953987
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            180721.452,
+            173783.418,
+            175545.737
+          ],
+          "candidate": [
+            173090.935,
+            181604.331,
+            176202.391
+          ],
+          "baseline_median": 175545.737,
+          "candidate_median": 176202.391,
+          "change_percent": 0.374064338571789
+        },
+        {
+          "name": "circles/curve_region_boolean_four_independent",
+          "baseline": [
+            9162161.432,
+            9416352.133,
+            9160170.498
+          ],
+          "candidate": [
+            9476160.589,
+            9190121.214,
+            9134923.781
+          ],
+          "baseline_median": 9162161.432,
+          "candidate_median": 9190121.214,
+          "change_percent": 0.30516578656152316
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            260207.02799999996,
+            276174.892,
+            272966.272
+          ],
+          "candidate": [
+            255502.032,
+            273979.204,
+            273795.456
+          ],
+          "baseline_median": 272966.272,
+          "candidate_median": 273795.456,
+          "change_percent": 0.30376793217881115
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            20534.492,
+            20290.648,
+            20278.05
+          ],
+          "candidate": [
+            20224.332,
+            20324.424,
+            21874.62
+          ],
+          "baseline_median": 20290.648,
+          "candidate_median": 20324.424,
+          "change_percent": 0.16646092327854412
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.72323,
+            11.99398,
+            12.65073
+          ],
+          "candidate": [
+            12.64453,
+            12.65913,
+            12.68683
+          ],
+          "baseline_median": 12.65073,
+          "candidate_median": 12.65913,
+          "change_percent": 0.06639933031531431
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            849.6465,
+            896.3985,
+            866.1405
+          ],
+          "candidate": [
+            879.9395,
+            856.686,
+            864.351
+          ],
+          "baseline_median": 866.1405,
+          "candidate_median": 864.351,
+          "change_percent": -0.20660620303518673
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.503769,
+            3.449653,
+            3.414306
+          ],
+          "candidate": [
+            3.570965,
+            3.427095,
+            3.442494
+          ],
+          "baseline_median": 3.449653,
+          "candidate_median": 3.442494,
+          "change_percent": -0.20752811949492633
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            19806.96,
+            25456.336,
+            19586.096
+          ],
+          "candidate": [
+            19601.456,
+            19817.6,
+            19742.128
+          ],
+          "baseline_median": 19806.96,
+          "candidate_median": 19742.128,
+          "change_percent": -0.3273192857460083
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            19146.088,
+            18413.376,
+            20409.16
+          ],
+          "candidate": [
+            19083.372,
+            23376.196,
+            18819.832
+          ],
+          "baseline_median": 19146.088,
+          "candidate_median": 19083.372,
+          "change_percent": -0.3275656102698421
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            550.204,
+            572.92,
+            570.72
+          ],
+          "candidate": [
+            552.56,
+            1114.964,
+            568.56
+          ],
+          "baseline_median": 570.72,
+          "candidate_median": 568.56,
+          "change_percent": -0.3784693019344143
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11341.2,
+            11644.2,
+            11269.2
+          ],
+          "candidate": [
+            11386.2,
+            11289.2,
+            11193.2
+          ],
+          "baseline_median": 11341.2,
+          "candidate_median": 11289.2,
+          "change_percent": -0.4585052728106387
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2430.848,
+            2388.896,
+            2548.83
+          ],
+          "candidate": [
+            2432.7635,
+            2417.929,
+            2396.9555
+          ],
+          "baseline_median": 2430.848,
+          "candidate_median": 2417.929,
+          "change_percent": -0.5314606260860333
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            218261.73,
+            209710.61,
+            203891.91
+          ],
+          "candidate": [
+            208733.28,
+            208347.91,
+            204970.04
+          ],
+          "baseline_median": 209710.61,
+          "candidate_median": 208347.91,
+          "change_percent": -0.6498002175474027
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            24606.422,
+            24267.815,
+            25592.514
+          ],
+          "candidate": [
+            23962.086,
+            27635.304,
+            24400.236
+          ],
+          "baseline_median": 24606.422,
+          "candidate_median": 24400.236,
+          "change_percent": -0.8379357226336981
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            45803.8125,
+            44370.756,
+            43230.934
+          ],
+          "candidate": [
+            43086.424,
+            49804.893,
+            43910.1525
+          ],
+          "baseline_median": 44370.756,
+          "candidate_median": 43910.1525,
+          "change_percent": -1.0380789996005557
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            5774.7558,
+            5874.53245,
+            5824.8919
+          ],
+          "candidate": [
+            5746.20275,
+            6089.8332,
+            5754.9517
+          ],
+          "baseline_median": 5824.8919,
+          "candidate_median": 5754.9517,
+          "change_percent": -1.2007124115041568
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            56377.217,
+            54470.908,
+            52750.906
+          ],
+          "candidate": [
+            53815.823,
+            55166.5355,
+            53620.331
+          ],
+          "baseline_median": 54470.908,
+          "candidate_median": 53815.823,
+          "change_percent": -1.2026327888641108
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            17736.1867,
+            17291.2717,
+            17154.17315
+          ],
+          "candidate": [
+            16819.61905,
+            17761.2255,
+            17071.3733
+          ],
+          "baseline_median": 17291.2717,
+          "candidate_median": 17071.3733,
+          "change_percent": -1.2717306385278904
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            358345.485,
+            342672.201,
+            347325.292
+          ],
+          "candidate": [
+            342736.286,
+            341084.369,
+            346581.152
+          ],
+          "baseline_median": 347325.292,
+          "candidate_median": 342736.286,
+          "change_percent": -1.3212415293960222
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            25486.88495,
+            26947.96025,
+            25156.6136
+          ],
+          "candidate": [
+            25382.87105,
+            25008.2013,
+            25148.3157
+          ],
+          "baseline_median": 25486.88495,
+          "candidate_median": 25148.3157,
+          "change_percent": -1.3284057689443185
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            366.15,
+            352.8155,
+            354.211
+          ],
+          "candidate": [
+            343.211,
+            511.5849999999999,
+            348.951
+          ],
+          "baseline_median": 354.211,
+          "candidate_median": 348.951,
+          "change_percent": -1.4849905847079792
+        },
+        {
+          "name": "circles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            4632077.632,
+            4747190.285,
+            4582780.614
+          ],
+          "candidate": [
+            4539605.567,
+            4801546.635,
+            4562987.252
+          ],
+          "baseline_median": 4632077.632,
+          "candidate_median": 4562987.252,
+          "change_percent": -1.4915635161789953
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            35841.601,
+            34293.047,
+            34135.163
+          ],
+          "candidate": [
+            33750.5945,
+            34388.171,
+            33626.648
+          ],
+          "baseline_median": 34293.047,
+          "candidate_median": 33750.5945,
+          "change_percent": -1.5818148209460592
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3686.479,
+            3993.654,
+            3725.0526
+          ],
+          "candidate": [
+            3657.221,
+            3665.8326,
+            3706.2976
+          ],
+          "baseline_median": 3725.0526,
+          "candidate_median": 3665.8326,
+          "change_percent": -1.5897762087976886
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            703154.8,
+            700563.9,
+            708195.4
+          ],
+          "candidate": [
+            690136.6,
+            690996.6,
+            687525.9
+          ],
+          "baseline_median": 703154.8,
+          "candidate_median": 690136.6,
+          "change_percent": -1.8513988669351389
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            13016.16755,
+            12946.207799999998,
+            12885.664
+          ],
+          "candidate": [
+            12646.90635,
+            14794.419,
+            12403.1001
+          ],
+          "baseline_median": 12946.207799999998,
+          "candidate_median": 12646.90635,
+          "change_percent": -2.3118851066178503
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            12919.401149999998,
+            12917.89575,
+            13345.4079
+          ],
+          "candidate": [
+            12612.8512,
+            12609.4469,
+            12929.725450000002
+          ],
+          "baseline_median": 12919.401149999998,
+          "candidate_median": 12612.8512,
+          "change_percent": -2.372787611753957
+        },
+        {
+          "name": "rectangles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            344788.496,
+            372872.128,
+            351638.775
+          ],
+          "candidate": [
+            342754.855,
+            337801.415,
+            355705.226
+          ],
+          "baseline_median": 351638.775,
+          "candidate_median": 342754.855,
+          "change_percent": -2.5264335538650595
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2873.25535,
+            2874.84125,
+            2878.915
+          ],
+          "candidate": [
+            2846.7162,
+            2800.4889,
+            2777.19145
+          ],
+          "baseline_median": 2874.84125,
+          "candidate_median": 2800.4889,
+          "change_percent": -2.586311505026584
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            140006.8497,
+            134524.6538,
+            138678.5978
+          ],
+          "candidate": [
+            140261.25575,
+            132898.4029,
+            134238.7639
+          ],
+          "baseline_median": 138678.5978,
+          "candidate_median": 134238.7639,
+          "change_percent": -3.2015278279659665
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            6066.5093,
+            5699.63045,
+            5544.09615
+          ],
+          "candidate": [
+            5586.8942,
+            5511.9488,
+            5491.0873
+          ],
+          "baseline_median": 5699.63045,
+          "candidate_median": 5511.9488,
+          "change_percent": -3.292874014314373
+        }
+      ],
+      "instructions": [
+        {
+          "fixture": "rectangles",
+          "baseline": 233495783,
+          "candidate": 233628218,
+          "change_percent": 0.05671836908507366
+        },
+        {
+          "fixture": "circles",
+          "baseline": 2418564421,
+          "candidate": 2418850134,
+          "change_percent": 0.01181333015234376
+        },
+        {
+          "fixture": "capsules",
+          "baseline": 870857076,
+          "candidate": 870916692,
+          "change_percent": 0.006845669816901712
+        }
+      ]
+    },
+    "seven_additional_native_pairs": {
+      "lane_measurement_count": 574,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 28,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 5.83,
+          "user_s": 5.8,
+          "system_s": 0,
+          "max_rss_kib": 10512,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 5.87,
+          "user_s": 5.83,
+          "system_s": 0,
+          "max_rss_kib": 10412,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 5.86,
+          "user_s": 5.83,
+          "system_s": 0,
+          "max_rss_kib": 10388,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 6.23,
+          "user_s": 6.19,
+          "system_s": 0,
+          "max_rss_kib": 10308,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 5.85,
+          "user_s": 5.82,
+          "system_s": 0,
+          "max_rss_kib": 10460,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 5.75,
+          "user_s": 5.72,
+          "system_s": 0,
+          "max_rss_kib": 10000,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 5.81,
+          "user_s": 5.78,
+          "system_s": 0,
+          "max_rss_kib": 10324,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 5.86,
+          "user_s": 5.82,
+          "system_s": 0,
+          "max_rss_kib": 10528,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 5.88,
+          "user_s": 5.85,
+          "system_s": 0,
+          "max_rss_kib": 9984,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 6.02,
+          "user_s": 5.98,
+          "system_s": 0,
+          "max_rss_kib": 10384,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 5.86,
+          "user_s": 5.83,
+          "system_s": 0,
+          "max_rss_kib": 10436,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 6,
+          "user_s": 5.97,
+          "system_s": 0,
+          "max_rss_kib": 10364,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 5.88,
+          "user_s": 5.85,
+          "system_s": 0,
+          "max_rss_kib": 10376,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 5.82,
+          "user_s": 5.79,
+          "system_s": 0,
+          "max_rss_kib": 10336,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31544,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31520,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31424,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31416,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31340,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31492,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31480,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31404,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31476,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31552,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 0.32,
+          "user_s": 0.31,
+          "system_s": 0,
+          "max_rss_kib": 31460,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31496,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 0.33,
+          "user_s": 0.31,
+          "system_s": 0.01,
+          "max_rss_kib": 31448,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 0.32,
+          "user_s": 0.3,
+          "system_s": 0.01,
+          "max_rss_kib": 31560,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            5.83,
+            5.86,
+            5.85,
+            5.81,
+            5.88,
+            5.86,
+            5.88
+          ],
+          "candidate": [
+            5.87,
+            6.23,
+            5.75,
+            5.86,
+            6.02,
+            6,
+            5.82
+          ],
+          "baseline_median": 5.86,
+          "candidate_median": 5.87,
+          "change_percent": 0.17064846416381396
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.32,
+            0.32,
+            0.32,
+            0.33,
+            0.32,
+            0.32,
+            0.33
+          ],
+          "candidate": [
+            0.32,
+            0.32,
+            0.32,
+            0.32,
+            0.33,
+            0.33,
+            0.32
+          ],
+          "baseline_median": 0.32,
+          "candidate_median": 0.32,
+          "change_percent": 0
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            19254.72,
+            18993.14,
+            19682.692,
+            19403.548,
+            19834.876,
+            19163.928,
+            20622.984
+          ],
+          "candidate": [
+            19321.556,
+            19863.476,
+            20317.248,
+            19332.196,
+            20182.736,
+            19924.192,
+            20174.616
+          ],
+          "baseline_median": 19403.548,
+          "candidate_median": 19924.192,
+          "change_percent": 2.6832412299029107
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            12732.2845,
+            12652.234,
+            12757.34075,
+            12733.4949,
+            12565.8259,
+            12962.482700000002,
+            12851.810800000001
+          ],
+          "candidate": [
+            13053.529449999998,
+            13553.34565,
+            12444.41225,
+            15331.57915,
+            13023.9545,
+            13105.281400000002,
+            12653.1869
+          ],
+          "baseline_median": 12733.4949,
+          "candidate_median": 13053.529449999998,
+          "change_percent": 2.513328449992147
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            20468.536,
+            20392.68,
+            20761.316,
+            20551.748,
+            20809.012,
+            20705.52,
+            20573.188
+          ],
+          "candidate": [
+            20895.206,
+            21400.212,
+            20988.12,
+            21011.418,
+            22209.276,
+            21536.662,
+            20507.032
+          ],
+          "baseline_median": 20573.188,
+          "candidate_median": 21011.418,
+          "change_percent": 2.1301025392856054
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2407.225,
+            2389.446,
+            2392.416,
+            2387.146,
+            2522.767,
+            2413.9345,
+            2458.3015
+          ],
+          "candidate": [
+            2456.5365,
+            2492.179,
+            2349.379,
+            2480.27,
+            2369.6525,
+            2531.8865,
+            2407.7695
+          ],
+          "baseline_median": 2407.225,
+          "candidate_median": 2456.5365,
+          "change_percent": 2.0484790578363166
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            5558.9351,
+            5573.02115,
+            5448.4282,
+            5525.49345,
+            6178.16815,
+            5886.62515,
+            5697.4951
+          ],
+          "candidate": [
+            5955.28245,
+            6052.29225,
+            5479.3031,
+            5581.2761,
+            6082.99365,
+            5679.26835,
+            5566.9621
+          ],
+          "baseline_median": 5573.02115,
+          "candidate_median": 5679.26835,
+          "change_percent": 1.9064560700617683
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            185.868,
+            182.708,
+            180.548,
+            184.148,
+            185.108,
+            183.424,
+            188.388
+          ],
+          "candidate": [
+            180.268,
+            225.028,
+            186.588,
+            186.708,
+            220.264,
+            192.144,
+            187.584
+          ],
+          "baseline_median": 184.148,
+          "candidate_median": 187.584,
+          "change_percent": 1.8658904793970033
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            73404.764,
+            72553.584,
+            71519.856,
+            71585.208,
+            71391.944,
+            74436.412,
+            72401.112
+          ],
+          "candidate": [
+            73187.016,
+            73354.248,
+            73552.476,
+            72171.252,
+            75829.916,
+            97708.096,
+            77075.116
+          ],
+          "baseline_median": 72401.112,
+          "candidate_median": 73552.476,
+          "change_percent": 1.5902573430087719
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            3657.87855,
+            3803.74655,
+            3678.00265,
+            3714.9981,
+            3734.41475,
+            3789.543,
+            3693.5231
+          ],
+          "candidate": [
+            3798.85135,
+            3788.87155,
+            3709.735,
+            3759.2986,
+            3790.6669,
+            3771.43175,
+            3711.95885
+          ],
+          "baseline_median": 3714.9981,
+          "candidate_median": 3771.43175,
+          "change_percent": 1.5190761470376124
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            173465.869,
+            176644.962,
+            174118.954,
+            174931.269,
+            176932.271,
+            174974.866,
+            174470.001
+          ],
+          "candidate": [
+            179874.76,
+            182326.461,
+            175070.099,
+            173339.108,
+            181591.562,
+            177488.963,
+            174693.845
+          ],
+          "baseline_median": 174931.269,
+          "candidate_median": 177488.963,
+          "change_percent": 1.4621136716272298
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            3.043211,
+            3.029533,
+            3.010504,
+            3.014813,
+            3.073029,
+            2.971436,
+            3.030952
+          ],
+          "candidate": [
+            3.05767,
+            3.111767,
+            2.961087,
+            3.076989,
+            3.093198,
+            2.967766,
+            3.073809
+          ],
+          "baseline_median": 3.029533,
+          "candidate_median": 3.073809,
+          "change_percent": 1.461479376524366
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.2519,
+            4.28071,
+            4.21101,
+            4.3885,
+            4.25601,
+            4.3121,
+            4.26071
+          ],
+          "candidate": [
+            4.3297,
+            4.3222,
+            4.21091,
+            4.23601,
+            4.23591,
+            5.62442,
+            4.3595
+          ],
+          "baseline_median": 4.26071,
+          "candidate_median": 4.3222,
+          "change_percent": 1.4431866989304432
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            43810.559,
+            43889.2535,
+            42937.409,
+            43244.6535,
+            44038.994,
+            43504.435,
+            44614.9945
+          ],
+          "candidate": [
+            44380.805,
+            62609.0745,
+            43527.659,
+            43284.9805,
+            44459.3295,
+            45473.0055,
+            43171.888
+          ],
+          "baseline_median": 43810.559,
+          "candidate_median": 44380.805,
+          "change_percent": 1.301617721882975
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            846.662,
+            849.012,
+            1519.186,
+            855.1365,
+            871.63,
+            949.08,
+            853.3215
+          ],
+          "candidate": [
+            857.2315,
+            866.1955,
+            855.766,
+            864.9005,
+            938.7205,
+            900.1485,
+            857.541
+          ],
+          "baseline_median": 855.1365,
+          "candidate_median": 864.9005,
+          "change_percent": 1.1418060157647458
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            19615.932,
+            19634.572,
+            19693.812,
+            20228.372,
+            19637.412,
+            19457.304,
+            19766.804
+          ],
+          "candidate": [
+            19801.4,
+            19463.744,
+            20597.628,
+            19957.952,
+            20100.94,
+            19763.448,
+            19848.236
+          ],
+          "baseline_median": 19637.412,
+          "candidate_median": 19848.236,
+          "change_percent": 1.0735834233146502
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11230.2,
+            11460.2,
+            11257.2,
+            11270.2,
+            11369.2,
+            11886.1,
+            11540.2
+          ],
+          "candidate": [
+            11167.2,
+            11319.2,
+            11738.2,
+            12642.1,
+            11199.3,
+            11649.2,
+            11485.2
+          ],
+          "baseline_median": 11369.2,
+          "candidate_median": 11485.2,
+          "change_percent": 1.0203004608943411
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            25779.2819,
+            25466.1979,
+            25289.79395,
+            25130.4189,
+            25398.899,
+            25699.53835,
+            25628.247249999997
+          ],
+          "candidate": [
+            25139.81625,
+            25905.07025,
+            24935.8868,
+            28347.19375,
+            25670.896850000005,
+            25705.70545,
+            25501.106
+          ],
+          "baseline_median": 25466.1979,
+          "candidate_median": 25670.896850000005,
+          "change_percent": 0.8038064842023518
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            633760.5,
+            677531.5,
+            636845.3,
+            635736.4,
+            639705.1,
+            659107.8,
+            670000.1
+          ],
+          "candidate": [
+            644749.8,
+            644089.8,
+            650653.3,
+            644620.7,
+            659148.7,
+            642633.9,
+            712537.1
+          ],
+          "baseline_median": 639705.1,
+          "candidate_median": 644749.8,
+          "change_percent": 0.7885977460551752
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            177694.71,
+            180851.19,
+            175224.18,
+            177897.6,
+            180755.8,
+            177989.09,
+            186238.02
+          ],
+          "candidate": [
+            180420.52,
+            179358.6,
+            183510.61,
+            177818.1,
+            190315.14,
+            178735.74,
+            178699.24
+          ],
+          "baseline_median": 177989.09,
+          "candidate_median": 179358.6,
+          "change_percent": 0.769434800751001
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            135219.02715,
+            135386.9262,
+            134380.6822,
+            132913.59585,
+            136815.34915,
+            135614.9535,
+            136464.6562
+          ],
+          "candidate": [
+            136204.0836,
+            141658.8239,
+            134024.8716,
+            132262.8895,
+            141803.38745,
+            142012.8361,
+            136304.7636
+          ],
+          "baseline_median": 135386.9262,
+          "candidate_median": 136304.7636,
+          "change_percent": 0.6779365081707622
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            147.592,
+            147.1638,
+            158.5932,
+            148.3918,
+            148.0998,
+            155.0452,
+            147.7778
+          ],
+          "candidate": [
+            148.8998,
+            146.67,
+            148.7518,
+            149.9918,
+            148.5558,
+            150.4916,
+            149.5498
+          ],
+          "baseline_median": 148.0998,
+          "candidate_median": 148.8998,
+          "change_percent": 0.5401762865311133
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            23576.38,
+            23640.08465,
+            23123.2711,
+            23453.2115,
+            23520.13985,
+            23224.35565,
+            23561.53305
+          ],
+          "candidate": [
+            23627.699,
+            24702.2628,
+            23554.792,
+            23601.14385,
+            24629.3983,
+            23570.02445,
+            23726.13075
+          ],
+          "baseline_median": 23520.13985,
+          "candidate_median": 23627.699,
+          "change_percent": 0.457306592077944
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            355.0655,
+            360.6655,
+            358.59,
+            359.1805,
+            372.1645,
+            358.835,
+            353.9705
+          ],
+          "candidate": [
+            364.18,
+            354.271,
+            349.896,
+            375.4245,
+            357.7355,
+            360.445,
+            360.885
+          ],
+          "baseline_median": 358.835,
+          "candidate_median": 360.445,
+          "change_percent": 0.44867418172698237
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11254.64035,
+            11325.969,
+            11980.71105,
+            11393.33635,
+            11358.58875,
+            11331.6581,
+            11509.4799
+          ],
+          "candidate": [
+            11387.8442,
+            11469.5081,
+            11025.5861,
+            11424.7017,
+            11368.35455,
+            11745.80415,
+            11154.7812
+          ],
+          "baseline_median": 11358.58875,
+          "candidate_median": 11387.8442,
+          "change_percent": 0.2575623666276172
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            24930.32,
+            24196.65,
+            24666.608,
+            24588.143,
+            24526.577,
+            25078.119,
+            24661.378
+          ],
+          "candidate": [
+            24951.008,
+            24970.537,
+            24117.046,
+            24666.488,
+            24539.216,
+            24582.084,
+            24721.834
+          ],
+          "baseline_median": 24661.378,
+          "candidate_median": 24666.488,
+          "change_percent": 0.020720658837469763
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.651449,
+            3.559836,
+            3.522718,
+            3.586514,
+            3.502609,
+            3.5113,
+            3.520909
+          ],
+          "candidate": [
+            3.49555,
+            3.596143,
+            3.594444,
+            3.399227,
+            3.628311,
+            3.472982,
+            3.522428
+          ],
+          "baseline_median": 3.522718,
+          "candidate_median": 3.522428,
+          "change_percent": -0.008232279733988435
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            344743.078,
+            346738.142,
+            375412.234,
+            349411.499,
+            346946.488,
+            349497.603,
+            349601.415
+          ],
+          "candidate": [
+            349329.974,
+            466666.044,
+            342181.665,
+            342220.702,
+            353556.724,
+            352254.224,
+            343004.008
+          ],
+          "baseline_median": 349411.499,
+          "candidate_median": 349329.974,
+          "change_percent": -0.023332088449679045
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            545.8,
+            548.324,
+            569.64,
+            551.28,
+            549.244,
+            547.84,
+            550.004
+          ],
+          "candidate": [
+            548.124,
+            548.684,
+            546.08,
+            585.4,
+            544.324,
+            620.12,
+            545.12
+          ],
+          "baseline_median": 549.244,
+          "candidate_median": 548.124,
+          "change_percent": -0.20391665634945655
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            11083.98,
+            11019.324,
+            11036.104,
+            11268.446,
+            11666.8,
+            11283.666,
+            10999.506
+          ],
+          "candidate": [
+            11039.542,
+            11044.442,
+            10941.69,
+            10951.01,
+            11201.93,
+            11412.756,
+            11061.902
+          ],
+          "baseline_median": 11083.98,
+          "candidate_median": 11044.442,
+          "change_percent": -0.35671302185676934
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.69533,
+            12.81652,
+            12.76413,
+            12.79962,
+            12.75452,
+            12.69803,
+            12.79432
+          ],
+          "candidate": [
+            12.65933,
+            12.67183,
+            12.44965,
+            12.35675,
+            12.87141,
+            12.75902,
+            12.76833
+          ],
+          "baseline_median": 12.76413,
+          "candidate_median": 12.67183,
+          "change_percent": -0.7231201813206245
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            5780.34345,
+            5781.69735,
+            5919.3879,
+            5810.32985,
+            5779.05555,
+            5881.13855,
+            5986.89525
+          ],
+          "candidate": [
+            5758.26345,
+            5711.84365,
+            5768.08475,
+            5776.8517,
+            5841.8152,
+            5778.68255,
+            5642.5544
+          ],
+          "baseline_median": 5810.32985,
+          "candidate_median": 5768.08475,
+          "change_percent": -0.7270688771653822
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            3647.8878,
+            3745.227,
+            3680.5956,
+            3712.1512,
+            3719.2128,
+            3714.101,
+            3862.279
+          ],
+          "candidate": [
+            3671.564,
+            3742.7532,
+            3644.51,
+            3652.8374,
+            3964.426,
+            3758.038,
+            3685.2012
+          ],
+          "baseline_median": 3714.101,
+          "candidate_median": 3685.2012,
+          "change_percent": -0.7781102344820545
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            259165.18000000002,
+            261156.204,
+            259166.94,
+            259883.692,
+            266673.428,
+            260448.25200000004,
+            258759.528
+          ],
+          "candidate": [
+            257531.972,
+            262808.648,
+            257687.64,
+            254124.924,
+            268651.768,
+            262337.524,
+            253451.012
+          ],
+          "baseline_median": 259883.692,
+          "candidate_median": 257687.64,
+          "change_percent": -0.8450133916059643
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            349.466,
+            351.3555,
+            350.961,
+            352.5605,
+            350.741,
+            354.5605,
+            353.331
+          ],
+          "candidate": [
+            345.2765,
+            357.6455,
+            342.4115,
+            345.076,
+            348.786,
+            347.321,
+            348.121
+          ],
+          "baseline_median": 351.3555,
+          "candidate_median": 347.321,
+          "change_percent": -1.1482672108448555
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            697694.1,
+            707939.4,
+            710894.3,
+            778043.6,
+            703939.7,
+            715838.9,
+            719788.6
+          ],
+          "candidate": [
+            711154.2,
+            702460.8,
+            680733.3,
+            746530.8,
+            687575.8,
+            694934.3,
+            701807.8
+          ],
+          "baseline_median": 710894.3,
+          "candidate_median": 701807.8,
+          "change_percent": -1.2781787672232037
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            9899.48,
+            9865.164,
+            9723.212,
+            9653.62,
+            9853.084,
+            9806.008,
+            10239.5
+          ],
+          "candidate": [
+            9606.06,
+            9644.94,
+            9720.372,
+            9813.208,
+            9603.38,
+            9897.68,
+            9834.324
+          ],
+          "baseline_median": 9853.084,
+          "candidate_median": 9720.372,
+          "change_percent": -1.346908237055544
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            17156.22295,
+            17074.3371,
+            16966.65745,
+            17458.1238,
+            17285.1766,
+            17402.0141,
+            17326.5433
+          ],
+          "candidate": [
+            17694.42705,
+            17736.0997,
+            16691.1144,
+            17008.8631,
+            17027.4113,
+            17285.9426,
+            16861.2117
+          ],
+          "baseline_median": 17285.1766,
+          "candidate_median": 17027.4113,
+          "change_percent": -1.4912506013967985
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            206895.31,
+            213117.28,
+            223989.04,
+            209227.45,
+            209882.2,
+            212867.3,
+            214832.86
+          ],
+          "candidate": [
+            207032.5,
+            330298.34,
+            206158.76,
+            208250.42,
+            211674.28,
+            215466.22,
+            204603.96
+          ],
+          "baseline_median": 212867.3,
+          "candidate_median": 208250.42,
+          "change_percent": -2.1689005309880716
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            56266.515,
+            60513.7185,
+            60099.032,
+            54616.743,
+            54021.009,
+            53614.0515,
+            55446.556
+          ],
+          "candidate": [
+            53468.272,
+            65751.119,
+            53653.759,
+            54021.9235,
+            54736.685,
+            57615.487,
+            52639.9935
+          ],
+          "baseline_median": 55446.556,
+          "candidate_median": 54021.9235,
+          "change_percent": -2.5693796022245308
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            34023.2705,
+            36781.8165,
+            37678.045,
+            34571.1135,
+            35328.4715,
+            35697.876,
+            35378.7775
+          ],
+          "candidate": [
+            33778.2575,
+            34202.2635,
+            33906.869,
+            34292.3475,
+            34316.1155,
+            34473.505,
+            33443.175500000005
+          ],
+          "baseline_median": 35378.7775,
+          "candidate_median": 34202.2635,
+          "change_percent": -3.3254795194661457
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            2957.7601,
+            3147.5311,
+            3162.37505,
+            3039.4305,
+            2915.87295,
+            2836.4269,
+            3006.36175
+          ],
+          "candidate": [
+            2875.69775,
+            3124.7341,
+            2773.8362,
+            2818.53965,
+            2873.34635,
+            2887.1054,
+            2766.4742
+          ],
+          "baseline_median": 3006.36175,
+          "candidate_median": 2873.34635,
+          "change_percent": -4.424464221579461
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            12844.489300000001,
+            13099.8163,
+            12833.2301,
+            14363.8771,
+            13470.71785,
+            13351.94095,
+            13327.122700000002
+          ],
+          "candidate": [
+            12821.96185,
+            12619.02925,
+            12516.2273,
+            12557.86895,
+            12920.861550000001,
+            12780.1077,
+            12620.0112
+          ],
+          "baseline_median": 13327.122700000002,
+          "candidate_median": 12620.0112,
+          "change_percent": -5.305807681953745
+        }
+      ]
+    }
+  },
+  "memory": {
+    "scope": "Paired whole-process peak RSS only; no fresh allocator or complete heap recording in this checkpoint.",
+    "layout": "No retained data field or public type was added. The shared contact factory preserves the same Arc allocation and sharing as the removed inline construction."
+  },
+  "size": {
+    "native": [
+      {
+        "fixture": "bezier_region",
+        "baseline": {
+          "text": 9407607,
+          "file": 14884344
+        },
+        "candidate": {
+          "text": 9405863,
+          "file": 14880856
+        },
+        "text_delta": -1744,
+        "file_delta": -3488
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline": {
+          "text": 6114263,
+          "file": 10512880
+        },
+        "candidate": {
+          "text": 6112631,
+          "file": 10508880
+        },
+        "text_delta": -1632,
+        "file_delta": -4000
+      },
+      {
+        "fixture": "curve_region_boolean_batch",
+        "baseline": {
+          "text": 9003207,
+          "file": 14322112
+        },
+        "candidate": {
+          "text": 9001463,
+          "file": 14318648
+        },
+        "text_delta": -1744,
+        "file_delta": -3464
+      }
+    ],
+    "wasm": {
+      "baseline": 17029672,
+      "candidate": 17031775,
+      "delta": 2103
+    }
+  },
+  "limitations": [
+    "Not a uniform performance or full Hypercurve release-readiness claim.",
+    "ExactCorelib idea mining/uplift remains closed; lower-stack and Hypermesh source are unchanged in this slice.",
+    "Concurrent Hyperreal formatting work is preserved, not committed or qualified by these pinned-snapshot results.",
+    "Owned build, test and profile workers were finished before paired timings; existing desktop processes were not stopped or controlled.",
+    "No push, publication or deployment."
+  ],
+  "followups": [
+    "Rational overlap map construction still captures requested policy before later boundary decisions; do not blindly weaken that early capture. Audit publication after all consumed predicates.",
+    "The rational-circle component boundary seeding still assumes an algebraic center after refinement. Reuse the shared finite-fiber authority and prove the exact-center overlap case separately.",
+    "Other mapped angle queries must be reviewed together with their retained caches before changing their query policy. This checkpoint changes the uncached selected-fiber maps, not every mapped-circle cache.",
+    "Rational equality's measured wide-cross-product allocation dominance and the one-item coarse-sign loop remain separate candidates, not changes delivered here."
+  ],
+  "reproduction": {
+    "snapshot": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_workspace=/home/tim/Documents/GitHub/workspace\nreplay_root=\"$replay_workspace/hypercurve/target/strict-contact-replay.iVykgE\"\nreplay_snapshot=\"$replay_root/snapshot\"\nmapfile -t replay_revisions < \"$replay_root/snapshot-revisions.txt\"\nmkdir \"$replay_snapshot\"\nreplay_index=0\nfor replay_crate in hyperreal hyperlimit hyperlattice hypertri hypersolve hypercurve; do\n    mkdir \"$replay_snapshot/$replay_crate\"\n    git -C \"$replay_workspace/$replay_crate\" archive \"${replay_revisions[$replay_index]}\" | tar -xf - -C \"$replay_snapshot/$replay_crate\"\n    replay_index=$((replay_index + 1))\ndone\ncp \"$replay_root/baseline-bezier_offset.rs\" \"$replay_snapshot/hypercurve/src/bezier_offset.rs\"\ncd \"$replay_snapshot/hypercurve\"\nbash \"$replay_root/test-regressions.sh\" baseline\n",
+    "focused_tests": "#!/usr/bin/env bash\nset -uo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE\nreplay_label=\"$1\"\ncd \"$replay_root/snapshot/hypercurve\"\nenv CARGO_BUILD_JOBS=2 cargo test --release --locked --all-features --lib --no-run > \"$replay_root/$replay_label-build.log\" 2>&1\nreplay_status=$?\nif (( replay_status != 0 )); then exit \"$replay_status\"; fi\ncp target/release/deps/hypercurve-0cc442a79c71c1af \"$replay_root/$replay_label-test\"\nreplay_failed=0\nfor replay_case in selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact selected_fiber_angle_query_observes_its_requested_policy rational_circle_tangent_dot_follows_both_traversals selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber; do\n    if [[ \"$replay_label\" == baseline && \"$replay_case\" == rational_circle_tangent_dot_follows_both_traversals ]]; then\n        continue\n    fi\n    \"$replay_root/$replay_label-test\" --exact \"bezier_offset::conversion_tests::$replay_case\" --nocapture > \"$replay_root/$replay_label-$replay_case.log\" 2>&1\n    replay_status=$?\n    if ! rg -q 'test result: (ok\\. 1 passed; 0 failed;|FAILED\\. 0 passed; 1 failed;)' \"$replay_root/$replay_label-$replay_case.log\"; then\n        replay_status=125\n    fi\n    printf '%s %s\\n' \"$replay_case\" \"$replay_status\"\n    if (( replay_status != 0 )); then replay_failed=1; fi\ndone\nexit \"$replay_failed\"\n",
+    "gates": "#!/usr/bin/env bash\nset -uo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE\ncd \"$replay_root/snapshot/hypercurve\"\nexport CARGO_BUILD_JOBS=2\nreplay_failed=0\nreplay_gate() {\n    local replay_gate_name=\"$1\"\n    shift\n    \"$@\" > \"$replay_root/candidate-$replay_gate_name.log\" 2>&1\n    local replay_gate_status=$?\n    printf '%s %s\\n' \"$replay_gate_name\" \"$replay_gate_status\"\n    if (( replay_gate_status != 0 )); then replay_failed=1; fi\n}\nreplay_gate fmt cargo fmt --all --check\nreplay_gate full cargo test --release --locked --all-features --no-fail-fast -- --include-ignored --test-threads=2\nreplay_gate clippy cargo clippy --locked --all-targets --all-features -- -D warnings\nreplay_gate minimal cargo test --release --locked --no-default-features --no-fail-fast -- --test-threads=2\nreplay_gate minimal-clippy cargo clippy --locked --all-targets --no-default-features -- -D warnings\nreplay_gate docs env RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features\nreplay_gate minimal-docs env RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --no-default-features\nreplay_gate fuzz-check cargo check --locked --manifest-path fuzz/Cargo.toml --bins\nreplay_gate ui-tests cargo test --locked --manifest-path examples/hypercurve_ui/Cargo.toml --no-fail-fast\nreplay_gate ui-clippy cargo clippy --locked --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings\nreplay_gate ui-wasm cargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown\nexit \"$replay_failed\"\n",
+    "build_artifacts": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE\nreplay_label=\"$1\"\ncd \"$replay_root/snapshot/hypercurve\"\nenv CARGO_BUILD_JOBS=2 cargo build --release --locked --bench bezier_region --bench rational_bezier --bench curve_region_boolean_batch > \"$replay_root/$replay_label-bench-build.log\" 2>&1\nfor replay_bench in bezier_region rational_bezier curve_region_boolean_batch; do\n    replay_bins=(target/release/deps/\"$replay_bench\"-*)\n    replay_count=0\n    for replay_bin in \"${replay_bins[@]}\"; do\n        if [[ -x \"$replay_bin\" && \"$replay_bin\" != *.d ]]; then\n            cp \"$replay_bin\" \"$replay_root/$replay_label-$replay_bench\"\n            replay_count=$((replay_count + 1))\n        fi\n    done\n    if (( replay_count != 1 )); then\n        printf 'ambiguous benchmark %s: %s executables\\n' \"$replay_bench\" \"$replay_count\" >&2\n        exit 1\n    fi\ndone\nenv CARGO_BUILD_JOBS=2 cargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown > \"$replay_root/$replay_label-wasm-build.log\" 2>&1\ncp examples/hypercurve_ui/target/wasm32-unknown-unknown/release/hypercurve_ui.wasm \"$replay_root/$replay_label-ui.wasm\"\n",
+    "timings": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE\nfor replay_round in 1 2 3; do\n    if (( replay_round % 2 )); then\n        replay_order=\"baseline candidate\"\n    else\n        replay_order=\"candidate baseline\"\n    fi\n    for replay_case in selected chord radial contacts; do\n        case \"$replay_case\" in\n            selected) replay_test=selected_fiber_genuinely_analytic_contacts_complete_region_booleans ;;\n            chord) replay_test=recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict ;;\n            radial) replay_test=recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel ;;\n            contacts) replay_test=selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber ;;\n        esac\n        for replay_variant in $replay_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$replay_root/paired-$replay_case-$replay_round-$replay_variant.time\" \\\n                taskset -c 7 \"$replay_root/$replay_variant-test\" \\\n                \"bezier_offset::conversion_tests::$replay_test\" --exact --include-ignored --test-threads=1 \\\n                > \"$replay_root/paired-$replay_case-$replay_round-$replay_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$replay_case\" \"$replay_round\" \"$replay_variant\"\n        done\n    done\n    for replay_bench in bezier_region rational_bezier; do\n        for replay_variant in $replay_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$replay_root/paired-$replay_bench-$replay_round-$replay_variant.time\" \\\n                taskset -c 7 \"$replay_root/$replay_variant-$replay_bench\" \\\n                > \"$replay_root/paired-$replay_bench-$replay_round-$replay_variant.log\" 2>&1\n        done\n    done\n    for replay_fixture in rectangles circles capsules; do\n        unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n        if [[ \"$replay_fixture\" != rectangles ]]; then\n            export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$replay_fixture\"\n        fi\n        for replay_variant in $replay_order; do\n            HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 \\\n                taskset -c 7 \"$replay_root/$replay_variant-curve_region_boolean_batch\" \\\n                > \"$replay_root/paired-$replay_fixture-$replay_round-$replay_variant.log\" 2>&1\n        done\n    done\ndone\n",
+    "additional_native_pairs": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE\"\nfor fiber_round in 1 2 3 4 5 6 7; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_fixture in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_fixture\" \\\n                > \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$fiber_fixture\" \"$fiber_round\" \"$fiber_variant\"\n        done\n    done\ndone\nnode \"$fiber_evidence/collect-results.mjs\" \"$fiber_evidence\" repeat 7 > \"$fiber_evidence/repeat-results.json\"\n",
+    "instructions": "#!/usr/bin/env bash\nset -euo pipefail\nreplay_root=/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE\nfor replay_fixture in rectangles circles capsules; do\n    unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n    if [[ \"$replay_fixture\" != rectangles ]]; then\n        export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$replay_fixture\"\n    fi\n    for replay_variant in baseline candidate; do\n        HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=20 \\\n            taskset -c 3 valgrind --tool=callgrind \\\n            --callgrind-out-file=\"$replay_root/instructions-$replay_fixture-$replay_variant.callgrind\" \\\n            \"$replay_root/$replay_variant-curve_region_boolean_batch\" \\\n            > \"$replay_root/instructions-$replay_fixture-$replay_variant.log\" 2>&1\n        printf '%s %s passed\\n' \"$replay_fixture\" \"$replay_variant\"\n    done\ndone\n",
+    "result_collector": "import fs from \"node:fs\";\nconst root = process.argv[2];\nconst prefix = process.argv[3] ?? \"paired\";\nconst rounds = Number(process.argv[4] ?? \"3\");\nconst pattern = new RegExp(\"^\" + prefix + \"-(.+)-(\\\\d+)-(baseline|candidate)\\\\.log$\");\nconst files = fs.readdirSync(root);\nconst whole = [], lanes = [];\nfor (const name of files) {\n  const m = name.match(pattern);\n  if (!m) continue;\n  const fixture = m[1], round = Number(m[2]), variant = m[3];\n  const contents = fs.readFileSync(root + \"/\" + name, \"utf8\");\n  if ([\"selected\", \"chord\", \"radial\", \"contacts\"].includes(fixture) &&\n      !contents.includes(\"test result: ok. 1 passed; 0 failed; 0 ignored;\"))\n    throw new Error(\"Incomplete test: \" + name);\n  const time = root + \"/\" + name.replace(/\\.log$/, \".time\");\n  if (fs.existsSync(time)) {\n    const values = Object.fromEntries([...fs.readFileSync(time, \"utf8\").matchAll(/(\\w+)=([0-9.]+)/g)].map(m => [m[1], Number(m[2])]));\n    if (values.exit !== 0) throw new Error(\"Unsuccessful process: \" + name);\n    whole.push({fixture, round, variant, ...values});\n  }\n  for (const line of contents.split(\"\\n\")) {\n    let m = line.match(/^([^:]+): (\\d+) (?:iterations|curves) in ([0-9.]+)(ns|µs|ms|s) /);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]) * ({ns:1,\"µs\":1000,ms:1000000,s:1000000000})[m[4]];\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n      continue;\n    }\n    m = line.match(/^([^:]+): (\\d+) iterations, total_ns=(\\d+), ns_per_iter=(\\d+),/);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]);\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n    }\n  }\n}\nconst median = xs => { const sorted = xs.toSorted((a,b)=>a-b); return sorted[(sorted.length-1)/2]; };\nconst compare = (rows, key, value) => [...new Set(rows.map(key))].map(name => {\n  const baseline = rows.filter(r => key(r) === name && r.variant === \"baseline\").map(r=>r[value]);\n  const candidate = rows.filter(r => key(r) === name && r.variant === \"candidate\").map(r=>r[value]);\n  if (baseline.length !== rounds || candidate.length !== rounds) throw new Error(\"Unpaired \" + name);\n  const before = median(baseline), after = median(candidate);\n  return {name, baseline, candidate, baseline_median:before, candidate_median:after, change_percent:100*(after/before-1)};\n});\nconst instructions = [\"rectangles\",\"circles\",\"capsules\"].map(fixture => {\n  const values = [\"baseline\",\"candidate\"].map(variant => {\n    const contents = fs.readFileSync(root+\"/instructions-\"+fixture+\"-\"+variant+\".callgrind\",\"utf8\");\n    const summary = Number(contents.match(/^summary: (\\d+)$/m)?.[1]);\n    const total = Number(contents.match(/^totals: (\\d+)$/m)?.[1]);\n    if (!summary || summary !== total) throw new Error(\"Incomplete Callgrind result\");\n    return summary;\n  });\n  return {fixture, baseline:values[0], candidate:values[1], change_percent:100*(values[1]/values[0]-1)};\n});\nconsole.log(JSON.stringify({\n  cpu:7, alternating_order:Array.from({length:rounds}, (_, index) => index % 2 ? \"candidate,baseline\" : \"baseline,candidate\"),\n  invocations:files.filter(f=>pattern.test(f)).length,\n  whole_process_measurements:whole,\n  whole_process_summary:compare(whole,r=>r.fixture,\"elapsed_s\"),\n  lane_measurements:lanes,\n  lane_summary:compare(lanes,r=>r.fixture+\"/\"+r.name,\"ns_per_iter\").sort((a,b)=>b.change_percent-a.change_percent),\n  instructions\n}, null, 2));\n"
+  },
+  "artifacts": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-bench-build.log",
+      "bytes": 1457,
+      "sha256": "ba13c52b8a5df974fe69af6b385ee9d73e4a6c93cc054d8500ae429094e9dec2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-bezier_offset.rs",
+      "bytes": 7326199,
+      "sha256": "9e38e29d1852383268b7d3898030fc0b603e429ee6c2c632cd211d55100cfbcc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-bezier_region",
+      "bytes": 14884344,
+      "sha256": "62ab5ebc9e00f32006503245820267d0b932f9183bbbb45a63b19a6ad26d2341"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-bezier_region.size",
+      "bytes": 1641,
+      "sha256": "d301b44805433285b16ed1b78f8d1ae128b29cddf8edff52e1cc68533128ec05"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-build.log",
+      "bytes": 284,
+      "sha256": "bbae68c7aa0b6cf4420c7c95d113ac8e68558a80efe55f46219e96a1871097bf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-curve_region_boolean_batch",
+      "bytes": 14322112,
+      "sha256": "09f54787f178c638413714ba23049c2df1fb780f6ff74ffcf59be7c93427e910"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-curve_region_boolean_batch.size",
+      "bytes": 1654,
+      "sha256": "e25e5488964372126eeb066a2b01f4ecd510a5d93a275373efdf26c4ca9fc158"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-rational_bezier",
+      "bytes": 10512880,
+      "sha256": "a6245c48387425c180206a9fa3d892476bfcf7741bdadc98749ab3d94267d5f4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-rational_bezier.size",
+      "bytes": 1574,
+      "sha256": "75aafb257f33c8d4c141abcf4996aeb5497938ac86b186b0f80cb3c352ec3fbf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-selected_fiber_angle_query_observes_its_requested_policy.log",
+      "bytes": 649,
+      "sha256": "ac8f7591fe289764125d05782d5014c113711c7316747c0bb56f39304a7c8493"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber.log",
+      "bytes": 774,
+      "sha256": "ab095d99e3c6b52f3147ab3e2479df149471e9bb3b16a80a5845cab70fd0b649"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact.log",
+      "bytes": 739,
+      "sha256": "db0523ff93c336b8b877239f561bac472c4fb26a4ab9f7957018dbd497929f90"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-test",
+      "bytes": 28081680,
+      "sha256": "776a3b1650fab09e1b34022b6ecd2fa58789af30d2d2baee2f0c69b2d844f2b8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-ui.wasm",
+      "bytes": 17029672,
+      "sha256": "20de651d8ae215b07f77e6bce568eea5c316afab6cf2c75c033265b91b5851f5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/baseline-wasm-build.log",
+      "bytes": 4753,
+      "sha256": "9abc3908f7dd667f63a8304df790f4a58bd3f5d4cceea4fc2a7c4d1eff734d6e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/build-benchmarks.sh",
+      "bytes": 1247,
+      "sha256": "8e2fa18b98a39418731e634fe18a7bee9c2932346691387287a182b94ae77615"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-bench-build.log",
+      "bytes": 254,
+      "sha256": "15c4ab3e7f0b9287f6263c71fd24d615ee9229dfc78daf1fe94aaa3761bf802f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-bezier_region",
+      "bytes": 14880856,
+      "sha256": "a9c319fc39e8f4d8b1bdecc6bd54a87792c185504e8cb82d1af07eefadfd1735"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-bezier_region.size",
+      "bytes": 1642,
+      "sha256": "f737c88ab1fa64557f11a074b12e147c7e6d378f686fd7dae134a9198d5d98c0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-build.log",
+      "bytes": 284,
+      "sha256": "bbae68c7aa0b6cf4420c7c95d113ac8e68558a80efe55f46219e96a1871097bf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-clippy.log",
+      "bytes": 4582,
+      "sha256": "6b20139ea7c62f42cb39391fe390d75e262559b6fb387b25274e979bd2fc3248"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-curve_region_boolean_batch",
+      "bytes": 14318648,
+      "sha256": "42ca5dab2e5aa3a159485d099b35eae1c5fc82a86ed21a8a17ea3d5b93342b20"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-curve_region_boolean_batch.size",
+      "bytes": 1655,
+      "sha256": "516f6b8f10fb217b2ef25ca79a817d1721e79338e48652b9e0415413d7d1171c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-docs.log",
+      "bytes": 704,
+      "sha256": "588f0111a3adb5a24222a31e1c72758fbff063f629aaeb8eb4241de34b5e1cbf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-full.log",
+      "bytes": 167356,
+      "sha256": "0b02fb0421ddabe01c367ae51d4005f29e045473a6aacace24cc3de9a11f97ad"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-fuzz-check.log",
+      "bytes": 72,
+      "sha256": "736e2582f563605dd272e5fb977840b0c0767377d27b6940c440caf75eec7157"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-fuzz-prepare.log",
+      "bytes": 2102,
+      "sha256": "c350f852230d5c845219ee4f964f352ec9f84bf01c7395c06e28116571c2de95"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-gates.status",
+      "bytes": 117,
+      "sha256": "8ea78b002bc11719b07258351ac35abceb639ce4825b6c3607396fe05f8d41ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-minimal-clippy.log",
+      "bytes": 1467,
+      "sha256": "27af0f1af23139c53021cca551191c08f3a25d38bd37f66264a4c54647d399fb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-minimal-docs.log",
+      "bytes": 1126,
+      "sha256": "bc3356eb4dd0062c4f21681428d7d7fccccd7b37cb8b0a77f8ceac16ac4824d7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-minimal.log",
+      "bytes": 165127,
+      "sha256": "66b9bf51d83c6f3c1dc8295dc82476bac14cd1c96398930be5d342b68f1d6a23"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-rational_bezier",
+      "bytes": 10508880,
+      "sha256": "467e79ac2035ed9c279f9c9f787be0cabeaaa1a6c238ccfc948de01fda6b52a1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-rational_bezier.size",
+      "bytes": 1575,
+      "sha256": "f1b828ebffa1a40c439563c05aed23cdb944e4e26d2b55da8d0b61b61d4e3700"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-rational_circle_tangent_dot_follows_both_traversals.log",
+      "bytes": 211,
+      "sha256": "f9347c202ece68df127ebbedd21c4179ea0165bcbb6a7ea01bfd19520a081e7c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-selected_fiber_angle_query_observes_its_requested_policy.log",
+      "bytes": 216,
+      "sha256": "905e4998975069be99382cc0252ede7f0b2d3755af72660747a67aa466369e4c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber.log",
+      "bytes": 244,
+      "sha256": "75efb54335e341b27530f95e724a4e4ee6c1cbf01d8ad8b0cbc7054c1d78e2f0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact.log",
+      "bytes": 235,
+      "sha256": "8aae5ce77d93c8da3ad17fe79b97639726d98747c96051db1e400739c6329abb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-test",
+      "bytes": 28084744,
+      "sha256": "f218824579d4d0b7bdfe73b05457a822065877e0f98bd3aba44a3fca68c0ab6a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui-clippy-prepare.log",
+      "bytes": 9720,
+      "sha256": "e72d0299cfac38ac04b3d0250f5f6cd691dee782257e69e7393a56f95c342b07"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui-clippy.log",
+      "bytes": 72,
+      "sha256": "732186322402325172940531d8d6d7cfac85dc902585b2bef6715ad6839dacfd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui-early-tests.log",
+      "bytes": 3294,
+      "sha256": "fb4b8507b9b5c73bec027309b069ba833f8f155b90081b0fbf4cf1d8ac8e022c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui-prepare.log",
+      "bytes": 10338,
+      "sha256": "31121198420ff9ca4e36b9e9734d0ea0818664062bf68fafba91f2e179f692ec"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui-tests.log",
+      "bytes": 3294,
+      "sha256": "6482a2b892fc041f4932196b645d2dc2f501b78b1bc2ff198a45ab7c1221fd17"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui-wasm.log",
+      "bytes": 62,
+      "sha256": "09f2b93c4bce5bfb43dca18ca8d9c1dca2831c7d2ffb73b00b96f8f73a607f86"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-ui.wasm",
+      "bytes": 17031775,
+      "sha256": "4080bfd539835d7701f1690f85da755a04abde89d59828e38d5a0591c11c844b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate-wasm-build.log",
+      "bytes": 363,
+      "sha256": "031056c6e46ee09c7ac0dbd94f52d8e68629e9986f125ff96dcc0e4ac45e4a22"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/candidate.patch",
+      "bytes": 23569,
+      "sha256": "82bd00445f87877ec03bc9129f1cba616a9e1ee1660383d92ca49a4abc1a405e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/cargo-version.txt",
+      "bytes": 36,
+      "sha256": "f4f564f8936fa8eb53bca8bbe50666489252bbcbeaae0cb0dd54682444697e52"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/checkpoint.mjs",
+      "bytes": 10225,
+      "sha256": "080353af65c8e2d01e256b52a874313385146ab2a312ba0dbf9a7d7bf9ce8b4a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/collect-results.mjs",
+      "bytes": 3524,
+      "sha256": "a5524e610aaa99dca8dc6de3a8149fa2034294cee8f4db9d893e0d68712bd737"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/cpu.txt",
+      "bytes": 3666,
+      "sha256": "2f2bf1ac7ad938b59e8283815efe6c341f14292b8497930bba43b5db94b0204f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-capsules-baseline.callgrind",
+      "bytes": 373163,
+      "sha256": "0c2d6314764e59665a4cbafe3f7489b6680aa5918d0203046b7516c16a88ea6d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-capsules-baseline.log",
+      "bytes": 728,
+      "sha256": "06e971bba2d1712f41a08cf71162431a430e87faaade89d02975d3c2d3c9efeb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-capsules-candidate.callgrind",
+      "bytes": 373256,
+      "sha256": "faf9e7c60ff41165c2ae2a522b1fff3a9ee8468b46d8de0a52bc9a667acc0806"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-capsules-candidate.log",
+      "bytes": 729,
+      "sha256": "8354e6dff12ddddcfefe1c1e8f2cfc2bf0a60a01f2c5ddc51f669f771be7a3e4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-circles-baseline.callgrind",
+      "bytes": 354653,
+      "sha256": "fa3ae699df701f1b545fe3090b7af0fced46f1e883c530b10fe885a7a3d171fb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-circles-baseline.log",
+      "bytes": 733,
+      "sha256": "4a644c716eebf903fdea72b4d98ed6153a9516a83daff81b59787c69f5ef9309"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-circles-candidate.callgrind",
+      "bytes": 354633,
+      "sha256": "fb668de80d0cd22822277c26b408e4e07cbea2fc31052f72c6ed073135624945"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-circles-candidate.log",
+      "bytes": 733,
+      "sha256": "d03a664b3848005f29f4b0e9d3968dd2c5bb1b82fb266cb2652577318c63b143"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-rectangles-baseline.callgrind",
+      "bytes": 238669,
+      "sha256": "70507fc2b214e5012e7697f768a9b4691f2dca7fbd38c7a239e4f33f6d69c9ae"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-rectangles-baseline.log",
+      "bytes": 725,
+      "sha256": "d1784688a8e71be522110830eff0dd0d136b7421131f68d6f677faffcb6a8cc5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-rectangles-candidate.callgrind",
+      "bytes": 238676,
+      "sha256": "4a8f97a4d7cda35556e2790e939ae8d2d278b0d1b5e3259c50d95f58c86f941d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions-rectangles-candidate.log",
+      "bytes": 726,
+      "sha256": "e9f50c7df88a4bb95eb84d7251264b8c3cdf0aeefa4057608250eb03ed1d566b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions.sh",
+      "bytes": 863,
+      "sha256": "5d99d6508fd2d612c7226c762147c3b0477ed83c653af8fe68222bc6dc676993"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/instructions.status",
+      "bytes": 155,
+      "sha256": "7cfbfde12b9434024f5b125bbcac57c78b84bde29acfc9e84751a23529c3593d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/orientation-before-bezier_offset.rs",
+      "bytes": 7330414,
+      "sha256": "dedaec346c58a8573b37286610ad822219cf9f27a4e8837d7da71aa69876f1ef"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/orientation-before-test",
+      "bytes": 28084848,
+      "sha256": "ba823e4c4add1ef46143c668b70957e98613d0014f750e84166616696b0b52a0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/orientation-before.log",
+      "bytes": 964,
+      "sha256": "bbce06db6dc96997dea8dc87e92a163d9d4bcbea1437cb1f41441ab9091e6525"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-1-baseline.log",
+      "bytes": 1867,
+      "sha256": "29b69e28a264b37d166128167096ef11e24b61ad7c34afc419dc6a7e11d89cb0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-1-baseline.time",
+      "bytes": 66,
+      "sha256": "a2dcd7ada4c5833b7f6ad905643bc80d2b3bed69a82f4bc61c9dc512ad990e3b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-1-candidate.log",
+      "bytes": 1865,
+      "sha256": "edcfeffd51e92708f3f241bc6f7d8b6bcf2410c4a0f94457d7fc4d75ef3a3c4d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-1-candidate.time",
+      "bytes": 66,
+      "sha256": "8f3a02adafcb663f2320f08ca5b9c39b32764962ed00d53fc153679d91567567"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-2-baseline.log",
+      "bytes": 1866,
+      "sha256": "7bbfc57382b6d9b9e0fb30c58388dc75c4f5a631089af9ca39298e96742d2f75"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-2-baseline.time",
+      "bytes": 66,
+      "sha256": "c7d13d97a5efc3384c3a7f8283caab2ed408c73f378a159421f39369e8ecaefb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-2-candidate.log",
+      "bytes": 1863,
+      "sha256": "f62238b69125483620d7d8fffcf33828795f2534cecc80171e8d9a05cdc318fe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-2-candidate.time",
+      "bytes": 66,
+      "sha256": "8da976325defb823f6ee48f3aa3dc07af34c5ac94b8f3d029b0b72767fc3f5b0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-3-baseline.log",
+      "bytes": 1863,
+      "sha256": "d73b22284010016df94e5f998238c597c1f83c10b76419d7977263a919471356"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-3-baseline.time",
+      "bytes": 66,
+      "sha256": "695960f54910d090e073fcd305c85f2ff20839a14b9956481dbd4c87d2c0f6a6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-3-candidate.log",
+      "bytes": 1864,
+      "sha256": "d54024a6da7e31294b1af89af7ffb872978f900cbd7cde6f630585bfde070f66"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-bezier_region-3-candidate.time",
+      "bytes": 65,
+      "sha256": "6a9e14f4fa1bbc2a598ccd7b47ceb0cc31130288eaf7d3ec35ee586d20d160ec"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-capsules-1-baseline.log",
+      "bytes": 217,
+      "sha256": "5b7f12ddc6ffd7ce7ffbfd5d712c6d2a8e3ee4f0a0a5bc431efa30bd8137b298"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-capsules-1-candidate.log",
+      "bytes": 217,
+      "sha256": "d410c6e00c95d9445a185b4f8a46448f32b6a89ffd0f196a08b7fab7c5331e52"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-capsules-2-baseline.log",
+      "bytes": 217,
+      "sha256": "cde4f678ed2b6a5a7bb1b28173fbbfd425a3838b57241277970429b4cf480035"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-capsules-2-candidate.log",
+      "bytes": 217,
+      "sha256": "90520fe763e38a7c18443b42e03d2ffa3bc05eaac88915dabd95743c515dddd8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-capsules-3-baseline.log",
+      "bytes": 217,
+      "sha256": "b8789012c52d2c483acae4df41186b9a292203ef4231b2b8a11da1268a1cae1e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-capsules-3-candidate.log",
+      "bytes": 217,
+      "sha256": "ffae4df78ceb81a9e9f0c3e036b31c9258e4eee664bc2d1b9a5aff861a2a938b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-1-baseline.log",
+      "bytes": 240,
+      "sha256": "0c0fb92c4c2d0c2b610893cee2d61677b77b7bbde1b567018a28866b1be2d2d8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-1-baseline.time",
+      "bytes": 68,
+      "sha256": "01259b0332f3846807a57ac441df1fcf3d1b47ea7c5a752d5e4273f2ca1ef4db"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-1-candidate.log",
+      "bytes": 240,
+      "sha256": "8087e1e452ce8e6f9ea497de35fa8b926aea0db983acc71c72b23e01b43d3e75"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-1-candidate.time",
+      "bytes": 68,
+      "sha256": "41c488ea382e0d26ff56c4ae43bd22b0ca5adbee59e4f8c5b9d54036d17ee122"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-2-baseline.log",
+      "bytes": 240,
+      "sha256": "398b8bb326ac43291bdbfe272f37976249d42a0cf55a708c7572fd1fa38f2eee"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-2-baseline.time",
+      "bytes": 68,
+      "sha256": "9e89687eb5c2f6e8a6e0db6b2aac6949785f8bee018327ae7a9b4c242fbd0304"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-2-candidate.log",
+      "bytes": 240,
+      "sha256": "c0fe9bd8ab57c67bdd9c4813f387007b2540d78667ce3665f241d12f10d47376"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-2-candidate.time",
+      "bytes": 68,
+      "sha256": "f7975fac23d2fdb0930fd3212b74d7afd6c1cdcd87f7cbca9784145d89e7a828"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-3-baseline.log",
+      "bytes": 240,
+      "sha256": "51359ccc04750ac0dd667ec2ccbc956634893ec844655d8d71569f064c89a4d9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-3-baseline.time",
+      "bytes": 68,
+      "sha256": "156d59297cddb3a44b09c575db288bad12dd4dc5c9cdbdb8848faa4f27d34d21"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-3-candidate.log",
+      "bytes": 240,
+      "sha256": "e106ba02722ce0aa2a2eff926a2a2bb746b6d72bfad4f0962569d350dddcd045"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-chord-3-candidate.time",
+      "bytes": 68,
+      "sha256": "1eff27ada9c825eba79e6233f2df574932d5d866b37ef502e55de13d51f6a5d4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-circles-1-baseline.log",
+      "bytes": 217,
+      "sha256": "70b71cac241c68939f4dd27525b57b4e8adf1982e231847ddb5fad5354b572ae"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-circles-1-candidate.log",
+      "bytes": 217,
+      "sha256": "6fdd5217bfe09c4933dda6fa36f62b6bf5a1cca45a945c7bbf5fc22f91218de6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-circles-2-baseline.log",
+      "bytes": 217,
+      "sha256": "94ff2a2830dff90b6cab64b83700f8ce3348f8b8d4286f6bd9265e65f4ef72fe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-circles-2-candidate.log",
+      "bytes": 217,
+      "sha256": "ce4b40660a272f7b5eb308d847821f0464e779ad19663b0b1bd5d8cfa631a57c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-circles-3-baseline.log",
+      "bytes": 217,
+      "sha256": "58500ce80bf3c6f54db73ec183be52ea0404c8ddfae8820cae4c494100715997"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-circles-3-candidate.log",
+      "bytes": 217,
+      "sha256": "e866e7cd77a04243abd41e2909a1165c13e8d2d4e405b0480193ca221854d6a5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-1-baseline.log",
+      "bytes": 239,
+      "sha256": "83404cecd07660d859c9145b91ad0bc197db8b61ca8d0f2618559e47e5f1220e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-1-baseline.time",
+      "bytes": 68,
+      "sha256": "8f863d57232a1dc8d578f4e1992f47368779505035fa23963d0dc6e59b66bfd9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-1-candidate.log",
+      "bytes": 239,
+      "sha256": "52cdbb6aaa96931d318fba611d378a56bccbe5eaee30576d23d2ffc1e086978d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-1-candidate.time",
+      "bytes": 68,
+      "sha256": "c868a8003c9994d3af4c8e9d64e2a25b1dcc13aa44e2e7a287df1d117488e907"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-2-baseline.log",
+      "bytes": 239,
+      "sha256": "52cb69cf478502eb12a9ea9352db2a72ac3e914c02bd8d566a496247a5d3202a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-2-baseline.time",
+      "bytes": 68,
+      "sha256": "16a68609269e7b88a5a51e4c1f105153bf923e1c5ef530f2a290ab21c50e3471"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-2-candidate.log",
+      "bytes": 239,
+      "sha256": "869a5dba0120efa27c9922e0cb6155cb29a04dc8ddc3ae147ba65421bf0d49cb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-2-candidate.time",
+      "bytes": 68,
+      "sha256": "5cdd52f4a39ecb102ae6047468cef1f48f4cb52484067837df37baf0670b73b6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-3-baseline.log",
+      "bytes": 239,
+      "sha256": "6090faf4e55ccc8e14f11b8b7e74caad89d779136c3d4f9647a2d7d2df29f7af"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-3-baseline.time",
+      "bytes": 68,
+      "sha256": "3413c7405442c33a9dcec3d2fd2448bb8554965d8d2c64e48722b05fb0397bfd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-3-candidate.log",
+      "bytes": 239,
+      "sha256": "763206afa9589fe515faf9721b77fe54da0e10dec5f7d1836b4e27f50aa2f96c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-contacts-3-candidate.time",
+      "bytes": 68,
+      "sha256": "be3278541611df7c7c346eeb7cde8b1868cc20ba4fd9a75f4aa622bc13fc6a35"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-1-baseline.log",
+      "bytes": 230,
+      "sha256": "3d9920512b0d96bb34567cfd489d31e2e8f17b00038b2fdbbfc4a0a1ed6d1199"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-1-baseline.time",
+      "bytes": 68,
+      "sha256": "9997221fe8604510c7ea2c4b90d8c7825ebc1e12cfeaad9e5496c92b58f2d8a1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-1-candidate.log",
+      "bytes": 230,
+      "sha256": "284821457c8f0b34002aeab2303e3e1a06c3672a7decee9f354aca167c78790c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-1-candidate.time",
+      "bytes": 68,
+      "sha256": "885755fc937fa51107c38f2e57d3b2bd302be31612c307682c8e91f84ac3a3c4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-2-baseline.log",
+      "bytes": 230,
+      "sha256": "42eee331a879876243e3f68db162e7b807e96ea8a5bc75ca16eb26d24648a520"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-2-baseline.time",
+      "bytes": 68,
+      "sha256": "97970e42d48bc564f3756ba84da9b8f38ad7bb216e81b6a4a0c9bfa7e8f49fee"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-2-candidate.log",
+      "bytes": 230,
+      "sha256": "8a1639d3574ada39e9dba158b37ded0632508472a628eedbdce47d7a55dd814f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-2-candidate.time",
+      "bytes": 68,
+      "sha256": "763e5c91bf83851c88143cdc846527e9709bd8c180a3d0973ddfe3a56b9ea316"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-3-baseline.log",
+      "bytes": 230,
+      "sha256": "43cf795bf93126d6cd54d90b31a3dc0dc80302a00ddbd36cb60d4937c96e45ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-3-baseline.time",
+      "bytes": 68,
+      "sha256": "736cf4fd5342809ea7af1c3941d791204ebcb2639d4fed01bc0ff6df80116a68"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-3-candidate.log",
+      "bytes": 230,
+      "sha256": "e12b8320f8c6ef9f273984b7228cba588dc566985dbea09cbbd69e3ea80d8cca"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-radial-3-candidate.time",
+      "bytes": 68,
+      "sha256": "3a87e813460c6afb87e09af854bdc10193f59760a68e4ad184b4180dddc4800d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-1-baseline.log",
+      "bytes": 2313,
+      "sha256": "1f18bcf202f02cfdec010adffd94af9dc157e51ec00b306b7eec83e5c9bdc9ec"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "85ad7bca1f3df5b329b9dedfdf36c8e2214c8b3d85a1fda1cded34b64e454d6e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-1-candidate.log",
+      "bytes": 2316,
+      "sha256": "3b756bbcce5cdd439f49219317cd029d9d60ce96a2bd9d0943f96b14c29af12f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "bc9913d229ecc8bbebb834e5774c0597162bc390d0e74a3233bac89c012e1f8e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-2-baseline.log",
+      "bytes": 2315,
+      "sha256": "813245e51bc73897c180f2fd78fc1642ce88beff040ea698e21408bee112243a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "d21af934f8b8876ac7ebeb30a0d345d74a961a50ca89e43b1a686e6327fc1b2a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-2-candidate.log",
+      "bytes": 2319,
+      "sha256": "e079839d46137463be7ac4309fed3e4f311d19cf33f9c6917a28ed333246ae0a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "b051bc30fa0ee81812fbcc2643cc0c035808bb6b168cf23a6e25a7048500293d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-3-baseline.log",
+      "bytes": 2313,
+      "sha256": "f65dcb7f9121bf2de66aeaa8af31ab79b88d379825faf143f6497f6c16360b34"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "fb721b9d6bedb9d4e4e811d69b2597ef0fafe571e7079f662c34d9d50d2cd007"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-3-candidate.log",
+      "bytes": 2315,
+      "sha256": "ffc84e0753dcdea4c79c9e28f2acd4730450a9f444bdab8bb0e5f49d159ddade"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "c41e24160db8121c03fdd8d8529b11e14c55b6d791004c335d6469e2c2ceb1cd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rectangles-1-baseline.log",
+      "bytes": 213,
+      "sha256": "61d4ca234cb28a9b36ac9bc9d5c5d0c97345e7fb19bad8ebae968c127cd9f578"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rectangles-1-candidate.log",
+      "bytes": 213,
+      "sha256": "eecbf27a8f4b1c5e626b3eede963ddec87479b5f29a3bb5267cedd1c77a07227"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rectangles-2-baseline.log",
+      "bytes": 213,
+      "sha256": "eaec0349f32022b69b1747925366c00d6f40fc485fea21c87581da807a9683f0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rectangles-2-candidate.log",
+      "bytes": 213,
+      "sha256": "8be81e63f3fdca024d76a1974f25ace5e76c3f10c681cdfc6936aae5bd3f0056"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rectangles-3-baseline.log",
+      "bytes": 213,
+      "sha256": "0528816a9de20df38012dc4849d0e70100276c1b92183d5362fdb15ef4514171"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-rectangles-3-candidate.log",
+      "bytes": 213,
+      "sha256": "7fc0ed82f52528aed0086de8246308e125d627e11cdd29d52160ed65d91801bb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-results.json",
+      "bytes": 129030,
+      "sha256": "7ae493c161b7771cd4d368e7802429d67c0713a9daa3f029491ca3575c8fbd92"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-1-baseline.log",
+      "bytes": 228,
+      "sha256": "b3834325e53a0629d8f693edfe53964428aafc580b201f5f97450b5f9f5da451"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-1-baseline.time",
+      "bytes": 68,
+      "sha256": "b156a795b8fb90e0586a0e3ce56bf874a433606405a1292dc6e2758d17198840"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-1-candidate.log",
+      "bytes": 228,
+      "sha256": "020f815357a41c27ca74d11360c4360cc3d9c28308a8ad25d28c1d3797d561f2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-1-candidate.time",
+      "bytes": 68,
+      "sha256": "2c70f876b9730fe44b2011951693c740e5ba41107057a60895d64eb53d439a9c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-2-baseline.log",
+      "bytes": 228,
+      "sha256": "885811d64367db9728b428002f5769aa451a3aade84bbc21c960ec95f98fbb5c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-2-baseline.time",
+      "bytes": 68,
+      "sha256": "bf8f91c3ff9bab44fe64809ea76a22237c226e15d649cbea4a31b20c317c4f68"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-2-candidate.log",
+      "bytes": 228,
+      "sha256": "3ed54775169dfaf8a8f3cd0a3c769cf1d66880d8704356f82fffd5b69b57e644"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-2-candidate.time",
+      "bytes": 68,
+      "sha256": "955a72735e8448cc4d15badabfd7f6f90409d967d72a5de6c08b787d00790b6b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-3-baseline.log",
+      "bytes": 228,
+      "sha256": "c6632e0b23fa72b7725a544f560a9d6eefbf9eba95c1a994c85e76dd10a7cb33"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-3-baseline.time",
+      "bytes": 68,
+      "sha256": "9304162b6ed9a309bbed815bc7d0d07fb5e552b88684fb2681265315a37d51ba"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-3-candidate.log",
+      "bytes": 228,
+      "sha256": "4d9bf49fb1a1b29e78810cb316aeaced669b39465816b940572072464278cae0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-selected-3-candidate.time",
+      "bytes": 68,
+      "sha256": "6d86fd5373d42bae75f86af3daa5994f3c83cfe9159c676d63cc83400cd0e122"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired-timings.sh",
+      "bytes": 2500,
+      "sha256": "25410abd697467c5ed042ced6191e3f50a00c39298b53c46ca7c09d5b7104898"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/paired.status",
+      "bytes": 630,
+      "sha256": "512d309a5d70ec8564f08c12ec517c51adf26409c8a0da047fa677851743f8cf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-bench-build.log",
+      "bytes": 254,
+      "sha256": "5d7b8ff11d8e20f056472329e12fdffe8032f8e9ebbd79632ad038bb5c7f1410"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-bezier_region",
+      "bytes": 14881304,
+      "sha256": "2d7586a915e199d91b7388d7e12a59a8234e01d848e85df334c3b2973e6ee199"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-build.log",
+      "bytes": 284,
+      "sha256": "bbae68c7aa0b6cf4420c7c95d113ac8e68558a80efe55f46219e96a1871097bf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-curve_region_boolean_batch",
+      "bytes": 14319096,
+      "sha256": "af8130d9781a437440dd7ee087d7ce2f3af00093074c3fce34a1f42a70d8faa7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-rational_bezier",
+      "bytes": 10509136,
+      "sha256": "f77831a051f4c7469e9dc459de9da31dab327207aee1bb770fcf48a1e8dc0841"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-selected_fiber_angle_query_observes_its_requested_policy.log",
+      "bytes": 216,
+      "sha256": "f06f826afdbbe07d2565c03215b8d2588d53ccdacf8e2622140eb47bbbc00b63"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber.log",
+      "bytes": 244,
+      "sha256": "f2eb464a6a2d354f6be7dfaa313a7b9177f47bed9fd54d5bb245b4af4e63e813"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact.log",
+      "bytes": 710,
+      "sha256": "c2bc5442b9921b2d89251eb7c3fbbba1380bfdf8b78cd1562b6f7b9883bbfc1c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-test",
+      "bytes": 28076664,
+      "sha256": "5ff14b8d84f1ee1165d6867fac97625c508f67a32b265bc81be2e4d358939f31"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-ui.wasm",
+      "bytes": 17032030,
+      "sha256": "f0246b65bd1ea9d8f269cae80b94c92fbdc240f42174e03fd7e8172c8fb74151"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only-wasm-build.log",
+      "bytes": 363,
+      "sha256": "41cf1685dfb8ad5f79523f5a3922475c1d3ad7ac38401c2b85d06ec772618d1a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/policy-only.patch",
+      "bytes": 13471,
+      "sha256": "f8b34a42efc797d77dd988d6e4835eca91156a0ec87cbd4676e8bc28c3ae9634"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/qualify.sh",
+      "bytes": 1607,
+      "sha256": "a82576dc2c34fb056f32d2a830e9f94866de5b1f6939d207ea4a578fa1fb6c61"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/regression.patch",
+      "bytes": 1154,
+      "sha256": "ac8cf2b2da94e9fd37c022453ea9ed3f3ce6da8d31fbf89330b8c593ec63dd99"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-1-baseline.log",
+      "bytes": 1864,
+      "sha256": "3ba2a4db964046e81c47064514d6f73ac412b32e17e87d52c1ea885a5873a8af"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-1-baseline.time",
+      "bytes": 66,
+      "sha256": "9f8f0d06989de7b522306a1a7db0e2a0464b7e3dde2b3db5e80e724b51654c12"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-1-candidate.log",
+      "bytes": 1862,
+      "sha256": "828e4c9cbe2768a187a441bee80a3762f3ad58e49c396dbdc4471ba8ec39092d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-1-candidate.time",
+      "bytes": 66,
+      "sha256": "1216f7ffe225f806f9817a4ca2fd24996c9bdcd3f0d066d6dc6789e884ed5633"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-2-baseline.log",
+      "bytes": 1866,
+      "sha256": "943e306e08a00dc1e7677784994cbaddaf0431abf822009d7d8482b170053f1a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-2-baseline.time",
+      "bytes": 66,
+      "sha256": "1f02d49a1d3eff72fbaf7028bf9fa594e2740ab7b111bcaad08c5eab6b93348c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-2-candidate.log",
+      "bytes": 1870,
+      "sha256": "7166b1b40b6a276321b0a412c65eca0e3932949a509cd156d16e09bc1e5f42b8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-2-candidate.time",
+      "bytes": 66,
+      "sha256": "591ddc00e4d1d58f05301b93858bbb654d87f23d7e7191fa822a0bbdfc380235"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-3-baseline.log",
+      "bytes": 1869,
+      "sha256": "f837e64f54e2c36c497c4dba018bb4311f2ef62c0ca5e2a731342f51856a22c3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-3-baseline.time",
+      "bytes": 66,
+      "sha256": "fbeabccccabf5b0922e736bd32a66522be74fe7f52fc557da57b22db23578b45"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-3-candidate.log",
+      "bytes": 1865,
+      "sha256": "5977e8e27a62f9e01c107d2d2d0aaaf69af504ae7c2c16bb5ae964f270dd7d91"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-3-candidate.time",
+      "bytes": 66,
+      "sha256": "9d7144c03cfa8b937393c12fced06f0f2000fcc7847e44bdd9ed193d64a45209"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-4-baseline.log",
+      "bytes": 1866,
+      "sha256": "2da9d01d9364c741715bc598b7afd0e46de78edc9a91e7d85e6b74e51310e43f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-4-baseline.time",
+      "bytes": 66,
+      "sha256": "0a5b80106d2ea16c8662c7626b17147f4428ce075983bf53a2028d4024fe9a38"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-4-candidate.log",
+      "bytes": 1866,
+      "sha256": "786e4e0db9c16fe8a8a7d058c02bc05e9733b2490ae3d8edc1522dbcd9dd228f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-4-candidate.time",
+      "bytes": 66,
+      "sha256": "eed08b16c52a319f9260051cc82002e90abc0e5b48fa694281242f982653a14b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-5-baseline.log",
+      "bytes": 1864,
+      "sha256": "22c1e7d47ecb8919b00615a434adfd1c99d77087d46df88be5defec4f92231ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-5-baseline.time",
+      "bytes": 65,
+      "sha256": "658b0282d86f61aa7fc6947a0aec465a59da83543b9483e8c852a63f9886a2bb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-5-candidate.log",
+      "bytes": 1864,
+      "sha256": "3437a31020c6f4e86c3632a0a5d13590f1d99793cef4057c7faa5e3128e16826"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-5-candidate.time",
+      "bytes": 66,
+      "sha256": "958edeef7393ff2db17a8ba8f8a8a755188c75bdc58907dbb5bcadacd020735f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-6-baseline.log",
+      "bytes": 1862,
+      "sha256": "399d46e0ce5ecd821056e1e27bb6e524c4d6cbda07e2a14dd6bf534c3378b25f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-6-baseline.time",
+      "bytes": 66,
+      "sha256": "b693b7d23e54136be711ad2939edfd2a7188858a6207a6b605f7169ca43ace87"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-6-candidate.log",
+      "bytes": 1866,
+      "sha256": "5975666802e403a2b3c1e5191462e82befacf670566adb2a8b041f9b71078c5c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-6-candidate.time",
+      "bytes": 66,
+      "sha256": "9ea9d086108dedaa480850e1275cc01be26473147243e44ab226030b003852ce"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-7-baseline.log",
+      "bytes": 1868,
+      "sha256": "3ae497a25db0474cbdc5d0ea55ec49d1adea4f98e8a68944d5309eed60fb2a8b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-7-baseline.time",
+      "bytes": 66,
+      "sha256": "9c19e3cb42eea150b03d73fe51ca53c236d53d916fd1c352b44302e3154e761c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-7-candidate.log",
+      "bytes": 1867,
+      "sha256": "fb567c6977ed5abf2c03ffe514c9aa789dfa0ca20eda518e4e6b2a37d5d3dc75"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-bezier_region-7-candidate.time",
+      "bytes": 66,
+      "sha256": "fdf81a39454187a03f55553acd0b5e9aee60c5bda747b148a2cc440fb2f28470"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-native.sh",
+      "bytes": 998,
+      "sha256": "8a908e2b114fa7f8153ee5d2b54f81ed7abfe3b2fefbb2ea9f02eca1ec2164fb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-1-baseline.log",
+      "bytes": 2307,
+      "sha256": "88c31e25c0a84108d298212d2ece1da25bc1cc76ae8839dcc81eb3b3a72ecc49"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "f4615902f3e2a3a00889d7709a7606c5f59bf16c31f66a766d3a4845bb896ddf"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-1-candidate.log",
+      "bytes": 2314,
+      "sha256": "c54ac9e2957e434796521c8f2341369848e472f8a71f424d2629c3544a40a246"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "0785db79fa6eb56b4b12678dd817d34e961060f0d19039b04d7aeb85f788518f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-2-baseline.log",
+      "bytes": 2316,
+      "sha256": "8e6899e497230aec75203dafde4e83108310b1a251ef6da5e0f5a97c4d6811b8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "a02b940b8a0618c6402b4f6f01d064973a92bc9fffa51a8f5858494f887e0fee"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-2-candidate.log",
+      "bytes": 2312,
+      "sha256": "fa5c77d8e090b5408ba108d6710cb3371ba584dbb9f84114893102a71dcb8920"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "6b723559fd0da2402752024c9d55ca4000b296c84e3ddd3847d9a8983b689a2c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-3-baseline.log",
+      "bytes": 2316,
+      "sha256": "4c9c8e0ffd7c08af4361d15f777b42939c12667e4527dcba72fd512de97b136b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "a81a5f36dfc7b937a1239625301ea19e633eded6fbdefba44f058acea2e6377d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-3-candidate.log",
+      "bytes": 2313,
+      "sha256": "c060ae1af4c33750c5273d16a0eb3bf5cc4d75eb548143936c81f536e22c2c92"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "5c8b620944b721fa5551ee7ae1b8f3b938da16006a2bbd9e2237a51154308144"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-4-baseline.log",
+      "bytes": 2314,
+      "sha256": "78c95af0a1612c330e652f7577197dfe734ab37f1a788d357d91280a36bc1bbd"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-4-baseline.time",
+      "bytes": 66,
+      "sha256": "c2fcdb73a93f3fad705c78aef9d140b0974ca93e980dcfafbcc933cae603d170"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-4-candidate.log",
+      "bytes": 2313,
+      "sha256": "6512ff6ed2c04904f9aeda17b860370d9b9033f2090ca08042c4b0da90681825"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-4-candidate.time",
+      "bytes": 66,
+      "sha256": "9a66bdc28123186df6140469a6890f61ee6ca40a2640ed5a8adc05d0b8034885"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-5-baseline.log",
+      "bytes": 2316,
+      "sha256": "7319e658cc336e8462d1fe9a844119e5a03ed0aaf4ce58dba52551631cbb2c9f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-5-baseline.time",
+      "bytes": 66,
+      "sha256": "bffd10acc56bacb3d42552403b6e5b4d7bcb472bfe76a0ce6aad998b9bb69e3d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-5-candidate.log",
+      "bytes": 2316,
+      "sha256": "da756af392a4af32da214932f4b4f3f023f1aae05de3be53a35032be36176925"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-5-candidate.time",
+      "bytes": 66,
+      "sha256": "8658352f07d08422f5a0ded92245b88670cc59a1995a41629f3ceb377b1fd71d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-6-baseline.log",
+      "bytes": 2315,
+      "sha256": "15f7a3870e4ad9424dedfff9f2f70d9f59925837fb2dcb7e20d9ea67b4624869"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-6-baseline.time",
+      "bytes": 66,
+      "sha256": "96fc5401620b0404c51298ba394ebbd9594c8361fb50fcc0885ca7482e0602ac"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-6-candidate.log",
+      "bytes": 2315,
+      "sha256": "e327c69c6adcd7f9aeb87e5fee3c87d9b4b91c5b560ae636af76a3f63d46fdea"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-6-candidate.time",
+      "bytes": 66,
+      "sha256": "efb1dc4567b1e896a212722e64e3befb1bb45cf7f48c971bb3dbc375c66a11b9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-7-baseline.log",
+      "bytes": 2315,
+      "sha256": "4548ac38fb248eec064194eb1981d01b35271aa037629d1b2516203248ca8063"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-7-baseline.time",
+      "bytes": 66,
+      "sha256": "557b95125d4f4c74fdfdefa967a04563ff4620103a406b03787e8d2ada2d7eea"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-7-candidate.log",
+      "bytes": 2316,
+      "sha256": "36e65bc697b099ea394e07a0af3e979ad62775d6c4de674dc5fa79b22b3aa1fe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-rational_bezier-7-candidate.time",
+      "bytes": 66,
+      "sha256": "affc65dfef859250d52374424f3388da398f5ecf984e648c819a29a56a386445"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat-results.json",
+      "bytes": 235787,
+      "sha256": "770e8edff4d9b7865745ca4dac023bf4a1c17ccc2310d30db048b41f15fe08b6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/repeat.status",
+      "bytes": 938,
+      "sha256": "e6f958189b93dc63562a1f06490bb1f6461dd10ddf53904061513faa99e7b4fa"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/rustc-version.txt",
+      "bytes": 196,
+      "sha256": "a90721a3b031e0e1c8bfc34ece79b6608d2ae53166cfb77dad281a0eb5fa6bc8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/snapshot-revisions.txt",
+      "bytes": 246,
+      "sha256": "dda946e1fa354ed2df3cf8c49b7aa39f8437e7c98d5924a20f55f0c9d4ea246c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/snapshot.sh",
+      "bytes": 810,
+      "sha256": "e6e5fb8caf16a3a60f6eb151cd77376d2329804e94fa79eef1db9eaea7658550"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/test-regressions.sh",
+      "bytes": 1421,
+      "sha256": "455e64b885bb0fe282c63a68390003ee1424b7724fd83440f6cd03c8b3d8c2fc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/strict-contact-replay.iVykgE/unmodified-snapshot-sanity.log",
+      "bytes": 4891,
+      "sha256": "ee81fc5c03c966e65f68c93d454bfab07be6b79ac45308a7cf395c22607e68e5"
+    }
+  ]
+}

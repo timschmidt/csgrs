@@ -1,0 +1,305 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "projective-cubic-shared-component",
+  "source_revision": "7a77d6815310a7e8cda44b1eeeab876ed3bdd561",
+  "historical_control_revision": "ef7ddbce61806545b3d62ac3fa69ef25940330c0",
+  "benchmark_harness_revision": "838fd30633f30836a819538acc1d08d3afd8a6bc",
+  "hypersolve_revision": "b2a279032f4824c635923a6093fe1d342c208da9",
+  "hypersolve_historical_control_revision": "963ed9b9dfb281d199a157e7e35ff30114b41079",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "closed_boundary": "retained regions may clip the same non-axis-monotone cubic image through an exact endpoint-fixed projective/Mobius parameter correspondence",
+    "degree_scope": "the control-net certificate applies to every positive equal degree, not only cubics",
+    "range_scope": "complete and partial oriented overlap ranges derive their maps from one retained scale and the already-retained ranges",
+    "authoritative_engine": "all results continue through one CurveRegionBooleanContext arrangement",
+    "public_api_growth": false,
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "defects_closed": {
+    "non_axis_monotone_shared_cubic": "the historical engine returns Blocked(Boolean, CubicBezier, Boundary) after retained clipping removes every certified injective authored coordinate",
+    "projective_subrange_transport": "trimmed carriers with geometrically scaled homogeneous weights now retain an exact range-local Mobius correspondence instead of falling into unsupported point replay",
+    "rational_image_common_factor": "Hypersolve cancels an exact common numerator/denominator factor when it would otherwise make the image resultant vanish identically because of a source root outside the selected isolator"
+  },
+  "exact_architecture": {
+    "control_net_certificate": "affine control points must agree exactly in the selected orientation; nonzero common weight signs, a positive scale, and every geometric weight-ratio identity are policy-certified",
+    "single_pass_classifier": "affine identity/unit-complement and projective relations are classified in one control-net pass per orientation; failed general candidates do not repeat point comparisons",
+    "compact_correspondence": "EndpointProjective and RangeProjective each retain one Real scale plus orientation; partial-map coefficients are derived from retained overlap ranges on demand",
+    "exact_parameter_map": "exact rational parameters use direct Real arithmetic; algebraic parameters use Hypersolve rational-image construction and exact candidate replay",
+    "inverse": "the inverse 2x2 projective map is derived algebraically from the forward numerator and denominator and is tested in both orientations",
+    "policy": "STRICT returns only certified relations; APPROXIMATE_512 may terminate inherited equality/sign predicates at 512 bits while returned parameters, carriers, and coordinates stay exact"
+  },
+  "hypersolve_factor_cancellation": {
+    "trigger": "exact nonconstant numerator and denominator polynomials",
+    "method": "primitive integer polynomial GCD followed by exact quotient/remainder certification",
+    "linear_fast_path": "two nonconstant linears skip GCD because they are either coprime or a constant rational map already handled by the existing proportionality test",
+    "regression": "P=(x+3)(x^2-2), isolated positive sqrt(2), and x(x+3)/(x+3) transform exactly under STRICT and APPROXIMATE_512",
+    "returned_geometry_approximated": false
+  },
+  "regression_matrix": {
+    "cubic_controls": [
+      [0, 0],
+      [7, -5],
+      [8, -4],
+      [3, 3]
+    ],
+    "affine_frame": "u=3t and v=18t(1-t), proving image injectivity while both authored x and y reverse in the open domain",
+    "projective_weights": [1, 2, 4, 8],
+    "parameter_orientations": ["same", "reversed"],
+    "overlap_scopes": ["complete", "partial retained subrange"],
+    "policies": ["STRICT", "APPROXIMATE_512"],
+    "operations": ["union", "intersection", "difference", "xor"],
+    "intersection_evidence": {
+      "contacts": 2,
+      "overlaps": 1,
+      "complete": true
+    },
+    "result_fragment_counts": [4, 2, 0, 4],
+    "result": "pass"
+  },
+  "historical_completion": {
+    "method": "the final benchmark harness was cherry-picked onto an isolated ef7ddbc source clone and both binaries were rebuilt against the same Hyperreal, Hyperlimit, and optimized Hypersolve state",
+    "parent_exit_code": 101,
+    "parent_error": "Blocked(Boolean, CubicBezier, Boundary)",
+    "candidate_exit_code": 0,
+    "candidate_fragment_counts": [4, 2, 0, 4],
+    "interpretation": "the projective cubic row is newly supported mathematical coverage, not a slower replacement for a historically successful path"
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 14 HYPERCURVE_PATHOLOGICAL_MODE=boolean {historical,candidate pathological_regions binary}",
+    "method": "one warm-up followed by eleven alternating-order process pairs; complete 67-cell all-family workload; matched dependency state and toolchain",
+    "cells_per_process": 67,
+    "historical_milliseconds": [
+      482.756673,
+      494.087467,
+      492.026458,
+      483.897365,
+      490.214461,
+      481.052870,
+      492.337847,
+      491.156038,
+      489.006085,
+      476.559407,
+      482.244748
+    ],
+    "candidate_milliseconds": [
+      490.841089,
+      499.803425,
+      488.330911,
+      482.214140,
+      484.217843,
+      491.886567,
+      487.898651,
+      492.223525,
+      484.304846,
+      480.547184,
+      493.171609
+    ],
+    "historical_median_milliseconds": 489.006085,
+    "candidate_median_milliseconds": 488.330911,
+    "median_change_percent": -0.138071,
+    "paired_geometric_mean_change_percent": 0.375620,
+    "interpretation": "the complete all-family workload is throughput-neutral"
+  },
+  "aligned_supported_path_benchmark": {
+    "fixture": "aligned-conic-overlap",
+    "command": "taskset -c 14 HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=2000 HYPERCURVE_CURVE_REGION_BATCH_MODE=shared {historical,candidate curve_region_boolean_batch binary}",
+    "historical_nanoseconds_per_batch": [
+      382425,
+      390099,
+      393914,
+      391306,
+      362309,
+      389720,
+      400292,
+      396613,
+      373638,
+      387345,
+      369008
+    ],
+    "candidate_nanoseconds_per_batch": [
+      386070,
+      378369,
+      381758,
+      401684,
+      400779,
+      390901,
+      394208,
+      386422,
+      377196,
+      373217,
+      382783
+    ],
+    "historical_median_nanoseconds": 389720,
+    "candidate_median_nanoseconds": 386070,
+    "median_change_percent": -0.936570,
+    "paired_geometric_mean_change_percent": 0.413117,
+    "interpretation": "the already-supported shared-conic lane remains neutral"
+  },
+  "new_projective_cubic_benchmark": {
+    "command": "taskset -c 14 HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=mobius-cubic-overlap HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=200 HYPERCURVE_CURVE_REGION_BATCH_MODE={independent,shared} candidate curve_region_boolean_batch binary",
+    "method": "one warm-up followed by eleven alternating independent/shared processes; independent performs four authoritative calls and shared performs one all-four arrangement",
+    "iterations_per_process": 200,
+    "independent_nanoseconds_per_batch": [
+      9172429,
+      9282519,
+      9129918,
+      9031595,
+      9104025,
+      9089821,
+      9135344,
+      9108300,
+      9301235,
+      9070990,
+      9176745
+    ],
+    "shared_nanoseconds_per_batch": [
+      2329013,
+      2319116,
+      2298047,
+      2302038,
+      2327402,
+      2321069,
+      2283979,
+      2379625,
+      2258903,
+      2290092,
+      2287414
+    ],
+    "independent_median_nanoseconds": 9129918,
+    "shared_median_nanoseconds": 2302038,
+    "median_shared_speedup": 3.966015,
+    "paired_geometric_mean_shared_speedup": 3.961449,
+    "historical_status": "unsupported"
+  },
+  "hypersolve_release_controls": {
+    "method": "matched release Criterion binaries pinned to CPU 14; current shared dependency state; reported point estimates with confidence intervals",
+    "linear_fractional_rational_image_microseconds": {
+      "historical_interval": [7.9447, 8.0201, 8.1022],
+      "candidate_interval": [8.0155, 8.0572, 8.0996],
+      "point_estimate_change_percent": 0.462588,
+      "interpretation": "overlapping intervals; statistically neutral"
+    },
+    "degree_12_cubic_rational_image_milliseconds": {
+      "historical_interval": [1.9418, 1.9500, 1.9585],
+      "candidate_interval": [1.9190, 1.9274, 1.9372],
+      "point_estimate_change_percent": -1.158974,
+      "interpretation": "the higher-degree GCD-capable path does not regress"
+    }
+  },
+  "heaptrack": {
+    "all_family": {
+      "historical_allocation_calls": 8295412,
+      "candidate_allocation_calls": 8295412,
+      "historical_temporary_allocations": 1392519,
+      "candidate_temporary_allocations": 1392519,
+      "historical_peak_heap": "34.70M",
+      "candidate_peak_heap": "34.70M",
+      "historical_peak_rss": "65.03M",
+      "candidate_peak_rss": "65.05M",
+      "historical_total_leaked": "476.82K",
+      "candidate_total_leaked": "476.82K",
+      "interpretation": "allocation calls, temporary allocations, peak heap, and leaks are exactly unchanged"
+    },
+    "projective_cubic_100_batches": {
+      "independent_allocation_calls": 14243895,
+      "shared_allocation_calls": 3711595,
+      "allocation_reduction_percent": 73.942556,
+      "allocation_ratio": 3.837675,
+      "independent_temporary_allocations": 419323,
+      "shared_temporary_allocations": 109423,
+      "temporary_reduction_percent": 73.904842,
+      "independent_peak_heap": "877.00K",
+      "shared_peak_heap": "876.99K"
+    },
+    "artifacts": [
+      "/tmp/hypercurve-projective-cubic-parent-b2-all-family.zst",
+      "/tmp/hypercurve-projective-cubic-candidate-b2-all-family.zst",
+      "/tmp/hypercurve-projective-cubic-b2-independent-100.zst",
+      "/tmp/hypercurve-projective-cubic-b2-shared-100.zst"
+    ]
+  },
+  "matched_release_binaries": {
+    "pathological": {
+      "historical_file_bytes": 7028800,
+      "candidate_file_bytes": 7044880,
+      "file_delta_bytes": 16080,
+      "file_delta_percent": 0.228773,
+      "historical_stripped_bytes": 5589304,
+      "candidate_stripped_bytes": 5605864,
+      "stripped_delta_bytes": 16560,
+      "stripped_delta_percent": 0.296280,
+      "historical_text_bytes": 5319129,
+      "candidate_text_bytes": 5335077,
+      "text_delta_bytes": 15948,
+      "historical_data_bytes": 266296,
+      "candidate_data_bytes": 266920,
+      "historical_bss_bytes": 3328,
+      "candidate_bss_bytes": 3152,
+      "historical_loadable_bytes": 5588753,
+      "candidate_loadable_bytes": 5605149,
+      "loadable_delta_bytes": 16396,
+      "loadable_delta_percent": 0.293375
+    },
+    "curve_region_batch": {
+      "historical_file_bytes": 6256152,
+      "candidate_file_bytes": 6278264,
+      "file_delta_bytes": 22112,
+      "file_delta_percent": 0.353444,
+      "historical_stripped_bytes": 4933952,
+      "candidate_stripped_bytes": 4954704,
+      "stripped_delta_bytes": 20752,
+      "stripped_delta_percent": 0.420596,
+      "historical_loadable_bytes": 4933285,
+      "candidate_loadable_bytes": 4953761,
+      "loadable_delta_bytes": 20476,
+      "loadable_delta_percent": 0.415058
+    },
+    "interpretation": "the sub-half-percent linked-size cost is accepted for a new exact completion class; runtime remains the higher priority"
+  },
+  "static_call_graph": {
+    "command": "hyper-callgraph --root {snapshot} --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_nodes": 23086,
+    "candidate_nodes": 23136,
+    "node_delta": 50,
+    "historical_edges": 39896,
+    "candidate_edges": 40006,
+    "edge_delta": 110,
+    "source_only_historical_nodes": 16957,
+    "source_only_candidate_nodes": 17002,
+    "source_only_node_delta": 45,
+    "source_only_historical_edges": 28658,
+    "source_only_candidate_edges": 28755,
+    "source_only_edge_delta": 97,
+    "historical_artifact": "/tmp/hypercurve-projective-cubic-callgraph-parent/callgraph.json",
+    "candidate_artifact": "/tmp/hypercurve-projective-cubic-callgraph-candidate-final/callgraph.json"
+  },
+  "competitive_context": {
+    "rerun": false,
+    "reason": "the available floating competitors do not expose exact retained rational-cubic Boolean topology or projective parameter correspondence, so no like-for-like completion row exists",
+    "retained_reference": "the mixed-line/conic checkpoint records a 61.98x gap to Cavalier binary64 under explicitly unequal exactness and degeneracy guarantees",
+    "interpretation": "historical failure plus absolute exact-path throughput is the honest comparison for this capability"
+  },
+  "verification": {
+    "hypercurve_all_features_unit_tests": "270 passed",
+    "hypercurve_complete_all_features_suite": "pass",
+    "hypercurve_focused_projective_unit_tests": "same/reversed complete and partial-range maps pass under STRICT and APPROXIMATE_512",
+    "hypercurve_focused_curve_region_boolean": "26 tests; projective cubic regression passes under both policies",
+    "hypercurve_no_default_focused_tests": "pass",
+    "hypercurve_clippy_all_targets_all_features_deny_warnings": "pass",
+    "hypercurve_clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "hypersolve_all_features": "167 unit, 2 readme, 131 residual-property, and 209 smoke tests pass",
+    "hypersolve_no_default_features": "167 unit, 2 readme, 131 residual-property, and 209 smoke tests pass",
+    "hypersolve_clippy_all_targets_all_features_deny_warnings": "pass",
+    "formatting": "pass",
+    "diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "remaining_boundaries": [
+    "shared components not reducible to lineage, degree alignment, endpoint-fixed projective control nets, conic/polynomial-graph maps, point incidence, or a certified injective coordinate still need exact bivariate branch evidence",
+    "publish native conic and arc results compactly inside the authoritative arrangement",
+    "reduce isolated single-operation topology construction overhead without restoring a second Boolean engine",
+    "complete exact general offsets and solver-driven fillet/chamfer"
+  ]
+}

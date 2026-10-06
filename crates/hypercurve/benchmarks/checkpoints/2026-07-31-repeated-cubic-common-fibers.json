@@ -1,0 +1,157 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "repeated-cubic-common-fibers",
+  "source_revision": "2efeae2c56f2d4663049e14a8cc1ec842bbb0247",
+  "historical_control_revision": "0747853",
+  "hypersolve_revision": "e7a25d1a6caeb027348ca3089e99a428c2d473e0",
+  "hypersolve_benchmark_revision": "cd062aac0987446af441bf9e89dfd56fc1f0efab",
+  "historical_hypersolve_revision": "684843f",
+  "scope": {
+    "operation": "exact rational-linear extraction and Hypercurve transport for repeated-root cubic generic common fibers",
+    "completed_families": [
+      "one double rational component beside one distinct rational component",
+      "one triple rational component",
+      "recursive exact cofactor extraction",
+      "same- and reversed-orientation component ranges",
+      "exact repeated-component deduplication",
+      "STRICT and APPROXIMATE_512 through the identical construction graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "entry": "the first and second subresultants must vanish identically before the cubic generic-common-fiber path is entered",
+    "cubic_reconstruction": "the third subresultant is copied from a degree-three terminal equation or reconstructed by exact specialization and interpolation inside the configured degree budget",
+    "double_root_admission": "the cubic discriminant must be the exact zero polynomial and b^2-3ac must be nonzero; the candidate is (9ad-bc)/(2(b^2-3ac))",
+    "triple_root_admission": "when the discriminant and b^2-3ac are both the exact zero polynomial, the candidate is -b/(3a)",
+    "division_authority": "the primitive D(r)l-N(r) factor must divide both authored bivariate equations exactly before publication",
+    "residual_authority": "both exact quotients are retained and fed back through the same extractor until no supported factor remains",
+    "strict": "STRICT uses exact subresultant zeroes, exact invariant identities, exact polynomial GCD reduction, exact division, and exact geometry replay",
+    "approximate_512": "APPROXIMATE_512 uses the same component construction; only inherited Hyperreal equality terminals may stop at 512 bits and no approximate factor or parameter is synthesized",
+    "failure_semantics": "a square-free distinct cubic, irreducible quadratic, unsupported coefficient tower, or failed exact division remains explicit incomplete evidence"
+  },
+  "direct_hypersolve_benchmark": {
+    "method": "five sequential optimized benchmark processes pinned to CPU 11; each 1000-iteration timing extracts all three exact residual factors",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "lane": "rational_repeated_cubic_common_fiber_three_components",
+    "iterations_per_process": 1000,
+    "samples_microseconds": [
+      3717.52,
+      3592.403,
+      3607.124,
+      3634.666,
+      3620.759
+    ],
+    "median_microseconds": 3620.759,
+    "interpretation": "the lane includes third-subresultant reconstruction and three exact two-equation cofactor divisions; the historical extractor returned NoLinearComponent, so no unresolved-versus-completed speed ratio is claimed"
+  },
+  "matched_release_benchmark": {
+    "method": "five interleaved all-feature release processes per revision pinned to CPU 11 with identical fixtures and iteration counts",
+    "historical_checkout": "/tmp/hypercurve-repeated-cubic-baseline.fFiFti",
+    "lanes": {
+      "nonlinear_rational_component_candidates": {
+        "historical_median_microseconds": 37735.026,
+        "candidate_median_microseconds": 37246.042,
+        "median_change_percent": -1.295836
+      },
+      "nonlinear_rational_component_contacts": {
+        "historical_median_microseconds": 37051.395,
+        "candidate_median_microseconds": 36469.135,
+        "median_change_percent": -1.571493
+      },
+      "exact_intersection_candidates": {
+        "historical_median_microseconds": 41.264,
+        "candidate_median_microseconds": 41.488,
+        "median_change_percent": 0.542846
+      },
+      "exact_intersection_contacts": {
+        "historical_median_microseconds": 51.786,
+        "candidate_median_microseconds": 50.971,
+        "median_change_percent": -1.573784
+      },
+      "higher_nullity_candidates": {
+        "historical_median_microseconds": 813.629,
+        "candidate_median_microseconds": 804.019,
+        "median_change_percent": -1.181128
+      },
+      "higher_nullity_contacts": {
+        "historical_median_microseconds": 2156.097,
+        "candidate_median_microseconds": 2152.408,
+        "median_change_percent": -0.171096
+      },
+      "line_overlap_candidates": {
+        "historical_median_microseconds": 2.601,
+        "candidate_median_microseconds": 2.575,
+        "median_change_percent": -0.999616
+      },
+      "line_overlap_contacts": {
+        "historical_median_microseconds": 8.17,
+        "candidate_median_microseconds": 8.084,
+        "median_change_percent": -1.052632
+      }
+    },
+    "interpretation": "every pre-existing median remains within 1.58 percent; the completed repeated-cubic path is measured separately because it did not exist in the historical executable"
+  },
+  "release_size": {
+    "method": "matched all-feature offset benchmark builds from isolated six-repository snapshots",
+    "historical_file_bytes": 7380440,
+    "candidate_file_bytes": 7402832,
+    "file_change_percent": 0.303397,
+    "historical_text_bytes": 5611699,
+    "candidate_text_bytes": 5630447,
+    "text_change_percent": 0.334088,
+    "historical_loadable_bytes": 5883651,
+    "candidate_loadable_bytes": 5900031,
+    "loadable_change_percent": 0.278399
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "method": "matched isolated source snapshots containing hypercurve, hypersolve, hyperreal, hyperlattice, hyperlimit, and hypertri; both selected libraries include examples, tests, benchmarks, and fuzz targets",
+    "historical_nodes": 29687,
+    "candidate_nodes": 29701,
+    "node_change": 14,
+    "node_change_percent": 0.047159,
+    "historical_edges": 52991,
+    "candidate_edges": 53042,
+    "edge_change": 51,
+    "edge_change_percent": 0.096243,
+    "historical_artifact": "/tmp/hypercurve-repeated-cubic-baseline-callgraph/callgraph.json",
+    "candidate_artifact": "/tmp/hypercurve-repeated-cubic-candidate-callgraph/callgraph.json",
+    "interpretation": "this syntax graph is a navigation and source-complexity aid, not a reachability or binary-size proof"
+  },
+  "verification": {
+    "hypersolve": {
+      "all_features_library_tests": 190,
+      "all_features_residual_property_tests": 131,
+      "all_features_smoke_tests": 209,
+      "full_no_default_features": "passed",
+      "double_root_both_parameter_orientations": "passed",
+      "triple_root_both_parameter_orientations": "passed",
+      "distinct_cubic_rejection": "passed"
+    },
+    "hypercurve": {
+      "full_matrix_at_double_root_cut": "291 all-feature and 258 no-default library tests plus every integration and doc suite passed",
+      "triple_root_targeted_all_features": "passed",
+      "triple_root_targeted_no_default_features": "passed",
+      "parallel_fit_offset_all_features": 83,
+      "parallel_fit_offset_no_default_features": 73,
+      "curve_region_boolean_all_features": 29,
+      "curve_region_boolean_fuzz_all_features": 11,
+      "pathological_exact_boolean_operations": 268
+    },
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "irreducible quadratic positive-dimensional components",
+    "square-free distinct cubic components, including rational-linear factors not exposed by repeated-root invariants",
+    "degree-four-or-higher positive-dimensional components",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization"
+  ]
+}

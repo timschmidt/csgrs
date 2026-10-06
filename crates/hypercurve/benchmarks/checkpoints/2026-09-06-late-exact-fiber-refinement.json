@@ -1,0 +1,3659 @@
+{
+  "schema": 1,
+  "date": "2026-09-06",
+  "title": "Certified selected-fiber signs after late exact retained-root refinement",
+  "decision": "retain the correctness fix; reject the independent interval-reuse pilot; full release readiness remains open",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory",
+    "binary size",
+    "code size"
+  ],
+  "revisions": {
+    "hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+    "hyperlimit": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e",
+    "hypercurve": "017f9826764955aa425b44bf915933e78c75a991",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "hypercurve_candidate": "this checkpoint's source hash and containing commit",
+  "source": {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "5138c1c9a010c041432f47d3103ae3e11e15a74b0680d1c9feb8d646d49210b4",
+    "production_rust_net_lines": 9,
+    "test_rust_net_lines": 70,
+    "public_api": "unchanged; no compatibility interface, shim, or new root authority",
+    "behavior": "Reuse the initial exact univariate predicate dispatch when a later retained-parameter refinement becomes Exact; preserve the original root-refinement and terminal-policy schedules."
+  },
+  "regression": {
+    "name": "bezier_offset::conversion_tests::selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps",
+    "construction": "Certified linear retained root 2^-100 in [0,1], irrational selected fiber u^2=1/2, predicates u^2-1/2 +/- retained. The retained root remains Algebraic after 64 steps and is Exact after 128.",
+    "baseline": "full-name exact-filter replay panics at the algebraic-only assumption; one failed test",
+    "candidate": "positive and negative signs remain Certified under STRICT and APPROXIMATE_512; one passing test",
+    "excluded_invocation": {
+      "log": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/late-exact-before.log",
+      "reason": "The short name combined with --exact selected zero tests. Not used as a regression gate."
+    }
+  },
+  "validation": {
+    "all_features_include_ignored": {
+      "passed": 1750,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 46
+    },
+    "no_default_features": {
+      "passed": 1712,
+      "failed": 0,
+      "ignored": 4,
+      "suites": 46,
+      "ignored_coverage": "all four pass in the all-feature run"
+    },
+    "ui": {
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "suites": 1
+    },
+    "gates": "fmt 0\nclippy 0\nminimal 0\nminimal-clippy 0\ndocs 0\nminimal-docs 0\nfuzz-check 0\nui-tests 0\nui-clippy 0\nui-wasm 0\n",
+    "fuzz_targets_compiled": true,
+    "new_fuzz_campaign": false,
+    "new_heap_profiles": false,
+    "new_lower_stack_or_hypermesh_qualification": false
+  },
+  "build_control": {
+    "native_and_test_features": "all features including dispatch-trace and comparative-benchmarks",
+    "wasm_features": "demo defaults",
+    "matched_native_and_wasm_source_root": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched.9SYZvS",
+    "matched_same_paths": true,
+    "timings": "Three alternating pairs on CPU 7 after all owned build and qualification workers finished; Callgrind controls subsequently run on CPU 3, twenty batch iterations per fixture; seven additional alternating native benchmark pairs run on CPU 7 after Callgrind finishes.",
+    "dependencies": "same unchanged lower-stack revisions on both sides"
+  },
+  "timings": {
+    "total_invocations": 76,
+    "total_lane_measurements": 856,
+    "three_pairs": {
+      "lane_measurement_count": 282,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 48,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 6.33,
+          "user_s": 6.3,
+          "system_s": 0,
+          "max_rss_kib": 11028,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 6.34,
+          "user_s": 6.31,
+          "system_s": 0,
+          "max_rss_kib": 10976,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 6.37,
+          "user_s": 6.34,
+          "system_s": 0,
+          "max_rss_kib": 10968,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 6.56,
+          "user_s": 6.53,
+          "system_s": 0,
+          "max_rss_kib": 10884,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 6.5,
+          "user_s": 6.47,
+          "system_s": 0,
+          "max_rss_kib": 10852,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 6.43,
+          "user_s": 6.4,
+          "system_s": 0,
+          "max_rss_kib": 11000,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 16.95,
+          "user_s": 16.83,
+          "system_s": 0.03,
+          "max_rss_kib": 46340,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 17.1,
+          "user_s": 17,
+          "system_s": 0.02,
+          "max_rss_kib": 46248,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 16.73,
+          "user_s": 16.62,
+          "system_s": 0.03,
+          "max_rss_kib": 46692,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 16.84,
+          "user_s": 16.73,
+          "system_s": 0.03,
+          "max_rss_kib": 46716,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 16.77,
+          "user_s": 16.67,
+          "system_s": 0.02,
+          "max_rss_kib": 46380,
+          "exit": 0
+        },
+        {
+          "fixture": "chord",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 16.85,
+          "user_s": 16.74,
+          "system_s": 0.03,
+          "max_rss_kib": 46264,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 29.61,
+          "user_s": 29.46,
+          "system_s": 0.03,
+          "max_rss_kib": 50280,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 29.67,
+          "user_s": 29.51,
+          "system_s": 0.04,
+          "max_rss_kib": 50652,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 29.79,
+          "user_s": 29.65,
+          "system_s": 0.03,
+          "max_rss_kib": 50444,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 29.6,
+          "user_s": 29.44,
+          "system_s": 0.03,
+          "max_rss_kib": 50284,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 29.36,
+          "user_s": 29.2,
+          "system_s": 0.04,
+          "max_rss_kib": 50424,
+          "exit": 0
+        },
+        {
+          "fixture": "radial",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 29.6,
+          "user_s": 29.45,
+          "system_s": 0.03,
+          "max_rss_kib": 50512,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31820,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31840,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31816,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31744,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31720,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31952,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 20.42,
+          "user_s": 20.34,
+          "system_s": 0,
+          "max_rss_kib": 18836,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 20.44,
+          "user_s": 20.36,
+          "system_s": 0,
+          "max_rss_kib": 18908,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 20.34,
+          "user_s": 20.26,
+          "system_s": 0,
+          "max_rss_kib": 19008,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 20.45,
+          "user_s": 20.38,
+          "system_s": 0,
+          "max_rss_kib": 18896,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 20.42,
+          "user_s": 20.34,
+          "system_s": 0,
+          "max_rss_kib": 19036,
+          "exit": 0
+        },
+        {
+          "fixture": "selected",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 20.4,
+          "user_s": 20.32,
+          "system_s": 0,
+          "max_rss_kib": 18688,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            6.33,
+            6.37,
+            6.5
+          ],
+          "candidate": [
+            6.34,
+            6.56,
+            6.43
+          ],
+          "baseline_median": 6.37,
+          "candidate_median": 6.43,
+          "change_percent": 0.9419152276294973
+        },
+        {
+          "name": "chord",
+          "baseline": [
+            16.95,
+            16.73,
+            16.77
+          ],
+          "candidate": [
+            17.1,
+            16.84,
+            16.85
+          ],
+          "baseline_median": 16.77,
+          "candidate_median": 16.85,
+          "change_percent": 0.4770423375074717
+        },
+        {
+          "name": "radial",
+          "baseline": [
+            29.61,
+            29.79,
+            29.36
+          ],
+          "candidate": [
+            29.67,
+            29.6,
+            29.6
+          ],
+          "baseline_median": 29.61,
+          "candidate_median": 29.6,
+          "change_percent": -0.033772374197904576
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.36,
+            0.35,
+            0.36
+          ],
+          "candidate": [
+            0.35,
+            0.36,
+            0.35
+          ],
+          "baseline_median": 0.36,
+          "candidate_median": 0.35,
+          "change_percent": -2.777777777777779
+        },
+        {
+          "name": "selected",
+          "baseline": [
+            20.42,
+            20.34,
+            20.42
+          ],
+          "candidate": [
+            20.44,
+            20.45,
+            20.4
+          ],
+          "baseline_median": 20.42,
+          "candidate_median": 20.44,
+          "change_percent": 0.09794319294809117
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            37363.314,
+            37817.9945,
+            37539.163
+          ],
+          "candidate": [
+            38123.3065,
+            39923.02,
+            39598.397
+          ],
+          "baseline_median": 37539.163,
+          "candidate_median": 39598.397,
+          "change_percent": 5.485561838445885
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.385028,
+            3.64716,
+            3.425326
+          ],
+          "candidate": [
+            3.609922,
+            3.699086,
+            3.457153
+          ],
+          "baseline_median": 3.425326,
+          "candidate_median": 3.609922,
+          "change_percent": 5.389151280783211
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            58705.083,
+            57887.249,
+            61054.2525
+          ],
+          "candidate": [
+            60097.1125,
+            61127.592,
+            62101.1155
+          ],
+          "baseline_median": 58705.083,
+          "candidate_median": 61127.592,
+          "change_percent": 4.126574525071369
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            11935.802,
+            12106.11,
+            12046.716
+          ],
+          "candidate": [
+            12629.734,
+            12511.324,
+            12326.776
+          ],
+          "baseline_median": 12046.716,
+          "candidate_median": 12511.324,
+          "change_percent": 3.8567191257766753
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            3134.4267,
+            3159.0641,
+            3183.7819
+          ],
+          "candidate": [
+            3265.0552500000003,
+            3309.1122499999997,
+            3278.7074
+          ],
+          "baseline_median": 3159.0641,
+          "candidate_median": 3278.7074,
+          "change_percent": 3.7873020683562464
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            47344.928,
+            47470.4475,
+            49016.1915
+          ],
+          "candidate": [
+            47787.183,
+            50156.064,
+            49104.051
+          ],
+          "baseline_median": 47470.4475,
+          "candidate_median": 49104.051,
+          "change_percent": 3.441306299040048
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            382.6385,
+            382.679,
+            382.689
+          ],
+          "candidate": [
+            393.373,
+            395.253,
+            402.5275
+          ],
+          "baseline_median": 382.679,
+          "candidate_median": 395.253,
+          "change_percent": 3.285782601083409
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            379.9235,
+            377.954,
+            378.1895
+          ],
+          "candidate": [
+            387.3185,
+            388.698,
+            393.088
+          ],
+          "baseline_median": 378.1895,
+          "candidate_median": 388.698,
+          "change_percent": 2.778633462853941
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            20403.52,
+            20843.372,
+            21378.496
+          ],
+          "candidate": [
+            21398.528,
+            21411.652,
+            21423.252
+          ],
+          "baseline_median": 20843.372,
+          "candidate_median": 21411.652,
+          "change_percent": 2.7264302532238993
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            144903.3083,
+            145054.8902,
+            150438.49135
+          ],
+          "candidate": [
+            146608.0757,
+            152057.4095,
+            148939.67005
+          ],
+          "baseline_median": 145054.8902,
+          "candidate_median": 148939.67005,
+          "change_percent": 2.6781446972547363
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            21385.572,
+            21740.752,
+            21267.504
+          ],
+          "candidate": [
+            21953.772,
+            21814.224,
+            22106.084
+          ],
+          "baseline_median": 21385.572,
+          "candidate_median": 21953.772,
+          "change_percent": 2.656931505035276
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            10587.552,
+            10497.444,
+            10554.756
+          ],
+          "candidate": [
+            10891.972,
+            10738.024,
+            10817.02
+          ],
+          "baseline_median": 10554.756,
+          "candidate_median": 10817.02,
+          "change_percent": 2.484794532436374
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            676.876,
+            649.116,
+            687.752
+          ],
+          "candidate": [
+            713.072,
+            692.752,
+            683.072
+          ],
+          "baseline_median": 676.876,
+          "candidate_median": 692.752,
+          "change_percent": 2.34548129938128
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            13933.00805,
+            14106.49605,
+            14505.52725
+          ],
+          "candidate": [
+            13974.41125,
+            14559.884,
+            14415.1534
+          ],
+          "baseline_median": 14106.49605,
+          "candidate_median": 14415.1534,
+          "change_percent": 2.1880511567576644
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            184545.73,
+            184151.38,
+            189116.05
+          ],
+          "candidate": [
+            188162.88,
+            188415.3,
+            192990.88
+          ],
+          "baseline_median": 184545.73,
+          "candidate_median": 188415.3,
+          "change_percent": 2.096808200330602
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            4117.9372,
+            4125.4254,
+            4133.4588
+          ],
+          "candidate": [
+            4207.459,
+            4284.9186,
+            4204.318
+          ],
+          "baseline_median": 4125.4254,
+          "candidate_median": 4207.459,
+          "change_percent": 1.9884882659616077
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2846.1395,
+            2794.1285,
+            3078.319
+          ],
+          "candidate": [
+            2874.8025,
+            2939.814,
+            2893.972
+          ],
+          "baseline_median": 2846.1395,
+          "candidate_median": 2893.972,
+          "change_percent": 1.6806098225332855
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.71322,
+            12.52854,
+            12.66913
+          ],
+          "candidate": [
+            12.85442,
+            12.78062,
+            12.88902
+          ],
+          "baseline_median": 12.66913,
+          "candidate_median": 12.85442,
+          "change_percent": 1.462531365610742
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            4037.5972,
+            4208.55115,
+            4114.6241
+          ],
+          "candidate": [
+            4056.82435,
+            4174.5135,
+            4247.05205
+          ],
+          "baseline_median": 4114.6241,
+          "candidate_median": 4174.5135,
+          "change_percent": 1.4555254269764228
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            21918.956,
+            22102.826,
+            22325.73
+          ],
+          "candidate": [
+            22391.302,
+            22289.372,
+            22685.646
+          ],
+          "baseline_median": 22102.826,
+          "candidate_median": 22391.302,
+          "change_percent": 1.3051543725675518
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            3.063059,
+            3.164643,
+            2.961557
+          ],
+          "candidate": [
+            2.957097,
+            3.102647,
+            3.188521
+          ],
+          "baseline_median": 3.063059,
+          "candidate_median": 3.102647,
+          "change_percent": 1.292433479080879
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            11943.5917,
+            12254.49695,
+            12298.8104
+          ],
+          "candidate": [
+            12061.65555,
+            12576.86185,
+            12405.5556
+          ],
+          "baseline_median": 12254.49695,
+          "candidate_median": 12405.5556,
+          "change_percent": 1.2326793226710153
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            6073.61085,
+            6053.18475,
+            6118.20235
+          ],
+          "candidate": [
+            5984.4635,
+            6133.01135,
+            6208.8751
+          ],
+          "baseline_median": 6073.61085,
+          "candidate_median": 6133.01135,
+          "change_percent": 0.978009646436262
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            230684.25,
+            228212.86,
+            234256.75
+          ],
+          "candidate": [
+            229327.25,
+            238591.56,
+            232729.06
+          ],
+          "baseline_median": 230684.25,
+          "candidate_median": 232729.06,
+          "change_percent": 0.8864107540935251
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            286318.496,
+            284584.024,
+            284884.56
+          ],
+          "candidate": [
+            285561.428,
+            306917.932,
+            287099.848
+          ],
+          "baseline_median": 284884.56,
+          "candidate_median": 287099.848,
+          "change_percent": 0.7776090076626163
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            12233.2,
+            12061.2,
+            12220.2
+          ],
+          "candidate": [
+            12293.2,
+            12095.2,
+            15956.9
+          ],
+          "baseline_median": 12220.2,
+          "candidate_median": 12293.2,
+          "change_percent": 0.5973715651135025
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            837.9375,
+            835.8425,
+            834.988
+          ],
+          "candidate": [
+            824.9635,
+            837.8725,
+            855.5465
+          ],
+          "baseline_median": 835.8425,
+          "candidate_median": 837.8725,
+          "change_percent": 0.2428687222772119
+        },
+        {
+          "name": "rectangles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            381830.575,
+            382772.006,
+            379982.637
+          ],
+          "candidate": [
+            386471.046,
+            382586.648,
+            376059.246
+          ],
+          "baseline_median": 381830.575,
+          "candidate_median": 382586.648,
+          "change_percent": 0.19801269188566284
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            180.0636,
+            178.7058,
+            182.1616
+          ],
+          "candidate": [
+            179.2916,
+            189.421,
+            180.2538
+          ],
+          "baseline_median": 180.0636,
+          "candidate_median": 180.2538,
+          "change_percent": 0.10562934429834137
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            387429.101,
+            408577.988,
+            401157.037
+          ],
+          "candidate": [
+            396598.751,
+            409380.423,
+            401299.277
+          ],
+          "baseline_median": 401157.037,
+          "candidate_median": 401299.277,
+          "change_percent": 0.035457436086305805
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            744942.9,
+            745777.9,
+            751180.6
+          ],
+          "candidate": [
+            743718,
+            748744.7,
+            740400.2
+          ],
+          "baseline_median": 745777.9,
+          "candidate_median": 743718,
+          "change_percent": -0.27620823840449615
+        },
+        {
+          "name": "circles/curve_region_boolean_four_independent",
+          "baseline": [
+            9877034.5,
+            9743226.956,
+            9811541.286
+          ],
+          "candidate": [
+            9779793.298,
+            9666875.468,
+            9770748.81
+          ],
+          "baseline_median": 9811541.286,
+          "candidate_median": 9770748.81,
+          "change_percent": -0.41576012178846655
+        },
+        {
+          "name": "circles/curve_region_boolean_shared_all_four",
+          "baseline": [
+            4862650.466,
+            4836148.132,
+            4844822.348
+          ],
+          "candidate": [
+            4834862.785,
+            4823472.541,
+            4804225.87
+          ],
+          "baseline_median": 4844822.348,
+          "candidate_median": 4823472.541,
+          "change_percent": -0.4406726494071256
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            173.628,
+            188.748,
+            177.908
+          ],
+          "candidate": [
+            177.028,
+            178.228,
+            175.068
+          ],
+          "baseline_median": 177.908,
+          "candidate_median": 177.028,
+          "change_percent": -0.49463767790093316
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            657488.9,
+            661506.7,
+            664097.5
+          ],
+          "candidate": [
+            654222,
+            684836,
+            658105.9
+          ],
+          "baseline_median": 661506.7,
+          "candidate_median": 658105.9,
+          "change_percent": -0.5140991013394047
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.3132,
+            4.23651,
+            4.26111
+          ],
+          "candidate": [
+            4.26091,
+            4.23571,
+            4.23591
+          ],
+          "baseline_median": 4.26111,
+          "candidate_median": 4.23591,
+          "change_percent": -0.591395199842315
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            192392.066,
+            199097.07,
+            198618.112
+          ],
+          "candidate": [
+            193715.835,
+            197977.357,
+            197097.176
+          ],
+          "baseline_median": 198618.112,
+          "candidate_median": 197097.176,
+          "change_percent": -0.765758965627461
+        },
+        {
+          "name": "capsules/curve_region_boolean_shared_all_four",
+          "baseline": [
+            1211611.674,
+            1236134.332,
+            1211726.054
+          ],
+          "candidate": [
+            1174417.24,
+            1198833.657,
+            1230859.453
+          ],
+          "baseline_median": 1211726.054,
+          "candidate_median": 1198833.657,
+          "change_percent": -1.0639696123922793
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            27465.04865,
+            27088.07015,
+            27803.41565
+          ],
+          "candidate": [
+            26989.7938,
+            27992.06275,
+            27053.1171
+          ],
+          "baseline_median": 27465.04865,
+          "candidate_median": 27053.1171,
+          "change_percent": -1.4998391419197454
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            78806.904,
+            81196.44,
+            84948.78
+          ],
+          "candidate": [
+            79957.028,
+            84957.54,
+            79453.44
+          ],
+          "baseline_median": 81196.44,
+          "candidate_median": 79957.028,
+          "change_percent": -1.526436380708318
+        },
+        {
+          "name": "rectangles/curve_region_boolean_four_independent",
+          "baseline": [
+            768388.327,
+            775605.883,
+            775283.555
+          ],
+          "candidate": [
+            762439.215,
+            763420.888,
+            753278.603
+          ],
+          "baseline_median": 775283.555,
+          "candidate_median": 762439.215,
+          "change_percent": -1.6567280341706847
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            19696.15025,
+            19553.2279,
+            19734.304
+          ],
+          "candidate": [
+            19011.06225,
+            19511.8487,
+            19330.66115
+          ],
+          "baseline_median": 19696.15025,
+          "candidate_median": 19330.66115,
+          "change_percent": -1.855637245659203
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            25326.88455,
+            25064.7073,
+            25848.693100000004
+          ],
+          "candidate": [
+            24855.92485,
+            25753.153650000004,
+            24780.77475
+          ],
+          "baseline_median": 25326.88455,
+          "candidate_median": 24855.92485,
+          "change_percent": -1.8595248028640765
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            27260.208,
+            26228.893,
+            27611.058
+          ],
+          "candidate": [
+            26637.39,
+            28298.441,
+            26681.882
+          ],
+          "baseline_median": 27260.208,
+          "candidate_median": 26681.882,
+          "change_percent": -2.121502521183982
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            6956.7692,
+            6787.74,
+            7038.81825
+          ],
+          "candidate": [
+            6803.36875,
+            6832.91185,
+            6763.59465
+          ],
+          "baseline_median": 6956.7692,
+          "candidate_median": 6803.36875,
+          "change_percent": -2.205053029501114
+        },
+        {
+          "name": "capsules/curve_region_boolean_four_independent",
+          "baseline": [
+            3770865.751,
+            3835106.935,
+            3730677.169
+          ],
+          "candidate": [
+            3644022.793,
+            3685314.977,
+            3671356.133
+          ],
+          "baseline_median": 3770865.751,
+          "candidate_median": 3671356.133,
+          "change_percent": -2.6389064095854176
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            15253.93985,
+            15872.2376,
+            14895.96945
+          ],
+          "candidate": [
+            14622.05325,
+            14983.39795,
+            14508.296
+          ],
+          "baseline_median": 15253.93985,
+          "candidate_median": 14622.05325,
+          "change_percent": -4.14244848356341
+        }
+      ],
+      "instructions": [
+        {
+          "fixture": "rectangles",
+          "baseline": 261228947,
+          "candidate": 261003504,
+          "change_percent": -0.08630092590772298
+        },
+        {
+          "fixture": "circles",
+          "baseline": 2629435387,
+          "candidate": 2629405712,
+          "change_percent": -0.0011285692794293922
+        },
+        {
+          "fixture": "capsules",
+          "baseline": 978025508,
+          "candidate": 978045095,
+          "change_percent": 0.002002708501946948
+        }
+      ]
+    },
+    "seven_additional_native_pairs": {
+      "lane_measurement_count": 574,
+      "cpu": 7,
+      "alternating_order": [
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate",
+        "candidate,baseline",
+        "baseline,candidate"
+      ],
+      "invocations": 28,
+      "whole_process_measurements": [
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 6.43,
+          "user_s": 6.4,
+          "system_s": 0,
+          "max_rss_kib": 10896,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 6.39,
+          "user_s": 6.36,
+          "system_s": 0,
+          "max_rss_kib": 11028,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 6.39,
+          "user_s": 6.36,
+          "system_s": 0,
+          "max_rss_kib": 10712,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 6.32,
+          "user_s": 6.29,
+          "system_s": 0,
+          "max_rss_kib": 10996,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 6.43,
+          "user_s": 6.39,
+          "system_s": 0,
+          "max_rss_kib": 11016,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 6.34,
+          "user_s": 6.3,
+          "system_s": 0,
+          "max_rss_kib": 10768,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 6.32,
+          "user_s": 6.28,
+          "system_s": 0,
+          "max_rss_kib": 11008,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 6.32,
+          "user_s": 6.28,
+          "system_s": 0,
+          "max_rss_kib": 10880,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 6.34,
+          "user_s": 6.31,
+          "system_s": 0,
+          "max_rss_kib": 10324,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 6.37,
+          "user_s": 6.34,
+          "system_s": 0,
+          "max_rss_kib": 10896,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 6.35,
+          "user_s": 6.33,
+          "system_s": 0,
+          "max_rss_kib": 11044,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 6.39,
+          "user_s": 6.36,
+          "system_s": 0,
+          "max_rss_kib": 10984,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 6.42,
+          "user_s": 6.38,
+          "system_s": 0,
+          "max_rss_kib": 10836,
+          "exit": 0
+        },
+        {
+          "fixture": "bezier_region",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 6.38,
+          "user_s": 6.35,
+          "system_s": 0,
+          "max_rss_kib": 10956,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31608,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 1,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 32004,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "baseline",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31684,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 2,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31900,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31712,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 3,
+          "variant": "candidate",
+          "elapsed_s": 0.38,
+          "user_s": 0.37,
+          "system_s": 0.01,
+          "max_rss_kib": 31816,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "baseline",
+          "elapsed_s": 0.37,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31816,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 4,
+          "variant": "candidate",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31736,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31692,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 5,
+          "variant": "candidate",
+          "elapsed_s": 0.36,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31808,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.35,
+          "system_s": 0.01,
+          "max_rss_kib": 31664,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 6,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0.01,
+          "max_rss_kib": 31804,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "baseline",
+          "elapsed_s": 0.36,
+          "user_s": 0.36,
+          "system_s": 0,
+          "max_rss_kib": 31876,
+          "exit": 0
+        },
+        {
+          "fixture": "rational_bezier",
+          "round": 7,
+          "variant": "candidate",
+          "elapsed_s": 0.35,
+          "user_s": 0.34,
+          "system_s": 0,
+          "max_rss_kib": 31752,
+          "exit": 0
+        }
+      ],
+      "whole_process_summary": [
+        {
+          "name": "bezier_region",
+          "baseline": [
+            6.43,
+            6.39,
+            6.43,
+            6.32,
+            6.34,
+            6.35,
+            6.42
+          ],
+          "candidate": [
+            6.39,
+            6.32,
+            6.34,
+            6.32,
+            6.37,
+            6.39,
+            6.38
+          ],
+          "baseline_median": 6.39,
+          "candidate_median": 6.37,
+          "change_percent": -0.312989045383405
+        },
+        {
+          "name": "rational_bezier",
+          "baseline": [
+            0.36,
+            0.35,
+            0.36,
+            0.37,
+            0.36,
+            0.36,
+            0.36
+          ],
+          "candidate": [
+            0.35,
+            0.35,
+            0.38,
+            0.36,
+            0.36,
+            0.35,
+            0.35
+          ],
+          "baseline_median": 0.36,
+          "candidate_median": 0.35,
+          "change_percent": -2.777777777777779
+        }
+      ],
+      "lane_summary": [
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline": [
+            670.476,
+            658.632,
+            651.276,
+            650.756,
+            648.956,
+            654.712,
+            655.996
+          ],
+          "candidate": [
+            687.636,
+            682.992,
+            712.272,
+            704.232,
+            682.072,
+            682.752,
+            680.912
+          ],
+          "baseline_median": 654.712,
+          "candidate_median": 682.992,
+          "change_percent": 4.319456493847662
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_contact_replay",
+          "baseline": [
+            21024.56,
+            21186.108,
+            21606.916,
+            21702.672,
+            21175.188,
+            21635.076,
+            21949.736
+          ],
+          "candidate": [
+            22513.576,
+            22230.956,
+            22219.716,
+            26026.696,
+            23923.52,
+            21986.816,
+            21690.112
+          ],
+          "baseline_median": 21606.916,
+          "candidate_median": 22230.956,
+          "change_percent": 2.888149331445522
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_contacts",
+          "baseline": [
+            20551.552,
+            20419.32,
+            20821.536,
+            20504.316,
+            21252.944,
+            20696.184,
+            21053.72
+          ],
+          "candidate": [
+            21584.564,
+            21250.464,
+            21004.844,
+            21116.232,
+            23716.216,
+            21187.792,
+            20840.852
+          ],
+          "baseline_median": 20696.184,
+          "candidate_median": 21187.792,
+          "change_percent": 2.3753557660677993
+        },
+        {
+          "name": "rational_bezier/rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline": [
+            2832.286,
+            2741.0925,
+            2874.988,
+            2967.247,
+            2886.9425,
+            2853.415,
+            2869.1135
+          ],
+          "candidate": [
+            2903.811,
+            2903.701,
+            2925.1345,
+            3011.164,
+            3087.5435,
+            2926.7695,
+            2902.211
+          ],
+          "baseline_median": 2869.1135,
+          "candidate_median": 2925.1345,
+          "change_percent": 1.9525543342917562
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_lineage_partial_overlap",
+          "baseline": [
+            4526.4798,
+            4061.6776,
+            4159.525,
+            4218.487,
+            4111.3284,
+            4137.3686,
+            4105.0008
+          ],
+          "candidate": [
+            4239.0816,
+            4177.5098,
+            4247.085,
+            4177.0178,
+            4232.596,
+            4213.6952,
+            4146.972
+          ],
+          "baseline_median": 4137.3686,
+          "candidate_median": 4213.6952,
+          "change_percent": 1.844810249683837
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline": [
+            404.5625,
+            388.2235,
+            386.9935,
+            383.8885,
+            386.8285,
+            381.394,
+            380.779
+          ],
+          "candidate": [
+            393.948,
+            392.748,
+            397.0925,
+            405.712,
+            387.883,
+            393.533,
+            390.4585
+          ],
+          "baseline_median": 386.8285,
+          "candidate_median": 393.533,
+          "change_percent": 1.7331970110785466
+        },
+        {
+          "name": "bezier_region/bezier_region_materialization",
+          "baseline": [
+            3263.14145,
+            3165.8846,
+            3289.1026500000003,
+            3112.5418,
+            3171.3532,
+            3114.21215,
+            3143.41115
+          ],
+          "candidate": [
+            3236.5472500000005,
+            3213.2343499999997,
+            3211.85895,
+            3231.03865,
+            3225.03805,
+            3200.8687000000004,
+            3179.73715
+          ],
+          "baseline_median": 3165.8846,
+          "candidate_median": 3213.2343499999997,
+          "change_percent": 1.4956246352125335
+        },
+        {
+          "name": "rational_bezier/rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline": [
+            376.154,
+            395.968,
+            378.4195,
+            390.408,
+            382.414,
+            377.274,
+            381.629
+          ],
+          "candidate": [
+            387.2885,
+            386.5535,
+            394.158,
+            386.4235,
+            385.049,
+            386.9985,
+            384.134
+          ],
+          "baseline_median": 381.629,
+          "candidate_median": 386.5535,
+          "change_percent": 1.2903893572029368
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline": [
+            171.908,
+            170.748,
+            181.108,
+            173.948,
+            179.148,
+            175.908,
+            176.468
+          ],
+          "candidate": [
+            173.308,
+            174.908,
+            180.268,
+            200.744,
+            177.028,
+            178.748,
+            177.908
+          ],
+          "baseline_median": 175.908,
+          "candidate_median": 177.908,
+          "change_percent": 1.136957955294804
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_degree_elevation",
+          "baseline": [
+            12.68163,
+            12.69433,
+            12.64483,
+            12.47445,
+            12.71893,
+            12.62163,
+            12.63034
+          ],
+          "candidate": [
+            12.59134,
+            12.78952,
+            12.99581,
+            12.82353,
+            12.78373,
+            12.64134,
+            12.72253
+          ],
+          "baseline_median": 12.64483,
+          "candidate_median": 12.78373,
+          "change_percent": 1.0984726564137182
+        },
+        {
+          "name": "rational_bezier/rational_bezier_immediate_topology",
+          "baseline": [
+            76741.584,
+            77385.26,
+            80576.24,
+            81054.088,
+            78813.4,
+            78873.596,
+            90092.388
+          ],
+          "candidate": [
+            79216.256,
+            79339.684,
+            79735.856,
+            83149.144,
+            78444.508,
+            79872.568,
+            78105.968
+          ],
+          "baseline_median": 78873.596,
+          "candidate_median": 79339.684,
+          "change_percent": 0.5909303285728029
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_source_envelope",
+          "baseline": [
+            14469.88715,
+            14146.9763,
+            14164.72505,
+            13954.157,
+            14068.55515,
+            13931.60505,
+            13764.4375
+          ],
+          "candidate": [
+            14211.5244,
+            14091.4306,
+            14297.9834,
+            13827.80415,
+            14408.2224,
+            14017.44265,
+            14151.58
+          ],
+          "baseline_median": 14068.55515,
+          "candidate_median": 14151.58,
+          "change_percent": 0.5901448237916496
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_basis_resultant",
+          "baseline": [
+            22520.296,
+            21826.046,
+            22132.044,
+            22464.182,
+            22184.5,
+            22288.552,
+            22203.478
+          ],
+          "candidate": [
+            22273.254,
+            22101.466,
+            22323.29,
+            23766.992,
+            23294.664,
+            22344.53,
+            22055.028
+          ],
+          "baseline_median": 22203.478,
+          "candidate_median": 22323.29,
+          "change_percent": 0.5396091549261017
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline": [
+            10567.676,
+            10578.516,
+            10714.268,
+            10846.896,
+            10730.064,
+            10590.032,
+            10622.592
+          ],
+          "candidate": [
+            10593.632,
+            10647.872,
+            10752.104,
+            10727.704,
+            10670.272,
+            10665.868,
+            10671.348
+          ],
+          "baseline_median": 10622.592,
+          "candidate_median": 10670.272,
+          "change_percent": 0.44885466748605385
+        },
+        {
+          "name": "bezier_region/bezier_resolved_overlap_region_materialization",
+          "baseline": [
+            25150.58895,
+            25461.6951,
+            25353.25005,
+            24999.97975,
+            24920.82665,
+            25262.45925,
+            25847.2167
+          ],
+          "candidate": [
+            25353.30305,
+            25293.9436,
+            25605.43025,
+            25517.1943,
+            25252.16845,
+            25330.66705,
+            26264.6451
+          ],
+          "baseline_median": 25262.45925,
+          "candidate_median": 25353.30305,
+          "change_percent": 0.35959998629191414
+        },
+        {
+          "name": "bezier_region/curve_region_cached_classification",
+          "baseline": [
+            39058.039,
+            37790.761,
+            37985.8675,
+            37676.5035,
+            37103.838,
+            38410.8335,
+            37716.101
+          ],
+          "candidate": [
+            37685.403,
+            37560.867,
+            37929.831,
+            37612.983,
+            38819.3905,
+            37911.063,
+            44620.743
+          ],
+          "baseline_median": 37790.761,
+          "candidate_median": 37911.063,
+          "change_percent": 0.31833706656503313
+        },
+        {
+          "name": "bezier_region/curve_region_cached_algebraic_classification",
+          "baseline": [
+            49196.5945,
+            48094.57,
+            47921.257,
+            47141.4755,
+            47196.6015,
+            47457.4235,
+            50990.5365
+          ],
+          "candidate": [
+            48280.2225,
+            48067.1615,
+            48051.208,
+            47356.4605,
+            48499.592,
+            47414.3365,
+            48572.8825
+          ],
+          "baseline_median": 47921.257,
+          "candidate_median": 48067.1615,
+          "change_percent": 0.30446718039971454
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cold_evaluation_64_controls",
+          "baseline": [
+            741399.2,
+            747542.8,
+            756601.2,
+            776845.8,
+            747906.8,
+            743570,
+            750134.6
+          ],
+          "candidate": [
+            744911.9,
+            749112.6,
+            787510,
+            763728.7,
+            756775.1,
+            744742,
+            742330.1
+          ],
+          "baseline_median": 747906.8,
+          "candidate_median": 749112.6,
+          "change_percent": 0.16122329680650083
+        },
+        {
+          "name": "bezier_region/curve_region_empty",
+          "baseline": [
+            3.141515,
+            3.080829,
+            3.016113,
+            3.090398,
+            3.184372,
+            3.088568,
+            3.166243
+          ],
+          "candidate": [
+            3.181352,
+            3.075709,
+            3.041381,
+            3.093768,
+            3.100568,
+            3.078609,
+            3.140335
+          ],
+          "baseline_median": 3.090398,
+          "candidate_median": 3.093768,
+          "change_percent": 0.1090474430801347
+        },
+        {
+          "name": "rational_bezier/rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline": [
+            4.31421,
+            4.26091,
+            4.24041,
+            4.2824,
+            4.23601,
+            4.26091,
+            4.24751
+          ],
+          "candidate": [
+            4.26071,
+            4.3727,
+            4.2609,
+            4.28521,
+            4.23611,
+            4.23581,
+            4.27941
+          ],
+          "baseline_median": 4.26091,
+          "candidate_median": 4.2609,
+          "change_percent": -0.00023469165036926753
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_all_ops",
+          "baseline": [
+            387161.725,
+            391916.919,
+            390838.613,
+            390028.439,
+            400517.36,
+            387638.393,
+            389366.784
+          ],
+          "candidate": [
+            402866.639,
+            388756.436,
+            389845.082,
+            386932.931,
+            393668.48,
+            392529.337,
+            385619.671
+          ],
+          "baseline_median": 390028.439,
+          "candidate_median": 389845.082,
+          "change_percent": -0.04701118730473519
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_degree_elevation",
+          "baseline": [
+            27281.051,
+            27423.991,
+            27171.488,
+            28111.535,
+            27285.161,
+            26342.675,
+            27757.969
+          ],
+          "candidate": [
+            26354.895,
+            27351.606,
+            27278.661,
+            27883.88,
+            27258.283,
+            27077.305,
+            26338.495
+          ],
+          "baseline_median": 27285.161,
+          "candidate_median": 27258.283,
+          "change_percent": -0.09850775665205536
+        },
+        {
+          "name": "rational_bezier/rational_bezier_cached_point_incidence",
+          "baseline": [
+            178.9438,
+            177.052,
+            180.2616,
+            188.2592,
+            178.4658,
+            181.1796,
+            221.0108
+          ],
+          "candidate": [
+            180.0536,
+            178.6538,
+            178.6476,
+            180.2436,
+            180.6296,
+            176.942,
+            182.1614
+          ],
+          "baseline_median": 180.2616,
+          "candidate_median": 180.0536,
+          "change_percent": -0.11538785853448807
+        },
+        {
+          "name": "rational_bezier/rational_bezier_pi_conic_cubic_contacts",
+          "baseline": [
+            185730.28,
+            186774.71,
+            188981.96,
+            199882.2,
+            186877.7,
+            184815.94,
+            186830.3
+          ],
+          "candidate": [
+            186008.66,
+            186553.42,
+            192374.82,
+            188288.5,
+            188503.09,
+            185078.22,
+            184697.15
+          ],
+          "baseline_median": 186830.3,
+          "candidate_median": 186553.42,
+          "change_percent": -0.1481986594251472
+        },
+        {
+          "name": "bezier_region/bezier_retained_region_materialization",
+          "baseline": [
+            12305.274,
+            12385.0105,
+            12285.2963,
+            12103.7863,
+            12004.50755,
+            12190.8478,
+            12079.5729
+          ],
+          "candidate": [
+            12161.58435,
+            12260.67305,
+            12307.10285,
+            12170.2237,
+            12200.6041,
+            12004.75205,
+            12091.8511
+          ],
+          "baseline_median": 12190.8478,
+          "candidate_median": 12170.2237,
+          "change_percent": -0.16917691319220385
+        },
+        {
+          "name": "bezier_region/bezier_region_algebraic_ray_classification",
+          "baseline": [
+            63551.631,
+            58818.865,
+            59095.8815,
+            58572.852,
+            58879.826,
+            58570.4925,
+            58560.723
+          ],
+          "candidate": [
+            60545.732,
+            58311.215,
+            59395.241,
+            58662.391,
+            58806.506,
+            57985.0825,
+            58234.3905
+          ],
+          "baseline_median": 58818.865,
+          "candidate_median": 58662.391,
+          "change_percent": -0.2660268946026001
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_line_authoritative_roles",
+          "baseline": [
+            148146.2819,
+            147281.55065,
+            148581.4781,
+            144840.63335,
+            143690.3682,
+            145660.6952,
+            147760.42735
+          ],
+          "candidate": [
+            146826.14385,
+            145911.7215,
+            145980.3573,
+            145859.76055,
+            147628.5239,
+            148130.6155,
+            147551.86565
+          ],
+          "baseline_median": 147281.55065,
+          "candidate_median": 146826.14385,
+          "change_percent": -0.30920831427300177
+        },
+        {
+          "name": "bezier_region/curve_region_clone",
+          "baseline": [
+            3.714636,
+            3.552556,
+            3.599773,
+            3.3589,
+            3.442264,
+            3.474192,
+            3.589364
+          ],
+          "candidate": [
+            3.522088,
+            3.600943,
+            3.51145,
+            3.673198,
+            3.533907,
+            3.610862,
+            3.507809
+          ],
+          "baseline_median": 3.552556,
+          "candidate_median": 3.533907,
+          "change_percent": -0.5249459825545255
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_length_bounds",
+          "baseline": [
+            4063.3571,
+            4097.84425,
+            4132.91585,
+            4056.5331,
+            4148.4378,
+            4114.8436,
+            4139.03795
+          ],
+          "candidate": [
+            4132.7379,
+            4061.76075,
+            4083.28475,
+            4092.6546,
+            4136.9186,
+            4134.67725,
+            4083.9457
+          ],
+          "baseline_median": 4114.8436,
+          "candidate_median": 4092.6546,
+          "change_percent": -0.5392428523893433
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_line_image_overlap",
+          "baseline": [
+            17876.196,
+            12069.792,
+            12564.72,
+            12353.314,
+            12093.09,
+            12236.242,
+            12936.374
+          ],
+          "candidate": [
+            12282.94,
+            12030.636,
+            12415.75,
+            12457.128,
+            13347.606,
+            12144.948,
+            12065.674
+          ],
+          "baseline_median": 12353.314,
+          "candidate_median": 12282.94,
+          "change_percent": -0.5696770923170891
+        },
+        {
+          "name": "rational_bezier/rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline": [
+            288879.648,
+            285567.236,
+            288507.872,
+            294595.616,
+            286725.476,
+            282781.508,
+            283790.48
+          ],
+          "candidate": [
+            284536.504,
+            279612.804,
+            289887.34,
+            287380.232,
+            285347.932,
+            284908.84,
+            281920.808
+          ],
+          "baseline_median": 286725.476,
+          "candidate_median": 284908.84,
+          "change_percent": -0.6335802543056879
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_cached_evaluation_64_controls",
+          "baseline": [
+            11972.1,
+            12224.2,
+            12711.1,
+            16493.9,
+            12468.2,
+            12212.1,
+            12383.1
+          ],
+          "candidate": [
+            12554.1,
+            12288.1,
+            12040.2,
+            12199.1,
+            12530.1,
+            12383.2,
+            12196.2
+          ],
+          "baseline_median": 12383.1,
+          "candidate_median": 12288.1,
+          "change_percent": -0.7671746170183513
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_retained_algebraic_all_ops",
+          "baseline": [
+            228293.46,
+            227683.6,
+            228857.03,
+            228193.46,
+            223451.69,
+            228354.35,
+            226395.49
+          ],
+          "candidate": [
+            239140.82,
+            225961.62,
+            225964.42,
+            225439.15,
+            224618.31,
+            226269.09,
+            225078.99
+          ],
+          "baseline_median": 228193.46,
+          "candidate_median": 225961.62,
+          "change_percent": -0.978047311259489
+        },
+        {
+          "name": "bezier_region/curve_region_immediate_native_signed_depth",
+          "baseline": [
+            831.528,
+            842.197,
+            844.632,
+            852.4215,
+            852.2615,
+            852.4315,
+            839.5575
+          ],
+          "candidate": [
+            836.033,
+            853.3815,
+            837.988,
+            849.532,
+            827.1685,
+            826.933,
+            834.078
+          ],
+          "baseline_median": 844.632,
+          "candidate_median": 836.033,
+          "change_percent": -1.018076511427457
+        },
+        {
+          "name": "bezier_region/bezier_retained_algebraic_exact_endpoint_envelope",
+          "baseline": [
+            6205.81935,
+            6049.31355,
+            6128.7101,
+            6149.3627,
+            6333.03865,
+            6002.7762,
+            5964.80985
+          ],
+          "candidate": [
+            6079.80995,
+            6071.25105,
+            6052.34835,
+            5902.6576,
+            6033.30565,
+            5941.8784,
+            5951.75175
+          ],
+          "baseline_median": 6128.7101,
+          "candidate_median": 6033.30565,
+          "change_percent": -1.556680744289085
+        },
+        {
+          "name": "bezier_region/curve_region_boolean_immediate_union",
+          "baseline": [
+            192636.432,
+            193165.256,
+            193780.484,
+            192300.415,
+            201200.566,
+            191482.382,
+            192700.327
+          ],
+          "candidate": [
+            192037.583,
+            189501.117,
+            190512.687,
+            190415.645,
+            189655.557,
+            188108.512,
+            188910.667
+          ],
+          "baseline_median": 192700.327,
+          "candidate_median": 189655.557,
+          "change_percent": -1.580054402294806
+        },
+        {
+          "name": "rational_bezier/rational_bezier_large_exact_split_64_controls",
+          "baseline": [
+            664933.5,
+            661372.6,
+            662799.6,
+            688826.8,
+            662795.6,
+            666168.4,
+            669297.1
+          ],
+          "candidate": [
+            654392.2,
+            653793.2,
+            759100,
+            649335.5,
+            656773,
+            656558,
+            648669.5
+          ],
+          "baseline_median": 664933.5,
+          "candidate_median": 654392.2,
+          "change_percent": -1.5853164263794906
+        },
+        {
+          "name": "bezier_region/bezier_conic_region_exact_area",
+          "baseline": [
+            27516.9423,
+            27109.14325,
+            27650.23415,
+            27316.02455,
+            27201.1619,
+            27704.46195,
+            28054.2165
+          ],
+          "candidate": [
+            27104.1816,
+            26915.463,
+            26911.71075,
+            26829.494899999998,
+            27000.98315,
+            27235.42605,
+            26924.5149
+          ],
+          "baseline_median": 27516.9423,
+          "candidate_median": 26924.5149,
+          "change_percent": -2.152955054166761
+        },
+        {
+          "name": "bezier_region/cubic_bezier_exact_area_moments",
+          "baseline": [
+            14889.5894,
+            15073.79775,
+            14924.05005,
+            14824.13885,
+            15385.6134,
+            15034.661,
+            15217.34995
+          ],
+          "candidate": [
+            14732.1487,
+            14507.6156,
+            14517.7829,
+            14643.65775,
+            14563.44675,
+            15194.84,
+            14515.02505
+          ],
+          "baseline_median": 15034.661,
+          "candidate_median": 14563.44675,
+          "change_percent": -3.134186065119793
+        },
+        {
+          "name": "bezier_region/cubic_bezier_prefix_area_moments",
+          "baseline": [
+            19629.6157,
+            19763.92445,
+            19556.99415,
+            19563.92565,
+            20108.98785,
+            19842.1746,
+            19531.92885
+          ],
+          "candidate": [
+            19640.00745,
+            18902.825,
+            19052.4437,
+            18990.80695,
+            18752.62075,
+            19366.67065,
+            18931.84145
+          ],
+          "baseline_median": 19629.6157,
+          "candidate_median": 18990.80695,
+          "change_percent": -3.254311035747892
+        },
+        {
+          "name": "rational_bezier/rational_bezier_exact_derivatives_1_through_3",
+          "baseline": [
+            6793.43055,
+            6810.16745,
+            6898.90535,
+            7139.94535,
+            7012.2426,
+            7246.86405,
+            7091.2182
+          ],
+          "candidate": [
+            6743.274,
+            6744.8574,
+            7893.8042,
+            6964.9693,
+            6804.31285,
+            6693.5704,
+            6706.73755
+          ],
+          "baseline_median": 7012.2426,
+          "candidate_median": 6744.8574,
+          "change_percent": -3.813119643065399
+        }
+      ]
+    }
+  },
+  "size": {
+    "native": [
+      {
+        "fixture": "bezier_region",
+        "baseline": {
+          "text": 9749319,
+          "file": 15437072
+        },
+        "candidate": {
+          "text": 9749223,
+          "file": 15437056
+        },
+        "text_delta": -96,
+        "file_delta": -16
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline": {
+          "text": 6376583,
+          "file": 10975488
+        },
+        "candidate": {
+          "text": 6376487,
+          "file": 10975480
+        },
+        "text_delta": -96,
+        "file_delta": -8
+      },
+      {
+        "fixture": "curve_region_boolean_batch",
+        "baseline": {
+          "text": 9345815,
+          "file": 14876440
+        },
+        "candidate": {
+          "text": 9345719,
+          "file": 14876408
+        },
+        "text_delta": -96,
+        "file_delta": -32
+      }
+    ],
+    "wasm": {
+      "baseline": 17031071,
+      "candidate": 17031367,
+      "delta": 296
+    }
+  },
+  "rejected_experiment": {
+    "change": "Pass the latest narrowed u interval instead of the original interval to each predicate refinement stage, without changing tranche sizes.",
+    "production_retained": false,
+    "selected_pilot_seconds": {
+      "baseline": 20.71,
+      "trial": 21.77
+    },
+    "strict_terminal_pilot_seconds": {
+      "baseline": 0.06,
+      "trial": 0.12
+    },
+    "scope": "One sequential pair per fixture, not a statistical claim; both semantic controls passed. The optimization was removed before building and qualifying the retained semantic fix."
+  },
+  "limitations": [
+    "This correctness checkpoint does not close uniform performance or full Hypercurve release readiness.",
+    "Memory evidence here is whole-process peak RSS from matched timings, not fresh allocation or complete-heap accounting.",
+    "A separate algebraic-only assumption in selected parallel-normal rational contact seeding remains under audit; this patch does not claim to cover it.",
+    "ExactCorelib idea mining/uplift remains closed; the lower stack and Hypermesh are unchanged in this slice.",
+    "No push, publication or deployment.",
+    "The seven additional pairs retain a +4.3195% degree-12 axis-monotonicity lane and +2.8881% algebraic contact replay; the capsule instruction control is +0.0020027%. These are explicit costs/follow-ups, not a blanket no-regression result."
+  ],
+  "reproduction": {
+    "timing_driver": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G\"\nfor fiber_round in 1 2 3; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_case in selected chord radial; do\n        case \"$fiber_case\" in\n            selected) fiber_test=\"bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans\" ;;\n            chord) fiber_test=\"bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict\" ;;\n            radial) fiber_test=\"bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel\" ;;\n        esac\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/paired-$fiber_case-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-test\" \"$fiber_test\" \\\n                --exact --include-ignored --test-threads=1 \\\n                > \"$fiber_evidence/paired-$fiber_case-$fiber_round-$fiber_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$fiber_case\" \"$fiber_round\" \"$fiber_variant\"\n        done\n    done\n    for fiber_bench in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/paired-$fiber_bench-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_bench\" \\\n                > \"$fiber_evidence/paired-$fiber_bench-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\n    for fiber_fixture in rectangles circles capsules; do\n        unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n        if [[ \"$fiber_fixture\" != rectangles ]]; then\n            export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$fiber_fixture\"\n        fi\n        for fiber_variant in $fiber_order; do\n            HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-curve_region_boolean_batch\" \\\n                > \"$fiber_evidence/paired-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\ndone\n",
+    "additional_native_driver": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G\"\nfor fiber_round in 1 2 3 4 5 6 7; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_fixture in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_fixture\" \\\n                > \"$fiber_evidence/repeat-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n            printf '%s %s %s passed\\n' \"$fiber_fixture\" \"$fiber_round\" \"$fiber_variant\"\n        done\n    done\ndone\nnode \"$fiber_evidence/collect-results.mjs\" \"$fiber_evidence\" repeat 7 > \"$fiber_evidence/repeat-results.json\"\n",
+    "instruction_driver": "#!/usr/bin/env bash\nset -euo pipefail\ncd /home/tim/Documents/GitHub/workspace/hypercurve\nfor fiber_fixture in rectangles circles capsules; do\n    unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n    if [[ \"$fiber_fixture\" != rectangles ]]; then\n        export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$fiber_fixture\"\n    fi\n    for fiber_variant in baseline candidate; do\n        HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=20 \\\n            taskset -c 3 valgrind --tool=callgrind \\\n            --callgrind-out-file=/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-$fiber_fixture-$fiber_variant.callgrind \\\n            /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/$fiber_variant-curve_region_boolean_batch \\\n            > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-refinement.fcoiQT/instructions-$fiber_fixture-$fiber_variant.log 2>&1\n        printf '%s %s passed\\n' \"$fiber_fixture\" \"$fiber_variant\"\n    done\ndone\n",
+    "result_collector": "import fs from \"node:fs\";\nconst root = process.argv[2];\nconst prefix = process.argv[3] ?? \"paired\";\nconst rounds = Number(process.argv[4] ?? \"3\");\nconst pattern = new RegExp(\"^\" + prefix + \"-(.+)-(\\\\d+)-(baseline|candidate)\\\\.log$\");\nconst files = fs.readdirSync(root);\nconst whole = [], lanes = [];\nfor (const name of files) {\n  const m = name.match(pattern);\n  if (!m) continue;\n  const fixture = m[1], round = Number(m[2]), variant = m[3];\n  const contents = fs.readFileSync(root + \"/\" + name, \"utf8\");\n  if ([\"selected\", \"chord\", \"radial\"].includes(fixture) &&\n      !contents.includes(\"test result: ok. 1 passed; 0 failed; 0 ignored;\"))\n    throw new Error(\"Incomplete test: \" + name);\n  const time = root + \"/\" + name.replace(/\\.log$/, \".time\");\n  if (fs.existsSync(time)) {\n    const values = Object.fromEntries([...fs.readFileSync(time, \"utf8\").matchAll(/(\\w+)=([0-9.]+)/g)].map(m => [m[1], Number(m[2])]));\n    if (values.exit !== 0) throw new Error(\"Unsuccessful process: \" + name);\n    whole.push({fixture, round, variant, ...values});\n  }\n  for (const line of contents.split(\"\\n\")) {\n    let m = line.match(/^([^:]+): (\\d+) (?:iterations|curves) in ([0-9.]+)(ns|µs|ms|s) /);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]) * ({ns:1,\"µs\":1000,ms:1000000,s:1000000000})[m[4]];\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n      continue;\n    }\n    m = line.match(/^([^:]+): (\\d+) iterations, total_ns=(\\d+), ns_per_iter=(\\d+),/);\n    if (m) {\n      const iterations = Number(m[2]), total_ns = Number(m[3]);\n      lanes.push({fixture, round, variant, name:m[1], iterations, total_ns, ns_per_iter:total_ns/iterations, output:line});\n    }\n  }\n}\nconst median = xs => { const sorted = xs.toSorted((a,b)=>a-b); return sorted[(sorted.length-1)/2]; };\nconst compare = (rows, key, value) => [...new Set(rows.map(key))].map(name => {\n  const baseline = rows.filter(r => key(r) === name && r.variant === \"baseline\").map(r=>r[value]);\n  const candidate = rows.filter(r => key(r) === name && r.variant === \"candidate\").map(r=>r[value]);\n  if (baseline.length !== rounds || candidate.length !== rounds) throw new Error(\"Unpaired \" + name);\n  const before = median(baseline), after = median(candidate);\n  return {name, baseline, candidate, baseline_median:before, candidate_median:after, change_percent:100*(after/before-1)};\n});\nconst instructions = [\"rectangles\",\"circles\",\"capsules\"].map(fixture => {\n  const values = [\"baseline\",\"candidate\"].map(variant => {\n    const contents = fs.readFileSync(root+\"/instructions-\"+fixture+\"-\"+variant+\".callgrind\",\"utf8\");\n    const summary = Number(contents.match(/^summary: (\\d+)$/m)?.[1]);\n    const total = Number(contents.match(/^totals: (\\d+)$/m)?.[1]);\n    if (!summary || summary !== total) throw new Error(\"Incomplete Callgrind result\");\n    return summary;\n  });\n  return {fixture, baseline:values[0], candidate:values[1], change_percent:100*(values[1]/values[0]-1)};\n});\nconsole.log(JSON.stringify({\n  cpu:7, alternating_order:Array.from({length:rounds}, (_, index) => index % 2 ? \"candidate,baseline\" : \"baseline,candidate\"),\n  invocations:files.filter(f=>pattern.test(f)).length,\n  whole_process_measurements:whole,\n  whole_process_summary:compare(whole,r=>r.fixture,\"elapsed_s\"),\n  lane_measurements:lanes,\n  lane_summary:compare(lanes,r=>r.fixture+\"/\"+r.name,\"ns_per_iter\").sort((a,b)=>b.change_percent-a.change_percent),\n  instructions\n}, null, 2));\n",
+    "gates": "#!/usr/bin/env bash\nset -uo pipefail\ncd /home/tim/Documents/GitHub/workspace/hypercurve\nexport CARGO_BUILD_JOBS=2\nfiber_failed=0\ncargo fmt --all --check > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-fmt.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'fmt' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo clippy --locked --all-targets --all-features -- -D warnings > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-clippy.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'clippy' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo test --release --locked --no-default-features --no-fail-fast -- --test-threads=2 > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-minimal.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'minimal' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo clippy --locked --all-targets --no-default-features -- -D warnings > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-minimal-clippy.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'minimal-clippy' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\nenv RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-docs.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'docs' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\nenv RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --no-default-features > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-minimal-docs.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'minimal-docs' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo check --locked --manifest-path fuzz/Cargo.toml --bins > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-fuzz-check.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'fuzz-check' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo test --locked --manifest-path examples/hypercurve_ui/Cargo.toml --no-fail-fast > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-ui-tests.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'ui-tests' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo clippy --locked --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-ui-clippy.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'ui-clippy' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\ncargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown > /home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-ui-wasm.log 2>&1\nfiber_status=$?\nprintf '%s %s\\n' 'ui-wasm' \"$fiber_status\"\nif (( fiber_status != 0 )); then fiber_failed=1; fi\nexit \"$fiber_failed\"\n",
+    "full_suite_command": "CARGO_BUILD_JOBS=2 cargo test --release --locked --all-features --no-fail-fast -- --include-ignored --test-threads=2",
+    "baseline_regression_command": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/late-exact-before-test bezier_offset::conversion_tests::selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps --exact --nocapture",
+    "candidate_regression_command": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-test bezier_offset::conversion_tests::selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps --exact --nocapture"
+  },
+  "artifacts": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-bezier_region",
+      "bytes": 15437072,
+      "sha256": "7ce8b2406341735bf2cda20718fe8c4482237bf35839abb233f751b24461797e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-build.jsonl",
+      "bytes": 128060,
+      "sha256": "704c88a1dddf9497b1967ac541ef30336139af3cea45af8e5750c5701967d666"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-build.log",
+      "bytes": 225,
+      "sha256": "b07a75115a1d30fa1ee9c445790f9e96d8b12449dc6bdfbc08ec2c200772754c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-curve_region_boolean_batch",
+      "bytes": 14876440,
+      "sha256": "8fae9ef79d25f0730b277b252b4375716c0c2c32e3ce49188847fbf86dda486d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-rational_bezier",
+      "bytes": 10975488,
+      "sha256": "b320d80651b0074670586b8ea97410475ca2c3a5437e7d9be280417faea7f318"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-test",
+      "bytes": 28079568,
+      "sha256": "09bd978ca75eccb1f5562483ec710938488f6f72ea5dde257cff3e3c05af831f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/baseline-ui.wasm",
+      "bytes": 17031071,
+      "sha256": "88d2927e55da24f3e6c5bf8e080b82c09babcff24290d9b4554f440125247ac2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-bezier_region",
+      "bytes": 15437056,
+      "sha256": "13acbce9a6848ba0233fa94370c1591b70f6799bff7d64d547077a0487526c90"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-curve_region_boolean_batch",
+      "bytes": 14876408,
+      "sha256": "f5fd9aeb528e18f0cd4dfde80b855365325b5f33b9aeea889bc4e5f4901b4df6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-full.log",
+      "bytes": 166926,
+      "sha256": "cf3e179d37cc9e95e6582de8a0c8253b8ffceb53864cec62081f7c377ba4d82a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-clippy.log",
+      "bytes": 154,
+      "sha256": "aa63c552743b9f09fe07af0cd7ba64934c0d7a97912311e9bfc200f9b7d71c8e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-docs.log",
+      "bytes": 247,
+      "sha256": "17a723208c40895de7d6721b4dc925a40ae9a3e30daaa24123206974250cfada"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-fuzz-check.log",
+      "bytes": 244,
+      "sha256": "d0d3d67a4a003923a733919884189b00ef12d20ad908e9f4dede707e4777f86e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-gates.status",
+      "bytes": 110,
+      "sha256": "0e84b8f22c337c8d0467121d815fdf7530e63e9645b89d004de9c46fcb35dcf8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-minimal-clippy.log",
+      "bytes": 154,
+      "sha256": "1e55f55541d81cbdd2d866d527c357f4c33847c41d81e1692103d34737212a5c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-minimal-docs.log",
+      "bytes": 247,
+      "sha256": "5059fac13a5953e71fba796b5b589f61e43795e1b51d390f5fa2187fb144954a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-minimal.log",
+      "bytes": 164886,
+      "sha256": "ffebbdb7e85410f4bbca98e80c7a8372c5962cb519e3b0d0c322d5bf61b2e2ff"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-ui-clippy.log",
+      "bytes": 260,
+      "sha256": "8ecf0be96e52834022b811f96fd65a0938a7161cb9db1f4996fd43ef95610e1a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-ui-tests.log",
+      "bytes": 3483,
+      "sha256": "3b04267d43b8aa4aafc6c9c144e7dd015620aebbf65f80a80716949907892815"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-hypercurve-ui-wasm.log",
+      "bytes": 251,
+      "sha256": "0708b8c133fe30580c74c888cebabdb266e1c9794e7a2a4405019d2a58e1e161"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-rational_bezier",
+      "bytes": 10975480,
+      "sha256": "94611ab9fa61b27953cbd554ae6750372627547aa1ac8820ecaabb04c2725431"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-test",
+      "bytes": 28089256,
+      "sha256": "0b18de9a27b5a25de438799f4ab259ffde15d009c6de1698c86205321e2230ad"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/candidate-ui.wasm",
+      "bytes": 17031367,
+      "sha256": "b026c6becd47921167d838adc8e9ff151910d715e2a465f031e62097ab81e220"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/checkpoint.mjs",
+      "bytes": 8215,
+      "sha256": "cf70ead47d7b575104d0499e090e28181d517182fe53354fea76a6a319e97c6a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/collect-results.mjs",
+      "bytes": 3512,
+      "sha256": "9ada0bd6a180dd516259d1a444a99af04bbc2e3041601be92540c164886d381e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-capsules-baseline.callgrind",
+      "bytes": 383205,
+      "sha256": "9cd28e78643e74bcd5d8ddf4eb79c95b98300aa291ef3c753ffdd9611a3eb4c1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-capsules-candidate.callgrind",
+      "bytes": 383196,
+      "sha256": "a28d0f46d9ba61abcc905f3977bf848160f42a50880355af19d94d7ad4584448"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-circles-baseline.callgrind",
+      "bytes": 362397,
+      "sha256": "6fe1447a5de1e2a30338bf4da5e2cb02b8f387a01b797575cba97af9fe1dc05e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-circles-candidate.callgrind",
+      "bytes": 362405,
+      "sha256": "125e24cc927e99ad53366daaa96626d21a7a9acd4a93deb3c9a6222ec580e074"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-rectangles-baseline.callgrind",
+      "bytes": 242473,
+      "sha256": "94c5da77ecab0705304be273bc3887eba3583b73872412c64a8501dc72cf511e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions-rectangles-candidate.callgrind",
+      "bytes": 242532,
+      "sha256": "c0b418d804d3ba740a60ba1f07a86e4af0e6694e03ce43b9b388d3d20f1f64e5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions.sh",
+      "bytes": 1034,
+      "sha256": "f3278a4e4a0a6b0a9293c047456748f894a8426a78824a5b32b9eec4b850d14e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/instructions.status",
+      "bytes": 155,
+      "sha256": "7cfbfde12b9434024f5b125bbcac57c78b84bde29acfc9e84751a23529c3593d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/late-exact-after.log",
+      "bytes": 466,
+      "sha256": "fdd23238f466a085bb592d9bfa95f9b3f68f60d362080d38127178e8eeb18c77"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/late-exact-before-test",
+      "bytes": 28089032,
+      "sha256": "668e32eab90081faa7c8115eb58d4e2acc5c47e6c8ed8399ce090309f43d4f81"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/late-exact-before.log",
+      "bytes": 343,
+      "sha256": "64bebe317f25a24dba271ec4f4119b715380e55ec89be286f52856cc07c6de17"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/late-exact-reproduction.log",
+      "bytes": 733,
+      "sha256": "bfb2a2ebd13f4036eca744f5f682c0dac856bead96dbb7e814b5546df166c95b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched-baseline-benches.jsonl",
+      "bytes": 153516,
+      "sha256": "4ed8cfc69755c40f542add3fd5fa75378b659700677e374e814da40f38cc2aed"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched-baseline-benches.log",
+      "bytes": 4654,
+      "sha256": "b1490992266610725a1e5d91713278a709ca2c5fc7500b0a764e79902b4b0f46"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched-baseline-wasm.log",
+      "bytes": 4837,
+      "sha256": "6117ca59ea333ccd02d4d23720afd0031d00a233e5f1c6c4cf53ad4d5900812b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched-candidate-benches.jsonl",
+      "bytes": 153369,
+      "sha256": "2085cd15023503db968031072b0e9c79f855ce9f7e1d1f7e450fb93aa5c404b6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched-candidate-benches.log",
+      "bytes": 212,
+      "sha256": "0e1e8521829eb31a1282c65e38bc2d900e609a69f7cd375694d39a4f19dd9ea9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/matched-candidate-wasm.log",
+      "bytes": 391,
+      "sha256": "8a0a8bcbb3434209bec265670132e0279a23e0df0713dc0e31e09553f13bf8a1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-1-baseline.log",
+      "bytes": 1869,
+      "sha256": "4e6363c5258a7e6c2371a93b215d86d8ebaab21ff1c96525b08ac81feb1e897c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-1-baseline.time",
+      "bytes": 66,
+      "sha256": "6b8a2d98f79a342914a456526f3b4a02f448eeb0e6edb20fd6ff09e14d798d28"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-1-candidate.log",
+      "bytes": 1868,
+      "sha256": "6ee71254a0d7cfc122c5ade14a2f778333c7e9a498dd1975daa81fefc2dd359d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-1-candidate.time",
+      "bytes": 66,
+      "sha256": "6e3f2efc6f2c20ea902993c78c0f790ed338a4bbfb1bd04754f4099511ae96e9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-2-baseline.log",
+      "bytes": 1866,
+      "sha256": "21afa3680db312e428a201fd577946194ec1e1fd49519c700c7f7873a3d1ad73"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-2-baseline.time",
+      "bytes": 66,
+      "sha256": "8a752392c187ad17008f6164069f457974ac1d907d8bc046c0fd22c31adeccd2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-2-candidate.log",
+      "bytes": 1865,
+      "sha256": "d91f7678db44e6f021eeab4ce2b53e12c2a7453c0fc6261b78d634827f338c13"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-2-candidate.time",
+      "bytes": 66,
+      "sha256": "cae264823038bd0cfe5a63c1b2e7f73656765ec51699f482817724010b037af3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-3-baseline.log",
+      "bytes": 1868,
+      "sha256": "af1c34fda66e728ad9a30b474bcc9cb3df4779fb22f1ac47dfe09478929723d7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-3-baseline.time",
+      "bytes": 66,
+      "sha256": "a0e7e90ced7afb688c700bea95adac7b76869cb04dbf64d42b9e2d8aba1903d7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-3-candidate.log",
+      "bytes": 1866,
+      "sha256": "b0feb2e853ce286795468757457d3a3888df97c8442a963f8fd627ce0af4250a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-bezier_region-3-candidate.time",
+      "bytes": 66,
+      "sha256": "d3adc04fefee6d3360e4c833cd6d1ac5ce0c34d7738800fcd99815971bf06f2a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-capsules-1-baseline.log",
+      "bytes": 217,
+      "sha256": "b77d63acad2cc2c490c8896325e902b5f9ca9b9c5791557d4bde42d629f97b34"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-capsules-1-candidate.log",
+      "bytes": 217,
+      "sha256": "66ce3515bf5a58d1062b92fb4e844d5bf37f37f92428cbab3588f0c7de5c13d4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-capsules-2-baseline.log",
+      "bytes": 217,
+      "sha256": "9f022b1d8ee3ba27714face22466441f876e1353190906c5ec9ceaa3e61a4eb7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-capsules-2-candidate.log",
+      "bytes": 217,
+      "sha256": "7f4c117b4cda6fc99b842c478f403b84a896e829c184f4ec7056bdfaccba481a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-capsules-3-baseline.log",
+      "bytes": 217,
+      "sha256": "d977140418d6de9ae4a0afabbbaa021de8245ff7f6bd249aaf9c6821e3c7ef2b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-capsules-3-candidate.log",
+      "bytes": 217,
+      "sha256": "299e6ebb9ddf5f6ddb40226110bbd0146cc70483ec0666aa67a8944ddf47f8de"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-1-baseline.log",
+      "bytes": 240,
+      "sha256": "d24e18f9b73e45dfc6005c43d3b190305e81d1317fc71684e1455dd52ddc7838"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-1-baseline.time",
+      "bytes": 68,
+      "sha256": "a8edecc0b387bd0b27649baee7ce75325544176b408cd6a67968e4ffcfb7fa40"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-1-candidate.log",
+      "bytes": 240,
+      "sha256": "c2691a0d091f245141df9c3cf157d9f13d4b9b1737ec5a8b49816aaeb755caf5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-1-candidate.time",
+      "bytes": 68,
+      "sha256": "99af734058b813568cd2fb14a57523508b7eed9a1c756723dd812e54c7add5be"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-2-baseline.log",
+      "bytes": 240,
+      "sha256": "354006503592857c03d61539fad13aa9bcc7e648992b9eb437c7dad926267137"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-2-baseline.time",
+      "bytes": 68,
+      "sha256": "d96fae85deaa7807f39d04156322bc6e0c231bc2750bff2e66342dbce31092c7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-2-candidate.log",
+      "bytes": 240,
+      "sha256": "ef29265f8d056de3d93f62385e5d3b49459ecb0f8352522985619b68a338b126"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-2-candidate.time",
+      "bytes": 68,
+      "sha256": "97c55398f9f38e6bf8dc34ebb51b7495a4d7147aeca8b868beb070ad88313f87"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-3-baseline.log",
+      "bytes": 240,
+      "sha256": "9abf1e3d67a0070938be37f07696f931525023e35fa85c656ee408947d3014fe"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-3-baseline.time",
+      "bytes": 68,
+      "sha256": "43d2e74d9cb6e2d89bf45d1499ee744cf76e04081d6e40e03404c28fb13db12a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-3-candidate.log",
+      "bytes": 240,
+      "sha256": "37d870171113d040089db584a03ce78260f07e1aa84c02c0678543b25b4ea1c2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-chord-3-candidate.time",
+      "bytes": 68,
+      "sha256": "cef4af9d577c8399b99c156ab37bf041bdc17d3905b299f533da8babcc10f73d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-circles-1-baseline.log",
+      "bytes": 217,
+      "sha256": "b66abc6c46d185a000f29f8832fcd3afedf5043377abfb0d72e20555aa03817d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-circles-1-candidate.log",
+      "bytes": 217,
+      "sha256": "876fd98af875d0b88d9105aaefd7d3752d2a6d4febed05ad2036235baae0c29d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-circles-2-baseline.log",
+      "bytes": 217,
+      "sha256": "eca1bacc65fcbe75f776c476f73e9b69f2c7fdb1e2946396ac1c7e8822edfe8f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-circles-2-candidate.log",
+      "bytes": 217,
+      "sha256": "3061b90b41b09baf6bd94a21aec0f3d495507d840af4ca5ff5fd7aa78bdb458f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-circles-3-baseline.log",
+      "bytes": 217,
+      "sha256": "87ff7ab191e73306ff6c0f4e05dad8637a20c1dc5472566084f8c09394944942"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-circles-3-candidate.log",
+      "bytes": 217,
+      "sha256": "97cc38c6322f6b2bd3bf6a487142c0ba2ffb11f63dd9a8e3722f52640c9a40f9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-1-baseline.log",
+      "bytes": 230,
+      "sha256": "4bf590056569ae7b3d021f576a1495f0627c0243445186746555fb15e608c628"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-1-baseline.time",
+      "bytes": 68,
+      "sha256": "84003e08c56a3cb7d893459ced1725ddf828cb20f5be2f5b5ea1ae1a3b6675da"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-1-candidate.log",
+      "bytes": 230,
+      "sha256": "979db5b1a3c6188c5917e5fcfcb7b8470582603bfb04ec54cfa6316077d22306"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-1-candidate.time",
+      "bytes": 68,
+      "sha256": "fc72561582feb5f5c5db69e668d3a089feb308ee9450afa424246cf68f3b6f46"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-2-baseline.log",
+      "bytes": 230,
+      "sha256": "b9c3372a6b6a31564520440d056950bbdfb3633a854adaf76138952e76adb0ab"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-2-baseline.time",
+      "bytes": 68,
+      "sha256": "463c07c0a47c9a0d64ee702ebbe8b156c26fcb06c781459b13bbba90494f3706"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-2-candidate.log",
+      "bytes": 230,
+      "sha256": "d77abc18f0efac57878d75308f49509810fed4610e273bdac9e057e008b907d4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-2-candidate.time",
+      "bytes": 68,
+      "sha256": "f6a7e5eef76b6ea51bda8427f04c88dd196f1876fed168f88fe333e4417a6e55"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-3-baseline.log",
+      "bytes": 230,
+      "sha256": "a2cf5908fa90bf5f827eebfd38e8abdc25b663efe4102a8fc03030d6289993d5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-3-baseline.time",
+      "bytes": 68,
+      "sha256": "75dc4a3edb50fdb3dde9d7e9406470b82a90634058a4b904729211a642871b2b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-3-candidate.log",
+      "bytes": 230,
+      "sha256": "7794a81ac07d601701c495536d66138213f3507b5d4e12936c7524e1fae6e32d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-radial-3-candidate.time",
+      "bytes": 68,
+      "sha256": "7998a6fa8cb40e1fd5b70fbbe024eb74feaa2bd8bc9d61dc550b23e7dca9c353"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-1-baseline.log",
+      "bytes": 2317,
+      "sha256": "f9340b987fdebfb17ab17096eb236cb4f8ab227028072c814dbc549acc9873a9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "a1cbc8e8390096f13a79b6d76fde841d7f5bfa0f1664a76884cda1da7bb13503"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-1-candidate.log",
+      "bytes": 2317,
+      "sha256": "72db433ddafce063d7890c6a3a292d3a83e1030b090ffa01ead9fc4afa19d261"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "561073f50af665d075d8a69164c48e4d98ebff57e2a6c663ce1b01d9e84bcadc"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-2-baseline.log",
+      "bytes": 2316,
+      "sha256": "da10a41348ccb2eb24b1130f52778bcb55a2fed504afab29bf110f737fd115a5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "45dce2f0417963f370e7ef59ae76705064fb58d2cf698a12e26b4bd6046a9602"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-2-candidate.log",
+      "bytes": 2318,
+      "sha256": "e79a783a125f392ba2f352c3ac91707b45e625e6f833cb69caf492d32b255ce0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "b1ff8e25fcb021f423ca47c2c255878521fc2999f89e18458465adfe32d5ac7a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-3-baseline.log",
+      "bytes": 2317,
+      "sha256": "deafe70ab7d0587ad93a4ba04edeb47255f2a5a0039bf9cb0eae361280b49610"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "6e163dc5405ae31025f770e32cbfe9e29f4ff6b399de5bb5bd3168ea1dcd0270"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-3-candidate.log",
+      "bytes": 2315,
+      "sha256": "b6b1267a1bb22dd5d95a98038eaa268267ae7f6d41cd6507086cc010bda9c79c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "dc58fe45bf592d5359b8f62cd888b27adc10239393116b8552dd0b7713c69793"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rectangles-1-baseline.log",
+      "bytes": 213,
+      "sha256": "97e5ca54be63ae004b021987e569266803f3eac418be184c80edc7c78e34b4b4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rectangles-1-candidate.log",
+      "bytes": 213,
+      "sha256": "39ed1f34c05c63e3f35aa3edb5151c99960c2cf4545be3daa301882eddfbffc2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rectangles-2-baseline.log",
+      "bytes": 213,
+      "sha256": "e7e44d21b4c672fdebead7f84ae236406320f23c97ffc2ff40bbc565e5500516"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rectangles-2-candidate.log",
+      "bytes": 213,
+      "sha256": "51b6697a4a68ad1d6aa3cd7d21618b3b703af143151d19d89b243d0a841d7142"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rectangles-3-baseline.log",
+      "bytes": 213,
+      "sha256": "4693b759f6f5267006f67b9b0662ea2a9e936044b6b86c8f4f252bae665482ac"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-rectangles-3-candidate.log",
+      "bytes": 213,
+      "sha256": "25334026b76fb15b90bd4e55a73178f78efc5f800605870aef11ce9ff2b46f90"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-results.json",
+      "bytes": 127514,
+      "sha256": "d4c55b02f5c4533328ad93afd2351f27c5d5b32471167a174f237d329842286a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-1-baseline.log",
+      "bytes": 228,
+      "sha256": "844f66301a3c421e49f16fe80c0b735aafb3ea9bfb29c12ac9e90436b9527f26"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-1-baseline.time",
+      "bytes": 68,
+      "sha256": "1e473100e38f0083c5f313527524e5d6fdb7fa5d22b25b1a300518da0099ade4"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-1-candidate.log",
+      "bytes": 228,
+      "sha256": "8ed43dc61c6445eb4458e99e5156acf34624a335f0f30eca3b63734c6c20df17"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-1-candidate.time",
+      "bytes": 68,
+      "sha256": "266f4e0bc840be58779e5f013cff760d3d594d8733e87c06a35f59f3259c6c1f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-2-baseline.log",
+      "bytes": 228,
+      "sha256": "5b8f282dcab1ec03f860056109faf0ddfdf3472729f04de983789232dc0f13f2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-2-baseline.time",
+      "bytes": 68,
+      "sha256": "3e8eb849eabf8e07e72d2cf3ce2dfae91e1fff4e0d8388c3b904fb0d0d7f74fa"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-2-candidate.log",
+      "bytes": 228,
+      "sha256": "792d5592f63b3ca3f21937441a1e75427e1b5319d8c1fcdc1153767c5362c36b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-2-candidate.time",
+      "bytes": 68,
+      "sha256": "6637ad96fa8b7d9b6403f1cd788d9e834d648909de6c21f441313b131bdcc966"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-3-baseline.log",
+      "bytes": 228,
+      "sha256": "844f66301a3c421e49f16fe80c0b735aafb3ea9bfb29c12ac9e90436b9527f26"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-3-baseline.time",
+      "bytes": 68,
+      "sha256": "a4468561197d29401b2635d4252cb383c268599b78c9873510f8506ee6d477bb"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-3-candidate.log",
+      "bytes": 228,
+      "sha256": "0d2eef480b4e55cfd958809b97675ec750808ea01fad09440e90f0ce81a94ad1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-selected-3-candidate.time",
+      "bytes": 68,
+      "sha256": "74daac1a72cc6e4e2509e00d097404f4d160ffb4087c03927270a96424230397"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired-timings.sh",
+      "bytes": 2442,
+      "sha256": "e0b2f06ec839c5bcf248ae624253f0a08e2cfe6268e52319ecb1e3cd9239b48b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/paired.status",
+      "bytes": 465,
+      "sha256": "250b0584ede4f646e4f548f6e2fe55ccd09a4ed42b87dc52b3a289b2f14d1953"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-selected-baseline.log",
+      "bytes": 228,
+      "sha256": "425d2ebad99b7761596e7326d4d42b7c63837eba8fcb997893117d4cc89a6d09"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-selected-baseline.time",
+      "bytes": 68,
+      "sha256": "765b01e3eeea18ca99d2d79f276985aedd5f27210ba244ea692c4b2f4b9304ac"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-selected-trial.log",
+      "bytes": 228,
+      "sha256": "9014d726f5214b7ca60b9f843e2bff8688372db6b16c577a753157462713bfb2"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-selected-trial.time",
+      "bytes": 68,
+      "sha256": "087899360a6b079fbb8f4c69885e3ddc69689b4ce3b6cc57c2718368fb58215f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-strict_terminal-baseline.log",
+      "bytes": 235,
+      "sha256": "1e713609461994f660779529854e9940dbaf29b85d418ed16d3d4e014a730be0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-strict_terminal-baseline.time",
+      "bytes": 66,
+      "sha256": "bf792ee709b3546a384e7e24bc6f552e8929b1b0f183f0f118b31783b623cd01"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-strict_terminal-trial.log",
+      "bytes": 235,
+      "sha256": "da7ae8e81a084fd9f17de120462efae72538ab1fe1e8fd22e485b6bf686cf49d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot-strict_terminal-trial.time",
+      "bytes": 66,
+      "sha256": "6c2ae36d63b5712946abc214c16f836fec059b3ca1bfe8a21ae10214c80e3260"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot.sh",
+      "bytes": 1101,
+      "sha256": "a99c50f5f312f7263ac143fc89ad10b792bc9a12b9d3fd64c03faefbf7d58506"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/pilot.status",
+      "bytes": 108,
+      "sha256": "f75bab5ed669b779cd4d99ecbab7a91df773487204db212bdbe06910fe67018d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/qualify-hypercurve.sh",
+      "bytes": 3366,
+      "sha256": "9b8eab114d24943987b614c0b3fa1abb25ee3b7fbd579373bd9a06958b082674"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-1-baseline.log",
+      "bytes": 1867,
+      "sha256": "6eb20c69e6b0d7c8c4c2ffe309b76b34d35afd89620fb8eab81464df5955612e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-1-baseline.time",
+      "bytes": 66,
+      "sha256": "b82775fc6a4e62f66f397fd89197149056a6e2b3495975c39e0f048d2f892081"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-1-candidate.log",
+      "bytes": 1866,
+      "sha256": "a73e1b7a1b3bb8f3f140ed97f19238c01ea3f86e6b754964c77cecd73ca9faa7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-1-candidate.time",
+      "bytes": 66,
+      "sha256": "d640d51b4676701205e4e46442f8ef0da8eddbb4c4b9d066c68c0f80db939453"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-2-baseline.log",
+      "bytes": 1864,
+      "sha256": "339e812b412e59efe0998f86692991871c8b0dfd61bd9ce790a5240c90cd6da6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-2-baseline.time",
+      "bytes": 66,
+      "sha256": "5470ea29b11214b2159b47d515a688064064649a125b0e2fa93e1098d5b9bd13"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-2-candidate.log",
+      "bytes": 1862,
+      "sha256": "3bdc4ca30212f8ee8a5c793d1b56fde6c710675b9ece18f59ecaae0ecca98340"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-2-candidate.time",
+      "bytes": 66,
+      "sha256": "6979cb4bfcc302a721ccdf6ca09ec4be38e644f1feb1df8c4d4622e70a27ba35"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-3-baseline.log",
+      "bytes": 1867,
+      "sha256": "c2a23b9429b4c835f1aef6ef4e3515f709b9c47bab40be270e1c133e9d10cff6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-3-baseline.time",
+      "bytes": 66,
+      "sha256": "2101c4c2aed840a8f9b4d3d42a772caed292bd4a8d00a1670aef569e308ff7e6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-3-candidate.log",
+      "bytes": 1867,
+      "sha256": "1c4d011d7b1ef5c91bf32e2053eb2b2e4e589250f62cfcf40851f0ad4cc8fa3d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-3-candidate.time",
+      "bytes": 66,
+      "sha256": "85462ee1c77d822d832bf009b9a978134ca5b18ab60caf3cde1c95a0e180d59b"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-4-baseline.log",
+      "bytes": 1863,
+      "sha256": "8101147592fc3aa02bdaeaac4569a91bf4353cfe2fb4d1bbd27ffb5909fdcea1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-4-baseline.time",
+      "bytes": 66,
+      "sha256": "f9f96a693bf8163a93083da87af713a5df75ee5c092b1abbac645346f127ec51"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-4-candidate.log",
+      "bytes": 1867,
+      "sha256": "4fb69d0b46a77e343dd2be41a5a4dae779fa8f3365f92668de3b1b699aea7dd9"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-4-candidate.time",
+      "bytes": 66,
+      "sha256": "7c1e0a80c096f4fa08e645380e343feaeb733e8e549ed989614acd9365f7dbb8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-5-baseline.log",
+      "bytes": 1864,
+      "sha256": "d71d3fa894e01d78c5381b1039ca1f8fc6f8b31511db83b3db28814d924a1a37"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-5-baseline.time",
+      "bytes": 66,
+      "sha256": "7c7f0e35031dc4f9b514163f1fbcfe0dce1f1331a8ccec700f9733097321d1f1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-5-candidate.log",
+      "bytes": 1862,
+      "sha256": "638b12aae0260afb106ffb8385ccb4de9894b2cb416345ae59770375b02a2c9f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-5-candidate.time",
+      "bytes": 66,
+      "sha256": "cde72dd8878ae41451f1a61fb41b63a4bc61bffbbca626bffe6cff9570107d4a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-6-baseline.log",
+      "bytes": 1864,
+      "sha256": "1c5a5df8a43d292c077362d20fba7d59d41f8c131ca346f417065ab99043fbe6"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-6-baseline.time",
+      "bytes": 66,
+      "sha256": "4f311556c46ff83247f823667fb1ddf1cf11462084677b805ace2789fe1611f5"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-6-candidate.log",
+      "bytes": 1862,
+      "sha256": "000e1989d03b7506cd8f778951df5207500584851ec20b849bc57d35be87312f"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-6-candidate.time",
+      "bytes": 66,
+      "sha256": "05279c5ca0412a7d81f7f6370837b4d77725dd72c53369de758db6550df935a8"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-7-baseline.log",
+      "bytes": 1863,
+      "sha256": "0a9ea4bad478c5a6a472641e5520c7c538aa15323de9acc98a018f6b367d3a9c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-7-baseline.time",
+      "bytes": 66,
+      "sha256": "5f07eb88a82307cbb171d92ca4cc24c301332895ad613ec30d624981b834c01e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-7-candidate.log",
+      "bytes": 1865,
+      "sha256": "a8dd4b86f1937a6e199684074220173bde9acb43d8764bddb4eb5664aea09493"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-bezier_region-7-candidate.time",
+      "bytes": 66,
+      "sha256": "1b8d85e32261db42d01b76e186ee9a744efe767a6fee1178323425fa20a2f181"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-native.sh",
+      "bytes": 1006,
+      "sha256": "c4c9ccd0d63e8aaf5154d3e66e7f7e87a006bdabf6d4968cb6284d6f7e4d01e1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-1-baseline.log",
+      "bytes": 2317,
+      "sha256": "80f462a18ed012b299497eb2b8c72e9619a6bfccee9386980c9b461cb9629795"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-1-baseline.time",
+      "bytes": 66,
+      "sha256": "1f928335f0ded59a4a39fcc9ee7f82001b848a7a1eff6a93f8d7d1bbe6f72707"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-1-candidate.log",
+      "bytes": 2318,
+      "sha256": "fb48ec3507df11a4b99e0c945924e911a28a1f8719e90a2c8f5fcc9f57f04553"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-1-candidate.time",
+      "bytes": 66,
+      "sha256": "f35bc6e7f3eae15ffb83a9455df626f83684e4571b7b9a16de3decda704bc451"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-2-baseline.log",
+      "bytes": 2317,
+      "sha256": "f3490873a5e492b49be517541cced37754a704db30451ac82bffe76f3aac7192"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-2-baseline.time",
+      "bytes": 66,
+      "sha256": "20722da1fa86a71b98f81ae2b089fb8b2bf9cb0e794dad259ed9d4d4fe1e8d64"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-2-candidate.log",
+      "bytes": 2316,
+      "sha256": "05e9c010b4041826feb227540bc8ea4f0eb4eea74839505f365d78075a1fdd45"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-2-candidate.time",
+      "bytes": 66,
+      "sha256": "8cc8ebc364911c1b9d7ca2f610f6e932393daaf294b519c8bc037f647104fd32"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-3-baseline.log",
+      "bytes": 2318,
+      "sha256": "e05e9165998058e02b109e88da01098fecdffc38dd3f542c29155b278caacd81"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-3-baseline.time",
+      "bytes": 66,
+      "sha256": "e3c4df1f39e16db198fcb5d601d3cbe0de453f5c6d17d5136ac13aac53cf2c41"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-3-candidate.log",
+      "bytes": 2310,
+      "sha256": "f5bdabc2de425d961a672bd438199734b0738b240e109eb90bc07d725d69cae1"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-3-candidate.time",
+      "bytes": 66,
+      "sha256": "046be016bff535e9dd96aad360d4ef5af7302c5b036ca2844c2ed04a44634f71"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-4-baseline.log",
+      "bytes": 2318,
+      "sha256": "3e70b67f3b8bd3ee5e63fe6f4f6b78e145ff24daa7c2f8e0142f8e648c08370d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-4-baseline.time",
+      "bytes": 66,
+      "sha256": "e49eada2aed455069504cb5bd7a4915f93cab73d9b879e5c340e78bca733e7ea"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-4-candidate.log",
+      "bytes": 2317,
+      "sha256": "af1def3cc107da1bdd7d8a4f7358f4e0fb84352548254cfe03d254b6ac659d8c"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-4-candidate.time",
+      "bytes": 66,
+      "sha256": "5036ddb908303f1458e562a25efbfc3cc5f59b2c727f2fbc84735ba38f0081e7"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-5-baseline.log",
+      "bytes": 2316,
+      "sha256": "1752531e4a6c73cb2d277333bde044248e1bae9b401897cc47b4ee9b137b9e3a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-5-baseline.time",
+      "bytes": 66,
+      "sha256": "3222e6482bc4b6b2347c4d0cedcc15f47f75f839a7b0d82639cadd5ac8c28e9d"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-5-candidate.log",
+      "bytes": 2315,
+      "sha256": "d0e4ec6a50b4228d096ba91f605e9792ee24f98fe96ee96f8ec6b2270b933827"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-5-candidate.time",
+      "bytes": 66,
+      "sha256": "48bc6a7fd62525085d2ea15dc3e568b2f6da2467cdc6ab165cf5d36e74f74103"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-6-baseline.log",
+      "bytes": 2315,
+      "sha256": "45ea3ec4d3110a9cd7ad05c2fb1dfdb065c1be864775eb2cac8fe9c189d94b9a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-6-baseline.time",
+      "bytes": 66,
+      "sha256": "205084ec03858592abe838c6d15f05f287f795b8be9450d673f16477cf490f5a"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-6-candidate.log",
+      "bytes": 2316,
+      "sha256": "34f409fbe63feb887ef2af3b493aed67d224ca0e2faee002345b23947954b536"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-6-candidate.time",
+      "bytes": 66,
+      "sha256": "2db20d501df1d4a4fb70d73f89939fe499fc4fc86355426ebf6a81c936bdaa7e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-7-baseline.log",
+      "bytes": 2315,
+      "sha256": "819eda06f9ccd59b81e653ac7aa5246d5891841f740895fc9fd0b62b26000904"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-7-baseline.time",
+      "bytes": 66,
+      "sha256": "78354a6026cdb393071636ff56890cf3135c8a44107bf0dd3f903ea8e8a88634"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-7-candidate.log",
+      "bytes": 2315,
+      "sha256": "f994af79747fb2c569d092cf0f3521af59f102f0f57d2c4c2d8ab60caaac319e"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-rational_bezier-7-candidate.time",
+      "bytes": 66,
+      "sha256": "3c3dcd7f369c14ed90c3bbfd66c4cd2db026b3fda4ce3756946d04157c295200"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat-results.json",
+      "bytes": 235719,
+      "sha256": "7ab1be466fcdd252a1fa440aa2a463310c93f840098748f066ae7d4e4c4869b0"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/repeat.status",
+      "bytes": 938,
+      "sha256": "e6f958189b93dc63562a1f06490bb1f6461dd10ddf53904061513faa99e7b4fa"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/trial-build.jsonl",
+      "bytes": 128059,
+      "sha256": "197e1075e9e33e308dc012bc9895b3066413f60348d73f55563a0e94dde2b5d3"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/trial-build.log",
+      "bytes": 144,
+      "sha256": "adc1b629c919ee51291cee96f3d13fa7289f3592974bdef6cb68f610797c2297"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/trial-test",
+      "bytes": 28079512,
+      "sha256": "0491ec6c9deeac5770e55d20dd9ecab7458bd6e3d6606ac586893b2bf641313d"
+    }
+  ],
+  "artifact_integrity_audit": {
+    "verified_files": 198,
+    "exit": 0,
+    "manifest": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/artifact-sha256.manifest",
+    "manifest_sha256": "41af8a463ca9089f2c14d958aae35919ffab7e7ae468b08d68e9b1356f15c142",
+    "log": "/home/tim/Documents/GitHub/workspace/hypercurve/target/selected-fiber-interval-reuse.SY8G4G/artifact-sha256-audit.log",
+    "sha256": "bdc8fba002402d5f9b4222a6c02d6ec28a5215375b2a538a9c1a56c5f4231395"
+  }
+}

@@ -1,0 +1,370 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "higher-order-edit-policy",
+  "source_revision": "1b6d3a8e583605cdaadf588392048625f8189cad",
+  "parent_revision": "fd34d92791dc0706556e4e703153efaabb115d1e",
+  "implementation_revisions": [
+    "b0ef0db608101993dafe47a70decb20a52d63f31",
+    "8628959e0d47bace557f26527eb37771b8c474e9",
+    "1b6d3a8e583605cdaadf588392048625f8189cad"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_edit_apis": [
+      "CurvePath2::chamfer_vertex_by_parameters",
+      "CurvePath2::fillet_vertex_by_parameters",
+      "CurvePathView2::chamfer_vertex_by_parameters",
+      "CurvePathView2::fillet_vertex_by_parameters"
+    ],
+    "edit_return_contract": "CurveOutcome<CurvePath2>",
+    "curve_region_higher_order_fallback_uses_the_active_policy": true,
+    "internal_composition_uses_raw_edit_kernels": true,
+    "complete_edit_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "strict_symbolic_fillet_result": "Fillet/RealSign blocker without materializing a guessed center relation",
+    "approximate_512_symbolic_fillet_result": "exact circular fillet with Approximate512Consumed",
+    "tested_adjacent_curve_families": [
+      "Line",
+      "CircularArc",
+      "QuadraticBezier",
+      "CubicBezier",
+      "RationalQuadraticBezier",
+      "RationalBezier",
+      "PolynomialBSpline",
+      "Nurbs"
+    ],
+    "point_derivative_subcurve_and_native_fragment_work_receive_active_policy": true,
+    "arc_sweep_decomposition_representative_and_directed_angle_caches_are_policy_aware": true,
+    "approximate_arc_fragment_never_gains_certified_sweep_facts": true,
+    "approximate_first_arc_cache_cannot_answer_a_later_strict_request": true,
+    "directed_radial_angle_uses_policy_classified_quadrants": true,
+    "hidden_infallible_real_atan2_removed_from_arc_fragment_path": true,
+    "returned_geometry_remains_exact_under_both_policies": true,
+    "compatibility_overload_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "layout_and_hot_cache_evidence": {
+    "measurement": "GDB sizeof against matched debug artifacts and nm -C -S against matched release editing artifacts",
+    "circular_arc_retained_facts_bytes": {
+      "parent": 384,
+      "initial_two_slot_policy_implementation": 392,
+      "final_compact_policy_implementation": 328,
+      "final_change_from_parent_bytes": -56
+    },
+    "curve_data_bytes": {
+      "parent": 544,
+      "candidate": 528,
+      "change_bytes": -16
+    },
+    "curve_path_data_bytes": {
+      "parent": 176,
+      "candidate": 168,
+      "change_bytes": -8
+    },
+    "native_fragment_hot_accessor_text_bytes": {
+      "parent": 217,
+      "candidate": 215
+    },
+    "optimization": "policy cache hits remain inline while initialization and terminal resolution are cold outlined; this recovered the strict hot path without duplicating policy implementations",
+    "rejected_intermediate": "the first two-slot arc classification cache grew retained arc facts and measured about 4.8 percent paired-geomean path-fillet and 3.6 percent region-fillet overhead; it was replaced before checkpointing"
+  },
+  "matched_higher_order_edit_benchmarks": {
+    "command": "nine interleaved parent/candidate executions of the release editing benchmark with HYPERCURVE_EDIT_BENCH=higher-order, reversing execution order on alternate pairs",
+    "benchmark_harness": "benches/editing.rs",
+    "iterations_per_sample": 10000,
+    "curve_path_higher_order_chamfer_ms": {
+      "parent_samples": [
+        35.551681,
+        37.215467,
+        37.194018,
+        35.497304,
+        38.186710,
+        36.723460,
+        35.530543,
+        37.473200,
+        35.768416
+      ],
+      "candidate_samples": [
+        34.186095,
+        35.753907,
+        35.013888,
+        35.090022,
+        34.272039,
+        34.019926,
+        35.500375,
+        34.120659,
+        35.547981
+      ],
+      "parent_median": 36.723460,
+      "candidate_median": 35.013888,
+      "median_change_percent": -4.6553,
+      "paired_geomean_change_percent": -4.7349
+    },
+    "curve_path_higher_order_fillet_ms": {
+      "parent_samples": [
+        64.278250,
+        62.520361,
+        63.804203,
+        64.762547,
+        64.287859,
+        63.243171,
+        63.982151,
+        68.027163,
+        65.319469
+      ],
+      "candidate_samples": [
+        67.513458,
+        69.008915,
+        64.691472,
+        72.062236,
+        65.098134,
+        64.308259,
+        68.005475,
+        64.384553,
+        64.571390
+      ],
+      "parent_median": 64.278250,
+      "candidate_median": 65.098134,
+      "median_change_percent": 1.2755,
+      "paired_geomean_change_percent": 3.2990
+    },
+    "curve_region_higher_order_chamfer_ms": {
+      "parent_samples": [
+        93.285890,
+        91.949632,
+        93.507325,
+        94.064537,
+        96.911542,
+        91.975651,
+        96.623881,
+        93.849412,
+        100.179487
+      ],
+      "candidate_samples": [
+        98.302006,
+        95.881512,
+        96.039151,
+        95.169281,
+        93.683083,
+        94.290691,
+        95.373127,
+        95.278443,
+        95.663578
+      ],
+      "parent_median": 93.849412,
+      "candidate_median": 95.373127,
+      "median_change_percent": 1.6236,
+      "paired_geomean_change_percent": 0.8881
+    },
+    "curve_region_higher_order_fillet_ms": {
+      "parent_samples": [
+        193.862390,
+        193.802635,
+        194.228515,
+        196.141593,
+        190.526629,
+        190.592845,
+        202.000902,
+        191.964651,
+        203.473031
+      ],
+      "candidate_samples": [
+        205.144426,
+        198.802921,
+        194.900298,
+        195.584552,
+        203.270744,
+        195.071517,
+        201.814935,
+        201.022109,
+        203.278354
+      ],
+      "parent_median": 193.862390,
+      "candidate_median": 201.022109,
+      "median_change_percent": 3.6932,
+      "paired_geomean_change_percent": 2.4159
+    },
+    "interpretation": "the policy-complete chamfer path is faster than the strict-only parent; fillet and region reconstruction retain overlapping ranges with a visible 0.9 to 3.3 percent paired-geomean policy cost after cold-path outlining"
+  },
+  "editing_instruction_control": {
+    "command": "three interleaved parent/candidate perf stat executions of the complete release editing benchmark",
+    "instructions": {
+      "parent_samples": [
+        15392105042,
+        15392734624,
+        15392768521
+      ],
+      "candidate_samples": [
+        15439611033,
+        15439397881,
+        15438962779
+      ],
+      "parent_median": 15392734624,
+      "candidate_median": 15439397881,
+      "change_percent": 0.3032
+    },
+    "branches": {
+      "parent_median": 3186620474,
+      "candidate_median": 3194530082,
+      "change_percent": 0.2482
+    },
+    "branch_misses": {
+      "parent_median": 3422733,
+      "candidate_median": 3443770,
+      "change_percent": 0.6146
+    },
+    "interpretation": "the complete editing executable pays 0.30 percent more retired instructions for explicit policy and certainty while the touched carrier layouts and policy cache hot accessor shrink"
+  },
+  "matched_pathological_curve_region2": {
+    "command": "seven interleaved parent/candidate executions of matched release pathological_regions artifacts, reversing execution order on alternate pairs",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_all_four_native_booleans_ms": [
+      468.796108,
+      470.685669,
+      468.174971,
+      477.767223,
+      478.051663,
+      474.815565,
+      494.831073
+    ],
+    "candidate_all_four_native_booleans_ms": [
+      469.438285,
+      472.024747,
+      476.014894,
+      470.728836,
+      469.119657,
+      472.885278,
+      474.793647
+    ],
+    "parent_median_ms": 474.815565,
+    "candidate_median_ms": 472.024747,
+    "median_change_percent": -0.5878,
+    "paired_geomean_change_percent": -0.8293,
+    "parent_build_median_ms": 74.335951,
+    "candidate_build_median_ms": 76.337623,
+    "build_median_change_percent": 2.6927,
+    "build_paired_geomean_change_percent": 1.8970,
+    "parent_observed_rss_delta_mib_median": 34.4,
+    "candidate_observed_rss_delta_mib_median": 34.5,
+    "rss_change_percent": 0.2907,
+    "flattened_exact_operations": 268,
+    "flattened_uncertain": 0,
+    "flattened_errors": 0,
+    "interpretation": "deterministic topology is identical; native exact Boolean execution improves 0.83 percent by paired geometric mean, construction pays 1.90 percent, and process-scale RSS is effectively unchanged"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "rectangle_union": {
+      "hypercurve": 4812.6,
+      "hypercurve_contours": 4802.2,
+      "hypercurve_loops": 5409.0,
+      "cavalier_contours": 910.2,
+      "i_overlay": 1029.1,
+      "geo": 1273.8
+    },
+    "star64_intersection": {
+      "hypercurve": 35666.6,
+      "hypercurve_contours": 36363.6,
+      "hypercurve_loops": 102174.3,
+      "cavalier_contours": 28108.4,
+      "i_overlay": 35452.1,
+      "geo": 36810.1
+    },
+    "star256_intersection": {
+      "hypercurve": 429908.2,
+      "hypercurve_contours": 301068.4,
+      "hypercurve_loops": 848590.9,
+      "cavalier_contours": 489498.1,
+      "i_overlay": 515812.0,
+      "geo": 525870.8
+    },
+    "star1024_intersection": {
+      "hypercurve": 5082576.7,
+      "hypercurve_contours": 3980699.4,
+      "hypercurve_loops": 11014888.6,
+      "cavalier_contours": 19852935.5,
+      "i_overlay": 10403642.5,
+      "geo": 10199788.9
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 19486.8,
+      "cavalier_contours": 944.7
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29830916.7,
+      "curvo_heuristic": 8133.9
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 925938.4
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1542.5,
+      "curvo": 57.9
+    },
+    "interpretation": "all exact Hypercurve lanes remain within 5 percent of the preceding checkpoint; Hypercurve remains faster than all measured finite peers at 256 and 1024 star intersections, while certified general offset and exact NURBS evaluation retain their non-equivalent guarantee/performance gap"
+  },
+  "matched_capsule_offset_control": {
+    "command": "three interleaved parent/candidate comparative processes, each using 11 samples at 100 ms per sample and HYPERCURVE_COMPARE_GROUP=line_arc_offset/capsule_inward",
+    "parent_process_medians_ns": [
+      19466.2,
+      19651.1,
+      19127.2
+    ],
+    "candidate_process_medians_ns": [
+      19669.3,
+      18940.7,
+      18766.3
+    ],
+    "parent_median_ns": 19466.2,
+    "candidate_median_ns": 18940.7,
+    "change_percent": -2.6996,
+    "interpretation": "the matched line/arc offset control rejects the broad-run apparent regression and improves 2.70 percent"
+  },
+  "release_pathological_binary": {
+    "measurement": "matched release executables copied and stripped with strip --strip-all",
+    "parent_bytes": 5512456,
+    "candidate_bytes": 5525296,
+    "delta_bytes": 12840,
+    "delta_percent": 0.2329,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -5997,
+    "delta_from_frozen_baseline_percent": -0.1084
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-higher-order-policy-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22469,
+    "edges": 38434,
+    "artifact": "/tmp/hypercurve-higher-order-policy-callgraph/callgraph.json",
+    "public_and_raw_higher_order_edit_nodes_present": true,
+    "persistent_higher_order_edit_benchmark_node_present": true
+  },
+  "remaining_policy_audit": {
+    "public_circular_arc_directed_sweep_angle_is_a_strict_wrapper": true,
+    "public_materialized_boundary_paths_is_a_strict_wrapper": true,
+    "curve_path_bezier_boundary_and_classify_point_retain_strict_only_cache_paths": true,
+    "curve_intersection_still_has_policy_bearing_routes_that_call_policy_free_native_bezier_fragments": true,
+    "spline_reconstruction_and_subcurve_policy_cut_is_incomplete": true,
+    "next_action": "make native-fragment selection, curve intersection, materialized boundary paths, and closed-path classification policy-explicit before claiming the Phase 1 decision-context audit complete"
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 258,
+    "all_integration_tests": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass"
+  }
+}

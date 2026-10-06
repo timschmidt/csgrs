@@ -1,0 +1,165 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "policy-complete algebraic parameter ordering",
+  "historical_hypercurve_revision": "35cf435403280bf2e0e41178008899c3177a65de",
+  "candidate_hypercurve_revision": "5d2ad176c4667f70ed8a6447daa3deb1fe9a9a14",
+  "historical_hypersolve_revision": "de63d0a8a7c2d70ecec7de87dc22c7a800ae5e89",
+  "policy_hypersolve_revision": "78ec34c0f45fa60cfc56bcbcb211e6d2c5aed255",
+  "candidate_hypersolve_revision": "1a857d780496ce5af8450e8ffddb7aea1487f956",
+  "previous_checkpoint": "2026-08-02-topology-backed-carrier-aliases.json",
+  "scope": {
+    "included": [
+      "explicit STRICT or APPROXIMATE_512 policy on Hypersolve represented-root arithmetic",
+      "exact translated-root difference proof beyond 512 bits",
+      "policy-aware Hypercurve comparison and arithmetic adapters with aggregate certainty observation",
+      "one shared represented-root comparison authority for arrangement, tangent, and rational-coordinate consumers",
+      "STRICT algebraic parameter comparison through exact difference construction after bounded interval refinement",
+      "APPROXIMATE_512 parameter equality only after its 512-bit terminal",
+      "exact sign proof for unit algebraic isolators whose endpoint is zero",
+      "matched historical runtime, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "nonrational algebraic coefficient-field arithmetic beyond Hypersolve's bounded rational package",
+      "remaining algebraic-cusp arrangement admission and distinct-carrier join work",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "strict": "STRICT never reaches an implicit approximate terminal. Overlapping parameter isolators receive 64 exact bisections, then exact represented-root difference construction; unsupported evidence remains explicit Ordering uncertainty.",
+    "approximate_512": "APPROXIMATE_512 first traverses the strict proof path, continues interval refinement to the policy's 512-bit terminal only when exact proof remains unavailable, and records Approximate512Consumed exactly when that terminal supplies the decision.",
+    "translation_proof": "For equal-degree exact-rational defining polynomials, normalized next-leading coefficients propose one root translation. The proposal is accepted only after affine transformation of the selected isolator and an exact common-root proof; the returned rational offset is therefore evidence rather than a coefficient heuristic.",
+    "arithmetic_policy": "Every represented-root arithmetic construction receives the caller's explicit policy. Hypercurve retries policy-dependent undecided or validation results under APPROXIMATE_512 only after STRICT fails and records the weakened certainty before consuming a successful result.",
+    "zero_endpoint_sign": "A unit isolator touching zero is strictly signed when the defining polynomial's exact constant coefficient is nonzero. If that coefficient is zero, unit isolation identifies the selected root as zero. A crossing isolator with nonzero constant remains undecided.",
+    "unsupported_field": "Parameters with nonrational polynomial coefficients are not smuggled into the rational algebraic package. A nested-radical pair separated by 2^-600 remains uncertain under STRICT and reaches approximate equality only through APPROXIMATE_512."
+  },
+  "capability": {
+    "historical": "Two translated roots of rational quadratics separated by 2^-600 exhausted Hypercurve's local 64-step comparison without an authoritative exact difference. Four consumers also called Hypersolve with policy outcomes that Hypercurve could not account for in aggregate certainty.",
+    "candidate": "The translated pair orders Less under both policies without consuming the approximate terminal. The deliberately unsupported nested-radical pair remains uncertain under STRICT and returns Equal with Approximate512Consumed under APPROXIMATE_512.",
+    "policy_validation_fixture": "Unary negation of a valid represented root whose transformed isolator endpoints are distinguishable only beyond 512 bits fails STRICT validation, succeeds only under APPROXIMATE_512, and marks the enclosing curve operation accordingly.",
+    "callers": [
+      "BezierParameter2 ordering",
+      "Bezier algebraic coordinate comparison",
+      "arrangement endpoint equality and tangent negation",
+      "algebraic tangent scalar arithmetic and sign",
+      "general rational Bezier coordinate equality"
+    ]
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "matched_analytic_squares": {
+      "method": "Callgrind on matched all-feature production benchmark artifacts; one warmup plus ten measured shared all-four CurveRegion2 Boolean batches",
+      "command": "taskset -c 11 env HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=analytic-squares HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=10 HYPERCURVE_CURVE_REGION_BATCH_MODE=shared valgrind --tool=callgrind <artifact>",
+      "historical_instructions": 71626820,
+      "candidate_instructions": 71661655,
+      "instruction_change_percent": 0.048634,
+      "interpretation": "The policy-complete algebraic path adds 34,835 deterministic instructions, below one twentieth of one percent, on the ordinary analytic Boolean guard."
+    },
+    "matched_line_arc_adaptive": {
+      "method": "three alternating all-feature processes per revision, each with eleven calibrated 100 ms samples pinned to CPU 11; values are medians of process medians",
+      "historical_exact_batch_ns": 383712.9,
+      "candidate_exact_batch_ns": 377705.3,
+      "adaptive_change_percent": -1.565650,
+      "interpretation": "The common native line/arc authority is neutral-to-faster; the policy additions are cold on this path."
+    },
+    "competitive_line_arc": {
+      "method": "one current all-feature process with eleven calibrated 100 ms samples pinned to CPU 11",
+      "hypercurve_exact_batch_ns": 376728.6,
+      "cavalier_four_finite_calls_ns": 9019.3,
+      "exact_to_finite_ratio": 41.769162,
+      "interpretation": "Cavalier is retained only as a throughput sentinel. Its finite polyline contract does not provide canonical-Real geometry, algebraic witnesses, exact degeneracy handling, or STRICT/APPROXIMATE_512 semantics."
+    },
+    "exact_translation_fixture": {
+      "method": "Callgrind process sentinel for the release unit regression, including the Rust test harness, construction, one STRICT comparison, and one APPROXIMATE_512 comparison",
+      "process_instructions": 12711033,
+      "result": "both comparisons return Less and the approximate operation remains Certified",
+      "historical_result": "the exact translated-root order was unresolved, so this is a completion sentinel rather than a like-for-like timing"
+    },
+    "hard_rational_replay": {
+      "method": "serialized optimized integration regression with /usr/bin/time",
+      "historical_test_seconds": 32.55,
+      "candidate_test_seconds": 32.31,
+      "test_time_change_percent": -0.737327,
+      "historical_maxrss_kib": 233652,
+      "candidate_maxrss_kib": 236464,
+      "interpretation": "The multi-minute debug test becomes a practical optimized sentinel and shows no runtime regression; single-process maximum RSS is recorded but is too noisy to treat as a heap claim."
+    }
+  },
+  "memory": {
+    "analytic_squares": {
+      "tool": "Heaptrack direct release traces",
+      "workload": "one warmup plus 25 measured shared all-four batches",
+      "historical_profile": "/tmp/hypercurve-algebraic-policy-parent.heaptrack.zst",
+      "candidate_profile": "/tmp/hypercurve-algebraic-policy-current.heaptrack.zst",
+      "historical_allocation_calls": 132323,
+      "candidate_allocation_calls": 132323,
+      "historical_temporary_allocations": 9596,
+      "candidate_temporary_allocations": 9596,
+      "historical_peak_heap": "154.91 KiB",
+      "candidate_peak_heap": "154.91 KiB",
+      "interpretation": "The common production guard is exactly allocation- and peak-neutral."
+    }
+  },
+  "release_size": {
+    "representative_production": {
+      "method": "matched all-feature curve_region_boolean_batch release artifacts",
+      "historical_file_bytes": 7849192,
+      "candidate_file_bytes": 7875552,
+      "file_change_percent": 0.335831,
+      "historical_stripped_bytes": 6222552,
+      "candidate_stripped_bytes": 6247912,
+      "stripped_change_percent": 0.407550,
+      "historical_aggregate_section_bytes": 6224474,
+      "candidate_aggregate_section_bytes": 6249058,
+      "aggregate_change_percent": 0.394957,
+      "historical_text_section_bytes": 4428519,
+      "candidate_text_section_bytes": 4451975,
+      "text_change_percent": 0.529658,
+      "historical_sha256": "82c3d21b9358ddda1d047dfdb21ce976181751d30e9d97e2240d5b8f915769ac",
+      "candidate_sha256": "fdc3a0a90c6281b650318f6687a097c7031672e7ecc9ddb16a89b58bd17f19f2",
+      "interpretation": "The bounded exact arithmetic, policy bridge, and regressions add 23,456 text bytes (0.53 percent) without growing any public carrier."
+    }
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-policy-5d2ad17 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 32268,
+    "previous_nodes": 32204,
+    "edges": 59743,
+    "previous_edges": 59606,
+    "confirmed_paths": [
+      "BezierParameter2::cmp_by_refinement -> cmp_by_refinement_once -> compare_distinct_parameters -> compare_parameters_by_exact_difference",
+      "compare_parameters_by_exact_difference -> Hypersolve::compare_algebraic_root_representations_by_difference -> represented_root_translation_difference",
+      "compare_algebraic_representations_with_policy -> Hypersolve difference comparison -> CurveContext::observe_approximate_512",
+      "arithmetic_algebraic_representations_with_policy -> Hypersolve represented-root arithmetic -> CurveContext::observe_approximate_512",
+      "arrangement, tangent-order, and rational-Bezier consumers -> shared Hypercurve policy adapters"
+    ]
+  },
+  "verification": {
+    "hypersolve_all_features": "passed: 210 unit, 2 README, 131 property, and 209 smoke tests",
+    "hypercurve_all_feature_library": "passed: 375 tests serially",
+    "hypercurve_affected_integrations": "passed: 9 algebraic-image, 26 algebraic-parameter, 58 arrangement, 9 tangent-order, 48 rational-Bezier, and 29 CurveRegion2 Boolean tests; the hard rational replay also passed separately in release",
+    "clippy_all_features": "passed all targets with -D warnings in both crates",
+    "clippy_no_default_features": "passed all targets with -D warnings in both crates",
+    "builds": "passed all-target all-feature and no-default checks plus matched release benchmark builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "engineering_decisions": {
+    "strict_refinement_budget": "Retained the historical 64 exact bisections for STRICT before symbolic difference proof. Raising STRICT to 512 made ordinary exact failures pay an arbitrary terminal-sized cost even though STRICT has no finite terminal.",
+    "approximate_refinement_budget": "Only APPROXIMATE_512 continues through 512 refinements and then returns its policy-defined equality with recorded consumption.",
+    "no_compatibility_shim": "Hypersolve's arithmetic function was changed in place to require policy at every caller; no old implicit-policy overload remains.",
+    "next_authority": "Admit remaining algebraic-cusp subfragments and exact distinct-carrier joins through one CurveRegion2 arrangement and raw-offset topology engine."
+  },
+  "remaining": [
+    "admit every retained algebraic-cusp subfragment through CurveRegion2 arrangement splitting and traversal",
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing exact polynomial and bigint allocation churn"
+  ]
+}

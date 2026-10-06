@@ -1,0 +1,228 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "split-quadratic-common-fibers",
+  "source_revision": "bf8186cd54a744c5d53f872a3520b66dd6f665b6",
+  "historical_control_revision": "bd53036efa72942ec464140b632c01b30f76feb1",
+  "hypersolve_revision": "52812481d156b3dd199d71720ca36a38bf528ebd",
+  "hypersolve_benchmark_revision": "684843fd6b2d77ae91439eb7c4c38e2392b64c8b",
+  "historical_hypersolve_revision": "4e0a13bf9a5f899afdd22890a2d84b1a4402c1ff",
+  "scope": {
+    "operation": "exact enumeration and transport of distinct or repeated rational-linear factors in a quadratic generic common fiber",
+    "completed_families": [
+      "two distinct rational parameter components",
+      "one repeated rational parameter component",
+      "same- and reversed-orientation component ranges",
+      "independent selected/opposite normal-branch filtering",
+      "multiple overlaps beside an isolated residual contact",
+      "exact repeated-component deduplication",
+      "STRICT and APPROXIMATE_512 through the identical proof graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "generic_fiber": "the first subresultant must vanish identically before the quadratic common-fiber path is entered",
+    "quadratic_reconstruction": "the second subresultant is copied from a degree-two terminal equation or reconstructed by exact specialization and interpolation within the configured degree budget",
+    "factor_admission": "a rational-linear factor is published only when b^2-4ac replays as an exact polynomial square and the resulting primitive D(r)l-N(r) divides both authored equations exactly",
+    "residual_authority": "both exact quotients are retained; Hypercurve repeats extraction against the residual until no further supported component remains",
+    "component_transport": "each extracted map independently replays authored equations, poles, monotonic cells, both closed parameter domains, isolated touches, and the selected signed normal branch",
+    "deduplication": "structurally identical overlap evidence and isolated parameter pairs from repeated factors are retained once",
+    "residual_contacts": "after the final component, the remaining equations retain every isolated solution and use the existing complete projection/replay authority",
+    "strict": "STRICT requires exact subresultant zeroes, exact polynomial-square replay, exact division, and exact geometry certification",
+    "approximate_512": "APPROXIMATE_512 follows the same construction; only inherited Hyperreal equality terminals may stop at 512 bits and no approximate component or parameter is synthesized",
+    "failure_semantics": "an irreducible quadratic, a degree-three-or-higher common fiber, an unsupported coefficient tower, or a failed exact division remains explicit incomplete evidence"
+  },
+  "implementation": {
+    "hypersolve": "rational_parameter_component_bivariate_polynomial_system now attempts one exactly factored rational-linear root of a quadratic generic GCD and returns exact residual equations for subsequent enumeration",
+    "hypercurve": "rational_parameter_component_system repeatedly consumes certified residual reports, merges independent overlap/contact evidence, and preserves the final residual system",
+    "hot_path_guard": "after each extraction, exact tensor-product Bernstein strict-sign evidence stops recursion immediately when one residual equation is rootless on the authored unit square",
+    "regression_found": "an initial unconditional recursive component probe raised the nonlinear overlap lane from about 38 milliseconds to about 290 milliseconds per operation",
+    "regression_resolution": "the in-loop Bernstein guard restores the existing component lane while still recursing for residual systems that can contain another component"
+  },
+  "direct_hypersolve_benchmark": {
+    "method": "five sequential release-binary processes pinned to CPU 11; each timed iteration extracts the first quadratic factor and then the second residual factor",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "lane": "rational_quadratic_common_fiber_two_components",
+    "iterations_per_process": 1000,
+    "samples_microseconds": [450.572, 453.205, 452.479, 455.865, 455.312],
+    "median_microseconds": 453.205,
+    "historical_semantics": "the historical extractor returned NoLinearComponent for this generic quadratic GCD, so a speedup ratio would compare unresolved evidence with completed exact work and is intentionally not reported"
+  },
+  "matched_release_benchmark": {
+    "method": "five sequential all-feature release-binary processes per revision pinned to CPU 11 with identical fixtures and iterations",
+    "historical_checkout": "/tmp/hypercurve-quadratic-baseline.Tz8TGG",
+    "lanes": {
+      "nonlinear_rational_component_candidates": {
+        "iterations_per_process": 5,
+        "historical_samples_microseconds": [39160.976, 37205.711, 37131.586, 37172.229, 37025.385],
+        "candidate_samples_microseconds": [38295.838, 37877.005, 37826.03, 37909.974, 38061.02],
+        "historical_median_microseconds": 37172.229,
+        "candidate_median_microseconds": 37909.974,
+        "median_change_percent": 1.984667
+      },
+      "nonlinear_rational_component_contacts": {
+        "iterations_per_process": 5,
+        "historical_samples_microseconds": [38809.153, 36766.361, 36954.146, 36443.095, 36549.388],
+        "candidate_samples_microseconds": [37415.914, 37455.348, 37176.893, 37252.875, 37271.786],
+        "historical_median_microseconds": 36766.361,
+        "candidate_median_microseconds": 37271.786,
+        "median_change_percent": 1.374694
+      },
+      "exact_intersection_candidates": {
+        "iterations_per_process": 1000,
+        "historical_median_microseconds": 40.855,
+        "candidate_median_microseconds": 40.846,
+        "median_change_percent": -0.022029
+      },
+      "exact_intersection_contacts": {
+        "iterations_per_process": 1000,
+        "historical_median_microseconds": 50.469,
+        "candidate_median_microseconds": 50.593,
+        "median_change_percent": 0.245695
+      },
+      "higher_nullity_candidates": {
+        "iterations_per_process": 100,
+        "historical_median_microseconds": 816.499,
+        "candidate_median_microseconds": 810.244,
+        "median_change_percent": -0.766076
+      },
+      "higher_nullity_contacts": {
+        "iterations_per_process": 100,
+        "historical_median_microseconds": 2133.53,
+        "candidate_median_microseconds": 2151.915,
+        "median_change_percent": 0.861717
+      },
+      "line_overlap_candidates": {
+        "iterations_per_process": 1000,
+        "historical_median_microseconds": 2.639,
+        "candidate_median_microseconds": 2.614,
+        "median_change_percent": -0.947329
+      },
+      "line_overlap_contacts": {
+        "iterations_per_process": 1000,
+        "historical_median_microseconds": 8.07,
+        "candidate_median_microseconds": 8.216,
+        "median_change_percent": 1.80917
+      },
+      "warm_ph_overlap_candidates": {
+        "iterations_per_process": 10,
+        "historical_median_microseconds": 1.96,
+        "candidate_median_microseconds": 1.925,
+        "median_change_percent": -1.785714,
+        "interpretation": "ten-iteration sub-three-microsecond sentinel; direction is useful but fine-grained magnitude is noisy"
+      },
+      "warm_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "historical_median_microseconds": 7.28,
+        "candidate_median_microseconds": 7.305,
+        "median_change_percent": 0.343407
+      },
+      "cold_ph_overlap": {
+        "iterations_per_process": 10,
+        "historical_median_microseconds": 533.87,
+        "candidate_median_microseconds": 536.171,
+        "median_change_percent": 0.431004
+      }
+    },
+    "interpretation": "all matched pre-existing medians remain within 1.99 percent; the completed quadratic-component path is absent from the historical executable and is reported separately"
+  },
+  "matched_heaptrack": {
+    "method": "identical complete release benchmark processes pinned to CPU 11 under Heaptrack record-only",
+    "historical_profile": "/tmp/hypercurve-quadratic-baseline-full.heaptrack.zst",
+    "candidate_profile": "/tmp/hypercurve-quadratic-current-full.heaptrack.zst",
+    "historical": {
+      "runtime_seconds": 13.01,
+      "allocation_calls": 23149608,
+      "temporary_allocations": 1373614,
+      "peak_heap_mebibytes_reported": 8.54,
+      "peak_rss_mebibytes_reported": 21.39,
+      "retained_at_exit_mebibytes_reported": 8.37
+    },
+    "candidate": {
+      "runtime_seconds": 13.08,
+      "allocation_calls": 23153504,
+      "temporary_allocations": 1373836,
+      "peak_heap_mebibytes_reported": 8.54,
+      "peak_rss_mebibytes_reported": 22.1,
+      "retained_at_exit_mebibytes_reported": 8.37
+    },
+    "change_percent": {
+      "runtime": 0.538048,
+      "allocation_calls": 0.01683,
+      "temporary_allocations": 0.016162,
+      "peak_heap": 0.0,
+      "peak_rss": 3.319308,
+      "retained_at_exit": 0.0
+    },
+    "interpretation": "allocation counts and peak heap are effectively unchanged; RSS is a single-process profiler reading and is retained without claiming a code-caused shift"
+  },
+  "release_size": {
+    "historical_file_bytes": 7312888,
+    "candidate_file_bytes": 7379808,
+    "file_change_percent": 0.915097,
+    "historical_text_bytes": 5557867,
+    "candidate_text_bytes": 5611187,
+    "text_change_percent": 0.959361,
+    "historical_loadable_bytes": 5826299,
+    "candidate_loadable_bytes": 5879555,
+    "loadable_change_percent": 0.914062,
+    "interpretation": "the generic second-subresultant reconstruction, exact polynomial-square factorization, recursive transport, and antagonistic tests add 66,920 bytes to the matched all-feature offset benchmark image"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": ["hypercurve", "hypersolve", "tests", "benchmarks"],
+    "historical_nodes": 27962,
+    "candidate_nodes": 28113,
+    "node_change": 151,
+    "node_change_percent": 0.540019,
+    "historical_edges": 50757,
+    "candidate_edges": 51326,
+    "edge_change": 569,
+    "edge_change_percent": 1.121028,
+    "historical_artifact": "/tmp/hypercurve-quadratic-baseline-callgraph/callgraph.json",
+    "candidate_artifact": "/tmp/hypercurve-quadratic-current-callgraph/callgraph.json",
+    "interpretation": "the syntax graph includes test and benchmark call sites and is a navigation aid, not reachability or binary-size proof"
+  },
+  "verification": {
+    "hypersolve": {
+      "all_features_library_tests": 187,
+      "all_features_residual_property_tests": 131,
+      "all_features_smoke_tests": 209,
+      "no_default_features": "passed",
+      "quadratic_component_orientations": "passed",
+      "repeated_component": "passed",
+      "irreducible_quadratic_rejection": "passed"
+    },
+    "hypercurve": {
+      "all_features_library_tests": 290,
+      "no_default_features_library_tests": 257,
+      "parallel_fit_offset_all_features": 83,
+      "parallel_fit_offset_no_default_features": 73,
+      "curve_region_boolean_all_features": 29,
+      "curve_region_boolean_fuzz_all_features": 11,
+      "pathological_exact_boolean_operations": 268,
+      "full_all_features": "passed",
+      "full_no_default_features": "passed"
+    },
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check",
+      "readme and rustdoc tests"
+    ]
+  },
+  "competitive_interpretation": {
+    "direct_external_peer_lane": null,
+    "reason": "the surveyed polygon and spline peers do not expose a semantically matched exact analytic-parallel/rational-Bezier component API with algebraic ranges, residual contacts, and policy terminals",
+    "claim_boundary": "only matched historical Hypercurve controls and a direct Hypersolve completed-work lane are reported"
+  },
+  "remaining": [
+    "irreducible quadratic positive-dimensional components",
+    "degree-three-or-higher rationally split or irreducible positive-dimensional components",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier traversal, transform, trim, and serialization surfaces",
+    "authoritative CurveRegion2 offset-piece regularization and unified corner engine"
+  ]
+}

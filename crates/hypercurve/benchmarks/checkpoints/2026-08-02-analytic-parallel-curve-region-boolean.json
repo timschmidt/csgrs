@@ -1,0 +1,200 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "analytic parallel carriers in the authoritative CurveRegion2 Boolean arrangement",
+  "source_revision": "620b1835609220056bba3365b0280fa05fa04c1b",
+  "semantic_revision": "1c253557edbba979db04cdb353dcd791df9f3130",
+  "historical_revision": "360481d6a8e59c337370c35408463931c9d22d2c",
+  "previous_checkpoint_revision": "fa838bd",
+  "dependency_revisions": {
+    "hyperreal": "3d50951775764f6ca50f5805b149c54cc423432c",
+    "hyperlimit": "3e5d8816cd32bba46f48e0c6c13ab7a9da227784",
+    "hypersolve": "339d4d8b6109da2c814febce3da9f725c44d8e56"
+  },
+  "scope": {
+    "included": [
+      "direct analytic-parallel/rational and analytic-parallel/analytic-parallel CurveRegion2 pair dispatch",
+      "exact contact, overlap, blocker, split, ray-classification, and Boolean traversal evidence",
+      "represented and algebraic retained parallel ranges",
+      "STRICT and APPROXIMATE_512 execution through one proof graph in default and minimal builds",
+      "matched ordinary-region timing, allocation, release-size, and static-callgraph guards",
+      "current-only analytic capability timing",
+      "competitive line/arc Boolean and offset plus certified cubic-offset context"
+    ],
+    "excluded": [
+      "finite projection of analytic carriers",
+      "raw signed-region offset and join generation",
+      "fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "carrier": "q(t)=p(t)+d*rotate90(p'(t))/sqrt(dot(p'(t),p'(t))) over one certified oriented source range",
+    "arrangement": "analytic carriers remain procedural exact fragments and enter the same CurveRegion2 pair, split, half-edge, face-selection, and regularization graph as native rational carriers",
+    "contacts": "candidate parameters are produced by exact elimination and retained only after selected-normal-branch equation replay",
+    "overlaps": "exact oriented parameter correspondence and clipped retained ranges are authoritative; no fitted or sampled replacement is introduced",
+    "winding": "supporting-line crossings and ray classification use exact selected-radical signs",
+    "policy": "STRICT and APPROXIMATE_512 traverse the same exact graph; only an inherited equality predicate may terminate at the 512-bit boundary, and returned geometry remains exact"
+  },
+  "historical_capability": {
+    "revision": "360481d",
+    "state": "retains BezierSplitFragment2::AnalyticParallel but returns an Unsupported Boolean blocker when the arrangement tries to promote it",
+    "timing_rule": "no failed historical call is presented as a comparable analytic-operation timing"
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release binaries pinned to CPU 11; eleven interleaved samples; fixture construction and one warm execution excluded from each measured loop",
+    "matched_historical_controls": {
+      "source": "byte-identical curve_region_boolean_batch.rs at 360481d and 1c25355 with the current shared dependency revisions",
+      "operation": "one shared arrangement computes union, intersection, difference, and xor",
+      "shared_edge_rectangles": {
+        "iterations_per_sample": 5000,
+        "historical_ns_per_operation_samples": [51668, 55764, 51607, 54732, 51503, 51401, 53854, 50949, 51904, 54042, 53165],
+        "current_ns_per_operation_samples": [52983, 50491, 52257, 51842, 51000, 49464, 51315, 50999, 53103, 52858, 51360],
+        "historical_median_ns": 51904,
+        "current_median_ns": 51360,
+        "change_percent": -1.0481
+      },
+      "native_versus_elevated_circle": {
+        "iterations_per_sample": 500,
+        "historical_ns_per_operation_samples": [985769, 973819, 995768, 1017072, 971031, 964109, 991430, 978093, 975394, 980351, 978864],
+        "current_ns_per_operation_samples": [996619, 972295, 993829, 998662, 980598, 965373, 978128, 989535, 992012, 1008097, 974248],
+        "historical_median_ns": 978864,
+        "current_median_ns": 989535,
+        "change_percent": 1.0901
+      },
+      "interpretation": "the existing overlap and rational-curve controls remain effectively neutral while analytic carriers gain complete arrangement admission"
+    },
+    "analytic_capability": {
+      "source": "620b183 benchmark fixtures over the 1c25355 semantic library",
+      "operation": "one shared arrangement computes union, intersection, difference, and xor",
+      "overlapping_analytic_squares": {
+        "iterations_per_sample": 2000,
+        "strict_ns_per_operation_samples": [464476, 450694, 451716, 457706, 455362, 459724, 452364, 453592, 457912, 445175, 448322],
+        "approximate_512_ns_per_operation_samples": [449416, 455289, 451838, 459034, 457952, 452201, 452309, 452905, 449777, 447496, 454535],
+        "strict_median_ns": 453592,
+        "approximate_512_median_ns": 452309,
+        "approximate_change_percent": -0.2829,
+        "result_fragment_checksum_per_operation": 24
+      },
+      "non_ph_curved_parallel_clipped_by_analytic_square": {
+        "iterations_per_sample": 50,
+        "strict_ns_per_operation_samples": [11352019, 11317978, 11285057, 11377301, 11861825, 11645544, 11667290, 11400806, 11524757, 11358305, 11388080],
+        "approximate_512_ns_per_operation_samples": [11269294, 11558041, 11514569, 11600398, 11560541, 11815930, 11725015, 11492416, 11426619, 11442855, 11351374],
+        "strict_median_ns": 11388080,
+        "approximate_512_median_ns": 11514569,
+        "approximate_change_percent": 1.1107,
+        "result_fragment_checksum_per_operation": 30
+      }
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct application traces",
+    "matched_control": {
+      "workload": "500 shared all-four native-versus-elevated-circle operations",
+      "historical_profile": "/tmp/hypercurve-elevated-circle-360481d.zst",
+      "current_profile": "/tmp/hypercurve-elevated-circle-1c25355.zst",
+      "historical_allocation_calls": 5635899,
+      "current_allocation_calls": 5657109,
+      "allocation_change_percent": 0.3763,
+      "historical_temporary_allocations": 178084,
+      "current_temporary_allocations": 178084,
+      "historical_peak_heap_kib": 243.54,
+      "current_peak_heap_kib": 244.43,
+      "peak_heap_change_percent": 0.3654,
+      "historical_recorder_peak_rss_mib": 14.25,
+      "current_recorder_peak_rss_mib": 14.61
+    },
+    "analytic_capability": {
+      "workload": "50 shared all-four non-PH curved-parallel clip operations plus benchmark warmup",
+      "profile": "/tmp/hypercurve-analytic-region-620b183.heaptrack.zst.zst",
+      "runtime_seconds": 8.128,
+      "allocation_calls": 9392862,
+      "temporary_allocations": 302931,
+      "peak_heap_kib": 981.11,
+      "recorder_peak_rss_mib": 45.67,
+      "interpretation": "live memory remains below one MiB, but exact resultant replay creates about 188 thousand allocation calls per measured four-result arrangement and is a high-priority optimization target"
+    }
+  },
+  "release_size": {
+    "method": "byte-identical all-feature and no-default curve_region_boolean_batch source at the historical and semantic revisions",
+    "all_features": {
+      "historical_file_bytes": 6724936,
+      "current_file_bytes": 7386680,
+      "file_change_bytes": 661744,
+      "file_change_percent": 9.8402,
+      "historical_text_bytes": 5041582,
+      "current_text_bytes": 5584290,
+      "text_change_bytes": 542708,
+      "text_change_percent": 10.7646,
+      "historical_data_bytes": 259968,
+      "current_data_bytes": 262440,
+      "historical_bss_bytes": 4640,
+      "current_bss_bytes": 4272
+    },
+    "no_default_features": {
+      "historical_file_bytes": 6273320,
+      "current_file_bytes": 7095104,
+      "file_change_bytes": 821784,
+      "file_change_percent": 13.0997,
+      "historical_text_bytes": 4691857,
+      "current_text_bytes": 5351517,
+      "text_change_bytes": 659660,
+      "text_change_percent": 14.0597,
+      "historical_data_bytes": 256400,
+      "current_data_bytes": 261616,
+      "historical_bss_bytes": 5488,
+      "current_bss_bytes": 4224
+    },
+    "interpretation": "correctness-first analytic arrangement support and minimal-build policy parity carry material temporary code-size debt; displaced offset/Boolean machinery must be deleted and cold solver paths outlined before Phase 4 exits"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-analytic-region-callgraph-clean-620b183 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 9,
+    "previous_checkpoint_nodes": 30433,
+    "current_nodes": 30715,
+    "node_change": 282,
+    "previous_checkpoint_edges": 55096,
+    "current_edges": 55574,
+    "edge_change": 478,
+    "semantic_only_nodes_before_benchmark_fixture": 30692,
+    "semantic_only_edges_before_benchmark_fixture": 55530,
+    "artifact": "/tmp/hypercurve-analytic-region-callgraph-clean-620b183/callgraph.json"
+  },
+  "competitive_context": {
+    "direct_guarantee_equivalent": false,
+    "reason": "the available peers use floating or scaled-integer geometry and do not retain exact procedural non-PH offset carriers or policy-identical algebraic replay",
+    "current_release_medians_ns": {
+      "line_arc_boolean_capsules_all_four_hypercurve_exact_batch": 441999.4,
+      "line_arc_boolean_capsules_all_four_cavalier_four_calls": 8977.1,
+      "line_arc_offset_capsule_inward_hypercurve": 18814.6,
+      "line_arc_offset_capsule_inward_cavalier_contours": 916.7,
+      "bezier_offset_open_cubic_hypercurve_certified": 29200791.5,
+      "bezier_offset_open_cubic_hypercurve_chord_fallback": 919307.9,
+      "bezier_offset_open_cubic_curvo_heuristic": 8358.3
+    },
+    "interpretation": "the peer lanes are throughput targets under weaker contracts, not correctness or exactness oracles"
+  },
+  "verification": {
+    "semantic_all_features": "passed: 334 library tests plus every integration, adversarial, fuzz-corpus, documentation, and feature target",
+    "semantic_no_default_features": "passed: 298 library tests plus every available integration and documentation target",
+    "semantic_clippy_all_features": "passed with -D warnings",
+    "semantic_clippy_no_default_features": "passed with -D warnings",
+    "benchmark_check_all_features": "passed",
+    "benchmark_check_no_default_features": "passed",
+    "benchmark_clippy_all_features": "passed with -D warnings",
+    "benchmark_clippy_no_default_features": "passed with -D warnings",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "generate signed raw exact parallel spans for complete CurveRegion2 boundaries",
+    "construct exact round, bevel, and bounded-miter join pieces",
+    "regularize expansion, erosion, collapse, and self-contact through the sole arrangement",
+    "implement solver-driven fillet and chamfer",
+    "reduce resultant allocation churn and repay linked-size debt by deleting displaced machinery",
+    "complete remaining scalar towers and exact finite projection/export boundaries"
+  ]
+}

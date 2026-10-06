@@ -1,0 +1,337 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "curve-intersection-policy",
+  "source_revision": "2c07b9b91693b6e336c7a8382e0f378c7e9da697",
+  "parent_revision": "7a087c1a2f86126bae5fc1e184de06bde6ed1df9",
+  "implementation_revisions": [
+    "2c07b9b91693b6e336c7a8382e0f378c7e9da697"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_apis": [
+      "Curve2::intersect_curve",
+      "Curve2::intersection_topology",
+      "CurvePath2::intersect_path",
+      "CurvePath2::intersection_topology",
+      "CurvePath2::boolean_selection",
+      "CurvePath2::boolean_selections",
+      "CurvePath2::boolean_region"
+    ],
+    "public_return_contract": "CurveOutcome<T>",
+    "internal_composition_uses_raw_kernels": true,
+    "complete_operation_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "native_fragment_and_rational_evaluator_selection_use_the_active_policy": true,
+    "curve_split_and_trim_arrangement_use_the_active_policy": true,
+    "materialized_boundary_simplicity_uses_policy_aware_path_construction": true,
+    "path_boolean_representative_evaluation_uses_the_active_policy": true,
+    "path_boolean_failures_are_reported_as_boolean_operation_failures": true,
+    "obsolete_strict_rational_evaluator_wrapper_removed": true,
+    "strict_ambiguous_arc_result": "Intersection/RealSign blocker",
+    "approximate_512_ambiguous_arc_result": "complete exact contact evidence with Approximate512Consumed",
+    "approximate_first_arc_cache_cannot_answer_a_later_strict_intersection": true,
+    "repeated_approximate_topology_replays_terminal_consumption": true,
+    "path_intersection_preserves_terminal_consumption": true,
+    "path_boolean_batch_single_selection_and_region_preserve_terminal_consumption": true,
+    "strict_symbolic_path_boolean_remains_blocked_after_approximate_completion": true,
+    "returned_contact_and_region_geometry_remain_exact": true,
+    "compatibility_overload_deref_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "matched_curve_path_benchmarks": {
+    "command": "eleven interleaved parent/candidate executions of the release curve_path benchmark, reversing execution order on alternate pairs",
+    "benchmark_harness": "benches/curve_path.rs",
+    "parent_revision": "7a087c1a2f86126bae5fc1e184de06bde6ed1df9",
+    "candidate_revision": "2c07b9b91693b6e336c7a8382e0f378c7e9da697",
+    "immediate_intersection_evidence": {
+      "iterations_per_process": 2000,
+      "parent_total_ms": [
+        4.334672,
+        4.453354,
+        4.309704,
+        5.039794,
+        4.336212,
+        4.276396,
+        4.357890,
+        5.279647,
+        4.444714,
+        4.807030,
+        4.351281
+      ],
+      "candidate_total_ms": [
+        4.209341,
+        4.218640,
+        4.231169,
+        4.310293,
+        4.433916,
+        4.838668,
+        4.274826,
+        4.249438,
+        5.027335,
+        4.690498,
+        4.374609
+      ],
+      "parent_median_us_per_iteration": 2.178945,
+      "candidate_median_us_per_iteration": 2.155147,
+      "median_change_percent": -1.0922,
+      "paired_geomean_change_percent": -2.2005
+    },
+    "immediate_intersection_topology": {
+      "iterations_per_process": 2000,
+      "parent_total_ms": [
+        39.247953,
+        39.093784,
+        39.057466,
+        42.766792,
+        38.989711,
+        40.137393,
+        39.297090,
+        39.714922,
+        40.262174,
+        41.214938,
+        40.351558
+      ],
+      "candidate_total_ms": [
+        39.401833,
+        40.648648,
+        40.555774,
+        39.679004,
+        40.205108,
+        40.089545,
+        47.028639,
+        39.752689,
+        40.502287,
+        42.315973,
+        40.332469
+      ],
+      "parent_median_us_per_iteration": 19.857461,
+      "candidate_median_us_per_iteration": 20.166235,
+      "median_change_percent": 1.5549,
+      "paired_geomean_change_percent": 2.2757
+    },
+    "immediate_boolean_batch": {
+      "iterations_per_process": 500,
+      "parent_total_ms": [
+        52.568048,
+        55.483409,
+        52.083402,
+        57.067439,
+        52.530191,
+        51.555259,
+        52.409240,
+        53.055805,
+        53.450598,
+        53.407530,
+        52.984930
+      ],
+      "candidate_total_ms": [
+        52.233432,
+        53.078093,
+        57.072979,
+        53.656004,
+        54.109413,
+        53.447638,
+        53.649025,
+        56.496569,
+        55.878401,
+        53.268951,
+        52.996099
+      ],
+      "parent_median_us_per_iteration": 105.969860,
+      "candidate_median_us_per_iteration": 107.298050,
+      "median_change_percent": 1.2534,
+      "paired_geomean_change_percent": 1.5857
+    },
+    "lineage_partial_nonlinear_overlap": {
+      "iterations_per_process": 5000,
+      "parent_median_us_per_iteration": 1.374818,
+      "candidate_median_us_per_iteration": 1.383063,
+      "median_change_percent": 0.5997,
+      "paired_geomean_change_percent": 2.3108
+    },
+    "native_circle_dispatch": {
+      "iterations_per_process": 500,
+      "parent_median_us_per_iteration": 124.371756,
+      "candidate_median_us_per_iteration": 116.396864,
+      "median_change_percent": -6.4121,
+      "paired_geomean_change_percent": -4.0649
+    },
+    "interpretation": "strict evidence improves; topology and Boolean batching carry overlapping 1.3-2.3 percent policy/outcome costs; native circular dispatch improves; no exact checksum changed"
+  },
+  "complete_curve_path_instruction_control": {
+    "command": "seven interleaved perf stat -e instructions executions of the complete release curve_path benchmark",
+    "parent_instructions": [
+      1897285714,
+      1897299913,
+      1897302101,
+      1897304918,
+      1897298031,
+      1897296903,
+      1897284629
+    ],
+    "candidate_instructions": [
+      1902791131,
+      1902791172,
+      1902811600,
+      1902785742,
+      1902797309,
+      1902816933,
+      1902789683
+    ],
+    "parent_median": 1897298031,
+    "candidate_median": 1902791172,
+    "median_change_percent": 0.2895,
+    "paired_geomean_change_percent": 0.2900,
+    "interpretation": "the complete benchmark, including unchanged promotion, split, and cached replay rows, adds 0.29 percent instructions for explicit intersection certainty"
+  },
+  "pathological_curve_region2": {
+    "command": "seven interleaved parent/candidate release pathological_regions executions, reversing execution order on alternate pairs",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_boolean_ms": [
+      477.933826,
+      463.795957,
+      465.409717,
+      472.630220,
+      464.058169,
+      459.332404,
+      470.342278
+    ],
+    "candidate_boolean_ms": [
+      471.700674,
+      465.218600,
+      463.405454,
+      479.133564,
+      481.551058,
+      470.801516,
+      467.806092
+    ],
+    "parent_boolean_median_ms": 465.409717,
+    "candidate_boolean_median_ms": 470.801516,
+    "median_change_percent": 1.1585,
+    "paired_geomean_change_percent": 0.7966,
+    "parent_build_median_ms": 75.482004,
+    "candidate_build_median_ms": 72.353329,
+    "build_change_percent": -4.1449,
+    "parent_observed_rss_delta_mib_median": 34.3,
+    "candidate_observed_rss_delta_mib_median": 34.5,
+    "interpretation": "deterministic topology is identical; Boolean execution carries a sub-1-percent paired-geomean cost, construction improves 4.14 percent, and process-scale RSS moves 0.2 MiB"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "rectangle_union": {
+      "hypercurve": 4825.2,
+      "hypercurve_contours": 4786.0,
+      "hypercurve_loops": 5133.5,
+      "cavalier_contours": 881.8,
+      "i_overlay": 1029.5,
+      "geo": 1231.4,
+      "change_from_preceding_checkpoint_percent": 0.2618
+    },
+    "star64_intersection": {
+      "hypercurve": 35670.6,
+      "hypercurve_contours": 35484.4,
+      "hypercurve_loops": 98559.8,
+      "cavalier_contours": 27649.7,
+      "i_overlay": 34170.8,
+      "geo": 35461.5,
+      "change_from_preceding_checkpoint_percent": 0.0112
+    },
+    "star256_intersection": {
+      "hypercurve": 420175.8,
+      "hypercurve_contours": 292435.1,
+      "hypercurve_loops": 832746.6,
+      "cavalier_contours": 478044.9,
+      "i_overlay": 500210.7,
+      "geo": 512390.9,
+      "change_from_preceding_checkpoint_percent": -2.2638
+    },
+    "star1024_intersection": {
+      "hypercurve": 5070415.4,
+      "hypercurve_contours": 3867138.4,
+      "hypercurve_loops": 10645134.4,
+      "cavalier_contours": 19323095.0,
+      "i_overlay": 10321092.1,
+      "geo": 10011299.8,
+      "change_from_preceding_checkpoint_percent": -0.2393
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 19105.5,
+      "cavalier_contours": 918.1,
+      "change_from_preceding_checkpoint_percent": -1.9567
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29323182.3,
+      "curvo_heuristic": 8129.5,
+      "change_from_preceding_checkpoint_percent": -1.7020
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 920156.5,
+      "change_from_preceding_checkpoint_percent": -0.6244
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1539.3,
+      "curvo": 58.3,
+      "change_from_preceding_checkpoint_percent": -0.2075
+    },
+    "interpretation": "the touched 64-vertex lane is flat, 256 vertices improve 2.26 percent, 1024 vertices remain flat, and Hypercurve retains its larger-input exact polygon advantage"
+  },
+  "release_pathological_binary": {
+    "measurement": "matched release executables copied and stripped with strip --strip-all",
+    "parent_bytes": 5525648,
+    "candidate_bytes": 5498376,
+    "delta_bytes": -27272,
+    "delta_percent": -0.4936,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -32917,
+    "delta_from_frozen_baseline_percent": -0.5951,
+    "interpretation": "removing the obsolete strict evaluator path more than repays the public outcome wrappers"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-intersection-policy-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22495,
+    "edges": 38527,
+    "artifact": "/tmp/hypercurve-intersection-policy-callgraph/callgraph.json",
+    "public_and_raw_intersection_nodes_present": true,
+    "policy_aware_evaluator_nodes_present": true,
+    "obsolete_strict_rational_evaluator_node_absent": true
+  },
+  "caller_audit": {
+    "hypercurve_tests_benches_examples_and_fuzz": "all migrated and warning-clean",
+    "csgrs_all_feature_check": "pass",
+    "hyperbrep": "current branch already requires the earlier CurvePolicy-to-CurveContext and construction/query/measurement outcome migrations in addition to this intersection outcome migration",
+    "hypercircuit": "current branch already requires the earlier CurvePolicy-to-CurveContext and construction/query outcome migrations in addition to this intersection outcome migration",
+    "caller_cutover_deferred_until_remaining_phase_1_public_policy_surfaces_stabilize": true,
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "remaining_policy_audit": {
+    "public_circular_arc_directed_sweep_angle_is_a_strict_wrapper": true,
+    "public_curve_and_path_native_fragment_accessors_are_strict_wrappers": true,
+    "public_materialized_boundary_paths_is_a_strict_wrapper": true,
+    "curve_path_bezier_boundary_and_classify_point_retain_strict_only_cache_paths": true,
+    "spline_reconstruction_and_subcurve_policy_cut_is_incomplete": true,
+    "next_action": "make closed CurvePath2 boundary materialization and classification policy-explicit, then cut over directed sweep, materialized CurveRegion2 boundary paths, and spline subcurve/reconstruction"
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 258,
+    "all_integration_tests": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "generated_curve_region_boolean_corpus_seconds": 162.27,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  }
+}
