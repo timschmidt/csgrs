@@ -1,0 +1,49 @@
+[package]
+name = "hyperlattice"
+version = "0.6.1"
+edition = "2024"
+description = "A small Rust linear algebra library with hyperreal-backed scalar, vector, and matrix types."
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/hyperlattice"
+readme = "README.md"
+keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
+categories = ["mathematics"]
+
+[dependencies]
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+arbitrary = { version = "1", features = ["derive"], optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+
+[dev-dependencies]
+criterion = "0.7.0"
+proptest = "1.7.0"
+rug = { version = "1.30.0", default-features = false, features = ["float", "std"] }
+serde_json = "1.0.145"
+symbolica = "1.5.0"
+
+[features]
+default = []
+hyperreal-dispatch-trace = ["hyperreal/dispatch-trace"]
+arbitrary = ["dep:arbitrary"]
+serde = ["dep:serde", "hyperreal/serde"]
+
+[[example]]
+name = "readme_quickstart"
+
+[[bench]]
+name = "mathbench"
+harness = false
+
+[[bench]]
+name = "regression_sentinels"
+harness = false
+
+[[bench]]
+name = "retained_fuzz"
+harness = false
+
+[[bench]]
+name = "api_dispatch_trace"
+harness = false
+required-features = ["hyperreal-dispatch-trace"]
