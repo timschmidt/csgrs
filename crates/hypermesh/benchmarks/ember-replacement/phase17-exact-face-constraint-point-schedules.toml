@@ -1,0 +1,483 @@
+schema = 1
+date = "2026-08-04"
+status = "accepted"
+implementation = "c0d52f7b73f7dbf927e9eeea2ee646e9e58d4cfa"
+parent = "d103dcf8d484995343de580c38e6ea5eb7b532a9"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[design]
+scope = "exact face-constraint point schedules"
+endpoint_incidence_source = "authored closed-segment construction invariant"
+non_endpoint_incidence = "unchanged policy-aware exact predicate"
+scratch_lifetime = "one fallible reusable vector per changed source face"
+scratch_capacity = "projected face point count"
+degenerate_constraints_removed_before_schedule = true
+exact_sort_unchanged = true
+strict_terminal_approximation = false
+approximate_512_terminal_owner = "Hyperlimit"
+fixture_branch = false
+mesh_size_branch = false
+operation_branch = false
+topology_branch = false
+competitor_branch = false
+compatibility_surface = false
+alternate_engine = false
+rust_lines_added = 14
+rust_lines_removed = 1
+
+[perf_protocol]
+cpu = 11
+perf_processes = 3
+events = ["instructions:u", "branches:u"]
+primary = "retired instructions and branches"
+whole_process = true
+includes_one_fixture_import_and_pwn_prime = true
+same_compiler = true
+same_lockfiles = true
+paired_parent_executable = true
+benchmark_specific_code = false
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_8"
+workload = "all x100"
+parent_instructions = 1004931478
+current_instructions = 929187510
+instruction_movement_percent = -7.537227
+parent_branches = 183040375
+current_branches = 171973732
+branch_movement_percent = -6.046012
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_64"
+workload = "all x20"
+parent_instructions = 1705229624
+current_instructions = 1583118694
+instruction_movement_percent = -7.160967
+parent_branches = 312037033
+current_branches = 294944516
+branch_movement_percent = -5.477721
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all x5"
+parent_instructions = 3751762174
+current_instructions = 3510641996
+instruction_movement_percent = -6.426851
+parent_branches = 690381417
+current_branches = 654784180
+branch_movement_percent = -5.156170
+
+[[perf]]
+fixture = "overlapping_boxes"
+workload = "all x1000"
+parent_instructions = 5027744462
+current_instructions = 4716159792
+instruction_movement_percent = -6.197305
+parent_branches = 882117599
+current_branches = 837183845
+branch_movement_percent = -5.093851
+
+[[perf]]
+fixture = "clipped_voxel_torus_33"
+workload = "all x3"
+parent_instructions = 2908720768
+current_instructions = 2899121949
+instruction_movement_percent = -0.330001
+parent_branches = 498746407
+current_branches = 498088512
+branch_movement_percent = -0.131910
+
+[[perf]]
+fixture = "clipped_voxel_torus_65"
+workload = "all x1"
+parent_instructions = 4727570484
+current_instructions = 4721093152
+instruction_movement_percent = -0.137012
+parent_branches = 811363150
+current_branches = 811072902
+branch_movement_percent = -0.035773
+
+[[perf]]
+fixture = "subdivided_overlapping_boxes_3072_each"
+workload = "union x5"
+parent_instructions = 4445861799
+current_instructions = 4398720901
+instruction_movement_percent = -1.060332
+parent_branches = 770401491
+current_branches = 763410893
+branch_movement_percent = -0.907397
+
+[[perf]]
+fixture = "dense_coplanar_boxes_32"
+workload = "all x1"
+parent_instructions = 11867423054
+current_instructions = 11003524059
+instruction_movement_percent = -7.279584
+parent_branches = 2028346077
+current_branches = 1894405557
+branch_movement_percent = -6.603435
+
+[[perf]]
+fixture = "wide_rational_boxes_2048"
+workload = "union x5"
+parent_instructions = 14047214473
+current_instructions = 13919478158
+instruction_movement_percent = -0.909336
+parent_branches = 2563418095
+current_branches = 2537133583
+branch_movement_percent = -1.025370
+
+[[perf]]
+fixture = "yeahright-full-rotated"
+workload = "intersection x1"
+parent_instructions = 13661181260
+current_instructions = 13255354775
+instruction_movement_percent = -2.970654
+parent_branches = 2390074727
+current_branches = 2318691378
+branch_movement_percent = -2.986658
+
+[callgrind]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all x1"
+parent_total_instructions = 861194927
+current_total_instructions = 812872428
+total_movement_percent = -5.611099
+parent_build_surface_arrangement_inclusive = 631603902
+current_build_surface_arrangement_inclusive = 583280912
+arrangement_movement_percent = -7.650838
+parent_corefine_surface_inclusive = 418808194
+current_corefine_surface_inclusive = 370491357
+corefine_movement_percent = -11.536746
+parent_point_on_segment_calls = 49152
+current_point_on_segment_calls = 30720
+current_hypertri_cdt_inclusive_approx = 149250000
+artifact = "target/phase17-face-constraint-schedule-sparse-512.callgrind"
+
+[clock_protocol]
+cpu = 11
+adjacent_parent_current_pairs = 11
+order_alternated = true
+statistic = "independent medians plus median paired ratio"
+frequency_drift_observed = true
+primary_acceptance_signal = "retired work"
+
+[[clock]]
+shells = 8
+policy = "STRICT"
+parent_median_ns = 920053
+current_median_ns = 866615
+median_paired_movement_percent = -6.605706
+
+[[clock]]
+shells = 8
+policy = "APPROXIMATE_512"
+parent_median_ns = 891960
+current_median_ns = 845638
+median_paired_movement_percent = -5.670862
+
+[[clock]]
+shells = 64
+policy = "STRICT"
+parent_median_ns = 7133040
+current_median_ns = 6896463
+median_paired_movement_percent = -2.760934
+
+[[clock]]
+shells = 64
+policy = "APPROXIMATE_512"
+parent_median_ns = 6991122
+current_median_ns = 6692596
+median_paired_movement_percent = -4.731169
+
+[[clock]]
+shells = 512
+policy = "STRICT"
+parent_median_ns = 61071934
+current_median_ns = 58385682
+median_paired_movement_percent = -4.800191
+
+[[clock]]
+shells = 512
+policy = "APPROXIMATE_512"
+parent_median_ns = 61737636
+current_median_ns = 58843069
+median_paired_movement_percent = -3.922407
+
+[cgal_protocol]
+engine = "CGAL 6.0.3 EPECK"
+cgal_repetitions = 21
+exact_off = true
+cgal_records = 126
+all_cgal_rows_valid_closed_structurally_valid = true
+cgal_rows_reused_from_immediately_preceding_fresh_run = true
+
+[[cgal]]
+shells = 8
+hypermesh_strict_median_ns = 866615
+hypermesh_approximate_512_median_ns = 845638
+cgal_outside_median_ns = 287640
+cgal_inside_median_ns = 279381
+strict_to_cgal_outside = 3.012846
+approximate_512_to_cgal_outside = 2.939918
+
+[[cgal]]
+shells = 64
+hypermesh_strict_median_ns = 6896463
+hypermesh_approximate_512_median_ns = 6692596
+cgal_outside_median_ns = 2027341
+cgal_inside_median_ns = 2063618
+strict_to_cgal_outside = 3.401728
+approximate_512_to_cgal_outside = 3.301169
+
+[[cgal]]
+shells = 512
+hypermesh_strict_median_ns = 58385682
+hypermesh_approximate_512_median_ns = 58843069
+cgal_outside_median_ns = 18227912
+cgal_inside_median_ns = 18231192
+strict_to_cgal_outside = 3.203092
+approximate_512_to_cgal_outside = 3.228185
+
+[heap_protocol]
+executable = "large_mesh_kernel_heap_probe"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+selectors = 14
+policies = ["STRICT", "APPROXIMATE_512"]
+all_selectors_executed = true
+all_policy_rows_byte_identical = true
+all_certainty = "Certified"
+
+[[heap]]
+fixture = "boxes-3072"
+total_peak = 17053704
+kernel_peak = 16004178
+allocation_calls = 158745
+reallocation_calls = 788
+added_bytes = 27268118
+
+[[heap]]
+fixture = "boxes-3072-general"
+total_peak = 16660328
+kernel_peak = 16063730
+allocation_calls = 165640
+reallocation_calls = 788
+added_bytes = 28982822
+
+[[heap]]
+fixture = "dense-coplanar-16"
+total_peak = 19749525
+kernel_peak = 18719560
+allocation_calls = 480328
+reallocation_calls = 30845
+added_bytes = 81002090
+
+[[heap]]
+fixture = "dense-coplanar-32"
+total_peak = 78750901
+kernel_peak = 74724848
+allocation_calls = 1926828
+reallocation_calls = 123026
+added_bytes = 324327706
+
+[[heap]]
+fixture = "sparse-shells-512"
+total_peak = 15540315
+kernel_peak = 14578158
+allocation_calls = 463128
+reallocation_calls = 14099
+added_bytes = 50801084
+
+[[heap]]
+fixture = "wide-rational-64"
+total_peak = 22334270
+kernel_peak = 21716146
+allocation_calls = 648761
+reallocation_calls = 4903
+added_bytes = 48724182
+
+[[heap]]
+fixture = "wide-rational-512"
+total_peak = 23223527
+kernel_peak = 22596194
+allocation_calls = 1651394
+reallocation_calls = 39812
+added_bytes = 127939350
+
+[[heap]]
+fixture = "wide-rational-2048"
+total_peak = 31898360
+kernel_peak = 31234658
+allocation_calls = 1923383
+reallocation_calls = 221132
+added_bytes = 432389422
+
+[[heap]]
+fixture = "voxel-torus-33"
+total_peak = 17657096
+kernel_peak = 16589238
+allocation_calls = 179307
+reallocation_calls = 925
+added_bytes = 34732040
+
+[[heap]]
+fixture = "voxel-torus-65"
+total_peak = 70860620
+kernel_peak = 66042050
+allocation_calls = 691939
+reallocation_calls = 1776
+added_bytes = 150751435
+
+[[heap]]
+fixture = "yeahright"
+total_peak = 5971801
+kernel_peak = 5054548
+allocation_calls = 209892
+reallocation_calls = 10611
+added_bytes = 13660389
+
+[[heap]]
+fixture = "yeahright-4"
+total_peak = 22494285
+kernel_peak = 18855430
+allocation_calls = 878096
+reallocation_calls = 38026
+added_bytes = 53598754
+
+[[heap]]
+fixture = "yeahright-8"
+total_peak = 86054229
+kernel_peak = 71528974
+allocation_calls = 3869544
+reallocation_calls = 146205
+added_bytes = 217024316
+
+[[heap]]
+fixture = "yeahright-full-rotated"
+total_peak = 165353622
+kernel_peak = 158230228
+allocation_calls = 14972165
+reallocation_calls = 2232013
+added_bytes = 834548872
+
+[[heap_pair]]
+fixture = "sparse-shells-512"
+parent_total_peak = 15540295
+current_total_peak = 15540315
+parent_kernel_peak = 14578138
+current_kernel_peak = 14578158
+parent_allocations = 470296
+current_allocations = 463128
+parent_added_bytes = 50905532
+current_added_bytes = 50801084
+
+[[heap_pair]]
+fixture = "dense-coplanar-32"
+parent_total_peak = 78750901
+current_total_peak = 78750901
+parent_kernel_peak = 74724848
+current_kernel_peak = 74724848
+parent_allocations = 2049708
+current_allocations = 1926828
+parent_added_bytes = 326293786
+current_added_bytes = 324327706
+
+[[heap_pair]]
+fixture = "wide-rational-2048"
+parent_total_peak = 31898360
+current_total_peak = 31898360
+parent_kernel_peak = 31234658
+current_kernel_peak = 31234658
+parent_allocations = 1947027
+current_allocations = 1923383
+parent_reallocations = 223172
+current_reallocations = 221132
+parent_added_bytes = 438743478
+current_added_bytes = 432389422
+
+[[heap_pair]]
+fixture = "yeahright-full-rotated"
+parent_total_peak = 165381598
+current_total_peak = 165353622
+parent_kernel_peak = 158258204
+current_kernel_peak = 158230228
+parent_allocations = 15558650
+current_allocations = 14972165
+parent_reallocations = 2255915
+current_reallocations = 2232013
+parent_added_bytes = 863068648
+current_added_bytes = 834548872
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_text = 1984718
+current_native_text = 1984454
+parent_wasm_oz = 1408990
+current_wasm_oz = 1409155
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_text = 1987862
+current_native_text = 1987598
+parent_wasm_oz = 1410857
+current_wasm_oz = 1411023
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_text = 1080047
+current_native_text = 1080247
+parent_wasm_oz = 674493
+current_wasm_oz = 674595
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_text = 1081003
+current_native_text = 1081211
+parent_wasm_oz = 674902
+current_wasm_oz = 675008
+
+[callgraph.production]
+root = "workspace"
+crates = ["hypermesh", "hyperreal", "hyperlimit", "hypertri", "hyperlattice"]
+include_examples = false
+include_tests = false
+nodes = 14908
+edges = 24870
+artifact = "target/callgraph-hypermesh-face-constraint-schedule-production/callgraph.json"
+
+[callgraph.evidence]
+include_examples = true
+include_tests = true
+nodes = 17190
+edges = 28097
+artifact = "target/callgraph-hypermesh-face-constraint-schedule/callgraph.json"
+
+[validation]
+default_executed_tests = 185
+all_feature_executed_tests = 186
+documented_ignored_tests = 6
+focused_surface_tests = 33
+clippy_all_targets_all_features_deny_warnings = true
+no_default_check = true
+rustdoc_deny_warnings = true
+all_fuzz_bins_check = true
+all_bench_targets_build = true
+format_check = true
+diff_check = true
+size_harness = true
+callgraphs = true
+large_heap_policy_pairs = 14
+
+[open]
+phase_17 = true
+phase_18 = true
+cgal_parity = true
+corefine_surface_inclusive_instructions = 370491357
+hypertri_cdt_inclusive_instructions_approx = 149250000
+real_world_and_deeper_symbolic_corpus = true
+stage_specific_heap_attribution = true

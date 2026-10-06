@@ -1,0 +1,364 @@
+schema = 1
+status = "retained-checkpoint-phase-11-17-and-18-open"
+captured_at = "2026-08-03"
+checkpoint = "pathological-contact-and-high-genus-scaling-corpus"
+implementation_commit = "5992d713812b8e3ff6e898acc08fb897e98f4f48"
+corpus_commit = "403ee0442828e3858ea95bad000485f798ab8004"
+previous_evidence_commit = "6e7b7107d7f054d8452a4e107269a3a408a5c227"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+production_boolean_engine_count = 1
+production_module_changed = false
+dependency_changed = false
+cargo_feature_changed = false
+compatibility_shim = false
+benchmark_engine_dispatch = false
+fixture_coordinate_or_triangle_count_dispatch_in_engine = false
+hypercurve_edited = false
+hypersolve_edited = false
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false
+cgal_parity = false
+
+[corpus]
+manifest_records_before = 23
+manifest_records_after = 29
+new_lower_dimensional_contact_cases = 3
+new_high_genus_scale_points = 3
+new_permanent_fuzz_seeds = 3
+new_large_heap_selectors = 2
+policies = ["STRICT", "APPROXIMATE_512"]
+all_successful_rows_certainty = "Certified"
+approximate_512_terminal_consumed = false
+lower_dimensional_outputs_cgal_common_contract = false
+lower_dimensional_reason = "exact union or difference may be a closed PWN with nonmanifold edge or vertex incidence"
+
+[[contact_case]]
+id = "edge_touching_boxes"
+topology = ["edge-contact", "zero-volume-intersection", "nonmanifold-output"]
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+policies = ["STRICT", "APPROXIMATE_512"]
+outputs_per_policy = 5
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/edge_touching_boxes"
+
+[[contact_case]]
+id = "vertex_touching_boxes"
+topology = ["vertex-contact", "zero-volume-intersection", "nonmanifold-output"]
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+policies = ["STRICT", "APPROXIMATE_512"]
+outputs_per_policy = 5
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/vertex_touching_boxes"
+
+[[contact_case]]
+id = "face_tangent_containment_boxes"
+topology = ["tangent-containment", "partial-face-contact", "coplanar-overlay"]
+expected_volumes = [64.0, 8.0, 56.0, 0.0, 56.0]
+policies = ["STRICT", "APPROXIMATE_512"]
+outputs_per_policy = 5
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/face_tangent_containment_boxes"
+
+[torus_generator]
+kind = "indexed boundary of an exact rectangular voxel annulus clipped at its x symmetry plane"
+outer_extents = [9, 33, 65]
+wall_rule = "(outer - 1) / 4"
+depth_rule = "wall"
+triangle_formula = "4*(outer^2-inner^2) + 8*(outer+inner)*depth"
+coordinate_class = "integer vertices plus one exact binary64 half-integer clipping plane"
+operation = "intersection"
+special_engine_path = false
+
+[[torus_scale]]
+id = "clipped_voxel_torus_9"
+size = "medium"
+outer = 9
+input_vertices_left = 224
+input_triangles_left = 448
+input_triangles_right = 12
+input_triangles_total = 460
+output_vertices = 148
+output_triangles = 292
+expected_volume = 56.0
+default_competitive_suite = true
+heap_selector = false
+
+[[torus_scale]]
+id = "clipped_voxel_torus_33"
+size = "large"
+outer = 33
+input_vertices_left = 3200
+input_triangles_left = 6400
+input_triangles_right = 12
+input_triangles_total = 6412
+output_vertices = 1730
+output_triangles = 3456
+expected_volume = 3200.0
+default_competitive_suite = false
+heap_selector = "voxel-torus-33"
+
+[[torus_scale]]
+id = "clipped_voxel_torus_65"
+size = "xl"
+outer = 65
+input_vertices_left = 12544
+input_triangles_left = 25088
+input_triangles_right = 12
+input_triangles_total = 25100
+output_vertices = 6532
+output_triangles = 13060
+expected_volume = 25088.0
+default_competitive_suite = false
+heap_selector = "voxel-torus-65"
+
+[exact_off]
+exporter = "examples/export_cgal_exact_off.rs"
+scalar_encoding = "reduced numerator/denominator from Real::exact_rational"
+rounds_through_decimal_approximation = false
+cgal_version = "6.0.3"
+cgal_kernel = "Exact_predicates_exact_constructions_kernel"
+
+[[exact_off.asset]]
+fixture = "clipped_voxel_torus_9"
+left_sha256 = "cbdb30250dc6bbd07f5978a5962d54b19083b21c90ca927993c70aa656cfa257"
+right_sha256 = "ad5e42da04accef93c6b570cbc0b8a2581b6e14cccb3e9efc8d81eac02a8ba37"
+
+[[exact_off.asset]]
+fixture = "clipped_voxel_torus_33"
+left_sha256 = "e957a01081b741947d3ce71956ece30f7863f6be26d4b798dd0e397b68546a99"
+right_sha256 = "c3983115300d1fc4ed2b96c73ce254816183b8b9e922495eab159734f5e96073"
+
+[[exact_off.asset]]
+fixture = "clipped_voxel_torus_65"
+left_sha256 = "1669686d993366a7f0c2da5bb5ded0ed3672f039f5ce76e3eb2edb62042cf85b"
+right_sha256 = "19e5da2af93b0fa83365b4b4cd7de19ec0a0e07b648c25b82a1b5e22a04477a7"
+
+[runtime_protocol]
+operation = "intersection"
+hypermesh_executable = "competitive_arrangement_probe"
+hypermesh_boundary = "repeated production boolean calls after exact input import and policy-qualified PWN priming"
+cgal_executable = "hypermesh_cgal_epeck"
+cgal_boundary = "corefine_and_compute_boolean_operations with input copy outside timing"
+threads = 1
+pinned_cpu = 11
+hypermesh_repetitions = [101, 31, 11]
+cgal_repetitions_each = 21
+cgal_statistic = "median"
+hypermesh_statistic = "aggregate elapsed divided by repetitions"
+separate_cold_single_call = true
+
+[[runtime]]
+fixture = "clipped_voxel_torus_9"
+input_triangles = 460
+hypermesh_strict_warm_ns = 9745376
+hypermesh_approximate_512_warm_ns = 9835960
+hypermesh_strict_cold_ns = 10328971
+cgal_cold_ns = 837152
+cgal_min_ns = 483887
+cgal_median_ns = 492986
+cgal_max_ns = 659125
+strict_to_cgal_median = 19.768058
+approximate_512_to_cgal_median = 19.951804
+
+[[runtime]]
+fixture = "clipped_voxel_torus_33"
+input_triangles = 6412
+hypermesh_strict_warm_ns = 127903436
+hypermesh_approximate_512_warm_ns = 128980184
+hypermesh_strict_cold_ns = 130908381
+cgal_cold_ns = 4195242
+cgal_min_ns = 3459303
+cgal_median_ns = 3503579
+cgal_max_ns = 4724596
+strict_to_cgal_median = 36.506508
+approximate_512_to_cgal_median = 36.813836
+
+[[runtime]]
+fixture = "clipped_voxel_torus_65"
+input_triangles = 25100
+hypermesh_strict_warm_ns = 602394576
+hypermesh_approximate_512_warm_ns = 596549982
+hypermesh_strict_cold_ns = 605278545
+cgal_cold_ns = 13525462
+cgal_min_ns = 11472763
+cgal_median_ns = 11838708
+cgal_max_ns = 13665292
+strict_to_cgal_median = 50.883473
+approximate_512_to_cgal_median = 50.389788
+
+[hardware_counters]
+executable = "large_mesh_heap_probe"
+policy = "STRICT"
+repetitions = 11
+counters_include_process_fixture_preparation = true
+
+[hardware_counters.large]
+fixture = "clipped_voxel_torus_33"
+task_clock_ms = 149.71
+cycles = 596102795
+instructions = 1726236583
+branches = 308763005
+branch_misses = 2092835
+cache_misses = 1259742
+
+[hardware_counters.xl]
+fixture = "clipped_voxel_torus_65"
+task_clock_ms = 702.32
+cycles = 2822459413
+instructions = 8310466956
+branches = 1434075833
+branch_misses = 8711194
+cache_misses = 6421800
+
+[hardware_counters.scaling]
+input_triangle_growth = 3.914535
+task_clock_growth = 4.691203
+instruction_growth = 4.814211
+branch_growth = 4.644584
+branch_miss_growth = 4.162389
+cache_miss_growth = 5.097710
+sublinear_or_linear = false
+
+[heap_protocol]
+executable = "large_mesh_kernel_heap_probe"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+boundary = "prepared input versus one production Boolean call versus output/input drop"
+serialized = true
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_byte_identical = true
+
+[heap.large]
+fixture = "clipped_voxel_torus_33"
+input_triangles = 6412
+process_baseline_live_bytes = 634
+input_live_bytes = 657426
+input_payload_bytes = 656792
+boolean_peak_live_bytes = 17045982
+kernel_peak_incremental_bytes = 16388556
+post_boolean_incremental_bytes = 418208
+output_live_payload_bytes = 375368
+input_fact_growth_bytes = 42840
+post_input_drop_incremental_bytes = 83616
+allocation_calls = 305956
+deallocation_calls = 305298
+reallocation_calls = 37483
+added_bytes = 93088982
+removed_bytes = 92670774
+
+[heap.xl]
+fixture = "clipped_voxel_torus_65"
+input_triangles = 25100
+process_baseline_live_bytes = 634
+input_live_bytes = 3211338
+input_payload_bytes = 3210704
+boolean_peak_live_bytes = 68563466
+kernel_peak_incremental_bytes = 65352128
+post_boolean_incremental_bytes = 2322776
+output_live_payload_bytes = 1623160
+input_fact_growth_bytes = 699616
+post_input_drop_incremental_bytes = 166368
+allocation_calls = 1315382
+deallocation_calls = 1302385
+reallocation_calls = 152323
+added_bytes = 386792377
+removed_bytes = 384469601
+
+[heap.scaling]
+input_triangle_growth = 3.914535
+input_payload_growth = 4.888464
+kernel_peak_growth = 3.987668
+output_triangle_growth = 3.778935
+input_fact_growth = 16.330906
+allocation_call_growth = 4.299252
+reallocation_call_growth = 4.063789
+added_byte_growth = 4.155082
+kernel_peak_bytes_per_triangle = [2555.919526, 2603.670438]
+approximately_linear_peak = true
+fact_lifetime_cliff_open = true
+
+[process_rss]
+metric = "fresh-process maximum RSS from /usr/bin/time -v"
+hypermesh_scope = "deterministic fixture generation, exact import, PWN priming, and one Boolean"
+cgal_scope = "exact OFF read, common-contract validation, and one Boolean"
+
+[process_rss.large]
+hypermesh_kib = 21304
+cgal_kib = 9556
+hypermesh_to_cgal = 2.229385
+
+[process_rss.xl]
+hypermesh_kib = 73716
+cgal_kib = 20020
+hypermesh_to_cgal = 3.682118
+
+[size]
+baseline = "phase17-fused-exact-construction-certified-local-flips"
+production_changed = false
+default_consumers_byte_identical = true
+release_general_native_text_bytes = 2033026
+release_general_wasm_opt_oz_bytes = 1441079
+release_immediate_native_text_bytes = 2036178
+release_immediate_wasm_opt_oz_bytes = 1442929
+size_general_native_text_bytes = 1077231
+size_general_wasm_opt_oz_bytes = 675045
+size_immediate_native_text_bytes = 1078179
+size_immediate_wasm_opt_oz_bytes = 675453
+
+[rejected.orient3_affine_expansion]
+description = "expanded det(a-d,b-d,c-d) into 24 direct triple products to avoid nine retained coordinate differences"
+correctness_tests_passed = true
+candidate_task_clock_ms = 3855.45
+candidate_instructions = 43946629505
+candidate_rss_kib = 192168
+retained_task_clock_ms = 3380.23
+retained_instructions = 36921998673
+retained_rss_kib = 192376
+candidate_instruction_growth_percent = 19.026
+candidate_runtime_loss_percent = 14.058807
+retained = false
+reason = "Hyperreal gains more from the reusable linear difference facts than from a larger flat polynomial"
+
+[validation]
+unit = 112
+boolean = 8
+competitive_executed = 6
+competitive_ignored = 6
+manifest = 9
+intersection = 2
+policy = 9
+readme = 2
+executed_total = 148
+failed = 0
+release_probe_builds = true
+large_xl_heap_executions = 4
+permanent_fuzz_seed_executions = 3
+fuzz_seed_lsan_disabled_for_ptrace_environment = true
+cgal_outputs_valid_closed_and_volume_checked = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_bins_check = true
+fmt = true
+diff_check = true
+default_size_harness = true
+
+[footprint]
+implementation_insertions = 699
+implementation_deletions = 123
+production_rust_modules_changed = 0
+cargo_metadata_changed = false
+native_or_wasm_consumer_code_changed = false
+
+[open]
+real_world_external_pathologies = true
+additional_dense_coplanar_scaling_family = true
+fixed_coordinate_complexity_scaling_sibling = true
+stage_specific_heap_attribution = true
+torus_runtime_slope = true
+torus_input_fact_lifetime_cliff = true
+per_case_cgal_runtime_parity = true
+per_case_cgal_heap_rss_parity = true
+linked_size_recovery = true
+phase_18_completion_audit = true

@@ -1,0 +1,369 @@
+schema = 1
+date = "2026-08-05"
+status = "correctness, runtime, heap, and size checkpoint; phases 17 and 18 open"
+checkpoint = "flat-contribution-cell-ownership"
+implementation_parent = "1b253caff43ba1c9492cdbc725a0cc6bf64b5881"
+implementation_commit = "a59bc843b2d85338af1c6a6c0ec584a3ab7b4013"
+comparison_parent = "d17f1ec286b9aad0df9c45b6f501d503fc598d95"
+hyperreal_commit = "492882c16ec6f649051285a5e215371750b3c967"
+hyperlattice_commit = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit_commit = "b0418bddff50183fa782e5caa6da6974a2b969a1"
+hypertri_commit = "210a66c01f1f53f7ffb035a9643d57f81ee19171"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+one_boolean_engine = true
+one_arrangement_many_outputs = true
+compatibility_shim = false
+dual_engine = false
+fixture_dispatch = false
+triangle_count_dispatch = false
+operation_dispatch = false
+result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+hypercurve_hypersolve_excluded = true
+
+[ownership]
+canonical_sheet_side_cell_owner = "CellDisjointSets::into_cells flat Vec<u32>"
+temporary_surface_sheet_owner_removed = true
+repeated_triangle_per_sheet_removed = true
+repeated_bundle_id_per_sheet_removed = true
+bundle_lookup_reuses_monotone_contribution_offsets = true
+single_sheet_outer_cells_are_direct = true
+multi_sheet_directed_balance_preserved = true
+aggregate_transition_reused_for_one_contribution_bundles = true
+independent_sheet_transitions_only_for_coincident_contributions = true
+seed_contribution_row_borrowed_across_direction_attempts = true
+
+[exactness]
+strict_approximate_terminal = false
+approximate_512_terminal_owner = "Hyperlimit"
+aggregate_certainty_preserved = true
+coincident_authored_sheets_preserved = true
+retained_component_balance_preserved = true
+complete_exact_decline_preserved = true
+typed_malformed_topology_failures_preserved = true
+
+[validation]
+all_feature_executed_tests = 214
+documented_ignored_tests = 7
+failures = 0
+public_dense_crossing_both_policies = true
+manifest_tests = 17
+manifest_fixture_count = 59
+no_default_features_check = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_no_deps = true
+fmt_check = true
+diff_check = true
+asan = true
+lsan = false
+lsan_reason = "managed environment prevents final ptrace scan"
+
+[fuzz]
+target = "boolean_pipeline"
+seed_files_discovered = 2082
+executions = 3711
+seconds = 31
+maximum_rss_mib = 490
+result = "pass"
+
+[performance_protocol]
+workload = "one retained arrangement materializing union, intersection, difference, reverse difference"
+iterations = 1000
+repetitions = 5
+policy = "STRICT"
+events = ["instructions:u", "branches:u"]
+counter_authority = true
+wall_clock_frequency_sensitive = true
+
+[[performance]]
+fixture = "crossing_octahedra"
+parent_instructions = 2878901557
+current_instructions = 2856327195
+instruction_change_percent = -0.784131
+parent_branches = 487625739
+current_branches = 483882610
+branch_change_percent = -0.767623
+d17_instructions = 2925008334
+d17_instruction_change_percent = -2.348066
+d17_branches = 496036275
+d17_branch_change_percent = -2.450156
+wall_ns_minimum = 285857
+wall_ns_median = 289883
+wall_ns_maximum = 292540
+
+[[performance]]
+fixture = "overlapping_boxes"
+parent_instructions = 3650113562
+current_instructions = 3627124212
+instruction_change_percent = -0.629826
+parent_branches = 619748164
+current_branches = 616389691
+branch_change_percent = -0.541909
+d17_instructions = 3811847729
+d17_instruction_change_percent = -4.846036
+d17_branches = 648564823
+d17_branch_change_percent = -4.960974
+wall_ns_minimum = 364903
+wall_ns_median = 368025
+wall_ns_maximum = 378946
+
+[[performance]]
+fixture = "affine_boxes"
+parent_instructions = 6981825352
+current_instructions = 6970739480
+instruction_change_percent = -0.158782
+parent_branches = 1187730893
+current_branches = 1187361607
+branch_change_percent = -0.031092
+d17_instructions = 6897183448
+d17_instruction_change_percent = 1.066465
+d17_branches = 1180053625
+d17_branch_change_percent = 0.619292
+wall_ns_minimum = 702595
+wall_ns_median = 718268
+wall_ns_maximum = 747061
+
+[[performance]]
+fixture = "identical_boxes"
+parent_instructions = 3767044285
+current_instructions = 3764607382
+instruction_change_percent = -0.064690
+parent_branches = 639690479
+current_branches = 639555510
+branch_change_percent = -0.021099
+d17_instructions = 3908061655
+d17_instruction_change_percent = -3.670727
+d17_branches = 665157793
+d17_branch_change_percent = -3.849054
+wall_ns_minimum = 368535
+wall_ns_median = 369320
+wall_ns_maximum = 378278
+
+[competitive]
+engine = "CGAL 6.0.3 EPECK"
+exact_rational_off = true
+copy_timing = "outside"
+outputs_independently_validated = true
+all_runtime_gaps_open = true
+clock_rows_frequency_sensitive = true
+crossing_cgal_median_ns = 117702
+crossing_hypermesh_median_ns = 289883
+crossing_ratio = 2.462858
+overlapping_cgal_median_ns = 130086.5
+overlapping_hypermesh_median_ns = 368025
+overlapping_ratio = 2.829079
+affine_cgal_median_ns = 360265
+affine_hypermesh_median_ns = 718268
+affine_ratio = 1.993721
+
+[historical_hard_case]
+fixture = "yeahright_full_resolution_rotated_intersection"
+input_triangles_left = 11894
+input_triangles_right = 11894
+operation = "intersection"
+expected_triangles = 0
+certainty = "Certified"
+strict_ns = 984904948
+strict_maximum_rss_kib = 70716
+approximate_512_ns = 984765399
+approximate_512_maximum_rss_kib = 70660
+instructions = 10342992427
+branches = 1762017725
+branch_misses = 24135762
+parent_instructions = 10355874218
+parent_branches = 1764194965
+instruction_change_percent = -0.124391
+branch_change_percent = -0.123413
+d17_instructions = 10749362045
+d17_branches = 1827527405
+d17_instruction_change_percent = -3.780407
+d17_branch_change_percent = -3.584607
+historical_ember_seconds = 3312.66
+historical_ember_maximum_rss_kib = 329352
+speedup_over_ember = 3363.908
+rss_reduction_from_ember_percent = 78.545750
+historical_cgal_seconds = 0.09
+historical_cgal_maximum_rss_kib = 15516
+runtime_ratio_to_cgal = 10.941838
+rss_ratio_to_cgal = 4.554009
+cgal_gaps_open = true
+
+[[heap]]
+fixture = "subdivided_boxes_3072_each_general_path"
+input_triangles = 6144
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_identical = true
+parent_incremental_peak_bytes = 12132042
+current_incremental_peak_bytes = 12132042
+parent_allocation_calls = 35732
+current_allocation_calls = 35729
+parent_added_bytes = 18182830
+current_added_bytes = 17985166
+added_byte_change_percent = -1.087092
+certainty = "Certified"
+
+[[heap]]
+fixture = "dense_coplanar_boxes_32"
+input_triangles = 24576
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_identical = true
+parent_incremental_peak_bytes = 55759202
+current_incremental_peak_bytes = 55759202
+parent_allocation_calls = 926777
+current_allocation_calls = 926776
+parent_added_bytes = 221799367
+current_added_bytes = 220619719
+added_byte_change_percent = -0.531854
+certainty = "Certified"
+
+[[heap]]
+fixture = "transverse_self_pwn_clusters_512"
+input_triangles = 4100
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_identical = true
+parent_incremental_peak_bytes = 11451636
+current_incremental_peak_bytes = 11451636
+parent_allocation_calls = 197043
+current_allocation_calls = 197040
+parent_added_bytes = 31255206
+current_added_bytes = 30927366
+added_byte_change_percent = -1.048913
+certainty = "Certified"
+
+[[heap]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+input_triangles = 23788
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_identical = true
+parent_incremental_peak_bytes = 54471340
+current_incremental_peak_bytes = 53217804
+peak_change_percent = -2.301276
+parent_allocation_calls = 10804022
+current_allocation_calls = 10804019
+parent_added_bytes = 611301578
+current_added_bytes = 610048042
+added_byte_change_percent = -0.205060
+certainty = "Certified"
+
+[source_size]
+parent_tokei_code_lines = 20300
+current_tokei_code_lines = 20351
+change_lines = 51
+d17_tokei_code_lines = 19314
+d17_change_lines = 1037
+d17_change_percent = 5.369162
+
+[[linked_size]]
+features = "default"
+profile = "release"
+consumer = "general"
+parent_native_text_bytes = 2025170
+current_native_text_bytes = 2024242
+native_change_bytes = -928
+parent_optimized_wasm_bytes = 1442248
+current_optimized_wasm_bytes = 1441682
+wasm_change_bytes = -566
+d17_native_text_bytes = 2008250
+d17_native_change_percent = 0.796315
+d17_optimized_wasm_bytes = 1424419
+d17_wasm_change_percent = 1.211933
+
+[[linked_size]]
+features = "all"
+profile = "release"
+consumer = "general"
+parent_native_text_bytes = 2160379
+current_native_text_bytes = 2159459
+native_change_bytes = -920
+parent_optimized_wasm_bytes = 1517400
+current_optimized_wasm_bytes = 1516808
+wasm_change_bytes = -592
+d17_native_text_bytes = 2144019
+d17_native_change_percent = 0.720143
+d17_optimized_wasm_bytes = 1499118
+d17_wasm_change_percent = 1.180027
+
+[[linked_size]]
+features = "default"
+profile = "size"
+consumer = "general"
+parent_native_text_bytes = 1116183
+current_native_text_bytes = 1115895
+native_change_bytes = -288
+parent_optimized_wasm_bytes = 700085
+current_optimized_wasm_bytes = 699921
+wasm_change_bytes = -164
+d17_native_text_bytes = 1099983
+d17_native_change_percent = 1.446568
+d17_optimized_wasm_bytes = 687434
+d17_wasm_change_percent = 1.816465
+
+[[linked_size]]
+features = "all"
+profile = "size"
+consumer = "general"
+parent_native_text_bytes = 1118247
+current_native_text_bytes = 1117975
+native_change_bytes = -272
+parent_optimized_wasm_bytes = 700018
+current_optimized_wasm_bytes = 699916
+wasm_change_bytes = -102
+d17_native_text_bytes = 1102319
+d17_native_change_percent = 1.420279
+d17_optimized_wasm_bytes = 687245
+d17_wasm_change_percent = 1.843738
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+artifact = "target/callgraph-phase18-flat-sheet-owner-production/callgraph.json"
+nodes = 15460
+edges = 25840
+surface_sheet_nodes = 0
+ember_nodes = 0
+segment_trace_or_local_bsp_nodes = 0
+hypermesh_hypertri_to_hyperlimit_edges = 49
+build_to_surface_cell_routes = 1
+
+[callgraph.all_evidence]
+artifact = "target/callgraph-phase18-flat-sheet-owner-all/callgraph.json"
+include_tests = true
+include_examples = true
+include_benches = true
+include_fuzz = true
+nodes = 21863
+edges = 35352
+
+[rejected]
+compact_radial_flags = "removed after broad-control regressions"
+multiplicity_schedule = "removed after neutral or regressing broad controls"
+benchmark_special_cases = false
+
+[open]
+phase_17_complete = false
+phase_18_complete = false
+cgal_runtime_parity = false
+cgal_full_case_rss_parity = false
+affine_instruction_regression_vs_d17 = true
+ordinary_large_peak_recovery_vs_d17 = true
+dense_query_allocation_recovery = true
+source_native_wasm_recovery_vs_d17 = true
+real_world_generated_pathology_corpus = true
+fuzz_mutation_source_audit = true
+final_release_audit = true
+
+[conclusion]
+correctness_structure_retained = true
+runtime_improves_on_all_four_small_controls = true
+cumulative_heap_traffic_improves_on_all_large_controls = true
+full_case_peak_improves = true
+all_linked_size_rows_improve = true
+benchmark_special_cases = false
+reason = "One flat contribution side-cell owner and conditional sheet-transition storage reduce work, traffic, peak heap, and linked size while preserving every authored sheet and complete exact policy path."

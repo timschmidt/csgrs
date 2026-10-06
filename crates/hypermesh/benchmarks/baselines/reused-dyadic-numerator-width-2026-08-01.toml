@@ -1,0 +1,347 @@
+date = "2026-08-01"
+title = "reused dyadic numerator width"
+hypermesh_base_commit = "ea618ad6a69bce042927788dd18c8106ecff07b6"
+hyperreal_parent_commit = "8d6eafdbddbb847fcd5d6a1acc4d74e91b3f84ea"
+implementation_commit = "a1c524cb46da6d622d324af376cdd7b37a9aba1f"
+retained = true
+
+[change]
+crate = "hyperreal"
+files_changed = 1
+production_insertions = 2
+production_deletions = 3
+test_insertions = 0
+public_api_changed = false
+compatibility_shim_added = false
+allocations_added = false
+caches_added = false
+carriers_added = false
+predicate_changed = false
+terminal_policy_changed = false
+topology_changed = false
+
+[invariant]
+numerator_is_immutable_between_width_and_digit_read = true
+width_was_already_computed_for_exponent = true
+old_high_word_helper_recomputed_same_width = true
+new_high_word_helper_receives_exact_existing_width = true
+round_to_odd_logic_changed = false
+scaling_logic_changed = false
+single_private_high_word_call_site = true
+
+[paths]
+lossy_normal_dyadic_covered = true
+exact_normal_dyadic_covered = true
+enclosure_normal_dyadic_covered = true
+wide_rounding_covered_by_randomized_gmp_test = true
+zero_rejected_before_normal_path = true
+subnormal_path_unchanged = true
+overflow_and_underflow_paths_unchanged = true
+non_dyadic_path_unchanged = true
+internally_unreduced_path_unchanged = true
+general_approximation_path_unchanged = true
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+binary64_export_is_non_certifying = true
+predicate_dispatch_changed = false
+equality_dispatch_changed = false
+certainty_changed = false
+both_policy_outputs_certified = true
+both_policy_topology_identical = true
+
+[cpu_method]
+measurement_order = "parent,candidate,candidate,parent"
+logical_cpu = 9
+fixture_built_once_per_process = true
+complete_immediate_union_repeated = true
+instructions_are_primary_retention_gate = true
+task_clock_and_cycles_are_secondary = true
+branch_and_cache_counters_include_randomized_fixture_paths = true
+host_load_was_variable = true
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+policy = "STRICT"
+repetitions = 501
+parent_task_ms_per_operation = 10.943323353
+candidate_task_ms_per_operation = 10.955608782
+task_movement_percent = 0.112264
+cycles_movement_percent = 0.122589
+instructions_movement_percent = -0.231947
+branches_movement_percent = 0.001459
+branch_misses_movement_percent = 0.284856
+cache_misses_movement_percent = 5.485122
+
+[[serialized_cpu]]
+fixture = "generated_projective"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+policy = "APPROXIMATE_512"
+repetitions = 501
+parent_task_ms_per_operation = 10.961257485
+candidate_task_ms_per_operation = 10.898572854
+task_movement_percent = -0.571874
+cycles_movement_percent = -0.542523
+instructions_movement_percent = -0.232209
+branches_movement_percent = 0.001243
+branch_misses_movement_percent = 0.641377
+cache_misses_movement_percent = 6.508515
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+policy = "STRICT"
+repetitions = 51
+parent_task_ms_per_operation = 35.065882353
+candidate_task_ms_per_operation = 34.870392157
+task_movement_percent = -0.557494
+cycles_movement_percent = -0.739151
+instructions_movement_percent = -0.113408
+branches_movement_percent = 0.000265
+branch_misses_movement_percent = -0.096066
+cache_misses_movement_percent = -0.553899
+
+[[serialized_cpu]]
+fixture = "retained_arrangement"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+policy = "APPROXIMATE_512"
+repetitions = 51
+parent_task_ms_per_operation = 35.271862745
+candidate_task_ms_per_operation = 34.907647059
+task_movement_percent = -1.032596
+cycles_movement_percent = -0.992910
+instructions_movement_percent = -0.108688
+branches_movement_percent = 0.005263
+branch_misses_movement_percent = -0.190529
+cache_misses_movement_percent = -1.911578
+
+[[serialized_cpu]]
+fixture = "subdivided_boxes"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+policy = "STRICT"
+repetitions = 10001
+parent_task_ms_per_operation = 1.382903210
+candidate_task_ms_per_operation = 1.392671733
+task_movement_percent = 0.706378
+cycles_movement_percent = 0.551332
+instructions_movement_percent = -0.017575
+branches_movement_percent = 0.019222
+branch_misses_movement_percent = 1.374752
+cache_misses_movement_percent = -2.627491
+
+[[serialized_cpu]]
+fixture = "subdivided_boxes"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+policy = "APPROXIMATE_512"
+repetitions = 10001
+parent_task_ms_per_operation = 1.427291271
+candidate_task_ms_per_operation = 1.405708929
+task_movement_percent = -1.512119
+cycles_movement_percent = -1.434204
+instructions_movement_percent = -0.045375
+branches_movement_percent = 0.001405
+branch_misses_movement_percent = 1.692233
+cache_misses_movement_percent = -0.432572
+
+[policy_paired_task]
+generated_movement_percent = -0.2301
+retained_movement_percent = -0.7957
+boxes_movement_percent = -0.4204
+
+[heap.generated_projective]
+input_triangles = 13452
+strict_allocations = 200753
+approximate_512_allocations = 200753
+strict_reconstructed_temporaries = 10359
+approximate_512_reconstructed_temporaries = 10359
+strict_peak_mib = 10.69
+approximate_512_peak_mib = 10.69
+matches_parent = true
+
+[heap.retained_arrangement]
+input_triangles = 4524
+fixture_sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+strict_allocations = 454001
+approximate_512_allocations = 454001
+strict_reconstructed_temporaries = 28735
+approximate_512_reconstructed_temporaries = 28735
+strict_peak_mib = 12.38
+approximate_512_peak_mib = 12.38
+matches_parent = true
+
+[heap.subdivided_boxes]
+input_triangles = 6144
+strict_allocations = 27209
+approximate_512_allocations = 27209
+strict_reconstructed_temporaries = 81
+approximate_512_reconstructed_temporaries = 81
+strict_peak_mib = 4.26
+approximate_512_peak_mib = 4.26
+matches_parent = true
+
+[size.release_native]
+general_parent_text = 4037092
+general_current_text = 4037020
+general_movement_bytes = -72
+immediate_parent_text = 4070708
+immediate_current_text = 4070636
+immediate_movement_bytes = -72
+
+[size.release_wasm_oz]
+general_parent_bytes = 2702123
+general_current_bytes = 2702037
+general_movement_bytes = -86
+immediate_parent_bytes = 2717158
+immediate_current_bytes = 2717072
+immediate_movement_bytes = -86
+
+[size.size_native]
+general_parent_text = 1854090
+general_current_text = 1854090
+general_movement_bytes = 0
+immediate_parent_text = 1866606
+immediate_current_text = 1866606
+immediate_movement_bytes = 0
+
+[size.size_wasm_oz]
+general_parent_bytes = 1151896
+general_current_bytes = 1151886
+general_movement_bytes = -10
+immediate_parent_bytes = 1162254
+immediate_current_bytes = 1162246
+immediate_movement_bytes = -8
+
+[size.repeated_operation_binary]
+parent_file_bytes = 6374120
+current_file_bytes = 6374104
+parent_text_bytes = 5057314
+current_text_bytes = 5057262
+parent_gnu_aggregate_bytes = 5317229
+current_gnu_aggregate_bytes = 5317241
+bss_padding_movement_bytes = 64
+
+[profile]
+fixture = "generated_projective_8"
+operations = 100
+logical_cpu = 9
+frequency_hz = 1999
+samples = 2324
+lost_samples = 0
+approximate_cycle_events = 4770775349
+movement_from_checkpoint_21_percent = 0.07626
+polygon_soup_self_percent = 5.78
+rational_to_f64_lossy_self_percent = 4.57
+memmove_self_percent = 4.14
+projective_construction_self_percent = 3.99
+signed_product_sum_ordering_6x2_self_percent = 3.81
+product_sum_plan_4x2_self_percent = 2.51
+malloc_self_percent = 2.44
+rational_linear_form_normalization_self_percent = 2.39
+crossing_event_split_self_percent = 2.26
+word_totals_4x2_self_percent = 2.25
+
+[competitive.exact_cell]
+hypermesh_low_ms = 1.3938
+hypermesh_center_ms = 1.4009
+hypermesh_high_ms = 1.4119
+boolmesh_low_ms = 7.4762
+boolmesh_center_ms = 7.5222
+boolmesh_high_ms = 7.5618
+manifold_low_ms = 4.3332
+manifold_center_ms = 4.3509
+manifold_high_ms = 4.3649
+hypermesh_faster_than_boolmesh = 5.3695
+hypermesh_faster_than_manifold = 3.1058
+
+[competitive.projective]
+hypermesh_low_ms = 6.4317
+hypermesh_center_ms = 6.4500
+hypermesh_high_ms = 6.4679
+boolmesh_low_us = 768.91
+boolmesh_center_us = 778.90
+boolmesh_high_us = 799.99
+manifold_low_us = 679.53
+manifold_center_us = 686.06
+manifold_high_us = 698.18
+hypermesh_slower_than_boolmesh = 8.2809
+hypermesh_slower_than_manifold = 9.4015
+
+[competitive.scalar_to_f64_lossy]
+hyperreal_low_ns = 2.6019
+hyperreal_center_ns = 2.6075
+hyperreal_high_ns = 2.6136
+gmp_low_ns = 7.8411
+gmp_center_ns = 7.8614
+gmp_high_ns = 7.8832
+hyperreal_faster_than_gmp = 3.0149
+
+[historical.retained_arrangement]
+historical_task_ms = 944.8
+current_strict_task_ms = 34.870392157
+task_reduction_percent = 96.31
+historical_peak_mib = 67.74
+current_peak_mib = 12.38
+peak_reduction_percent = 81.72
+historical_allocations = 5020891
+current_allocations = 454001
+allocation_reduction_percent = 90.96
+directional_not_direct_ab = true
+
+[call_graph]
+hypermesh_nodes = 8018
+hypermesh_edges = 19670
+five_crate_parent_nodes = 19679
+five_crate_parent_edges = 39275
+five_crate_current_nodes = 19678
+five_crate_current_edges = 39274
+removed_synthetic_node = "hyperreal::rational::arithmetic::queries_conversion::value::bits"
+new_policy_spines = 0
+new_fallback_spines = 0
+
+[dispatch]
+generated_unknown_fact_events = 0
+generated_fallback_or_abort_events = 0
+generated_output_certainty = "Certified"
+
+[rejected.fused_digit_iterator]
+fully_removed = true
+representative_text_movement_from_parent_bytes = -148
+instructions_movement_vs_selected_percent = 0.094
+generally_slower_than_selected = true
+duplicated_limb_shape_logic = true
+
+[validation]
+five_crate_default_tests = true
+five_crate_no_default_tests = true
+five_crate_all_feature_tests = true
+five_crate_clippy_all_features_warning_denied = true
+five_crate_clippy_no_default_warning_denied = true
+five_crate_rustdoc_all_features_warning_denied = true
+five_crate_rustdoc_no_default_warning_denied = true
+five_crate_format_and_diff_checks = true
+hyperreal_benches_compile = true
+hypermesh_benches_compile = true
+hypermesh_fuzz_bins_compile = true
+asan_dyadic_tests_passed = 37
+yeahright_every_operation_closure = true
+polygon_immediate_consistency = true
+stress_3360_13440 = true
+full_input_validation_11894 = true
+dispatch_trace = true
+full_rotated_boolean_rerun = false
+prior_full_rotated_boolean_seconds = 3357.09
+prior_full_rotated_boolean_peak_mib = 319.07

@@ -1,0 +1,297 @@
+schema_version = 1
+date = "2026-08-05"
+status = "retained; Phases 11, 17, and 18 remain open"
+
+[revisions]
+hyperlimit_parent = "d2dee8fb"
+hyperlimit_current = "c2ca7be"
+hypertri_current = "824bd3a"
+hypermesh_parent = "c860e09a"
+hypermesh_implementation = "13a3f83e"
+
+[scope]
+boolean_engine = "surface_arrangement"
+compatibility_shim = false
+alternate_boolean_engine = false
+fixture_dispatch = false
+coordinate_or_width_dispatch = false
+operation_dispatch = false
+expected_result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+retained_line_query_floor = 16
+crossing_queries_excluded_from_floor = true
+later_crossing_points_excluded_from_floor = true
+hypercurve_touched = false
+hypersolve_touched = false
+
+[algorithm]
+retained_unit = "Hyperlimit Line2Orientation per authored projected face line"
+reused_by = ["pairwise proper-crossing orientation", "closed point-on-segment incidence"]
+small_path = "direct complete Hyperlimit predicates"
+dense_path = "retained certified line filters with the same complete fallback cascade"
+crossing_early_exit_preserved = true
+interval_containment_preserved = true
+face_arrangement_topology_unchanged = true
+
+[rejected_low_threshold]
+query_floor = 3
+dense17_instructions = 15483312974
+crossing_instructions = 3357932962
+reason = "eager evidence compilation regressed the ordinary direct control by about fifteen percent"
+
+[policy]
+strict_exact_only = true
+approximate_512_terminal_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+implementation_policy_branch = false
+large_policy_outputs_equal = true
+large_certainty = "Certified"
+large_exact_six_volume = 12805
+
+[source_size]
+files_changed = 6
+insertions = 201
+deletions = 24
+net_lines = 177
+
+[dense17_parent]
+revision = "c860e09a"
+instructions = 21536995472
+branches = 2817740957
+cycles = 5649794117
+median_boolean_ns = 1334104449
+
+[dense17_current]
+artifact = "target/release/examples/competitive_arrangement_probe"
+sha256 = "46d24e5ad527c16d43b1fc48e2b788b16eee490e6f5bad5df95d925b0d26d76c"
+repetitions = 5
+instructions = 15563736923
+branches = 2144853300
+cycles = 4402175133
+median_boolean_ns = 1043314770
+instruction_change_percent = -27.734874
+branch_change_percent = -23.880395
+cycle_change_percent = -22.082557
+median_boolean_change_percent = -21.796620
+shared_vertices = 9464
+result_triangles = [11308, 11908, 10764, 12452]
+certainty = "Certified"
+
+[[small_control]]
+fixture = "crossing_octahedra"
+repetitions = 5
+arrangements_per_repetition = 1000
+parent_instructions = 2919816330
+current_instructions = 2929471944
+instruction_change_percent = 0.330693
+parent_branches = 495847493
+current_branches = 497289268
+branch_change_percent = 0.290770
+parent_cycles = 1233360230
+current_cycles = 1260659385
+cycle_change_percent = 2.213397
+parent_median_ns = 292128409
+current_median_ns = 298237852
+median_change_percent = 2.091355
+retained_line_evidence_initialized = false
+gap_open = true
+
+[[small_control]]
+fixture = "affine_boxes"
+repetitions = 5
+arrangements_per_repetition = 1000
+parent_instructions = 6868511652
+current_instructions = 6889217636
+instruction_change_percent = 0.301462
+parent_branches = 1176294351
+current_branches = 1179328160
+branch_change_percent = 0.257912
+parent_cycles = 2906252889
+current_cycles = 2895716656
+cycle_change_percent = -0.362537
+parent_median_ns = 688752242
+current_median_ns = 684773172
+median_change_percent = -0.577722
+retained_line_evidence_initialized = false
+gap_open = true
+
+[dense65_heap]
+strict_equals_approximate_512 = true
+certainty = "Certified"
+input_triangles = 1572
+grid_crossings = 16900
+output_vertices = 73844
+output_triangles = 164068
+total_peak_bytes = 178914697
+incremental_kernel_peak_bytes = 178125996
+post_boolean_incremental_bytes = 57917376
+output_live_payload_bytes = 57784192
+input_fact_growth_bytes = 133184
+post_input_drop_incremental_bytes = 118328
+parent_allocation_calls = 32817512
+allocation_calls = 32818562
+allocation_call_change_percent = 0.003200
+parent_deallocation_calls = 32159654
+deallocation_calls = 32160704
+deallocation_call_change_percent = 0.003265
+parent_reallocation_calls = 2132870
+reallocation_calls = 2132870
+reallocation_change_percent = 0.0
+parent_cumulative_added_bytes = 9761722369
+cumulative_added_bytes = 9841052545
+cumulative_added_change_percent = 0.812666
+parent_cumulative_removed_bytes = 9703804993
+cumulative_removed_bytes = 9783135169
+cumulative_removed_change_percent = 0.817516
+allocator_probe_sha256 = "983dac4b21cb38de7233a4b44dbdaeaf93360e830f84107d4938c94113066688"
+
+[dense65_process]
+policy = "STRICT"
+parent_elapsed_seconds = 69.68
+elapsed_seconds = 46.37
+elapsed_change_percent = -33.452928
+parent_user_seconds = 63.97
+user_seconds = 46.08
+user_change_percent = -27.966234
+parent_maximum_rss_kib = 191772
+maximum_rss_kib = 191796
+maximum_rss_change_kib = 24
+maximum_rss_change_percent = 0.012515
+swaps = 0
+artifact_sha256 = "ecc6ce2742784604c33cf66b8c34a040df4d5d1a193f881be73d05ac2002aa5e"
+
+[large_policy_gate]
+policies = ["STRICT", "APPROXIMATE_512"]
+complete_real_equality = true
+topology_equal = true
+balanced_boundaries = true
+exact_volume_equal = true
+parent_elapsed_seconds = 129.93
+elapsed_seconds = 113.18
+elapsed_change_percent = -12.891557
+
+[profile]
+artifact = "target/phase17-retained-line-orientation.perf.data"
+sha256 = "57b298e2eaf85565df74183fe248b8df85c46369d9d5a90066cb39b7bc2840a"
+frequency_hz = 999
+samples = 1100
+lost_samples = 0
+exact_homogeneous_point2_parent_self_percent = 25.41
+exact_homogeneous_point2_self_percent = 21.34
+direct_orient2d_parent_self_percent = 19.84
+direct_orient2d_self_percent = 10.34
+retained_orient2d_self_percent = 6.26
+rational_denominator_self_percent = 5.81
+projected_segment_self_percent = 5.64
+exact_dyadic_f64_self_percent = 2.86
+rational_numerator_self_percent = 2.77
+replace_region_self_percent = 2.50
+triangle_neighbors_self_percent = 1.85
+
+[direct_probe_size]
+parent_text_bytes = 2761053
+current_text_bytes = 2785505
+change_bytes = 24452
+change_percent = 0.885604
+
+[canonical_size]
+toolchain = "rustc 1.97.0 (2d8144b78 2026-07-07)"
+minimum_growth_percent = 0.620608
+maximum_growth_percent = 0.952971
+default_release_native_text_parent = [1986190, 1989342]
+default_release_native_text_current = [2004634, 2007786]
+default_release_wasm_oz_parent = [1407703, 1409543]
+default_release_wasm_oz_current = [1421118, 1422956]
+default_size_native_text_parent = [1091103, 1092059]
+default_size_native_text_current = [1097895, 1098859]
+default_size_wasm_oz_parent = [678869, 679454]
+default_size_wasm_oz_current = [684610, 685029]
+all_release_native_text_parent = [2121083, 2123947]
+all_release_native_text_current = [2140227, 2143091]
+all_release_wasm_oz_parent = [1481754, 1483724]
+all_release_wasm_oz_current = [1495837, 1497809]
+all_size_native_text_parent = [1093439, 1094411]
+all_size_native_text_current = [1100231, 1101203]
+all_size_wasm_oz_parent = [678899, 679353]
+all_size_wasm_oz_current = [684831, 684873]
+
+[cgal]
+version = "6.0.3"
+cpu = 11
+exact_rational_off = true
+iterations_per_trial = 900
+trials = 5
+copy_timing = "outside"
+all_outputs_valid_closed_structurally_valid = true
+all_runtime_gaps_open = true
+
+[[cgal_reused]]
+fixture = "crossing_octahedra"
+cgal_ns = [111903, 111832, 114422, 115612, 115772]
+hypermesh_strict_ns = [294877, 289364, 304071, 294682, 296152]
+paired_ratios = [2.635113, 2.587488, 2.657452, 2.548888, 2.558062]
+median_cgal_ns = 114422
+median_hypermesh_ns = 294877
+median_paired_ratio = 2.587488
+
+[[cgal_reused]]
+fixture = "affine_boxes"
+cgal_ns = [368765, 368715, 371505, 369954, 372045]
+hypermesh_strict_ns = [682156, 680832, 685903, 680247, 678152]
+paired_ratios = [1.849839, 1.846499, 1.846282, 1.838734, 1.822769]
+median_cgal_ns = 369954
+median_hypermesh_ns = 680832
+median_paired_ratio = 1.846282
+
+[historical]
+ember_full_seconds = 3312.66
+ember_full_maximum_rss_kib = 329352
+cgal_full_seconds = 0.09
+cgal_full_maximum_rss_kib = 15516
+rerun_for_this_checkpoint = false
+claim = "open reference only; no full-case parity claim"
+
+[callgraph]
+parent_production_nodes = 15309
+parent_production_edges = 25529
+production_nodes = 15323
+production_edges = 25560
+parent_tests_examples_nodes = 17656
+parent_tests_examples_edges = 28899
+tests_examples_nodes = 17669
+tests_examples_edges = 28930
+parent_all_evidence_nodes = 21701
+parent_all_evidence_edges = 34999
+all_evidence_nodes = 21714
+all_evidence_edges = 35030
+production_artifact = "target/phase17-retained-line-orientation-callgraph-production/callgraph.json"
+tests_examples_artifact = "target/phase17-retained-line-orientation-callgraph-tests/callgraph.json"
+all_evidence_artifact = "target/phase17-retained-line-orientation-callgraph-all/callgraph.json"
+retired_namespace_nodes = 0
+boolean_engine_namespaces = ["hypermesh::surface_arrangement"]
+
+[validation]
+hyperlimit_all_features = true
+hypermesh_release_all_features = true
+hyperlimit_clippy_all_targets_all_features_deny_warnings = true
+hypermesh_clippy_all_targets_all_features_deny_warnings = true
+format_check = true
+diff_check = true
+large_policy_gate = true
+large_heap_both_policies = true
+canonical_size_default = true
+canonical_size_all = true
+current_cgal_reused_trials = true
+callgraph_scopes = 3
+
+[open]
+phase11 = true
+phase17 = true
+phase18 = true
+direct_small_path_recovery = true
+all_cgal_runtime_gaps = true
+linked_size_recovery = true
+external_real_world_corpus = true
+stage_specific_lifetime_attribution = true
+next_profile_target = "retained exact projected query-point conversion evidence"

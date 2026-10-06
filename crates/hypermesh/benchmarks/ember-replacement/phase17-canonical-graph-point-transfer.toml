@@ -1,0 +1,456 @@
+schema_version = 1
+phase = 17
+checkpoint = "canonical-graph-point-transfer"
+date = "2026-08-05"
+status = "accepted; phases 17 and 18 remain open"
+implementation_commit = "c94b4fd3cdfdb479fecf4075aee997b5a608dd46"
+parent_implementation_commit = "cf07cbaf8fcd19bc4a3655a6386dd7c55af170e5"
+parent_evidence_commit = "38c92caf"
+fixture_specialization = false
+compatibility_shims = false
+alternate_boolean_path = false
+strict_exact_only = true
+approximate_512_terminal_only = true
+aggregate_certainty_preserved = true
+hypercurve_touched = false
+hypersolve_touched = false
+
+[implementation]
+source_file = "src/surface_arrangement.rs"
+insertions = 73
+deletions = 9
+transient_map_entry = "Option<u32>"
+graph_point_transferred_once = true
+source_identity_precedence_preserved = true
+canonical_arena_insert_preserved = true
+map_dropped_before_source_edge_propagation = true
+map_dropped_before_face_cdt = true
+malformed_graph_id_typed = true
+allocation_failure_typed = true
+
+[[performance]]
+fixture = "overlapping_boxes"
+workload = "all-four-x1000"
+parent_instructions = 3988598107
+current_instructions = 3948258013
+instruction_movement_percent = -1.0114
+parent_branches = 688092798
+current_branches = 682280329
+branch_movement_percent = -0.8447
+
+[[performance]]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all-four-x5"
+parent_instructions = 2750323478
+current_instructions = 2725502212
+instruction_movement_percent = -0.9025
+parent_branches = 494207703
+current_branches = 490560781
+branch_movement_percent = -0.7379
+
+[[performance]]
+fixture = "dense_coplanar_boxes_32"
+workload = "all-four-x1"
+parent_instructions = 10289216560
+current_instructions = 10073488474
+instruction_movement_percent = -2.0966
+parent_branches = 1755112191
+current_branches = 1722415548
+branch_movement_percent = -1.8629
+
+[[performance]]
+fixture = "clipped_voxel_torus_33"
+workload = "all-four-x3"
+parent_instructions = 2646100131
+current_instructions = 2645739046
+instruction_movement_percent = -0.0136
+parent_branches = 444099185
+current_branches = 444073164
+branch_movement_percent = -0.0059
+
+[[performance]]
+fixture = "wide_rational_overlapping_boxes_2048"
+workload = "union-x5"
+parent_instructions = 11836833066
+current_instructions = 11824555926
+instruction_movement_percent = -0.1037
+parent_branches = 2179694362
+current_branches = 2177751509
+branch_movement_percent = -0.0891
+
+[[performance]]
+fixture = "yeahright-full-rotated"
+workload = "intersection-x1"
+parent_instructions = 10404981358
+current_instructions = 10394943637
+instruction_movement_percent = -0.0965
+parent_branches = 1786026592
+current_branches = 1784402889
+branch_movement_percent = -0.0909
+
+[[symbolic_control]]
+fixture = "deep_symbolic_translated_boxes_1"
+policy = "STRICT"
+workload = "all-four-x20"
+certainty = "Certified"
+parent_instructions = 4295790760
+current_instructions = 4285247794
+instruction_movement_percent = -0.2454
+parent_branches = 938413856
+current_branches = 936210808
+branch_movement_percent = -0.2348
+
+[[symbolic_control]]
+fixture = "deep_symbolic_translated_boxes_128"
+policy = "APPROXIMATE_512"
+workload = "all-four-x5"
+certainty = "Approximate512Consumed"
+parent_instructions = 1505498946
+current_instructions = 1505351515
+instruction_movement_percent = -0.0098
+parent_branches = 274793231
+current_branches = 274782583
+branch_movement_percent = -0.0039
+
+[[heap]]
+selector = "boxes-3072"
+peak_bytes = 12383968
+parent_allocation_calls = 19227
+current_allocation_calls = 19228
+parent_added_bytes = 16571238
+current_added_bytes = 16571814
+
+[[heap]]
+selector = "boxes-3072-general"
+peak_bytes = 12630096
+parent_allocation_calls = 38413
+current_allocation_calls = 38414
+parent_added_bytes = 18901086
+current_added_bytes = 18901662
+
+[[heap]]
+selector = "dense-coplanar-16"
+peak_bytes = 14893071
+parent_allocation_calls = 276942
+current_allocation_calls = 276943
+parent_added_bytes = 66303658
+current_added_bytes = 66315962
+
+[[heap]]
+selector = "dense-coplanar-32"
+peak_bytes = 59391879
+parent_allocation_calls = 1106674
+current_allocation_calls = 1106675
+parent_added_bytes = 265072426
+current_added_bytes = 265121594
+
+[[heap]]
+selector = "sparse-shells-512"
+peak_bytes = 11888929
+parent_allocation_calls = 213485
+current_allocation_calls = 213486
+parent_added_bytes = 35113460
+current_added_bytes = 35125748
+
+[[heap]]
+selector = "self-PWN-clusters-512"
+peak_bytes = 12284773
+parent_allocation_calls = 215479
+current_allocation_calls = 215480
+parent_added_bytes = 35709262
+current_added_bytes = 35721550
+
+[[heap]]
+selector = "wide-rational-64"
+peak_bytes = 17861062
+parent_allocation_calls = 384611
+current_allocation_calls = 384612
+parent_added_bytes = 32608494
+current_added_bytes = 32609070
+
+[[heap]]
+selector = "wide-rational-512"
+peak_bytes = 18750079
+parent_allocation_calls = 1295425
+current_allocation_calls = 1295426
+parent_added_bytes = 104895582
+current_added_bytes = 104896158
+
+[[heap]]
+selector = "wide-rational-2048"
+peak_bytes = 27423760
+parent_allocation_calls = 1567489
+current_allocation_calls = 1567490
+parent_added_bytes = 385301166
+current_added_bytes = 385301742
+
+[[heap]]
+selector = "voxel-torus-33"
+peak_bytes = 12784184
+parent_allocation_calls = 28308
+current_allocation_calls = 28309
+parent_added_bytes = 23173108
+current_added_bytes = 23174148
+
+[[heap]]
+selector = "voxel-torus-65"
+peak_bytes = 51784828
+parent_allocation_calls = 102729
+current_allocation_calls = 102730
+parent_added_bytes = 105624183
+current_added_bytes = 105626263
+
+[[heap]]
+selector = "yeahright"
+peak_bytes = 5161051
+parent_allocation_calls = 167362
+current_allocation_calls = 167363
+parent_added_bytes = 11457989
+current_added_bytes = 11458693
+
+[[heap]]
+selector = "yeahright-4"
+peak_bytes = 19676989
+parent_allocation_calls = 728413
+current_allocation_calls = 728414
+parent_added_bytes = 45781994
+current_added_bytes = 45783466
+
+[[heap]]
+selector = "yeahright-8"
+peak_bytes = 76258109
+parent_allocation_calls = 3315751
+current_allocation_calls = 3315752
+parent_added_bytes = 188359212
+current_added_bytes = 188362156
+
+[[heap]]
+selector = "yeahright-full-rotated"
+peak_bytes = 59440454
+kernel_peak_bytes = 52317092
+parent_allocation_calls = 9926707
+current_allocation_calls = 9926708
+reallocation_calls = 1610293
+parent_added_bytes = 588741037
+current_added_bytes = 588769229
+
+[heap_protocol]
+selectors = 15
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_pairs_byte_identical = true
+all_certainty = "Certified"
+all_peaks_unchanged = true
+allocation_delta_per_operation = 1
+
+[heaptrack]
+fixture = "yeahright-full-rotated"
+policy = "STRICT"
+parent_artifact = "target/phase17-compact-face-work-full-strict.zst"
+current_artifact = "target/phase17-canonical-graph-point-transfer-full-strict.zst.zst"
+peak_flame_stacks = "/tmp/hypermesh-canonical-graph-point-transfer-peak.stacks"
+parent_total_peak_bytes = 59514182
+current_total_peak_bytes = 59514182
+allocator_peak_bytes = 59440454
+profiler_process_overhead_bytes = 73728
+parent_allocation_function_calls = 11645452
+current_allocation_function_calls = 11645453
+current_temporary_allocations = 2669071
+map_present_at_global_peak = false
+
+[[fresh_full_process]]
+policy = "STRICT"
+wall_seconds = 1.00
+max_rss_kib = 69316
+certainty = "Certified"
+output = "exact empty"
+
+[[fresh_full_process]]
+policy = "APPROXIMATE_512"
+wall_seconds = 1.00
+max_rss_kib = 69140
+certainty = "Certified"
+output = "exact empty"
+
+[historical_full]
+ember_wall_seconds = 3312.66
+ember_max_rss_kib = 329352
+cgal_wall_seconds = 0.09
+cgal_max_rss_kib = 15516
+current_strict_speedup_over_ember = 3312.66
+current_strict_rss_reduction_percent_vs_ember = 78.95
+current_strict_slowdown_vs_cgal = 11.11
+current_strict_rss_ratio_vs_cgal = 4.467
+
+[[competitive]]
+fixture = "crossing_octahedra"
+cgal_epeck_exact_off_outside_ns = 112972
+cgal_epeck_exact_off_inside_ns = 122712
+parent_strict_ns = 433890
+current_strict_ns = 405112
+strict_ratio_to_cgal_outside = 3.586
+parent_approximate_512_ns = 430771
+current_approximate_512_ns = 411392
+approximate_512_ratio_to_cgal_outside = 3.642
+fresh_processes_per_policy = 63
+
+[[competitive]]
+fixture = "affine_boxes"
+cgal_epeck_exact_off_outside_ns = 376124
+cgal_epeck_exact_off_inside_ns = 383553
+parent_strict_ns = 819744
+current_strict_ns = 789356
+strict_ratio_to_cgal_outside = 2.099
+parent_approximate_512_ns = 815734
+current_approximate_512_ns = 792286
+approximate_512_ratio_to_cgal_outside = 2.106
+fresh_processes_per_policy = 63
+
+[[size]]
+features = "default"
+profile = "release"
+target = "native-general-text"
+parent_bytes = 1984978
+current_bytes = 1986058
+
+[[size]]
+features = "default"
+profile = "release"
+target = "native-immediate-text"
+parent_bytes = 1988122
+current_bytes = 1989202
+
+[[size]]
+features = "default"
+profile = "release"
+target = "wasm-general-optimized"
+parent_bytes = 1403288
+current_bytes = 1403447
+
+[[size]]
+features = "default"
+profile = "release"
+target = "wasm-immediate-optimized"
+parent_bytes = 1405142
+current_bytes = 1405301
+
+[[size]]
+features = "default"
+profile = "size"
+target = "native-general-text"
+parent_bytes = 1089703
+current_bytes = 1091151
+
+[[size]]
+features = "default"
+profile = "size"
+target = "native-immediate-text"
+parent_bytes = 1090675
+current_bytes = 1092123
+
+[[size]]
+features = "default"
+profile = "size"
+target = "wasm-general-optimized"
+parent_bytes = 678998
+current_bytes = 679616
+
+[[size]]
+features = "default"
+profile = "size"
+target = "wasm-immediate-optimized"
+parent_bytes = 679559
+current_bytes = 680024
+
+[[size]]
+features = "all"
+profile = "release"
+target = "native-general-text"
+parent_bytes = 2120359
+current_bytes = 2121287
+
+[[size]]
+features = "all"
+profile = "release"
+target = "native-immediate-text"
+parent_bytes = 2123199
+current_bytes = 2124127
+
+[[size]]
+features = "all"
+profile = "release"
+target = "wasm-general-optimized"
+parent_bytes = 1477155
+current_bytes = 1477270
+
+[[size]]
+features = "all"
+profile = "release"
+target = "wasm-immediate-optimized"
+parent_bytes = 1479126
+current_bytes = 1479243
+
+[[size]]
+features = "all"
+profile = "size"
+target = "native-general-text"
+parent_bytes = 1091959
+current_bytes = 1093391
+
+[[size]]
+features = "all"
+profile = "size"
+target = "native-immediate-text"
+parent_bytes = 1092915
+current_bytes = 1094347
+
+[[size]]
+features = "all"
+profile = "size"
+target = "wasm-general-optimized"
+parent_bytes = 679187
+current_bytes = 679649
+
+[[size]]
+features = "all"
+profile = "size"
+target = "wasm-immediate-optimized"
+parent_bytes = 679462
+current_bytes = 679772
+
+[callgraph]
+crates = ["hypermesh", "hyperreal", "hyperlimit", "hypertri", "hyperlattice"]
+production_artifact = "target/hypermesh-path-callgraph-phase17-graph-point-remap-production"
+production_nodes = 15107
+production_edges = 25193
+tests_examples_nodes = 17427
+tests_examples_edges = 28509
+all_targets_nodes = 21473
+all_targets_edges = 34610
+removed_engine_nodes = 0
+append_to_map_graph_point_edges = 1
+arena_to_point_interner_capacity_edges = 1
+
+[validation]
+format = true
+diff_check = true
+default_tests = true
+all_feature_tests = true
+all_feature_passed = 199
+all_feature_ignored = 6
+minimal_library_tests = true
+minimal_library_passed = 151
+no_default_check = true
+clippy_all_targets_all_features = true
+rustdoc_warning_denied = true
+fuzz_all_targets_check = true
+benches_all_features_check = true
+examples_all_features_check = true
+size_default = true
+size_all = true
+
+open_gates = [
+  "external real-world corpus",
+  "remaining per-case CGAL EPECK gaps",
+  "further arrangement and corefinement lifetime reduction",
+  "final removal, policy, caller, and artifact audit",
+]

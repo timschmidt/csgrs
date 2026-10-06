@@ -1,0 +1,285 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "compact-polygon-vertex-arena"
+parent_commit = "3057c2f8"
+parent_executable_sha256 = "127446b8a8c84967a5674d319b9defa2d5d40a9c2d5d04d4046cad9afb0e63ed"
+hypermesh_implementation_commit = "dcc16bfd03bcc2ea15270a84fa7416ef5d1f8f1a"
+hyperlimit_implementation_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+
+[representation]
+index_domain = "checked u32"
+face_count = 6144
+points = 18432
+point_bytes_x86_64 = 48
+parent_face_vec_headers = 6144
+parent_face_vec_header_bytes = 147456
+candidate_offsets = 6145
+candidate_offset_bytes = 24580
+point_payload_bytes = 884736
+live_carrier_savings_bytes = 122876
+live_carrier_savings_percent = 11.904
+compatibility_adapter = false
+dual_representation = false
+unchecked_truncation = false
+fallible_pre_reservation = true
+checked_row_lookup = true
+
+[source]
+file = "src/intersection.rs"
+parent_production_lines = 1240
+candidate_production_lines = 1321
+production_delta = 81
+parent_test_lines = 201
+candidate_test_lines = 254
+test_delta = 53
+
+[policy]
+scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+arena_records_topology_decisions = false
+derived_vertices_use_operation_context = true
+
+[tests.default]
+library_passed = 1079
+competitive_passed = 4
+competitive_ignored = 6
+core_passed = 59
+corpus_passed = 4
+predicate_policy_passed = 8
+readme_passed = 2
+regression_passed = 48
+regression_ignored = 1
+failed = 0
+
+[tests.minimal]
+library_passed = 1079
+failed = 0
+
+[tests.all_features]
+library_passed = 1080
+core_passed = 60
+failed = 0
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+bench_no_run = true
+fuzz_bins_check = true
+wasm_minimal_and_all_features = true
+size_harness_native_and_wasm = true
+trunk_release_demo = true
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20022
+edges = 39960
+
+[callgraph.evidence]
+includes = ["examples", "tests", "bench", "fuzz"]
+nodes = 26440
+edges = 49906
+
+[fixture.general]
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[fixture.certified]
+probe_mode = "boxes-3072"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 27
+output_triangles = 50
+
+[heap.tool]
+massif_version = "3.27.0"
+massif_args = "--time-unit=B --detailed-freq=1"
+heaptrack_allocations_parent = 844759
+heaptrack_allocations_candidate = 838605
+heaptrack_temporary_parent = 34039
+heaptrack_temporary_candidate = 34039
+heaptrack_peak_rss_parent_mb = 40.26
+heaptrack_peak_rss_candidate_mb = 38.60
+
+[heap.general_strict.parent]
+useful_bytes = 28739660
+extra_bytes = 1227708
+total_bytes = 29967368
+
+[heap.general_strict.candidate]
+useful_bytes = 28739660
+extra_bytes = 1227084
+total_bytes = 29966744
+
+[heap.general_approximate_512.parent]
+useful_bytes = 28739660
+extra_bytes = 1227692
+total_bytes = 29967352
+
+[heap.general_approximate_512.candidate]
+useful_bytes = 28739660
+extra_bytes = 1227996
+total_bytes = 29967656
+
+[heap.certified_strict.parent]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_strict.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.parent]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.delta]
+allocation_calls = -6154
+allocation_calls_percent = -0.728492
+general_useful_bytes = 0
+live_intersection_stage_carrier_bytes = -122876
+
+[runtime.perf]
+policy = "STRICT"
+cpu = 11
+fixture = "boxes-3072-general"
+batches_per_revision = 6
+processes_per_batch = 5
+processes_per_revision = 30
+excluded_parent_batches = 1
+excluded_parent_internal_deviation_percent = 11.55
+maximum_retained_internal_deviation_percent = 3.36
+
+[runtime.perf.parent]
+task_clock_ms = 1949.100000
+cycles = 7972275710.667
+instructions = 23881142170.000
+branches = 4604487210.500
+branch_misses = 13630736.500
+
+[runtime.perf.candidate]
+task_clock_ms = 1924.403333
+cycles = 7887936418.667
+instructions = 23896746786.500
+branches = 4633286120.667
+branch_misses = 14237004.167
+
+[runtime.perf.delta_percent]
+task_clock = -1.267081
+cycles = -1.057907
+instructions = 0.065343
+branches = 0.625453
+branch_misses = 4.447798
+
+[runtime.callgrind]
+version = "3.27.0"
+args = "--cache-sim=no --branch-sim=yes"
+parent_instructions = 23902510549
+candidate_instructions = 23900826011
+instruction_delta = -1684538
+instruction_delta_percent = -0.007048
+parent_total_branches = 3575766181
+candidate_total_branches = 3575463033
+total_branch_delta = -303148
+total_branch_delta_percent = -0.008478
+parent_conditional_branches = 3014834357
+candidate_conditional_branches = 3014553578
+conditional_branch_delta_percent = -0.009313
+parent_total_mispredicts = 112774853
+candidate_total_mispredicts = 112247255
+total_mispredict_delta_percent = -0.467833
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4085052
+candidate_bytes = 4081972
+delta_bytes = -3080
+delta_percent = -0.075397
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2757749
+candidate_bytes = 2754491
+delta_bytes = -3258
+delta_percent = -0.118140
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4118284
+candidate_bytes = 4115188
+delta_bytes = -3096
+delta_percent = -0.075177
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2772304
+candidate_bytes = 2769105
+delta_bytes = -3199
+delta_percent = -0.115391
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1883674
+candidate_bytes = 1883746
+delta_bytes = 72
+delta_percent = 0.003822
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1176941
+candidate_bytes = 1177387
+delta_bytes = 446
+delta_percent = 0.037895
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1895822
+candidate_bytes = 1895902
+delta_bytes = 80
+delta_percent = 0.004220
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1187078
+candidate_bytes = 1187530
+delta_bytes = 452
+delta_percent = 0.038077
+
+[decision]
+retained = true
+reason = "One checked u32 face-offset arena removes 6,154 allocation calls and 122,876 live intersection-stage carrier bytes, improves 30-process pinned clock/cycles by 1.267%/1.058%, lowers deterministic instructions and branches, shrinks every release native/WASM consumer, and preserves every tested exact topology and policy path; size-profile growth remains below 0.039%."

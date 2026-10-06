@@ -1,0 +1,879 @@
+date = "2026-08-02"
+status = "retained"
+phase = 7
+checkpoint = 40
+title = "Fused exact product-sum sign planning"
+policy_contract = "explicit MeshContext; STRICT and APPROXIMATE_512; approximation only at Hyperlimit terminal 512-bit equality/sign interpretation"
+hyperreal_parent = "33e7e4d620c0c95620c1045d09d0089ded105030"
+hyperreal_implementation = "6302bbd848ad99cf192419c76e399f6e45cbdba3"
+hypermesh_implementation = "8d27c24a4a68caec9b3b72e1bdc0bf6143a6de4c"
+hypermesh_evidence_parent = "4cbf48890f8a70e763d64bb6dd0e613ffe3dc1bb"
+hyperlattice = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit = "3e5d8816cd32bba46f48e0c6c13ab7a9da227784"
+hypertri = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+retained_obj_sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+source_insertions = 120
+source_deletions = 22
+production_insertions = 68
+production_deletions = 22
+test_insertions = 52
+production_files = 1
+test_files = 1
+new_dependency = false
+new_public_api = false
+new_heap_allocation = false
+new_cache = false
+compatibility_shim = false
+terminal_policy_change = false
+temporary_hooks_removed = true
+
+[implementation]
+hot_shapes = ["4x2", "6x2"]
+sign_evaluation = "inside exact one-pass dyadic word accumulator"
+successful_path_materializes_sign_array = false
+declined_path = "outlined helper reconstructs full exact sign array from original immutable inputs"
+declined_path_inline = false
+word_operations_checked = true
+arbitrary_width_fallback_unchanged = true
+four_term_admission_guard_unchanged = true
+six_term_admission_domain_unchanged = true
+floating_point_used = false
+policy_used = false
+
+[[topology]]
+fixture = "generated_13452"
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+strict_certainty = "Certified"
+approximate_certainty = "Certified"
+
+[[topology]]
+fixture = "retained_4524"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+strict_certainty = "Certified"
+approximate_certainty = "Certified"
+
+[[topology]]
+fixture = "boxes_6144"
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+strict_certainty = "Certified"
+approximate_certainty = "Certified"
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "STRICT"
+revision = "parent"
+position = 1
+repetitions = 1001
+task_ms = 8543.14
+cycles = 36115991101
+instructions = 100911214610
+branches = 17401130718
+branch_misses = 217977736
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "STRICT"
+revision = "candidate"
+position = 2
+repetitions = 1001
+task_ms = 8499.19
+cycles = 36037666929
+instructions = 100286190691
+branches = 17315592340
+branch_misses = 219505508
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "STRICT"
+revision = "candidate"
+position = 3
+repetitions = 1001
+task_ms = 8448.74
+cycles = 35815334979
+instructions = 100282549762
+branches = 17315108659
+branch_misses = 217940756
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "STRICT"
+revision = "parent"
+position = 4
+repetitions = 1001
+task_ms = 8550.76
+cycles = 36194063804
+instructions = 100906701596
+branches = 17400005297
+branch_misses = 218375589
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 1
+repetitions = 1001
+task_ms = 8595.56
+cycles = 36357819436
+instructions = 100911171107
+branches = 17401333385
+branch_misses = 218452311
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 2
+repetitions = 1001
+task_ms = 8549.64
+cycles = 36095483883
+instructions = 100284731990
+branches = 17315701498
+branch_misses = 217838972
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 3
+repetitions = 1001
+task_ms = 8517.99
+cycles = 36067347967
+instructions = 100283875724
+branches = 17315333199
+branch_misses = 217997722
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 4
+repetitions = 1001
+task_ms = 8477.35
+cycles = 35910491996
+instructions = 100907445037
+branches = 17400173741
+branch_misses = 217533630
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 5
+repetitions = 1001
+task_ms = 8479.37
+cycles = 35880613767
+instructions = 100282855120
+branches = 17315288537
+branch_misses = 217155570
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 6
+repetitions = 1001
+task_ms = 8616.30
+cycles = 36262054162
+instructions = 100909685594
+branches = 17400743111
+branch_misses = 219014921
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 7
+repetitions = 1001
+task_ms = 8497.17
+cycles = 35955895234
+instructions = 100912943745
+branches = 17401589204
+branch_misses = 218115394
+
+[[cpu_sample]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 8
+repetitions = 1001
+task_ms = 8489.88
+cycles = 35910675119
+instructions = 100283762786
+branches = 17315189597
+branch_misses = 218234830
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "STRICT"
+revision = "parent"
+position = 1
+repetitions = 501
+task_ms = 16835.85
+cycles = 71376496332
+instructions = 193535380841
+branches = 33962479408
+branch_misses = 338478747
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "STRICT"
+revision = "candidate"
+position = 2
+repetitions = 501
+task_ms = 17178.30
+cycles = 72625275769
+instructions = 193462179732
+branches = 33963150962
+branch_misses = 334622994
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "STRICT"
+revision = "candidate"
+position = 3
+repetitions = 501
+task_ms = 17058.24
+cycles = 72104489931
+instructions = 193455621173
+branches = 33962704517
+branch_misses = 335667876
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "STRICT"
+revision = "parent"
+position = 4
+repetitions = 501
+task_ms = 17388.62
+cycles = 73456617572
+instructions = 193532841247
+branches = 33961916840
+branch_misses = 339163307
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 1
+repetitions = 501
+task_ms = 17507.17
+cycles = 73783384012
+instructions = 193519151691
+branches = 33958747459
+branch_misses = 336825568
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 2
+repetitions = 501
+task_ms = 17280.32
+cycles = 72786386055
+instructions = 193467271525
+branches = 33964579364
+branch_misses = 337054924
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 3
+repetitions = 501
+task_ms = 17106.67
+cycles = 72244091478
+instructions = 193462628287
+branches = 33963529387
+branch_misses = 335176046
+
+[[cpu_sample]]
+fixture = "retained_4524"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 4
+repetitions = 501
+task_ms = 17328.70
+cycles = 73182873748
+instructions = 193531954799
+branches = 33962072682
+branch_misses = 334868193
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "STRICT"
+revision = "parent"
+position = 1
+repetitions = 10001
+task_ms = 6947.01
+cycles = 29401182048
+instructions = 87066279671
+branches = 14498769913
+branch_misses = 175254400
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "STRICT"
+revision = "candidate"
+position = 2
+repetitions = 10001
+task_ms = 6872.33
+cycles = 29119505592
+instructions = 86917146838
+branches = 14483246781
+branch_misses = 180741114
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "STRICT"
+revision = "candidate"
+position = 3
+repetitions = 10001
+task_ms = 6846.66
+cycles = 29013296113
+instructions = 86922514125
+branches = 14484363506
+branch_misses = 177065388
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "STRICT"
+revision = "parent"
+position = 4
+repetitions = 10001
+task_ms = 6960.24
+cycles = 29406895599
+instructions = 87061676369
+branches = 14498216045
+branch_misses = 169612838
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 1
+repetitions = 10001
+task_ms = 7069.85
+cycles = 29716902334
+instructions = 87067412665
+branches = 14499473010
+branch_misses = 177974046
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 2
+repetitions = 10001
+task_ms = 6812.23
+cycles = 28769186121
+instructions = 86913965587
+branches = 14482431532
+branch_misses = 170903449
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "APPROXIMATE_512"
+revision = "candidate"
+position = 3
+repetitions = 10001
+task_ms = 6834.22
+cycles = 28937494848
+instructions = 86920085307
+branches = 14483868663
+branch_misses = 177831254
+
+[[cpu_sample]]
+fixture = "boxes_6144"
+policy = "APPROXIMATE_512"
+revision = "parent"
+position = 4
+repetitions = 10001
+task_ms = 6876.09
+cycles = 29136500081
+instructions = 87074908299
+branches = 14501027525
+branch_misses = 167874659
+
+[[cpu_summary]]
+fixture = "generated_13452"
+policy = "STRICT"
+repetitions = 1001
+samples_per_revision = 2
+task_percent = -0.853930
+cycles_percent = -0.632074
+instructions_percent = -0.618962
+branches_percent = -0.489740
+branch_misses_percent = 0.250471
+
+[[cpu_summary]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+repetitions = 1001
+samples_per_revision = 4
+task_percent = -0.437309
+cycles_percent = -0.368298
+instructions_percent = -0.620853
+branches_percent = -0.491821
+branch_misses_percent = -0.216370
+
+[[cpu_summary]]
+fixture = "retained_4524"
+policy = "STRICT"
+repetitions = 501
+samples_per_revision = 2
+task_percent = 0.035267
+cycles_percent = -0.071357
+instructions_percent = -0.038862
+branches_percent = 0.002148
+branch_misses_percent = -1.084818
+
+[[cpu_summary]]
+fixture = "retained_4524"
+policy = "APPROXIMATE_512"
+repetitions = 501
+samples_per_revision = 2
+task_percent = -1.288557
+cycles_percent = -1.317160
+instructions_percent = -0.031315
+branches_percent = 0.010731
+branch_misses_percent = 0.079978
+
+[[cpu_summary]]
+fixture = "boxes_6144"
+policy = "STRICT"
+repetitions = 10001
+samples_per_revision = 2
+task_percent = -1.353682
+cycles_percent = -1.148271
+instructions_percent = -0.165565
+branches_percent = -0.101306
+branch_misses_percent = 3.751955
+
+[[cpu_summary]]
+fixture = "boxes_6144"
+policy = "APPROXIMATE_512"
+repetitions = 10001
+samples_per_revision = 2
+task_percent = -2.147507
+cycles_percent = -1.948437
+instructions_percent = -0.177022
+branches_percent = -0.117930
+branch_misses_percent = 0.834468
+
+[[cpu_policy_mean]]
+fixture = "generated_13452"
+task_percent = -0.645620
+cycles_percent = -0.500186
+instructions_percent = -0.619908
+branches_percent = -0.490781
+
+[[cpu_policy_mean]]
+fixture = "retained_4524"
+task_percent = -0.626645
+cycles_percent = -0.694258
+instructions_percent = -0.035089
+branches_percent = 0.006440
+
+[[cpu_policy_mean]]
+fixture = "boxes_6144"
+task_percent = -1.750595
+cycles_percent = -1.548354
+instructions_percent = -0.171293
+branches_percent = -0.109618
+
+[profile]
+cpu = 9
+event = "cycles:u"
+frequency_hz = 4000
+repetitions = 1001
+parent_samples = 17436
+candidate_samples = 17013
+parent_lost_samples = 0
+candidate_lost_samples = 0
+candidate_event_count_approx = 35870000000
+parent_input_soup_self_percent = 5.42
+candidate_input_soup_self_percent = 5.69
+parent_product_sum_4x2_self_percent = 4.63
+candidate_product_sum_4x2_self_percent = 4.75
+parent_product_sum_6x2_self_percent = 4.63
+candidate_product_sum_6x2_self_percent = 4.30
+candidate_to_f64_lossy_self_percent = 3.07
+candidate_malloc_self_percent = 2.91
+candidate_gcd_word_self_percent = 2.87
+candidate_crossing_split_self_percent = 2.75
+candidate_gcd_fixed_self_percent = 2.61
+candidate_compute_input_soup_self_percent = 2.59
+
+[dispatch]
+events = 97321
+predicates = 676
+linear_algebra = 1411
+cache_events = 6341
+rational_temporaries = 12775
+unknown_facts = 0
+fallback_abort_events = 0
+unchanged = true
+
+[[heaptrack]]
+fixture = "generated_13452"
+policy = "STRICT"
+parent_allocations = 200644
+candidate_allocations = 200643
+parent_peak_mib = 7.50
+candidate_peak_mib = 7.50
+parent_rss_mib = 17.81
+candidate_rss_mib = 17.79
+
+[[heaptrack]]
+fixture = "generated_13452"
+policy = "APPROXIMATE_512"
+parent_allocations = 200644
+candidate_allocations = 200643
+parent_peak_mib = 7.50
+candidate_peak_mib = 7.50
+parent_rss_mib = 17.77
+candidate_rss_mib = 17.83
+
+[[heaptrack]]
+fixture = "retained_4524"
+policy = "STRICT"
+parent_allocations = 453856
+candidate_allocations = 453855
+parent_peak_mib = 11.66
+candidate_peak_mib = 11.66
+parent_rss_mib = 20.99
+candidate_rss_mib = 20.98
+
+[[heaptrack]]
+fixture = "retained_4524"
+policy = "APPROXIMATE_512"
+parent_allocations = 453856
+candidate_allocations = 453855
+parent_peak_mib = 11.66
+candidate_peak_mib = 11.66
+parent_rss_mib = 20.99
+candidate_rss_mib = 21.05
+
+[[heaptrack]]
+fixture = "boxes_6144"
+policy = "STRICT"
+parent_allocations = 2148
+candidate_allocations = 2147
+parent_peak_mib = 1.14
+candidate_peak_mib = 1.14
+parent_rss_mib = 9.05
+candidate_rss_mib = 9.03
+
+[[heaptrack]]
+fixture = "boxes_6144"
+policy = "APPROXIMATE_512"
+parent_allocations = 2148
+candidate_allocations = 2147
+parent_peak_mib = 1.14
+candidate_peak_mib = 1.14
+parent_rss_mib = 9.06
+candidate_rss_mib = 9.01
+
+[[massif]]
+fixture = "generated_13452"
+parent_total_bytes = 8245720
+candidate_total_bytes = 8245736
+parent_useful_bytes = 7420614
+candidate_useful_bytes = 7420614
+
+[[massif]]
+fixture = "retained_4524"
+parent_total_bytes = 12691568
+candidate_total_bytes = 12690608
+parent_useful_bytes = 11582695
+candidate_useful_bytes = 11582335
+
+[[massif]]
+fixture = "boxes_6144"
+parent_total_bytes = 1065008
+candidate_total_bytes = 1064976
+parent_useful_bytes = 1063718
+candidate_useful_bytes = 1063718
+
+[size.production_probe]
+parent_text_section_bytes = 3817766
+candidate_text_section_bytes = 3818934
+parent_gnu_text_bytes = 4634485
+candidate_gnu_text_bytes = 4635873
+parent_gnu_data_bytes = 247512
+candidate_gnu_data_bytes = 247528
+parent_aggregate_bytes = 4883056
+candidate_aggregate_bytes = 4887132
+parent_stripped_file_bytes = 4885880
+candidate_stripped_file_bytes = 4887304
+parent_bss_section_bytes = 227
+candidate_bss_section_bytes = 227
+
+[[size.canonical_default]]
+consumer = "general_release"
+candidate_native_text_bytes = 4067268
+candidate_native_data_bytes = 238368
+candidate_native_bss_bytes = 3995
+candidate_native_aggregate_bytes = 4309631
+candidate_file_bytes = 4728632
+candidate_optimized_wasm_bytes = 2741407
+native_text_delta_bytes = 1480
+native_aggregate_delta_bytes = 4104
+file_delta_bytes = 1816
+optimized_wasm_delta_bytes = 460
+
+[[size.canonical_default]]
+consumer = "immediate_release"
+candidate_native_text_bytes = 4100900
+candidate_native_data_bytes = 238728
+candidate_native_bss_bytes = 2771
+candidate_native_aggregate_bytes = 4342399
+candidate_file_bytes = 4763912
+candidate_optimized_wasm_bytes = 2756456
+native_text_delta_bytes = 1480
+native_aggregate_delta_bytes = 8
+file_delta_bytes = 1816
+optimized_wasm_delta_bytes = 399
+
+[[size.canonical_default]]
+consumer = "general_size"
+candidate_native_text_bytes = 1872594
+candidate_native_data_bytes = 239992
+candidate_native_bss_bytes = 1530
+candidate_native_aggregate_bytes = 2114116
+candidate_file_bytes = 2116728
+candidate_optimized_wasm_bytes = 1166513
+native_text_delta_bytes = 416
+native_aggregate_delta_bytes = 0
+file_delta_bytes = 464
+optimized_wasm_delta_bytes = 78
+
+[[size.canonical_default]]
+consumer = "immediate_size"
+candidate_native_text_bytes = 1885046
+candidate_native_data_bytes = 240536
+candidate_native_bss_bytes = 826
+candidate_native_aggregate_bytes = 2126408
+candidate_file_bytes = 2129720
+candidate_optimized_wasm_bytes = 1176886
+native_text_delta_bytes = 400
+native_aggregate_delta_bytes = 0
+file_delta_bytes = 448
+optimized_wasm_delta_bytes = 79
+
+[[size.canonical_all]]
+consumer = "general_release"
+candidate_native_text_bytes = 4222937
+candidate_native_data_bytes = 238720
+candidate_native_bss_bytes = 3779
+candidate_native_aggregate_bytes = 4465436
+candidate_file_bytes = 4889256
+candidate_optimized_wasm_bytes = 2813709
+native_text_delta_bytes = 1312
+native_aggregate_delta_bytes = 4096
+file_delta_bytes = 1784
+optimized_wasm_delta_bytes = 418
+
+[[size.canonical_all]]
+consumer = "immediate_release"
+candidate_native_text_bytes = 4256865
+candidate_native_data_bytes = 239080
+candidate_native_bss_bytes = 2267
+candidate_native_aggregate_bytes = 4498212
+candidate_file_bytes = 4924824
+candidate_optimized_wasm_bytes = 2829086
+native_text_delta_bytes = 1320
+native_aggregate_delta_bytes = 8
+file_delta_bytes = 1792
+optimized_wasm_delta_bytes = 331
+
+[[size.canonical_all]]
+consumer = "general_size"
+candidate_native_text_bytes = 1872890
+candidate_native_data_bytes = 240040
+candidate_native_bss_bytes = 1194
+candidate_native_aggregate_bytes = 2114124
+candidate_file_bytes = 2117064
+candidate_optimized_wasm_bytes = 1197145
+native_text_delta_bytes = 416
+native_aggregate_delta_bytes = 0
+file_delta_bytes = 464
+optimized_wasm_delta_bytes = 57
+
+[[size.canonical_all]]
+consumer = "immediate_size"
+candidate_native_text_bytes = 1885246
+candidate_native_data_bytes = 240584
+candidate_native_bss_bytes = 4682
+candidate_native_aggregate_bytes = 2130512
+candidate_file_bytes = 2129960
+candidate_optimized_wasm_bytes = 1207892
+native_text_delta_bytes = 400
+native_aggregate_delta_bytes = 4096
+file_delta_bytes = 448
+optimized_wasm_delta_bytes = 57
+
+[callgraph.five_crates]
+parent_nodes = 19775
+candidate_nodes = 19778
+parent_edges = 39556
+candidate_edges = 39568
+sha256 = "c1f42f93eca02d9d8e951bffc46537cd99d7140ff6984a4a56ed01b1a844a65c"
+
+[callgraph.hyperreal]
+parent_nodes = 7153
+candidate_nodes = 7156
+parent_edges = 12275
+candidate_edges = 12287
+sha256 = "a465eff2e8af569c8825f7031025ff97a3c7e58941224c49db93925a513f1262"
+added_nodes = [
+  "Rational::signed_product_sum_ordering_after_unplanned_declines",
+  "declined helper Self alias",
+  "fused_unplanned_signs_preserve_zero_single_and_mixed_product_ordering",
+]
+
+[callgraph.other_libraries]
+hyperlattice_unchanged = true
+hyperlimit_unchanged = true
+hypertri_unchanged = true
+hypermesh_unchanged = true
+
+[[competitive]]
+fixture = "projective_generated"
+operation = "union"
+hypermesh_ms = 6.1469
+boolmesh_ms = 0.75852
+manifold_ms = 0.66639
+hypermesh_checkpoint_39_ms = 6.3147
+hypermesh_historical_delta_percent = -2.657292
+criterion_live_paired_percent = -3.8207
+
+[[competitive]]
+fixture = "projective_generated"
+operation = "intersection"
+hypermesh_ms = 4.4874
+boolmesh_ms = 0.74403
+manifold_ms = 0.66545
+hypermesh_checkpoint_39_ms = 4.5347
+hypermesh_historical_delta_percent = -1.043068
+criterion_live_paired_percent = -1.2760
+
+[[competitive]]
+fixture = "projective_generated"
+operation = "difference"
+hypermesh_ms = 4.0703
+boolmesh_ms = 0.75697
+manifold_ms = 0.66790
+hypermesh_checkpoint_39_ms = 4.1457
+hypermesh_historical_delta_percent = -1.818752
+criterion_live_paired_percent = -1.4067
+
+[[competitive]]
+fixture = "boxes_6144"
+operation = "union"
+hypermesh_ms = 0.71194
+boolmesh_ms = 6.7685
+manifold_ms = 4.3120
+hypermesh_checkpoint_39_ms = 0.72909
+hypermesh_historical_delta_percent = -2.352247
+criterion_live_paired_percent = -1.0032
+
+[[competitive]]
+fixture = "boxes_6144"
+operation = "intersection"
+hypermesh_ms = 0.50318
+boolmesh_ms = 3.8837
+manifold_ms = 3.4970
+hypermesh_checkpoint_39_ms = 0.51479
+hypermesh_historical_delta_percent = -2.255289
+criterion_live_paired_percent = -2.1905
+
+[[competitive]]
+fixture = "boxes_6144"
+operation = "difference"
+hypermesh_ms = 0.64510
+boolmesh_ms = 6.1781
+manifold_ms = 3.9831
+hypermesh_checkpoint_39_ms = 0.64530
+hypermesh_historical_delta_percent = -0.030993
+criterion_live_paired_percent = 0.0109
+
+[historical.retained_strict]
+candidate_ms_per_union = 34.168203593
+historical_ms_per_union = 944.8
+speedup = 27.651439076
+time_reduction_percent = 96.383551694
+candidate_peak_mib = 11.66
+historical_peak_mib = 67.74
+candidate_allocations = 453855
+historical_allocations = 5020891
+candidate_rss_mib = 20.98
+historical_rss_mib = 82.5
+
+[[rejected]]
+name = "early exact zero in Rational::to_f64_lossy"
+reason = "-48 binary bytes and lower work, but +1.30% generated STRICT task clock and +0.29% approximate task clock"
+
+[[rejected]]
+name = "projective adjacency parity head selection"
+reason = "fewer visits but +2.3% to +2.5% branch misses and worse clock"
+
+[[rejected]]
+name = "borrowed projective adjacency edge record"
+reason = "+0.083% branches with order-sensitive clocks"
+
+[[rejected]]
+name = "projective adjacency field reorder"
+reason = "+0.4% to +0.8% dense clock"
+
+[[rejected]]
+name = "fully inline fused sign and fallback routes"
+reason = "lower deterministic work but worse clock and layout"
+
+[[rejected]]
+name = "outlined product-sum accumulator"
+reason = "+1.77% instructions"
+
+[[rejected]]
+name = "six-term-only sign fusion"
+reason = "+4.6% total instructions"
+
+[[rejected]]
+name = "four-term-only sign fusion"
+reason = "+2.37% total instructions"
+
+[[rejected]]
+name = "cold declined helper"
+reason = "worse generated clock"
+
+[validation]
+hyperreal_default_lib_tests = 565
+hyperreal_minimal_lib_tests = 565
+hyperreal_all_feature_lib_tests = 642
+hypermesh_default_lib_tests = 1063
+hypermesh_minimal_lib_tests = 1063
+hypermesh_all_feature_lib_tests = 1064
+hypermesh_address_sanitizer_lib_tests = 1063
+address_sanitizer_failures = 0
+five_crate_default_suites_passed = true
+five_crate_minimal_suites_passed = true
+five_crate_all_feature_suites_passed = true
+five_crate_clippy_minimal_warnings_denied = true
+five_crate_clippy_all_feature_warnings_denied = true
+five_crate_rustdoc_minimal_warnings_denied = true
+five_crate_rustdoc_all_feature_warnings_denied = true
+five_crate_format_checks_passed = true
+hypermesh_fuzz_bins_checked = true
+hypermesh_all_feature_benches_linked = true
+hypermesh_wasm_minimal_checked = true
+hypermesh_wasm_all_feature_checked = true
+dispatch_trace_passed = true
+bounded_ignored_release_gates_passed = 5
+known_56_minute_rotated_test_rerun = false
+hyperlimit_untracked_executable_touched = false

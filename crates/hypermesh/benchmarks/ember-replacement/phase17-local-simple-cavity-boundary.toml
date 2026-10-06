@@ -1,0 +1,201 @@
+title = "Phase 17 local simple-cavity boundary scheduling"
+date = "2026-08-05"
+status = "retained; Phases 11, 17, and 18 remain open"
+
+[revisions]
+hypertri_parent = "69a18e9"
+hypertri_current = "72ddcdc"
+hypermesh_parent_evidence = "4f80b1c5"
+
+[scope]
+production_fixture_dispatch = false
+compatibility_shim = false
+alternate_boolean_engine = false
+policy_branch = false
+coordinate_width_branch = false
+workload_cardinality_branch = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[algorithm]
+local_proof = "the already-required sorted cavity boundary is one simple cycle containing both constraint endpoints"
+complete_decline = "weak, disconnected, or multiply incident boundaries run the full hull/protected-edge component closure and repeat the local proof"
+hull_barrier_preserved = true
+protected_edge_barrier_preserved = true
+atomic_topology_replacement_preserved = true
+typed_boundary_failures_preserved = true
+
+[policy]
+strict_exact_only = true
+approximate_512_terminal_owner = "hyperlimit"
+large_policy_counters_equal = true
+large_policy_outputs_equal = true
+large_certainty = "Certified"
+large_exact_intersection_volume = 12805
+
+[dense17_parent]
+instructions = 24083182461
+branches = 3125077444
+cycles = 6495638376
+median_boolean_ns = 1543316730
+
+[dense17_current]
+artifact = "target/release/examples/competitive_arrangement_probe"
+sha256 = "4312f98547ad3fe6c10f08448a5e30b20a2104e3af5ab6b2df84ba4028fd9494"
+repetitions = 3
+instructions = 22227815623
+branches = 2906838361
+cycles = 5871677803
+median_boolean_ns = 1387561232
+output_vertices = 5444
+output_triangles = 11908
+instruction_change_percent = -7.703994
+branch_change_percent = -6.983478
+cycle_change_percent = -9.605839
+median_boolean_change_percent = -10.092257
+vs_complete_cavity_instruction_percent = -27.826011
+vs_iterative_instruction_percent = -62.816257
+
+[crossing_octahedra_control]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 2916553799
+branches = 495482144
+cycles = 1225709182
+instruction_change_percent = -0.120192
+branch_change_percent = -0.110620
+cycle_change_percent = -2.526020
+output_vertices = 24
+output_triangles = [44, 20, 32, 32]
+
+[affine_boxes_control]
+repetitions = 3
+arrangements_per_repetition = 1000
+instructions = 6864519901
+branches = 1175516130
+cycles = 2831264861
+instruction_change_percent = -0.014602
+branch_change_percent = -0.024825
+cycle_change_percent = 0.393586
+output_vertices = 24
+output_triangles = [44, 28, 20, 20]
+
+[dense65_heap]
+artifact = "target/release/examples/large_mesh_kernel_heap_probe"
+sha256 = "0a45ad468a230ff7a5ddef39cdf302b5c0dae4781d9cf6c163cbc4d0875158d5"
+strict_equals_approximate_512 = true
+certainty = "Certified"
+input_triangles = 1572
+output_vertices = 73844
+output_triangles = 164068
+total_peak_bytes = 178914697
+incremental_kernel_peak_bytes = 178125996
+post_boolean_incremental_bytes = 57917376
+output_live_payload_bytes = 57784192
+input_fact_growth_bytes = 133184
+post_input_drop_incremental_bytes = 118328
+allocation_calls = 47668590
+deallocation_calls = 47010732
+reallocation_calls = 2531566
+cumulative_added_bytes = 95666427841
+cumulative_removed_bytes = 95608510465
+allocation_call_change_percent = -1.020563
+reallocation_change_percent = -34.671675
+cumulative_added_change_percent = -1.734702
+
+[dense65_process]
+policy = "STRICT"
+elapsed_seconds = 80.35
+boolean_seconds = 80.308663162
+user_seconds = 79.90
+system_seconds = 0.12
+maximum_rss_kib = 191856
+swaps = 0
+elapsed_change_percent = -22.382148
+maximum_rss_change_kib = 148
+maximum_rss_change_percent = 0.077201
+vs_iterative_elapsed_percent = -88.376298
+
+[large_policy_gate]
+policies = ["STRICT", "APPROXIMATE_512"]
+complete_real_equality = true
+balanced_boundaries = true
+exact_volume_equality = true
+elapsed_seconds = 163.90
+parent_elapsed_seconds = 210.11
+elapsed_change_percent = -21.993242
+
+[profile]
+artifact = "target/phase17-local-simple-cavity-boundary.perf.data"
+frequency_hz = 999
+samples = 1422
+lost_samples = 0
+exact_homogeneous_point2_self_percent = 22.89
+orient2d_policy_self_percent = 21.38
+triangle_neighbors_self_percent = 7.98
+rational_denominator_self_percent = 4.78
+exact_dyadic_f64_self_percent = 4.25
+projected_segment_self_percent = 3.97
+replace_region_self_percent = 0.78
+neighbor_across_self_percent = 0.71
+close_constraint_cavity_holes_self_percent = 0.0
+
+[direct_probe_size]
+competitive_parent_text = 2755465
+competitive_current_text = 2755089
+competitive_change_bytes = -376
+competitive_change_percent = -0.013646
+heap_parent_text = 2901803
+heap_current_text = 2901427
+heap_change_bytes = -376
+heap_change_percent = -0.012958
+
+[canonical_size]
+minimum_change_percent = -0.080619
+maximum_growth_percent = 0.036706
+default_release_native_text_parent = [1982014, 1985158]
+default_release_native_text_current = [1981398, 1984542]
+default_release_wasm_oz_parent = [1404400, 1406229]
+default_release_wasm_oz_current = [1403334, 1405165]
+default_size_native_text_parent = [1086423, 1087387]
+default_size_native_text_current = [1086807, 1087763]
+default_size_wasm_oz_parent = [675613, 676026]
+default_size_wasm_oz_current = [675721, 675947]
+all_release_native_text_parent = [2116907, 2119763]
+all_release_native_text_current = [2116291, 2119147]
+all_release_wasm_oz_parent = [1478558, 1480516]
+all_release_wasm_oz_current = [1477366, 1479327]
+all_size_native_text_parent = [1088767, 1089731]
+all_size_native_text_current = [1089159, 1090131]
+all_size_wasm_oz_parent = [675643, 675917]
+all_size_wasm_oz_current = [675570, 676034]
+
+[callgraph]
+production_nodes = 15255
+production_edges = 25450
+tests_examples_nodes = 17602
+tests_examples_edges = 28820
+all_evidence_nodes = 21647
+all_evidence_edges = 34920
+production_artifact = "target/phase17-local-simple-cavity-boundary-callgraph-production/callgraph.json"
+tests_examples_artifact = "target/phase17-local-simple-cavity-boundary-callgraph-tests-examples/callgraph.json"
+all_evidence_artifact = "target/phase17-local-simple-cavity-boundary-callgraph-all-evidence/callgraph.json"
+retired_global_scanner_nodes = 0
+ember_namespace_nodes = 0
+one_boolean_engine = true
+
+[validation]
+hypertri_all_feature_tests_pass = true
+hypertri_warning_denied_clippy_pass = true
+hypermesh_release_suite_pass = true
+large_policy_equality_gate_pass = true
+format_and_diff_checks_pass = true
+default_all_native_wasm_release_size_pass = true
+
+[open]
+external_real_world_corpus = true
+complete_fuzz_seed_admission_audit = true
+retained_initial_adjacency = true
+every_cgal_case_at_parity = true
+large_rss_at_cgal_target = true
+phase18_final_audit = true

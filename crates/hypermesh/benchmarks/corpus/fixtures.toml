@@ -1,0 +1,1171 @@
+schema = 1
+registry = "hypermesh-surface-arrangement"
+admission = "monotonic"
+
+[[fixture]]
+id = "overlapping_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "exact-asset-pair"
+left = "benchmarks/corpus/exact/overlapping-boxes-left.off"
+right = "benchmarks/corpus/exact/overlapping-boxes-right.off"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [84.0, 12.0, 52.0, 20.0, 72.0]
+
+[[fixture]]
+id = "disjoint_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "disjoint", "multi-component-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+
+[[fixture]]
+id = "nested_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "strict-containment", "nested-shell-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [216.0, 16.0, 200.0, 0.0, 200.0]
+
+[[fixture]]
+id = "identical_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "identical", "coplanar-coincident-faces"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [64.0, 64.0, 0.0, 0.0, 0.0]
+
+[[fixture]]
+id = "face_touching_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "full-face-contact", "zero-volume-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+
+[[fixture]]
+id = "corner_coincident_same_operand_box_tetra"
+status = "permanent"
+provenance = "tests/boolean.rs::corner_coincident_same_operand_shells_have_consistent_surface_cells"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "tests::boolean::integer_box + integer_tetrahedron"
+coordinate_class = "integer"
+topology = ["closed-pwn", "multi-component", "self-intersecting-pwn", "winding-multiplicity-two", "corner-coincidence", "coincident-face-stack", "source-order-permutation", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_signed_six_volumes = ["542/3", "50/3", "110/3", "382/3", "164"]
+
+[[fixture]]
+id = "subdivided_face_coincident_shell_stack"
+status = "permanent"
+provenance = "tests/boolean.rs::subdivided_face_coincident_shell_stack_has_consistent_surface_cells"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "tests::boolean::integer_box + TriangleMesh::subdivide_triangles"
+coordinate_class = "integer-dyadic"
+topology = ["closed-pwn", "multi-component", "full-face-contact", "partial-face-contact", "coplanar-overlay", "coincident-face-stack", "subdivided-source", "retained-component-balance", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-reduction"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_signed_six_volumes = [114, 6, 108, 0, 108]
+
+[[fixture]]
+id = "partial_face_touching_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "partial-face-contact", "coplanar-overlay", "t-junction"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+
+[[fixture]]
+id = "edge_touching_boxes"
+status = "permanent"
+provenance = "tests/competitive.rs::lower_dimensional_closed_pwn_contacts_are_total_under_both_policies"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::lower_dimensional_contact_corpus"
+coordinate_class = "integer"
+topology = ["closed-pwn", "edge-contact", "zero-volume-intersection", "nonmanifold-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/edge_touching_boxes"
+
+[[fixture]]
+id = "vertex_touching_boxes"
+status = "permanent"
+provenance = "tests/competitive.rs::lower_dimensional_closed_pwn_contacts_are_total_under_both_policies"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::lower_dimensional_contact_corpus"
+coordinate_class = "integer"
+topology = ["closed-pwn", "vertex-contact", "zero-volume-intersection", "nonmanifold-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/vertex_touching_boxes"
+
+[[fixture]]
+id = "face_tangent_containment_boxes"
+status = "permanent"
+provenance = "tests/competitive.rs::lower_dimensional_closed_pwn_contacts_are_total_under_both_policies"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::lower_dimensional_contact_corpus"
+coordinate_class = "integer"
+topology = ["closed-pwn", "strict-containment", "tangent-containment", "partial-face-contact", "coplanar-overlay"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_volumes = [64.0, 8.0, 56.0, 0.0, 56.0]
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/face_tangent_containment_boxes"
+
+[[fixture]]
+id = "overlapping_tetrahedra"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::tetrahedron"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "transverse-edge-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [21.166666666666668, 0.16666666666666666, 10.5]
+
+[[fixture]]
+id = "crossing_octahedra"
+status = "permanent"
+provenance = "Historical tests/regression.rs crossing_octahedra public behavior"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::crossing_octahedra_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "no-contained-source-vertex", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 16
+expected_signed_six_volumes = [351, 81, 135, 135, 270]
+
+[[fixture]]
+id = "affine_boxes"
+status = "permanent"
+provenance = "Historical tests/regression.rs affine_box_pair public behavior"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::affine_boxes_case"
+coordinate_class = "integer-affine"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "non-axis-aligned-support", "exact-affine-embedding", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 24
+expected_signed_six_volumes = [576, 192, 192, 192, 384]
+
+[[fixture]]
+id = "sparse_multishell_tetrahedra_8"
+status = "permanent"
+provenance = "Hypermesh deterministic disconnected-shell sparse-intersection corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::sparse_multishell_tetrahedra_case(8)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "multi-shell-input", "disconnected-components", "sparse-broad-phase", "component-scaling", "transverse-face-intersection", "fixed-local-topology", "bounded-coordinate-complexity"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "regression"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 64
+expected_output_triangles = [128, 32, 96, 64, 160]
+scaling_family = "sparse_multishell_tetrahedra"
+scale_parameter = 8
+input_coordinate_max = 13
+
+[[fixture]]
+id = "sparse_multishell_tetrahedra_64"
+status = "permanent"
+provenance = "Deterministic 64-component sibling of sparse_multishell_tetrahedra_8"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::sparse_multishell_tetrahedra_case(64)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "multi-shell-input", "disconnected-components", "sparse-broad-phase", "component-scaling", "transverse-face-intersection", "fixed-local-topology", "bounded-coordinate-complexity"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling"]
+size = "medium"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 512
+expected_output_triangles = [1024, 256, 768, 512, 1280]
+scaling_family = "sparse_multishell_tetrahedra"
+scale_parameter = 64
+input_coordinate_max = 29
+
+[[fixture]]
+id = "sparse_multishell_tetrahedra_512"
+status = "permanent"
+provenance = "Deterministic 512-component sibling of sparse_multishell_tetrahedra_8"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::sparse_multishell_tetrahedra_case(512)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "multi-shell-input", "disconnected-components", "sparse-broad-phase", "component-scaling", "transverse-face-intersection", "fixed-local-topology", "bounded-coordinate-complexity", "large-mesh"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 4096
+expected_output_triangles = [8192, 2048, 6144, 4096, 10240]
+scaling_family = "sparse_multishell_tetrahedra"
+scale_parameter = 512
+input_coordinate_max = 61
+heap_probe_modes = ["sparse-shells-512"]
+
+[[fixture]]
+id = "transverse_self_pwn_clusters_8"
+status = "permanent"
+provenance = "Scaling sibling of surface_arrangement_transverse_self_pwn and historical overlapping closed components"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::transverse_self_pwn_cluster_case(8)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "disconnected-components", "fixed-local-topology", "same-operand-scaling", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "transverse_self_pwn_clusters"
+scale_parameter = 8
+input_triangles = 68
+expected_output_triangles = [132, 0, 128, 4, 132]
+expected_signed_six_volumes = [1080, 0, 1016, 64, 1080]
+
+[[fixture]]
+id = "transverse_self_pwn_clusters_64"
+status = "permanent"
+provenance = "Scaling sibling of surface_arrangement_transverse_self_pwn and historical overlapping closed components"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::transverse_self_pwn_cluster_case(64)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "disconnected-components", "fixed-local-topology", "same-operand-scaling", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "transverse_self_pwn_clusters"
+scale_parameter = 64
+input_triangles = 516
+expected_output_triangles = [1028, 0, 1024, 4, 1028]
+expected_signed_six_volumes = [8192, 0, 8128, 64, 8192]
+
+[[fixture]]
+id = "transverse_self_pwn_clusters_512"
+status = "permanent"
+provenance = "Scaling sibling of surface_arrangement_transverse_self_pwn and historical overlapping closed components"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::transverse_self_pwn_cluster_case(512)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "disconnected-components", "fixed-local-topology", "same-operand-scaling", "transverse-face-intersection", "large-mesh"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "heap"]
+size = "large"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "transverse_self_pwn_clusters"
+scale_parameter = 512
+input_triangles = 4100
+expected_output_triangles = [8196, 0, 8192, 4, 8196]
+expected_signed_six_volumes = [65088, 0, 65024, 64, 65088]
+heap_probe_modes = ["self-pwn-clusters-512"]
+
+[[fixture]]
+id = "clipped_voxel_torus_9"
+status = "permanent"
+provenance = "Hypermesh deterministic high-genus scaling and competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::clipped_voxel_torus_case(9)"
+coordinate_class = "integer-and-dyadic"
+topology = ["closed-pwn", "concave", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling"]
+size = "medium"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 460
+expected_volumes = [298.0, 56.0, 56.0, 186.0, 242.0]
+scaling_family = "clipped_voxel_torus"
+scale_parameter = 9
+
+[[fixture]]
+id = "clipped_voxel_torus_33"
+status = "permanent"
+provenance = "Deterministic large sibling of clipped_voxel_torus_9"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::clipped_voxel_torus_case(33)"
+coordinate_class = "integer-and-dyadic"
+topology = ["closed-pwn", "concave", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6412
+scaling_family = "clipped_voxel_torus"
+scale_parameter = 33
+heap_probe_modes = ["voxel-torus-33"]
+
+[[fixture]]
+id = "clipped_voxel_torus_65"
+status = "permanent"
+provenance = "Deterministic XL sibling of clipped_voxel_torus_9"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::clipped_voxel_torus_case(65)"
+coordinate_class = "integer-and-dyadic"
+topology = ["closed-pwn", "concave", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 25100
+scaling_family = "clipped_voxel_torus"
+scale_parameter = 65
+heap_probe_modes = ["voxel-torus-65"]
+
+[[fixture]]
+id = "subdivided_overlapping_boxes_3072_each"
+status = "permanent"
+provenance = "Hypermesh deterministic competitive scaling corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::large_boolean_case"
+coordinate_class = "dyadic"
+topology = ["closed-pwn", "dense-coplanar-input", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+heap_probe_modes = ["boxes-3072", "boxes-3072-general"]
+scaling_family = "wide_rational_boxes"
+scale_parameter = 0
+similarity = "1"
+similarity_component_bits = 1
+
+[[fixture]]
+id = "wide_rational_boxes_64"
+status = "permanent"
+provenance = "Hypermesh deterministic fixed-topology rational-width corpus"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::wide_rational_overlapping_box_case(16, 64)"
+coordinate_class = "wide-arbitrary-rational"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-similarity", "fixed-topology-scalar-scaling", "wide-rational"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "wide_rational_boxes"
+scale_parameter = 64
+similarity = "(2^64 + 1) / 2^64"
+similarity_component_bits = 65
+heap_probe_modes = ["wide-rational-64"]
+
+[[fixture]]
+id = "wide_rational_boxes_512"
+status = "permanent"
+provenance = "Deterministic 513-bit sibling of wide_rational_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::wide_rational_overlapping_box_case(16, 512)"
+coordinate_class = "wide-arbitrary-rational"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-similarity", "fixed-topology-scalar-scaling", "wide-rational"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "wide_rational_boxes"
+scale_parameter = 512
+similarity = "(2^512 + 1) / 2^512"
+similarity_component_bits = 513
+heap_probe_modes = ["wide-rational-512"]
+
+[[fixture]]
+id = "wide_rational_boxes_2048"
+status = "permanent"
+provenance = "Deterministic 2049-bit sibling of wide_rational_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::wide_rational_overlapping_box_case(16, 2048)"
+coordinate_class = "wide-arbitrary-rational"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-similarity", "fixed-topology-scalar-scaling", "wide-rational"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "wide_rational_boxes"
+scale_parameter = 2048
+similarity = "(2^2048 + 1) / 2^2048"
+similarity_component_bits = 2049
+heap_probe_modes = ["wide-rational-2048"]
+
+[[fixture]]
+id = "thin_dyadic_boxes_64"
+status = "permanent"
+provenance = "Hypermesh deterministic near-degenerate exact-affine corpus"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::thin_dyadic_overlapping_box_case(16, 64)"
+coordinate_class = "extreme-exponent-exact-dyadic"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-affine-embedding", "fixed-topology-scalar-scaling", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "thin_dyadic_boxes"
+scale_parameter = 64
+affine_determinant = "1 / 2^64"
+scale_denominator_bits = 65
+binary64_scale = "nonzero"
+heap_probe_modes = ["thin-dyadic-64"]
+
+[[fixture]]
+id = "thin_dyadic_boxes_512"
+status = "permanent"
+provenance = "Deterministic 512-bit-exponent sibling of thin_dyadic_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::thin_dyadic_overlapping_box_case(16, 512)"
+coordinate_class = "extreme-exponent-exact-dyadic"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-affine-embedding", "fixed-topology-scalar-scaling", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "thin_dyadic_boxes"
+scale_parameter = 512
+affine_determinant = "1 / 2^512"
+scale_denominator_bits = 513
+binary64_scale = "nonzero"
+heap_probe_modes = ["thin-dyadic-512"]
+
+[[fixture]]
+id = "thin_dyadic_boxes_2048"
+status = "permanent"
+provenance = "Deterministic 2,048-bit-exponent sibling of thin_dyadic_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::thin_dyadic_overlapping_box_case(16, 2048)"
+coordinate_class = "extreme-exponent-exact-dyadic"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-affine-embedding", "fixed-topology-scalar-scaling", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "thin_dyadic_boxes"
+scale_parameter = 2048
+affine_determinant = "1 / 2^2048"
+scale_denominator_bits = 2049
+binary64_scale = "underflows-to-zero"
+heap_probe_modes = ["thin-dyadic-2048"]
+
+[[fixture]]
+id = "dense_coplanar_boxes_4"
+status = "permanent"
+provenance = "Hypermesh deterministic cross-operand coplanar scaling corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_coplanar_box_case(4)"
+coordinate_class = "bounded-word-dyadic"
+topology = ["closed-pwn", "convex", "identical", "cross-operand-coplanar-overlay", "opposite-face-diagonals", "fixed-coordinate-complexity"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling"]
+size = "medium"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 384
+expected_output_triangles = 384
+expected_volumes = [64.0, 64.0, 0.0, 0.0, 0.0]
+scaling_family = "dense_coplanar_boxes"
+scale_parameter = 4
+input_coordinate_denominator_bound = 8
+
+[[fixture]]
+id = "dense_coplanar_boxes_16"
+status = "permanent"
+provenance = "Deterministic large sibling of dense_coplanar_boxes_4"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_coplanar_box_case(16)"
+coordinate_class = "bounded-word-dyadic"
+topology = ["closed-pwn", "convex", "identical", "cross-operand-coplanar-overlay", "opposite-face-diagonals", "fixed-coordinate-complexity", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 6144
+scaling_family = "dense_coplanar_boxes"
+scale_parameter = 16
+input_coordinate_denominator_bound = 8
+heap_probe_modes = ["dense-coplanar-16"]
+
+[[fixture]]
+id = "dense_coplanar_boxes_32"
+status = "permanent"
+provenance = "Deterministic XL sibling of dense_coplanar_boxes_4"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_coplanar_box_case(32)"
+coordinate_class = "bounded-word-dyadic"
+topology = ["closed-pwn", "convex", "identical", "cross-operand-coplanar-overlay", "opposite-face-diagonals", "fixed-coordinate-complexity", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 24576
+expected_output_triangles = 24576
+scaling_family = "dense_coplanar_boxes"
+scale_parameter = 32
+input_coordinate_denominator_bound = 8
+heap_probe_modes = ["dense-coplanar-32"]
+
+[[fixture]]
+id = "yeahright_control_hull_subdivided_box"
+status = "permanent-opt-in"
+provenance = "YeahRight model repository; exact convex-hull derivation documented in competitive/yeahright.rs"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_boolean_case"
+coordinate_class = "decimal-input-derived-dyadic"
+topology = ["closed-pwn", "high-genus-source", "convex-hull", "box-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+archive_sha256 = "b3a4f314bfb8c67e36eab5faa96a146ffac90524e120769b5adb8a71be8ba3dc"
+control_mesh_sha256 = "bf8768bf019ac505c39c92ae5d63808ee1773047aefd5d5d6700b88c1b5f1c3e"
+heap_probe_modes = ["yeahright"]
+
+[[fixture]]
+id = "yeahright_control_hull_subdivided_4_box"
+status = "permanent-opt-in"
+provenance = "Deterministic scale sibling of the content-addressed YeahRight control"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_boolean_case_with_subdivisions(4)"
+coordinate_class = "decimal-input-derived-dyadic"
+topology = ["closed-pwn", "convex-hull", "dense-input-subdivision", "box-intersection"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+heap_probe_modes = ["yeahright-4"]
+
+[[fixture]]
+id = "yeahright_control_hull_subdivided_8_box"
+status = "permanent-opt-in"
+provenance = "Deterministic scale sibling of the content-addressed YeahRight control"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_boolean_case_with_subdivisions(8)"
+coordinate_class = "decimal-input-derived-dyadic"
+topology = ["closed-pwn", "convex-hull", "dense-input-subdivision", "box-intersection"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["scaling", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+heap_probe_modes = ["yeahright-8"]
+
+[[fixture]]
+id = "yeahright_full_resolution_rotated_box"
+status = "permanent-opt-in"
+provenance = "Content-addressed YeahRight control and exact rotated-box hard gate"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_full_rotated_case"
+coordinate_class = "decimal-input-and-symbolic-rotation"
+topology = ["closed-pwn", "high-genus", "nonconvex", "dense-intersection", "empty-result"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "competitive", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 23788
+input_triangles_per_operand = [11894, 11894]
+expected_output_vertices = 0
+expected_output_triangles = 0
+heap_probe_modes = ["yeahright-full-rotated"]
+competitive_probe_selectors = ["yeahright_full_resolution_rotated_intersection"]
+left_exact_off_sha256 = "5352f571af1df60fd5acc8015aae82f5542c229e683e9f689b03fe452305e310"
+right_exact_off_sha256 = "c10b3a3d0774126a664e8880c01f38a6a9765c2ab1a6be7dc3a93894a7ebeaa1"
+
+[[fixture]]
+id = "symbolic_terminal_box_contact"
+status = "permanent"
+provenance = "operations::tests::exact_box_cell_boolean_obeys_terminal_equality_policy"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "pi + e versus e + pi box boundary"
+coordinate_class = "symbolic-computable"
+topology = ["closed-pwn", "face-contact", "terminal-equality"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "policy-dependent"
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_1"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(1)"
+coordinate_class = "quadratic-surd"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 1
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_8"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(8)"
+coordinate_class = "nested-symbolic-computable"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "STRICT PredicateUndecided; APPROXIMATE_512 Approximate512Consumed"
+strict_result = "PredicateUndecided"
+approximate_512_result = "complete topology; Approximate512Consumed"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 8
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_32"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(32)"
+coordinate_class = "nested-symbolic-computable"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "STRICT PredicateUndecided; APPROXIMATE_512 Approximate512Consumed"
+strict_result = "PredicateUndecided"
+approximate_512_result = "complete topology; Approximate512Consumed"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 32
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_128"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(128)"
+coordinate_class = "nested-symbolic-computable"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "STRICT PredicateUndecided; APPROXIMATE_512 Approximate512Consumed"
+strict_result = "PredicateUndecided"
+approximate_512_result = "complete topology; Approximate512Consumed"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 128
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "exact_pairwise_intersection_microcases"
+status = "permanent"
+provenance = "tests/intersection_corpus.rs"
+license = "MIT"
+source_kind = "unit-generator-matrix"
+generator = "intersection_corpus::exact_pairwise_intersection_corpus_covers_policy_order_and_orientation"
+coordinate_class = "integer"
+topology = ["triangle-pair", "parallel-support-disjoint", "transverse-point", "transverse-segment", "shared-feature", "coplanar-disjoint", "coplanar-vertex-contact", "coplanar-edge-contact", "t-junction", "coplanar-area-overlap", "coincident-face", "orientation-inversion"]
+operations = ["pairwise-intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+case_count = 12
+orientation_order_variants_per_case = 8
+exact_rectangle_oracle_cases = 256
+rectangle_orientation_order_variants_per_case = 8
+expected_pairwise_classes = ["Disjoint", "NonCoplanarPoint", "NonCoplanarSegment", "CoplanarPoint", "CoplanarSegment", "CoplanarOverlap"]
+
+[[fixture]]
+id = "symbolic_terminal_pairwise_contact"
+status = "permanent"
+provenance = "tests/predicate_policy.rs::pairwise_contact_classification_obeys_terminal_equality_policy"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "pi + e versus e + pi coplanar vertex contact"
+coordinate_class = "symbolic-computable"
+topology = ["triangle-pair", "coplanar-vertex-contact", "terminal-equality"]
+operations = ["pairwise-intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "policy-dependent"
+strict_result = "PredicateUndecided"
+approximate_512_result = "CoplanarPoint"
+
+[[fixture]]
+id = "surface_arrangement_negative_cavity"
+status = "permanent"
+provenance = "surface_arrangement::tests::nested_negative_shell_forms_an_exact_cavity"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "nested exact tetrahedral shells with inner winding transition -1"
+coordinate_class = "integer"
+topology = ["closed-pwn", "nested-shell", "negative-winding-cavity", "multi-component-radial"]
+operations = ["union", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_facets = 8
+expected_cells = 4
+expected_windings = [0, 0, 1, 1]
+
+[[fixture]]
+id = "surface_arrangement_genus_one_voxel_ring"
+status = "permanent"
+provenance = "surface_arrangement::tests::genus_one_voxel_ring_has_one_inside_and_one_outside_cell"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "3x3x1 integer voxel ring with the center column absent"
+coordinate_class = "integer"
+topology = ["closed-pwn", "nonconvex", "high-genus", "genus-one", "tunnel"]
+operations = ["union", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 64
+expected_points = 32
+expected_radial_edges = 96
+expected_cells = 2
+
+[[fixture]]
+id = "surface_arrangement_transverse_self_pwn"
+status = "permanent"
+provenance = "surface_arrangement::tests::same_operand_transverse_pwn_preserves_winding_multiplicity"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "two transversely overlapping exact tetrahedral shells in one operand"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "nonmanifold-radial"]
+operations = ["union", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_cells = 4
+expected_windings = [0, 1, 1, 2]
+
+[[fixture]]
+id = "surface_arrangement_embedding_permutation"
+status = "permanent"
+provenance = "surface_arrangement::tests::exact_embedding_and_operand_permutation_preserve_cell_truth"
+license = "MIT"
+source_kind = "unit-generator-matrix"
+generator = "overlapping tetrahedra under exact scale-7 reflected embedding, face reorder, and operand swap"
+coordinate_class = "integer"
+topology = ["closed-pwn", "transverse-face-intersection", "exact-embedding", "reflection", "face-permutation", "operand-permutation"]
+operations = ["union", "intersection", "xor", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+metamorphic_variants = 4
+
+[[fixture]]
+id = "same_operand_coplanar_source_edge_propagation"
+status = "permanent"
+provenance = "tests/boolean.rs::same_operand_coplanar_shell_overlap_is_order_invariant"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "two overlapping integer boxes in one operand unioned with an integer octahedron"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "coplanar-overlay", "source-edge-split-propagation", "nonmanifold-radial", "operand-permutation"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_signed_six_volume = "21763/48"
+metamorphic_variants = 4
+
+[[fixture]]
+id = "same_operand_subdivision_edge_intersection_continuation"
+status = "permanent"
+provenance = "tests/boolean.rs::subdivided_same_operand_overlap_has_empty_disjoint_intersection"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "one subdivided and one unsubdivided overlapping integer box in one operand, intersected with a disjoint integer octahedron"
+coordinate_class = "dyadic"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "coplanar-overlay", "subdivided-surface", "boundary-aligned-intersection", "intersection-curve-continuation", "winding-multiplicity-two", "operand-permutation", "empty-result"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_output_triangles = 0
+expected_signed_six_volume = "0"
+metamorphic_variants = 4
+
+[[fixture]]
+id = "surface_arrangement_forty_operand_truth"
+status = "permanent"
+provenance = "surface_arrangement::tests::forty_operands_share_one_arrangement_and_batched_truth_table"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "40 disjoint exact tetrahedral operands with shared union/intersection/parity DAG"
+coordinate_class = "integer"
+topology = ["closed-pwn", "disjoint", "multi-component", "high-operand-count", "batched-expression"]
+operations = ["union", "intersection", "xor", "multi-expression"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "scaling", "fuzz-seed"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "Certified"
+operand_count = 40
+input_triangles = 160
+requested_expressions = 3
+expected_cells = 80
+
+[[fixture]]
+id = "face_arrangement_disconnected_inner_cells"
+status = "permanent"
+provenance = "surface_arrangement::tests::bounded_face_pslg_keeps_disconnected_inner_cells"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "one exact source triangle containing two disjoint coplanar triangular constraint loops"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "coplanar-overlay", "bounded-face-corefinement", "disjoint-coplanar-components", "disconnected-inner-cells"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_source_face_triangles = 13
+expected_source_face_constraints = 9
+
+[[fixture]]
+id = "face_arrangement_nested_constraint_loops"
+status = "permanent"
+provenance = "surface_arrangement::tests::bounded_face_pslg_keeps_nested_constraint_loops"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "one exact source triangle containing two strictly nested coplanar triangular constraint loops"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "coplanar-overlay", "bounded-face-corefinement", "nested-constraint-loops", "nested-holes"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_source_face_triangles = 13
+expected_source_face_constraints = 9
+
+[[fixture]]
+id = "face_arrangement_crossing_constraints"
+status = "permanent"
+provenance = "surface_arrangement::tests::crossing_face_constraints_share_one_triple_point"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "two transverse exact source planes cut one bounded source triangle at a shared triple point"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "bounded-face-corefinement", "properly-crossing-constraints", "plane-triple-construction", "shared-crossing-point"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_shared_crossing_points = 1
+
+[[fixture]]
+id = "face_arrangement_opposite_winding_coincidence"
+status = "permanent"
+provenance = "surface_arrangement::tests::opposite_winding_coincident_faces_reuse_one_point_set"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "two geometrically identical exact triangles with opposite winding and independent source identity"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "coplanar-overlay", "coincident-face", "coincident-edges", "opposite-winding", "shared-point-set"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_arrangement_points = 3
+
+[[fixture]]
+id = "face_arrangement_collinear_overlap_t_junctions"
+status = "permanent"
+provenance = "surface_arrangement::tests::collinear_overlaps_and_t_junctions_split_into_one_edge_set"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "one bounded exact triangle with nested collinear segments and T-junctions on both sides"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "bounded-face-corefinement", "collinear-overlap", "t-junction", "canonical-split-edge-set"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_arrangement_points = 11
+expected_source_face_constraints = 10
+
+[[fixture]]
+id = "dense_crossing_grid_5"
+status = "permanent"
+provenance = "Hypermesh deterministic public Boolean crossing-cavity corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_crossing_grid_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "dense-crossing-constraints", "finite-work-exhaustion", "weakly-simple-cavity", "cavity-hole-closure"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "dense_crossing_grid"
+scale_parameter = 5
+input_triangles = 132
+grid_intersections = 100
+expected_intersection_volume = 85
+
+[[fixture]]
+id = "dense_crossing_grid_17"
+status = "permanent"
+provenance = "Hypermesh deterministic public Boolean crossing-cavity corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_crossing_grid_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "dense-crossing-constraints", "finite-work-exhaustion", "historical-pass-limit-exceeded", "weakly-simple-cavity", "cavity-hole-closure"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "dense_crossing_grid"
+scale_parameter = 17
+input_triangles = 420
+grid_intersections = 1156
+expected_intersection_volume = 901
+
+[[fixture]]
+id = "dense_crossing_grid_65"
+status = "permanent"
+provenance = "Hypermesh deterministic public Boolean crossing-cavity corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_crossing_grid_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "dense-crossing-constraints", "finite-work-exhaustion", "historical-pass-limit-exceeded", "weakly-simple-cavity", "cavity-hole-closure", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["scaling", "heap"]
+size = "large"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "dense_crossing_grid"
+scale_parameter = 65
+input_triangles = 1572
+grid_intersections = 16900
+expected_intersection_volume = 12805
+heap_probe_modes = ["dense-crossing-65"]

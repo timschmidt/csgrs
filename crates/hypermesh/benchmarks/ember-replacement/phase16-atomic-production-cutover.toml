@@ -1,0 +1,140 @@
+schema = 1
+status = "production-cutover-implemented-validation-open"
+captured_at = "2026-08-03"
+phases = [16]
+checkpoint = "atomic-production-cutover"
+implementation_commit = "ef431941da1ec174b315e34a617cb0218c6db081"
+source_parent_commit = "f56371ec7eda83518c3960792a42a27a5634f2a4"
+csgrs_caller_commit = "b34a2f47b90e3d329028d6337d19dfbc9629fbb0"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypertri_commit = "d6014be5cc3ee4961929430d40b5cba83efc4813"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+production_orchestrator = true
+public_multi_expression_api = true
+callers_migrated = true
+dual_shipped_engine = false
+compatibility_shim = false
+historical_engine_removed = true
+phase_16_implementation_complete = true
+phase_16_evidence_complete = false
+phase_17_complete = false
+phase_18_complete = false
+cgal_parity = false
+
+[api]
+entry = "boolean(&MeshContext, &[TriangleMeshRef], BooleanProgram)"
+programs = ["Operation", "Expressions"]
+expression_nodes = ["Constant", "Operand", "Not", "And", "Or", "Xor", "Operation"]
+output = "MeshOutcome<BooleanMeshBatch>"
+shared_vertex_arena = true
+compact_triangle_indices = "u32"
+per_result_provenance = true
+unbounded_exterior_marker = true
+finite_conversion_rejects_unbounded = true
+legacy_forwarders = false
+
+[architecture]
+one_arrangement_many_outputs = true
+input_validation = "finite nonempty closed PWN"
+broad_phase = "shared exact BVH"
+intersection_graph = "compact dimension-complete face rows"
+corefinement = "bounded exact source-face PSLG"
+topology = "exact radial facet bundles and cells"
+classification = "global winding vectors and one truth DAG"
+output = "direct selected exact facets plus independent closure certification"
+repair_path = false
+recursive_subdivision = false
+whole_mesh_segment_trace = false
+local_bsp = false
+trusted_convex_selector = false
+native_reusable_fact = "policy-qualified closed-PWN validation only"
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+strict_undecided_is_error = true
+approximate_512_terminal_only = true
+aggregate_certainty_absorbed = true
+cached_approximate_fact_rejected_by_strict = true
+cached_fact_can_upgrade_to_certified = true
+
+[source]
+files_changed = 59
+lines_added = 2279
+lines_removed = 83934
+net_lines = -81655
+removed_namespaces = ["operations", "subdivision", "segment_trace", "local_bsp", "halfspace"]
+removed_low_level_configuration = true
+removed_old_integration_files = ["tests/core.rs", "tests/regression.rs"]
+migration_ledger = "benchmarks/corpus/implementation-test-migration.toml"
+migration_ledger_pinned_tests = 1113
+
+[tests.all_features]
+unit_passed = 107
+integration_passed = 29
+failed = 0
+ignored = 6
+
+[gates]
+all_feature_tests = true
+fmt = true
+diff_check = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_bins_clippy_deny_warnings = true
+size_harness_clippy_deny_warnings = true
+ui_clippy_deny_warnings = true
+corpus_migration_ledger = true
+callgraph = true
+sanitizers = false
+production_large_mesh_heap = false
+current_native_wasm_size = false
+dispatch_runtime_coverage = false
+rustdoc_api_coverage = false
+
+[callgraph.production]
+command = "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/hypermesh-path-callgraph-phase16-cutover-production --crate-name hypermesh,hyperreal,hyperlimit,hyperlattice,hypertri,csgrs --format json,dot --per-library"
+crates = 6
+nodes = 17932
+edges = 29377
+hypermesh_function_nodes = 2573
+hypermesh_internal_edges = 4063
+removed_namespace_nodes = 0
+
+[callgraph.evidence]
+command = "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/hypermesh-path-callgraph-phase16-cutover-evidence --crate-name hypermesh,hyperreal,hyperlimit,hyperlattice,hypertri,csgrs --include-tests --include-bench --include-examples --include-fuzz --format json --per-library"
+crates = 6
+nodes = 25022
+edges = 39535
+hypermesh_function_nodes = 3470
+hypermesh_internal_edges = 5126
+removed_namespace_nodes = 0
+
+[controlled_callers]
+hypermesh_examples = "pass"
+hypermesh_benches = "pass"
+hypermesh_fuzz = "pass"
+hypermesh_size_harness = "pass"
+hypermesh_ui = "pass"
+csgrs_source_migrated = true
+csgrs_removed_api_references = 0
+csgrs_full_check = "blocked by concurrent Hypercurve signature changes in src/curve/native.rs; no Hypermesh diagnostic"
+hypercurve_edited = false
+hypersolve_edited = false
+
+[remaining]
+production_large_mesh_heap_both_policies = true
+large_fixture_kernel_and_input_lifetime_split = true
+dispatch_runtime_coverage = true
+rustdoc_api_coverage = true
+fuzz_runtime_and_sanitizers = true
+current_source_native_wasm_size = true
+historical_and_cgal_per_case_benchmarks = true
+pathological_and_real_world_corpus_expansion = true
+full_csgrs_validation_after_concurrent_curve_stabilization = true
+phase_18_requirement_audit = true

@@ -1,0 +1,685 @@
+//! Hyperreal planes, AABBs, and vector helpers.
+
+use std::cmp::Ordering;
+
+use hyperlattice::{
+    HomogeneousPoint3, Matrix4, Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real,
+};
+
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
+use crate::error::{HypermeshError, HypermeshResult};
+pub(crate) use crate::predicate::compare_real_decision;
+pub use crate::predicate::{
+    Classification, classify_point, classify_projective_point, compare_real,
+};
+
+pub(crate) fn affine_projective_point_decision(
+    decisions: &DecisionContext,
+    point: &HomogeneousPoint3,
+) -> HypermeshResult<Point3> {
+    if point.w.definitely_one() {
+        return Ok(Point3::new(
+            point.x.clone(),
+            point.y.clone(),
+            point.z.clone(),
+        ));
+    }
+    if point.w.exact_rational_ref().is_some() {
+        return point
+            .to_affine_point()
+            .map_err(|_| HypermeshError::PointAtInfinity);
+    }
+    let reciprocal = hyperlimit::reciprocal_real(&point.w, decisions.policy())
+        .map_err(|_| HypermeshError::PointAtInfinity)?;
+    let reciprocal = decisions.decide(reciprocal, "projective reciprocal")?;
+    Ok(Point3::new(
+        &point.x * &reciprocal,
+        &point.y * &reciprocal,
+        &point.z * reciprocal,
+    ))
+}
+
+/// Exact plane `normal . point + offset = 0`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Plane {
+    /// Plane normal coefficients.
+    pub normal: Point3,
+    /// Constant offset.
+    pub offset: Real,
+}
+
+impl Plane {
+    /// Constructs a plane from exact coefficients.
+    pub const fn new(normal: Point3, offset: Real) -> Self {
+        Self { normal, offset }
+    }
+
+    /// Constructs a plane from scalar coefficients.
+    pub fn from_coefficients(a: Real, b: Real, c: Real, d: Real) -> Self {
+        Self::new(Point3::new(a, b, c), d)
+    }
+
+    /// Constructs an axis-aligned plane `point[axis] - value = 0`.
+    pub fn axis_aligned(axis: usize, value: Real) -> Self {
+        let zero = Real::zero();
+        let one = Real::one();
+        let normal = match axis {
+            0 => Point3::new(one, zero.clone(), zero),
+            1 => Point3::new(zero.clone(), one, zero),
+            2 => Point3::new(zero.clone(), zero, one),
+            _ => panic!("axis must be 0, 1, or 2"),
+        };
+        Self::new(normal, -value)
+    }
+
+    /// Constructs the oriented plane with `normal` through `point`.
+    ///
+    /// Wide exact-dyadic normals are projective coordinates: one positive
+    /// common scale has no geometric meaning. Remove it before constructing
+    /// the offset so repeated predicates do not carry that scale into every
+    /// product. General exact-rational and symbolic normals retain the usual
+    /// `Real` expression path.
+    pub(crate) fn from_normal_and_point(
+        normal: Point3,
+        point: &Point3,
+        normalize_wide_dyadic: bool,
+    ) -> Self {
+        if normalize_wide_dyadic
+            && let [Some(x), Some(y), Some(z)] =
+                [&normal.x, &normal.y, &normal.z].map(Real::exact_rational_ref)
+            && let [Some(px), Some(py), Some(pz)] =
+                [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+            && [x, y, z, px, py, pz].into_iter().all(Rational::is_dyadic)
+        {
+            let [x, y, z] = Rational::primitive_integer_ratio([x, y, z]);
+            let offset = Rational::signed_product_sum_known_dyadic(
+                [false; 3],
+                [[&x, px], [&y, py], [&z, pz]],
+            );
+            return Self::new(
+                Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+                Real::from(offset),
+            );
+        }
+        let offset = -dot_point(&normal, point);
+        Self::new(normal, offset)
+    }
+
+    /// Returns the exact homogeneous reflection across this plane.
+    ///
+    /// For `n · x + d = 0`, reflection is
+    /// `x' = x - 2 (n · x + d) n / (n · n)`. Keeping this operation beside
+    /// Hypermesh's native plane prevents modeling layers from introducing a
+    /// second plane carrier solely to mirror triangle geometry.
+    pub fn reflection_matrix(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<Matrix4>> {
+        let decisions = DecisionContext::new(context);
+        let matrix = self.reflection_matrix_decision(&decisions)?;
+        Ok(decisions.finish(matrix))
+    }
+
+    pub(crate) fn reflection_matrix_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Matrix4> {
+        let nx = self.normal.x.clone();
+        let ny = self.normal.y.clone();
+        let nz = self.normal.z.clone();
+        let squared_norm =
+            nx.clone() * nx.clone() + ny.clone() * ny.clone() + nz.clone() * nz.clone();
+        let reciprocal = hyperlimit::reciprocal_real(&squared_norm, decisions.policy())
+            .map_err(|_| HypermeshError::DegeneratePointSet)?;
+        let factor = Real::from(2_u8) * decisions.decide(reciprocal, "plane normal nonzero")?;
+        let one = Real::one();
+        let zero = Real::zero();
+        Ok(Matrix4::from_row_major([
+            one.clone() - factor.clone() * nx.clone() * nx.clone(),
+            -factor.clone() * nx.clone() * ny.clone(),
+            -factor.clone() * nx.clone() * nz.clone(),
+            -factor.clone() * self.offset.clone() * nx.clone(),
+            -factor.clone() * ny.clone() * nx.clone(),
+            one.clone() - factor.clone() * ny.clone() * ny.clone(),
+            -factor.clone() * ny.clone() * nz.clone(),
+            -factor.clone() * self.offset.clone() * ny.clone(),
+            -factor.clone() * nz.clone() * nx,
+            -factor.clone() * nz.clone() * ny,
+            one - factor.clone() * nz.clone() * nz.clone(),
+            -factor * self.offset.clone() * nz,
+            zero.clone(),
+            zero.clone(),
+            zero,
+            Real::one(),
+        ]))
+    }
+
+    /// Constructs the oriented plane through three affine points.
+    pub fn from_points(p0: &Point3, p1: &Point3, p2: &Point3) -> Self {
+        if let [
+            Some(x0),
+            Some(y0),
+            Some(z0),
+            Some(x1),
+            Some(y1),
+            Some(z1),
+            Some(x2),
+            Some(y2),
+            Some(z2),
+        ] = [
+            &p0.x, &p0.y, &p0.z, &p1.x, &p1.y, &p1.z, &p2.x, &p2.y, &p2.z,
+        ]
+        .map(Real::exact_rational_ref)
+        {
+            if let Some([x, y, z, offset]) = Rational::affine_plane3_coefficients_known_dyadic([
+                [x0, y0, z0],
+                [x1, y1, z1],
+                [x2, y2, z2],
+            ]) {
+                return Self::new(
+                    Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+                    Real::from(offset),
+                );
+            }
+            let exact_dyadic = [x0, y0, z0, x1, y1, z1, x2, y2, z2]
+                .into_iter()
+                .all(Rational::is_dyadic);
+            let signs = [true, false, false, false, true, true];
+            let x_terms = [[y1, z2], [y1, z0], [y0, z2], [z1, y2], [z1, y0], [z0, y2]];
+            let y_terms = [[z1, x2], [z1, x0], [z0, x2], [x1, z2], [x1, z0], [x0, z2]];
+            let z_terms = [[x1, y2], [x1, y0], [x0, y2], [y1, x2], [y1, x0], [y0, x2]];
+            let x = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic(signs, x_terms)
+            } else {
+                Rational::signed_product_sum(signs, x_terms)
+            };
+            let y = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic(signs, y_terms)
+            } else {
+                Rational::signed_product_sum(signs, y_terms)
+            };
+            let z = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic(signs, z_terms)
+            } else {
+                Rational::signed_product_sum(signs, z_terms)
+            };
+            let [x, y, z] = if exact_dyadic {
+                // The fixed-stack constructor above already handles narrow
+                // dyadics. Once it declines, remove the cross product's
+                // positive projective scale before forming the offset so that
+                // later predicates never multiply that dead factor again.
+                Rational::primitive_integer_ratio([&x, &y, &z])
+            } else {
+                [x, y, z]
+            };
+            let offset_terms = [[&x, x0], [&y, y0], [&z, z0]];
+            let offset = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic([false; 3], offset_terms)
+            } else {
+                Rational::signed_product_sum([false; 3], offset_terms)
+            };
+            return Self::new(
+                Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+                Real::from(offset),
+            );
+        }
+        let u = sub_points(p1, p0);
+        let v = sub_points(p2, p0);
+        let normal = cross_arrays(&u, &v);
+        let offset = -dot_point(&normal, p0);
+        Self::new(normal, offset)
+    }
+
+    /// Returns whether three affine points define a valid plane under the
+    /// configured exact predicate policy.
+    ///
+    /// This is the allocation-reduced validation counterpart of
+    /// `Plane::from_points(...).is_valid()`: it evaluates cross-product
+    /// components only until one is not structurally zero and does not build
+    /// the unused plane offset.
+    #[inline]
+    pub fn points_are_nondegenerate(
+        context: &MeshContext,
+        p0: &Point3,
+        p1: &Point3,
+        p2: &Point3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let nondegenerate = Self::decide_points_are_nondegenerate(&decisions, p0, p1, p2)?;
+        Ok(decisions.finish(nondegenerate))
+    }
+
+    /// Decides whether three affine points define a valid plane, preserving
+    /// predicate uncertainty for geometry-producing callers.
+    #[inline]
+    pub(crate) fn decide_points_are_nondegenerate(
+        decisions: &DecisionContext,
+        p0: &Point3,
+        p1: &Point3,
+        p2: &Point3,
+    ) -> crate::error::HypermeshResult<bool> {
+        decisions
+            .decide(
+                hyperlimit::classify_triangle3_degeneracy(p0, p1, p2, decisions.policy()),
+                "3D triangle degeneracy",
+            )
+            .map(|degeneracy| matches!(degeneracy, hyperlimit::TriangleDegeneracy::NonDegenerate))
+    }
+
+    pub(crate) fn points_are_collinear_on_support(
+        &self,
+        decisions: &DecisionContext,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+    ) -> crate::error::HypermeshResult<bool> {
+        let normal = [&self.normal.x, &self.normal.y, &self.normal.z];
+        let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
+        for (axis, coefficient) in normal.into_iter().enumerate() {
+            let Some(component) = coefficient.exact_rational_ref() else {
+                continue;
+            };
+            if component.is_zero() {
+                continue;
+            }
+            let u = (axis + 1) % 3;
+            let v = (axis + 2) % 3;
+            let [Some(au), Some(bu), Some(cu)] =
+                coordinates.map(|point| point[u].exact_rational_ref())
+            else {
+                break;
+            };
+            let [Some(av), Some(bv), Some(cv)] =
+                coordinates.map(|point| point[v].exact_rational_ref())
+            else {
+                break;
+            };
+            if (au == bu && bu == cu) || (av == bv && bv == cv) {
+                return Ok(true);
+            }
+            return Ok(Rational::signed_product_sum_ordering(
+                [true, true, true, false, false, false],
+                [[au, bv], [bu, cv], [cu, av], [au, cv], [bu, av], [cu, bv]],
+            ) == std::cmp::Ordering::Equal);
+        }
+        Ok(!Self::decide_points_are_nondegenerate(decisions, a, b, c)?)
+    }
+
+    /// Returns this plane with all coefficients negated.
+    pub fn inverted(&self) -> Self {
+        Self::new(
+            Point3::new(
+                -self.normal.x.clone(),
+                -self.normal.y.clone(),
+                -self.normal.z.clone(),
+            ),
+            -self.offset.clone(),
+        )
+    }
+
+    /// Returns the exact expression `normal . point + offset`.
+    pub fn expression_at_point(&self, point: &Point3) -> Real {
+        Real::signed_product_sum(
+            [true, true, true, true],
+            [
+                [&self.normal.x, &point.x],
+                [&self.normal.y, &point.y],
+                [&self.normal.z, &point.z],
+                [&self.offset, &Real::one()],
+            ],
+        )
+    }
+
+    /// Returns true when the configured exact predicate policy certifies a
+    /// non-zero normal component.
+    pub fn is_valid(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let valid = self.decide_is_valid(&decisions)?;
+        Ok(decisions.finish(valid))
+    }
+
+    /// Decides whether the normal is non-zero, preserving exhausted predicate
+    /// certainty for geometry-producing callers.
+    #[inline]
+    pub(crate) fn decide_is_valid(
+        &self,
+        decisions: &DecisionContext,
+    ) -> crate::error::HypermeshResult<bool> {
+        let mut saw_unknown = false;
+        for component in [&self.normal.x, &self.normal.y, &self.normal.z] {
+            match crate::predicate::classify_real(decisions, component) {
+                Ok(Classification::Negative | Classification::Positive) => return Ok(true),
+                Ok(Classification::On) => {}
+                Err(crate::error::HypermeshError::PredicateUndecided { .. }) => {
+                    saw_unknown = true;
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        if saw_unknown {
+            Err(crate::error::HypermeshError::PredicateUndecided {
+                predicate: "plane normal nonzero",
+            })
+        } else {
+            Ok(false)
+        }
+    }
+
+    /// Converts to hyperlattice's projective plane carrier.
+    pub fn as_projective(&self) -> ProjectivePlane3 {
+        ProjectivePlane3::new(self.normal.clone(), self.offset.clone())
+    }
+
+    /// Returns `(axis, value)` for planes of form `normal[axis] * x + d = 0`.
+    pub fn axis_split_value(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<Option<(usize, Real)>>> {
+        let decisions = DecisionContext::new(context);
+        let split = self.axis_split_value_decision(&decisions)?;
+        Ok(decisions.finish(split))
+    }
+
+    pub(crate) fn axis_split_value_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<(usize, Real)>> {
+        for axis in 0..3 {
+            let components = [&self.normal.x, &self.normal.y, &self.normal.z];
+            if components
+                .iter()
+                .enumerate()
+                .all(|(i, value)| i == axis || value.definitely_zero())
+                && matches!(
+                    crate::predicate::classify_real(decisions, components[axis]),
+                    Ok(Classification::Negative | Classification::Positive)
+                )
+            {
+                let Some(value) = (&self.offset / components[axis]).ok() else {
+                    return Ok(None);
+                };
+                return Ok(Some((axis, -value)));
+            }
+        }
+        Ok(None)
+    }
+}
+
+impl Plane3Coefficients for Plane {
+    fn normal(&self) -> &Point3 {
+        &self.normal
+    }
+
+    fn offset(&self) -> &Real {
+        &self.offset
+    }
+}
+
+/// Hyperreal axis-aligned bounding box.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Aabb {
+    /// Minimum coordinate.
+    pub min: Point3,
+    /// Maximum coordinate.
+    pub max: Point3,
+}
+
+impl Aabb {
+    /// Constructs an AABB from exact endpoints.
+    pub const fn new(min: Point3, max: Point3) -> Self {
+        Self { min, max }
+    }
+
+    /// Returns the extent along one axis.
+    pub fn extent(&self, axis: usize) -> Real {
+        axis_ref(&self.max, axis) - axis_ref(&self.min, axis)
+    }
+
+    /// Returns the longest axis when exact comparisons can certify an order.
+    pub fn longest_axis(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<usize>> {
+        let decisions = DecisionContext::new(context);
+        let axis = self.longest_axis_decision(&decisions)?;
+        Ok(decisions.finish(axis))
+    }
+
+    pub(crate) fn longest_axis_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<usize> {
+        let ex = self.extent(0);
+        let ey = self.extent(1);
+        let ez = self.extent(2);
+        if compare_real_decision(decisions, &ex, &ey)? != Ordering::Less
+            && compare_real_decision(decisions, &ex, &ez)? != Ordering::Less
+        {
+            Ok(0)
+        } else if compare_real_decision(decisions, &ey, &ez)? != Ordering::Less {
+            Ok(1)
+        } else {
+            Ok(2)
+        }
+    }
+
+    /// Returns the midpoint along one axis.
+    pub fn midpoint(&self, axis: usize) -> Real {
+        ((axis_ref(&self.min, axis) + axis_ref(&self.max, axis)) / Real::from(2))
+            .expect("division by literal two is always valid")
+    }
+
+    /// Creates a splitting plane at the midpoint of the selected axis.
+    pub fn splitting_plane(&self, axis: usize) -> Plane {
+        Plane::axis_aligned(axis, self.midpoint(axis))
+    }
+
+    /// Returns true when `point` lies inside the closed AABB.
+    pub fn contains_point(
+        &self,
+        context: &MeshContext,
+        point: &Point3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let contains = self.contains_point_decision(&decisions, point)?;
+        Ok(decisions.finish(contains))
+    }
+
+    pub(crate) fn contains_point_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+    ) -> HypermeshResult<bool> {
+        for axis in 0..3 {
+            if compare_real_decision(decisions, axis_ref(point, axis), axis_ref(&self.min, axis))?
+                .is_lt()
+                || compare_real_decision(
+                    decisions,
+                    axis_ref(point, axis),
+                    axis_ref(&self.max, axis),
+                )?
+                .is_gt()
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    /// Returns the left half, with `max[axis]` clamped to `value`.
+    pub fn left_half(&self, axis: usize, value: Real) -> Self {
+        let mut max = self.max.clone();
+        *axis_mut(&mut max, axis) = value;
+        Self::new(self.min.clone(), max)
+    }
+
+    /// Returns the right half, with `min[axis]` clamped to `value`.
+    pub fn right_half(&self, axis: usize, value: Real) -> Self {
+        let mut min = self.min.clone();
+        *axis_mut(&mut min, axis) = value;
+        Self::new(min, self.max.clone())
+    }
+}
+
+pub(crate) fn axis_ref(point: &Point3, axis: usize) -> &Real {
+    match axis {
+        0 => &point.x,
+        1 => &point.y,
+        2 => &point.z,
+        _ => panic!("axis must be 0, 1, or 2"),
+    }
+}
+
+pub(crate) fn axis_mut(point: &mut Point3, axis: usize) -> &mut Real {
+    match axis {
+        0 => &mut point.x,
+        1 => &mut point.y,
+        2 => &mut point.z,
+        _ => panic!("axis must be 0, 1, or 2"),
+    }
+}
+
+pub(crate) fn dot_point(left: &Point3, right: &Point3) -> Real {
+    Real::signed_product_sum(
+        [true, true, true],
+        [
+            [&left.x, &right.x],
+            [&left.y, &right.y],
+            [&left.z, &right.z],
+        ],
+    )
+}
+
+pub(crate) fn sub_points(left: &Point3, right: &Point3) -> [Real; 3] {
+    [&left.x - &right.x, &left.y - &right.y, &left.z - &right.z]
+}
+
+pub(crate) fn cross_arrays(left: &[Real; 3], right: &[Real; 3]) -> Point3 {
+    Point3::new(
+        Real::diff_of_products(&left[1], &right[2], &left[2], &right[1]),
+        Real::diff_of_products(&left[2], &right[0], &left[0], &right[2]),
+        Real::diff_of_products(&left[0], &right[1], &left[1], &right[0]),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn previous_points_are_nondegenerate(p0: &Point3, p1: &Point3, p2: &Point3) -> bool {
+        let u = sub_points(p1, p0);
+        let v = sub_points(p2, p0);
+        [[1, 2, 2, 1], [2, 0, 0, 2], [0, 1, 1, 0]]
+            .into_iter()
+            .any(|[ua, vb, ub, va]| {
+                !Real::diff_of_products(&u[ua], &v[vb], &u[ub], &v[va]).definitely_zero()
+            })
+    }
+
+    #[test]
+    fn axis_split_value_handles_non_unit_normal_exactly() {
+        let plane =
+            Plane::from_coefficients(Real::from(0), Real::from(2), Real::from(0), Real::from(-6));
+
+        assert_eq!(
+            plane
+                .axis_split_value_decision(&crate::test_support::approximate_decisions())
+                .unwrap(),
+            Some((1, Real::from(3)))
+        );
+    }
+
+    #[test]
+    fn point_nondegeneracy_matches_materialized_plane_validation() {
+        let point = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+        let cases = [
+            [point(0, 0, 0), point(2, 0, 0), point(0, 3, 0)],
+            [point(1, 1, 1), point(2, 2, 2), point(3, 3, 3)],
+        ];
+
+        for [a, b, c] in cases {
+            assert_eq!(
+                Plane::decide_points_are_nondegenerate(
+                    &crate::test_support::approximate_decisions(),
+                    &a,
+                    &b,
+                    &c,
+                )
+                .unwrap(),
+                Plane::from_points(&a, &b, &c)
+                    .decide_is_valid(&crate::test_support::approximate_decisions())
+                    .unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn wide_dyadic_plane_uses_primitive_normal_before_offset_construction() {
+        let denominator = Rational::new(2)
+            .powi(2048_i64.into())
+            .expect("fixture exponent is positive");
+        let scale = (&denominator + Rational::one()) / &denominator;
+        let scaled = |value| Real::from(Rational::new(value) * &scale);
+        let zero = Real::zero();
+        let points = [
+            Point3::new(scaled(2), zero.clone(), zero.clone()),
+            Point3::new(scaled(2), scaled(1), zero.clone()),
+            Point3::new(scaled(2), zero.clone(), scaled(1)),
+        ];
+
+        let plane = Plane::from_points(&points[0], &points[1], &points[2]);
+        assert_eq!(plane.normal, Point3::new(Real::one(), zero.clone(), zero));
+        assert_eq!(plane.offset, -scaled(2));
+
+        let oblique_points = [
+            Point3::new(scaled(1), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), scaled(1), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), scaled(1)),
+        ];
+        let oblique =
+            Plane::from_points(&oblique_points[0], &oblique_points[1], &oblique_points[2]);
+        assert_eq!(
+            oblique.normal,
+            Point3::new(Real::one(), Real::one(), Real::one())
+        );
+        assert_eq!(oblique.offset, -scaled(1));
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let outcome = classify_point(&MeshContext::new(policy), &points[0], &plane).unwrap();
+            assert_eq!(outcome.value, Classification::On);
+            assert_eq!(outcome.certainty, crate::MeshCertainty::Certified);
+            let outcome =
+                classify_point(&MeshContext::new(policy), &oblique_points[0], &oblique).unwrap();
+            assert_eq!(outcome.value, Classification::On);
+            assert_eq!(outcome.certainty, crate::MeshCertainty::Certified);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn optimized_point_nondegeneracy_matches_previous_exact_rational_path(
+            coordinates in proptest::array::uniform9((-50_i32..=50, 1_u32..=11))
+        ) {
+            let coordinates = coordinates.map(|(numerator, denominator)| {
+                (Real::from(numerator) / Real::from(denominator))
+                    .expect("the generated denominator is positive")
+            });
+            let [x0, y0, z0, x1, y1, z1, x2, y2, z2] = coordinates;
+            let p0 = Point3::new(x0, y0, z0);
+            let p1 = Point3::new(x1, y1, z1);
+            let p2 = Point3::new(x2, y2, z2);
+
+            prop_assert_eq!(
+                Plane::decide_points_are_nondegenerate(
+                    &crate::test_support::approximate_decisions(),
+                    &p0,
+                    &p1,
+                    &p2,
+                )
+                .unwrap(),
+                previous_points_are_nondegenerate(&p0, &p1, &p2)
+            );
+        }
+    }
+}

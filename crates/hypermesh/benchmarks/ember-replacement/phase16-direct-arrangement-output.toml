@@ -1,0 +1,221 @@
+schema = 1
+status = "retained-test-gated"
+captured_at = "2026-08-03"
+phases = [11, 16]
+checkpoint = "direct-arrangement-output"
+implementation_commit = "7d9fac56f37d70893fbbc819560ca46ab3b779a8"
+source_parent_commit = "de3778cba209df3af5b5885a1662924fe94a1a1b"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypertri_commit = "d6014be5cc3ee4961929430d40b5cba83efc4813"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+module_cfg_test = true
+production_orchestrator = false
+public_multi_expression_api = false
+callers_migrated = false
+dual_shipped_engine = false
+compatibility_shim = false
+ember_removed = false
+phase_16_complete = false
+phase_17_complete = false
+cgal_parity = false
+
+[architecture]
+one_arrangement_many_outputs = true
+builtin_operations = ["union", "intersection", "difference", "symmetric_difference"]
+arbitrary_expression_rows = true
+reverse_difference_expression = true
+used_point_bitset = true
+checked_u32_vertex_remap = true
+exact_output_reservation = true
+deterministic_sorted_contribution_provenance = true
+direct_arrangement_point_certification = true
+triangle_certificate_key_bytes = 12
+edge_certificate_key_bytes = 8
+exact_nondegeneracy = true
+duplicate_triangle_rejection = true
+directed_edge_balance = true
+balanced_nonmanifold_pwn = true
+historical_output_repair = false
+recursive_subdivision = false
+whole_mesh_segment_trace = false
+local_bsp = false
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+strict_undecided_is_error = true
+approximate_512_terminal_only = true
+aggregate_certainty_absorbed = true
+large_exact_fixture_certainty = "Certified"
+terminal_fixture_strict = "PredicateUndecided"
+terminal_fixture_approximate = "Approximate512Consumed then degenerate-output rejection"
+
+[corpus]
+focused_surface_arrangement_tests = 29
+new_materialization_tests = 4
+all_builtin_operations = true
+deterministic_repeat = true
+positive_signed_volume = true
+empty_intersection = true
+balanced_nonmanifold_output = true
+balanced_nonmanifold_edges = 1
+arbitrary_three_operand_expression_rows = 7
+reverse_difference = true
+high_operand_count = 40
+high_operand_rows_materialized = ["union", "intersection", "parity"]
+large_shell_count = 1536
+large_fixture_facets = 6144
+large_fixture_output_vertices = 6144
+large_fixture_output_triangles = 6144
+large_fixture_source_rows = 6144
+classification_dimension_failure = true
+classification_value_failure = true
+absent_point_failure = true
+degenerate_triangle_failure = true
+malformed_contribution_csr_failure = true
+absent_source_failure = true
+invalid_source_orientation_failure = true
+duplicate_triangle_failure = true
+open_output_failure = true
+terminal_policy_failure = true
+
+[tests.all_features]
+unit_passed = 1123
+integration_passed = 134
+failed = 0
+ignored = 7
+
+[gates]
+focused_tests = true
+all_feature_tests = true
+fmt = true
+diff_check = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+large_fixture_both_policies = true
+callgraph = true
+production_size = "byte-identical to shared Phase 15 checkpoint"
+
+[runtime.environment]
+tool = "Callgrind 3.27.0"
+cpu = 11
+policies = 2
+baseline_worktree_commit = "de3778cba209df3af5b5885a1662924fe94a1a1b"
+same_dependency_checkouts = true
+same_rustc = true
+
+[runtime.callgrind_1024]
+facets = 1024
+baseline_instructions = 260748448
+output_instructions = 266135938
+delta_instructions = 5387490
+delta_percent = 2.066164
+
+[runtime.callgrind_6144]
+facets = 6144
+baseline_instructions = 1632810238
+output_instructions = 1666850813
+delta_instructions = 34040575
+delta_percent = 2.084785
+
+[runtime.scaling]
+input_ratio = 6.0
+baseline_instruction_ratio = 6.262013257
+output_instruction_ratio = 6.263155685
+output_per_facet_growth_percent = 4.385928
+increment_ratio = 6.318447923
+increment_per_facet_growth_percent = 5.307465
+
+[runtime.materializer]
+emitted_triangles = 12288
+inclusive_instructions = 23015654
+instructions_per_triangle = 1873.018717
+certificate_inclusive_instructions = 18242789
+certificate_instructions_per_triangle = 1484.601969
+
+[runtime.direct_certificate_optimization]
+initial_output_instructions = 1679730462
+final_output_instructions = 1666850813
+removed_instructions = 12879649
+whole_test_reduction_percent = 0.766769
+initial_output_increment_reduction_percent = 27.450101
+removed_owned_point_reconstruction = true
+machine_word_keys_replaced_with_u32 = true
+
+[heap.massif_6144]
+tool = "Massif 3.27.0"
+stacks = true
+baseline_useful_peak_bytes = 21859979
+output_useful_peak_bytes = 21859979
+useful_delta_bytes = 0
+baseline_total_peak_bytes = 23536696
+output_total_peak_bytes = 23534896
+total_delta_bytes = -1800
+total_delta_interpretation = "allocator and stack sampling noise"
+output_detailed_snapshot_useful_bytes = 19745883
+output_detailed_snapshot_total_bytes = 21202000
+output_vertex_allocation_bytes = 884736
+governing_peak_moved = false
+
+[size.release_general]
+native_text_bytes = 4118204
+wasm_opt_oz_bytes = 2779870
+delta_from_phase15 = 0
+
+[size.release_immediate]
+native_text_bytes = 4151428
+wasm_opt_oz_bytes = 2794424
+delta_from_phase15 = 0
+
+[size.size_general]
+native_text_bytes = 1899546
+wasm_opt_oz_bytes = 1189866
+delta_from_phase15 = 0
+
+[size.size_immediate]
+native_text_bytes = 1911694
+wasm_opt_oz_bytes = 1200027
+delta_from_phase15 = 0
+
+[source]
+lines_added = 691
+lines_removed = 16
+net_lines = 675
+production_compilation_effect = "none; module remains cfg(test)"
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20964
+edges = 41667
+arrangement_nodes = 655
+materializer_nodes = 6
+materializer_incident_edges = 90
+historical_ember_nodes = 4437
+arrangement_to_ember_edges = 0
+ember_to_arrangement_edges = 0
+
+[competitive]
+shared_cgal_case = false
+cgal_epeck_claim = "none"
+historical_full_resolution_hypermesh_seconds = 3312.66
+historical_full_resolution_hypermesh_rss_kib = 329352
+historical_full_resolution_cgal_seconds = 0.09
+historical_full_resolution_cgal_rss_kib = 15516
+per_case_parity_open = true
+
+[remaining]
+production_orchestrator = true
+minimal_shared_multi_expression_api = true
+certainty_outcome_boundary = true
+atomic_general_cutover = true
+specialization_decline_routing = true
+controlled_caller_migration = true
+ember_source_deletion = true
+fuzz_and_sanitizers = true
+production_large_mesh_heap = true
+cgal_per_case_protocol = true

@@ -1,0 +1,419 @@
+schema = 1
+date = "2026-08-07"
+status = "clean exact pairwise-intersection scheduling checkpoint; phases 17 and 18 open"
+checkpoint = "retained-shared-vertex-support-slices"
+hypermesh_parent = "43a2d815b9ed4c4310a0145a0bb61c832a622676"
+hypermesh_implementation = "c2d4c17ee4ece136cb6cf32dff2dafc9b7a03359"
+hyperreal_commit = "f09c147b0352884f8efe88e875c37d8f0f439ba5"
+hyperlattice_commit = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit_commit = "b0418bddff50183fa782e5caa6da6974a2b969a1"
+hypertri_commit = "86189ff6e87f056a3686d81b57952d799945663a"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+one_boolean_engine = true
+compatibility_shim = false
+dual_engine = false
+threshold = false
+fixture_dispatch = false
+coordinate_dispatch = false
+triangle_count_dispatch = false
+operation_dispatch = false
+result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+public_api_added = false
+allocation_added = false
+hypercurve_hypersolve_excluded = true
+
+[algorithm]
+retained_fact = "one canonical source vertex shared by two authored triangles in one operand"
+retained_geometry_requirement = "identical retained Point3 at the shared source identity"
+authored_support_incidence_reused = true
+other_vertices_probed = 4
+optional_probe_policy = "STRICT"
+singleton_slice_proof = "one On vertex and two equal strict non-On sides"
+singleton_proof_uses_convexity = true
+public_closed_set_intersection_omits_point = false
+arrangement_omits_intrinsic_authored_point = true
+fully_certified_failed_proof_is_reused = true
+unavailable_probe_falls_through = true
+coplanar_falls_through = true
+multiple_shared_vertices_fall_through = true
+contradictory_exact_source_point_is_typed_failure = true
+aggregate_certainty_preserved = true
+strict_exact_only = true
+approximate_512_terminal_only = true
+
+[policy_regression]
+symbolic_values = ["pi + e", "e + pi"]
+optional_strict_result = "Unavailable"
+optional_strict_certainty = "Certified"
+optional_approximate_result = "Unavailable"
+optional_approximate_certainty = "Certified"
+required_strict_result = "PredicateUndecided"
+required_strict_certainty = "Certified"
+required_approximate_result = "success"
+required_approximate_certainty = "Approximate512Consumed"
+classification_states_exhausted = 27
+
+[dispatch_profile]
+diagnostics_shipped = false
+full_eligible_pairs = 194_888
+full_point_only = 113_297
+full_point_only_forward = 86_261
+full_point_only_reverse = 27_036
+full_fully_classified_continuations = 9_559
+full_unavailable = 72_032
+full_late_shared_feature_checks = 8_867
+torus_structurally_equal_supports = 39_792
+torus_point_only = 2_330
+torus_point_only_forward = 1_398
+torus_point_only_reverse = 932
+torus_fully_classified_continuations = 912
+torus_unavailable = 1_834
+torus_late_shared_feature_checks = 26_524
+
+[performance_protocol]
+parent_binary = "fresh release clone at 43a2d815"
+current_binary = "release c2d4c17e"
+policy = "STRICT"
+small_iterations = 1_000
+dense_coplanar_iterations = 10
+dense_crossing_torus_full_iterations = 1
+repetitions = 3
+events = ["instructions:u", "branches:u"]
+counter_authority = true
+
+[[performance]]
+fixture = "overlapping_boxes"
+parent_instructions = 3_516_959_338
+current_instructions = 3_271_763_858
+instruction_change_percent = -6.9718
+parent_branches = 596_221_672
+current_branches = 555_727_505
+branch_change_percent = -6.7918
+
+[[performance]]
+fixture = "identical_boxes"
+parent_instructions = 3_532_865_848
+current_instructions = 3_310_554_376
+instruction_change_percent = -6.2927
+parent_branches = 598_201_126
+current_branches = 562_383_446
+branch_change_percent = -5.9876
+
+[[performance]]
+fixture = "face_touching_boxes"
+parent_instructions = 2_147_316_240
+current_instructions = 1_918_449_652
+instruction_change_percent = -10.6583
+parent_branches = 354_043_965
+current_branches = 316_755_888
+branch_change_percent = -10.5320
+
+[[performance]]
+fixture = "crossing_octahedra"
+parent_instructions = 2_799_110_443
+current_instructions = 2_682_175_152
+instruction_change_percent = -4.1776
+parent_branches = 473_255_977
+current_branches = 454_319_279
+branch_change_percent = -4.0014
+
+[[performance]]
+fixture = "affine_boxes"
+parent_instructions = 6_782_242_119
+current_instructions = 6_553_597_999
+instruction_change_percent = -3.3712
+parent_branches = 1_153_021_976
+current_branches = 1_115_132_073
+branch_change_percent = -3.2861
+
+[[performance]]
+fixture = "dense_crossing_grid_17"
+parent_instructions = 12_719_828_595
+current_instructions = 12_718_742_889
+instruction_change_percent = -0.0085
+parent_branches = 1_763_670_774
+current_branches = 1_762_970_256
+branch_change_percent = -0.0397
+
+[[performance]]
+fixture = "dense_coplanar_boxes_16"
+parent_instructions = 22_186_691_558
+current_instructions = 22_232_318_037
+instruction_change_percent = 0.2056
+parent_branches = 3_686_365_324
+current_branches = 3_697_046_804
+branch_change_percent = 0.2898
+
+[[performance]]
+fixture = "clipped_voxel_torus_33"
+parent_instructions = 777_266_221
+current_instructions = 778_046_216
+instruction_change_percent = 0.1004
+parent_branches = 133_448_183
+current_branches = 133_682_342
+branch_change_percent = 0.1755
+
+[[performance]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+parent_instructions = 9_038_986_337
+current_instructions = 7_304_899_113
+instruction_change_percent = -19.1845
+parent_branches = 1_533_823_982
+current_branches = 1_220_651_290
+branch_change_percent = -20.4178
+parent_median_ns = 893_596_574
+current_median_ns = 722_273_118
+wall_change_percent = -19.1723
+
+[historical]
+ember_seconds = 3_312.66
+current_fresh_full_median_seconds = 0.681646973
+speedup = 4_859.788
+
+[competitive_protocol]
+engine = "CGAL 6.0.3 EPECK"
+exact_off = true
+copy_timing = "outside"
+small_internal_iterations = 1_000
+large_internal_iterations = 1
+fresh_processes = 3
+operation = "all four Boolean expressions"
+outputs_independently_validated = true
+
+[[competitive]]
+fixture = "overlapping_boxes"
+hypermesh_ns = [330_834, 334_390, 323_905]
+cgal_ns = [118_752, 120_642, 127_061]
+hypermesh_median_ns = 330_834
+cgal_median_ns = 120_642
+median_ratio = 2.742
+result = "loss"
+
+[[competitive]]
+fixture = "crossing_octahedra"
+hypermesh_ns = [270_594, 266_243, 279_628]
+cgal_ns = [116_912, 119_791, 120_311]
+hypermesh_median_ns = 270_594
+cgal_median_ns = 119_791
+median_ratio = 2.259
+result = "loss"
+
+[[competitive]]
+fixture = "affine_boxes"
+hypermesh_ns = [670_400, 666_476, 667_682]
+cgal_ns = [356_295, 354_825, 362_895]
+hypermesh_median_ns = 667_682
+cgal_median_ns = 356_295
+median_ratio = 1.874
+result = "loss"
+
+[[competitive]]
+fixture = "dense_coplanar_boxes_16"
+hypermesh_ns = [192_447_506, 189_274_644, 199_500_022]
+cgal_ns = [290_888_313, 296_578_442, 295_256_853]
+hypermesh_median_ns = 192_447_506
+cgal_median_ns = 295_256_853
+median_ratio = 0.652
+cgal_to_hypermesh_speedup = 1.534
+result = "win"
+
+[[competitive]]
+fixture = "clipped_voxel_torus_33"
+hypermesh_ns = [54_578_505, 54_746_854, 54_642_431]
+cgal_ns = [6_204_404, 6_303_078, 6_331_625]
+hypermesh_median_ns = 54_642_431
+cgal_median_ns = 6_303_078
+median_ratio = 8.669
+result = "loss"
+
+[[competitive]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+hypermesh_ns = [676_937_977, 681_646_973, 697_287_400]
+cgal_ns = [46_301_334, 42_633_375, 42_220_843]
+hypermesh_median_ns = 681_646_973
+cgal_median_ns = 42_633_375
+median_ratio = 15.989
+hypermesh_output_triangles = [33_512, 0, 16_756, 16_756]
+cgal_output_triangles = [23_788, 0, 11_894, 11_894]
+hypermesh_max_rss_kib = 70_236
+cgal_max_rss_kib = 22_092
+rss_ratio = 3.179
+result = "loss"
+
+[[heap]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 53_217_804
+parent_allocations = 8_681_722
+current_allocations = 6_558_967
+parent_reallocations = 1_296_791
+current_reallocations = 910_496
+parent_added_bytes = 500_833_490
+current_added_bytes = 424_413_658
+
+[[heap]]
+fixture = "dense_crossing_grid_65"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 197_318_844
+parent_allocations = 31_166_606
+current_allocations = 31_166_606
+parent_reallocations = 344_218
+current_reallocations = 344_218
+parent_added_bytes = 6_631_418_894
+current_added_bytes = 6_631_418_894
+output_vertices = 73_844
+output_triangles = 164_068
+
+[[heap]]
+fixture = "dense_coplanar_boxes_32"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 55_758_866
+parent_allocations = 926_777
+current_allocations = 926_777
+parent_reallocations = 123_014
+current_reallocations = 123_014
+parent_added_bytes = 220_619_383
+current_added_bytes = 220_619_383
+output_vertices = 12_290
+output_triangles = 24_576
+
+[[heap]]
+fixture = "clipped_voxel_torus_65"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 47_367_618
+parent_allocations = 98_161
+current_allocations = 98_161
+parent_reallocations = 1_800
+current_reallocations = 1_800
+parent_added_bytes = 64_455_376
+current_added_bytes = 64_455_376
+output_vertices = 6_532
+output_triangles = 13_060
+
+[[heap]]
+fixture = "transverse_self_pwn_clusters_512"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 11_451_636
+parent_allocations = 197_040
+current_allocations = 197_040
+parent_reallocations = 13_655
+current_reallocations = 13_655
+parent_added_bytes = 30_927_366
+current_added_bytes = 30_927_366
+output_vertices = 5_124
+output_triangles = 8_196
+
+[[linked_size]]
+profile = "release"
+features = "default"
+parent_native_text = 2_024_754
+current_native_text = 2_027_794
+native_change_percent = 0.150142
+parent_wasm_opt_oz = 1_447_132
+current_wasm_opt_oz = 1_449_486
+wasm_change_percent = 0.162667
+
+[[linked_size]]
+profile = "release"
+features = "all"
+parent_native_text = 2_159_827
+current_native_text = 2_162_955
+native_change_percent = 0.144826
+parent_wasm_opt_oz = 1_522_220
+current_wasm_opt_oz = 1_524_574
+wasm_change_percent = 0.154643
+
+[[linked_size]]
+profile = "size"
+features = "default"
+parent_native_text = 1_113_951
+current_native_text = 1_115_391
+native_change_percent = 0.129270
+parent_wasm_opt_oz = 698_695
+current_wasm_opt_oz = 699_996
+wasm_change_percent = 0.186204
+
+[[linked_size]]
+profile = "size"
+features = "all"
+parent_native_text = 1_116_527
+current_native_text = 1_118_183
+native_change_percent = 0.148317
+parent_wasm_opt_oz = 698_089
+current_wasm_opt_oz = 699_384
+wasm_change_percent = 0.185506
+
+[source]
+files_changed = 3
+insertions = 451
+deletions = 24
+parent_tokei_rust_code_lines = 20_822
+current_tokei_rust_code_lines = 21_217
+code_line_change = 395
+code_line_change_percent = 1.90
+
+[validation]
+hypermesh_executed_tests = 220
+hypermesh_ignored_tests = 7
+manifest_records = 59
+no_default = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_deny_warnings = true
+format_check = true
+diff_check = true
+fuzz_workspace_all_targets = true
+bench_all_features_no_run = true
+
+[sanitizer]
+target = "boolean_pipeline"
+source_seeds = 2_182
+isolated_final_corpus_files = 2_214
+executions = 3_294
+seconds = 31
+fuzzer_rss_mib = 484
+process_max_rss_kib = 799_252
+failures = 0
+artifacts = 0
+source_corpus_unchanged = true
+leak_detection = false
+leak_detection_reason = "managed environment prevents LeakSanitizer ptrace finalization"
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+production_nodes = 15_591
+production_edges = 26_096
+all_nodes = 21_994
+all_edges = 35_611
+direct_hypermesh_hypertri_to_hyperlimit_edges = 47
+arrangement_to_cells_edges = 1
+removed_engine_namespace_nodes = 0
+removed_engine_production_source_matches = 0
+hypercurve_hypersolve_excluded = true
+
+[open]
+items = [
+  "structural equal-support and torus control overhead",
+  "every losing CGAL shared-contract row",
+  "full corefined output-work reduction",
+  "full CGAL peak-RSS boundary",
+  "exact face line-intersection construction",
+  "external real-world and generated pathology corpus expansion",
+  "fuzz mutation-source audit",
+  "deeper arrangement lifetime and allocation recovery",
+  "deferred caller audit after concurrent dependencies stabilize",
+  "Phase 18 final requirement and removal audit",
+]

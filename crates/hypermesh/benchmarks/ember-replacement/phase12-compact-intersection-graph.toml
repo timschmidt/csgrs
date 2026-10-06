@@ -1,0 +1,186 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phase = 12
+checkpoint = "compact-streamed-face-intersection-graph"
+parent_commit = "dad851519ae299d4af353514aa88a76084dd8c00"
+implementation_commit = "584444cc4a1846c501587fa8944dbd4bd9b02842"
+
+[representation]
+old = "Vec<Vec<PairwiseIntersection>>"
+new = "PairwiseIntersectionGraph"
+retained_face_index_bytes = 8
+transient_builder_tail_bytes_per_face = 4
+old_face_header_bytes_x86_64 = 24
+node_id = "checked u32"
+end_marker = 4294967295
+global_candidate_pair_buffer = false
+compatibility_adapter = false
+event_order_preserved = true
+
+[fixture]
+id = "subdivided_overlapping_boxes_3072_each"
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[tests]
+command = "cargo test"
+unit_passed = 1071
+competitive_passed = 4
+competitive_ignored = 6
+core_passed = 59
+corpus_passed = 4
+predicate_policy_passed = 8
+readme_passed = 2
+regression_passed = 48
+regression_ignored = 1
+failed = 0
+
+[heap.tool]
+massif_version = "3.27.0"
+massif_args = "--time-unit=B --detailed-freq=1"
+heaptrack_allocations_parent = 844972
+heaptrack_allocations_candidate = 844727
+heaptrack_temporary_parent = 34039
+heaptrack_temporary_candidate = 34039
+
+[heap.strict.parent]
+useful_bytes = 29540348
+extra_bytes = 1229772
+total_bytes = 30770120
+
+[heap.strict.candidate]
+useful_bytes = 29450268
+extra_bytes = 1228428
+total_bytes = 30678696
+
+[heap.strict.delta]
+useful_bytes = -90080
+useful_percent = -0.3049
+total_bytes = -91424
+total_percent = -0.2971
+
+[heap.approximate_512.parent]
+useful_bytes = 29540348
+extra_bytes = 1230092
+total_bytes = 30770440
+
+[heap.approximate_512.candidate]
+useful_bytes = 29450268
+extra_bytes = 1227804
+total_bytes = 30678072
+
+[heap.approximate_512.delta]
+useful_bytes = -90080
+useful_percent = -0.3049
+total_bytes = -92368
+total_percent = -0.3002
+
+[runtime]
+policy = "STRICT"
+cpu = 11
+repetitions_per_batch = 5
+batches_per_revision = 2
+fixture = "boxes-3072-general"
+
+[runtime.parent]
+task_clock_ms = 1980.195
+cycles = 8188558194
+instructions = 24402968350
+branches = 4693198302
+branch_misses = 14579496
+
+[runtime.candidate]
+task_clock_ms = 1932.325
+cycles = 7995551846
+instructions = 24420486900
+branches = 4693159825
+branch_misses = 14203656
+
+[runtime.delta_percent]
+task_clock = -2.4174
+cycles = -2.3570
+instructions = 0.0718
+branches = -0.0008
+branch_misses = -2.5779
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4078364
+candidate_bytes = 4080980
+delta_bytes = 2616
+delta_percent = 0.0641
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4111404
+candidate_bytes = 4114004
+delta_bytes = 2600
+delta_percent = 0.0632
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2749908
+candidate_bytes = 2753443
+delta_bytes = 3535
+delta_percent = 0.1285
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2764465
+candidate_bytes = 2767993
+delta_bytes = 3528
+delta_percent = 0.1276
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1877562
+candidate_bytes = 1878770
+delta_bytes = 1208
+delta_percent = 0.0643
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1889366
+candidate_bytes = 1890558
+delta_bytes = 1192
+delta_percent = 0.0631
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1171509
+candidate_bytes = 1173631
+delta_bytes = 2122
+delta_percent = 0.1811
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1181650
+candidate_bytes = 1183773
+delta_bytes = 2123
+delta_percent = 0.1797
+
+[decision]
+retained = true
+reason = "General-path clock/cycles, exact large-fixture peak heap, and allocations improve; branch work is flat; the sub-0.19% canonical code-size increase is temporary replacement scaffolding and must be recovered when historical EMBER is deleted."

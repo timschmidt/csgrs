@@ -1,0 +1,370 @@
+schema = 1
+date = "2026-08-05"
+status = "accepted-checkpoint-phases-open"
+hypermesh_implementation = "7d836392643a2a786e57db2aa06de9c0cd2e955c"
+hyperlimit_implementation = "d2dee8fb801e3255dbcef93eb054d897003c28cf"
+measured_production_parent = "df1d005c138f2dedb88f4c15a6d48f55368b173f"
+evidence_only_parent = "282b426cd6aee7dfa485928517ede26dc0d3886c"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[design]
+fixture_branch = false
+triangle_count_branch = false
+expected_result_branch = false
+operation_branch = false
+competitor_branch = false
+compatibility_surface = false
+alternate_engine = false
+source_triangle_extrema_bytes = 2
+retained_vertex_cycle_bytes = 24
+exact_bounds_cloned_per_source_face = false
+source_bound_heap_allocation_per_face = false
+source_coordinates_borrowed_from_shared_owner = true
+certified_filter_reused_from_bvh_build = true
+strict_terminal_consumption = false
+approximate_512_terminal_owner = "Hyperlimit"
+
+[policy_regression]
+borrowed_coordinate_api = "ordered_aabb3s_intersect_coordinates_with_policy"
+strict_symbolic_boundary = "Unknown"
+approximate_512_symbolic_boundary = "Decided(true)"
+approximate_512_certainty = "Approximate"
+exact_rational_certainty_both_policies = "Exact"
+
+[perf_protocol]
+cpu = 11
+tool = "perf stat -r 3"
+events = ["instructions:u", "branches:u"]
+parent_executable = "target/phase17-parent-source-bound-views-competitive_arrangement_probe"
+
+[[perf]]
+fixture = "overlapping_boxes"
+workload = "all-four x1000"
+parent_instructions = 4423773881
+current_instructions = 4395187899
+instruction_movement_percent = -0.6462
+parent_branches = 784374979
+current_branches = 779591103
+branch_movement_percent = -0.6099
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all-four x5"
+parent_instructions = 3291555526
+current_instructions = 3223622434
+instruction_movement_percent = -2.0639
+parent_branches = 613863957
+current_branches = 600121382
+branch_movement_percent = -2.2387
+
+[[perf]]
+fixture = "dense_coplanar_boxes_32"
+workload = "all-four x1"
+parent_instructions = 10573044648
+current_instructions = 10511779980
+instruction_movement_percent = -0.5794
+parent_branches = 1816143221
+current_branches = 1802320367
+branch_movement_percent = -0.7611
+
+[[perf]]
+fixture = "clipped_voxel_torus_33"
+workload = "all-four x3"
+parent_instructions = 2858969822
+current_instructions = 2833311667
+instruction_movement_percent = -0.8975
+parent_branches = 488891178
+current_branches = 484728905
+branch_movement_percent = -0.8514
+
+[[perf]]
+fixture = "wide_rational_boxes_2048"
+workload = "union x5"
+parent_instructions = 13866159380
+current_instructions = 13830028302
+instruction_movement_percent = -0.2606
+parent_branches = 2524833402
+current_branches = 2517765913
+branch_movement_percent = -0.2799
+
+[[perf]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+workload = "intersection x1"
+parent_instructions = 12914957749
+current_instructions = 12891016963
+instruction_movement_percent = -0.1854
+parent_branches = 2257845142
+current_branches = 2253088651
+branch_movement_percent = -0.2107
+
+[heap_protocol]
+selectors = 15
+policies = ["STRICT", "APPROXIMATE_512"]
+all_policy_rows_byte_identical = true
+all_certainty = "Certified"
+all_peaks_lower = true
+all_kernel_peaks_lower = true
+all_allocation_calls_lower = true
+all_reallocation_calls_unchanged = true
+metric = "global_allocator_requested_payload"
+
+[[heap]]
+selector = "boxes-3072"
+parent_peak_bytes = 14349904
+current_peak_bytes = 12580432
+current_kernel_peak_bytes = 11530906
+current_allocation_calls = 145126
+current_reallocation_calls = 788
+current_added_bytes = 22735998
+
+[[heap]]
+selector = "boxes-3072-general"
+parent_peak_bytes = 14399504
+current_peak_bytes = 12630032
+current_kernel_peak_bytes = 12033434
+current_allocation_calls = 152023
+current_reallocation_calls = 788
+current_added_bytes = 24893678
+
+[[heap]]
+selector = "dense-coplanar-16"
+parent_peak_bytes = 17046229
+current_peak_bytes = 15424213
+current_kernel_peak_bytes = 14394248
+current_allocation_calls = 393681
+current_reallocation_calls = 30845
+current_added_bytes = 70900674
+
+[[heap]]
+selector = "dense-coplanar-32"
+parent_peak_bytes = 67937525
+current_peak_bytes = 61449461
+current_kernel_peak_bytes = 57423408
+current_allocation_calls = 1581203
+current_reallocation_calls = 123026
+current_added_bytes = 283960610
+
+[[heap]]
+selector = "sparse-shells-512"
+parent_peak_bytes = 13739923
+current_peak_bytes = 12658579
+current_kernel_peak_bytes = 11696422
+current_allocation_calls = 432403
+current_reallocation_calls = 12563
+current_added_bytes = 45879596
+
+[[heap]]
+selector = "self-pwn-clusters-512"
+parent_peak_bytes = 13871137
+current_peak_bytes = 12788737
+current_kernel_peak_bytes = 11824368
+current_allocation_calls = 432908
+current_reallocation_calls = 12631
+current_added_bytes = 46391422
+
+[[heap]]
+selector = "wide-rational-64"
+parent_peak_bytes = 19630974
+current_peak_bytes = 17861502
+current_kernel_peak_bytes = 17243378
+current_allocation_calls = 629688
+current_reallocation_calls = 4903
+current_added_bytes = 43871086
+
+[[heap]]
+selector = "wide-rational-512"
+parent_peak_bytes = 20520231
+current_peak_bytes = 18750759
+current_kernel_peak_bytes = 18123426
+current_allocation_calls = 1629354
+current_reallocation_calls = 39812
+current_added_bytes = 122701286
+
+[[heap]]
+selector = "wide-rational-2048"
+parent_peak_bytes = 29195064
+current_peak_bytes = 27425592
+current_kernel_peak_bytes = 26761890
+current_allocation_calls = 1901343
+current_reallocation_calls = 221132
+current_added_bytes = 425758014
+
+[[heap]]
+selector = "voxel-torus-33"
+parent_peak_bytes = 14835880
+current_peak_bytes = 12989224
+current_kernel_peak_bytes = 11921366
+current_allocation_calls = 164761
+current_reallocation_calls = 795
+current_added_bytes = 29908236
+
+[[heap]]
+selector = "voxel-torus-65"
+parent_peak_bytes = 59816684
+current_peak_bytes = 52587884
+current_kernel_peak_bytes = 47769314
+current_allocation_calls = 638324
+current_reallocation_calls = 1518
+current_added_bytes = 132167455
+
+[[heap]]
+selector = "yeahright"
+parent_peak_bytes = 5596865
+current_peak_bytes = 5371937
+current_kernel_peak_bytes = 4454684
+current_allocation_calls = 203395
+current_reallocation_calls = 10494
+current_added_bytes = 12739325
+
+[[heap]]
+selector = "yeahright-4"
+parent_peak_bytes = 21010549
+current_peak_bytes = 20120341
+current_kernel_peak_bytes = 16481486
+current_allocation_calls = 858323
+current_reallocation_calls = 37777
+current_added_bytes = 50353650
+
+[[heap]]
+selector = "yeahright-8"
+parent_peak_bytes = 80135413
+current_peak_bytes = 76261237
+current_kernel_peak_bytes = 61735982
+current_allocation_calls = 3806702
+current_reallocation_calls = 145554
+current_added_bytes = 205114420
+
+[[heap]]
+selector = "yeahright-full-rotated"
+parent_peak_bytes = 154886838
+current_peak_bytes = 148606806
+current_kernel_peak_bytes = 141483412
+current_allocation_calls = 14494565
+current_reallocation_calls = 2202661
+current_added_bytes = 792214525
+
+[stage_heap]
+fixture = "yeahright-full-rotated"
+policy = "STRICT"
+parent_artifact = "target/phase17-parent-source-bound-views-full-strict.zst"
+current_artifact = "target/phase17-retained-source-bound-extrema-full-strict.zst"
+parent_heaptrack_peak_bytes = 154960566
+current_heaptrack_peak_bytes = 148680534
+parent_polygon_soup_live_bytes = 111787592
+current_polygon_soup_live_bytes = 104936648
+parent_arrangement_live_bytes = 35975852
+current_arrangement_live_bytes = 36546764
+parent_corefine_live_bytes = 32732220
+current_corefine_live_bytes = 32732220
+parent_pairwise_live_bytes = 2853604
+current_pairwise_live_bytes = 2853604
+source_bound_removed_bytes_per_face = 288
+retained_filter_bytes_per_face = 24
+net_peak_removed_bytes_per_face = 264
+
+[historical_full]
+fixture = "yeahright-full-rotated"
+result = "exact empty"
+certainty = "Certified"
+parent_wall_seconds = 1.36
+current_wall_seconds = 1.34
+parent_max_rss_kib = 179540
+current_max_rss_kib = 173040
+historical_ember_wall_seconds = 3312.66
+historical_ember_max_rss_kib = 329352
+historical_cgal_wall_seconds = 0.09
+historical_cgal_max_rss_kib = 15516
+single_process_rows_are_advisory = true
+
+[cgal_protocol]
+engine = "CGAL 6.0.3 EPECK"
+exact_off = true
+cgal_repetitions = 63
+hypermesh_fresh_process_samples = 63
+cpu = 11
+all_outputs_valid_closed_structurally_valid = true
+
+[[cgal]]
+fixture = "crossing_octahedra"
+cgal_outside_median_ns = 125342
+cgal_inside_median_ns = 128052
+hypermesh_strict_median_ns = 479747
+hypermesh_approximate_512_median_ns = 482137
+strict_to_cgal_outside = 3.828
+approximate_512_to_cgal_outside = 3.847
+output_triangles = [44, 20, 32, 32]
+
+[[cgal]]
+fixture = "affine_boxes"
+cgal_outside_median_ns = 381374
+cgal_inside_median_ns = 377804
+hypermesh_strict_median_ns = 875520
+hypermesh_approximate_512_median_ns = 866390
+strict_to_cgal_outside = 2.296
+approximate_512_to_cgal_outside = 2.272
+output_triangles = [44, 28, 20, 20]
+
+[size_default]
+release_native_general_parent = 1984426
+release_native_general_current = 1994434
+release_native_immediate_parent = 1987570
+release_native_immediate_current = 1997578
+release_wasm_general_parent = 1413698
+release_wasm_general_current = 1416739
+release_wasm_immediate_parent = 1415543
+release_wasm_immediate_current = 1418594
+size_native_general_parent = 1082183
+size_native_general_current = 1085567
+size_native_immediate_parent = 1083147
+size_native_immediate_current = 1086531
+size_wasm_general_parent = 676697
+size_wasm_general_current = 678967
+size_wasm_immediate_parent = 677106
+size_wasm_immediate_current = 679376
+
+[size_all_features]
+release_native_general_parent = 2120771
+release_native_general_current = 2130427
+release_native_immediate_parent = 2123611
+release_native_immediate_current = 2133267
+release_wasm_general_parent = 1490213
+release_wasm_general_current = 1492610
+release_wasm_immediate_parent = 1492170
+release_wasm_immediate_current = 1494583
+size_native_general_parent = 1084567
+size_native_general_current = 1088047
+size_native_immediate_parent = 1085523
+size_native_immediate_current = 1089011
+size_wasm_general_parent = 676543
+size_wasm_general_current = 679270
+size_wasm_immediate_parent = 676816
+size_wasm_immediate_current = 679543
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+production_nodes = 14997
+production_edges = 25023
+tests_examples_nodes = 17317
+tests_examples_edges = 28339
+full_evidence_nodes = 21363
+full_evidence_edges = 34440
+production_ember_nodes = 0
+hypermesh_borrowed_overlap_to_hyperlimit_edges = 1
+
+[validation]
+hyperlimit_all_feature_unit_tests = 154
+hyperlimit_no_default_unit_tests = 144
+hypermesh_all_feature_unit_tests = 145
+hypermesh_minimal_unit_tests = 144
+hypermesh_boolean_tests = 8
+hypermesh_competitive_tests_passed = 11
+hypermesh_competitive_tests_ignored = 6
+hypermesh_corpus_manifest_tests = 14
+hypermesh_intersection_corpus_tests = 3
+hypermesh_policy_tests = 9
+hypermesh_readme_tests = 2
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_targets_check = true
+benches_check = true
+examples_check = true

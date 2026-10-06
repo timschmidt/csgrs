@@ -1,0 +1,243 @@
+schema = 1
+date = "2026-08-05"
+status = "accepted-checkpoint-phases-open"
+hypermesh_implementation = "f646d8f008c69d1cd65fd3876480af443de435e0"
+parent = "209b2d22d34b02b53b4ac2d77ed765a4a17a6c47"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[design]
+fixture_branch = false
+triangle_count_branch = false
+expected_result_branch = false
+competitor_branch = false
+compatibility_surface = false
+alternate_engine = false
+bvh_axis_is_scheduling_only = true
+bvh_bounds_remain_exact = true
+exact_candidate_tests_unchanged = true
+missing_or_nan_approximate_span = "zero"
+stable_axis_tie = "lowest axis"
+strict_terminal_consumption = false
+approximate_512_terminal_owner = "Hyperlimit"
+
+[corpus]
+permanent_records = 46
+added_crossing_octahedra = true
+added_affine_boxes = true
+self_pwn_cluster_counts = [8, 64, 512]
+deep_symbolic_depths = [1, 8, 32, 128]
+large_heap_selectors = 15
+removed_placeholder = "general_nonconvex_regression_suite"
+external_real_world_pathology_open = true
+fuzz_mutation_source_audit_open = true
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all-four x5"
+parent_instructions = 3326617001
+current_instructions = 3324130995
+instruction_movement_percent = -0.0747
+branch_movement_percent = -0.1136
+
+[[perf]]
+fixture = "overlapping_boxes"
+workload = "all-four x1000"
+parent_instructions = 4454100972
+current_instructions = 4451946283
+instruction_movement_percent = -0.0484
+branch_movement = "effectively flat"
+
+[[perf]]
+fixture = "dense_coplanar_boxes_32"
+workload = "all-four x1"
+parent_instructions = 10603957193
+current_instructions = 10607960938
+instruction_movement_percent = 0.0378
+branch_movement_percent = -0.1113
+
+[[perf]]
+fixture = "clipped_voxel_torus_33"
+workload = "all-four x3"
+parent_instructions = 2887187669
+current_instructions = 2883915399
+instruction_movement_percent = -0.1133
+branch_movement_percent = 0.0161
+
+[[perf]]
+fixture = "wide_rational_boxes_2048"
+workload = "union x5"
+parent_instructions = 13913868176
+current_instructions = 13897147768
+instruction_movement_percent = -0.1202
+branch_movement_percent = -0.1312
+
+[[perf]]
+fixture = "yeahright-full-rotated"
+workload = "intersection x1"
+parent_instructions = 12942178484
+current_instructions = 12941853170
+instruction_movement_percent = -0.0025
+branch_movement_percent = -0.0205
+
+[[self_pwn_perf]]
+clusters = 8
+repetitions = 100
+strict_instructions = 913870075
+approximate_512_instructions = 913953005
+certainty = "Certified"
+
+[[self_pwn_perf]]
+clusters = 64
+repetitions = 20
+strict_instructions = 1523171777
+approximate_512_instructions = 1523173647
+certainty = "Certified"
+
+[[self_pwn_perf]]
+clusters = 512
+repetitions = 5
+strict_instructions = 3376390247
+approximate_512_instructions = 3376392785
+certainty = "Certified"
+
+[[symbolic_perf]]
+depth = 1
+policy = "STRICT"
+repetitions = 100
+instructions = 22059480390
+certainty = "Certified"
+
+[[symbolic_perf]]
+depth = 1
+policy = "APPROXIMATE_512"
+repetitions = 100
+instructions = 22059480569
+certainty = "Certified"
+
+[[symbolic_perf]]
+depth = 8
+policy = "APPROXIMATE_512"
+repetitions = 50
+instructions = 10375726092
+certainty = "Approximate512Consumed"
+
+[[symbolic_perf]]
+depth = 32
+policy = "APPROXIMATE_512"
+repetitions = 20
+instructions = 4224567958
+certainty = "Approximate512Consumed"
+
+[[symbolic_perf]]
+depth = 128
+policy = "APPROXIMATE_512"
+repetitions = 5
+instructions = 1545672369
+certainty = "Approximate512Consumed"
+
+[cgal_protocol]
+engine = "CGAL 6.0.3 EPECK"
+exact_off = true
+repetitions = 21
+all_outputs_valid_closed_structurally_valid = true
+
+[[cgal]]
+fixture = "crossing_octahedra"
+cgal_outside_median_ns = 127541
+cgal_inside_median_ns = 130531
+hypermesh_strict_median_ns = 361978
+hypermesh_approximate_512_median_ns = 363837
+strict_to_cgal_outside = 2.838
+approximate_512_to_cgal_outside = 2.853
+output_triangles = [44, 20, 32, 32]
+
+[[cgal]]
+fixture = "affine_boxes"
+cgal_outside_median_ns = 384674
+cgal_inside_median_ns = 386213
+hypermesh_strict_median_ns = 802762
+hypermesh_approximate_512_median_ns = 792780
+strict_to_cgal_outside = 2.087
+approximate_512_to_cgal_outside = 2.061
+output_triangles = [44, 28, 20, 20]
+
+[heap_protocol]
+selectors = 15
+policies = ["STRICT", "APPROXIMATE_512"]
+all_policy_rows_byte_identical = true
+all_certainty = "Certified"
+established_peaks_flat_or_lower = 13
+sparse_peak_growth_bytes = 1904
+sparse_peak_growth_percent = 0.0123
+
+[self_pwn_512_heap]
+input_triangles = 4100
+output_triangles = 8196
+process_baseline_bytes = 641
+input_retained_bytes = 964369
+input_payload_bytes = 963728
+boolean_peak_bytes = 15675073
+kernel_incremental_peak_bytes = 14710704
+post_boolean_retained_bytes = 1073024
+output_payload_bytes = 1032968
+input_fact_growth_bytes = 40056
+post_input_drop_bytes = 50080
+allocation_calls = 441106
+deallocation_calls = 440541
+reallocation_calls = 12631
+added_bytes = 49376158
+removed_bytes = 48303134
+
+[stage_heap]
+fixture = "yeahright-full-rotated"
+policy = "STRICT"
+artifact = "target/phase17-stage-attribution-full-strict.zst"
+runtime_seconds = 6.923
+allocations = 16878720
+temporary_allocations = 3681081
+heaptrack_peak_bytes = 165424662
+heaptrack_peak_rss_mb = 205.41
+peak_time_seconds = 6.438
+polygon_soup_live_at_peak_bytes = 122254248
+surface_arrangement_live_at_peak_bytes = 35975860
+corefine_live_at_peak_bytes = 32732060
+remaining_live_at_peak_approx_bytes = 7194554
+post_corefine_peak_bytes = 158143590
+
+[size_default]
+release_native_general_parent = 1985406
+release_native_general_current = 1986254
+release_native_immediate_parent = 1988550
+release_native_immediate_current = 1989398
+release_wasm_general_parent = 1410475
+release_wasm_general_current = 1412049
+release_wasm_immediate_parent = 1412345
+release_wasm_immediate_current = 1413919
+size_native_general_parent = 1081775
+size_native_general_current = 1081479
+size_native_immediate_parent = 1082739
+size_native_immediate_current = 1082435
+size_wasm_general_parent = 676121
+size_wasm_general_current = 676025
+size_wasm_immediate_parent = 676756
+size_wasm_immediate_current = 676660
+
+[callgraph]
+production_nodes = 14926
+production_edges = 24909
+evidence_nodes = 17246
+evidence_edges = 28225
+bvh_axis_to_hyperlimit_edge = false
+one_boolean_engine = true
+ember_path = false
+
+[validation]
+all_features_tests = true
+no_default_features_tests = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_all_targets_check = true
+benches_all_features_check = true
+examples_all_features_check = true
+rustfmt_check = true
+diff_check = true

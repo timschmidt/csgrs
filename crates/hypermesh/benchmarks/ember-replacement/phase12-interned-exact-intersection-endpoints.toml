@@ -1,0 +1,275 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "interned-exact-intersection-endpoints"
+parent_commit = "3465b8db"
+hypermesh_implementation_commit = "80aced02c431890b44e4861f6d0e8dd95ce0c558"
+hyperlimit_implementation_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+
+[representation]
+segment_parent_bytes_x86_64 = 96
+segment_candidate_bytes_x86_64 = 8
+endpoint_id = "checked u32"
+exact_rational_endpoints_interned = true
+symbolic_endpoint_pairs_unmerged = true
+iterator_returns_borrowed_points = true
+compatibility_adapter = false
+dual_representation = false
+unchecked_truncation = false
+transactional_pair_append = true
+remap_validates_endpoint_ids = true
+
+[diagnostic_census]
+fixture = "boxes-3072-general"
+input_triangles = 6144
+undirected_segments = 288
+endpoint_occurrences = 576
+unique_exact_endpoints = 72
+instrumentation_retained = false
+
+[policy]
+scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+endpoint_identity_is_policy_sensitive = false
+symbolic_equality_decision_added = false
+
+[tests.default]
+library_passed = 1078
+competitive_passed = 4
+competitive_ignored = 6
+core_passed = 59
+corpus_passed = 4
+predicate_policy_passed = 8
+readme_passed = 2
+regression_passed = 48
+regression_ignored = 1
+failed = 0
+
+[tests.minimal]
+library_passed = 1078
+failed = 0
+
+[tests.all_features]
+library_passed = 1079
+core_passed = 60
+failed = 0
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+native_minimal_and_all_features = true
+bench_no_run = true
+fuzz_bins_check = true
+wasm_minimal_and_all_features = true
+size_harness_native_and_wasm = true
+trunk_release_demo = true
+yeahright_local_asset_available = false
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 19998
+edges = 39923
+
+[callgraph.evidence]
+includes = ["examples", "tests", "bench", "fuzz"]
+nodes = 26416
+edges = 49869
+
+[fixture.general]
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[fixture.certified]
+probe_mode = "boxes-3072"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 27
+output_triangles = 50
+
+[heap.tool]
+massif_version = "3.27.0"
+massif_args = "--time-unit=B --detailed-freq=1"
+heaptrack_allocations_parent = 844735
+heaptrack_allocations_candidate = 844759
+heaptrack_temporary_parent = 34039
+heaptrack_temporary_candidate = 34039
+
+[heap.general_strict.parent]
+useful_bytes = 28864564
+extra_bytes = 1228684
+total_bytes = 30093248
+
+[heap.general_strict.candidate]
+useful_bytes = 28739660
+extra_bytes = 1227708
+total_bytes = 29967368
+
+[heap.general_approximate_512.parent]
+useful_bytes = 28864564
+extra_bytes = 1226780
+total_bytes = 30091344
+
+[heap.general_approximate_512.candidate]
+useful_bytes = 28739660
+extra_bytes = 1227692
+total_bytes = 29967352
+
+[heap.certified_strict.parent]
+useful_bytes = 1063718
+extra_bytes = 1274
+total_bytes = 1064992
+
+[heap.certified_strict.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.parent]
+useful_bytes = 1063718
+extra_bytes = 1274
+total_bytes = 1064992
+
+[heap.certified_approximate_512.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.delta_percent]
+general_useful = -0.432724
+general_strict_total = -0.418300
+general_approximate_512_total = -0.412052
+certified_useful = 0.0
+
+[runtime.perf]
+policy = "STRICT"
+cpu = 11
+fixture = "boxes-3072-general"
+alternating_batches_per_revision = 2
+processes_per_batch = 5
+processes_per_revision = 10
+
+[runtime.perf.parent]
+task_clock_ms = 2142.155
+cycles = 8695571828
+instructions = 24405410507
+branches = 4682044920
+branch_misses = 14179520
+
+[runtime.perf.candidate]
+task_clock_ms = 1983.830
+cycles = 8066425251
+instructions = 23896240950
+branches = 4633564728
+branch_misses = 14283520
+
+[runtime.perf.delta_percent]
+task_clock = -7.390922
+cycles = -7.235252
+instructions = -2.086298
+branches = -1.035449
+branch_misses = 0.733452
+
+[runtime.callgrind]
+version = "3.27.0"
+args = "--cache-sim=no --branch-sim=yes"
+parent_instructions = 24413066684
+candidate_instructions = 23902510549
+instruction_delta = -510556135
+instruction_delta_percent = -2.091323
+parent_total_branches = 3584597542
+candidate_total_branches = 3575766181
+total_branch_delta = -8831361
+total_branch_delta_percent = -0.246370
+parent_conditional_branches = 3023656470
+candidate_conditional_branches = 3014834357
+conditional_branch_delta_percent = -0.291770
+parent_total_mispredicts = 111698257
+candidate_total_mispredicts = 112774853
+total_mispredict_delta_percent = 0.963843
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4082772
+candidate_bytes = 4085052
+delta_bytes = 2280
+delta_percent = 0.055844
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2754397
+candidate_bytes = 2757749
+delta_bytes = 3352
+delta_percent = 0.121696
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4116004
+candidate_bytes = 4118284
+delta_bytes = 2280
+delta_percent = 0.055394
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2769016
+candidate_bytes = 2772304
+delta_bytes = 3288
+delta_percent = 0.118743
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1880730
+candidate_bytes = 1883674
+delta_bytes = 2944
+delta_percent = 0.156535
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1174827
+candidate_bytes = 1176941
+delta_bytes = 2114
+delta_percent = 0.179941
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1892902
+candidate_bytes = 1895822
+delta_bytes = 2920
+delta_percent = 0.154260
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1184967
+candidate_bytes = 1187078
+delta_bytes = 2111
+delta_percent = 0.178148
+
+[decision]
+retained = true
+reason = "Exact-rational endpoint IDs shrink the retained segment carrier from 96 to 8 bytes, reduce useful large-general peak heap by 124,904 bytes and deterministic whole-workload instructions by 2.091%, preserve every tested topology/policy/failure path, and cost at most 0.180% linked size plus 24 allocation calls."

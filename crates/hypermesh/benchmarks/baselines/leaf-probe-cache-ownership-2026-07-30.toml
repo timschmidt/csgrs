@@ -1,0 +1,318 @@
+schema = 1
+date = "2026-07-30"
+direct_parent = "90a75315adc54fc3c91324303aa872b682fe17bd"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+host = "AMD Ryzen 7 5800X3D 8-Core Processor"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[dependencies.hyperreal]
+commit = "5d39335c42ad84e557225af8353ba40adce2337e"
+frozen_tree_sha256 = "74f45ce8c0d06b0fe79e5942e47ac0b1ab14b9e39ce634d3fae3e70602034b22"
+
+[dependencies.hyperlattice]
+commit = "91d300239500116efbef0fe9da9e1b564d37adfb"
+frozen_tree_sha256 = "ceb984348e1941b3b669cb0975ca19691b98a93d255f338671e4243a94012c36"
+
+[dependencies.hyperlimit]
+commit = "e68bb9da6087587c32f4dbc118fe422672714c75"
+frozen_tree_sha256 = "80da5317befe92a03fdbe00b93a2dce6e4d38bbc5e03392627f2de87ab9a7be1"
+
+[correctness]
+all_feature_library_tests = 1043
+all_feature_integration_failures = 0
+no_default_library_tests = 1042
+no_default_integration_failures = 0
+strict_and_approximate_policy_tests = 8
+ignored_external_or_benchmark_tests = 7
+
+[source]
+added_lines_excluding_preexisting_formatting = 245
+removed_lines_excluding_preexisting_formatting = 455
+net_lines = -210
+net_production_lines = -217
+net_test_lines = -59
+large_heap_probe_lines = 66
+net_benchmark_support_lines = 66
+
+[callgraph.parent]
+nodes = 7716
+edges = 19064
+
+[callgraph.current]
+nodes = 7723
+edges = 19056
+
+[runtime.trace_probe.parent]
+perf_repetitions = 20
+operations_per_repetition = 256
+task_clock_ms = 725.130
+cycles = 3052769111
+instructions = 6287068399
+branches = 1135839940
+branch_misses = 25701491
+
+[runtime.trace_probe.current]
+perf_repetitions = 20
+operations_per_repetition = 256
+task_clock_ms = 718.265
+task_clock_movement_percent = -0.9467
+cycles = 3025037744
+cycles_movement_percent = -0.9084
+instructions = 6286429293
+instructions_movement_percent = -0.0102
+branches = 1135754902
+branches_movement_percent = -0.0075
+branch_misses = 25304425
+branch_misses_movement_percent = -1.5449
+
+[runtime.criterion_octahedron_union.parent_first]
+estimate_ns = 2824000
+lower_ns = 2816800
+upper_ns = 2830100
+
+[runtime.criterion_octahedron_union.current_first]
+estimate_ns = 2848900
+lower_ns = 2824200
+upper_ns = 2880000
+movement_percent = 0.8817
+
+[runtime.criterion_octahedron_union.parent_second]
+estimate_ns = 2846800
+lower_ns = 2839400
+upper_ns = 2853300
+
+[runtime.criterion_octahedron_union.current_second]
+estimate_ns = 2832700
+lower_ns = 2826900
+upper_ns = 2838800
+movement_percent = -0.4953
+
+[runtime.criterion_octahedron_union.combined]
+parent_estimate_ns = 2835400
+current_estimate_ns = 2840800
+movement_percent = 0.1905
+
+[runtime.large_yeahright.parent]
+perf_repetitions = 10
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+task_clock_ms = 1719.60
+cycles = 7158174966
+instructions = 23421401269
+branches = 3902960862
+branch_misses = 25126599
+fresh_process_peak_rss_kib = 18404
+
+[runtime.large_yeahright.current]
+perf_repetitions = 10
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+task_clock_ms = 1770.68
+task_clock_movement_percent = 2.9705
+cycles = 7383026532
+cycles_movement_percent = 3.1412
+instructions = 23421381557
+instructions_movement_percent = -0.000084
+branches = 3902956757
+branches_movement_percent = -0.000105
+branch_misses = 24955849
+branch_misses_movement_percent = -0.6796
+fresh_process_peak_rss_kib = 18644
+
+[memory.trace_probe.parent]
+operations = 256
+allocations = 3944566
+temporary_allocations = 38146
+peak_heap_kib = 471.83
+peak_rss_with_heaptrack_mib = 9.14
+leaked_kib = 126.59
+
+[memory.trace_probe.current]
+operations = 256
+allocations = 3944566
+temporary_allocations = 38146
+peak_heap_kib = 471.83
+peak_rss_with_heaptrack_mib = 9.31
+leaked_kib = 126.59
+
+[memory.large_boxes.parent]
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+allocations = 28156
+temporary_allocations = 80
+peak_heap_mib = 4.72
+peak_rss_with_heaptrack_mib = 10.53
+leaked_kib = 20.00
+
+[memory.large_boxes.current]
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+allocations = 28156
+temporary_allocations = 80
+peak_heap_mib = 4.72
+peak_rss_with_heaptrack_mib = 12.63
+leaked_kib = 20.00
+
+[memory.large_yeahright.fixture]
+source_commit = "575c4d0a"
+source_path = "competitive/data/yeahright_boolean_hull.obj"
+sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+base_hull_facets = 1128
+box_facets = 12
+exact_input_triangles_after_midpoint_subdivision = 4524
+
+[memory.large_yeahright.parent]
+allocations = 41757532
+temporary_allocations = 7636311
+peak_heap_mib = 12.77
+peak_rss_with_heaptrack_mib = 22.14
+leaked_kib = 6.40
+
+[memory.large_yeahright.current]
+allocations = 41757532
+temporary_allocations = 7636311
+peak_heap_mib = 12.77
+peak_rss_with_heaptrack_mib = 22.20
+leaked_kib = 6.40
+
+[memory.large_yeahright.current_top_allocators]
+biguint_shift_calls = 17277197
+biguint_division_calls = 8436732
+dominant_path = "exact signed-product sums in output T-junction resolution and Boolean mesh closure"
+
+[historical.yeahright]
+runtime_ms = 944.8
+peak_heap_mib = 67.74
+allocations = 5020891
+peak_rss_mib = 82.5
+output_polygons = 5152
+output_checksum = 675298388
+current_heap_movement_percent = -81.1485
+current_allocation_movement_percent = 731.6757
+current_runtime_movement_percent = 87.4132
+comparison_note = "directional: historical polygon output and current closure-certified immediate triangle output differ"
+
+[competitive.overlapping_box_union]
+historical_hypermesh_ns = 618600
+current_hypermesh_ns = 4917
+boolmesh_ns = 66344
+manifold_rust_ns = 59579
+historical_speedup = 125.81
+boolmesh_speedup = 13.49
+manifold_rust_speedup = 12.12
+
+[probe_native_text]
+parent_bytes = 4321602
+current_bytes = 4314390
+movement_bytes = -7212
+movement_percent = -0.1669
+
+[probe_native_file]
+parent_bytes = 5490096
+current_bytes = 5481448
+movement_bytes = -8648
+movement_percent = -0.1575
+parent_sha256 = "bd8c464df99a1205957a11b19591e3c32766e582a4f81a8d5e2e670663daba40"
+current_sha256 = "6b54ec638b79838f25ac92531efa50394355834c41e60a81c6bb52915e49369e"
+
+[size.default_general_release_native]
+parent_bytes = 3739125
+current_bytes = 3733357
+movement_bytes = -5768
+movement_percent = -0.1543
+
+[size.default_general_release_wasm]
+parent_bytes = 2632311
+current_bytes = 2630695
+movement_bytes = -1616
+movement_percent = -0.0614
+
+[size.default_immediate_release_native]
+parent_bytes = 3772389
+current_bytes = 3766629
+movement_bytes = -5760
+movement_percent = -0.1527
+
+[size.default_immediate_release_wasm]
+parent_bytes = 2647396
+current_bytes = 2645782
+movement_bytes = -1614
+movement_percent = -0.0610
+
+[size.default_general_size_native]
+parent_bytes = 1704315
+current_bytes = 1701275
+movement_bytes = -3040
+movement_percent = -0.1784
+
+[size.default_general_size_wasm]
+parent_bytes = 1111161
+current_bytes = 1109838
+movement_bytes = -1323
+movement_percent = -0.1191
+
+[size.default_immediate_size_native]
+parent_bytes = 1716255
+current_bytes = 1713175
+movement_bytes = -3080
+movement_percent = -0.1795
+
+[size.default_immediate_size_wasm]
+parent_bytes = 1121456
+current_bytes = 1120006
+movement_bytes = -1450
+movement_percent = -0.1293
+
+[size.all_general_release_native]
+parent_bytes = 3873978
+current_bytes = 3869306
+movement_bytes = -4672
+movement_percent = -0.1206
+
+[size.all_general_release_wasm]
+parent_bytes = 2712359
+current_bytes = 2710742
+movement_bytes = -1617
+movement_percent = -0.0596
+
+[size.all_immediate_release_native]
+parent_bytes = 3907794
+current_bytes = 3903122
+movement_bytes = -4672
+movement_percent = -0.1196
+
+[size.all_immediate_release_wasm]
+parent_bytes = 2727805
+current_bytes = 2726170
+movement_bytes = -1635
+movement_percent = -0.0599
+
+[size.all_general_size_native]
+parent_bytes = 1704595
+current_bytes = 1701467
+movement_bytes = -3128
+movement_percent = -0.1835
+
+[size.all_general_size_wasm]
+parent_bytes = 1108352
+current_bytes = 1107473
+movement_bytes = -879
+movement_percent = -0.0793
+
+[size.all_immediate_size_native]
+parent_bytes = 1716487
+current_bytes = 1713375
+movement_bytes = -3112
+movement_percent = -0.1813
+
+[size.all_immediate_size_wasm]
+parent_bytes = 1118343
+current_bytes = 1117470
+movement_bytes = -873
+movement_percent = -0.0781

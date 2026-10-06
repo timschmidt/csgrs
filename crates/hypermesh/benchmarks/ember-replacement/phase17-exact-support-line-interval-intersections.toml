@@ -1,0 +1,437 @@
+[metadata]
+captured = "2026-08-04"
+phase = 17
+checkpoint = "exact-support-line-interval-intersections"
+status = "retained-open"
+supersedes_checkpoint = "certified-bvh-candidate-envelopes"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hidden_work_limit = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+parent_hypermesh = "10dc6533d6d76766d83adb5bee294f879aa7356b"
+hypermesh = "cfc5ae62ac48634dc552915f76047d26b4b0d982"
+hyperreal = "c2217bae132b725e29faeb89495b8cd51012e1bc"
+hyperlattice = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit = "6e4d68c835dbdcb487ef8e43cf57138ed13894b5"
+hypertri = "41631f652233e1337521822abc63bc29a6c0ce55"
+hyperpath = "e65506279d3cba99a23cf98bbd17be44126ec14d"
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+threads = 1
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[algorithm]
+component = "exact nonparallel convex-polygon intersection"
+kind = "closed support-line slice interval intersection"
+parallel_support_route = "unchanged exact coplanar/disjoint classifier"
+nonparallel_routes = 1
+common_line_coordinate = "certified nonzero component of support-normal cross product"
+polygon_slice = "complete closed boundary walk"
+slice_dimensions = ["empty", "point", "closed interval"]
+endpoint_coordinate = "retained exact affine value or rational numerator/denominator"
+interval_operation = "max of minima and min of maxima"
+materialization = "surviving endpoint only"
+construction_identity_merge = "canonical before materialization"
+affine_candidate_containment_removed = true
+projective_edge_polygon_fallback_removed = true
+four_plane_determinant_removed = true
+adds_dependency = false
+fixture_branch = false
+coordinate_width_branch = false
+triangle_count_branch = false
+operation_branch = false
+expected_output_branch = false
+
+[carrier]
+storage = "fixed stack, at most two deferred endpoints per polygon slice"
+source_edges_borrowed = true
+coordinate_and_materialization_recipe_share_tag = true
+crossing_denominator_shared = true
+interpolation_numerator_retained = true
+span_extended_in_place = true
+maximum_point_bytes = 256
+maximum_span_bytes = 528
+heap_allocation = false
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+certainty_aggregated = true
+support_parallelism_strict_components_attempted_first = 3
+later_certified_nonzero_avoids_terminal = true
+exact_rational_work_certified_under_both = true
+symbolic_endpoint_strict = "PredicateUndecided"
+symbolic_endpoint_approximate_512 = "Approximate512Consumed"
+symbolic_parallelism_strict = "PredicateUndecided"
+symbolic_parallelism_approximate_512 = "Approximate512Consumed"
+all_large_measured_certainty = "Certified"
+large_policy_outputs_exactly_equal = true
+large_policy_heap_exactly_equal = true
+
+[proof]
+closed_convex_slice_is_closed_interval = true
+on_plane_vertex = true
+edge_on_support_line = true
+proper_crossing_pair = true
+tangent_point = true
+disjoint_intervals = true
+endpoint_contact = true
+partial_overlap = true
+contained_interval = true
+equal_interval = true
+all_three_support_axes = true
+arbitrary_convex_degree = true
+reversed_winding = true
+operand_permutation = true
+exact_enclosure_rejection_only = true
+exact_enclosure_false_negatives_allowed = false
+general_symbolic_decline = true
+typed_capacity_and_malformed_errors_preserved = true
+
+[corpus]
+new_static_cases = 5
+new_static_executions = 80
+property_cases = 256
+property_executions = 4_096
+random_ratio_oracle_cases = 1_024
+policies = ["STRICT", "APPROXIMATE_512"]
+operand_orders = 2
+winding_combinations = 4
+static_disjoint_interval = true
+static_crossing_crossing_point_contact = true
+static_contained_interval = true
+static_z_axis = true
+static_convex_quad = true
+exact_closed_interval_oracle = true
+canonical_equal_endpoint_test = true
+deferred_materialization_test = true
+carrier_size_test = true
+symbolic_policy_tests = true
+
+[full_perf_protocol]
+fixture = "yeahright-full-rotated"
+operation = "intersection"
+policy = "APPROXIMATE_512"
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+fresh_process = true
+cpu_pinned = 11
+repetitions = 5
+fixture_preparation_included = true
+exact_import_included = true
+validation_and_destruction_included = true
+parent_source = "accepted 10dc6533 checkpoint, same host and protocol"
+
+[full_perf]
+parent_median_seconds = 1.88
+current_samples_seconds = [1.71, 1.72, 1.72, 1.71, 1.71]
+current_median_seconds = 1.71
+wall_movement_percent = -9.042553
+parent_cycles = 7_239_160_608
+current_cycles = 6_600_430_217
+cycle_movement_percent = -8.823265
+parent_instructions = 18_514_197_608
+current_instructions = 16_777_620_124
+instruction_movement_percent = -9.379706
+parent_branches = 3_286_637_679
+current_branches = 3_014_526_912
+branch_movement_percent = -8.279284
+parent_cache_misses = 19_792_580
+current_cache_misses = 18_491_840
+cache_miss_movement_percent = -6.571854
+
+[historical]
+ember_seconds = 3_312.66
+ember_max_rss_kib = 329_352
+current_vs_ember_speedup = 1_937.23
+current_strict_max_rss_kib = 190_092
+current_approximate_512_max_rss_kib = 190_356
+current_strict_rss_movement_from_ember_percent = -42.282727
+cgal_epeck_seconds = 0.09
+cgal_epeck_max_rss_kib = 15_516
+current_vs_cgal_runtime_ratio = 19.0
+current_strict_vs_cgal_rss_ratio = 12.2511
+current_approximate_512_vs_cgal_rss_ratio = 12.2681
+cgal_runtime_target_closed = false
+cgal_rss_target_closed = false
+
+[controls.wide_2049]
+input_triangles = 6_144
+parent_instructions = 3_892_427_738
+current_instructions = 3_824_038_509
+instruction_movement_percent = -1.757000
+parent_branches = 698_944_715
+current_branches = 683_149_878
+branch_movement_percent = -2.259812
+
+[controls.voxel_torus_33]
+input_triangles = 6_412
+parent_instructions = 1_157_159_946
+current_instructions = 1_134_371_933
+instruction_movement_percent = -1.969307
+parent_branches = 199_226_631
+current_branches = 195_291_387
+branch_movement_percent = -1.975256
+
+[controls.voxel_torus_65]
+input_triangles = 25_100
+parent_instructions = 4_957_003_380
+current_instructions = 4_915_377_049
+instruction_movement_percent = -0.839747
+parent_branches = 849_868_524
+current_branches = 842_853_534
+branch_movement_percent = -0.825421
+
+[controls.dense_coplanar_16]
+input_triangles = 6_144
+parent_instructions = 3_051_772_507
+current_instructions = 3_016_824_494
+instruction_movement_percent = -1.145160
+parent_branches = 521_301_031
+current_branches = 515_444_251
+branch_movement_percent = -1.123546
+
+[controls.small_exact_boxes]
+operation = "all shared arrangement outputs"
+parent_strict_microseconds = 632.628
+current_strict_microseconds = 574.91
+strict_movement_percent = -9.123525
+parent_approximate_512_microseconds = 629.603
+current_approximate_512_microseconds = 583.89
+approximate_512_movement_percent = -7.260608
+pinned_cgal_copy_outside_microseconds = 119.5965
+pinned_cgal_copy_inside_microseconds = 128.9760
+strict_vs_cgal_copy_outside_ratio = 4.8071
+approximate_512_vs_cgal_copy_inside_ratio = 4.5271
+target_closed = false
+
+[heap_protocol]
+metric = "global_allocator_requested_payload"
+fixture_preparation_excluded = true
+input_drop_measured_separately = true
+output_drop_measured_separately = true
+selectors = 13
+policies_per_selector = 2
+strict_and_approximate_512_outputs_equal = true
+strict_and_approximate_512_all_counters_equal = true
+all_certainty = "Certified"
+
+[heap.boxes_3072]
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 16_004_010
+allocation_calls = 166_057
+reallocation_calls = 788
+
+[heap.boxes_3072_general]
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 16_063_730
+allocation_calls = 166_811
+reallocation_calls = 788
+
+[heap.dense_coplanar_16]
+input_triangles = 6_144
+output_vertices = 3_074
+output_triangles = 6_144
+incremental_peak_bytes = 18_719_560
+allocation_calls = 531_424
+reallocation_calls = 30_845
+
+[heap.dense_coplanar_32]
+input_triangles = 24_576
+output_vertices = 12_290
+output_triangles = 24_576
+incremental_peak_bytes = 74_724_848
+allocation_calls = 2_090_317
+reallocation_calls = 123_026
+
+[heap.wide_rational_64]
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 21_716_146
+allocation_calls = 657_846
+reallocation_calls = 4_903
+
+[heap.wide_rational_512]
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 22_596_194
+allocation_calls = 1_817_581
+reallocation_calls = 44_317
+
+[heap.wide_rational_2048]
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+incremental_peak_bytes = 31_234_658
+allocation_calls = 2_092_630
+deallocation_calls = 2_092_488
+reallocation_calls = 227_677
+added_bytes = 459_671_086
+removed_bytes = 459_124_046
+
+[heap.voxel_torus_33]
+input_triangles = 6_412
+output_vertices = 1_730
+output_triangles = 3_456
+incremental_peak_bytes = 16_592_142
+allocation_calls = 184_577
+reallocation_calls = 927
+
+[heap.voxel_torus_65]
+input_triangles = 25_100
+output_vertices = 6_532
+output_triangles = 13_060
+incremental_peak_bytes = 66_152_426
+allocation_calls = 702_828
+reallocation_calls = 1_778
+
+[heap.yeahright]
+input_triangles = 852
+output_vertices = 317
+output_triangles = 630
+incremental_peak_bytes = 5_053_588
+allocation_calls = 224_223
+reallocation_calls = 10_738
+
+[heap.yeahright_4]
+input_triangles = 3_372
+output_vertices = 1_054
+output_triangles = 2_104
+incremental_peak_bytes = 18_851_122
+allocation_calls = 905_691
+reallocation_calls = 38_257
+
+[heap.yeahright_8]
+input_triangles = 13_452
+output_vertices = 3_820
+output_triangles = 7_636
+incremental_peak_bytes = 71_531_870
+allocation_calls = 3_912_941
+reallocation_calls = 146_229
+
+[heap.yeahright_full_rotated]
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+incremental_peak_bytes = 158_258_204
+allocation_calls = 16_928_390
+deallocation_calls = 16_575_749
+reallocation_calls = 2_385_161
+added_bytes = 913_357_128
+removed_bytes = 888_967_224
+post_boolean_retained_incremental_bytes = 24_389_904
+output_live_payload_bytes = 56
+input_fact_growth_bytes = 24_389_848
+post_input_drop_incremental_bytes = 10_792
+
+[size.release_general]
+parent_native_text_bytes = 2_029_758
+current_native_text_bytes = 1_968_566
+native_movement_percent = -3.014743
+parent_wasm_opt_oz_bytes = 1_447_589
+current_wasm_opt_oz_bytes = 1_391_337
+wasm_movement_percent = -3.885908
+
+[size.release_immediate]
+parent_native_text_bytes = 2_032_902
+current_native_text_bytes = 1_971_710
+native_movement_percent = -3.010082
+parent_wasm_opt_oz_bytes = 1_449_447
+current_wasm_opt_oz_bytes = 1_393_195
+wasm_movement_percent = -3.880927
+
+[size.size_general]
+parent_native_text_bytes = 1_088_223
+current_native_text_bytes = 1_072_063
+native_movement_percent = -1.485000
+parent_wasm_opt_oz_bytes = 684_175
+current_wasm_opt_oz_bytes = 668_360
+wasm_movement_percent = -2.311543
+
+[size.size_immediate]
+parent_native_text_bytes = 1_089_171
+current_native_text_bytes = 1_073_019
+native_movement_percent = -1.483000
+parent_wasm_opt_oz_bytes = 684_362
+current_wasm_opt_oz_bytes = 668_771
+wasm_movement_percent = -2.278180
+
+[dispatch.yeahright]
+fixture = "yeahright"
+operation = "union"
+support_line_slice_forward = 3_491
+support_line_slice_reverse = 3_491
+separating_support_plane = 2_624
+parallel_supports = 630
+unknown_fact_events = 0
+fallback_or_abort_events = 0
+output_triangles = 630
+
+[callgraph]
+scope = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+crate_count = 5
+nodes = 14_793
+edges = 24_634
+hypermesh_nodes = 2_914
+hypermesh_edges = 4_669
+nonparallel_production_callers = 1
+nonparallel_production_caller = "intersect_polygons_with_vertices_constructed"
+slice_production_callers = 1
+slice_production_caller = "intersect_nonparallel_polygons_constructed"
+interval_production_callers = 1
+interval_production_caller = "intersect_nonparallel_polygons_constructed"
+deleted_candidate_collection_nodes = 0
+deleted_affine_containment_nodes = 0
+deleted_projective_containment_nodes = 0
+deleted_four_plane_determinant_nodes = 0
+hypercurve_included = false
+hypersolve_included = false
+
+[validation]
+all_feature_executed_tests = 179
+all_feature_ignored_tests = 6
+all_feature_tests_pass = true
+default_tests_pass = true
+no_default_features_check_pass = true
+clippy_all_targets_all_features_warnings_denied = true
+rustdoc_all_features_warnings_denied = true
+format_check_pass = true
+diff_check_pass = true
+fuzz_bins_check_pass = true
+bench_no_run_pass = true
+native_size_build_pass = true
+wasm_size_build_pass = true
+locked_release_trunk_demo_pass = true
+full_exact_oracle_pass = true
+all_large_heap_policy_pairs_pass = true
+
+[open]
+phase_17_complete = false
+phase_18_complete = false
+full_cgal_runtime_parity = false
+full_cgal_rss_parity = false
+small_exact_box_cgal_parity = false
+real_world_corpus_complete = false
+deeper_symbolic_corpus_complete = false
+stage_specific_heap_attribution_complete = false
+broad_current_cgal_confidence_complete = false
+final_requirement_audit_complete = false
+deferred_concurrent_caller_validation_complete = false

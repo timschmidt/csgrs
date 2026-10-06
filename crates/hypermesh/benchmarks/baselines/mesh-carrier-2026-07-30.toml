@@ -1,0 +1,208 @@
+[identity]
+date = "2026-07-30"
+parent_hypermesh = "1aef2f4f"
+current_hypermesh = "5df21f0f"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+carrier_workload = "100000 simultaneously retained cold triangle meshes"
+runtime_workload = "256 sequential general cube unions"
+
+[storage_parent]
+triangle_mesh_facts_bytes = 1048
+
+[storage_current]
+triangle_mesh_facts_bytes = 72
+
+[carrier_memory_parent]
+allocation_calls = 300015
+temporary_allocations = 2
+peak_heap_mib = 113.68
+peak_rss_mib = 122.39
+runtime_seconds = 0.165
+leaked_bytes = 544
+
+[carrier_memory_current]
+allocation_calls = 300015
+temporary_allocations = 2
+peak_heap_mib = 16.08
+peak_rss_mib = 24.88
+runtime_seconds = 0.116
+leaked_bytes = 544
+
+[immediate_memory_parent]
+allocation_calls = 43
+temporary_allocations = 2
+peak_heap_kib = 94.61
+peak_rss_mib = 6.09
+output_vertices = 44
+output_triangles = 84
+outcome = "Certified"
+
+[immediate_memory_current]
+allocation_calls = 45
+temporary_allocations = 2
+peak_heap_kib = 93.27
+peak_rss_mib = 6.66
+output_vertices = 44
+output_triangles = 84
+outcome = "Certified"
+
+[criterion_parent_ns]
+lower = 3701.1
+estimate = 3772.1
+upper = 3854.0
+
+[criterion_current_ns]
+lower = 3699.1
+estimate = 3730.8
+upper = 3758.9
+
+[perf_parent]
+runs = 5
+operations_per_run = 256
+cycles = 2283617043
+cycles_relative_stddev_percent = 0.75
+instructions = 4666399555
+instructions_relative_stddev_percent = 0.01
+task_clock_ms = 542.79
+task_clock_relative_stddev_percent = 0.72
+elapsed_ms = 543.927
+elapsed_relative_stddev_percent = 0.71
+
+[perf_current]
+runs = 5
+operations_per_run = 256
+cycles = 2293619004
+cycles_relative_stddev_percent = 1.17
+instructions = 4663974560
+instructions_relative_stddev_percent = 0.02
+task_clock_ms = 546.63
+task_clock_relative_stddev_percent = 1.22
+elapsed_ms = 547.612
+elapsed_relative_stddev_percent = 1.22
+
+[size.general_release_native_parent]
+raw_bytes = 4315008
+text_bytes = 3700909
+gzip_9_bytes = 1722138
+brotli_11_bytes = 1284909
+
+[size.general_release_native_current]
+raw_bytes = 4315328
+text_bytes = 3701085
+gzip_9_bytes = 1721083
+brotli_11_bytes = 1288034
+
+[size.general_release_wasm_parent]
+raw_bytes = 3334427
+gzip_9_bytes = 979981
+brotli_11_bytes = 663611
+wasm_opt_oz_bytes = 2591788
+wasm_opt_oz_gzip_9_bytes = 897941
+wasm_opt_oz_brotli_11_bytes = 634391
+
+[size.general_release_wasm_current]
+raw_bytes = 3333367
+gzip_9_bytes = 977535
+brotli_11_bytes = 663344
+wasm_opt_oz_bytes = 2591488
+wasm_opt_oz_gzip_9_bytes = 896039
+wasm_opt_oz_brotli_11_bytes = 634100
+
+[size.immediate_release_native_parent]
+raw_bytes = 4350800
+text_bytes = 3735173
+gzip_9_bytes = 1737639
+brotli_11_bytes = 1297724
+
+[size.immediate_release_native_current]
+raw_bytes = 4350800
+text_bytes = 3734901
+gzip_9_bytes = 1737134
+brotli_11_bytes = 1299009
+
+[size.immediate_release_wasm_parent]
+raw_bytes = 3351567
+gzip_9_bytes = 986101
+brotli_11_bytes = 668691
+wasm_opt_oz_bytes = 2607123
+wasm_opt_oz_gzip_9_bytes = 903726
+wasm_opt_oz_brotli_11_bytes = 639384
+
+[size.immediate_release_wasm_current]
+raw_bytes = 3350442
+gzip_9_bytes = 983587
+brotli_11_bytes = 668256
+wasm_opt_oz_bytes = 2606677
+wasm_opt_oz_gzip_9_bytes = 902089
+wasm_opt_oz_brotli_11_bytes = 638769
+
+[size.general_size_native_parent]
+raw_bytes = 1908224
+text_bytes = 1672059
+gzip_9_bytes = 786952
+brotli_11_bytes = 638974
+
+[size.general_size_native_current]
+raw_bytes = 1908864
+text_bytes = 1672707
+gzip_9_bytes = 786417
+brotli_11_bytes = 638314
+
+[size.general_size_wasm_parent]
+raw_bytes = 1276690
+gzip_9_bytes = 461908
+brotli_11_bytes = 355477
+wasm_opt_oz_bytes = 1084503
+wasm_opt_oz_gzip_9_bytes = 450634
+wasm_opt_oz_brotli_11_bytes = 354911
+
+[size.general_size_wasm_current]
+raw_bytes = 1277958
+gzip_9_bytes = 461961
+brotli_11_bytes = 355308
+wasm_opt_oz_bytes = 1084991
+wasm_opt_oz_gzip_9_bytes = 450540
+wasm_opt_oz_brotli_11_bytes = 354306
+
+[size.immediate_size_native_parent]
+raw_bytes = 1920816
+text_bytes = 1684127
+gzip_9_bytes = 793304
+brotli_11_bytes = 643991
+
+[size.immediate_size_native_current]
+raw_bytes = 1921408
+text_bytes = 1684711
+gzip_9_bytes = 792751
+brotli_11_bytes = 643703
+
+[size.immediate_size_wasm_parent]
+raw_bytes = 1287315
+gzip_9_bytes = 466401
+brotli_11_bytes = 358714
+wasm_opt_oz_bytes = 1094922
+wasm_opt_oz_gzip_9_bytes = 454527
+wasm_opt_oz_brotli_11_bytes = 358113
+
+[size.immediate_size_wasm_current]
+raw_bytes = 1288543
+gzip_9_bytes = 465682
+brotli_11_bytes = 358696
+wasm_opt_oz_bytes = 1095173
+wasm_opt_oz_gzip_9_bytes = 454391
+wasm_opt_oz_brotli_11_bytes = 357764
+
+[cargo_bloat_size_profile_general]
+parent_hypermesh_kib = 763.9
+current_hypermesh_kib = 763.4
+
+[verification]
+all_features_tests_passed = 1156
+no_default_features_tests_passed = 1154
+ignored_tests = 7
+all_targets_all_features = true
+all_targets_no_default_features = true
+all_fuzz_targets_compiled = true
+clippy_warnings_denied = true
+rustdoc_warnings_denied = true
+native_and_wasm_size_matrix = true

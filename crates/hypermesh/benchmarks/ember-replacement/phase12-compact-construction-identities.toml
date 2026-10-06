@@ -1,0 +1,257 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "compact-construction-identities"
+parent_commit = "833bedcb"
+hypermesh_implementation_commit = "55d6af84c1f629e5939f714495687c349980ebd0"
+hyperlimit_implementation_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+
+[representation]
+index_domain = "checked u32"
+plane_identity_parent_bytes_x86_64 = 16
+plane_identity_candidate_bytes_x86_64 = 8
+edge_identity_parent_bytes_x86_64 = 40
+edge_identity_candidate_bytes_x86_64 = 20
+vertex_identity_parent_bytes_x86_64 = 56
+vertex_identity_candidate_bytes_x86_64 = 28
+source_triangle_parent_bytes_x86_64 = 40
+source_triangle_candidate_bytes_x86_64 = 32
+source_edge_key_parent_bytes_x86_64 = 24
+source_edge_key_candidate_bytes_x86_64 = 12
+large_fixture_source_triangles = 6144
+retained_source_triangle_savings_bytes = 49152
+compatibility_adapter = false
+dual_representation = false
+unchecked_truncation = false
+transactional_source_triangle_assignment = true
+
+[policy]
+scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+identity_storage_is_policy_sensitive = false
+
+[tests.default]
+library_passed = 1075
+competitive_passed = 4
+competitive_ignored = 6
+core_passed = 59
+corpus_passed = 4
+predicate_policy_passed = 8
+readme_passed = 2
+regression_passed = 48
+regression_ignored = 1
+failed = 0
+
+[tests.minimal]
+library_passed = 1075
+failed = 0
+
+[tests.all_features]
+library_passed = 1076
+core_passed = 60
+failed = 0
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+native_minimal_and_all_features = true
+bench_no_run = true
+fuzz_bins_check = true
+wasm_minimal_and_all_features = true
+size_harness_native_and_wasm = true
+trunk_release_demo = true
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 19963
+edges = 39852
+
+[callgraph.evidence]
+includes = ["examples", "tests", "bench", "fuzz"]
+nodes = 26381
+edges = 49798
+
+[fixture.general]
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[fixture.certified]
+probe_mode = "boxes-3072"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 27
+output_triangles = 50
+
+[heap.tool]
+massif_version = "3.27.0"
+massif_args = "--time-unit=B --detailed-freq=1"
+heaptrack_allocations_parent = 844735
+heaptrack_allocations_candidate = 844735
+heaptrack_temporary_parent = 33789
+heaptrack_temporary_candidate = 33792
+
+[heap.general_strict.parent]
+useful_bytes = 28864564
+extra_bytes = 1228044
+total_bytes = 30092608
+
+[heap.general_strict.candidate]
+useful_bytes = 28864564
+extra_bytes = 1227532
+total_bytes = 30092096
+
+[heap.general_approximate_512.parent]
+useful_bytes = 28864564
+extra_bytes = 1226812
+total_bytes = 30091376
+
+[heap.general_approximate_512.candidate]
+useful_bytes = 28864564
+extra_bytes = 1228204
+total_bytes = 30092768
+
+[heap.certified_strict.parent]
+useful_bytes = 1063718
+extra_bytes = 1274
+total_bytes = 1064992
+
+[heap.certified_strict.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.parent]
+useful_bytes = 1063718
+extra_bytes = 1274
+total_bytes = 1064992
+
+[heap.certified_approximate_512.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[runtime]
+policy = "STRICT"
+cpu = 11
+fixture = "boxes-3072-general"
+alternating_batches = 4
+processes_per_batch = 5
+processes_per_revision = 20
+
+[runtime.parent]
+task_clock_ms = 2040.950
+cycles = 8333696171
+instructions = 24410469086
+branches = 4687262324
+branch_misses = 14134600
+
+[runtime.candidate]
+task_clock_ms = 2033.085
+cycles = 8308323882
+instructions = 24416645267
+branches = 4692634155
+branch_misses = 14267861
+
+[runtime.delta_percent]
+task_clock = -0.3854
+cycles = -0.3045
+instructions = 0.0253
+branches = 0.1146
+branch_misses = 0.9428
+
+[callgrind]
+parent_instructions = 24412416094
+candidate_instructions = 24424410247
+memcmp_parent_instructions = 2258068797
+memcmp_candidate_instructions = 2268911361
+non_memcmp_instruction_delta_percent = 0.0052
+non_memcmp_conditional_branch_delta_percent = 0.0083
+rational_equality_memcmp_calls = 91587384
+rational_ordering_memcmp_calls = 23088776
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4083164
+candidate_bytes = 4082772
+delta_bytes = -392
+delta_percent = -0.0096
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2755551
+candidate_bytes = 2754397
+delta_bytes = -1154
+delta_percent = -0.0419
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4116220
+candidate_bytes = 4116004
+delta_bytes = -216
+delta_percent = -0.0052
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2770102
+candidate_bytes = 2769016
+delta_bytes = -1086
+delta_percent = -0.0392
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1880546
+candidate_bytes = 1880730
+delta_bytes = 184
+delta_percent = 0.0098
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1174389
+candidate_bytes = 1174827
+delta_bytes = 438
+delta_percent = 0.0373
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1892326
+candidate_bytes = 1892902
+delta_bytes = 576
+delta_percent = 0.0304
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1184523
+candidate_bytes = 1184967
+delta_bytes = 444
+delta_percent = 0.0375
+
+[decision]
+retained = true
+reason = "Checked compact identities halve construction-key storage and remove 49,152 retained carrier bytes on each 6,144-triangle fixture without changing allocation count, exact topology, policy semantics, or dominant path call counts; aggregate pinned clock/cycles and release linked size improve, while non-libc deterministic work and size-profile growth remain below 0.04%."

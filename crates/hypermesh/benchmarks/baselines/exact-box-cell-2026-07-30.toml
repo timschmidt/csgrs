@@ -1,0 +1,96 @@
+[identity]
+date = "2026-07-30"
+parent_hypermesh = "0507e622"
+current_hypermesh = "e1260726"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+
+[runtime_ns]
+union = 3564.1
+intersection = 1543.4
+difference = 2646.8
+symmetric_difference = 3819.2
+historical_hypermesh_union = 618600
+boolmesh_union = 64777
+manifold_rust_union = 62279
+
+[dispatch_parent]
+events = 31797
+predicate_events = 96
+compare_real = 7230
+rational_temporaries = 6712
+
+[dispatch_current]
+events = 234
+predicate_events = 0
+compare_real = 213
+rational_temporaries = 0
+cache_events = 0
+approximation_events = 0
+
+[memory_parent]
+allocation_calls = 7028
+peak_heap_kib = 346.70
+output_vertices = 20
+output_triangles = 36
+
+[memory_current]
+allocation_calls = 45
+peak_heap_kib = 94.61
+output_vertices = 44
+output_triangles = 84
+
+[size.release_native_parent]
+raw_bytes = 4316600
+text_bytes = 3702373
+gzip_9_bytes = 1721436
+brotli_11_bytes = 1288906
+
+[size.release_native_current]
+raw_bytes = 4353864
+text_bytes = 3737509
+gzip_9_bytes = 1737887
+brotli_11_bytes = 1300565
+
+[size.release_wasm_parent]
+raw_bytes = 3332846
+gzip_9_bytes = 979000
+brotli_11_bytes = 663218
+wasm_opt_oz_bytes = 2590840
+wasm_opt_oz_gzip_9_bytes = 896564
+wasm_opt_oz_brotli_11_bytes = 633830
+
+[size.release_wasm_current]
+raw_bytes = 3353967
+gzip_9_bytes = 983906
+brotli_11_bytes = 668600
+wasm_opt_oz_bytes = 2608785
+wasm_opt_oz_gzip_9_bytes = 901834
+wasm_opt_oz_brotli_11_bytes = 639266
+
+[size.size_native_parent]
+raw_bytes = 1907088
+text_bytes = 1671031
+gzip_9_bytes = 786552
+brotli_11_bytes = 637650
+
+[size.size_native_current]
+raw_bytes = 1921712
+text_bytes = 1685063
+gzip_9_bytes = 793018
+brotli_11_bytes = 643741
+
+[size.size_wasm_parent]
+raw_bytes = 1275767
+gzip_9_bytes = 460990
+brotli_11_bytes = 354258
+wasm_opt_oz_bytes = 1084570
+wasm_opt_oz_gzip_9_bytes = 449566
+wasm_opt_oz_brotli_11_bytes = 353615
+
+[size.size_wasm_current]
+raw_bytes = 1288414
+gzip_9_bytes = 466363
+brotli_11_bytes = 358833
+wasm_opt_oz_bytes = 1096003
+wasm_opt_oz_gzip_9_bytes = 454294
+wasm_opt_oz_brotli_11_bytes = 357862

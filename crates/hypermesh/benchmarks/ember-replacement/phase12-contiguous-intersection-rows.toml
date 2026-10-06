@@ -1,0 +1,322 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "contiguous-intersection-rows"
+parent_commit = "019131518445c8e2eca756d51fab753ada67cdf9"
+parent_executable_sha256 = "f58a3b7d2b5f3c6810c470c71b34e266017db19cee0a1726bef7364afcc33274"
+candidate_executable_sha256 = "3cda9842a356a6112b4eccd0e04db5c9e82180e2efefbdd2cb9f5f3693f64465"
+hypermesh_implementation_commit = "e04b73d32a5eab14a61b2c7c32e68d7fa34ff2ac"
+hyperlimit_implementation_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+
+[representation]
+index_domain = "checked u32"
+faces = 6144
+undirected_segments = 288
+directed_events = 576
+exact_points = 72
+parent_face_words = 2
+parent_event_bytes = 12
+parent_logical_row_carrier_bytes = 56064
+candidate_offset_count = 6145
+candidate_face_words_per_face = 1
+candidate_event_bytes = 8
+candidate_logical_row_carrier_bytes = 29188
+logical_row_carrier_savings_bytes = 26876
+logical_row_carrier_savings_percent = 47.938071
+massif_peak_savings_beyond_logical_length_bytes = 5392
+parent_builder_logical_carrier_bytes = 80640
+candidate_builder_before_finish_bytes = 31488
+candidate_builder_during_finish_bytes = 60676
+compatibility_adapter = false
+dual_representation = false
+wide_fallback = false
+global_candidate_pair_buffer = false
+unchecked_truncation = false
+fallible_builder_creation = true
+fallible_finalization = true
+atomic_symmetric_append = true
+event_order_preserved = true
+row_storage_contiguous = true
+
+[source]
+primary_file = "src/intersection.rs"
+parent_pre_test_module_lines = 1321
+candidate_pre_test_module_lines = 1403
+production_delta = 82
+parent_test_module_lines = 254
+candidate_test_module_lines = 262
+intersection_test_delta = 8
+subdivision_test_net_delta = 1
+total_net_delta = 91
+
+[policy]
+scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+aggregate_certainty_preserved = true
+finalization_records_topology_decisions = false
+finalization_performs_scalar_comparisons = false
+
+[tests.default]
+library_passed = 1079
+competitive_passed = 4
+competitive_ignored = 6
+core_passed = 59
+corpus_passed = 4
+predicate_policy_passed = 8
+readme_passed = 2
+regression_passed = 48
+regression_ignored = 1
+failed = 0
+
+[tests.minimal]
+library_passed = 1079
+core_passed = 59
+failed = 0
+
+[tests.all_features]
+library_passed = 1080
+core_passed = 60
+failed = 0
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+bench_no_run = true
+fuzz_bins_check = true
+wasm_minimal_and_all_features = true
+size_harness_native_and_wasm = true
+trunk_release_demo = true
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20042
+edges = 39993
+
+[callgraph.evidence]
+includes = ["examples", "tests", "bench", "fuzz"]
+nodes = 26460
+edges = 49939
+
+[fixture.general]
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[fixture.certified]
+probe_mode = "boxes-3072"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 27
+output_triangles = 50
+
+[heap.tool]
+massif_version = "3.27.0"
+massif_args = "--time-unit=B --detailed-freq=1"
+heaptrack_version = "1.5.0"
+heaptrack_allocations_parent = 838604
+heaptrack_allocations_candidate = 838605
+heaptrack_temporary_parent = 34038
+heaptrack_temporary_candidate = 34039
+heaptrack_peak_parent_mb = 28.81
+heaptrack_peak_candidate_mb = 28.78
+heaptrack_peak_rss_parent_mb = 40.49
+heaptrack_peak_rss_candidate_mb = 40.61
+
+[heap.general_strict.parent]
+useful_bytes = 28739660
+extra_bytes = 1227788
+total_bytes = 29967448
+
+[heap.general_strict.candidate]
+useful_bytes = 28707392
+extra_bytes = 1227008
+total_bytes = 29934400
+
+[heap.general_approximate_512.parent]
+useful_bytes = 28739660
+extra_bytes = 1227996
+total_bytes = 29967656
+
+[heap.general_approximate_512.candidate]
+useful_bytes = 28707392
+extra_bytes = 1227936
+total_bytes = 29935328
+
+[heap.certified_strict.parent]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_strict.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.parent]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.delta]
+allocation_calls = 1
+temporary_allocations = 1
+general_useful_bytes = -32268
+general_useful_percent = -0.112277
+general_strict_total_bytes = -33048
+general_strict_total_percent = -0.110280
+general_approximate_512_total_bytes = -32328
+general_approximate_512_total_percent = -0.107876
+certified_useful_bytes = 0
+
+[runtime.perf]
+policy = "STRICT"
+cpu = 11
+fixture = "boxes-3072-general"
+batches_per_revision = 6
+processes_per_batch = 5
+processes_per_revision = 30
+excluded_parent_batches = 1
+excluded_paired_candidate_batches = 1
+excluded_parent_internal_deviation_percent = 11.64
+maximum_retained_internal_deviation_percent = 2.13
+paired_clock_95_percent_lower_delta_percent = -4.631995
+paired_clock_95_percent_upper_delta_percent = 2.012087
+
+[runtime.perf.parent]
+task_clock_ms = 1938.871667
+cycles = 7915324059.167
+instructions = 23882247674.167
+branches = 4604782727.500
+branch_misses = 13659334.333
+
+[runtime.perf.candidate]
+task_clock_ms = 1913.473333
+cycles = 7830848280.500
+instructions = 23898221125.500
+branches = 4633681026.500
+branch_misses = 14221669.000
+
+[runtime.perf.delta_percent]
+task_clock = -1.309954
+cycles = -1.067243
+instructions = 0.066884
+branches = 0.627571
+branch_misses = 4.116853
+
+[runtime.callgrind]
+version = "3.27.0"
+args = "--cache-sim=no --branch-sim=yes"
+parent_instructions = 23898239510
+candidate_instructions = 23903497834
+instruction_delta = 5258324
+instruction_delta_percent = 0.022003
+parent_conditional_branches = 3009986102
+candidate_conditional_branches = 3015215222
+conditional_branch_delta = 5229120
+conditional_branch_delta_percent = 0.173726
+parent_indirect_branches = 560906666
+candidate_indirect_branches = 560909296
+indirect_branch_delta = 2630
+indirect_branch_delta_percent = 0.000469
+parent_total_branches = 3570892768
+candidate_total_branches = 3576124518
+total_branch_delta = 5231750
+total_branch_delta_percent = 0.146511
+parent_total_mispredicts = 113853710
+candidate_total_mispredicts = 111140278
+total_mispredict_delta = -2713432
+total_mispredict_delta_percent = -2.383262
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4081972
+candidate_bytes = 4091844
+delta_bytes = 9872
+delta_percent = 0.241844
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2754491
+candidate_bytes = 2760635
+delta_bytes = 6144
+delta_percent = 0.223054
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4115188
+candidate_bytes = 4125060
+delta_bytes = 9872
+delta_percent = 0.239892
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2769105
+candidate_bytes = 2775185
+delta_bytes = 6080
+delta_percent = 0.219566
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1883746
+candidate_bytes = 1885330
+delta_bytes = 1584
+delta_percent = 0.084088
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1177387
+candidate_bytes = 1178835
+delta_bytes = 1448
+delta_percent = 0.122984
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1895902
+candidate_bytes = 1897478
+delta_bytes = 1576
+delta_percent = 0.083127
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1187530
+candidate_bytes = 1188976
+delta_bytes = 1446
+delta_percent = 0.121765
+
+[competitive]
+cgal_epeck_rerun = false
+reason = "Carrier-only checkpoint leaves operation and output semantics unchanged; per-case pinned CGAL EPECK comparison remains a Phase 17 gate."
+
+[decision]
+retained = true
+reason = "Contiguous checked rows remove 32,268 bytes from the true large useful-heap peak under both policies, cut the logical retained row carrier 47.938%, improve six-batch pinned clock/cycle means 1.310%/1.067%, and lower modeled mispredictions 2.383% while preserving every tested exact topology and policy path. The explicit tradeoffs are one observed allocation call, 0.022% more Callgrind instructions, and at most 0.242% linked-size growth; deterministic work and size debt remain open for Phase 17."

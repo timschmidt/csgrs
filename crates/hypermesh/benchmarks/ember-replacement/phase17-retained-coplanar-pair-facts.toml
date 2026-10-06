@@ -1,0 +1,350 @@
+schema = 1
+status = "retained-checkpoint-phase-11-17-and-18-open"
+captured_at = "2026-08-03"
+checkpoint = "retained-coplanar-pair-facts"
+hypermesh_commit = "50b62e5da55f1b87cead99ef060cd771e3c9908b"
+parent_commit = "9ebefb108b8eea6863b9ef04b0916d72103825f3"
+hypertri_commit = "186a29eb74ade9126f605184d1275a504450b9ec"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+production_boolean_engine_count = 1
+compatibility_shim = false
+benchmark_engine_dispatch = false
+fixture_name_dispatch = false
+coordinate_value_dispatch = false
+triangle_count_dispatch = false
+operation_dispatch = false
+policy_selects_algorithm = false
+hypercurve_edited = false
+hypersolve_edited = false
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false
+cgal_parity = false
+
+[algorithm.pairwise_scratch]
+owner = "one canonical self-BVH traversal"
+cleared_between_pairs = true
+capacity_retained_between_pairs = true
+direct_public_pair_api_uses_same_algorithm = true
+constructed_point_scratch = true
+directional_classification_matrices = 2
+point_query_scratch = true
+capacity_sums_checked = true
+capacity_products_checked = true
+allocation_failures_typed = true
+
+[algorithm.coplanar_classification]
+predicate_order_unchanged = true
+short_circuit_order_unchanged = true
+classifications_lazy = true
+positive_area_and_contact_recovery_share_facts = true
+strict_failures_cached = false
+certified_positive_skips_repeated_identity = true
+approximate_positive_checks_retained_identity_first = true
+retained_identity_policy_regression = true
+
+[algorithm.point_query]
+carrier = "hyperreal::RationalLinearForm4Query"
+one_query_per_demanded_vertex = true
+rational_to_f64_normalization_reused_across_planes = true
+filter_is_certified_only = true
+uncertain_filter_uses_unbounded_exact_rational_fallback = true
+query_geometry_immutable = true
+
+[algorithm.deduplication]
+stable_in_place = true
+capacity_retained = true
+canonical_minimum_construction_recipe = true
+exact_rational_contradiction_helper_centralized = true
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+same_algorithm = true
+all_measured_exact_rows_certainty = "Certified"
+approximate_512_terminal_consumed = false
+heap_rows_byte_identical = true
+topology_rows_identical = true
+cache_operation_local = true
+cache_pair_local = true
+aggregate_certainty_qualifies_cached_exclusion = true
+
+[runtime_protocol]
+operation = "intersection"
+hypermesh_executable = "competitive_arrangement_probe"
+small_large_repetitions = [101, 31]
+xl_repetitions_each = 11
+xl_independent_aggregates = 3
+xl_statistic = "median of aggregate means"
+cgal_version = "6.0.3"
+cgal_kernel = "Exact_predicates_exact_constructions_kernel"
+cgal_repetitions_each = 21
+cgal_statistic = "median"
+cgal_copy = "outside timed interval"
+threads = 1
+
+[[runtime]]
+fixture = "clipped_voxel_torus_9"
+input_triangles = 460
+hypermesh_strict_ns = 8032677
+hypermesh_approximate_512_ns = 7955899
+parent_strict_ns = 8799637
+parent_approximate_512_ns = 8690371
+cgal_median_ns = 492986
+strict_improvement_percent = 8.715814
+approximate_512_improvement_percent = 8.451561
+strict_to_cgal = 16.293925
+approximate_512_to_cgal = 16.138184
+
+[[runtime]]
+fixture = "clipped_voxel_torus_33"
+input_triangles = 6412
+hypermesh_strict_ns = 92057542
+hypermesh_approximate_512_ns = 92437687
+parent_strict_ns = 107600171
+parent_approximate_512_ns = 108688090
+cgal_median_ns = 3503579
+strict_improvement_percent = 14.444800
+approximate_512_improvement_percent = 14.951411
+strict_to_cgal = 26.275286
+approximate_512_to_cgal = 26.383788
+
+[[runtime]]
+fixture = "clipped_voxel_torus_65"
+input_triangles = 25100
+hypermesh_strict_ns = 404325713
+hypermesh_approximate_512_ns = 401745200
+strict_aggregate_means_ns = [404843236, 400511164, 404325713]
+approximate_512_aggregate_means_ns = [397067935, 401745200, 401804116]
+parent_strict_ns = 461709971
+parent_approximate_512_ns = 465819996
+cgal_median_ns = 11838708
+strict_improvement_percent = 12.428637
+approximate_512_improvement_percent = 13.755270
+strict_to_cgal = 34.152858
+approximate_512_to_cgal = 33.934885
+
+[hardware_counters]
+executable = "large_mesh_heap_probe"
+policy = "STRICT"
+repetitions = 11
+includes_fixture_preparation = true
+
+[hardware_counters.large]
+fixture = "clipped_voxel_torus_33"
+input_triangles = 6412
+task_clock_ms = 114.38
+cycles = 449915942
+instructions = 1307616836
+branches = 232438083
+branch_misses = 1647082
+cache_misses = 1199260
+task_clock_reduction_percent = 12.760278
+instruction_reduction_percent = 11.248574
+branch_reduction_percent = 11.687120
+query_only_instruction_reduction_percent = 2.143989
+
+[hardware_counters.xl]
+fixture = "clipped_voxel_torus_65"
+input_triangles = 25100
+task_clock_ms = 494.98
+cycles = 1952556766
+instructions = 5602180760
+branches = 994234204
+branch_misses = 5979365
+cache_misses = 5895897
+task_clock_reduction_percent = 11.621762
+instruction_reduction_percent = 11.204006
+branch_reduction_percent = 11.738591
+query_only_instruction_reduction_percent = 2.147556
+
+[hardware_counters.scaling]
+input_triangle_growth = 3.914535
+task_clock_growth = 4.327505
+instruction_growth = 4.284268
+branch_growth = 4.277415
+branch_miss_growth = 3.630278
+cache_miss_growth = 4.916279
+parent_instruction_growth = 4.282118
+sublinear_or_linear = false
+
+[heap_protocol]
+executable = "large_mesh_kernel_heap_probe"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+serialized = true
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_byte_identical = true
+
+[heap.large]
+fixture = "clipped_voxel_torus_33"
+input_triangles = 6412
+input_payload_bytes = 656792
+kernel_peak_incremental_bytes = 16387766
+parent_kernel_peak_incremental_bytes = 16387156
+output_live_payload_bytes = 375368
+input_fact_growth_bytes = 42840
+allocation_calls = 183110
+deallocation_calls = 182452
+reallocation_calls = 927
+added_bytes = 34661744
+removed_bytes = 34243536
+allocation_call_reduction_percent = 28.266141
+added_byte_reduction_percent = 61.520559
+peak_growth_percent = 0.003722
+
+[heap.xl]
+fixture = "clipped_voxel_torus_65"
+input_triangles = 25100
+input_payload_bytes = 3210704
+kernel_peak_incremental_bytes = 65353442
+parent_kernel_peak_incremental_bytes = 65352128
+output_live_payload_bytes = 1623160
+input_fact_growth_bytes = 699616
+allocation_calls = 699382
+deallocation_calls = 686385
+reallocation_calls = 1778
+added_bytes = 150367419
+removed_bytes = 148044643
+allocation_call_reduction_percent = 28.990047
+added_byte_reduction_percent = 59.519059
+peak_growth_percent = 0.002011
+
+[process_rss]
+metric = "fresh-process maximum RSS from /usr/bin/time -v"
+large_hypermesh_kib = 21500
+large_cgal_kib = 9556
+large_hypermesh_to_cgal = 2.249895
+xl_hypermesh_kib = 73852
+xl_cgal_kib = 20020
+xl_hypermesh_to_cgal = 3.688911
+
+[historical_yeahright]
+fixture_triangles_each = 11894
+policy = "APPROXIMATE_512"
+output = "exact empty mesh"
+certainty = "Certified"
+task_clock_ms = 3202.70
+cycles = 12875052637
+instructions = 35250840270
+branches = 5967751716
+branch_misses = 61199233
+cache_misses = 24349325
+maximum_rss_kib = 192304
+parent_task_clock_ms = 3219.37
+parent_instructions = 35257061862
+task_clock_reduction_percent = 0.517803
+instruction_reduction_percent = 0.017646
+historical_ember_seconds = 3312.66
+speedup_over_historical_ember = 1034.333531
+historical_cgal_seconds = 0.09
+slowdown_to_historical_cgal = 35.585556
+historical_cgal_rss_kib = 15516
+rss_to_historical_cgal = 12.393916
+
+[exact_boxes]
+strict_point_estimate_us = 864.20
+approximate_512_point_estimate_us = 858.94
+cgal_copy_outside_us = 119.5965
+cgal_copy_inside_us = 128.9760
+strict_to_cgal_copy_outside = 7.225964
+strict_to_cgal_copy_inside = 6.700471
+approximate_512_to_cgal_copy_outside = 7.181983
+approximate_512_to_cgal_copy_inside = 6.659689
+exact_volumes_unchanged = true
+exact_topology_unchanged = true
+statistically_material_change = false
+
+[profile]
+fixture = "clipped_voxel_torus_65"
+samples = 511
+pairwise_inclusive_percent = 46.25
+self_bvh_inclusive_percent = 45.03
+append_pair_inclusive_percent = 38.28
+polygon_intersection_inclusive_percent = 34.67
+coplanar_intersection_inclusive_percent = 25.40
+vertex_containment_inclusive_percent = 14.84
+point_query_classify_inclusive_percent = 9.15
+point_query_new_inclusive_percent = 7.04
+rational_normalization_self_percent = 3.62
+prior_rational_normalization_self_percent = 4.84
+corefine_inclusive_percent = 22.59
+hypertri_cdt_inclusive_percent = 12.72
+constraint_insertion_inclusive_percent = 11.69
+topology_sort_inclusive_percent = 5.31
+arrangement_point_insert_inclusive_percent = 5.14
+bounds_overlap_inclusive_percent = 5.05
+exact_flippability_inclusive_percent = 4.89
+bvh_build_inclusive_percent = 4.16
+
+[size]
+baseline = "canonical self-pairs and local topology"
+release_general_native_text_bytes = 2033826
+release_general_native_growth_percent = 0.209700
+release_general_wasm_oz_bytes = 1441629
+release_general_wasm_growth_percent = 0.177545
+release_immediate_native_text_bytes = 2036970
+release_immediate_native_growth_percent = 0.209375
+release_immediate_wasm_oz_bytes = 1443484
+release_immediate_wasm_growth_percent = 0.177177
+size_general_native_text_bytes = 1080599
+size_general_native_growth_percent = 0.221850
+size_general_wasm_oz_bytes = 675111
+size_general_wasm_growth_percent = 0.272846
+size_immediate_native_text_bytes = 1081539
+size_immediate_native_growth_percent = 0.221657
+size_immediate_wasm_oz_bytes = 675517
+size_immediate_wasm_growth_percent = 0.290546
+
+[footprint]
+insertions = 463
+deletions = 113
+net_lines = 350
+cargo_metadata_changed = false
+public_api_changed = false
+
+[rejected.retained_vertex_rational_prefilter]
+description = "scan retained vertex exact-rational coordinates before structural equality"
+correctness_tests_passed = true
+deterministic_instruction_win = false
+retained = false
+reason = "added code without reducing whole-workload retired work"
+
+[callgraph]
+scope = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+include_examples = true
+hypercurve_included = false
+hypersolve_included = false
+nodes = 15460
+edges = 25291
+removed_ember_implementation_nodes = 0
+out_dir = "target/hypermesh-path-callgraph-phase17-retained-coplanar-facts"
+
+[validation.hypermesh]
+executed_tests = 154
+ignored_tests = 6
+all_features = true
+no_default_check = true
+clippy_deny_warnings = true
+rustdoc_deny_warnings = true
+fuzz_bins_check = true
+bench_no_run = true
+fixed_fuzz_seed_executions = 3
+full_yeahright_ignored_oracle = true
+fmt = true
+
+[open]
+real_world_external_pathologies = true
+dense_coplanar_scaling_family = true
+fixed_coordinate_complexity_scaling_sibling = true
+high_bit_and_deep_symbolic_families = true
+torus_superlinear_slope = true
+input_fact_lifetime_cliff = true
+stage_specific_heap_attribution = true
+per_case_cgal_runtime_parity = true
+per_case_cgal_heap_rss_parity = true
+linked_size_recovery = true
+phase_18_completion_audit = true

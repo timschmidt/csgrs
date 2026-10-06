@@ -1,0 +1,289 @@
+[metadata]
+captured = "2026-08-03"
+phase = 17
+checkpoint = "exact-linear-arithmetic-code-sharing"
+status = "retained-open"
+supersedes_checkpoint = "affine-wide-edge-planes-size-target"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+parent_hyperreal = "f59a6ce7206354f33f73f8956e3c1e5261a20893"
+subtraction_commit = "2f8bb7b79aa3eeede11766f095eb092ad4beef3c"
+hyperreal = "c2217bae132b725e29faeb89495b8cd51012e1bc"
+hyperlattice = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit = "e9d58cf4ae46a29d35884a9fb50e91a1be3a526b"
+hypertri = "186a29eb74ade9126f605184d1275a504450b9ec"
+hypermesh = "410f9372038207bfc2ce208fd8d370464568c091"
+parent_hypermesh_implementation = "5f9e45d21ded8a6aad46764f82fb396c6930cc0a"
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+threads = 1
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[algorithm]
+crate = "hyperreal"
+type = "hyperreal::Rational"
+operations = ["addition", "subtraction"]
+generic_public_operator_impls_preserved = true
+fixed_signature_exact_cores = ["add_ref", "subtract_ref"]
+core_inline_policy = "never"
+arithmetic_order_changed = false
+retained_cache_lookup_changed = false
+retained_cache_publication_changed = false
+word_dispatch_changed = false
+gcd_schedule_changed = false
+reduction_schedule_changed = false
+mesh_branch = false
+fixture_branch = false
+bit_width_branch = false
+expected_output_branch = false
+source_lines_added = 29
+source_lines_deleted = 15
+source_net_lines = 14
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+all_measured_certainty = "Certified"
+approximate_512_terminal_consumed = false
+policy_values_exactly_equal = true
+policy_heap_exactly_equal = true
+
+[bloat.current]
+add_core_bytes = 3277
+subtract_core_bytes = 2867
+generic_add_adapter_total_bytes = 556
+generic_subtract_adapter_total_bytes = 258
+heavy_core_count_per_operation = 1
+
+[scalar_protocol]
+benchmark = "hyperreal/benches/borrowed_ops.rs"
+group = "rational_ops"
+cpu_pinned = 11
+serial = true
+warmup_seconds = 3
+samples = 100
+
+[[scalar]]
+operation = "add_owned"
+parent_mean_ns = 9.9962
+parent_interval_ns = [9.9810, 10.016]
+current_mean_ns = 9.7434
+current_interval_ns = [9.7327, 9.7556]
+movement_percent = -2.5290
+
+[[scalar]]
+operation = "add_refs"
+parent_mean_ns = 8.5611
+parent_interval_ns = [8.5403, 8.5875]
+current_mean_ns = 8.0325
+current_interval_ns = [8.0247, 8.0413]
+movement_percent = -6.1744
+
+[[scalar]]
+operation = "sub_owned"
+parent_mean_ns = 10.433
+parent_interval_ns = [10.410, 10.462]
+current_mean_ns = 9.8744
+current_interval_ns = [9.8361, 9.9282]
+movement_percent = -5.3542
+
+[[scalar]]
+operation = "sub_refs"
+parent_mean_ns = 8.6349
+parent_interval_ns = [8.5893, 8.6874]
+current_mean_ns = 8.3844
+current_interval_ns = [8.3614, 8.4106]
+movement_percent = -2.9010
+
+[mesh_perf_protocol]
+fresh_process = true
+includes_fixture_preparation = true
+includes_exact_import = true
+includes_pwn_priming = true
+includes_one_boolean = true
+
+[mesh_perf.full_yeahright]
+fixture = "yeahright-full-rotated"
+policy = "STRICT"
+operation = "intersection"
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+parent_repetitions = 3
+current_repetitions = 5
+parent_instructions = 35_245_810_810
+current_instructions = 35_242_076_813
+instruction_movement_percent = -0.010594
+parent_branches = 5_965_419_063
+current_branches = 5_965_405_877
+branch_movement_percent = -0.000221
+wall_win_claimed = false
+
+[mesh_perf.wide_2049]
+fixture = "wide-rational-2048"
+policy = "STRICT"
+operation = "union"
+input_triangles = 6_144
+output_vertices = 2_410
+output_triangles = 4_816
+certainty = "Certified"
+repetitions = 11
+parent_instructions = 4_195_402_389
+current_instructions = 4_195_442_185
+instruction_movement_percent = 0.000949
+parent_branches = 780_805_097
+current_branches = 780_762_383
+branch_movement_percent = -0.005471
+wall_win_claimed = false
+
+[heap_protocol]
+metric = "global_allocator_requested_payload"
+fixture_preparation_excluded = true
+input_drop_measured_separately = true
+output_drop_measured_separately = true
+strict_and_approximate_512_equal = true
+identical_to_affine_edge_plane_checkpoint = true
+
+[heap.wide_2049]
+incremental_peak_bytes = 31_038_074
+allocation_calls = 2_109_647
+reallocation_calls = 228_217
+added_bytes = 463_318_390
+input_fact_growth_bytes = 26_568
+output_live_payload_bytes = 520_472
+
+[heap.full_yeahright]
+incremental_peak_bytes = 158_258_204
+allocation_calls = 39_175_099
+reallocation_calls = 4_027_656
+added_bytes = 2_445_957_944
+input_fact_growth_bytes = 24_389_848
+output_live_payload_bytes = 56
+
+[size_protocol]
+native_metric = "text bytes"
+wasm_metric = "wasm-opt -Oz bytes"
+feature_set = "default"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_bytes = 2_044_326
+current_native_bytes = 2_020_214
+native_movement_bytes = -24_112
+native_movement_percent = -1.179460
+parent_wasm_bytes = 1_450_878
+current_wasm_bytes = 1_437_333
+wasm_movement_bytes = -13_545
+wasm_movement_percent = -0.933573
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_bytes = 2_047_470
+current_native_bytes = 2_023_358
+native_movement_bytes = -24_112
+native_movement_percent = -1.177649
+parent_wasm_bytes = 1_452_733
+current_wasm_bytes = 1_439_188
+wasm_movement_bytes = -13_545
+wasm_movement_percent = -0.932381
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_bytes = 1_084_559
+current_native_bytes = 1_084_423
+native_movement_bytes = -136
+native_movement_percent = -0.012540
+parent_wasm_bytes = 679_339
+current_wasm_bytes = 679_361
+wasm_movement_bytes = 22
+wasm_movement_percent = 0.003238
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_bytes = 1_085_499
+current_native_bytes = 1_085_371
+native_movement_bytes = -128
+native_movement_percent = -0.011792
+parent_wasm_bytes = 679_746
+current_wasm_bytes = 679_768
+wasm_movement_bytes = 22
+wasm_movement_percent = 0.003237
+
+[rejected.broader_dyadic_helper]
+retained = false
+reason = "larger and slower on the 2049-bit exact mesh"
+instruction_movement_percent = 0.1774
+branch_movement_percent = 0.1640
+native_text_movement_bytes = 480
+heap_changed = false
+
+[rejected.multiply_core_sharing]
+retained = false
+reason = "direct exact scalar regression"
+owned_runtime_movement_percent = 6.1096
+borrowed_runtime_movement_percent = 6.3932
+
+[rejected.divide_core_sharing]
+retained = false
+reason = "direct exact scalar regression"
+owned_runtime_movement_percent = 3.2855
+borrowed_runtime_movement_percent = 6.7732
+
+[measurement_audit]
+stale_executable_comparison_discarded = true
+final_parent_rebuilt_from_exact_source = true
+final_current_rebuilt_from_exact_source = true
+
+[callgraph]
+path = "/tmp/hypermesh-linear-operator-code-sharing-callgraph-2026-08-03"
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+function_nodes = 14_683
+edges = 24_419
+hypercurve_included = false
+hypersolve_included = false
+
+[validation]
+hyperreal_unit_tests = 649
+hypermesh_unit_tests = 122
+hypermesh_total_executed_tests = 162
+hypermesh_documented_ignored_tests = 6
+hyperreal_all_features = true
+hyperreal_no_default = true
+hyperreal_clippy_deny_warnings = true
+hyperreal_rustdoc_deny_warnings = true
+hypermesh_all_features = true
+hypermesh_no_default = true
+hypermesh_clippy_deny_warnings = true
+hypermesh_rustdoc_deny_warnings = true
+hypermesh_fuzz_targets_checked = true
+hypermesh_benchmarks_compiled = true
+full_yeahright_ignored_oracle = true
+large_heap_both_policies = true
+formatting = true
+diff_check = true
+
+[open]
+phase_17_complete = false
+phase_18_complete = false
+cgal_per_case_parity = false
+wide_2049_cgal_ratio = 4.44
+external_real_world_corpus_complete = false
+deeper_symbolic_corpus_complete = false
+final_path_audit_complete = false
