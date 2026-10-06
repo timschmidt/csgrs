@@ -1,0 +1,835 @@
+impl Rational {
+    #[inline]
+    fn from_parts_raw(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
+        Self(Arc::new(RationalData {
+            sign,
+            numerator,
+            denominator,
+            product_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
+            retained_facts: std::sync::atomic::AtomicU32::new(0),
+        }))
+    }
+
+    #[inline]
+    pub(crate) fn from_parts_raw_unreduced(
+        sign: Sign,
+        numerator: BigUint,
+        denominator: BigUint,
+    ) -> Self {
+        Self(Arc::new(RationalData {
+            sign,
+            numerator,
+            denominator,
+            product_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
+            retained_facts: std::sync::atomic::AtomicU32::new(RETAINED_UNREDUCED_INTERNAL),
+        }))
+    }
+
+    #[inline]
+    pub(crate) fn is_internally_unreduced(&self) -> bool {
+        self.retained_fact(RETAINED_UNREDUCED_INTERNAL)
+    }
+
+    pub(crate) fn canonicalized_ref(&self) -> &Self {
+        if !self.is_internally_unreduced() {
+            return self;
+        }
+        let cached = self.product_cache.get_or_init(|| {
+            crate::trace_dispatch!(
+                "rational",
+                "canonicalization",
+                "lazy-internal-coordinate"
+            );
+            CachedRationalProduct {
+                other: None,
+                result: Self::from_fraction_parts_reduced(
+                    self.sign,
+                    self.numerator.clone(),
+                    self.denominator.clone(),
+                ),
+            }
+        });
+        debug_assert!(cached.other.is_none());
+        &cached.result
+    }
+
+    fn into_parts(self) -> (Sign, BigUint, BigUint) {
+        let RationalData {
+            sign,
+            numerator,
+            denominator,
+            product_cache: _,
+            linear_cache: _,
+            retained_facts: _,
+        } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
+            sign: shared.sign,
+            numerator: shared.numerator.clone(),
+            denominator: shared.denominator.clone(),
+            product_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
+            retained_facts: std::sync::atomic::AtomicU32::new(0),
+        });
+        (sign, numerator, denominator)
+    }
+
+    #[inline]
+    fn retained_inverse(&self) -> Option<Self> {
+        let cached = self.linear_cache.get()?;
+        match cached.primary.kind {
+            CachedRationalLinearKind::StrongInversePlaceholder => {
+                return Some(cached.primary.result.clone());
+            }
+            CachedRationalLinearKind::WeakInversePlaceholder => {
+                return cached.primary.other.upgrade().map(Self);
+            }
+            _ => {}
+        }
+        if let Some(inverse) = cached.tertiary.get() {
+            match inverse.kind {
+                CachedRationalLinearKind::StrongInversePlaceholder => {
+                    return Some(inverse.result.clone());
+                }
+                CachedRationalLinearKind::WeakInversePlaceholder => {
+                    return inverse.other.upgrade().map(Self);
+                }
+                _ => {}
+            }
+        }
+        if let Some(inverse) = cached.quaternary.get() {
+            match inverse.kind {
+                CachedRationalLinearKind::StrongInversePlaceholder => {
+                    return Some(inverse.result.clone());
+                }
+                CachedRationalLinearKind::WeakInversePlaceholder => {
+                    return inverse.other.upgrade().map(Self);
+                }
+                _ => {}
+            }
+        }
+        let inverse = cached.quinary.get()?;
+        match inverse.kind {
+            CachedRationalLinearKind::StrongInversePlaceholder => Some(inverse.result.clone()),
+            CachedRationalLinearKind::WeakInversePlaceholder => inverse.other.upgrade().map(Self),
+            _ => None,
+        }
+    }
+
+    fn retain_inverse_entry(&self, inverse: CachedRationalUnary) -> bool {
+        if let Some(cached) = self.linear_cache.get() {
+            if cached.primary.kind.is_inverse_placeholder() {
+                return false;
+            }
+            let entry = match inverse {
+                CachedRationalUnary::Strong(inverse) => CachedRationalLinearEntry {
+                    other: std::sync::Weak::new(),
+                    kind: CachedRationalLinearKind::StrongInversePlaceholder,
+                    result: inverse,
+                },
+                CachedRationalUnary::Weak(inverse) => CachedRationalLinearEntry {
+                    other: inverse,
+                    kind: CachedRationalLinearKind::WeakInversePlaceholder,
+                    result: RATIONAL_ZERO.clone(),
+                },
+            };
+            if cached.primary.kind.is_primary_placeholder() {
+                return cached
+                    .quaternary
+                    .set(entry)
+                    .or_else(|entry| cached.quinary.set(entry))
+                    .is_ok();
+            }
+            return cached
+                .tertiary
+                .set(entry)
+                .or_else(|entry| cached.quaternary.set(entry))
+                .or_else(|entry| cached.quinary.set(entry))
+                .is_ok();
+        }
+
+        // Preserve a direct primary linear-cache load on the established
+        // add/sub hot path. When inverse retention initializes this lazy box
+        // first, the inert primary slot marks secondary and tertiary as the
+        // two available linear entries; quaternary and quinary remain available
+        // for the other cycle-free unary pair and future placeholder layouts.
+        let (kind, other, placeholder) = match inverse {
+            CachedRationalUnary::Strong(inverse) => (
+                CachedRationalLinearKind::StrongInversePlaceholder,
+                std::sync::Weak::new(),
+                inverse,
+            ),
+            CachedRationalUnary::Weak(inverse) => (
+                CachedRationalLinearKind::WeakInversePlaceholder,
+                inverse,
+                RATIONAL_ZERO.clone(),
+            ),
+        };
+        self.linear_cache
+            .set(Box::new(CachedRationalArithmetic {
+                primary: CachedRationalLinearEntry {
+                    other,
+                    kind,
+                    result: placeholder,
+                },
+                secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction: OnceLock::new(),
+            }))
+            .is_ok()
+    }
+
+    #[cold]
+    fn retain_inverse_pair(&self, inverse: &Self) {
+        let _ = inverse.retain_inverse_entry(CachedRationalUnary::Weak(Arc::downgrade(&self.0)));
+        let _ = self.retain_inverse_entry(CachedRationalUnary::Strong(inverse.clone()));
+    }
+
+    /// Zero, the additive identity.
+    pub fn zero() -> Self {
+        trace_rational_temporary!();
+        RATIONAL_ZERO.clone()
+    }
+
+    /// One, the multiplicative identity.
+    pub fn one() -> Self {
+        trace_rational_temporary!();
+        RATIONAL_ONE.clone()
+    }
+
+    fn minus_one() -> Self {
+        trace_rational_temporary!();
+        RATIONAL_MINUS_ONE.clone()
+    }
+
+    fn small_integer(sign: Sign, magnitude: u128) -> Option<Self> {
+        debug_assert!(magnitude >= 2);
+        if magnitude > 64 {
+            return None;
+        }
+        let index = magnitude as usize - 2;
+        let values = match sign {
+            Plus => &SMALL_POSITIVE_RATIONALS,
+            Minus => &SMALL_NEGATIVE_RATIONALS,
+            NoSign => return Some(Self::zero()),
+        };
+        let value = values.get(index)?.get_or_init(|| {
+            Self::from_parts_raw(
+                sign,
+                BigUint::from((index + 2) as u8),
+                BigUint::one(),
+            )
+        });
+        trace_rational_temporary!();
+        Some(value.clone())
+    }
+
+    fn small_reduced_dyadic(sign: Sign, magnitude: u128, denominator: u128) -> Option<Self> {
+        debug_assert_ne!(magnitude, 0);
+        debug_assert!(denominator > 1 && denominator.is_power_of_two());
+        if magnitude > 63 || magnitude & 1 == 0 {
+            return None;
+        }
+        let shift = denominator.trailing_zeros() as usize;
+        if shift > SMALL_DYADIC_MAX_SHIFT {
+            return None;
+        }
+        let magnitude_index = (magnitude >> 1) as usize;
+        let index = (shift - 1) * SMALL_DYADIC_ODD_MAGNITUDES + magnitude_index;
+        let values = match sign {
+            Plus => &SMALL_POSITIVE_DYADICS,
+            Minus => &SMALL_NEGATIVE_DYADICS,
+            NoSign => return Some(Self::zero()),
+        };
+        let value = values.get(index)?.get_or_init(|| {
+            Self::from_parts_raw(
+                sign,
+                BigUint::from(magnitude),
+                BigUint::from(denominator),
+            )
+        });
+        trace_rational_temporary!();
+        Some(value.clone())
+    }
+
+    fn small_reduced_general_fraction(
+        sign: Sign,
+        magnitude: u128,
+        denominator: u128,
+    ) -> Option<Self> {
+        debug_assert_ne!(magnitude, 0);
+        debug_assert!(denominator > 1 && !denominator.is_power_of_two());
+        if magnitude > SMALL_GENERAL_MAX_MAGNITUDE as u128
+            || denominator > SMALL_GENERAL_MAX_DENOMINATOR as u128
+        {
+            return None;
+        }
+        let magnitude_index = magnitude as usize - 1;
+        let denominator_index = denominator as usize - 1;
+        let index = denominator_index * SMALL_GENERAL_MAX_MAGNITUDE + magnitude_index;
+        let values = match sign {
+            Plus => &SMALL_POSITIVE_GENERAL_RATIONALS,
+            Minus => &SMALL_NEGATIVE_GENERAL_RATIONALS,
+            NoSign => return Some(Self::zero()),
+        };
+        let value = values[index].get_or_init(|| {
+            Self::from_parts_raw(
+                sign,
+                BigUint::from(magnitude),
+                BigUint::from(denominator),
+            )
+        });
+        trace_rational_temporary!();
+        Some(value.clone())
+    }
+
+    /// The non-negative Rational corresponding to the provided [`i64`].
+    pub fn new(n: i64) -> Self {
+        // Small scalar constructors are hot. Rational is stored as
+        // Sign+BigUint, so going through BigInt first only adds allocation and
+        // sign extraction work.
+        let sign = if n < 0 { Minus } else { Plus };
+        Self::from_primitive_integer(sign, u128::from(n.unsigned_abs()))
+    }
+
+    pub(crate) fn from_primitive_integer(sign: Sign, magnitude: u128) -> Self {
+        if magnitude == 0 {
+            return Self::zero();
+        }
+        if magnitude == 1 {
+            return if sign == Minus {
+                Self::minus_one()
+            } else {
+                Self::one()
+            };
+        }
+        if let Some(value) = Self::small_integer(sign, magnitude) {
+            return value;
+        }
+        Self::from_integer_magnitude(sign, BigUint::from(magnitude))
+    }
+
+    /// The Rational corresponding to the provided [`BigInt`].
+    pub fn from_bigint(n: BigInt) -> Self {
+        Self::from_bigint_fraction(n, BigUint::one()).unwrap()
+    }
+
+    /// The non-negative Rational corresponding to the provided [`i64`]
+    /// numerator and [`u64`] denominator as a fraction.
+    pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+        if d == 0 {
+            return Err(Problem::DivideByZero);
+        }
+        let sign = if n < 0 { Minus } else { Plus };
+        // The storage type is already Sign+BigUint, so unsigned_abs gives the
+        // exact magnitude type and avoids a temporary signed BigInt.
+        let numerator = BigUint::from(n.unsigned_abs());
+        let denominator = BigUint::from(d);
+        Ok(Self::from_fraction_parts_reduced(
+            sign,
+            numerator,
+            denominator,
+        ))
+    }
+
+    /// The Rational corresponding to the provided [`BigInt`]
+    /// numerator and [`BigUint`] denominator as a fraction.
+    pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Result<Self, Problem> {
+        if denominator == BigUint::ZERO {
+            return Err(Problem::DivideByZero);
+        }
+        let (sign, numerator) = n.into_parts();
+        Ok(Self::from_fraction_parts_reduced(
+            sign,
+            numerator,
+            denominator,
+        ))
+    }
+
+    pub(crate) fn from_integer_magnitude(sign: Sign, numerator: BigUint) -> Self {
+        if numerator.is_one() {
+            return match sign {
+                Minus => Self::minus_one(),
+                Plus => Self::one(),
+                NoSign => Self::zero(),
+            };
+        }
+        Self::from_fraction_parts(sign, numerator, BigUint::one())
+    }
+
+    pub(crate) fn from_unsigned_integer(numerator: BigUint) -> Self {
+        Self::from_integer_magnitude(Plus, numerator)
+    }
+
+    pub(super) fn from_reduced_dyadic_word(
+        sign: Sign,
+        numerator: u64,
+        denominator_shift: u32,
+    ) -> Self {
+        debug_assert_ne!(sign, NoSign);
+        debug_assert_ne!(numerator, 0);
+        debug_assert!(denominator_shift == 0 || numerator.trailing_zeros() == 0);
+        let retained = RETAINED_DYADIC_KNOWN
+            | RETAINED_DYADIC_VALUE
+            | Self::encoded_dyadic_denominator_shift(u64::from(denominator_shift));
+        // Primitive float decoding reaches this constructor with a reduced
+        // word numerator. Reuse the existing bounded canonical values before
+        // allocating a duplicate RationalData and two duplicate BigUints.
+        let cached = if denominator_shift == 0 {
+            if numerator == 1 {
+                Some(if sign == Minus {
+                    Self::minus_one()
+                } else {
+                    Self::one()
+                })
+            } else {
+                Self::small_integer(sign, u128::from(numerator))
+            }
+        } else if numerator <= 63
+            && denominator_shift
+                <= u32::try_from(SMALL_DYADIC_MAX_SHIFT).expect("small dyadic shift fits u32")
+        {
+            Self::small_reduced_dyadic(
+                sign,
+                u128::from(numerator),
+                1_u128 << denominator_shift,
+            )
+        } else {
+            None
+        };
+        if let Some(value) = cached {
+            value.retain_fact(retained);
+            return value;
+        }
+        // IEEE-754 decoding has already stripped every common power of two.
+        // Entering through the general fraction constructor would rebuild a
+        // signed BigInt and re-check reduction facts that are known here.
+        let value = Self::from_parts_raw(
+            sign,
+            BigUint::from(numerator),
+            BigUint::one() << denominator_shift,
+        );
+        value.retain_fact(retained);
+        trace_rational_temporary!();
+        value
+    }
+
+    fn from_fraction_parts(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
+        if sign == NoSign || numerator.is_zero() {
+            return Self::zero();
+        }
+        trace_rational_temporary!();
+        Self::from_parts_raw(sign, numerator, denominator)
+    }
+
+    fn from_fraction_parts_reduced(
+        sign: Sign,
+        mut numerator: BigUint,
+        mut denominator: BigUint,
+    ) -> Self {
+        if sign == NoSign || numerator.is_zero() {
+            return Self::zero();
+        }
+        if denominator != *ONE.deref() {
+            trace_rational_reduction!(&numerator, &denominator);
+            if let Some(denominator_shift) = Self::biguint_power_of_two_shift(&denominator) {
+                let common_shift = numerator
+                    .trailing_zeros()
+                    .expect("nonzero numerator has trailing zeros")
+                    .min(denominator_shift);
+                if common_shift != 0 {
+                    let shift = usize::try_from(common_shift)
+                        .expect("dyadic reduction shift fits usize");
+                    numerator >>= shift;
+                    denominator >>= shift;
+                }
+                trace_rational_power_of_two_common_factor!(common_shift);
+            } else {
+                let divisor =
+                    Self::gcd_magnitudes_with_mixed_width_fast_path(&numerator, &denominator);
+                trace_rational_gcd!(&numerator, &denominator, &divisor);
+                if divisor != *ONE.deref() {
+                    trace_rational_division_algorithm!(
+                        "reduction-numerator",
+                        &numerator,
+                        &divisor
+                    );
+                    trace_rational_division_algorithm!(
+                        "reduction-denominator",
+                        &denominator,
+                        &divisor
+                    );
+                    numerator /= &divisor;
+                    denominator /= divisor;
+                }
+            }
+        }
+        trace_rational_temporary!();
+        Self::from_parts_raw(sign, numerator, denominator)
+    }
+
+    pub(crate) fn add_one(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().add_one();
+        }
+        if self.sign == NoSign {
+            return Self::one();
+        }
+
+        match self.sign {
+            Plus => Self::from_fraction_parts(
+                Plus,
+                &self.numerator + &self.denominator,
+                self.denominator.clone(),
+            ),
+            Minus => match self.numerator.cmp(&self.denominator) {
+                Ordering::Greater => Self::from_fraction_parts(
+                    Minus,
+                    &self.numerator - &self.denominator,
+                    self.denominator.clone(),
+                ),
+                Ordering::Equal => Self::zero(),
+                Ordering::Less => Self::from_fraction_parts(
+                    Plus,
+                    &self.denominator - &self.numerator,
+                    self.denominator.clone(),
+                ),
+            },
+            NoSign => unreachable!(),
+        }
+    }
+
+    pub(crate) fn subtract_one(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().subtract_one();
+        }
+        if self.sign == NoSign {
+            return Self::from_integer_magnitude(Minus, ONE.deref().clone());
+        }
+
+        match self.sign {
+            Plus => match self.numerator.cmp(&self.denominator) {
+                Ordering::Greater => Self::from_fraction_parts(
+                    Plus,
+                    &self.numerator - &self.denominator,
+                    self.denominator.clone(),
+                ),
+                Ordering::Equal => Self::zero(),
+                Ordering::Less => Self::from_fraction_parts(
+                    Minus,
+                    &self.denominator - &self.numerator,
+                    self.denominator.clone(),
+                ),
+            },
+            Minus => Self::from_fraction_parts(
+                Minus,
+                &self.numerator + &self.denominator,
+                self.denominator.clone(),
+            ),
+            NoSign => unreachable!(),
+        }
+    }
+
+    fn maybe_reduce(self) -> Self {
+        if Self::is_power_of_two(&self.denominator) {
+            let denominator = self.denominator.clone();
+            trace_rational_reduction!(&self.numerator, &self.denominator);
+            // Binary64-derived dyadics and trig reduction scales dominate. When the
+            // denominator is a power of two, remove common factors with shifts instead of a
+            // full BigInt gcd.
+            self.reduce_by_power_of_two_divisor(&denominator)
+        } else {
+            self.reduce()
+        }
+    }
+
+    fn reduce_with_possible_divisor(self, possible_divisor: &BigUint) -> Self {
+        if self.sign == NoSign || self.numerator.is_zero() {
+            return Self::zero();
+        }
+        if self.denominator == *ONE.deref() || possible_divisor == &*ONE {
+            return self;
+        }
+
+        trace_rational_reduction!(&self.numerator, &self.denominator);
+        if Self::is_power_of_two(possible_divisor) {
+            // Callers often already know a possible divisor from the operation they just
+            // performed.  Preserve that hint for dyadic cases so reduction stays shift-only.
+            return self.reduce_by_power_of_two_divisor(possible_divisor);
+        }
+
+        let divisor =
+            Self::gcd_magnitudes_with_mixed_width_fast_path(&self.numerator, possible_divisor);
+        trace_rational_gcd!(&self.numerator, possible_divisor, &divisor);
+        if divisor == *ONE.deref() {
+            self
+        } else {
+            trace_rational_division_algorithm!("reduction-numerator", &self.numerator, &divisor);
+            trace_rational_division_algorithm!(
+                "reduction-denominator",
+                &self.denominator,
+                &divisor
+            );
+            trace_rational_temporary!();
+            Self::from_parts_raw(
+                self.sign,
+                &self.numerator / &divisor,
+                &self.denominator / divisor,
+            )
+        }
+    }
+
+    fn reduce(self) -> Self {
+        if self.denominator == *ONE.deref() {
+            return self;
+        }
+
+        trace_rational_reduction!(&self.numerator, &self.denominator);
+        if Self::is_power_of_two(&self.denominator) {
+            let denominator = self.denominator.clone();
+            // Powers of two are common enough that avoiding gcd here shows up in scalar
+            // import and matrix benchmarks.
+            return self.reduce_by_power_of_two_divisor(&denominator);
+        }
+
+        let divisor =
+            Self::gcd_magnitudes_with_mixed_width_fast_path(&self.numerator, &self.denominator);
+        trace_rational_gcd!(&self.numerator, &self.denominator, &divisor);
+        if divisor == *ONE.deref() {
+            self
+        } else {
+            trace_rational_division_algorithm!("reduction-numerator", &self.numerator, &divisor);
+            trace_rational_division_algorithm!(
+                "reduction-denominator",
+                &self.denominator,
+                &divisor
+            );
+            let numerator = &self.numerator / &divisor;
+            let denominator = &self.denominator / &divisor;
+            trace_rational_temporary!();
+            Self::from_parts_raw(self.sign, numerator, denominator)
+        }
+    }
+
+    fn biguint_power_of_two_shift(value: &BigUint) -> Option<u64> {
+        if value.is_zero() {
+            return None;
+        }
+        // BigUint has cheap trailing-zero and bit-length queries; together they identify a
+        // dyadic denominator without allocating or dividing.
+        let shift = value
+            .trailing_zeros()
+            .expect("non-zero BigUint has trailing zeros");
+        (shift == value.bits() - 1).then_some(shift)
+    }
+
+    fn is_power_of_two(value: &BigUint) -> bool {
+        Self::biguint_power_of_two_shift(value).is_some()
+    }
+
+    fn reduce_by_power_of_two_divisor(self, possible_divisor: &BigUint) -> Self {
+        if self.sign == NoSign || self.numerator.is_zero() {
+            return Self::zero();
+        }
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("non-zero numerator has trailing zeros");
+        if numerator_shift == 0 {
+            trace_rational_power_of_two_common_factor!(0);
+            return self;
+        }
+        let divisor_shift = possible_divisor
+            .trailing_zeros()
+            .expect("power-of-two divisor has trailing zeros");
+        let shift = numerator_shift.min(divisor_shift);
+        if shift == 0 {
+            trace_rational_power_of_two_common_factor!(0);
+            return self;
+        }
+        let shift = usize::try_from(shift).expect("shift should fit in usize");
+        trace_rational_power_of_two_common_factor!(shift as u64);
+        // Shift out common powers of two directly.  This is the hot reduction path for
+        // exactly representable binary fractions.
+        trace_rational_temporary!();
+        Self::from_parts_raw(
+            self.sign,
+            &self.numerator >> shift,
+            &self.denominator >> shift,
+        )
+    }
+
+    /// The inverse of this Rational.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// let five = Rational::new(5);
+    /// let a_fifth = Rational::fraction(1, 5).unwrap();
+    /// assert_eq!(five.clone().inverse().unwrap(), a_fifth);
+    /// assert_eq!(a_fifth.clone().inverse().unwrap(), five);
+    /// ```
+    pub fn inverse(self) -> Result<Self, Problem> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().clone().inverse();
+        }
+        if let Some(inverse) = self.retained_inverse() {
+            crate::trace_dispatch!("rational", "inverse", "retained");
+            return Ok(inverse);
+        }
+        if self.numerator == BigUint::ZERO {
+            return Err(Problem::DivideByZero);
+        }
+        match Arc::try_unwrap(self.0) {
+            Ok(data) => Ok(Self::from_parts_raw(
+                data.sign,
+                data.denominator,
+                data.numerator,
+            )),
+            Err(shared) => {
+                let owner = Self(shared);
+                let inverse = Self::from_parts_raw(
+                    owner.sign,
+                    owner.denominator.clone(),
+                    owner.numerator.clone(),
+                );
+                owner.retain_inverse_pair(&inverse);
+                Ok(inverse)
+            }
+        }
+    }
+
+    /// Checks if the value is an integer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// assert!(Rational::new(5).is_integer());
+    /// assert!(Rational::fraction(16, 4).unwrap().is_integer());
+    /// assert!(!Rational::fraction(5, 4).unwrap().is_integer());
+    /// ```
+    pub fn is_integer(&self) -> bool {
+        self.canonicalized_ref().denominator == *ONE.deref()
+    }
+
+    /// Returns true when this rational has a power-of-two denominator.
+    ///
+    /// This is a cheap structural query used by higher-level exact arithmetic
+    /// kernels to decide whether extra multiplication will stay on dyadic
+    /// shift-only reductions or will likely trigger full BigInt gcd work.
+    pub fn is_dyadic(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_dyadic();
+        }
+        if self.retained_fact(RETAINED_DYADIC_KNOWN) {
+            crate::trace_dispatch!("rational", "retained-facts", "dyadic-hit");
+            return self.retained_fact(RETAINED_DYADIC_VALUE);
+        }
+        let is_dyadic = Self::is_power_of_two(&self.denominator);
+        self.retain_fact(
+            RETAINED_DYADIC_KNOWN
+                | if is_dyadic {
+                    RETAINED_DYADIC_VALUE
+                } else {
+                    0
+                },
+        );
+        crate::trace_dispatch!("rational", "retained-facts", "dyadic-learned");
+        is_dyadic
+    }
+
+    /// Return whether two rationals share the same reduced denominator.
+    ///
+    /// This is a structural query for higher-level exact kernels that carry
+    /// common-scale facts opportunistically. It exposes only denominator
+    /// equality, not the denominator itself, so geometry crates can select
+    /// faster shared-scale schedules while `Rational` keeps ownership of its
+    /// storage and reduction strategy, preserving object-level rational
+    /// structure before scalar expansion.
+    #[inline]
+    pub fn same_denominator(&self, other: &Self) -> bool {
+        self.canonicalized_ref().denominator == other.canonicalized_ref().denominator
+    }
+
+    #[inline]
+    pub(crate) fn dyadic_denominator_shift(&self) -> Option<u64> {
+        let retained = self
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
+            return self.canonicalized_ref().dyadic_denominator_shift();
+        }
+        self.dyadic_denominator_shift_from_retained(retained)
+    }
+
+    #[inline]
+    pub(crate) fn dyadic_denominator_shift_if_reduced(&self) -> Option<u64> {
+        let retained = self
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
+            return None;
+        }
+        self.dyadic_denominator_shift_from_retained(retained)
+    }
+
+    #[inline]
+    fn dyadic_denominator_shift_from_retained(&self, retained: u32) -> Option<u64> {
+        let encoded_shift =
+            (retained & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET;
+        if encoded_shift != 0 {
+            return Some(u64::from(encoded_shift - 1));
+        }
+        if retained & RETAINED_DYADIC_KNOWN != 0 && retained & RETAINED_DYADIC_VALUE == 0 {
+            crate::trace_dispatch!("rational", "retained-facts", "non-dyadic-hit");
+            return None;
+        }
+        self.learn_dyadic_denominator_shift()
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn learn_dyadic_denominator_shift(&self) -> Option<u64> {
+        let shift = Self::biguint_power_of_two_shift(&self.denominator);
+        self.retain_fact(
+            RETAINED_DYADIC_KNOWN
+                | if shift.is_some() {
+                    RETAINED_DYADIC_VALUE
+                } else {
+                    0
+                }
+                | shift
+                    .map(Self::encoded_dyadic_denominator_shift)
+                    .unwrap_or(0),
+        );
+        shift
+    }
+
+    #[inline]
+    fn encoded_dyadic_denominator_shift(shift: u64) -> u32 {
+        if shift <= RETAINED_DYADIC_SHIFT_MAX {
+            (u32::try_from(shift).expect("bounded dyadic shift fits u32") + 1)
+                << RETAINED_DYADIC_SHIFT_OFFSET
+        } else {
+            0
+        }
+    }
+
+    fn from_signed_magnitude_difference(
+        positive: BigUint,
+        negative: BigUint,
+        denominator: BigUint,
+    ) -> Self {
+        let (sign, numerator) = match positive.cmp(&negative) {
+            Ordering::Greater => (Plus, positive - negative),
+            Ordering::Less => (Minus, negative - positive),
+            Ordering::Equal => return Self::zero(),
+        };
+        Self::from_fraction_parts_reduced(sign, numerator, denominator)
+    }
+
+}
