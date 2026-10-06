@@ -1,0 +1,1517 @@
+//! Division-free polynomial replay over an exact ordered coefficient field.
+//!
+//! The coefficient field remains owned by the caller. Root isolation uses
+//! addition, exact real scaling, and sign predicates; reduction also uses
+//! field multiplication. An already selected algebraic or radical tower need
+//! not be collapsed into a primitive element to replay a polynomial relation.
+
+use std::cmp::Ordering;
+
+use hyperreal::Real;
+
+use crate::root_isolation::IsolatedRootInterval;
+
+/// Arithmetic and sign authority for one exact ordered coefficient field.
+///
+/// `sign_if_separated` is a speculative fast predicate.  Returning `None`
+/// never asserts equality; it asks the Bernstein isolator to subdivide or to
+/// decline to the caller's complete fallback.
+pub trait OrderedFieldPolynomialContext<C> {
+    /// Caller-owned arithmetic or predicate error.
+    type Error;
+
+    /// Embeds a represented exact real in this coefficient field.
+    fn constant(&mut self, value: &Real) -> Result<C, Self::Error>;
+
+    /// Exact field addition.
+    fn add(&mut self, left: &C, right: &C) -> Result<C, Self::Error>;
+
+    /// Exact field multiplication.
+    fn multiply(&mut self, left: &C, right: &C) -> Result<C, Self::Error>;
+
+    /// Exact multiplication by a represented real scalar.
+    fn scale(&mut self, value: &C, scale: &Real) -> Result<C, Self::Error>;
+
+    /// Removes an available common positive scale from a coefficient tuple.
+    ///
+    /// Every coefficient must receive the same strictly positive field factor;
+    /// length, signs, zero sets and coefficient-field identity are preserved.
+    /// Actual polynomial values may change, so callers use this only for
+    /// projective, root or sign semantics. If normalization is unavailable,
+    /// leave the entire tuple unchanged. No approximate decision is permitted.
+    fn normalize_positive_scale(&mut self, coefficients: &mut [C]);
+
+    /// Authoritative exact sign.
+    fn sign(&mut self, value: &C) -> Result<Ordering, Self::Error>;
+
+    /// Cheap sign when exact interval separation is already available.
+    fn sign_if_separated(&mut self, value: &C) -> Result<Option<Ordering>, Self::Error>;
+
+    /// Maximum leading-term eliminations a selected-root replay may spend
+    /// across its pseudo-remainder sequence before declining, or `None` for a
+    /// complete replay.
+    ///
+    /// Each division-free elimination multiplies every coefficient by the
+    /// divisor's leading coefficient, so coefficient size compounds per
+    /// elimination; over an extension field one more can cost more than all
+    /// earlier ones. A bounded caller sets this so a replay that would not
+    /// finish cheaply declines to its complete route instead of running
+    /// unbounded.
+    fn remainder_elimination_budget(&self) -> Option<usize> {
+        None
+    }
+}
+
+/// Work limits for division-free ordered-field Bernstein isolation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct OrderedFieldRootIsolationConfig {
+    /// Maximum dyadic subdivision depth before the complete caller fallback.
+    pub max_subdivision_depth: usize,
+    /// Additional dyadic refinements after a variation-one interval is found.
+    pub refinement_steps: usize,
+}
+
+impl Default for OrderedFieldRootIsolationConfig {
+    fn default() -> Self {
+        Self {
+            max_subdivision_depth: 128,
+            refinement_steps: 8,
+        }
+    }
+}
+
+/// Terminal state of the division-free isolation attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum OrderedFieldRootIsolationStatus {
+    /// Every distinct root in the requested closed interval was isolated.
+    Isolated,
+    /// Every exact coefficient vanished.
+    IdenticallyZero,
+    /// A repeated/nonseparable root or speculative sign exceeded this path.
+    CompleteFallbackRequired,
+    /// The requested interval was empty or reversed.
+    InvalidInterval,
+}
+
+/// Exact result of one division-free ordered-field isolation attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct OrderedFieldRootIsolationReport {
+    /// Terminal status.
+    pub status: OrderedFieldRootIsolationStatus,
+    /// Certified singleton intervals when `status == Isolated`. Nonpoint
+    /// intervals exclude every separately reported exact root, including at
+    /// their endpoints, so the original polynomial remains their authority.
+    pub intervals: Vec<IsolatedRootInterval>,
+    /// Number of dyadic subdivision steps performed.
+    pub subdivision_steps: usize,
+}
+
+fn report(
+    status: OrderedFieldRootIsolationStatus,
+    intervals: Vec<IsolatedRootInterval>,
+    subdivision_steps: usize,
+) -> OrderedFieldRootIsolationReport {
+    OrderedFieldRootIsolationReport {
+        status,
+        intervals,
+        subdivision_steps,
+    }
+}
+
+fn midpoint(lower: &Real, upper: &Real) -> Option<Real> {
+    ((lower + upper) / Real::from(2_u8)).ok()
+}
+
+pub(crate) fn trim_polynomial<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &mut Vec<C>,
+    field: &mut F,
+) -> Result<(), F::Error> {
+    while polynomial.len() > 1
+        && field.sign(
+            polynomial
+                .last()
+                .expect("a nonempty polynomial retains a leading coefficient"),
+        )? == Ordering::Equal
+    {
+        polynomial.pop();
+    }
+    Ok(())
+}
+
+fn polynomial_sign_at_if_separated<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    parameter: &Real,
+    field: &mut F,
+) -> Result<Option<Ordering>, F::Error> {
+    let Some((leading, remaining)) = polynomial.split_last() else {
+        let zero = field.constant(&Real::zero())?;
+        return field.sign_if_separated(&zero);
+    };
+    let mut value = leading.clone();
+    for coefficient in remaining.iter().rev() {
+        let scaled = field.scale(&value, parameter)?;
+        value = field.add(&scaled, coefficient)?;
+    }
+    field.sign_if_separated(&value)
+}
+
+/// Returns the Euclidean quotient by `x - root` in the caller's exact field.
+///
+/// Coefficients are in ascending power order. The remainder is deliberately
+/// not constructed or signed. A caller using the quotient as a deflation must
+/// already own a root certificate, which may come from geometric incidence
+/// rather than another evaluation of the polynomial. No division is required.
+/// The root belongs to the same field as the coefficients; no separate real
+/// representation, normalization or root reconstruction is needed.
+pub fn ordered_field_polynomial_linear_quotient<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    root: &C,
+    field: &mut F,
+) -> Result<Vec<C>, F::Error> {
+    let degree = polynomial.len().saturating_sub(1);
+    if degree == 0 {
+        return Ok(Vec::new());
+    }
+    let mut quotient = Vec::with_capacity(degree);
+    quotient.push(polynomial[degree].clone());
+    for coefficient in polynomial[1..degree].iter().rev() {
+        let product = field.multiply(
+            quotient.last().expect("the quotient has a leading term"),
+            root,
+        )?;
+        quotient.push(field.add(&product, coefficient)?);
+    }
+    quotient.reverse();
+    Ok(quotient)
+}
+
+/// Reduces a polynomial while preserving its sign at every root of `modulus`.
+///
+/// Coefficients are in ascending power order. The result has degree less than
+/// the exact degree of `modulus`. Each elimination multiplies the current
+/// value by the strictly positive absolute leading coefficient, so signs at
+/// the selected root are preserved even for a negative or nonmonic modulus.
+/// No field division or independent representation of that root is needed.
+///
+/// Only the modulus degree and leading sign require predicates. Leading
+/// cancellation is algebraic; intermediate coefficients need no zero tests.
+/// An empty result represents zero. `None` means the modulus is identically
+/// zero and supplies no relation. The caller retains root selection and domain
+/// evidence; this reduction does not select or isolate a root.
+pub fn ordered_field_polynomial_sign_remainder<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    modulus: &[C],
+    field: &mut F,
+) -> Result<Option<Vec<C>>, F::Error> {
+    let mut degree = modulus.len();
+    let leading_sign = loop {
+        let Some(index) = degree.checked_sub(1) else {
+            return Ok(None);
+        };
+        degree = index;
+        let sign = field.sign(&modulus[index])?;
+        if sign != Ordering::Equal {
+            break sign;
+        }
+    };
+    let negative_one = Real::from(-1_i8);
+    let positive_leading = if leading_sign == Ordering::Less {
+        field.scale(&modulus[degree], &negative_one)?
+    } else {
+        modulus[degree].clone()
+    };
+    let mut remainder = polynomial.to_vec();
+    while remainder.len() > degree {
+        let leading = remainder.pop().expect("an elimination has a leading term");
+        let shift = remainder.len() - degree;
+        let subtract_leading = if leading_sign == Ordering::Greater {
+            field.scale(&leading, &negative_one)?
+        } else {
+            leading
+        };
+        for (power, coefficient) in remainder.iter_mut().enumerate() {
+            let scaled = field.multiply(coefficient, &positive_leading)?;
+            *coefficient = if power >= shift {
+                let term = field.multiply(&subtract_leading, &modulus[power - shift])?;
+                field.add(&scaled, &term)?
+            } else {
+                scaled
+            };
+        }
+    }
+    Ok(Some(remainder))
+}
+
+/// Returns a greatest common divisor in the caller's exact coefficient field.
+///
+/// Coefficients are in ascending power order. The result is defined up to a
+/// nonzero field factor; it is not made monic. An empty vector denotes the
+/// zero polynomial (both inputs vanished), and a unit denotes relatively
+/// prime inputs. Exact degree decisions and the shared division-free remainder
+/// preserve common roots and multiplicities without reconstructing field
+/// elements as independent real scalars.
+pub fn ordered_field_polynomial_gcd<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    left: &[C],
+    right: &[C],
+    field: &mut F,
+) -> Result<Vec<C>, F::Error> {
+    let trim = |polynomial: &mut Vec<C>, field: &mut F| -> Result<(), F::Error> {
+        trim_polynomial(polynomial, field)?;
+        if polynomial.len() == 1 && field.sign(&polynomial[0])? == Ordering::Equal {
+            polynomial.clear();
+        }
+        field.normalize_positive_scale(polynomial);
+        Ok(())
+    };
+    let mut left = left.to_vec();
+    let mut right = right.to_vec();
+    trim(&mut left, field)?;
+    trim(&mut right, field)?;
+    while !right.is_empty() {
+        if right.len() == 1 {
+            return Ok(vec![field.constant(&Real::one())?]);
+        }
+        let mut remainder = ordered_field_polynomial_sign_remainder(&left, &right, field)?
+            .expect("the divisor has a certified nonzero leading coefficient");
+        trim(&mut remainder, field)?;
+        left = right;
+        right = remainder;
+    }
+    if left.len() == 1 {
+        left[0] = field.constant(&Real::one())?;
+    }
+    Ok(left)
+}
+
+fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    mut polynomial: Vec<C>,
+    root: &Real,
+    field: &mut F,
+) -> Result<(Vec<C>, bool), F::Error> {
+    let mut had_root = false;
+    let mut embedded_root = None;
+    while polynomial.len() > 1
+        && polynomial_sign_at_if_separated(&polynomial, root, field)? == Some(Ordering::Equal)
+    {
+        let root = match &embedded_root {
+            Some(root) => root,
+            None => embedded_root.insert(field.constant(root)?),
+        };
+        polynomial = ordered_field_polynomial_linear_quotient(&polynomial, root, field)?;
+        trim_polynomial(&mut polynomial, field)?;
+        had_root = true;
+    }
+    Ok((polynomial, had_root))
+}
+
+pub(crate) fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    lower: &Real,
+    upper: &Real,
+    field: &mut F,
+) -> Result<Option<Vec<C>>, F::Error> {
+    let Some(leading) = polynomial.last() else {
+        return Ok(None);
+    };
+    let degree = polynomial.len().saturating_sub(1);
+    let width = upper - lower;
+    // Compose by `lower + width*x` using Horner form. Periodic recomposition
+    // bounds expression depth even when field operations retain lazy nodes.
+    let mut shifted_power = vec![leading.clone()];
+    for coefficient in polynomial[..degree].iter().rev() {
+        let old_len = shifted_power.len();
+        let highest_power = field.scale(&shifted_power[old_len - 1], &width)?;
+        shifted_power.push(highest_power);
+        for power in (1..old_len).rev() {
+            let same_power = field.scale(&shifted_power[power], lower)?;
+            let prior_power = field.scale(&shifted_power[power - 1], &width)?;
+            shifted_power[power] = field.add(&same_power, &prior_power)?;
+        }
+        let constant = field.scale(&shifted_power[0], lower)?;
+        shifted_power[0] = field.add(&constant, coefficient)?;
+    }
+
+    // x^j = sum_{i=j}^n C(i,j)/C(n,j) B_i^n(x).
+    let mut controls = Vec::with_capacity(degree + 1);
+    for index in 0..=degree {
+        let mut control = shifted_power[0].clone();
+        let mut ratio = Real::one();
+        if index != 0 {
+            let (Ok(numerator), Ok(denominator)) = (u64::try_from(index), u64::try_from(degree))
+            else {
+                return Ok(None);
+            };
+            let Ok(next) = (ratio * Real::from(numerator)) / Real::from(denominator) else {
+                return Ok(None);
+            };
+            ratio = next;
+        }
+        for (power, coefficient) in shifted_power.iter().enumerate().take(index + 1).skip(1) {
+            let term = field.scale(coefficient, &ratio)?;
+            control = field.add(&control, &term)?;
+            if power != index {
+                let (Ok(numerator), Ok(denominator)) =
+                    (u64::try_from(index - power), u64::try_from(degree - power))
+                else {
+                    return Ok(None);
+                };
+                let Ok(next) = (ratio * Real::from(numerator)) / Real::from(denominator) else {
+                    return Ok(None);
+                };
+                ratio = next;
+            }
+        }
+        controls.push(control);
+    }
+    Ok(Some(controls))
+}
+
+pub(crate) fn midpoint_subdivide<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    mut work: Vec<C>,
+    field: &mut F,
+) -> Result<(Vec<C>, Vec<C>), F::Error> {
+    let degree = work.len() - 1;
+    let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
+    let mut left = Vec::with_capacity(work.len());
+    let mut right = Vec::with_capacity(work.len());
+    left.push(work[0].clone());
+    right.push(work[degree].clone());
+    let mut scale = Real::one();
+    for level in 1..=degree {
+        // Unhalved sums are 2^level times the de Casteljau row. Scale
+        // only its two emitted boundaries, sharing the final midpoint.
+        // This preserves the actual coefficients with 2*degree-1 field
+        // scalings instead of degree*(degree+1)/2, and shortens lazy sums.
+        for index in 0..=degree - level {
+            work[index] = field.add(&work[index], &work[index + 1])?;
+        }
+        scale = &scale * &half;
+        let first = field.scale(&work[0], &scale)?;
+        let last = if level == degree {
+            first.clone()
+        } else {
+            field.scale(&work[degree - level], &scale)?
+        };
+        left.push(first);
+        right.push(last);
+    }
+    right.reverse();
+    Ok((left, right))
+}
+
+/// The common strict sign of Bernstein control coefficients, read only from
+/// already separated signs. A polynomial whose controls on an interval share
+/// one strict sign is that sign throughout the interval.
+pub(crate) fn bernstein_common_strict_sign<C, F: OrderedFieldPolynomialContext<C>>(
+    controls: &[C],
+    field: &mut F,
+) -> Result<Option<Ordering>, F::Error> {
+    let mut common = None;
+    for control in controls {
+        match field.sign_if_separated(control)? {
+            Some(sign @ (Ordering::Less | Ordering::Greater))
+                if common.is_none_or(|common| common == sign) =>
+            {
+                common = Some(sign);
+            }
+            _ => return Ok(None),
+        }
+    }
+    Ok(common)
+}
+
+fn bernstein_sign_variations<C, F: OrderedFieldPolynomialContext<C>>(
+    controls: &[C],
+    field: &mut F,
+) -> Result<Option<usize>, F::Error> {
+    // Preserve every exact assignment compatible with a nonseparated
+    // coefficient. A common variation count remains a valid Descartes count;
+    // disagreement asks the caller to subdivide.
+    let mut states = vec![(None, 0_usize)];
+    for control in controls {
+        let sign = field.sign_if_separated(control)?;
+        let options: &[Option<Ordering>] = match sign {
+            Some(Ordering::Less) => &[Some(Ordering::Less)],
+            Some(Ordering::Equal) => &[None],
+            Some(Ordering::Greater) => &[Some(Ordering::Greater)],
+            None => &[None, Some(Ordering::Less), Some(Ordering::Greater)],
+        };
+        let mut next = Vec::with_capacity(states.len().saturating_mul(options.len()));
+        for &(previous, variations) in &states {
+            for &option in options {
+                let state = match option {
+                    None => (previous, variations),
+                    Some(sign) => (
+                        Some(sign),
+                        variations + usize::from(previous.is_some_and(|value| value != sign)),
+                    ),
+                };
+                if !next.contains(&state) {
+                    next.push(state);
+                }
+            }
+        }
+        states = next;
+    }
+    let first = states.first().map(|state| state.1).unwrap_or(0);
+    Ok(states.iter().all(|state| state.1 == first).then_some(first))
+}
+
+/// Isolate all simple roots of `polynomial` in one closed represented range.
+///
+/// Variation-one intervals and rational roots are exact construction
+/// evidence. Irrational repeated roots deliberately return
+/// [`OrderedFieldRootIsolationStatus::CompleteFallbackRequired`], allowing a
+/// caller with field division or a global projection to retain completeness.
+pub fn isolate_ordered_field_polynomial_roots<C, F>(
+    mut polynomial: Vec<C>,
+    lower: &Real,
+    upper: &Real,
+    config: OrderedFieldRootIsolationConfig,
+    field: &mut F,
+) -> Result<OrderedFieldRootIsolationReport, F::Error>
+where
+    C: Clone,
+    F: OrderedFieldPolynomialContext<C>,
+{
+    if lower.partial_cmp(upper) != Some(Ordering::Less) {
+        return Ok(report(
+            OrderedFieldRootIsolationStatus::InvalidInterval,
+            Vec::new(),
+            0,
+        ));
+    }
+    if polynomial.is_empty() {
+        polynomial.push(field.constant(&Real::zero())?);
+    }
+    trim_polynomial(&mut polynomial, field)?;
+    if polynomial.len() == 1 {
+        let status = if field.sign(&polynomial[0])? == Ordering::Equal {
+            OrderedFieldRootIsolationStatus::IdenticallyZero
+        } else {
+            OrderedFieldRootIsolationStatus::Isolated
+        };
+        return Ok(report(status, Vec::new(), 0));
+    }
+
+    let mut exact_roots = Vec::new();
+    for endpoint in [lower, upper] {
+        let (deflated, had_root) = deflate_at_represented_root(polynomial, endpoint, field)?;
+        polynomial = deflated;
+        if had_root {
+            exact_roots.push(endpoint.clone());
+        }
+    }
+
+    #[derive(Clone)]
+    struct Node<C> {
+        lower: Real,
+        upper: Real,
+        controls: Vec<C>,
+        depth: usize,
+    }
+
+    let mut subdivision_steps = 0_usize;
+    loop {
+        if polynomial.len() == 1 {
+            exact_roots.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+            exact_roots.dedup();
+            let intervals = exact_roots
+                .into_iter()
+                .map(|root| IsolatedRootInterval {
+                    lower: root.clone(),
+                    upper: root.clone(),
+                    exact_root: Some(root),
+                    distinct_root_count: 1,
+                })
+                .collect();
+            return Ok(report(
+                OrderedFieldRootIsolationStatus::Isolated,
+                intervals,
+                subdivision_steps,
+            ));
+        }
+
+        exact_roots.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+        exact_roots.dedup();
+        let mut boundaries = Vec::with_capacity(exact_roots.len() + 2);
+        boundaries.push(lower.clone());
+        boundaries.extend(
+            exact_roots
+                .iter()
+                .filter(|root| root > &lower && root < &upper)
+                .cloned(),
+        );
+        boundaries.push(upper.clone());
+
+        let mut stack = Vec::with_capacity(boundaries.len());
+        for segment in boundaries.windows(2).rev() {
+            let Some(controls) =
+                power_to_bernstein_on_interval(&polynomial, &segment[0], &segment[1], field)?
+            else {
+                return Ok(report(
+                    OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                    Vec::new(),
+                    subdivision_steps,
+                ));
+            };
+            stack.push(Node {
+                lower: segment[0].clone(),
+                upper: segment[1].clone(),
+                controls,
+                depth: 0,
+            });
+        }
+
+        let mut isolated = Vec::new();
+        let mut rational_root = None;
+        while let Some(mut node) = stack.pop() {
+            // Share the midpoint tableau between both children, but restart
+            // from the authored polynomial every eight levels. Thus lazy
+            // coefficient expressions cannot grow with subdivision depth.
+            if node.depth != 0 && node.depth.is_multiple_of(8) {
+                let Some(controls) =
+                    power_to_bernstein_on_interval(&polynomial, &node.lower, &node.upper, field)?
+                else {
+                    return Ok(report(
+                        OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                        Vec::new(),
+                        subdivision_steps,
+                    ));
+                };
+                node.controls = controls;
+            }
+            let variations = bernstein_sign_variations(&node.controls, field)?;
+            if variations == Some(0) {
+                continue;
+            }
+            if variations == Some(1) {
+                let lower_sign = node
+                    .controls
+                    .first()
+                    .map(|value| field.sign_if_separated(value))
+                    .transpose()?
+                    .flatten();
+                let touches_exact_root = |lower: &Real, upper: &Real| {
+                    exact_roots
+                        .iter()
+                        .any(|root| root == lower || root == upper)
+                };
+                let mut refinements = 0;
+                // Deflation proves this interval for a smaller polynomial.
+                // Move away from removed roots before publishing it for the
+                // original polynomial, even when no extra accuracy is asked
+                // for. Otherwise a later endpoint sign can select a different
+                // exact root that was already emitted separately.
+                while refinements < config.refinement_steps
+                    || touches_exact_root(&node.lower, &node.upper)
+                {
+                    let Some(lower_sign) = lower_sign else {
+                        break;
+                    };
+                    if lower_sign == Ordering::Equal {
+                        break;
+                    }
+                    if node.depth >= config.max_subdivision_depth {
+                        return Ok(report(
+                            OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                            Vec::new(),
+                            subdivision_steps,
+                        ));
+                    }
+                    let Some(midpoint) = midpoint(&node.lower, &node.upper) else {
+                        return Ok(report(
+                            OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                            Vec::new(),
+                            subdivision_steps,
+                        ));
+                    };
+                    subdivision_steps = subdivision_steps.saturating_add(1);
+                    let midpoint_sign =
+                        polynomial_sign_at_if_separated(&polynomial, &midpoint, field)?;
+                    let Some(midpoint_sign) = midpoint_sign else {
+                        break;
+                    };
+                    if midpoint_sign == Ordering::Equal {
+                        rational_root = Some(midpoint);
+                        break;
+                    }
+                    if midpoint_sign == lower_sign {
+                        node.lower = midpoint;
+                    } else {
+                        node.upper = midpoint;
+                    }
+                    node.depth += 1;
+                    refinements += 1;
+                }
+                if rational_root.is_some() {
+                    break;
+                }
+                if touches_exact_root(&node.lower, &node.upper) {
+                    return Ok(report(
+                        OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                        Vec::new(),
+                        subdivision_steps,
+                    ));
+                }
+                isolated.push(IsolatedRootInterval {
+                    lower: node.lower,
+                    upper: node.upper,
+                    exact_root: None,
+                    distinct_root_count: 1,
+                });
+                continue;
+            }
+            if node.depth >= config.max_subdivision_depth {
+                return Ok(report(
+                    OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                    Vec::new(),
+                    subdivision_steps,
+                ));
+            }
+            let Some(midpoint) = midpoint(&node.lower, &node.upper) else {
+                return Ok(report(
+                    OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                    Vec::new(),
+                    subdivision_steps,
+                ));
+            };
+            let (left, right) = midpoint_subdivide(node.controls, field)?;
+            subdivision_steps = subdivision_steps.saturating_add(1);
+            if matches!(
+                left.last()
+                    .map(|value| field.sign_if_separated(value))
+                    .transpose()?
+                    .flatten(),
+                Some(Ordering::Equal)
+            ) {
+                rational_root = Some(midpoint);
+                break;
+            }
+            let left_variations = bernstein_sign_variations(&left, field)?;
+            let right_variations = bernstein_sign_variations(&right, field)?;
+            let next_depth = node.depth + 1;
+            if right_variations != Some(0) {
+                stack.push(Node {
+                    lower: midpoint.clone(),
+                    upper: node.upper,
+                    controls: right,
+                    depth: next_depth,
+                });
+            }
+            if left_variations != Some(0) {
+                stack.push(Node {
+                    lower: node.lower,
+                    upper: midpoint,
+                    controls: left,
+                    depth: next_depth,
+                });
+            }
+        }
+
+        if let Some(root) = rational_root {
+            let (deflated, had_root) = deflate_at_represented_root(polynomial, &root, field)?;
+            if !had_root {
+                return Ok(report(
+                    OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                    Vec::new(),
+                    subdivision_steps,
+                ));
+            }
+            polynomial = deflated;
+            if !exact_roots.contains(&root) {
+                exact_roots.push(root);
+            }
+            continue;
+        }
+
+        isolated.extend(exact_roots.into_iter().map(|root| IsolatedRootInterval {
+            lower: root.clone(),
+            upper: root.clone(),
+            exact_root: Some(root),
+            distinct_root_count: 1,
+        }));
+        isolated.sort_by(|first, second| {
+            first
+                .lower
+                .partial_cmp(&second.lower)
+                .unwrap_or(Ordering::Equal)
+        });
+        return Ok(report(
+            OrderedFieldRootIsolationStatus::Isolated,
+            isolated,
+            subdivision_steps,
+        ));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct RealContext;
+
+    impl OrderedFieldPolynomialContext<Real> for RealContext {
+        type Error = ();
+
+        fn constant(&mut self, value: &Real) -> Result<Real, Self::Error> {
+            Ok(value.clone())
+        }
+
+        fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
+            Ok(left + right)
+        }
+
+        fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
+            Ok(left * right)
+        }
+
+        fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, Self::Error> {
+            Ok(value * scale)
+        }
+
+        fn normalize_positive_scale(&mut self, coefficients: &mut [Real]) {
+            if let Some(normalized) =
+                crate::integer_interpolation::primitive_integer_polynomial(coefficients)
+            {
+                coefficients.clone_from_slice(&normalized);
+            }
+        }
+
+        fn sign(&mut self, value: &Real) -> Result<Ordering, Self::Error> {
+            value.partial_cmp(&Real::zero()).ok_or(())
+        }
+
+        fn sign_if_separated(&mut self, value: &Real) -> Result<Option<Ordering>, Self::Error> {
+            self.sign(value).map(Some)
+        }
+    }
+
+    fn fraction(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).expect("nonzero integer denominator")
+    }
+
+    #[test]
+    fn gcd_keeps_zero_and_coprime_equations_distinct() {
+        let polynomial = [-2, 1, 1, 0, 0].map(Real::from);
+        for zero in [vec![], vec![Real::zero()], vec![Real::zero(); 4]] {
+            assert!(
+                ordered_field_polynomial_gcd(&zero, &zero, &mut RealContext)
+                    .unwrap()
+                    .is_empty()
+            );
+            for (left, right) in [(&polynomial[..], &zero[..]), (&zero[..], &polynomial[..])] {
+                let gcd = ordered_field_polynomial_gcd(left, right, &mut RealContext).unwrap();
+                assert_eq!(gcd, polynomial[..3]);
+            }
+        }
+        for other in [[7, 0], [0, 1]] {
+            assert_eq!(
+                ordered_field_polynomial_gcd(&polynomial, &other.map(Real::from), &mut RealContext)
+                    .unwrap(),
+                vec![Real::one()],
+            );
+        }
+    }
+
+    #[test]
+    fn gcd_preserves_repeated_roots_in_the_selected_coefficient_field() {
+        // a+b*theta, theta>0 and theta^2=2. No standalone Real theta exists.
+        #[derive(Clone)]
+        struct Quadratic([Real; 2]);
+        struct Field;
+        impl OrderedFieldPolynomialContext<Quadratic> for Field {
+            type Error = ();
+            fn constant(&mut self, value: &Real) -> Result<Quadratic, ()> {
+                Ok(Quadratic([value.clone(), Real::zero()]))
+            }
+            fn add(&mut self, a: &Quadratic, b: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([&a.0[0] + &b.0[0], &a.0[1] + &b.0[1]]))
+            }
+            fn multiply(&mut self, a: &Quadratic, b: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([
+                    &a.0[0] * &b.0[0] + Real::from(2) * &a.0[1] * &b.0[1],
+                    &a.0[0] * &b.0[1] + &a.0[1] * &b.0[0],
+                ]))
+            }
+            fn scale(&mut self, value: &Quadratic, scale: &Real) -> Result<Quadratic, ()> {
+                Ok(Quadratic([&value.0[0] * scale, &value.0[1] * scale]))
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Quadratic]) {}
+            fn sign(&mut self, value: &Quadratic) -> Result<Ordering, ()> {
+                let a = value.0[0].partial_cmp(&Real::zero()).ok_or(())?;
+                let b = value.0[1].partial_cmp(&Real::zero()).ok_or(())?;
+                if b == Ordering::Equal {
+                    return Ok(a);
+                }
+                if a == Ordering::Equal || a == b {
+                    return Ok(b);
+                }
+                let norm = &value.0[0] * &value.0[0] - Real::from(2) * &value.0[1] * &value.0[1];
+                let sign = norm.partial_cmp(&Real::zero()).ok_or(())?;
+                Ok(if a == Ordering::Less {
+                    sign.reverse()
+                } else {
+                    sign
+                })
+            }
+            fn sign_if_separated(&mut self, value: &Quadratic) -> Result<Option<Ordering>, ()> {
+                self.sign(value).map(Some)
+            }
+        }
+        for branch in [-1, 1] {
+            // Independently expanded (x-branch*theta)^2*(x+1) and
+            // (x-branch*theta)^2*(x-3), with distinct nonmonic gauges.
+            let first = [[2, 0], [2, -2 * branch], [1, -2 * branch], [1, 0]];
+            let second = [[-6, 0], [2, 6 * branch], [-3, -2 * branch], [1, 0]];
+            let expected = [[2, 0], [0, -2 * branch], [1, 0]];
+            for gauge in [-3, 2] {
+                let first = first.map(|pair| Quadratic(pair.map(|x| Real::from(x * gauge))));
+                let second = second.map(|pair| Quadratic(pair.map(Real::from)));
+                let gcd = ordered_field_polynomial_gcd(&first, &second, &mut Field).unwrap();
+                assert_eq!(gcd.len(), 3);
+                for (actual, expected) in gcd.iter().zip(expected) {
+                    let scaled = Field
+                        .multiply(&Quadratic(expected.map(Real::from)), &gcd[2])
+                        .unwrap();
+                    assert_eq!(
+                        Field.sign(
+                            &Field
+                                .add(actual, &Field.scale(&scaled, &Real::from(-1)).unwrap())
+                                .unwrap()
+                        ),
+                        Ok(Ordering::Equal)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sign_remainder_preserves_nonmonic_relations_without_division() {
+        let radical = Real::from(2_i8).sqrt().unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for gauge in [Real::from(3_i8), Real::from(-3_i8), Real::pi(), -Real::pi()] {
+            // The retained relation is gauge*(x^3-sqrt(2)). Independently
+            // author (x^3-sqrt(2))*(x^2+2x+1) plus a signed small residual.
+            let modulus = [
+                -&gauge * &radical,
+                Real::zero(),
+                Real::zero(),
+                gauge.clone(),
+            ];
+            for residual in [Real::zero(), tiny.clone(), -tiny.clone()] {
+                let polynomial = [
+                    &residual - &radical,
+                    Real::from(-2_i8) * &radical,
+                    -&radical,
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::one(),
+                ];
+                let remainder = ordered_field_polynomial_sign_remainder(
+                    &polynomial,
+                    &modulus,
+                    &mut RealContext,
+                )
+                .unwrap()
+                .unwrap();
+                assert_eq!(remainder.len(), 3);
+                assert_eq!(
+                    remainder[0].partial_cmp(&Real::zero()),
+                    residual.partial_cmp(&Real::zero()),
+                );
+                assert!(
+                    remainder[1..]
+                        .iter()
+                        .all(|value| value.zero_status() == hyperreal::ZeroKnowledge::Zero)
+                );
+                // A trailing zero does not falsely raise the modulus degree.
+                let mut padded = modulus.to_vec();
+                padded.push(Real::zero());
+                assert_eq!(
+                    ordered_field_polynomial_sign_remainder(&polynomial, &padded, &mut RealContext)
+                        .unwrap(),
+                    Some(remainder),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate() {
+        // A remainder of x has different signs at the three selected roots
+        // of x^3-x. Reduction preserves the query; it does not pick a root.
+        let query = [Real::zero(), Real::one()];
+        let modulus = [Real::zero(), Real::from(-1_i8), Real::zero(), Real::one()];
+        assert_eq!(
+            ordered_field_polynomial_sign_remainder(&query, &modulus, &mut RealContext).unwrap(),
+            Some(query.to_vec()),
+        );
+        for zero in [vec![], vec![Real::zero()], vec![Real::zero(); 4]] {
+            assert!(
+                ordered_field_polynomial_sign_remainder(&query, &zero, &mut RealContext)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+        for polynomial in [vec![], query.to_vec(), modulus.to_vec()] {
+            assert_eq!(
+                ordered_field_polynomial_sign_remainder(
+                    &polynomial,
+                    &[Real::from(-2_i8)],
+                    &mut RealContext
+                )
+                .unwrap(),
+                Some(Vec::new()),
+            );
+        }
+        assert_eq!(
+            ordered_field_polynomial_sign_remainder(&[], &modulus, &mut RealContext).unwrap(),
+            Some(Vec::new()),
+        );
+    }
+
+    #[test]
+    fn linear_quotient_reuses_certified_nonrational_roots_without_predicates() {
+        struct ArithmeticOnly;
+        impl OrderedFieldPolynomialContext<Real> for ArithmeticOnly {
+            type Error = ();
+            fn constant(&mut self, _: &Real) -> Result<Real, ()> {
+                panic!("synthetic division does not reconstruct the zero remainder")
+            }
+            fn add(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+                Ok(left + right)
+            }
+            fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+                Ok(left * right)
+            }
+            fn scale(&mut self, _: &Real, _: &Real) -> Result<Real, ()> {
+                panic!("the root is already represented in the coefficient field")
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Real]) {
+                panic!("linear division must preserve actual coefficient values")
+            }
+            fn sign(&mut self, _: &Real) -> Result<Ordering, ()> {
+                panic!("the caller already owns the incidence proof")
+            }
+            fn sign_if_separated(&mut self, _: &Real) -> Result<Option<Ordering>, ()> {
+                panic!("the quotient needs no speculative predicate")
+            }
+        }
+        for root in [
+            Real::zero(),
+            Real::one(),
+            Real::from(2).sqrt().unwrap(),
+            Real::pi(),
+        ] {
+            // (x-root)(x^2+3x+7), with a freely chosen remainder. The
+            // quotient remains the same even when root is not a zero.
+            for remainder in [Real::zero(), Real::from(11)] {
+                let polynomial = [
+                    -Real::from(7) * &root + remainder,
+                    Real::from(7) - Real::from(3) * &root,
+                    Real::from(3) - &root,
+                    Real::one(),
+                ];
+                let quotient = ordered_field_polynomial_linear_quotient(
+                    &polynomial,
+                    &root,
+                    &mut ArithmeticOnly,
+                )
+                .unwrap();
+                assert_eq!(
+                    quotient
+                        .iter()
+                        .map(Real::exact_rational_normal_form)
+                        .collect::<Vec<_>>(),
+                    [7, 3, 1].map(|value| Real::from(value).exact_rational())
+                );
+            }
+        }
+        for polynomial in [vec![], vec![Real::from(7)]] {
+            assert!(
+                ordered_field_polynomial_linear_quotient(
+                    &polynomial,
+                    &Real::pi(),
+                    &mut ArithmeticOnly,
+                )
+                .unwrap()
+                .is_empty()
+            );
+        }
+    }
+
+    #[test]
+    fn linear_quotient_retains_a_root_in_its_coefficient_field() {
+        // a + b*theta with theta^2 = 2. Neither branch of theta is ever
+        // materialized as a Real; the quotient must use the retained field.
+        #[derive(Clone)]
+        struct Quadratic([Real; 2]);
+        struct QuadraticField;
+        impl OrderedFieldPolynomialContext<Quadratic> for QuadraticField {
+            type Error = ();
+
+            fn constant(&mut self, _: &Real) -> Result<Quadratic, ()> {
+                panic!("the root already belongs to the coefficient field")
+            }
+            fn add(&mut self, left: &Quadratic, right: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([
+                    &left.0[0] + &right.0[0],
+                    &left.0[1] + &right.0[1],
+                ]))
+            }
+            fn multiply(&mut self, left: &Quadratic, right: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([
+                    &left.0[0] * &right.0[0] + Real::from(2) * &left.0[1] * &right.0[1],
+                    &left.0[0] * &right.0[1] + &left.0[1] * &right.0[0],
+                ]))
+            }
+            fn scale(&mut self, _: &Quadratic, _: &Real) -> Result<Quadratic, ()> {
+                panic!("no scalar representation of theta is available")
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Quadratic]) {
+                panic!("division preserves coefficient values, not just their signs")
+            }
+            fn sign(&mut self, _: &Quadratic) -> Result<Ordering, ()> {
+                panic!("the quotient does not re-prove incidence")
+            }
+            fn sign_if_separated(&mut self, _: &Quadratic) -> Result<Option<Ordering>, ()> {
+                panic!("the quotient does not re-prove incidence")
+            }
+        }
+        for branch in [-1, 1] {
+            for remainder in [0, 11] {
+                // Independently authored (x-branch*theta)*Q(x)+remainder,
+                // where Q=(1+theta)+(-2+theta)x+(3-theta)x^2.
+                let polynomial = [
+                    [remainder - 2 * branch, -branch],
+                    [1 - 2 * branch, 1 + 2 * branch],
+                    [-2 + 2 * branch, 1 - 3 * branch],
+                    [3, -1],
+                ]
+                .map(|pair| Quadratic(pair.map(Real::from)));
+                let root = Quadratic([Real::zero(), Real::from(branch)]);
+                let quotient = ordered_field_polynomial_linear_quotient(
+                    &polynomial,
+                    &root,
+                    &mut QuadraticField,
+                )
+                .unwrap();
+                assert_eq!(quotient.len(), 3);
+                for (actual, expected) in quotient.iter().zip([[1, 1], [-2, 1], [3, -1]]) {
+                    assert_eq!(actual.0, expected.map(Real::from));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn midpoint_tableau_matches_authored_polynomial_on_both_children() {
+        for degree in 0..=9 {
+            let polynomial: Vec<_> = (0..=degree)
+                .map(|power| fraction((-1_i64).pow(power as u32) * (power + 2), power + 3))
+                .collect();
+            for (lower, upper) in [
+                (fraction(-5, 3), fraction(-2, 3)),
+                (Real::zero(), Real::one()),
+                (fraction(7, 9), fraction(11, 6)),
+            ] {
+                let controls =
+                    power_to_bernstein_on_interval(&polynomial, &lower, &upper, &mut RealContext)
+                        .unwrap()
+                        .unwrap();
+                let (left, right) = midpoint_subdivide(controls, &mut RealContext).unwrap();
+                let midpoint = midpoint(&lower, &upper).unwrap();
+                for (actual, lower, upper) in
+                    [(&left, &lower, &midpoint), (&right, &midpoint, &upper)]
+                {
+                    let expected =
+                        power_to_bernstein_on_interval(&polynomial, lower, upper, &mut RealContext)
+                            .unwrap()
+                            .unwrap();
+                    assert_eq!(actual, &expected, "degree {degree} on [{lower}, {upper}]");
+                }
+                assert_eq!(left.last(), right.first());
+            }
+        }
+    }
+
+    #[derive(Clone)]
+    struct DepthTracked {
+        value: Real,
+        depth: usize,
+    }
+
+    #[derive(Default)]
+    struct DepthTrackingContext {
+        max_depth: usize,
+        scale_calls: usize,
+    }
+
+    impl OrderedFieldPolynomialContext<DepthTracked> for DepthTrackingContext {
+        type Error = ();
+
+        fn constant(&mut self, value: &Real) -> Result<DepthTracked, Self::Error> {
+            Ok(DepthTracked {
+                value: value.clone(),
+                depth: 0,
+            })
+        }
+
+        fn add(
+            &mut self,
+            left: &DepthTracked,
+            right: &DepthTracked,
+        ) -> Result<DepthTracked, Self::Error> {
+            let depth = left.depth.max(right.depth) + 1;
+            self.max_depth = self.max_depth.max(depth);
+            Ok(DepthTracked {
+                value: &left.value + &right.value,
+                depth,
+            })
+        }
+
+        fn multiply(
+            &mut self,
+            left: &DepthTracked,
+            right: &DepthTracked,
+        ) -> Result<DepthTracked, Self::Error> {
+            let depth = left.depth.max(right.depth) + 1;
+            self.max_depth = self.max_depth.max(depth);
+            Ok(DepthTracked {
+                value: &left.value * &right.value,
+                depth,
+            })
+        }
+
+        fn scale(
+            &mut self,
+            value: &DepthTracked,
+            scale: &Real,
+        ) -> Result<DepthTracked, Self::Error> {
+            self.scale_calls += 1;
+            let depth = value.depth + 1;
+            self.max_depth = self.max_depth.max(depth);
+            Ok(DepthTracked {
+                value: &value.value * scale,
+                depth,
+            })
+        }
+
+        fn sign(&mut self, value: &DepthTracked) -> Result<Ordering, Self::Error> {
+            value.value.partial_cmp(&Real::zero()).ok_or(())
+        }
+
+        fn normalize_positive_scale(&mut self, coefficients: &mut [DepthTracked]) {
+            let mut values: Vec<_> = coefficients
+                .iter()
+                .map(|value| value.value.clone())
+                .collect();
+            RealContext.normalize_positive_scale(&mut values);
+            for (coefficient, value) in coefficients.iter_mut().zip(values) {
+                coefficient.value = value;
+            }
+        }
+
+        fn sign_if_separated(
+            &mut self,
+            value: &DepthTracked,
+        ) -> Result<Option<Ordering>, Self::Error> {
+            self.sign(value).map(Some)
+        }
+    }
+
+    #[test]
+    fn midpoint_subdivision_preserves_coefficients_with_linear_field_scaling() {
+        for degree in [0_usize, 1, 2, 7, 16] {
+            let polynomial = (0..=degree)
+                .map(|power| Real::from((power % 5) as i8 - 2))
+                .collect::<Vec<_>>();
+            // An independent affine power-to-Bernstein conversion gives
+            // the exact child coefficients, including their magnitudes.
+            let parent = power_to_bernstein_on_interval(
+                &polynomial,
+                &Real::from(-2_i8),
+                &Real::from(4_i8),
+                &mut RealContext,
+            )
+            .unwrap()
+            .unwrap();
+            let controls = parent
+                .into_iter()
+                .map(|value| DepthTracked { value, depth: 0 })
+                .collect();
+            let mut field = DepthTrackingContext::default();
+            let (left, right) = midpoint_subdivide(controls, &mut field).unwrap();
+            assert_eq!(field.scale_calls, (2 * degree).saturating_sub(1));
+            assert!(field.max_depth <= degree + 1);
+            for (child, lower, upper) in [(left, -2_i8, 1_i8), (right, 1, 4)] {
+                let expected = power_to_bernstein_on_interval(
+                    &polynomial,
+                    &Real::from(lower),
+                    &Real::from(upper),
+                    &mut RealContext,
+                )
+                .unwrap()
+                .unwrap();
+                assert_eq!(
+                    child
+                        .into_iter()
+                        .map(|value| value.value)
+                        .collect::<Vec<_>>(),
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn repeated_root_subdivision_keeps_coefficient_expression_depth_bounded() {
+        let mut depths = Vec::new();
+        for max_subdivision_depth in [16, 96] {
+            let polynomial = [4, 0, -4, 0, 1].map(|value| DepthTracked {
+                value: Real::from(value),
+                depth: 0,
+            });
+            let mut field = DepthTrackingContext::default();
+            let report = isolate_ordered_field_polynomial_roots(
+                polynomial.to_vec(),
+                &Real::one(),
+                &Real::from(2),
+                OrderedFieldRootIsolationConfig {
+                    max_subdivision_depth,
+                    refinement_steps: 0,
+                },
+                &mut field,
+            )
+            .unwrap();
+            assert_eq!(
+                report.status,
+                OrderedFieldRootIsolationStatus::CompleteFallbackRequired
+            );
+            assert!(report.intervals.is_empty());
+            assert!(report.subdivision_steps >= max_subdivision_depth);
+            assert!(field.max_depth <= 81, "depth {}", field.max_depth);
+            depths.push(field.max_depth);
+        }
+        assert_eq!(depths[0], depths[1]);
+    }
+
+    #[test]
+    fn clustered_simple_roots_survive_periodic_coefficient_recomposition() {
+        let center = fraction(1, 5);
+        let radius = fraction(1, 1 << 20);
+        let polynomial = vec![
+            &center * &center - &radius * &radius,
+            Real::from(-2) * &center,
+            Real::one(),
+        ];
+        let report = isolate_ordered_field_polynomial_roots(
+            polynomial,
+            &Real::zero(),
+            &Real::one(),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 64,
+                refinement_steps: 8,
+            },
+            &mut RealContext,
+        )
+        .unwrap();
+        assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+        assert_eq!(report.intervals.len(), 2);
+        assert!(report.subdivision_steps > 16);
+        assert!(report.intervals[0].upper < report.intervals[1].lower);
+        for (interval, root) in report
+            .intervals
+            .iter()
+            .zip([&center - &radius, &center + &radius])
+        {
+            assert_eq!(interval.distinct_root_count, 1);
+            assert!(interval.exact_root.is_none());
+            assert!(interval.lower < root && root < interval.upper);
+            assert!(&interval.upper - &interval.lower < radius);
+        }
+    }
+
+    #[test]
+    fn rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses() {
+        // x(x-1)(x-1/2)^2 has three distinct represented roots. This fixes
+        // both endpoint ownership and descending synthetic-division storage.
+        let polynomial = vec![
+            Real::zero(),
+            fraction(-1, 4),
+            fraction(5, 4),
+            Real::from(-2),
+            Real::one(),
+        ];
+        let report = isolate_ordered_field_polynomial_roots(
+            polynomial,
+            &Real::zero(),
+            &Real::one(),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 16,
+                refinement_steps: 2,
+            },
+            &mut RealContext,
+        )
+        .expect("rational field operations are total");
+
+        assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+        assert_eq!(report.intervals.len(), 3);
+        assert_eq!(report.intervals[0].exact_root, Some(Real::zero()));
+        assert_eq!(report.intervals[1].exact_root, Some(fraction(1, 2)));
+        assert_eq!(report.intervals[2].exact_root, Some(Real::one()));
+        assert!(
+            report
+                .intervals
+                .iter()
+                .all(|interval| interval.distinct_root_count == 1)
+        );
+    }
+
+    #[test]
+    fn retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots() {
+        let delta = Real::from(2_i8).powi_i64(-29).unwrap();
+        for (center, direction) in [
+            (Real::zero(), 1_i8),
+            (Real::one(), -1_i8),
+            (fraction(1, 2), 1_i8),
+            (fraction(1, 2), -1_i8),
+        ] {
+            // (t-center)^2 * ((t-center)^3-direction*delta): one exact
+            // double root and one nearby simple non-dyadic root. Deflation
+            // must not leave the removed root on the latter's boundary.
+            let mut polynomial = vec![Real::one()];
+            for _ in 0..3 {
+                let mut product = vec![Real::zero(); polynomial.len() + 1];
+                for (power, coefficient) in polynomial.iter().enumerate() {
+                    product[power] -= coefficient * &center;
+                    product[power + 1] += coefficient;
+                }
+                polynomial = product;
+            }
+            polynomial[0] -= Real::from(direction) * &delta;
+            for _ in 0..2 {
+                let mut product = vec![Real::zero(); polynomial.len() + 1];
+                for (power, coefficient) in polynomial.iter().enumerate() {
+                    product[power] -= coefficient * &center;
+                    product[power + 1] += coefficient;
+                }
+                polynomial = product;
+            }
+            for refinement_steps in [0, 8] {
+                let report = isolate_ordered_field_polynomial_roots(
+                    polynomial.clone(),
+                    &Real::zero(),
+                    &Real::one(),
+                    OrderedFieldRootIsolationConfig {
+                        max_subdivision_depth: 64,
+                        refinement_steps,
+                    },
+                    &mut RealContext,
+                )
+                .unwrap();
+                assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+                assert_eq!(report.intervals.len(), 2);
+                assert!(
+                    report
+                        .intervals
+                        .iter()
+                        .any(|root| root.exact_root.as_ref() == Some(&center))
+                );
+                let interval = report
+                    .intervals
+                    .iter()
+                    .find(|root| root.exact_root.is_none())
+                    .unwrap();
+                if direction > 0 {
+                    assert!(
+                        interval.lower > center,
+                        "the removed root must be outside the closed isolator"
+                    );
+                } else {
+                    assert!(
+                        interval.upper < center,
+                        "the removed root must be outside the closed isolator"
+                    );
+                }
+                let lower_sign = Real::eval_poly(&polynomial, &interval.lower)
+                    .partial_cmp(&Real::zero())
+                    .unwrap();
+                let upper_sign = Real::eval_poly(&polynomial, &interval.upper)
+                    .partial_cmp(&Real::zero())
+                    .unwrap();
+                assert!(matches!(
+                    (lower_sign, upper_sign),
+                    (Ordering::Less, Ordering::Greater) | (Ordering::Greater, Ordering::Less)
+                ));
+            }
+            let limited = isolate_ordered_field_polynomial_roots(
+                polynomial,
+                &Real::zero(),
+                &Real::one(),
+                OrderedFieldRootIsolationConfig {
+                    max_subdivision_depth: 0,
+                    refinement_steps: 0,
+                },
+                &mut RealContext,
+            )
+            .unwrap();
+            assert_eq!(
+                limited.status,
+                OrderedFieldRootIsolationStatus::CompleteFallbackRequired
+            );
+            assert!(limited.intervals.is_empty());
+        }
+    }
+
+    #[test]
+    fn excluding_a_deflated_boundary_can_find_another_exact_root() {
+        let near = fraction(1, 1024);
+        let report = isolate_ordered_field_polynomial_roots(
+            vec![Real::zero(), -near.clone(), Real::one()],
+            &Real::zero(),
+            &Real::one(),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 64,
+                refinement_steps: 0,
+            },
+            &mut RealContext,
+        )
+        .unwrap();
+        assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+        assert_eq!(report.intervals.len(), 2);
+        assert_eq!(report.intervals[0].exact_root, Some(Real::zero()));
+        assert_eq!(report.intervals[1].exact_root, Some(near));
+    }
+
+    #[test]
+    fn repeated_irrational_root_requests_the_complete_fallback() {
+        // (x^2-2)^2 has one repeated irrational root in (1,2); bounded
+        // division-free variation must not claim it is a simple isolator.
+        let report = isolate_ordered_field_polynomial_roots(
+            vec![
+                Real::from(4),
+                Real::zero(),
+                Real::from(-4),
+                Real::zero(),
+                Real::one(),
+            ],
+            &Real::one(),
+            &Real::from(2),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 4,
+                refinement_steps: 0,
+            },
+            &mut RealContext,
+        )
+        .expect("rational field operations are total");
+
+        assert_eq!(
+            report.status,
+            OrderedFieldRootIsolationStatus::CompleteFallbackRequired
+        );
+        assert!(report.intervals.is_empty());
+    }
+}

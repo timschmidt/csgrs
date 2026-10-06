@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc ba8a83f3085e00df77f4d477227ed2e518f717aa6c8ed6d152eb664bc152e0da # shrinks to divisor_coefficients = [0, 0, 0, 1], quotient_coefficients = [-1]
