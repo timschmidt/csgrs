@@ -1,9 +1,25 @@
-name: CI
+name: hypersolve
 
 on:
   push:
     branches: ["**"]
+    paths:
+      - "crates/hypersolve/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypersolve.yml"
   pull_request:
+    paths:
+      - "crates/hypersolve/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypersolve.yml"
   merge_group:
 
 permissions:
@@ -17,37 +33,19 @@ env:
   CARGO_TERM_COLOR: always
   HYPERSOLVE_SKIP_BENCHMARK_REPORTS: "1"
 
+defaults:
+  run:
+    working-directory: crates/hypersolve
+
 jobs:
   quality:
     name: Tests, representations, fuzz build, lint, and docs
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out Hypersolve
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          path: hypersolve
-          persist-credentials: false
-
-      - name: Check out Hyperreal sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperreal
-          path: hyperreal
-          persist-credentials: false
-
-      - name: Check out Hyperlattice sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperlattice
-          path: hyperlattice
-          persist-credentials: false
-
-      - name: Check out Hyperlimit sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperlimit
-          path: hyperlimit
           persist-credentials: false
 
       - name: Install Rust
@@ -57,53 +55,41 @@ jobs:
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: hypersolve
 
       - name: Check formatting
-        working-directory: hypersolve
         run: |
-          cargo fmt --all -- --check
+          cargo fmt -- --check
           rustfmt --edition 2024 --check fuzz/fuzz_targets/hyperreal_representations.rs
 
       - name: Check every target
-        working-directory: hypersolve
         run: cargo check --locked --all-targets --all-features
 
       - name: Test without features
-        working-directory: hypersolve
         run: cargo test --locked --no-default-features
 
       - name: Test all targets and features
-        working-directory: hypersolve
         run: cargo test --locked --all-targets --all-features
 
       - name: Test every Real representation and cache layout
-        working-directory: hypersolve
         run: scripts/representation_coverage.sh
 
       - name: Check steady-state allocation lifetimes
-        working-directory: hypersolve
         env:
           HYPERSOLVE_ALLOCATION_ITERATIONS: "4"
         run: scripts/allocation_profile.sh
 
       - name: Compile sanitizer fuzz targets
-        working-directory: hypersolve
         run: cargo check --locked --manifest-path fuzz/Cargo.toml --bins
 
       - name: Lint the Real-representation fuzz target
-        working-directory: hypersolve
         run: >-
           cargo clippy --locked --manifest-path fuzz/Cargo.toml
           --bin hyperreal_representations -- -D warnings
 
       - name: Run Clippy
-        working-directory: hypersolve
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
       - name: Build documentation
-        working-directory: hypersolve
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo doc --locked --no-deps --all-features
@@ -113,31 +99,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out Hypersolve
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          path: hypersolve
-          persist-credentials: false
-
-      - name: Check out Hyperreal sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperreal
-          path: hyperreal
-          persist-credentials: false
-
-      - name: Check out Hyperlattice sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperlattice
-          path: hyperlattice
-          persist-credentials: false
-
-      - name: Check out Hyperlimit sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperlimit
-          path: hyperlimit
           persist-credentials: false
 
       - name: Install Rust with LLVM coverage tools
@@ -148,8 +112,7 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
-          workspaces: hypersolve
+          workspaces: crates/hypersolve -> target/coverage
 
       - name: Enforce production coverage threshold
-        working-directory: hypersolve
         run: scripts/coverage.sh

@@ -1,0 +1,88 @@
+name: hypercurve
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "crates/hypercurve/**"
+      - "crates/hypersolve/**"
+      - "crates/hypertri/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypercurve.yml"
+  pull_request:
+    paths:
+      - "crates/hypercurve/**"
+      - "crates/hypersolve/**"
+      - "crates/hypertri/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypercurve.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: crates/hypercurve
+
+jobs:
+  quality:
+    name: Format, lint, test, and WASM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal \
+            --component clippy --component rustfmt \
+            --target wasm32-unknown-unknown
+          rustup default stable
+
+      - name: Cache Cargo build output
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: |
+            . -> target
+            crates/hypercurve/examples/hypercurve_ui -> target
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Run strict Clippy
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+
+      - name: Run bounded test suite
+        # Exact algebraic tests can each retain large certified elimination
+        # structures. Explicitly ignored manual certification stress cases
+        # remain available by name; keep the push suite optimized and bound
+        # concurrent retained elimination fields to two worker threads.
+        run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2
+
+      - name: Test WASM demo crate
+        working-directory: crates/hypercurve/examples/hypercurve_ui
+        run: cargo test --locked --no-fail-fast
+
+      - name: Run strict demo Clippy
+        working-directory: crates/hypercurve/examples/hypercurve_ui
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Build release WASM demo
+        working-directory: crates/hypercurve/examples/hypercurve_ui
+        run: cargo build --locked --release --target wasm32-unknown-unknown

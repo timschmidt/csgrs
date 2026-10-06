@@ -1,9 +1,19 @@
-name: CI
+name: hyperreal
 
 on:
   push:
     branches: ["**"]
+    paths:
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperreal.yml"
   pull_request:
+    paths:
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperreal.yml"
 
 permissions:
   contents: read
@@ -14,6 +24,10 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: crates/hyperreal
 
 jobs:
   verus:
@@ -60,13 +74,13 @@ jobs:
         run: cargo fmt --check
 
       - name: Check build
-        run: cargo check --all-targets
+        run: cargo check --locked --all-targets
 
       - name: Run tests
-        run: cargo test --all-targets
+        run: cargo test --locked --all-targets
 
       - name: Run Clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets -- -D warnings
 
       - name: Check fuzz targets
-        run: cargo check --manifest-path fuzz/Cargo.toml --bins
+        run: cargo check --locked --manifest-path fuzz/Cargo.toml --bins

@@ -1,9 +1,21 @@
-name: CI
+name: hyperlattice
 
 on:
   push:
     branches: ["**"]
+    paths:
+      - "crates/hyperlattice/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperlattice.yml"
   pull_request:
+    paths:
+      - "crates/hyperlattice/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperlattice.yml"
 
 permissions:
   contents: read
@@ -14,6 +26,10 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: crates/hyperlattice
 
 jobs:
   checks:
@@ -31,17 +47,9 @@ jobs:
             args: "--all-features"
 
     steps:
-      - name: Check out Hyperlattice
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          path: hyperlattice
-          persist-credentials: false
-
-      - name: Check out Hyperreal sibling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: ${{ github.repository_owner }}/hyperreal
-          path: hyperreal
           persist-credentials: false
 
       - name: Install Rust
@@ -52,25 +60,20 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
-          workspaces: hyperlattice
+          key: ${{ matrix.backend.name }}
 
       - name: Check formatting
         run: cargo fmt --check
-        working-directory: hyperlattice
 
       - name: Check build
-        run: cargo check --all-targets ${CARGO_ARGS}
-        working-directory: hyperlattice
+        run: cargo check --locked --all-targets ${CARGO_ARGS}
 
       - name: Run tests
-        run: cargo test --all-targets ${CARGO_ARGS}
-        working-directory: hyperlattice
+        run: cargo test --locked --all-targets ${CARGO_ARGS}
 
       - name: Run Clippy
-        run: cargo clippy --all-targets ${CARGO_ARGS} -- -D warnings
-        working-directory: hyperlattice
+        run: cargo clippy --locked --all-targets ${CARGO_ARGS} -- -D warnings
 
       - name: Check fuzz targets
         if: matrix.backend.name == 'default'
         run: cargo check --manifest-path fuzz/Cargo.toml --bins
-        working-directory: hyperlattice
