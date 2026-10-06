@@ -2371,30 +2371,53 @@ pub(super) fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
         | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (line, line_source, line_unit_x, line_unit_y, parallel, line_is_previous) =
-                match (previous, next) {
-                    (
-                        FilletOffsetCarrier2::Line {
-                            source,
-                            support,
-                            unit_x,
-                            unit_y,
-                            ..
-                        },
-                        parallel @ FilletOffsetCarrier2::Parallel { .. },
-                    ) => (support, source, *unit_x, *unit_y, parallel, true),
-                    (
-                        parallel @ FilletOffsetCarrier2::Parallel { .. },
-                        FilletOffsetCarrier2::Line {
-                            source,
-                            support,
-                            unit_x,
-                            unit_y,
-                            ..
-                        },
-                    ) => (support, source, *unit_x, *unit_y, parallel, false),
-                    _ => unreachable!(),
-                };
+            let (
+                line,
+                line_source,
+                line_unit_x,
+                line_unit_y,
+                line_signed_distance,
+                parallel,
+                line_is_previous,
+            ) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::Line {
+                        source,
+                        support,
+                        unit_x,
+                        unit_y,
+                        signed_distance,
+                    },
+                    parallel @ FilletOffsetCarrier2::Parallel { .. },
+                ) => (
+                    support,
+                    source,
+                    *unit_x,
+                    *unit_y,
+                    signed_distance,
+                    parallel,
+                    true,
+                ),
+                (
+                    parallel @ FilletOffsetCarrier2::Parallel { .. },
+                    FilletOffsetCarrier2::Line {
+                        source,
+                        support,
+                        unit_x,
+                        unit_y,
+                        signed_distance,
+                    },
+                ) => (
+                    support,
+                    source,
+                    *unit_x,
+                    *unit_y,
+                    signed_distance,
+                    parallel,
+                    false,
+                ),
+                _ => unreachable!(),
+            };
             let FilletOffsetCarrier2::Parallel { source, support } = parallel else {
                 unreachable!()
             };
@@ -2469,6 +2492,9 @@ pub(super) fn fillet_offset_centers(
                 .supporting_line_incidence_with_direction(
                     line,
                     (line_unit_x, line_unit_y),
+                    line_source
+                        .native_line()
+                        .map(|source_line| (source_line, line_signed_distance)),
                     certified_tangencies,
                     &finite_range,
                     false,
@@ -2501,6 +2527,9 @@ pub(super) fn fillet_offset_centers(
                         .supporting_line_incidence_with_direction(
                             line,
                             (line_unit_x, line_unit_y),
+                            line_source
+                                .native_line()
+                                .map(|source_line| (source_line, line_signed_distance)),
                             certified_tangencies,
                             &range,
                             true,

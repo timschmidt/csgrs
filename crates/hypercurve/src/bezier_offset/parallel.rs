@@ -4143,6 +4143,7 @@ impl BezierParallel2 {
         &self,
         line: &LineSeg2,
         direction: (&Real, &Real),
+        rational_offset: Option<(&LineSeg2, &Real)>,
         certified_tangencies: &[Real],
         range: &CurveParameterRange2,
         regularize_source: bool,
@@ -4161,6 +4162,7 @@ impl BezierParallel2 {
         self.supporting_line_incidence_with_certified_contacts(
             line,
             Some(direction),
+            rational_offset,
             &[],
             certified_tangencies,
             false,
@@ -4715,6 +4717,7 @@ impl BezierParallel2 {
         &self,
         line: &LineSeg2,
         certified_direction: Option<(&Real, &Real)>,
+        rational_offset: Option<(&LineSeg2, &Real)>,
         certified_crossings: &[Real],
         certified_tangencies: &[Real],
         deep_branch_refinement: bool,
@@ -4828,6 +4831,97 @@ impl BezierParallel2 {
             ),
             &polynomial_multiply(&signed_normal_term, &signed_normal_term),
         );
+        // A line offset by a unit normal carries sqrt(|d|^2) in its start and
+        // direction, so every root of the relation above would be retained
+        // with lazy irrational coefficients. When the rational source line is
+        // known, |d|^2 times that relation is R - X with rational R and
+        // X = sd |d| X0; its rational norm R^2 - sd^2 |d|^2 X0^2 replaces it,
+        // and each candidate keeps only the R - X factor.
+        let rational_conjugate = rational_offset.and_then(|(source_line, signed_distance)| {
+            let rational = |value: &Real| value.exact_rational_ref().is_some();
+            let all_rational = |coefficients: &[Real]| coefficients.iter().all(rational);
+            if !rational(signed_distance)
+                || !rational(self.distance())
+                || ![
+                    source_line.start().x(),
+                    source_line.start().y(),
+                    source_line.end().x(),
+                    source_line.end().y(),
+                ]
+                .into_iter()
+                .all(rational)
+                || !all_rational(source.x_numerator)
+                || !all_rational(source.y_numerator)
+                || !source.weight.is_none_or(all_rational)
+                || !all_rational(&differential.tangent_x)
+                || !all_rational(&differential.tangent_y)
+                || !all_rational(&speed_squared)
+            {
+                return None;
+            }
+            let (delta_x, delta_y) = source_line.delta();
+            let orientation = &delta_x * &line_x + &delta_y * &line_y;
+            let (delta_x, delta_y) = match real_sign(&orientation, policy)? {
+                RealSign::Positive => (delta_x, delta_y),
+                RealSign::Negative => (-delta_x, -delta_y),
+                RealSign::Zero => return None,
+            };
+            let weight = source
+                .weight
+                .map_or_else(|| vec![Real::one()], <[Real]>::to_vec);
+            let weighted = |coordinate: &Real| polynomial_scale(&weight, coordinate);
+            let from_x =
+                polynomial_subtract(source.x_numerator, &weighted(source_line.start().x()));
+            let from_y =
+                polynomial_subtract(source.y_numerator, &weighted(source_line.start().y()));
+            let cross = polynomial_subtract(
+                &polynomial_scale(&from_y, &delta_x),
+                &polynomial_scale(&from_x, &delta_y),
+            );
+            let normal = polynomial_multiply(
+                &polynomial_scale(
+                    &polynomial_add(
+                        &polynomial_scale(&differential.tangent_x, &delta_x),
+                        &polynomial_scale(&differential.tangent_y, &delta_y),
+                    ),
+                    self.distance(),
+                ),
+                &weight,
+            );
+            let norm_squared = &delta_x * &delta_x + &delta_y * &delta_y;
+            let offset_squared = signed_distance * signed_distance * &norm_squared;
+            let weighted_square = polynomial_multiply(&weight, &weight);
+            let rational_part = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_add(
+                        &polynomial_multiply(&cross, &cross),
+                        &polynomial_scale(&weighted_square, &offset_squared),
+                    ),
+                    &speed_squared,
+                ),
+                &polynomial_multiply(&normal, &normal),
+            );
+            let radical_factor = polynomial_scale(
+                &polynomial_multiply(&polynomial_multiply(&weight, &cross), &speed_squared),
+                &Real::from(2_u8),
+            );
+            let norm = polynomial_subtract(
+                &polynomial_multiply(&rational_part, &rational_part),
+                &polynomial_scale(
+                    &polynomial_multiply(&radical_factor, &radical_factor),
+                    &offset_squared,
+                ),
+            );
+            Some((
+                norm,
+                rational_part,
+                radical_factor,
+                real_sign(signed_distance, policy)?,
+            ))
+        });
+        if let Some((norm, ..)) = &rational_conjugate {
+            squared_relation = norm.clone();
+        }
         for parameter in certified_crossings {
             if squared_relation.len() < 2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -4930,6 +5024,28 @@ impl BezierParallel2 {
                     )
                 };
                 for (candidate_index, candidate) in candidates.iter().cloned().enumerate() {
+                    // A root of the rational norm lies on the authored offset
+                    // line exactly when R and X share their sign there, or
+                    // both vanish; the conjugate line carries the others.
+                    if let Some((_, rational_part, radical_factor, distance_sign)) =
+                        &rational_conjugate
+                    {
+                        let sign_at = |coefficients: &[Real]| {
+                            policy.strict_predicate_pass(|| {
+                                signed_coefficients_at_parameter(coefficients, &candidate, policy)
+                            })
+                        };
+                        let (
+                            Classification::Decided(rational_sign),
+                            Classification::Decided(radical_sign),
+                        ) = (sign_at(rational_part)?, sign_at(radical_factor)?)
+                        else {
+                            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                        };
+                        if rational_sign != product_sign(*distance_sign, radical_sign) {
+                            continue;
+                        }
+                    }
                     // The product polynomial is a compact fast path.  If its
                     // local-field GCD cannot certify the sign, consult the two
                     // retained branch factors below before permitting a
@@ -5255,6 +5371,7 @@ impl BezierParallel2 {
         let parameters = match self.supporting_line_incidence_with_certified_contacts(
             line,
             certified_direction,
+            None,
             &certified_parameters,
             certified_tangencies,
             deep_branch_refinement,
