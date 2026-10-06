@@ -1,0 +1,44 @@
+[package]
+name = "hyperbrep-fuzz"
+version = "0.1.0"
+publish = false
+edition = "2024"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperbrep = { version = "0.2.0", path = "..", features = ["tessellation"] }
+hypercurve = { version = "0.3.1", path = "../../hypercurve" }
+hyperlimit = { version = "0.4.1", path = "../../hyperlimit" }
+hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hypersolve = { path = "../../hypersolve" }
+
+[[bin]]
+name = "model_builder"
+path = "fuzz_targets/model_builder.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "analytic_solid_roundtrip"
+path = "fuzz_targets/analytic_solid_roundtrip.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "topology_edit_roundtrip"
+path = "fuzz_targets/topology_edit_roundtrip.rs"
+test = false
+doc = false
+bench = false

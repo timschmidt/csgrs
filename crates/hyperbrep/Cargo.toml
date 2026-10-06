@@ -1,0 +1,39 @@
+[package]
+name = "hyperbrep"
+version = "0.2.0"
+edition = "2024"
+description = "Hyper-native exact boundary-representation kernel"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hyperbrep"
+readme = "README.md"
+keywords = ["brep", "cad", "geometry", "exact", "topology"]
+categories = ["mathematics", "graphics", "data-structures"]
+
+[features]
+default = []
+tessellation = ["dep:hypertri"]
+
+[dependencies]
+hypercurve = { version = "0.3.1", path = "../hypercurve" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
+hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
+hypersolve = { version = "0.3.1", path = "../hypersolve" }
+hypertri = { version = "0.4.1", path = "../hypertri", optional = true, features = ["earcut"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.149", features = ["unbounded_depth"] }
+serde_stacker = "0.1.14"
+
+[dev-dependencies]
+proptest = "1.7.0"
+
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+hypersolve = { path = "../hypersolve" }
+
+[[bench]]
+name = "kernel"
+harness = false
