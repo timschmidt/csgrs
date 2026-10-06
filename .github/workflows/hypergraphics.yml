@@ -1,0 +1,103 @@
+name: hypergraphics
+
+on:
+  push:
+    paths:
+      - "crates/hypergraphics/**"
+      - "crates/hypercurve/**"
+      - "crates/hypermesh/**"
+      - "crates/hypersolve/**"
+      - "crates/hypertri/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypergraphics.yml"
+  pull_request:
+    paths:
+      - "crates/hypergraphics/**"
+      - "crates/hypercurve/**"
+      - "crates/hypermesh/**"
+      - "crates/hypersolve/**"
+      - "crates/hypertri/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypergraphics.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: crates/hypergraphics
+
+jobs:
+  stable:
+    name: Stable Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install stable Rust
+        run: |
+          rustup toolchain install stable --profile minimal \
+            --component clippy --component rustfmt \
+            --target wasm32-unknown-unknown
+          rustup default stable
+      - name: Check formatting
+        run: |
+          cargo fmt -- --check
+          cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
+      - name: Test all features and targets
+        run: cargo test --locked --all-targets --all-features
+      - name: Test renderer-only configuration
+        run: cargo test --locked --all-targets --no-default-features
+      - name: Lint
+        run: |
+          cargo clippy --locked --all-targets --all-features -- -D warnings
+          cargo clippy --locked --all-targets --no-default-features -- -D warnings
+          cargo clippy --manifest-path fuzz/Cargo.toml --bins -- -D warnings
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: |
+          cargo doc --locked --no-deps --all-features
+          cargo doc --locked --no-deps --no-default-features
+      - name: Check WASM feature matrix
+        run: |
+          cargo check --locked --lib --target wasm32-unknown-unknown --all-features
+          cargo check --locked --lib --target wasm32-unknown-unknown --no-default-features
+      - name: Compile fuzz targets
+        run: cargo check --manifest-path fuzz/Cargo.toml --bins
+      - name: Inspect the release package
+        run: cargo package --no-verify --list
+
+  msrv:
+    name: Minimum supported Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install MSRV
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal
+          rustup default 1.95.0
+      - name: Check all features at MSRV
+        run: cargo check --locked --all-targets --all-features
+      - name: Check renderer-only configuration at MSRV
+        run: cargo check --locked --all-targets --no-default-features

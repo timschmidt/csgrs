@@ -1,0 +1,109 @@
+name: hypermesh
+
+on:
+  push:
+    paths:
+      - "crates/hypermesh/**"
+      - "crates/hypergraphics/**"
+      - "crates/hypercurve/**"
+      - "crates/hypersolve/**"
+      - "crates/hypertri/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypermesh.yml"
+  pull_request:
+    paths:
+      - "crates/hypermesh/**"
+      - "crates/hypergraphics/**"
+      - "crates/hypercurve/**"
+      - "crates/hypersolve/**"
+      - "crates/hypertri/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hypermesh.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: crates/hypermesh
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default-exact
+            command: cargo test --locked
+          - name: no-default-features
+            command: cargo check --locked --no-default-features
+          - name: all-features
+            command: cargo test --locked --all-features
+          - name: all-features-clippy
+            command: cargo clippy --locked --all-features -- -D warnings
+          - name: all-features-docs
+            command: cargo doc --locked --all-features --no-deps
+          - name: benches
+            command: cargo bench --locked --no-run
+          - name: fuzz-targets
+            command: cargo check --locked --manifest-path fuzz/Cargo.toml --bins
+          - name: size-harness-native
+            command: cargo build --locked --manifest-path benchmarks/size-harness/Cargo.toml --profile size
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: ${{ matrix.name }}
+          workspaces: |
+            . -> target
+            crates/hypermesh/fuzz -> target
+            crates/hypermesh/benchmarks/size-harness -> target
+      - name: Run matrix command
+        env:
+          COMMAND: ${{ matrix.command }}
+        run: $COMMAND
+
+  demo:
+    name: demo-wasm
+    runs-on: ubuntu-latest
+    env:
+      TRUNK_COLOR: never
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: crates/hypermesh/examples/hypermesh_ui -> target
+      - uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2
+        with:
+          tool: trunk@0.21.14
+      - run: cargo build --locked --manifest-path benchmarks/size-harness/Cargo.toml --profile size --target wasm32-unknown-unknown
+      - run: trunk build --release --locked
+        working-directory: crates/hypermesh/examples/hypermesh_ui

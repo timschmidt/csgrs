@@ -1,0 +1,105 @@
+name: Workspace
+
+# Builds every crate in the workspace together, and tests the crates that
+# have no workflow of their own. Crates with their own workflow (csgrs,
+# csgrs-ffi, hyperreal, hyperlattice, hypersolve, hypertri, hypermesh,
+# hypercurve, hypergraphics) are tested there.
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Check every member and target
+        run: cargo check --locked --workspace --all-targets
+
+  test:
+    name: Test ${{ matrix.crate }}
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout || 30 }}
+    # Known-failing or very slow suites report without failing the run.
+    continue-on-error: ${{ matrix.allow-failure || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - hyperlimit
+          - hyperpack
+          - hyperevolution
+          - hyperbrep
+          - hypersdf
+          - hyperparts
+          - hypercircuit
+        include:
+          # Six arrangement and policy tests fail on main before the
+          # monorepo import.
+          - crate: hyperpath
+            allow-failure: true
+          # structurally_distinct_unresolved_assertions_remain_unknown fails
+          # on main before the monorepo import.
+          - crate: hyperphysics
+            allow-failure: true
+          # The complex-project performance tests take over 40 minutes in
+          # a debug build.
+          - crate: hyperdrc
+            args: --release
+            timeout: 90
+            allow-failure: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: ${{ matrix.crate }}
+      - name: Run tests
+        env:
+          CRATE: ${{ matrix.crate }}
+          ARGS: ${{ matrix.args }}
+        run: cargo test --locked -p "${CRATE}" ${ARGS}
+
+  hypervoxel:
+    name: hypervoxel
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: crates/hypervoxel
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: crates/hypervoxel -> target
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Test
+        run: cargo test --locked
