@@ -1,0 +1,2 @@
+# The crates under crates/ use rustfmt defaults; this file stops the
+# repository-root csgrs style from applying to them.

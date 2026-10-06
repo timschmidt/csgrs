@@ -4,9 +4,8 @@ use std::collections::HashMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2,
-    CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
-    Segment2,
+    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2, CurveGeometry2,
+    CurvePath2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
 };
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};

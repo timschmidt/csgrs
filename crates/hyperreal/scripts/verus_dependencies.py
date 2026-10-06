@@ -28,7 +28,11 @@ def dependency_sources(packages):
 def prepare_dependencies(root, pin, reports):
     manifest = root / 'verification/dependencies/Cargo.toml'
     lock = tomllib.loads(manifest.with_name('Cargo.lock').read_text())
-    production = tomllib.loads((root / 'Cargo.lock').read_text())
+    # The production lock is the nearest one above the crate: the workspace
+    # lock in the monorepo, or the crate's own lock when built standalone.
+    production_lock = next(directory / 'Cargo.lock' for directory in [root, *root.parents]
+                           if (directory / 'Cargo.lock').is_file())
+    production = tomllib.loads(production_lock.read_text())
     identity = lambda package: tuple(package.get(k) for k in ('name', 'version', 'source', 'checksum'))
     production_pins = {identity(package) for package in production['package']}
     for package in lock['package']:
