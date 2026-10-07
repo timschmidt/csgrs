@@ -602,10 +602,9 @@ fn main() -> CurveResult<()> {
         NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone())
     })
     .unwrap();
-    assert_eq!(
-        symbolic_preflight.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
+    // The square-root centripetal knots are certified exactly; no
+    // approximation budget is consumed.
+    assert_eq!(symbolic_preflight.certainty, CurveCertainty::Certified);
     let symbolic_interpolation_count = 100_u32;
     let started = Instant::now();
     let mut symbolic_interpolation_checksum = 0_usize;
