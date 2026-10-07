@@ -68,7 +68,9 @@ fn polygon_area(vertices: &[[f64; 2]], hole_indices: &[usize]) -> f64 {
 
 fn triangle_area_sum(vertices: &[[f64; 2]], triangles: &[usize]) -> f64 {
     triangles
-        .chunks_exact(3)
+        .as_chunks::<3>()
+        .0
+        .iter()
         .map(|triangle| {
             let a = vertices[triangle[0]];
             let b = vertices[triangle[1]];

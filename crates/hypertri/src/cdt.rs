@@ -472,7 +472,9 @@ fn constrained_delaunay_planar_inner(
                 });
             }
             let triangles = flat
-                .chunks_exact(3)
+                .as_chunks::<3>()
+                .0
+                .iter()
                 .map(|tri| {
                     [
                         source_indices[tri[0]],

@@ -166,7 +166,9 @@ fn split_edges_at_input_vertices(
     }
 
     let mut pending = triangles
-        .chunks_exact(3)
+        .as_chunks::<3>()
+        .0
+        .iter()
         .map(|triangle| [triangle[0], triangle[1], triangle[2]])
         .collect::<Vec<_>>();
     let mut conforming = Vec::with_capacity(triangles.len());
@@ -256,7 +258,7 @@ fn triangles_match_input_boundary(
     }
 
     let mut edge_counts = BTreeMap::new();
-    for triangle in triangles.chunks_exact(3) {
+    for triangle in triangles.as_chunks::<3>().0 {
         for edge in [
             ordered_edge(triangle[0], triangle[1]),
             ordered_edge(triangle[1], triangle[2]),
@@ -1526,7 +1528,7 @@ mod tests {
 
         let triangles = triangulate(&APPROX, &vertices, &[4, 8]).unwrap().value;
         let mut edge_counts = std::collections::BTreeMap::new();
-        for triangle in triangles.chunks_exact(3) {
+        for triangle in triangles.as_chunks::<3>().0 {
             for edge in [
                 [triangle[0], triangle[1]],
                 [triangle[1], triangle[2]],
@@ -1574,7 +1576,7 @@ mod tests {
         let triangles =
             split_edges_at_input_vertices(&evaluator, &vertices, vec![0, 3, 4]).unwrap();
         assert_eq!(triangles.len(), 9);
-        for triangle in triangles.chunks_exact(3) {
+        for triangle in triangles.as_chunks::<3>().0 {
             for edge in [
                 [triangle[0], triangle[1]],
                 [triangle[1], triangle[2]],
