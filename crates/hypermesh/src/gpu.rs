@@ -384,9 +384,26 @@ fn exact_gpu_triangle(
     b: Point3,
     c: Point3,
 ) -> Result<[ExactGpuVertex; 3], GpuMeshError> {
-    let normal = (&b - &a)
-        .unit_cross_checked(&(&c - &a))
-        .map_err(|_| GpuMeshError::TriangleNormalUnavailable { triangle })?;
+    let cross = (&b - &a).cross(&(&c - &a));
+    let normal = match cross.normalize_checked() {
+        Ok(normal) => normal,
+        // Structural facts cannot show that trigonometric or other computable
+        // coordinates are nonzero, so certify the squared length by bounded
+        // exact refinement before normalizing. A degenerate or undecided
+        // triangle still has no normal.
+        Err(_) => match hyperlimit::compare_reals(
+            &cross.dot(&cross),
+            &Real::zero(),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .value()
+        {
+            Some(std::cmp::Ordering::Greater) => cross
+                .normalize()
+                .map_err(|_| GpuMeshError::TriangleNormalUnavailable { triangle })?,
+            _ => return Err(GpuMeshError::TriangleNormalUnavailable { triangle }),
+        },
+    };
     let normal = [
         normal.0[0].clone(),
         normal.0[1].clone(),
@@ -628,6 +645,25 @@ mod tests {
                 vertex_count: 1,
             })
         );
+    }
+
+    #[test]
+    fn exact_gpu_exports_certify_computable_triangle_normals() {
+        // Trigonometric coordinates carry no structural nonzero facts, so the
+        // normal's length is certified by exact refinement.
+        let angle = Real::pi() / Real::from(16);
+        let angle = angle.unwrap();
+        let positions = vec![
+            Point3::origin(),
+            Point3::new(angle.clone().cos(), angle.clone().sin(), Real::zero()),
+            Point3::new(Real::zero(), angle.clone().cos(), angle.sin()),
+        ];
+        let mesh = TriangleMesh::new(positions, vec![Triangle::new(0, 1, 2)]);
+
+        let gpu = mesh.try_to_gpu_mesh_f64().unwrap();
+        let [x, y, z] = gpu.normals[0];
+        assert!((x * x + y * y + z * z - 1.0).abs() < 1e-12);
+        assert_eq!(gpu.indices, [0, 1, 2]);
     }
 
     #[test]
