@@ -15,11 +15,6 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
-# Unlicensed Symbolica (a hyperlattice comparison engine) aborts when anything
-# else on the machine binds its instance port, 12011 by default, at any point
-# during a run; a per-run port keeps hours-long bench runs from aborting.
-export SYMBOLICA_PORT="${SYMBOLICA_PORT:-$((20000 + $$ % 20000))}"
-
 target_dir="${CARGO_TARGET_DIR:-$root/target}"
 if [[ "$target_dir" != /* ]]; then
   target_dir="$root/$target_dir"
