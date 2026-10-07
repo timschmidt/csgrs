@@ -90,3 +90,43 @@ fn composite_reports_remain_certified_for_exact_rational_inputs() {
         }
     ));
 }
+
+#[test]
+fn ray_hits_on_computable_triangles_are_certified_without_a_coplanarity_retest() {
+    // The ray/plane intersection lies on the support plane by construction.
+    // Its orient3d value is an exact zero that structural facts cannot prove
+    // for trigonometric coordinates, so classifying the constructed point
+    // must not re-derive coplanarity.
+    let angle = (Real::pi() / Real::from(16)).unwrap();
+    let (sine, cosine) = (angle.clone().sin(), angle.cos());
+    let a = Point3::new(Real::from(10), Real::zero(), Real::zero());
+    let b = Point3::new(
+        Real::zero(),
+        &cosine * Real::from(10),
+        &sine * Real::from(10),
+    );
+    let c = Point3::new(
+        Real::zero(),
+        &sine * Real::from(-10),
+        &cosine * Real::from(10),
+    );
+    let origin = point(0, 0, Real::from(0));
+    let direction = point(1, 1, Real::from(2));
+
+    let report = classify_ray_triangle3_intersection_report(
+        &origin,
+        &direction,
+        &a,
+        &b,
+        &c,
+        PredicatePolicy::STRICT,
+    );
+    let PredicateOutcome::Decided {
+        value, certainty, ..
+    } = report
+    else {
+        panic!("a proper hit on a computable triangle must be certified");
+    };
+    assert_eq!(certainty, Certainty::Exact);
+    assert_eq!(value.relation, hyperlimit::RayTriangleIntersection::Proper);
+}

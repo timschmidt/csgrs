@@ -288,7 +288,16 @@ pub fn classify_point_triangle3_with_orientation(
 ) -> PredicateOutcome<Triangle3Location> {
     let normal_signs = reusable_outcome(orientation.normal_signs, policy)
         .unwrap_or_else(|| triangle3_normal_signs_outcome(&orientation.normal, policy));
-    classify_point_triangle3_impl(a, b, c, point, policy, &orientation.normal, normal_signs)
+    classify_point_triangle3_impl(
+        a,
+        b,
+        c,
+        point,
+        policy,
+        &orientation.normal,
+        normal_signs,
+        false,
+    )
 }
 
 /// Classify `point` relative to the 3D triangle `abc` with an explicit
@@ -307,7 +316,21 @@ pub fn classify_point_triangle3_with_policy(
 ) -> PredicateOutcome<Triangle3Location> {
     let normal = triangle3_normal(a, b, c);
     let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
-    classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs)
+    classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs, false)
+}
+
+/// [`classify_point_triangle3_with_policy`] for a point constructed on the
+/// triangle's support plane, such as a ray or segment intersection.
+fn classify_coplanar_point_triangle3(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Triangle3Location> {
+    let normal = triangle3_normal(a, b, c);
+    let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
+    classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs, true)
 }
 
 /// Decide the policy-controlled sign of a triangle winding normal dotted with a
@@ -557,7 +580,7 @@ fn classify_segment_triangle3_intersection_from_sides(
     let point = line.intersect_plane(plane);
     match point.to_affine_point() {
         Ok(intersection) => {
-            match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
+            match classify_coplanar_point_triangle3(a, b, c, &intersection, policy) {
                 PredicateOutcome::Decided {
                     value,
                     certainty: point_certainty,
@@ -700,7 +723,7 @@ fn classify_ray_triangle3_intersection_report_impl(
         .expect("a certified nonzero ray/plane denominator is a valid divisor");
     let parameter = &numerator * reciprocal;
     let intersection = ray_point_at(origin, direction, &parameter);
-    match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
+    match classify_coplanar_point_triangle3(a, b, c, &intersection, policy) {
         PredicateOutcome::Decided { value, .. } => {
             let relation = relation_from_constructed_ray_triangle_point(value);
             PredicateOutcome::decided(
@@ -750,6 +773,7 @@ pub fn classify_ray_triangle3_intersection_with_policy(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn classify_point_triangle3_impl(
     a: &Point3,
     b: &Point3,
@@ -758,6 +782,7 @@ fn classify_point_triangle3_impl(
     policy: PredicatePolicy,
     normal: &Triangle3Normal,
     normal_signs_outcome: PredicateOutcome<[Sign; 3]>,
+    known_coplanar: bool,
 ) -> PredicateOutcome<Triangle3Location> {
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;
@@ -780,16 +805,21 @@ fn classify_point_triangle3_impl(
         return PredicateOutcome::decided(Triangle3Location::Degenerate, certainty, stage);
     }
 
-    let plane_sign = match triangle3_sign(
-        orient3d_with_policy(a, b, c, point, policy),
-        &mut certainty,
-        &mut stage,
-    ) {
-        Ok(sign) => sign,
-        Err(unknown) => return unknown.into_outcome(),
-    };
-    if plane_sign != Sign::Zero {
-        return PredicateOutcome::decided(Triangle3Location::OffPlane, certainty, stage);
+    // A point constructed on the support plane is coplanar by construction;
+    // re-deriving that from orient3d would ask to certify an exact zero that
+    // structural facts cannot always prove.
+    if !known_coplanar {
+        let plane_sign = match triangle3_sign(
+            orient3d_with_policy(a, b, c, point, policy),
+            &mut certainty,
+            &mut stage,
+        ) {
+            Ok(sign) => sign,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+        if plane_sign != Sign::Zero {
+            return PredicateOutcome::decided(Triangle3Location::OffPlane, certainty, stage);
+        }
     }
 
     let edge_ab = edge_halfspace3_sign(normal, a, b, point, policy, &mut certainty, &mut stage);
