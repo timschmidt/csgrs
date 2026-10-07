@@ -19,7 +19,7 @@ Compile the wasm and JS directly from the main csgrs repo.
 ```bash
 # make sure you have Rust and Cargo: https://doc.rust-lang.org/cargo/getting-started/installation.html
 cargo install wasm-pack
-wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
+wasm-pack build --profile wasm --target bundler --out-dir pkg -- --features wasm
 ```
 
 ## Nuxt4 setup

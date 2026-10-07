@@ -124,21 +124,25 @@ exclude = [
 
 [profile.release]
 opt-level = 3
-lto = true
 debug = false
 debug-assertions = false
 overflow-checks = false
 
+# Size- and link-optimized artifacts. These stay out of the release profile,
+# which builds and tests every workspace crate: `panic = "abort"` cannot link
+# release test harnesses for crates with binary targets.
 [profile.embedded]
 inherits = "release"
 opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
 
-# Benchmarks keep Cargo's default release code generation, as the hyper
-# crates' tracked benchmark reports were measured with it; the release
-# profile's LTO would shift every comparison.
-[profile.bench]
-lto = false
-codegen-units = 16
+[profile.wasm]
+inherits = "release"
+lto = true
+codegen-units = 1
+panic = "abort"
 
 [dependencies]
 # geometry

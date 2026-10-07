@@ -424,7 +424,7 @@ For WebAssembly:
 
 ```sh
 cargo install wasm-pack
-wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
+wasm-pack build --profile wasm --target bundler --out-dir pkg -- --features wasm
 ```
 
 ## Correctness boundaries
