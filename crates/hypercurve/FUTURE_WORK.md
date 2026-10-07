@@ -124,6 +124,28 @@ Any consumer that needs control points for a boolean result hits the same limit.
 
 The first keeps the exact-only principal API smallest. The second makes the existing accessor total for these carriers.
 
+## 7. Concurrent contacts across independent radicals
+
+hypercircuit's Easyduino `stm32f103` board (`benches/easyduino_full_pipeline.rs`, `EASYDUINO_BOARD=stm32f103`) fails in the copper-layer union with "exact Construction for RationalQuadraticBezier was blocked by RealSign".
+
+**Where.** `CurveRegionBooleanContext::build_split_topology` finds two contacts on one conic arc carrier, at the same point but with two different straight carriers `A` and `B`. Two copper edges cross each other exactly on a clearance arc. The contacts are computed separately, each with its own square root, so `same_point` would need an equality across two independent radicals. The contact pair goes to `deferred_contact_matches`, and the topology vertices disagree.
+
+**Already fixed on this board's path (commit 5a4e8aebd).**
+- Reversing a straight quadratic fragment kept its retained line support.
+- A line-circle relation deflated an endpoint certified on the circle, even when it is not an arc endpoint.
+
+Before these fixes the board failed earlier, in the zone fill.
+
+**Tried, not enough.** One contact equals the other exactly when the new point lies on `A`, the existing point lies on `B`, and `A` and `B` cross. Each incidence is a sign in one point's field.
+- The straight carriers here are offsets of stroked traces. They carry `LineOffsetProvenance2` but no retained support. An exact incidence against the offset's source, `u x (P - S) = d |u|`, reaches the test once `with_endpoint_representations` keeps offset provenance.
+- The contact points come from the rational-quadratic (conic) intersection kernel. Their coordinates relative to the source still have no `quadratic_tower` form, so the residual stays undecided.
+- In two of the six cases `A` and `B` are parallel, coincident offsets, which needs a branch argument instead.
+
+**Options:**
+- Have line-conic contact points that lie on a circular conic come out in tower-representable form. For example, use the circle's exact center and radius, as `line_circle_relation_at_endpoints` does for native arcs, instead of the general conic root.
+- Extend `quadratic_tower` beyond one outer radical: elements of `Q(sqrt(d))(sqrt(a1), ..., sqrt(ak))` for small `k`.
+- A zero-separation bound for this expression size. `algebraic_separation_bound_bits` stops at 256 nodes and at `Inverse` nodes without an exact child sign. It would also need precision below the strict policy's 512-bit floor.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:
