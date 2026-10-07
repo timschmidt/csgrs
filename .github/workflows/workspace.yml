@@ -37,8 +37,6 @@ jobs:
     name: Test ${{ matrix.crate }}
     runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.timeout || 30 }}
-    # Known-failing or very slow suites report without failing the run.
-    continue-on-error: ${{ matrix.allow-failure || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,21 +48,14 @@ jobs:
           - hypersdf
           - hyperparts
           - hypercircuit
+          - hyperpath
+          - hyperphysics
         include:
-          # Six arrangement and policy tests fail on main before the
-          # monorepo import.
-          - crate: hyperpath
-            allow-failure: true
-          # structurally_distinct_unresolved_assertions_remain_unknown fails
-          # on main before the monorepo import.
-          - crate: hyperphysics
-            allow-failure: true
-          # The complex-project performance tests take over 40 minutes in
-          # a debug build.
+          # The complex-project performance tests take over 40 minutes in a
+          # debug build and about 35 in release.
           - crate: hyperdrc
             args: --release
             timeout: 90
-            allow-failure: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -28,12 +28,5 @@ debug = 1
 # Enable incremental compilation
 incremental = true
 
-# Ensure release builds are fully optimized
-[profile.release]
-debug = false
-lto = true
-codegen-units = 1
-panic = "abort"
-
 [alias]
 xtask = "run --manifest-path ./xtask/Cargo.toml --"
