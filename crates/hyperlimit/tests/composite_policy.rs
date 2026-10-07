@@ -130,3 +130,45 @@ fn ray_hits_on_computable_triangles_are_certified_without_a_coplanarity_retest()
     assert_eq!(certainty, Certainty::Exact);
     assert_eq!(value.relation, hyperlimit::RayTriangleIntersection::Proper);
 }
+
+#[test]
+fn ray_through_an_exact_vertex_of_a_computable_triangle_is_a_certified_boundary_touch() {
+    // The reconstructed hit equals the vertex only as an unprovable exact
+    // identity; the Plucker side products of the input coordinates certify
+    // the vertex contact structurally.
+    let angle = (Real::pi() / Real::from(16)).unwrap();
+    let (sine, cosine) = (angle.clone().sin(), angle.cos());
+    let a = Point3::new(Real::from(10), Real::zero(), Real::zero());
+    let b = Point3::new(
+        &cosine * Real::from(10),
+        &sine * Real::from(10),
+        Real::zero(),
+    );
+    let c = Point3::new(
+        &cosine * Real::from(10),
+        Real::zero(),
+        &sine * Real::from(10),
+    );
+    let origin = point(-20, 0, Real::from(0));
+    let direction = point(1, 0, Real::from(0));
+
+    let report = classify_ray_triangle3_intersection_report(
+        &origin,
+        &direction,
+        &a,
+        &b,
+        &c,
+        PredicatePolicy::STRICT,
+    );
+    let PredicateOutcome::Decided { value, .. } = report else {
+        panic!("a ray through an exact vertex must be certified");
+    };
+    assert_eq!(
+        value.relation,
+        hyperlimit::RayTriangleIntersection::BoundaryTouch
+    );
+    assert_eq!(
+        value.triangle_location,
+        Some(hyperlimit::Triangle3Location::OnVertex)
+    );
+}

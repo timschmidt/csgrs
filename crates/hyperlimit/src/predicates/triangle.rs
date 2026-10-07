@@ -288,16 +288,7 @@ pub fn classify_point_triangle3_with_orientation(
 ) -> PredicateOutcome<Triangle3Location> {
     let normal_signs = reusable_outcome(orientation.normal_signs, policy)
         .unwrap_or_else(|| triangle3_normal_signs_outcome(&orientation.normal, policy));
-    classify_point_triangle3_impl(
-        a,
-        b,
-        c,
-        point,
-        policy,
-        &orientation.normal,
-        normal_signs,
-        false,
-    )
+    classify_point_triangle3_impl(a, b, c, point, policy, &orientation.normal, normal_signs)
 }
 
 /// Classify `point` relative to the 3D triangle `abc` with an explicit
@@ -316,21 +307,7 @@ pub fn classify_point_triangle3_with_policy(
 ) -> PredicateOutcome<Triangle3Location> {
     let normal = triangle3_normal(a, b, c);
     let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
-    classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs, false)
-}
-
-/// [`classify_point_triangle3_with_policy`] for a point constructed on the
-/// triangle's support plane, such as a ray or segment intersection.
-fn classify_coplanar_point_triangle3(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    point: &Point3,
-    policy: PredicatePolicy,
-) -> PredicateOutcome<Triangle3Location> {
-    let normal = triangle3_normal(a, b, c);
-    let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
-    classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs, true)
+    classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs)
 }
 
 /// Decide the policy-controlled sign of a triangle winding normal dotted with a
@@ -579,10 +556,15 @@ fn classify_segment_triangle3_intersection_from_sides(
     let line = line_from_points(p, q);
     let point = line.intersect_plane(plane);
     match point.to_affine_point() {
-        Ok(intersection) => {
-            match classify_coplanar_point_triangle3(a, b, c, &intersection, policy) {
+        Ok(_) => {
+            let direction = Point3::new(
+                sub_ref(&q.x, &p.x),
+                sub_ref(&q.y, &p.y),
+                sub_ref(&q.z, &p.z),
+            );
+            match line_triangle3_crossing_location(p, &direction, a, b, c, policy) {
                 PredicateOutcome::Decided {
-                    value,
+                    value: (value, _),
                     certainty: point_certainty,
                     stage: point_stage,
                 } => {
@@ -722,9 +704,34 @@ fn classify_ray_triangle3_intersection_report_impl(
         .inverse_ref_assuming_nonzero()
         .expect("a certified nonzero ray/plane denominator is a valid divisor");
     let parameter = &numerator * reciprocal;
-    let intersection = ray_point_at(origin, direction, &parameter);
-    match classify_coplanar_point_triangle3(a, b, c, &intersection, policy) {
-        PredicateOutcome::Decided { value, .. } => {
+    match line_triangle3_crossing_location(origin, direction, a, b, c, policy) {
+        PredicateOutcome::Decided {
+            value: (value, vertex),
+            ..
+        } => {
+            // A vertex contact is reported as the vertex itself, with its
+            // parameter along the ray, so every triangle sharing the vertex
+            // reports identical exact values; reconstructing the hit from
+            // the plane would give each triangle a different expression whose
+            // equality cannot be certified.
+            let (parameter, intersection) = match vertex.map(|index| [a, b, c][index]) {
+                Some(vertex) => {
+                    let offset = Point3::new(
+                        sub_ref(&vertex.x, &origin.x),
+                        sub_ref(&vertex.y, &origin.y),
+                        sub_ref(&vertex.z, &origin.z),
+                    );
+                    let length_squared = dot_point3(direction, direction);
+                    let reciprocal = length_squared
+                        .inverse_ref_assuming_nonzero()
+                        .expect("a ray crossing a plane has a nonzero direction");
+                    (&dot_point3(&offset, direction) * reciprocal, vertex.clone())
+                }
+                None => {
+                    let intersection = ray_point_at(origin, direction, &parameter);
+                    (parameter, intersection)
+                }
+            };
             let relation = relation_from_constructed_ray_triangle_point(value);
             PredicateOutcome::decided(
                 RayTriangleIntersectionReport {
@@ -773,7 +780,6 @@ pub fn classify_ray_triangle3_intersection_with_policy(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn classify_point_triangle3_impl(
     a: &Point3,
     b: &Point3,
@@ -782,7 +788,6 @@ fn classify_point_triangle3_impl(
     policy: PredicatePolicy,
     normal: &Triangle3Normal,
     normal_signs_outcome: PredicateOutcome<[Sign; 3]>,
-    known_coplanar: bool,
 ) -> PredicateOutcome<Triangle3Location> {
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;
@@ -805,21 +810,16 @@ fn classify_point_triangle3_impl(
         return PredicateOutcome::decided(Triangle3Location::Degenerate, certainty, stage);
     }
 
-    // A point constructed on the support plane is coplanar by construction;
-    // re-deriving that from orient3d would ask to certify an exact zero that
-    // structural facts cannot always prove.
-    if !known_coplanar {
-        let plane_sign = match triangle3_sign(
-            orient3d_with_policy(a, b, c, point, policy),
-            &mut certainty,
-            &mut stage,
-        ) {
-            Ok(sign) => sign,
-            Err(unknown) => return unknown.into_outcome(),
-        };
-        if plane_sign != Sign::Zero {
-            return PredicateOutcome::decided(Triangle3Location::OffPlane, certainty, stage);
-        }
+    let plane_sign = match triangle3_sign(
+        orient3d_with_policy(a, b, c, point, policy),
+        &mut certainty,
+        &mut stage,
+    ) {
+        Ok(sign) => sign,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    if plane_sign != Sign::Zero {
+        return PredicateOutcome::decided(Triangle3Location::OffPlane, certainty, stage);
     }
 
     let edge_ab = edge_halfspace3_sign(normal, a, b, point, policy, &mut certainty, &mut stage);
@@ -1338,6 +1338,75 @@ fn relation_from_ray_origin_triangle_point(location: Triangle3Location) -> RayTr
         | Triangle3Location::OffPlane
         | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
     }
+}
+
+/// Locate where a line crosses triangle `abc`, given that it crosses the
+/// support plane transversally (so the triangle is not degenerate).
+///
+/// Each edge `pq` is classified by the Plucker side product
+/// `det(p - origin, q - origin, direction)`. The line passes through the
+/// interior exactly when the three products share a strict sign, and through
+/// an edge or vertex when one or two of them are zero. Only the input
+/// coordinates enter these products, so a line through a vertex or edge
+/// yields zeros that structural facts can certify; classifying the
+/// constructed intersection point instead would ask refinement to prove
+/// exact zeros it cannot. A vertex contact also reports which vertex
+/// (0, 1 or 2 for a, b, c).
+fn line_triangle3_crossing_location(
+    origin: &Point3,
+    direction: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<(Triangle3Location, Option<usize>)> {
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+    let mut side = |start: &Point3, end: &Point3| {
+        let (sx, sy, sz) = (
+            sub_ref(&start.x, &origin.x),
+            sub_ref(&start.y, &origin.y),
+            sub_ref(&start.z, &origin.z),
+        );
+        let (ex, ey, ez) = (
+            sub_ref(&end.x, &origin.x),
+            sub_ref(&end.y, &origin.y),
+            sub_ref(&end.z, &origin.z),
+        );
+        let cross_x = sub_ref(&mul_ref(&ey, &direction.z), &mul_ref(&ez, &direction.y));
+        let cross_y = sub_ref(&mul_ref(&ez, &direction.x), &mul_ref(&ex, &direction.z));
+        let cross_z = sub_ref(&mul_ref(&ex, &direction.y), &mul_ref(&ey, &direction.x));
+        let product = add_ref(
+            &add_ref(&mul_ref(&sx, &cross_x), &mul_ref(&sy, &cross_y)),
+            &mul_ref(&sz, &cross_z),
+        );
+        triangle3_sign(
+            resolve_real_sign_direct(&product, policy, RefinementNeed::RealRefinement),
+            &mut certainty,
+            &mut stage,
+        )
+    };
+    let signs = match (side(a, b), side(b, c), side(c, a)) {
+        (Ok(ab), Ok(bc), Ok(ca)) => [ab, bc, ca],
+        (Err(unknown), _, _) | (_, Err(unknown), _) | (_, _, Err(unknown)) => {
+            return unknown.into_outcome();
+        }
+    };
+    let crossing = if signs.contains(&Sign::Positive) && signs.contains(&Sign::Negative) {
+        (Triangle3Location::Outside, None)
+    } else {
+        // Edges are ab, bc, ca: the vertex between two zero edges is the
+        // contact.
+        match signs.map(|sign| sign == Sign::Zero) {
+            [false, false, false] => (Triangle3Location::Inside, None),
+            [true, true, false] => (Triangle3Location::OnVertex, Some(1)),
+            [false, true, true] => (Triangle3Location::OnVertex, Some(2)),
+            [true, false, true] => (Triangle3Location::OnVertex, Some(0)),
+            [true, true, true] => (Triangle3Location::Degenerate, None),
+            _ => (Triangle3Location::OnEdge, None),
+        }
+    };
+    PredicateOutcome::decided(crossing, certainty, stage)
 }
 
 fn relation_from_constructed_ray_triangle_point(
