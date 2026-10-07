@@ -692,10 +692,16 @@ fn project_curve_region_loop_to_curve_path(
         }
     }
 
+    // Pieces of the projected loop: Bezier subcurves, plus line segments for
+    // chords whose endpoints are exact points.
+    enum Piece {
+        Bezier(BezierSubcurve2),
+        Line(crate::LineSeg2),
+    }
     let mut subcurves = Vec::with_capacity(fragments.len());
     for fragment in fragments {
         let curve = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => curve.clone(),
+            BezierSplitFragment2::Materialized { curve, .. } => Piece::Bezier(curve.clone()),
             BezierSplitFragment2::RetainedBezier {
                 reversed,
                 start,
@@ -708,10 +714,13 @@ fn project_curve_region_loop_to_curve_path(
                     Classification::Decided(curve) => curve,
                     Classification::Uncertain(_) => return Ok(None),
                 };
-                if *reversed { curve.reversed() } else { curve }
+                Piece::Bezier(if *reversed { curve.reversed() } else { curve })
             }
+            BezierSplitFragment2::AlgebraicChord(chord) => match chord.exact_line() {
+                Some(line) => Piece::Line(line),
+                None => return Ok(None),
+            },
             BezierSplitFragment2::AnalyticParallel(_)
-            | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => return Ok(None),
             BezierSplitFragment2::SelectedFiber(_) => return Ok(None),
         };
@@ -722,19 +731,30 @@ fn project_curve_region_loop_to_curve_path(
     }
     let endpoints = subcurves
         .iter()
-        .map(|curve| curve.end().clone())
+        .map(|piece| match piece {
+            Piece::Bezier(curve) => curve.end().clone(),
+            Piece::Line(line) => line.end().clone(),
+        })
         .collect::<Vec<_>>();
     let curve_count = subcurves.len();
     let curves = subcurves
         .into_iter()
         .enumerate()
-        .map(|(index, curve)| {
-            projected_subcurve_with_endpoints(
-                curve,
-                endpoints[(index + curve_count - 1) % curve_count].clone(),
-                endpoints[index].clone(),
-            )
-            .map(Curve2::from)
+        .map(|(index, piece)| {
+            let start = endpoints[(index + curve_count - 1) % curve_count].clone();
+            let end = endpoints[index].clone();
+            match piece {
+                Piece::Bezier(curve) => {
+                    projected_subcurve_with_endpoints(curve, start, end).map(Curve2::from)
+                }
+                Piece::Line(_) => crate::LineSeg2::try_new(start, end)
+                    .map(Curve2::from)
+                    .map_err(|_| {
+                        CurveError::Topology(
+                            "finite curve projection produced a degenerate line".into(),
+                        )
+                    }),
+            }
         })
         .collect::<CurveResult<Vec<_>>>()?;
     finish(curves)
