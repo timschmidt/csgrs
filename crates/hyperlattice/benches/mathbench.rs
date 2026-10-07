@@ -70,8 +70,6 @@ fn main() {
         return;
     }
 
-    initialize_symbolica();
-
     let trace_only = args
         .iter()
         .any(|arg| arg == "--write-dispatch-trace-md" || arg == "--dispatch-trace-only");
@@ -79,11 +77,17 @@ fn main() {
         begin_dispatch_trace_run(trace_filter.as_deref());
     }
 
+    // Restricted Symbolica aborts as a second instance when any child process
+    // is spawned while it holds its instance port. Criterion probes for
+    // gnuplot when it is built and spawns it for every plot, so build it
+    // before initializing Symbolica and plot in process.
+    let criterion = Criterion::default().plotting_backend(criterion::PlottingBackend::Plotters);
     let mut criterion = if trace_only {
-        Criterion::default().with_filter("$^")
+        criterion.with_filter("$^")
     } else {
-        Criterion::default().configure_from_args()
+        criterion.configure_from_args()
     };
+    initialize_symbolica();
     bench_vectors(&mut criterion);
     bench_matrix3(&mut criterion);
     bench_matrix4(&mut criterion);
