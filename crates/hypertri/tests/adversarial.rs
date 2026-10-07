@@ -931,7 +931,7 @@ proptest! {
             report.diagnostics.containment_candidates,
             "every scanned containment candidate should use the prepared reflex/convex table"
         );
-        for triangle in triangles.chunks_exact(3) {
+        for triangle in triangles.as_chunks::<3>().0 {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
             prop_assert_ne!(triangle[0], triangle[1]);
             prop_assert_ne!(triangle[1], triangle[2]);
@@ -976,7 +976,7 @@ proptest! {
             report.diagnostics.containment_candidates,
             "every scanned containment candidate should use the prepared reflex/convex table"
         );
-        for triangle in triangles.chunks_exact(3) {
+        for triangle in triangles.as_chunks::<3>().0 {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
             prop_assert_ne!(triangle[0], triangle[1]);
             prop_assert_ne!(triangle[1], triangle[2]);

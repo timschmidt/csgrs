@@ -244,7 +244,7 @@ proptest! {
         prop_assert_eq!(facts.rings[0].known_axis_aligned_edges, 6);
         prop_assert_eq!(facts.rings[0].unknown_edge_zero_status, 0);
         prop_assert_eq!(triangles.len(), 12);
-        for triangle in triangles.chunks_exact(3) {
+        for triangle in triangles.as_chunks::<3>().0 {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
             prop_assert_ne!(triangle[0], triangle[1]);
             prop_assert_ne!(triangle[1], triangle[2]);

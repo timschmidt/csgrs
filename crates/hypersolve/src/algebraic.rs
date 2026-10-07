@@ -1086,7 +1086,7 @@ pub fn algebraic_root_affine_relation(
                 let column = u64::try_from(offset).ok()?;
                 binomial = ((&binomial * &Real::from(row)) / Real::from(column)).ok()?;
             }
-            sum = sum + &(coefficient * &binomial) * &power;
+            sum += &(coefficient * &binomial) * &power;
             power = &power * mean;
         }
         Some(sum)
