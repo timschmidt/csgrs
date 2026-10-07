@@ -9354,3 +9354,31 @@ fn authored_region_sides_are_certified_before_offset_and_boolean_reentry() {
         }
     }
 }
+
+#[test]
+fn curve_path_projection_keeps_exact_line_edges_beside_a_cubic() {
+    // Region line edges are retained as exact algebraic chords; projection
+    // must return them as native line segments instead of declining.
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(4, 0), p(4, 4)).unwrap()),
+        Curve2::from(CubicBezier2::new(p(4, 4), p(3, 6), p(1, 6), p(0, 4))),
+        Curve2::from(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
+    ])
+    .unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd).unwrap();
+
+    let paths = region.project_to_finite_curve_paths().unwrap();
+    assert_eq!(paths.len(), 1);
+    let curves = paths[0].curves();
+    assert_eq!(curves.len(), 4);
+    let lines = curves
+        .iter()
+        .filter(|curve| is_native(curve, CurveFamily2::Line))
+        .count();
+    let cubics = curves
+        .iter()
+        .filter(|curve| is_native(curve, CurveFamily2::CubicBezier))
+        .count();
+    assert_eq!((lines, cubics), (3, 1));
+}
