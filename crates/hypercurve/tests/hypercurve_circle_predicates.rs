@@ -154,3 +154,41 @@ fn arc_arc_intersection_reuses_circle_relation_witnesses_before_sweep_filtering(
         other => panic!("expected two arc hits from circle witnesses, got {other:?}"),
     }
 }
+
+#[test]
+fn line_starting_on_the_circle_away_from_arc_endpoints_deflates_its_exact_root() {
+    // The start point is an earlier cut of another line at the same circle,
+    // so its coordinates carry their own square root. It is not an arc
+    // endpoint. Its certified incidence must yield t = 0 at that stored
+    // point, not a new square-root root whose zero cannot be certified.
+    let circle = circle_arc();
+    let cut = LineSeg2::try_new(p(-10, 1), p(10, 2)).unwrap();
+    let LineCircleRelation::Secant {
+        second_point: start,
+        ..
+    } = crate::support::under_value(&policy(), || cut.supporting_line_circle_relation(&circle))
+        .unwrap()
+    else {
+        panic!("the cutting line must cross the circle");
+    };
+    let line = LineSeg2::try_new(start.clone(), p(-10, 3)).unwrap();
+    let relation =
+        crate::support::under_value(&policy(), || line.supporting_line_circle_relation(&circle))
+            .unwrap();
+    let LineCircleRelation::Secant {
+        first_point,
+        first_param,
+        second_point,
+        second_param,
+    } = relation
+    else {
+        panic!("expected a secant through the incident start point, got {relation:?}");
+    };
+    let (point, param) = if first_param.zero_status() == hyperreal::ZeroKnowledge::Zero {
+        (first_point, first_param)
+    } else {
+        (second_point, second_param)
+    };
+    assert_eq!(param.zero_status(), hyperreal::ZeroKnowledge::Zero);
+    assert_eq!(point, start);
+}

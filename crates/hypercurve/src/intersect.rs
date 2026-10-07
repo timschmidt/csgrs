@@ -798,17 +798,31 @@ impl LineSeg2 {
         arc: &CircularArc2,
         policy: &CurveContext,
     ) -> CurveResult<LineCircleRelation> {
-        if arc.endpoints_on_stored_circle_are_certified() {
-            let incident =
-                |point: &Point2| arc.contains_endpoint(point, &CurveContext::STRICT) == Some(true);
-            if let Some(relation) = line_circle_relation_at_endpoints(
-                self,
-                arc.center(),
-                [incident(self.start()), incident(self.end())],
-                policy,
-            )? {
-                return Ok(relation);
-            }
+        // A line endpoint certified on the stored circle deflates the
+        // line-circle quadratic exactly. Arc endpoints are recognized by
+        // identity; any other endpoint, such as an earlier cut of this line
+        // at the same circle, by its exact circle residual. Solving the
+        // undeflated quadratic would instead reach that endpoint through a
+        // new square root whose parameter cannot be certified to be 0 or 1.
+        let endpoints_certified = arc.endpoints_on_stored_circle_are_certified();
+        let incident = |point: &Point2| {
+            (endpoints_certified
+                && arc.contains_endpoint(point, &CurveContext::STRICT) == Some(true))
+                || {
+                    let (dx, dy) = point.delta_from(arc.center());
+                    crate::classify::is_zero(
+                        &(dot(&dx, &dy, &dx, &dy) - arc.radius_squared_ref()),
+                        &CurveContext::STRICT,
+                    ) == Some(true)
+                }
+        };
+        if let Some(relation) = line_circle_relation_at_endpoints(
+            self,
+            arc.center(),
+            [incident(self.start()), incident(self.end())],
+            policy,
+        )? {
+            return Ok(relation);
         }
         line_circle_relation_from_supports(self, arc.center(), arc.radius_squared_ref(), policy)
     }

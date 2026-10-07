@@ -261,12 +261,19 @@ impl QuadraticBezier2 {
             .iter()
             .map(BezierParallelLineTangentContact2::reversed)
             .collect::<Vec<_>>();
-        Self::with_retained_exact_line_provenance(
-            self.end.clone(),
-            self.control.clone(),
-            self.start.clone(),
-            contacts,
-        )
+        // Reverse the retained image itself: rebuilding it from the swapped
+        // endpoints would drop its exact support and offset provenance, and a
+        // fragment cut at algebraic points would then test parallelism
+        // against its own wide endpoints.
+        Ok(Self {
+            start: self.end.clone(),
+            control: self.control.clone(),
+            end: self.start.clone(),
+            exact_line_image: Some(Arc::new(ExactQuadraticLineImage2 {
+                line: evidence.line.reversed(),
+                parallel_tangent_contacts: (!contacts.is_empty()).then(|| Arc::from(contacts)),
+            })),
+        })
     }
 
     pub(crate) fn transform_similarity_with_retained_provenance(
@@ -763,4 +770,33 @@ fn quadratic_interpolation_parameter_blocker(
         return Some(UncertaintyReason::Boundary);
     }
     None
+}
+
+#[cfg(test)]
+mod reversal_tests {
+    use super::*;
+
+    #[test]
+    fn reversing_a_straight_fragment_keeps_its_exact_line_support() {
+        // A fragment cut from a longer line keeps that line as its exact
+        // direction; reversal must carry the support, with the orientation
+        // flipped, rather than rebuild an unsupported line from the endpoints.
+        let point = |x: i64, y: i64| Point2::new(Real::from(x), Real::from(y));
+        let source = LineSeg2::try_new(point(0, 0), point(6, 6)).unwrap();
+        let fragment = source.fragment_between_after_distinct_endpoints(
+            point(2, 2),
+            point(4, 4),
+            source.fragment_support(),
+        );
+        let reversed = QuadraticBezier2::from_line_segment(fragment)
+            .reversed_with_retained_provenance()
+            .unwrap();
+        let image = reversed.retained_exact_line_image().unwrap();
+
+        assert!(image.has_retained_support());
+        assert_eq!(image.start(), &point(4, 4));
+        assert_eq!(image.end(), &point(2, 2));
+        let (dx, dy) = image.directed_support_delta();
+        assert_eq!((dx, dy), (Real::from(-6), Real::from(-6)));
+    }
 }
