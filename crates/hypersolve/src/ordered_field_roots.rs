@@ -91,6 +91,8 @@ pub enum OrderedFieldRootIsolationStatus {
     CompleteFallbackRequired,
     /// The requested interval was empty or reversed.
     InvalidInterval,
+    /// The enclosing operation budget declined a required subdivision.
+    BudgetExhausted,
 }
 
 /// Exact result of one division-free ordered-field isolation attempt.
@@ -474,6 +476,13 @@ where
     C: Clone,
     F: OrderedFieldPolynomialContext<C>,
 {
+    if crate::work_budget::exhaustion().is_some() {
+        return Ok(report(
+            OrderedFieldRootIsolationStatus::BudgetExhausted,
+            Vec::new(),
+            0,
+        ));
+    }
     if lower.partial_cmp(upper) != Some(Ordering::Less) {
         return Ok(report(
             OrderedFieldRootIsolationStatus::InvalidInterval,
@@ -619,6 +628,15 @@ where
                             subdivision_steps,
                         ));
                     }
+                    if crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1)
+                        .is_err()
+                    {
+                        return Ok(report(
+                            OrderedFieldRootIsolationStatus::BudgetExhausted,
+                            Vec::new(),
+                            subdivision_steps,
+                        ));
+                    }
                     let Some(midpoint) = midpoint(&node.lower, &node.upper) else {
                         return Ok(report(
                             OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
@@ -665,6 +683,14 @@ where
             if node.depth >= config.max_subdivision_depth {
                 return Ok(report(
                     OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                    Vec::new(),
+                    subdivision_steps,
+                ));
+            }
+            if crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1).is_err()
+            {
+                return Ok(report(
+                    OrderedFieldRootIsolationStatus::BudgetExhausted,
                     Vec::new(),
                     subdivision_steps,
                 ));
@@ -935,6 +961,62 @@ mod tests {
                     Some(remainder),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn operation_budget_bounds_both_isolation_and_singleton_refinement() {
+        use crate::work_budget::{WorkBudget, WorkKind, with_budget};
+
+        for (coefficients, lower, upper, roots) in
+            [(vec![-2, 0, 1], 1, 2, 1), (vec![2, -4, 1], 0, 4, 2)]
+        {
+            let polynomial: Vec<_> = coefficients.into_iter().map(Real::from).collect();
+            let isolate = || {
+                isolate_ordered_field_polynomial_roots(
+                    polynomial.clone(),
+                    &Real::from(lower),
+                    &Real::from(upper),
+                    OrderedFieldRootIsolationConfig {
+                        max_subdivision_depth: 32,
+                        refinement_steps: 4,
+                    },
+                    &mut RealContext,
+                )
+                .unwrap()
+            };
+            let expected = isolate();
+            assert_eq!(expected.status, OrderedFieldRootIsolationStatus::Isolated);
+            assert_eq!(expected.intervals.len(), roots);
+            for limit in [0, 1] {
+                let limited = with_budget(
+                    WorkBudget {
+                        refinements: limit,
+                        promotions: 0,
+                    },
+                    || {
+                        let report = isolate();
+                        assert_eq!(
+                            report.status,
+                            OrderedFieldRootIsolationStatus::BudgetExhausted
+                        );
+                        assert!(report.intervals.is_empty());
+                        assert_eq!(report.subdivision_steps, limit);
+                        report
+                    },
+                );
+                assert_eq!(limited.result.unwrap_err().kind, WorkKind::RootRefinement);
+                assert_eq!(limited.usage.refinements, limit);
+            }
+            let retry = with_budget(
+                WorkBudget {
+                    refinements: 64,
+                    promotions: 0,
+                },
+                isolate,
+            );
+            assert_eq!(retry.usage.refinements, expected.subdivision_steps);
+            assert_eq!(retry.result.unwrap(), expected);
         }
     }
 

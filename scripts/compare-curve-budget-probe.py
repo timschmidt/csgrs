@@ -83,7 +83,7 @@ def main():
                 rows.extend(dict(row, implementation=implementation, sample=pair-args.warmup) for row in measured)
 
     with (args.output / "samples.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     medians = {}

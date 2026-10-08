@@ -20,6 +20,18 @@ budget overhead in that consumer, not active-budget solver throughput or a
 whole-solver resource bound. The module contract lists the remaining coverage
 gaps.
 
+The subsequent shared-isolator extension also charges ordered-field Bernstein
+subdivision, selected-fiber Sturm isolation, reusable fiber-root refinement,
+and local-field source refinement. The
+[five-pair Criterion probe](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-ordered-field-and-selected-fiber-isolators)
+retains its isolated build provenance, full Criterion data, and rejected
+initial variant. A thread-local activity flag avoids borrowing the frame stack
+when no budget is active. Final medians across the three selected-fiber workloads
+range from -4.28% to +3.59%; the repeated-root row changes from the initial
++7.33% to +1.20% in its later paired run. These observations do not establish a
+general speedup or a statistical bound. Exact intervals, typed resource status,
+and retry behavior are covered separately by solver tests.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |
