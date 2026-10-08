@@ -272,6 +272,45 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
     }
 }
 
+#[cfg(feature = "curve")]
+#[test]
+fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
+    let square = csgrs::curve::square(Real::one());
+    let half = (Real::one() / Real::from(2)).unwrap();
+    for preview in [
+        hypercurve::CurvePreviewOptions::try_strict(0.01, 0.01).unwrap(),
+        hypercurve::CurvePreviewOptions::try_approximate_512(0.01, 0.01).unwrap(),
+    ] {
+        let strict = preview.evaluate(|| {
+            csgrs::curve::contains_xy_with_context(
+                &square,
+                unresolved_zero(),
+                half.clone(),
+                &STRICT,
+            )
+        });
+        assert!(
+            strict.is_err(),
+            "display preview cannot decide a STRICT query: {strict:?}"
+        );
+        let approximate = preview
+            .evaluate(|| {
+                csgrs::curve::contains_xy_with_context(
+                    &square,
+                    unresolved_zero(),
+                    half.clone(),
+                    &APPROXIMATE,
+                )
+            })
+            .unwrap();
+        assert_eq!(approximate.value, None);
+        assert_eq!(
+            approximate.certainty,
+            GeometryCertainty::Approximate512Consumed
+        );
+    }
+}
+
 #[cfg(feature = "sdf")]
 #[test]
 fn sdf_meshing_consumes_the_selected_policy() {
