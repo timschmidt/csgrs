@@ -136,6 +136,20 @@
       "log": "benchmark-candidate-fixtures.log",
       "sha256": "7ac564dace35707de2113639cdf4546658027e11d78ac5ce3a78daa7ccf553ff",
       "criterion_fixtures_passed": 6
+    },
+    {
+      "name": "hypercurve-configured-ci",
+      "command": "cd crates/hypercurve && cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "source_revision": "774de5d9cf2eabf3849e4b6893584ac68618dff7",
+      "exit_code": 0,
+      "log": "hypercurve-configured-ci.log",
+      "sha256": "e46d0cedc8093cc9504830e14f6ab886d4de4dd4e0412c6bf1444239e60a47eb",
+      "tests": {
+        "passed": 2417,
+        "failed": 0,
+        "ignored": 33
+      },
+      "source_integrity": "Crate and dependency sources were held fixed until the command and final rustdoc exited. The intervening audit commit changed only evidence and the properties ledger."
     }
   ],
   "sources": "sources.json",
@@ -201,9 +215,7 @@
       "sha256": "927e7d17e216eb0f555bf9ea73e1f91a60a50fd8aa7b366702c9959aa23de910"
     }
   ],
-  "pending": [
-    "Run the full configured Hypercurve CI test command for this component/axis-factor extension with sources fixed until rustdoc exits."
-  ],
+  "pending": [],
   "limitations": [
     "Counts bound instrumented work attempts, not degree, coefficient growth, scalar precision, memory, allocation, or elapsed time. Other dispatch and elimination paths remain incomplete.",
     "The projective retry is exercised directly in the regression; the independently scaled fixture already succeeds in the initial field-GCD route. It is not evidence that this fixture requires the retry.",

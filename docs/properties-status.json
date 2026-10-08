@@ -390,7 +390,8 @@
         "crates/hypersolve/src/trivariate_arithmetic.rs",
         "crates/hypercurve/src/bezier_offset/parallel_components/budget_tests.rs",
         "crates/hypercurve/src/bezier_offset/multivariate_sign.rs",
-        "docs/evidence/2026-10-08-curve-budget-components/manifest.json"
+        "docs/evidence/2026-10-08-curve-budget-components/manifest.json",
+        "docs/evidence/2026-10-08-curve-budget-components/hypercurve-configured-ci.log"
       ],
       "remaining": "Shared synchronous accounting covers instrumented root/selected-fiber refinements, represented images, selected-fiber norms, tagged projections, bivariate and constrained tensor-axis resultants, fixed-rank norms/subresultants, cofactor lifts, common-component discovery, and axis-factor extraction. Curve selectors, saturation, multiplicity reduction, source correspondences, and trivariate factor replay preserve typed exhaustion and complete exact retries; partially processed support cannot become a completed result. Complete accounting across remaining elimination and curve dispatch paths, scalar precision, and coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
     },
@@ -560,7 +561,7 @@
     ]
   },
   "next_actions": [
-    "The last single clean configured Hypercurve CI command passed at d5b893d37 (2,411 passed, 33 existing ignored). At 4d3ec0237, all 2,412 compiled tests passed with 33 existing ignored; its doctest was rerun successfully against verified committed sources after an overlapping source edit invalidated the original final rustdoc step. Preserve those separate records. Run the complete configured command with fixed sources for the component/axis-factor budget extension, then complete the repository pre-push matrix before any push.",
+    "The complete configured Hypercurve CI command passed at 774de5d9c with sources held fixed through rustdoc: 2,417 passed, 33 existing ignored. Preserve the earlier 4d3ec0237 compiled-test/source-overlap and separate committed-source doctest replay records. Complete the full repository pre-push matrix before any push.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
     "Repair the confirmed HyperDRC source-circle loss with authoritative geometry and metrics, typed uncertainty propagation, and retained pass/fail fixtures; preserve the original failing probe.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
