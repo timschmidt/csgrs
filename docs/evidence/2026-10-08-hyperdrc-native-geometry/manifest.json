@@ -1,0 +1,66 @@
+{
+  "source_revision": "774de5d9cf2eabf3849e4b6893584ac68618dff7",
+  "scope": "Retained public-API regression and source audit; no geometry repair or independent validation of all readiness-plan claims is asserted.",
+  "plan_review": {
+    "path": "crates/hyperdrc/docs/design-readiness-plan.md",
+    "lines_read": 1855,
+    "sha256": "e41bd7bd8724f9f984f69b3fb9ebac3173f8b46a287650dca04737ab06f46edb",
+    "date": "2026-10-08"
+  },
+  "probe": {
+    "command": "CARGO_TARGET_DIR=/home/tim/Documents/GitHub/workspace/csgrs/target cargo run --offline --manifest-path /tmp/properties-hyperdrc-circle-probe/Cargo.toml",
+    "exit_code": 101,
+    "log": "source-circle-failure.log",
+    "expected": "Each of two copper layers contains the exact point (999/1000, 3/100), since its squared distance from the authored radius-1 via center is 998901/1000000 < 1.",
+    "actual": "F.Cu returns Some(false); the assertion stops before querying B.Cu.",
+    "provenance": "Newly authored single-via KiCad fixture, exact rational independent oracle, public loader and containment APIs.",
+    "replay": "Copy source-circle-probe to a writable temporary directory, replace its two absolute dependency paths with the checked-out repository paths, and run cargo run --offline --manifest-path <temporary directory>/Cargo.toml. The retained lock and source identify the observed run; the offline dependency cache is required.",
+    "performance_claim": false
+  },
+  "findings": [
+    {
+      "path": "crates/hyperdrc/src/kicad.rs",
+      "status": "confirmed-by-probe",
+      "detail": "Via copper is constructed from circle_polygon(..., 48) with f64 source size/center; exact source location and drill metadata do not preserve the copper boundary."
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/distance.rs",
+      "status": "source-audit",
+      "detail": "Clearance metrics and threshold helpers consume projected rings. Lifting their dyadics exactly does not restore the source arcs. Failed candidate comparisons and missing distances can be discarded; downstream checks can continue without recording uncertainty."
+    },
+    {
+      "path": "crates/hyperdrc/src/geometry/region.rs",
+      "status": "source-audit",
+      "detail": "exact_input_polygon_bounds derives bounds from report rings instead of each polygon authoritative region."
+    },
+    {
+      "path": "crates/hyperdrc/src/geometry/violations.rs",
+      "status": "source-audit",
+      "detail": "polygon_area_scalar falls back to report-ring shoelace if authoritative area is unavailable."
+    },
+    {
+      "path": "crates/hyperdrc/src/geometry/types.rs",
+      "status": "source-audit",
+      "detail": "Area and bounds OnceLock<Option<_>> can retain unavailable results; resource-denial reproduction remains to be constructed."
+    },
+    {
+      "path": "crates/hyperdrc/src/lib.rs",
+      "status": "source-audit",
+      "detail": "If material-component extraction is unavailable, exact_backed_finite_polygons rebuilds Polygon::new from display rings. Projection failures use expect; component cache retains None."
+    }
+  ],
+  "remaining": [
+    "Preserve exact source circles, then other source-native geometry.",
+    "Use authoritative bounds, area, and native boundary metrics throughout decision consumers.",
+    "Propagate unsupported or uncertain queries to readiness coverage and violations rather than silently passing or publishing guessed measurements.",
+    "Audit retryable caches and finite projection error handling.",
+    "Revalidate the broader format, manufacturing, mechanical, routing, impedance, DFT/DFA, and reporting gaps documented by the plan."
+  ],
+  "files": {
+    "source-circle-failure.log": "01b85110eff2a11d9b20544a8d5ad54ef90a556eaa95685cb6c1dfc5538ac5f1",
+    "source-circle-probe/Cargo.lock": "b5bd843b755c4a495bb832318c88e9633acf7ed5d0d88b6c990becc11cb45af1",
+    "source-circle-probe/Cargo.toml": "a4af6cfd72f19d4bbdb6ef7422d2a6ef2bb305bc83f4465bdce89f94229ce8a9",
+    "source-circle-probe/src/main.rs": "df2d8401997f366de0301154849e31b7fe9e1ff4d0bd5f70612241035984461c",
+    "source-circle-probe/via.kicad_pcb": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a"
+  }
+}

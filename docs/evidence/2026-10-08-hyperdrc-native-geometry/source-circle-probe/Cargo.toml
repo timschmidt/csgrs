@@ -1,0 +1,10 @@
+[package]
+name = "hyperdrc-source-circle-probe"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperdrc = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal" }
+
+[workspace]
