@@ -9,102 +9,16 @@ use crate::errors::ValidationError;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::{BooleanOp, BooleanProgram, HypermeshResult, Plane, Triangle, TriangleMesh};
 use hyperreal::RealSign;
-use std::cell::RefCell;
 use std::num::NonZeroU32;
-use std::sync::Arc;
 
-#[derive(Clone, Debug, PartialEq)]
-enum PrimitiveParameters {
-    Cuboid(Real, Real, Real),
-    Sphere(Real, usize, usize),
-    Ellipsoid(Real, Real, Real, usize, usize),
-    FrustumBetween(Box<Point3>, Box<Point3>, Real, Real, usize),
-    Octahedron(Real),
-    Icosahedron(Real),
-    #[cfg(feature = "curve")]
-    Torus(Real, Real, usize, usize),
-}
+pub mod cache;
 
-thread_local! {
-    static PRIMITIVE_CACHE: RefCell<Vec<(PrimitiveParameters, TriangleMesh)>> =
-        const { RefCell::new(Vec::new()) };
-}
-
-fn retained_primitive(
-    parameters: PrimitiveParameters,
-    build: impl FnOnce() -> TriangleMesh,
-) -> TriangleMesh {
-    if let Some(mesh) = PRIMITIVE_CACHE.with_borrow(|entries| {
-        entries
-            .iter()
-            .find(|(cached, _)| cached == &parameters)
-            .map(|(_, mesh)| mesh.clone())
-    }) {
-        return mesh;
-    }
-    let mesh = build();
-    PRIMITIVE_CACHE.with_borrow_mut(|entries| {
-        const CAPACITY: usize = 32;
-        if entries.len() == CAPACITY {
-            entries.remove(0);
-        }
-        entries.push((parameters, mesh.clone()));
-    });
-    mesh
-}
-
-#[derive(Clone, Debug, PartialEq)]
-enum DistributionParameters {
-    Linear {
-        count: usize,
-        direction: Vector3,
-        spacing: Real,
-    },
-    Grid {
-        rows: usize,
-        columns: usize,
-        dx: Real,
-        dy: Real,
-    },
-    Arc {
-        count: usize,
-        radius: Real,
-        start_angle_degrees: Real,
-        end_angle_degrees: Real,
-    },
-}
-
-#[derive(Clone)]
-struct CachedDistribution {
-    positions: Arc<[Point3]>,
-    triangles: Arc<[Triangle]>,
-    parameters: DistributionParameters,
-    context: GeometryContext,
-    result: GeometryOutcome<TriangleMesh>,
-}
-
-type MeshStorage = (Arc<[Point3]>, Arc<[Triangle]>);
-
-#[derive(Clone)]
-struct CachedMerge {
-    sources: Vec<MeshStorage>,
-    result: TriangleMesh,
-}
-
-thread_local! {
-    static DISTRIBUTION_CACHE: RefCell<Vec<CachedDistribution>> =
-        const { RefCell::new(Vec::new()) };
-    static MERGE_CACHE: RefCell<Vec<CachedMerge>> = const { RefCell::new(Vec::new()) };
-}
-
+use cache::{
+    DistributionParameters, PrimitiveParameters, retain_distribution, retain_merge,
+    retained_distribution, retained_merge, retained_primitive,
+};
 #[cfg(feature = "curve")]
-#[derive(Clone)]
-struct CachedFlatten {
-    positions: Arc<[Point3]>,
-    triangles: Arc<[Triangle]>,
-    context: GeometryContext,
-    region: GeometryOutcome<hypercurve::CurveRegion2>,
-}
+use cache::{retain_flatten, retain_slice, retained_flatten, retained_slice};
 
 #[cfg(feature = "curve")]
 /// Filled region, open strings, and open paths produced by a horizontal slice.
@@ -113,61 +27,6 @@ pub type SliceResult = (
     Vec<hypercurve::CurveString2>,
     Vec<hypercurve::CurvePath2>,
 );
-
-#[cfg(feature = "curve")]
-#[derive(Clone)]
-struct CachedSlice {
-    positions: Arc<[Point3]>,
-    triangles: Arc<[Triangle]>,
-    z: Real,
-    context: GeometryContext,
-    result: GeometryOutcome<SliceResult>,
-}
-
-#[cfg(feature = "curve")]
-thread_local! {
-    static FLATTEN_CACHE: RefCell<Vec<CachedFlatten>> = const { RefCell::new(Vec::new()) };
-    static SLICE_CACHE: RefCell<Vec<CachedSlice>> = const { RefCell::new(Vec::new()) };
-}
-
-fn retained_distribution(
-    mesh: &TriangleMesh,
-    parameters: &DistributionParameters,
-    context: &GeometryContext,
-) -> Option<GeometryOutcome<TriangleMesh>> {
-    DISTRIBUTION_CACHE.with_borrow(|entries| {
-        entries
-            .iter()
-            .find(|entry| {
-                Arc::ptr_eq(&entry.positions, &mesh.positions)
-                    && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
-                    && &entry.parameters == parameters
-                    && &entry.context == context
-            })
-            .map(|entry| entry.result.clone())
-    })
-}
-
-fn retain_distribution(
-    mesh: &TriangleMesh,
-    parameters: DistributionParameters,
-    context: &GeometryContext,
-    result: &GeometryOutcome<TriangleMesh>,
-) {
-    DISTRIBUTION_CACHE.with_borrow_mut(|entries| {
-        const CAPACITY: usize = 8;
-        if entries.len() == CAPACITY {
-            entries.remove(0);
-        }
-        entries.push(CachedDistribution {
-            positions: Arc::clone(&mesh.positions),
-            triangles: Arc::clone(&mesh.triangles),
-            parameters,
-            context: *context,
-            result: result.clone(),
-        });
-    });
-}
 
 #[cfg(feature = "metaballs")]
 pub use crate::implicit::metaballs::{MetaBall, MetaballDiagnostics};
@@ -1681,20 +1540,7 @@ pub fn float(mesh: &TriangleMesh) -> TriangleMesh {
 
 /// Concatenates native meshes without performing a Boolean operation.
 pub fn merge(meshes: &[TriangleMesh]) -> TriangleMesh {
-    if let Some(result) = MERGE_CACHE.with_borrow(|entries| {
-        entries
-            .iter()
-            .find(|entry| {
-                entry.sources.len() == meshes.len()
-                    && entry.sources.iter().zip(meshes).all(
-                        |((positions, triangles), mesh)| {
-                            Arc::ptr_eq(positions, &mesh.positions)
-                                && Arc::ptr_eq(triangles, &mesh.triangles)
-                        },
-                    )
-            })
-            .map(|entry| entry.result.clone())
-    }) {
+    if let Some(result) = retained_merge(meshes) {
         return result;
     }
     let position_count = meshes.iter().map(|mesh| mesh.positions.len()).sum();
@@ -1713,19 +1559,7 @@ pub fn merge(meshes: &[TriangleMesh]) -> TriangleMesh {
         }));
     }
     let result = TriangleMesh::new(positions, triangles);
-    MERGE_CACHE.with_borrow_mut(|entries| {
-        const CAPACITY: usize = 8;
-        if entries.len() == CAPACITY {
-            entries.remove(0);
-        }
-        entries.push(CachedMerge {
-            sources: meshes
-                .iter()
-                .map(|mesh| (Arc::clone(&mesh.positions), Arc::clone(&mesh.triangles)))
-                .collect(),
-            result: result.clone(),
-        });
-    });
+    retain_merge(meshes, &result);
     result
 }
 
@@ -2078,16 +1912,7 @@ pub fn flatten_with_context(
 ) -> Result<GeometryOutcome<hypercurve::CurveRegion2>, ValidationError> {
     use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveRegion2};
 
-    if let Some(region) = FLATTEN_CACHE.with_borrow(|entries| {
-        entries
-            .iter()
-            .find(|entry| {
-                Arc::ptr_eq(&entry.positions, &mesh.positions)
-                    && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
-                    && entry.context == *context
-            })
-            .map(|entry| entry.region.clone())
-    }) {
+    if let Some(region) = retained_flatten(mesh, context) {
         return Ok(region);
     }
     let decisions = GeometryDecisions::new(context);
@@ -2132,18 +1957,7 @@ pub fn flatten_with_context(
         };
     }
     let output = decisions.finish(output);
-    FLATTEN_CACHE.with_borrow_mut(|entries| {
-        const CAPACITY: usize = 8;
-        if entries.len() == CAPACITY {
-            entries.remove(0);
-        }
-        entries.push(CachedFlatten {
-            positions: Arc::clone(&mesh.positions),
-            triangles: Arc::clone(&mesh.triangles),
-            context: *context,
-            region: output.clone(),
-        });
-    });
+    retain_flatten(mesh, context, &output);
     Ok(output)
 }
 
@@ -2164,17 +1978,7 @@ pub fn slice_z_with_context(
 ) -> Result<GeometryOutcome<SliceResult>, ValidationError> {
     use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveRegion2, CurveString2};
 
-    if let Some(result) = SLICE_CACHE.with_borrow(|entries| {
-        entries
-            .iter()
-            .find(|entry| {
-                Arc::ptr_eq(&entry.positions, &mesh.positions)
-                    && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
-                    && entry.z == z
-                    && entry.context == *context
-            })
-            .map(|entry| entry.result.clone())
-    }) {
+    if let Some(result) = retained_slice(mesh, &z, context) {
         return Ok(result);
     }
     let decisions = GeometryDecisions::new(context);
@@ -2315,19 +2119,7 @@ pub fn slice_z_with_context(
         }
     }
     let result = decisions.finish((region, wires, Vec::new()));
-    SLICE_CACHE.with_borrow_mut(|entries| {
-        const CAPACITY: usize = 8;
-        if entries.len() == CAPACITY {
-            entries.remove(0);
-        }
-        entries.push(CachedSlice {
-            positions: Arc::clone(&mesh.positions),
-            triangles: Arc::clone(&mesh.triangles),
-            z,
-            context: *context,
-            result: result.clone(),
-        });
-    });
+    retain_slice(mesh, z, context, &result);
     Ok(result)
 }
 
