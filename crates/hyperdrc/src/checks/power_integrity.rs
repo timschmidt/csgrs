@@ -8,7 +8,6 @@
 //! estimate conductor support from parsed 2D copper. They are release-readiness
 //! prompts, not ampacity, temperature-rise, or electromigration calculations.
 
-use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::CopperSpatialIndex;
 use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -56,6 +55,7 @@ pub fn power_pad_entry_readiness(
             &feature_index,
             support_distance,
             broad_phase_distance,
+            &mut violations,
         );
         candidate_supports += support_candidates;
         exact_supports += support_exact;
@@ -147,6 +147,7 @@ pub fn power_via_return_readiness(
             &return_index,
             return_distance,
             broad_phase_distance,
+            &mut violations,
         );
         candidate_returns += return_candidates;
         exact_returns += return_exact;
@@ -206,12 +207,12 @@ fn local_pad_support(
     feature_index: &CopperSpatialIndex<'_>,
     support_distance: &Scalar,
     broad_phase_distance: f64,
+    violations: &mut Vec<Violation>,
 ) -> (PadSupport, usize, usize) {
     let mut support = PadSupport::default();
     let Some(pad_bounds) = pad.region.to_multipolygon().bounding_rect() else {
         return (support, 0, 0);
     };
-    let pad_geometry = pad.region.to_multipolygon();
     let candidates = feature_index.same_layer_near_feature(pad, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
@@ -234,8 +235,14 @@ fn local_pad_support(
             continue;
         }
         exact_count += 1;
-        if polygon_boundary_distance_scalar(&pad_geometry, &feature.region.to_multipolygon())
-            .is_none_or(|distance| crate::scalar::gt(&distance, support_distance))
+        if crate::checks::boundaries_within_for_check(
+            &pad.region,
+            &feature.region,
+            support_distance,
+            "power-pad-entry-readiness",
+            &[&pad.layer],
+            violations,
+        ) != Some(true)
         {
             continue;
         }
@@ -262,11 +269,11 @@ fn has_nearby_return(
     return_index: &CopperSpatialIndex<'_>,
     return_distance: &Scalar,
     broad_phase_distance: f64,
+    violations: &mut Vec<Violation>,
 ) -> (bool, usize, usize) {
     let Some(via_bounds) = via.region.to_multipolygon().bounding_rect() else {
         return (false, 0, 0);
     };
-    let via_geometry = via.region.to_multipolygon();
     let candidates = return_index.same_layer_near_feature(via, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
@@ -282,8 +289,14 @@ fn has_nearby_return(
         }
 
         exact_count += 1;
-        if polygon_boundary_distance_scalar(&via_geometry, &feature.region.to_multipolygon())
-            .is_some_and(|distance| crate::scalar::le(&distance, return_distance))
+        if crate::checks::boundaries_within_for_check(
+            &via.region,
+            &feature.region,
+            return_distance,
+            "power-via-return-readiness",
+            &[&via.layer],
+            violations,
+        ) == Some(true)
         {
             has_return = true;
             break;

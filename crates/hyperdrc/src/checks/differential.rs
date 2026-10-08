@@ -10,7 +10,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -543,13 +542,24 @@ pub fn differential_pair_to_pair_spacing_readiness(
             }
             exact_pairs += 1;
             let right = features[right_index];
-            let Some(gap) = polygon_boundary_distance_scalar(
-                &left.region.to_multipolygon(),
-                &right.region.to_multipolygon(),
+            let Some(gap) = crate::checks::boundary_distance_for_check(
+                &left.region,
+                &right.region,
+                "differential-pair-to-pair-spacing-readiness",
+                &[&left.layer],
+                &mut violations,
             ) else {
                 continue;
             };
-            if crate::scalar::gt(&gap, minimum_pair_to_pair_gap) {
+            if crate::checks::metric_cmp_for_check(
+                &gap,
+                minimum_pair_to_pair_gap,
+                "differential-pair-to-pair-spacing-readiness",
+                &[&left.layer],
+                &mut violations,
+            )
+            .is_none_or(|order| order.is_gt())
+            {
                 continue;
             }
 

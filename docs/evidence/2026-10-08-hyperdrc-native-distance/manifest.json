@@ -1,0 +1,83 @@
+{
+  "base_revision": "04ac60d9c84e1512278ef742e19eb10e4b7c565c",
+  "status": "Retained native DRC boundary metric adoption; the complete properties.md goal remains active.",
+  "scope": "Replace 52 finite/report metric calls in 14 production check modules plus the prepared net-clearance cache path. The shared metric consumes authoritative regularized native material and hole contours. Finite legacy geometry remains test-only.",
+  "baseline_failures": "failures/manifest.json",
+  "changed_call_counts": {
+    "crates/hyperdrc/src/checks/layer.rs": 1,
+    "crates/hyperdrc/src/checks/constraints.rs": 3,
+    "crates/hyperdrc/src/checks/differential.rs": 1,
+    "crates/hyperdrc/src/checks/assembly.rs": 11,
+    "crates/hyperdrc/src/checks/rf.rs": 2,
+    "crates/hyperdrc/src/checks/safety.rs": 4,
+    "crates/hyperdrc/src/checks/signal.rs": 3,
+    "crates/hyperdrc/src/checks/power_integrity.rs": 2,
+    "crates/hyperdrc/src/checks/thermal.rs": 3,
+    "crates/hyperdrc/src/checks/power.rs": 2,
+    "crates/hyperdrc/src/checks/mechanical.rs": 4,
+    "crates/hyperdrc/src/checks/return_path.rs": 3,
+    "crates/hyperdrc/src/checks/dense_pad.rs": 1,
+    "crates/hyperdrc/src/checks/board.rs": 12
+  },
+  "contract": [
+    "PreparedRegionBoundary exposes fallible boundary distance, inclusive boundary-clearance and point-clearance queries. Valid empty boundaries have no distance and do not satisfy a threshold; invalid construction and unsupported native boundaries remain typed uncertainty.",
+    "Every required metric comparison runs under STRICT with work-budget guards. An enclosing display preview cannot supply its tolerance. Optional certified outward finite bounds schedule candidates; absent bounds retain candidates, and unresolved exact lower bounds do not reject them.",
+    "Native filled-region boundaries exclude authored internal seams and include holes. Native circle distance and point thresholds are independent of report sampling.",
+    "Only successful prepared boundaries enter the local constraint cache. Every warm query still checks the current shared budget. Unknown nearest-candidate comparisons and query failures no longer become zero, a dropped candidate, or an arbitrary minimum.",
+    "Check gateways retain requested check and layers in geometry-uncertainty findings. ReadinessRunner marks the affected execution Uncertain, preserves the reason, and does not poison later checks. Shared check implementation version is now 2; registry schema remains 1.",
+    "The constraint index retains missing bounds and uses outward finite sorting keys; missing bounds and undecided bounds comparisons disable rejection. Differential same-layer nearest fallback now measures all pairs instead of returning the first pair."
+  ],
+  "validation": {
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "source_frozen_through_docs": true,
+    "configured_command": "cargo test --locked -p hyperdrc --release",
+    "passed": 1142,
+    "library": 1138,
+    "readme_integration": 2,
+    "doctests": 2,
+    "native_distance_tests": 13,
+    "legacy_finite_tests": 21,
+    "runner_attribution_test": 1,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "cost": {
+    "manifest": "cost/manifest.json",
+    "kind": "Candidate-only capability cost; repaired native and report-chord semantics differ. No matched-baseline speedup claim.",
+    "field_squares": 2000,
+    "field_probes": 64,
+    "field_preparation_median_us": 628555,
+    "field_queries_median_us": 22352,
+    "field_rows": 64,
+    "field_bytes": 257,
+    "field_sha256": "4e5e801fd8aba03a5d2f27e860977146155d07e9172ba4818583da20a52712f8",
+    "field_peak_rss_kib": [
+      65088,
+      65608
+    ],
+    "fixture_total_ms": 65446.001,
+    "fixture_peak_rss_kib": 1483976,
+    "fixture_exit_code": 0,
+    "limitations": [
+      "Field preparation excludes original input rectangle construction; whole-process RSS includes it.",
+      "The two-second field query gate, all 2,000 squares and 64 probes, and full fixture datasets remain unchanged.",
+      "Linked test/fixture executable sizes include their harnesses; no library-size delta or allocation count was measured.",
+      "The full fixture smoke timing is a single observation."
+    ]
+  },
+  "replay": {
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-native-distance/reproduce_validation.py /tmp/hyperdrc-distance-validation-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-native-distance/reproduce_cost.py /tmp/hyperdrc-distance-validation-fresh /tmp/hyperdrc-distance-cost-fresh",
+    "conditions": "Run from repository root. Output directories must not exist. Wait for all validation, build and test jobs to exit before the serial CPU-0 cost run. Retained scripts differ from the original temporary runners only in output-directory arguments and an unused import."
+  },
+  "remaining": [
+    "This does not certify every check: several older finite spatial indices and report-bound shortcuts can still omit candidates or require finite compatibility coordinates.",
+    "Component/projection caches, report-ring fallback promotion, and projection panics still need fallible authoritative handling. Some callers split features through to_multipolygon before retaining each native polygon.",
+    "The translated_circle compatibility wrapper still expects admitted construction and can panic on unresolved or denied input. Other source shapes and formats remain under audit.",
+    "Area, width, containment, source-value and other Option/filter_map consumers still need complete uncertainty propagation. Some non-distance threshold and sorting helpers still assume comparable values.",
+    "General rational-curve boundary distance remains a typed blocker. More curve families need independent native metric certificates.",
+    "The full repository pre-push workflow matrix has not been run for this commit; no push was requested."
+  ]
+}

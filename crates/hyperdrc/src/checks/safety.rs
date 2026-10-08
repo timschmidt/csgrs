@@ -10,7 +10,7 @@
 
 use crate::PcbRegionExt;
 use crate::Scalar;
-use crate::checks::distance::polygon_boundary_distance_scalar;
+
 use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes_scalar;
@@ -187,11 +187,14 @@ pub fn voltage_clearance_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &left.region.to_multipolygon(),
-                    &right.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, clearance))
+                && crate::checks::boundaries_within_for_check(
+                    &left.region,
+                    &right.region,
+                    clearance,
+                    "voltage-clearance-readiness",
+                    &[&left.layer],
+                    &mut violations,
+                ) == Some(true)
             {
                 vec![
                     left.location_f64_compatibility_required(),
@@ -306,11 +309,14 @@ pub fn protective_earth_spacing_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &hv.region.to_multipolygon(),
-                    &pe.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, clearance));
+                && crate::checks::boundaries_within_for_check(
+                    &hv.region,
+                    &pe.region,
+                    clearance,
+                    "protective-earth-spacing-readiness",
+                    &[&hv.layer],
+                    &mut violations,
+                ) == Some(true);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -426,11 +432,14 @@ pub fn surge_protection_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &source.region.to_multipolygon(),
-                    &neighbor.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, keepout));
+                && crate::checks::boundaries_within_for_check(
+                    &source.region,
+                    &neighbor.region,
+                    keepout,
+                    "surge-protection-keepout-readiness",
+                    &[&source.layer],
+                    &mut violations,
+                ) == Some(true);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -552,13 +561,24 @@ pub fn esd_protection_readiness(
             continue;
         }
 
-        let Some(edge_gap) = polygon_boundary_distance_scalar(
-            &feature.region.to_multipolygon(),
-            &outline.to_multipolygon(),
+        let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+            &feature.region,
+            outline,
+            "esd-protection-readiness",
+            &[&feature.layer],
+            &mut violations,
         ) else {
             continue;
         };
-        if crate::scalar::gt(&edge_gap, edge_distance) {
+        if crate::checks::metric_cmp_for_check(
+            &edge_gap,
+            edge_distance,
+            "esd-protection-readiness",
+            &[&feature.layer],
+            &mut violations,
+        )
+        .is_none_or(|order| order.is_gt())
+        {
             continue;
         }
         edge_candidate_count += 1;

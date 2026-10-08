@@ -1,0 +1,78 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error: this expression creates a reference which is immediately dereferenced by the compiler
+    --> crates/hyperdrc/src/checks/assembly.rs:1171:17
+     |
+1171 |                 &outline,
+     |                 ^^^^^^^^ help: change this to: `outline`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+     = note: `-D clippy::needless-borrow` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::needless_borrow)]`
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+    --> crates/hyperdrc/src/checks/assembly.rs:1406:21
+     |
+1406 |                     &outline,
+     |                     ^^^^^^^^ help: change this to: `outline`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> crates/hyperdrc/src/checks/board.rs:664:17
+    |
+664 |                 &outline,
+    |                 ^^^^^^^^ help: change this to: `outline`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> crates/hyperdrc/src/checks/board.rs:802:17
+    |
+802 |                 &outline,
+    |                 ^^^^^^^^ help: change this to: `outline`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+    --> crates/hyperdrc/src/checks/board.rs:2466:13
+     |
+2466 |             &outline,
+     |             ^^^^^^^^ help: change this to: `outline`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> crates/hyperdrc/src/checks/safety.rs:566:13
+    |
+566 |             &outline,
+    |             ^^^^^^^^ help: change this to: `outline`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+
+error: enclosing `Ok` and `?` operator are unneeded
+   --> crates/hyperdrc/src/checks/signal.rs:509:5
+    |
+509 | /     Ok(
+510 | |         crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
+511 | |             .map_err(|uncertainty| {
+512 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+...   |
+517 | |         })?,
+518 | |     )
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_question_mark
+    = note: `-D clippy::needless-question-mark` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::needless_question_mark)]`
+help: remove the enclosing `Ok` and `?` operator
+    |
+509 ~     crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
+510 |             .map_err(|uncertainty| {
+...
+515 |             ))
+516 ~         })
+    |
+
+error: could not compile `hyperdrc` (lib) due to 7 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperdrc` (lib test) due to 7 previous errors

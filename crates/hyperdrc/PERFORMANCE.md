@@ -83,6 +83,37 @@ retain every trial. Native clearance consumers, projection/component failures,
 conservative spatial rejection, and readiness uncertainty propagation remain
 open; the source-circle repair does not certify those paths.
 
+## Native boundary metric adoption, 2026-10-08
+
+All 52 report-metric call sites and the prepared net-clearance cache now query
+regularized native boundaries, including holes. Required metric failures and
+comparisons remain uncertainty through findings and readiness receipts. Six
+retained pre-fix failures cover circle/chord disagreement, a hole, an internal
+union seam, an unsupported rational boundary, and an exhausted warm query.
+The release gate passed 1,138 library tests, two README integration tests and
+two doctests; strict all-feature/all-target Clippy, rustdoc and formatting pass.
+The [manifest](../../docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json)
+retains the source hashes, failures, commands, and scope limitations.
+
+Five fresh processes pinned to CPU 0 measured the unchanged 2,000-square,
+64-probe field after all builds/tests ended. Median filled-region construction
+and boundary preparation took 628.555 ms; 64 probe constructions and queries took
+22.352 ms, within the existing two-second gate. Every trial produced 64 exact
+unit distances, 257 serialized bytes and the same SHA-256. Whole-process peak RSS
+was 65,088–65,608 KiB. The test executable was 51,646,568 bytes.
+
+One full fixture smoke run, also pinned to CPU 0, passed in 65.446 seconds with
+1,483,976 KiB peak RSS; its executable was 42,051,792 bytes. The
+[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-native-distance/cost/manifest.json)
+includes every trial and both executable hashes. These are candidate capability
+costs: corrected native answers can differ from report-chord answers. No matched
+speedup, allocation count or library-size delta is claimed. Original rectangle
+construction is outside the field preparation timer but inside process RSS.
+
+Finite spatial rejection elsewhere, component/projection failure handling,
+other source shapes, and non-distance readiness measurements remain open. The
+finite reference distance helpers are retained only in tests.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

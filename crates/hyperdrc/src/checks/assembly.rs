@@ -10,10 +10,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::checks::distance::{
-    exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
-    polygon_boundary_distance_scalar,
-};
 use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
 use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use crate::checks::{intersection_for_check, offset_for_check};
@@ -52,38 +48,41 @@ pub fn component_edge_clearance_readiness(
         .collect::<Vec<_>>();
     let mut rect_rejections = 0_usize;
     let mut exact_checks = 0_usize;
-    let violations = candidate_pads
-        .iter()
-        .filter_map(|feature| {
-            if outline_rect
-                .as_ref()
-                .is_some_and(|rect| {
-                    feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
-                })
-            {
-                rect_rejections += 1;
-                return None;
-            }
-            exact_checks += 1;
-            let edge_gap = polygon_boundary_distance_scalar(
-                &feature.region.to_multipolygon(),
-                &outline.to_multipolygon(),
-            )?;
-            crate::scalar::lt(&edge_gap, clearance).then(|| {
-                Violation::new(
-                    "component-edge-clearance-readiness",
-                    Severity::Warning,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location_f64_compatibility_required()],
-                    Some(format!(
-                        "component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access"
-                    )),
-                )
-            })
-        })
-        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+    for feature in &candidate_pads {
+        if outline_rect.as_ref().is_some_and(|rect| {
+            feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
+        }) {
+            rect_rejections += 1;
+            continue;
+        }
+        exact_checks += 1;
+        let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+            &feature.region,
+            outline,
+            "component-edge-clearance-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
+        if crate::checks::metric_cmp_for_check(
+            &edge_gap,
+            clearance,
+            "component-edge-clearance-readiness",
+            &[&feature.layer],
+            &mut violations,
+        )
+        .is_some_and(|order| order.is_lt())
+        {
+            violations.push(Violation::new(
+                "component-edge-clearance-readiness", Severity::Warning,
+                vec![feature.layer.clone()], None, Vec::new(),
+                vec![feature.location_f64_compatibility_required()],
+                Some(format!("component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access")),
+            ));
+        }
+    }
 
     log::trace!(
         "component-edge clearance readiness: source={} pads={} rect_rejections={} exact_checks={} clearance={clearance:#.6} violations={}",
@@ -186,11 +185,14 @@ pub fn component_hole_clearance_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundaries_within_scalar(
-                    &keepout.to_multipolygon(),
-                    &pad.region.to_multipolygon(),
+                && (crate::checks::boundaries_within_for_check(
+                    &keepout,
+                    &pad.region,
                     &Scalar::zero(),
-                );
+                    "component-hole-clearance-readiness",
+                    &[&pad.layer],
+                    &mut violations,
+                ) == Some(true));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -260,13 +262,24 @@ pub fn component_spacing_readiness(
         }
         exact_pair_count += 1;
 
-        let Some(gap) = polygon_boundary_distance_scalar(
-            &left.region.to_multipolygon(),
-            &right.region.to_multipolygon(),
+        let Some(gap) = crate::checks::boundary_distance_for_check(
+            &left.region,
+            &right.region,
+            "component-spacing-readiness",
+            &[&left.layer],
+            &mut violations,
         ) else {
             continue;
         };
-        if crate::scalar::ge(&gap, clearance) {
+        if crate::checks::metric_cmp_for_check(
+            &gap,
+            clearance,
+            "component-spacing-readiness",
+            &[&left.layer],
+            &mut violations,
+        )
+        .is_none_or(|order| !order.is_lt())
+        {
             continue;
         }
 
@@ -362,13 +375,24 @@ pub fn connector_rework_clearance_readiness(
         }
         exact_pair_count += 1;
 
-        let Some(gap) = polygon_boundary_distance_scalar(
-            &connector.region.to_multipolygon(),
-            &neighbor.region.to_multipolygon(),
+        let Some(gap) = crate::checks::boundary_distance_for_check(
+            &connector.region,
+            &neighbor.region,
+            "connector-rework-clearance-readiness",
+            &[&connector.layer],
+            &mut violations,
         ) else {
             continue;
         };
-        if crate::scalar::ge(&gap, clearance) {
+        if crate::checks::metric_cmp_for_check(
+            &gap,
+            clearance,
+            "connector-rework-clearance-readiness",
+            &[&connector.layer],
+            &mut violations,
+        )
+        .is_none_or(|order| !order.is_lt())
+        {
             continue;
         }
 
@@ -455,13 +479,24 @@ pub fn pad_pair_asymmetry_readiness(
             continue;
         }
 
-        let Some(gap) = polygon_boundary_distance_scalar(
-            &left.region.to_multipolygon(),
-            &right.region.to_multipolygon(),
+        let Some(gap) = crate::checks::boundary_distance_for_check(
+            &left.region,
+            &right.region,
+            "pad-pair-asymmetry-readiness",
+            &[&left.layer],
+            &mut violations,
         ) else {
             continue;
         };
-        if crate::scalar::gt(&gap, max_pair_gap) {
+        if crate::checks::metric_cmp_for_check(
+            &gap,
+            max_pair_gap,
+            "pad-pair-asymmetry-readiness",
+            &[&left.layer],
+            &mut violations,
+        )
+        .is_none_or(|order| order.is_gt())
+        {
             continue;
         }
         exact_pair_count += 1;
@@ -718,15 +753,17 @@ pub fn testpoint_accessibility_readiness(
             let required_edge_band = probe_radius + edge_clearance;
             let x = point.location[0].clone();
             let y = point.location[1].clone();
-            let outline_geometry = outline.to_multipolygon();
+
             let inside = outline.contains_xy(x, y) == Some(true);
             if !inside
-                || exact_point_polygon_boundary_within_scalar(
+                || (crate::checks::point_boundary_within_for_check(
                     &point.location,
-                    ipc_location(point),
-                    &outline_geometry,
+                    outline,
                     &required_edge_band,
-                )
+                    "testpoint-accessibility-readiness",
+                    &[&point.net],
+                    &mut violations,
+                ) == Some(true))
             {
                 violations.push(Violation::new(
                     "testpoint-accessibility-readiness",
@@ -920,15 +957,17 @@ pub fn testpoint_copper_clearance_readiness(
             // IPC-D-356 testpoint metadata itself is complete.
             let x = point.location[0].clone();
             let y = point.location[1].clone();
-            let feature_geometry = feature.region.to_multipolygon();
+
             let center_inside = feature.region.contains_xy(x, y) != Some(false);
             if !center_inside
-                && !exact_point_polygon_boundary_within_scalar(
+                && (crate::checks::point_boundary_within_for_check(
                     &point.location,
-                    ipc_location(point),
-                    &feature_geometry,
+                    &feature.region,
                     &keepout_radius,
-                )
+                    "testpoint-copper-clearance-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) == Some(false))
             {
                 continue;
             }
@@ -1127,13 +1166,24 @@ pub fn tooling_hole_readiness(
                     name: "tooling hole".to_string(),
                 }),
             );
-            let Some(edge_gap) = polygon_boundary_distance_scalar(
-                &keepout.to_multipolygon(),
-                &outline.to_multipolygon(),
+            let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+                &keepout,
+                outline,
+                "tooling-hole-readiness",
+                &[&board.source],
+                &mut violations,
             ) else {
                 continue;
             };
-            if crate::scalar::ge(&edge_gap, edge_clearance) {
+            if crate::checks::metric_cmp_for_check(
+                &edge_gap,
+                edge_clearance,
+                "tooling-hole-readiness",
+                &[&board.source],
+                &mut violations,
+            )
+            .is_none_or(|order| !order.is_lt())
+            {
                 continue;
             }
 
@@ -1351,13 +1401,24 @@ pub fn fiducial_readiness(
                     continue;
                 }
                 exact_edge_checks += 1;
-                let Some(distance_to_edge) = polygon_boundary_distance_scalar(
-                    &candidate.region.to_multipolygon(),
-                    &outline.to_multipolygon(),
+                let Some(distance_to_edge) = crate::checks::boundary_distance_for_check(
+                    &candidate.region,
+                    outline,
+                    "fiducial-readiness",
+                    &[&candidate.layer],
+                    &mut violations,
                 ) else {
                     continue;
                 };
-                if crate::scalar::ge(&distance_to_edge, edge_clearance) {
+                if crate::checks::metric_cmp_for_check(
+                    &distance_to_edge,
+                    edge_clearance,
+                    "fiducial-readiness",
+                    &[&candidate.layer],
+                    &mut violations,
+                )
+                .is_none_or(|order| !order.is_lt())
+                {
                     continue;
                 }
                 violations.push(Violation::new(
@@ -1464,11 +1525,14 @@ pub fn fiducial_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundaries_within_scalar(
-                    &keepout.to_multipolygon(),
-                    &blocker.region.to_multipolygon(),
+                && (crate::checks::boundaries_within_for_check(
+                    &keepout,
+                    &blocker.region,
                     &Scalar::zero(),
-                );
+                    "fiducial-keepout-readiness",
+                    &[&blocker.layer],
+                    &mut violations,
+                ) == Some(true));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -1579,11 +1643,14 @@ pub fn selective_wave_solder_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let touching = shapes.is_empty()
-                && polygon_boundaries_within_scalar(
-                    &keepout_region.to_multipolygon(),
-                    &pad.region.to_multipolygon(),
+                && (crate::checks::boundaries_within_for_check(
+                    &keepout_region,
+                    &pad.region,
                     &Scalar::zero(),
-                );
+                    "selective-wave-solder-keepout-readiness",
+                    &[&pad.layer],
+                    &mut violations,
+                ) == Some(true));
             if shapes.is_empty() && !touching {
                 continue;
             }

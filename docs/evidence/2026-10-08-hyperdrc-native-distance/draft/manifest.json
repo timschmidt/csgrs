@@ -1,0 +1,10 @@
+{
+  "purpose": "Authoring and focused-check history; these drafts are superseded by validation/status.json. Draft source snapshots were not retained, so these are not independently replayable gates.",
+  "notes": [
+    "The initial six-test native core passed with unused API warnings while callers were still being migrated.",
+    "Automated import insertion split three module comments; restoring the comments fixed the parser errors.",
+    "The first adopted distance build passed 29 tests with three unused helper warnings; those helpers were removed.",
+    "The extended distance build passed 34 tests.",
+    "Strict Clippy then found six needless outline borrows and one redundant Ok/question-mark wrapper. The final fixed-source Clippy gate passes."
+  ]
+}

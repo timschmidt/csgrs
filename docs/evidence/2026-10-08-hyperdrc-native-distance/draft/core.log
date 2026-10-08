@@ -1,0 +1,42 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: unused imports: `PreparedRegionBoundary`, `point_region_boundary_within`, `region_boundaries_within`, and `region_boundary_distance`
+  --> crates/hyperdrc/src/checks/distance.rs:12:5
+   |
+12 |     PreparedRegionBoundary, point_region_boundary_within, region_boundaries_within,
+   |     ^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^
+13 |     region_boundary_distance,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `within` is never used
+   --> crates/hyperdrc/src/checks/distance/native.rs:122:30
+    |
+ 26 | impl PreparedRegionBoundary {
+    | --------------------------- method in this implementation
+...
+122 |     pub(in crate::checks) fn within(&self, other: &Self, threshold: &Scalar) -> MetricResult<bool> {
+    |                              ^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `region_boundaries_within` is never used
+   --> crates/hyperdrc/src/checks/distance/native.rs:221:26
+    |
+221 | pub(in crate::checks) fn region_boundaries_within(
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `hyperdrc` (lib test) generated 3 warnings (run `cargo fix --lib -p hyperdrc --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 25.08s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 6 tests
+test checks::distance::native_regressions::exhausted_prepared_metric_does_not_publish_a_cached_distance ... ok
+test checks::distance::native_regressions::point_clearance_uses_the_authored_circle ... ok
+test checks::distance::native_regressions::overlapping_profiles_do_not_publish_internal_seams_as_boundaries ... ok
+test checks::distance::native_regressions::unsupported_native_boundary_cannot_borrow_report_segments ... ok
+test checks::distance::native_regressions::native_circle_distance_is_independent_of_report_resolution ... ok
+test checks::distance::native_regressions::native_hole_boundary_retains_its_radius ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1126 filtered out; finished in 0.01s
+

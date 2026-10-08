@@ -9,7 +9,8 @@
 //! stackup, adjacent reference layer, and source CAD constraints are reviewed.
 
 use super::difference_for_check;
-use super::distance::polygon_boundary_distance_scalar;
+use super::distance::{minimum_metric, region_boundary_distance};
+
 use super::spatial::CopperSpatialIndex;
 use crate::geometry::Rect;
 use crate::geometry::{multipolygon_to_shapes_scalar, polygons_to_profile};
@@ -73,7 +74,6 @@ pub fn split_plane_crossing_readiness(
             continue;
         };
 
-        let segment_geometry = feature.region.to_multipolygon();
         let candidates = ground_index.same_layer_near_feature(feature, broad_phase_distance);
         candidate_ground_zones += candidates.len();
         let nearby = candidates
@@ -84,15 +84,23 @@ pub fn split_plane_crossing_readiness(
             })
             .filter(|zone| {
                 exact_ground_zones += 1;
-                polygon_boundary_distance_scalar(
-                    &segment_geometry,
-                    &zone.feature.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, search_distance))
+                crate::checks::boundaries_within_for_check(
+                    &feature.region,
+                    &zone.feature.region,
+                    search_distance,
+                    "split-plane-crossing-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) == Some(true)
             })
             .collect::<Vec<_>>();
         if nearby.len() < 2
-            || !has_separated_ground_islands(&nearby, search_distance, broad_phase_distance)
+            || !has_separated_ground_islands(
+                &nearby,
+                search_distance,
+                broad_phase_distance,
+                &mut violations,
+            )
         {
             continue;
         }
@@ -198,28 +206,31 @@ pub fn return_path_proximity_readiness(
             continue;
         };
 
-        let feature_geometry = feature.region.to_multipolygon();
-        let nearest_distance = candidate_ground_indexes
-            .into_iter()
-            .filter_map(|ground_index| {
+        let nearest = crate::checks::geometry_result_for_check(
+            minimum_metric(candidate_ground_indexes.into_iter().map(|ground_index| {
                 exact_pairs += 1;
-                polygon_boundary_distance_scalar(
-                    &feature_geometry,
-                    &ground_features[ground_index].region.to_multipolygon(),
-                )
-            })
-            .reduce(|left, right| {
-                if crate::scalar::le(&left, &right) {
-                    left
-                } else {
-                    right
-                }
-            });
-        if nearest_distance
-            .as_ref()
-            .is_some_and(|distance| crate::scalar::le(distance, maximum_return_distance))
-        {
-            continue;
+                region_boundary_distance(&feature.region, &ground_features[ground_index].region)
+                    .map(|distance| distance.map(|distance| ((), distance)))
+            })),
+            "return-path-proximity-readiness",
+            &[&feature.layer],
+            &mut violations,
+        );
+        let Some(nearest) = nearest else { continue };
+        let nearest_distance = nearest.map(|(_, distance)| distance);
+        if let Some(distance) = &nearest_distance {
+            let Some(order) = crate::checks::metric_cmp_for_check(
+                distance,
+                maximum_return_distance,
+                "return-path-proximity-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if !order.is_gt() {
+                continue;
+            }
         }
 
         violations.push(return_path_proximity_violation(
@@ -279,18 +290,21 @@ fn has_separated_ground_islands(
     zones: &[&GroundZone<'_>],
     search_distance: &Scalar,
     broad_phase_distance: f64,
+    violations: &mut Vec<Violation>,
 ) -> bool {
     for (index, left) in zones.iter().enumerate() {
-        let left_geometry = left.feature.region.to_multipolygon();
         for right in zones.iter().skip(index + 1) {
             if !expanded_rects_overlap(&left.bounds, &right.bounds, broad_phase_distance) {
                 return true;
             }
-            if polygon_boundary_distance_scalar(
-                &left_geometry,
-                &right.feature.region.to_multipolygon(),
-            )
-            .is_some_and(|distance| crate::scalar::gt(&distance, search_distance))
+            if crate::checks::boundaries_within_for_check(
+                &left.feature.region,
+                &right.feature.region,
+                search_distance,
+                "split-plane-crossing-readiness",
+                &[&left.feature.layer],
+                violations,
+            ) == Some(false)
             {
                 return true;
             }

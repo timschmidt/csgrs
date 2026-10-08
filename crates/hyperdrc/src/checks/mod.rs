@@ -74,6 +74,90 @@ pub use thermal::*;
 use crate::report::{Severity, Violation};
 use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
+/// Retain a failed geometry query in the check's findings before allowing its
+/// candidate walk to continue. `None` must never silently erase uncertainty.
+pub(crate) fn geometry_result_for_check<T>(
+    result: Result<T, PcbGeometryUncertainty>,
+    requested_check: &str,
+    layers: &[&str],
+    violations: &mut Vec<Violation>,
+) -> Option<T> {
+    match result {
+        Ok(value) => Some(value),
+        Err(uncertainty) => {
+            violations.push(geometry_uncertainty_violation(
+                requested_check,
+                layers.iter().map(|layer| (*layer).to_owned()).collect(),
+                uncertainty,
+            ));
+            None
+        }
+    }
+}
+
+pub(crate) fn boundary_distance_for_check(
+    left: &PcbRegion,
+    right: &PcbRegion,
+    requested_check: &str,
+    layers: &[&str],
+    violations: &mut Vec<Violation>,
+) -> Option<Scalar> {
+    geometry_result_for_check(
+        distance::region_boundary_distance(left, right),
+        requested_check,
+        layers,
+        violations,
+    )
+    .flatten()
+}
+
+pub(crate) fn metric_cmp_for_check(
+    left: &Scalar,
+    right: &Scalar,
+    requested_check: &str,
+    layers: &[&str],
+    violations: &mut Vec<Violation>,
+) -> Option<std::cmp::Ordering> {
+    geometry_result_for_check(
+        distance::compare_metrics(left, right),
+        requested_check,
+        layers,
+        violations,
+    )
+}
+
+pub(crate) fn boundaries_within_for_check(
+    left: &PcbRegion,
+    right: &PcbRegion,
+    threshold: &Scalar,
+    requested_check: &str,
+    layers: &[&str],
+    violations: &mut Vec<Violation>,
+) -> Option<bool> {
+    geometry_result_for_check(
+        distance::region_boundaries_within(left, right, threshold),
+        requested_check,
+        layers,
+        violations,
+    )
+}
+
+pub(crate) fn point_boundary_within_for_check(
+    point: &[Scalar; 2],
+    region: &PcbRegion,
+    threshold: &Scalar,
+    requested_check: &str,
+    layers: &[&str],
+    violations: &mut Vec<Violation>,
+) -> Option<bool> {
+    geometry_result_for_check(
+        distance::point_region_boundary_within(point, region, threshold),
+        requested_check,
+        layers,
+        violations,
+    )
+}
+
 pub(crate) fn offset_for_check(
     region: &PcbRegion,
     distance: Scalar,

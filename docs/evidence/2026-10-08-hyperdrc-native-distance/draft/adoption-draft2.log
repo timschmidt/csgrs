@@ -1,0 +1,58 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: function `scalar_lt` is never used
+    --> crates/hyperdrc/src/checks/constraints.rs:2337:4
+     |
+2337 | fn scalar_lt(left: &Scalar, right: &Scalar) -> bool {
+     |    ^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `scalar_le` is never used
+    --> crates/hyperdrc/src/checks/constraints.rs:2341:4
+     |
+2341 | fn scalar_le(left: &Scalar, right: &Scalar) -> bool {
+     |    ^^^^^^^^^
+
+warning: function `polygon_inside_rect_boundary_gap_scalar` is never used
+    --> crates/hyperdrc/src/checks/mechanical.rs:1019:4
+     |
+1019 | fn polygon_inside_rect_boundary_gap_scalar(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `hyperdrc` (lib test) generated 3 warnings
+    Finished `release` profile [optimized] target(s) in 24.34s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 29 tests
+test checks::distance::finite_legacy::tests::point_segment_distance_falls_back_to_endpoint_for_degenerate_segment ... ok
+test checks::distance::finite_legacy::tests::point_segment_distance_uses_projection_for_internal_foot ... ok
+test checks::distance::finite_legacy::tests::point_segment_distance_keeps_tiny_nonzero_segment_distinct_from_point ... ok
+test checks::distance::finite_legacy::tests::point_segment_distance_with_non_finite_endpoint_is_infinite ... ok
+test checks::distance::finite_legacy::tests::segment_distance_does_not_zero_parallel_traces_inside_old_epsilon ... ok
+test checks::distance::finite_legacy::tests::segment_distance_reports_zero_for_endpoint_touch ... ok
+test checks::distance::finite_legacy::tests::segment_distance_is_expected_for_parallel_lines ... ok
+test checks::distance::finite_legacy::tests::segment_distance_still_zeroes_tiny_exact_crossing ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_of_empty_geometry_is_infinite ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_skips_invalid_coordinates_as_no_geometry_overlap ... ok
+test checks::distance::finite_legacy::tests::segment_distance_reports_zero_for_overlapping_collinear_segments ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_reports_touching_polygons_as_zero ... ok
+test checks::distance::finite_legacy::tests::segments_intersect_treats_touching_endpoints_as_intersection ... ok
+test checks::distance::finite_legacy::tests::segment_threshold_predicate_certifies_exact_dyadic_boundary ... ok
+test checks::distance::finite_legacy::tests::segment_distance_with_non_finite_endpoints_is_infinite ... ok
+test checks::distance::finite_legacy::tests::segments_intersect_uses_exact_closed_segment_topology ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_reports_separated_polygons_by_expected_gap ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_accepts_retained_source_grid_provenance ... ok
+test checks::distance::finite_legacy::tests::segments_intersect_with_non_finite_inputs_returns_false ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_considers_hole_boundaries ... ok
+test checks::distance::finite_legacy::tests::polygon_boundary_distance_is_symmetric_for_hole_and_outer_inputs ... ok
+test checks::distance::native_regressions::native_boundary_distance_retains_exact_line_coordinates ... ok
+test checks::distance::native_regressions::exhausted_prepared_metric_does_not_publish_a_cached_distance ... ok
+test checks::distance::native_regressions::overlapping_profiles_do_not_publish_internal_seams_as_boundaries ... ok
+test checks::distance::native_regressions::point_clearance_uses_the_authored_circle ... ok
+test checks::distance::native_regressions::unsupported_native_boundary_cannot_borrow_report_segments ... ok
+test checks::distance::native_regressions::native_circle_distance_is_independent_of_report_resolution ... ok
+test checks::distance::native_regressions::native_hole_boundary_retains_its_radius ... ok
+test checks::distance::native_regressions::prepared_boundary_reuses_large_exact_segment_field ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 1104 filtered out; finished in 0.70s
+

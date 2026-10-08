@@ -1,0 +1,65 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 24.33s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 6 tests
+test checks::distance::native_regressions::overlapping_profiles_do_not_publish_internal_seams_as_boundaries ... FAILED
+test checks::distance::native_regressions::exhausted_prepared_metric_does_not_publish_a_cached_distance ... FAILED
+test checks::distance::native_regressions::point_clearance_uses_the_authored_circle ... FAILED
+test checks::distance::native_regressions::unsupported_native_boundary_cannot_borrow_report_segments ... FAILED
+test checks::distance::native_regressions::native_circle_distance_is_independent_of_report_resolution ... FAILED
+test checks::distance::native_regressions::native_hole_boundary_retains_its_radius ... FAILED
+
+failures:
+
+---- checks::distance::native_regressions::overlapping_profiles_do_not_publish_internal_seams_as_boundaries stdout ----
+
+thread 'checks::distance::native_regressions::overlapping_profiles_do_not_publish_internal_seams_as_boundaries' (84) panicked at crates/hyperdrc/src/checks/distance/native_regressions.rs:46:5:
+assertion failed: !exact_point_polygon_boundary_within_scalar(&[Scalar::one(), Scalar::one()],
+        [1.0, 1.0], &polygons, &scalar("0.1"))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- checks::distance::native_regressions::exhausted_prepared_metric_does_not_publish_a_cached_distance stdout ----
+
+thread 'checks::distance::native_regressions::exhausted_prepared_metric_does_not_publish_a_cached_distance' (81) panicked at crates/hyperdrc/src/checks/distance/native_regressions.rs:143:5:
+assertion `left == right` failed
+  left: Some(Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }))
+ right: Some(None)
+
+---- checks::distance::native_regressions::point_clearance_uses_the_authored_circle stdout ----
+
+thread 'checks::distance::native_regressions::point_clearance_uses_the_authored_circle' (85) panicked at crates/hyperdrc/src/checks/distance/native_regressions.rs:30:5:
+assertion failed: exact_point_polygon_boundary_within_scalar(&point, [0.999, 0.03], &polygons,
+    &threshold)
+
+---- checks::distance::native_regressions::unsupported_native_boundary_cannot_borrow_report_segments stdout ----
+
+thread 'checks::distance::native_regressions::unsupported_native_boundary_cannot_borrow_report_segments' (86) panicked at crates/hyperdrc/src/checks/distance/native_regressions.rs:119:5:
+assertion failed: polygon_boundary_distance_scalar(&MultiPolygon(vec![polygon]),
+        &query).is_none()
+
+---- checks::distance::native_regressions::native_circle_distance_is_independent_of_report_resolution stdout ----
+
+thread 'checks::distance::native_regressions::native_circle_distance_is_independent_of_report_resolution' (82) panicked at crates/hyperdrc/src/checks/distance/native_regressions.rs:13:9:
+assertion `left == right` failed: native circle gap with 16 report samples
+  left: Some(Greater)
+ right: Some(Equal)
+
+---- checks::distance::native_regressions::native_hole_boundary_retains_its_radius stdout ----
+
+thread 'checks::distance::native_regressions::native_hole_boundary_retains_its_radius' (83) panicked at crates/hyperdrc/src/checks/distance/native_regressions.rs:67:5:
+assertion failed: !exact_point_polygon_boundary_within_scalar(&origin, [0.0, 0.0], &polygons,
+        &scalar("0.999999"))
+
+
+failures:
+    checks::distance::native_regressions::exhausted_prepared_metric_does_not_publish_a_cached_distance
+    checks::distance::native_regressions::native_circle_distance_is_independent_of_report_resolution
+    checks::distance::native_regressions::native_hole_boundary_retains_its_radius
+    checks::distance::native_regressions::overlapping_profiles_do_not_publish_internal_seams_as_boundaries
+    checks::distance::native_regressions::point_clearance_uses_the_authored_circle
+    checks::distance::native_regressions::unsupported_native_boundary_cannot_borrow_report_segments
+
+test result: FAILED. 0 passed; 6 failed; 0 ignored; 0 measured; 1126 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

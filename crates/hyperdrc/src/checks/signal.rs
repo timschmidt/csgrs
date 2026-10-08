@@ -10,7 +10,7 @@
 
 use crate::PcbRegionExt;
 use crate::Scalar;
-use crate::checks::distance::polygon_boundary_distance_scalar;
+
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
@@ -99,11 +99,14 @@ pub fn sensitive_net_spacing_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &sensitive.region.to_multipolygon(),
-                    &noisy.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, clearance))
+                && crate::checks::boundaries_within_for_check(
+                    &sensitive.region,
+                    &noisy.region,
+                    clearance,
+                    "sensitive-net-spacing-readiness",
+                    &[&sensitive.layer],
+                    &mut violations,
+                ) == Some(true)
             {
                 vec![
                     sensitive.location_f64_compatibility_required(),
@@ -359,11 +362,14 @@ pub fn mixed_signal_partition_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &sensitive.region.to_multipolygon(),
-                    &digital.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, separation))
+                && crate::checks::boundaries_within_for_check(
+                    &sensitive.region,
+                    &digital.region,
+                    separation,
+                    "mixed-signal-partition-readiness",
+                    &[&sensitive.layer],
+                    &mut violations,
+                ) == Some(true)
             {
                 vec![
                     sensitive.location_f64_compatibility_required(),
@@ -500,11 +506,14 @@ fn copper_features_touch(
         return Ok(true);
     }
 
-    Ok(polygon_boundary_distance_scalar(
-        &left.region.to_multipolygon(),
-        &right.region.to_multipolygon(),
-    )
-    .is_some_and(|distance| crate::scalar::le(&distance, tolerance)))
+    crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![left.layer.clone()],
+                uncertainty,
+            ))
+        })
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {

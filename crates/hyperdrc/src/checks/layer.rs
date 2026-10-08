@@ -14,7 +14,7 @@ use hypercurve::{CurveRegion2, LineLineIntersection, LineSeg2};
 use hyperlimit::{Point2, SegmentIntersection, Sign, compare_reals};
 
 use crate::PREDICATE_POLICY;
-use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
+
 use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::checks::{
     difference_for_check, intersection_for_check, offset_for_check, union_for_check,
@@ -309,7 +309,7 @@ pub fn board_outline_cutout_clearance_with_grid(
     outline: &PcbRegion,
     clearance: &Scalar,
     min_area: &Scalar,
-    grid: SourceGridFacts,
+    _grid: SourceGridFacts,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let outline_polygons = outline.to_multipolygon();
@@ -348,12 +348,14 @@ pub fn board_outline_cutout_clearance_with_grid(
         };
         let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         let touches_cutout = shapes.is_empty()
-            && polygon_boundary_distance_scalar_with_grid(
-                &subject.to_multipolygon(),
-                &cutout.to_multipolygon(),
-                grid,
-            )
-            .is_some_and(|distance| crate::scalar::le(&distance, clearance));
+            && (crate::checks::boundaries_within_for_check(
+                subject,
+                &cutout,
+                clearance,
+                "board-outline-cutout-clearance",
+                &[subject_name, outline_name],
+                &mut violations,
+            ) == Some(true));
         if shapes.is_empty() && !touches_cutout {
             continue;
         }

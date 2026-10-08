@@ -10,10 +10,6 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use hyperlimit::compare_reals;
 
-use super::distance::{
-    exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
-    polygon_boundary_distance_scalar,
-};
 use super::outline::{
     axis_aligned_outline_rect_with_grid, feature_bounds_inside_rect_margin_with_grid,
     feature_bounds_inside_rect_with_grid,
@@ -663,11 +659,14 @@ pub fn edge_copper_pullback_readiness_with_grid(
         };
         let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         let has_edge_intrusion = !shapes.is_empty()
-            || polygon_boundaries_within_scalar(
-                &feature.region.to_multipolygon(),
-                &outline.to_multipolygon(),
+            || (crate::checks::boundaries_within_for_check(
+                &feature.region,
+                outline,
                 edge_clearance,
-            );
+                "edge-copper-pullback-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) == Some(true));
         if !has_edge_intrusion {
             continue;
         }
@@ -798,11 +797,14 @@ pub fn edge_stitching_readiness_with_grid(
         };
         let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         let has_edge_intrusion = !shapes.is_empty()
-            || polygon_boundaries_within_scalar(
-                &feature.region.to_multipolygon(),
-                &outline.to_multipolygon(),
+            || (crate::checks::boundaries_within_for_check(
+                &feature.region,
+                outline,
                 edge_clearance,
-            );
+                "edge-stitching-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) == Some(true));
         if !has_edge_intrusion {
             continue;
         }
@@ -1188,43 +1190,46 @@ pub fn differential_pair_spacing_readiness(
                     .any(|negative_index| {
                         candidate_pairs += 1;
                         exact_pairs += 1;
-                        polygon_boundary_distance_scalar(
-                            &positive.region.to_multipolygon(),
-                            &negatives[negative_index].region.to_multipolygon(),
-                        )
-                        .is_some_and(|distance| crate::scalar::le(&distance, maximum_pair_gap))
+                        crate::checks::boundaries_within_for_check(
+                            &positive.region,
+                            &negatives[negative_index].region,
+                            maximum_pair_gap,
+                            "differential-pair-spacing-readiness",
+                            &[&layer],
+                            &mut violations,
+                        ) == Some(true)
                     })
             });
             if has_close_side {
                 continue;
             }
 
-            let nearest = positives
-                .iter()
-                .flat_map(|positive| negatives.iter().map(move |negative| (*positive, *negative)))
-                .filter_map(|(positive, negative)| {
-                    exact_pairs += 1;
-                    Some((
-                        polygon_boundary_distance_scalar(
-                            &positive.region.to_multipolygon(),
-                            &negative.region.to_multipolygon(),
-                        )?,
-                        positive.location_f64_compatibility_required(),
-                        negative.location_f64_compatibility_required(),
-                    ))
-                })
-                .fold(
-                    None::<(Scalar, [f64; 2], [f64; 2])>,
-                    |nearest, candidate| match nearest {
-                        Some(current) if crate::scalar::le(&current.0, &candidate.0) => {
-                            Some(current)
-                        }
-                        _ => Some(candidate),
-                    },
-                );
-            let Some((gap, positive_location, negative_location)) = nearest else {
+            let nearest = crate::checks::geometry_result_for_check(
+                crate::checks::distance::minimum_metric(
+                    positives
+                        .iter()
+                        .flat_map(|positive| {
+                            negatives.iter().map(move |negative| (*positive, *negative))
+                        })
+                        .map(|(positive, negative)| {
+                            exact_pairs += 1;
+                            crate::checks::distance::region_boundary_distance(
+                                &positive.region,
+                                &negative.region,
+                            )
+                            .map(|gap| gap.map(|gap| ((positive, negative), gap)))
+                        }),
+                ),
+                "differential-pair-spacing-readiness",
+                &[&layer],
+                &mut violations,
+            )
+            .flatten();
+            let Some(((positive, negative), gap)) = nearest else {
                 continue;
             };
+            let positive_location = positive.location_f64_compatibility_required();
+            let negative_location = negative.location_f64_compatibility_required();
 
             violations.push(Violation::new(
                 "differential-pair-spacing-readiness",
@@ -2183,7 +2188,6 @@ pub fn gold_finger_edge_readiness(
     let mut finger_features = 0usize;
     let mut measured_features = 0usize;
     let mut violations = Vec::new();
-    let outline_geometry = outline.to_multipolygon();
 
     for feature in &features {
         let Some(net) = feature.net.as_deref() else {
@@ -2195,13 +2199,25 @@ pub fn gold_finger_edge_readiness(
             continue;
         }
         finger_features += 1;
-        let Some(gap) =
-            polygon_boundary_distance_scalar(&feature.region.to_multipolygon(), &outline_geometry)
-        else {
+        let Some(gap) = crate::checks::boundary_distance_for_check(
+            &feature.region,
+            outline,
+            "gold-finger-edge-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
             continue;
         };
         measured_features += 1;
-        if crate::scalar::le(&gap, edge_distance) {
+        if crate::checks::metric_cmp_for_check(
+            &gap,
+            edge_distance,
+            "gold-finger-edge-readiness",
+            &[&feature.layer],
+            &mut violations,
+        )
+        .is_none_or(|order| !order.is_gt())
+        {
             continue;
         }
 
@@ -2275,11 +2291,14 @@ pub fn gold_finger_spacing_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundaries_within_scalar(
-                    &left.region.to_multipolygon(),
-                    &right.region.to_multipolygon(),
+                && (crate::checks::boundaries_within_for_check(
+                    &left.region,
+                    &right.region,
                     minimum_spacing,
-                );
+                    "gold-finger-spacing-readiness",
+                    &[&left.layer],
+                    &mut violations,
+                ) == Some(true));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -2357,18 +2376,20 @@ pub fn gold_finger_drill_keepout_readiness(
         ) {
             let finger = finger_features[finger_index];
             exact_pair_count += 1;
-            let finger_geometry = finger.region.to_multipolygon();
+
             let center_inside = finger
                 .region
                 .contains_xy(drill.location[0].clone(), drill.location[1].clone())
                 != Some(false);
             if !center_inside
-                && !exact_point_polygon_boundary_within_scalar(
+                && (crate::checks::point_boundary_within_for_check(
                     &drill.location,
-                    drill.location_f64_compatibility_required(),
-                    &finger_geometry,
+                    &finger.region,
                     &keepout_radius,
-                )
+                    "gold-finger-drill-keepout-readiness",
+                    &[&finger.layer],
+                    &mut violations,
+                ) == Some(false))
             {
                 continue;
             }
@@ -2440,13 +2461,24 @@ pub fn connector_return_path_readiness(
         }
         candidate_features += 1;
 
-        let Some(edge_gap) = polygon_boundary_distance_scalar(
-            &feature.region.to_multipolygon(),
-            &outline.to_multipolygon(),
+        let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+            &feature.region,
+            outline,
+            "connector-return-path-readiness",
+            &[&feature.layer],
+            &mut violations,
         ) else {
             continue;
         };
-        if crate::scalar::gt(&edge_gap, edge_distance) {
+        if crate::checks::metric_cmp_for_check(
+            &edge_gap,
+            edge_distance,
+            "connector-return-path-readiness",
+            &[&feature.layer],
+            &mut violations,
+        )
+        .is_none_or(|order| order.is_gt())
+        {
             continue;
         }
         let nearby_ground = ground_index
@@ -2922,11 +2954,14 @@ fn collect_net_spacing_violation(
     )?;
     let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
     let locations = if shapes.is_empty()
-        && polygon_boundaries_within_scalar(
-            &left.region.to_multipolygon(),
-            &right.region.to_multipolygon(),
-            clearance,
-        ) {
+        && crate::checks::distance::region_boundaries_within(&left.region, &right.region, clearance)
+            .map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    "different-net-spacing",
+                    vec![left.layer.clone()],
+                    uncertainty,
+                ))
+            })? {
         vec![
             left.location_f64_compatibility_required(),
             right.location_f64_compatibility_required(),
@@ -3076,11 +3111,14 @@ fn collect_registration_tolerance_violation(
     )?;
     let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
     let locations = if shapes.is_empty()
-        && polygon_boundaries_within_scalar(
-            &left.region.to_multipolygon(),
-            &right.region.to_multipolygon(),
-            tolerance,
-        ) {
+        && crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
+            .map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    "layer-registration-tolerance",
+                    vec![left_layer.to_owned(), right_layer.to_owned()],
+                    uncertainty,
+                ))
+            })? {
         vec![
             left.location_f64_compatibility_required(),
             right.location_f64_compatibility_required(),
@@ -3203,11 +3241,14 @@ pub fn panelization_clearance(
                 let feature_shapes =
                     multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
                 if feature_shapes.is_empty()
-                    && polygon_boundaries_within_scalar(
-                        &blocker_geometry,
-                        &copper.region.to_multipolygon(),
+                    && (crate::checks::boundaries_within_for_check(
+                        &blocker_piece,
+                        &copper.region,
                         clearance,
-                    )
+                        "panelization-clearance",
+                        &[&copper.layer],
+                        &mut violations,
+                    ) == Some(true))
                 {
                     fallback_hit = true;
                     fallback_hits += 1;
@@ -3478,11 +3519,18 @@ fn copper_features_touch_scalar(
         vec![left.layer.clone()],
     )?;
     Ok(!overlap.is_empty()
-        || polygon_boundary_distance_scalar(
-            &left.region.to_multipolygon(),
-            &right.region.to_multipolygon(),
+        || crate::checks::distance::region_boundaries_within(
+            &left.region,
+            &right.region,
+            tolerance,
         )
-        .is_some_and(|distance| crate::scalar::le(&distance, tolerance)))
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![left.layer.clone()],
+                uncertainty,
+            ))
+        })?)
 }
 
 fn rects_overlap(left: &Rect<f64>, right: &Rect<f64>) -> bool {

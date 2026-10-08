@@ -1,0 +1,30 @@
+
+running 1 test
+test checks::distance::native_regressions::prepared_boundary_reuses_large_exact_segment_field ... native_boundary_field squares=2000 probes=64 prepare_us=618984 query_us=20942 bytes=257 sha256=4e5e801fd8aba03a5d2f27e860977146155d07e9172ba4818583da20a52712f8
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1137 filtered out; finished in 0.72s
+
+	Command being timed: "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d checks::distance::native_regressions::prepared_boundary_reuses_large_exact_segment_field --exact --nocapture"
+	User time (seconds): 0.67
+	System time (seconds): 0.04
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.72
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 65088
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 14049
+	Voluntary context switches: 2
+	Involuntary context switches: 144
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,28 @@
+{
+  "base_revision": "04ac60d9c84e1512278ef742e19eb10e4b7c565c",
+  "command": "cargo test --locked --release -p hyperdrc --lib checks::distance::native_regressions",
+  "exit_code": 101,
+  "failed": 6,
+  "log": "six-failures.log",
+  "production_changes": "None; distance.rs only declares the new test module.",
+  "failures": [
+    "Native circle-to-circle gap changes with report resolution; first 16-sample case exceeds the independent analytic oracle.",
+    "A point inside an exact circle fails a clearance threshold that the exact squared-radius oracle proves.",
+    "A union of overlapping rectangles exposes an internal seam as a boundary.",
+    "A circular hole radius is reduced to its report-chord distance.",
+    "A full degree-five rational boundary with no native line/arc representation produces a report-segment distance.",
+    "A warmed prepared metric returns a finite distance after shared root-refinement budget exhaustion."
+  ],
+  "limitations": [
+    "These are private DRC metric regressions. End-to-end readiness error propagation and spatial candidate coverage need separate tests.",
+    "The first circle-distance assertion stops the baseline loop at 16 samples; later resolutions are retained for the repaired implementation."
+  ],
+  "sources": {
+    "crates/hyperdrc/src/checks/distance.rs": "716f81c4ae391af3319c18945ab4d8e5a0051d73692480208026d7f4d8ef1b48",
+    "crates/hyperdrc/src/checks/distance/native_regressions.rs": "334e6cbdb083ce6d956e03b7e71de13a958ec629f64c872b8a1b7dd9b836d764",
+    "crates/hyperdrc/src/geometry/types.rs": "e7a31ff1cd50a7b27b6d4e75cd14482d4c3b39e8adf608a5ac654db1e48f1b6b",
+    "crates/hyperdrc/src/geometry/circle.rs": "80072a46d806bc2263a5bc521fdc8299c13f145c1eeacdeb4a11220fe46d841c",
+    "crates/hypercurve/src/segment_metric.rs": "d45440480e380eb4d137567f05eb8c36803e9c064d5c22232056b3c56de2ae9e",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2"
+  }
+}

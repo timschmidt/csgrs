@@ -1,0 +1,358 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error: expected one of `::`, `;`, or `as`, found `-`
+ --> crates/hyperdrc/src/checks/differential.rs:4:8
+  |
+4 | use net-name and copper-geometry proxies for differential-pair
+  |        ^ expected one of `::`, `;`, or `as`
+
+error: expected one of `::`, `;`, or `as`, found `KiCad`
+ --> crates/hyperdrc/src/checks/safety.rs:4:12
+  |
+4 | use parsed KiCad copper, board outline geometry, and net-name
+  |            ^^^^^ expected one of `::`, `;`, or `as`
+
+error[E0432]: unresolved imports `crate::checks::esd_protection_readiness`, `crate::checks::high_voltage_edge_readiness`, `crate::checks::voltage_clearance_readiness`
+    --> crates/hyperdrc/src/checks/board.rs:3694:54
+     |
+3694 |         drill_to_copper_clearance, drills_to_region, esd_protection_readiness, fiducial_readiness,
+     |                                                      ^^^^^^^^^^^^^^^^^^^^^^^^ no `esd_protection_readiness` in `checks`
+3695 |         high_voltage_edge_readiness, hot_component_spacing_readiness, local_fiducial_readiness,
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `high_voltage_edge_readiness` in `checks`
+...
+3701 |         thermal_via_readiness, tooling_hole_readiness, voltage_clearance_readiness,
+     |                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `voltage_clearance_readiness` in `checks`
+     |
+help: a similar name exists in the module
+     |
+3695 -         high_voltage_edge_readiness, hot_component_spacing_readiness, local_fiducial_readiness,
+3695 +         high_speed_edge_readiness, hot_component_spacing_readiness, local_fiducial_readiness,
+     |
+help: a similar name exists in the module
+     |
+3701 -         thermal_via_readiness, tooling_hole_readiness, voltage_clearance_readiness,
+3701 +         thermal_via_readiness, tooling_hole_readiness, plane_clearance_readiness,
+     |
+
+error[E0425]: cannot find function `high_voltage_edge_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1823:51
+     |
+1823 |                           violations.extend(checks::high_voltage_edge_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:493:1
+     |
+ 493 | / pub fn high_speed_edge_readiness(
+ 494 | |     board: &BoardModel,
+ 495 | |     selected_layers: &[String],
+ 496 | |     edge_clearance: &Scalar,
+...    |
+ 506 | | }
+     | |_- similarly named function `high_speed_edge_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1823 -                         violations.extend(checks::high_voltage_edge_readiness(
+1823 +                         violations.extend(checks::high_speed_edge_readiness(
+     |
+
+error[E0425]: cannot find function `differential_pair_width_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1858:51
+     |
+1858 |                           violations.extend(checks::differential_pair_width_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:1026:1
+     |
+1026 | / pub fn differential_pair_readiness(
+1027 | |     board: &BoardModel,
+1028 | |     selected_layers: &[String],
+1029 | | ) -> Vec<Violation> {
+...    |
+1112 | |     violations
+1113 | | }
+     | |_- similarly named function `differential_pair_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1858 -                         violations.extend(checks::differential_pair_width_readiness(
+1858 +                         violations.extend(checks::differential_pair_readiness(
+     |
+
+error[E0425]: cannot find function `differential_pair_neckdown_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1868:51
+     |
+1868 |                           violations.extend(checks::differential_pair_neckdown_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:1318:1
+     |
+1318 | / pub fn differential_pair_return_readiness(
+1319 | |     board: &BoardModel,
+1320 | |     selected_layers: &[String],
+1321 | |     guard_distance: &Scalar,
+...    |
+1390 | |     violations
+1391 | | }
+     | |_- similarly named function `differential_pair_return_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1868 -                         violations.extend(checks::differential_pair_neckdown_readiness(
+1868 +                         violations.extend(checks::differential_pair_return_readiness(
+     |
+
+error[E0425]: cannot find function `differential_pair_skew_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1878:51
+     |
+1878 |                           violations.extend(checks::differential_pair_skew_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:1026:1
+     |
+1026 | / pub fn differential_pair_readiness(
+1027 | |     board: &BoardModel,
+1028 | |     selected_layers: &[String],
+1029 | | ) -> Vec<Violation> {
+...    |
+1112 | |     violations
+1113 | | }
+     | |_- similarly named function `differential_pair_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1878 -                         violations.extend(checks::differential_pair_skew_readiness(
+1878 +                         violations.extend(checks::differential_pair_readiness(
+     |
+
+error[E0425]: cannot find function `differential_pair_to_pair_spacing_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1887:51
+     |
+1887 |                           violations.extend(checks::differential_pair_to_pair_spacing_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:1123:1
+     |
+1123 | / pub fn differential_pair_spacing_readiness(
+1124 | |     board: &BoardModel,
+1125 | |     selected_layers: &[String],
+1126 | |     maximum_pair_gap: &Scalar,
+...    |
+1228 | |     violations
+1229 | | }
+     | |_- similarly named function `differential_pair_spacing_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1887 -                         violations.extend(checks::differential_pair_to_pair_spacing_readiness(
+1887 +                         violations.extend(checks::differential_pair_spacing_readiness(
+     |
+
+error[E0425]: cannot find function `differential_pair_via_proximity_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1896:51
+     |
+1896 |                           violations.extend(checks::differential_pair_via_proximity_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:1233:1
+     |
+1233 | / pub fn differential_pair_via_symmetry_readiness(
+1234 | |     board: &BoardModel,
+1235 | |     selected_layers: &[String],
+1236 | | ) -> Vec<Violation> {
+...    |
+1307 | |     violations
+1308 | | }
+     | |_- similarly named function `differential_pair_via_symmetry_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1896 -                         violations.extend(checks::differential_pair_via_proximity_readiness(
+1896 +                         violations.extend(checks::differential_pair_via_symmetry_readiness(
+     |
+
+error[E0425]: cannot find function `differential_pair_via_return_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:1905:51
+     |
+1905 |                           violations.extend(checks::differential_pair_via_return_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:1318:1
+     |
+1318 | / pub fn differential_pair_return_readiness(
+1319 | |     board: &BoardModel,
+1320 | |     selected_layers: &[String],
+1321 | |     guard_distance: &Scalar,
+...    |
+1390 | |     violations
+1391 | | }
+     | |_- similarly named function `differential_pair_return_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+1905 -                         violations.extend(checks::differential_pair_via_return_readiness(
+1905 +                         violations.extend(checks::differential_pair_return_readiness(
+     |
+
+error[E0425]: cannot find function `voltage_clearance_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:2089:51
+     |
+2089 |                           violations.extend(checks::voltage_clearance_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:303:1
+     |
+ 303 | / pub fn plane_clearance_readiness(
+ 304 | |     board: &BoardModel,
+ 305 | |     selected_layers: &[String],
+ 306 | |     min_area: &Scalar,
+...    |
+ 405 | |     violations
+ 406 | | }
+     | |_- similarly named function `plane_clearance_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+2089 -                         violations.extend(checks::voltage_clearance_readiness(
+2089 +                         violations.extend(checks::plane_clearance_readiness(
+     |
+
+error[E0425]: cannot find function `protective_earth_spacing_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:2100:51
+     |
+2100 |                           violations.extend(checks::protective_earth_spacing_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/signal.rs:28:1
+     |
+  28 | / pub fn sensitive_net_spacing_readiness(
+  29 | |     board: &BoardModel,
+  30 | |     clearance: &Scalar,
+  31 | |     selected_layers: &[String],
+...    |
+ 140 | |     violations
+ 141 | | }
+     | |_- similarly named function `sensitive_net_spacing_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+2100 -                         violations.extend(checks::protective_earth_spacing_readiness(
+2100 +                         violations.extend(checks::sensitive_net_spacing_readiness(
+     |
+
+error[E0425]: cannot find function `surge_protection_keepout_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:2111:51
+     |
+2111 |                         violations.extend(checks::surge_protection_keepout_readiness(
+     |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `checks`
+
+error[E0425]: cannot find function `esd_protection_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:2315:51
+     |
+2315 |                         violations.extend(checks::esd_protection_readiness(
+     |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^ not found in `checks`
+
+error[E0425]: cannot find function `esd_return_path_readiness` in module `checks`
+    --> crates/hyperdrc/src/app.rs:2325:51
+     |
+2325 |                           violations.extend(checks::esd_return_path_readiness(
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hyperdrc/src/checks/board.rs:2532:1
+     |
+2532 | / pub fn return_path_readiness(
+2533 | |     board: &BoardModel,
+2534 | |     stitching_distance: &Scalar,
+2535 | |     selected_layers: &[String],
+...    |
+2605 | |     violations
+2606 | | }
+     | |_- similarly named function `return_path_readiness` defined here
+     |
+help: a function with a similar name exists
+     |
+2325 -                         violations.extend(checks::esd_return_path_readiness(
+2325 +                         violations.extend(checks::return_path_readiness(
+     |
+
+warning: unused import: `crate::PcbRegionExt`
+  --> crates/hyperdrc/src/checks/constraints.rs:24:5
+   |
+24 | use crate::PcbRegionExt;
+   |     ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `PcbRegion`
+  --> crates/hyperdrc/src/checks/dense_pad.rs:17:13
+   |
+17 | use crate::{PcbRegion, PcbRegionExt, Scalar};
+   |             ^^^^^^^^^
+
+warning: unused imports: `MultiPolygon` and `polygons_to_profile`
+  --> crates/hyperdrc/src/checks/mechanical.rs:18:5
+   |
+18 |     MultiPolygon, Polygon, Rect, multipolygon_to_shapes_scalar, polygon_bounds_scalar,
+   |     ^^^^^^^^^^^^
+19 |     polygons_to_profile,
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `differential::*`
+  --> crates/hyperdrc/src/checks/mod.rs:59:9
+   |
+59 | pub use differential::*;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `safety::*`
+  --> crates/hyperdrc/src/checks/mod.rs:69:9
+   |
+69 | pub use safety::*;
+   |         ^^^^^^^^^
+
+warning: unused variable: `outline_geometry`
+   --> crates/hyperdrc/src/checks/assembly.rs:706:17
+    |
+706 |             let outline_geometry = outline.to_multipolygon();
+    |                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_outline_geometry`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `feature_geometry`
+   --> crates/hyperdrc/src/checks/assembly.rs:903:17
+    |
+903 |             let feature_geometry = feature.region.to_multipolygon();
+    |                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feature_geometry`
+
+warning: unused variable: `outline_geometry`
+    --> crates/hyperdrc/src/checks/board.rs:2160:9
+     |
+2160 |     let outline_geometry = outline.to_multipolygon();
+     |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_outline_geometry`
+
+warning: unused variable: `finger_geometry`
+    --> crates/hyperdrc/src/checks/board.rs:2330:17
+     |
+2330 |             let finger_geometry = finger.region.to_multipolygon();
+     |                 ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_finger_geometry`
+
+warning: unused variable: `outline_geometry`
+   --> crates/hyperdrc/src/checks/mechanical.rs:598:9
+    |
+598 |     let outline_geometry = outline.to_multipolygon();
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_outline_geometry`
+
+warning: unused variable: `feature_geometry`
+   --> crates/hyperdrc/src/checks/mechanical.rs:605:13
+    |
+605 |         let feature_geometry = feature.region.to_multipolygon();
+    |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feature_geometry`
+
+warning: unused variable: `outline_geometry`
+   --> crates/hyperdrc/src/checks/mechanical.rs:827:9
+    |
+827 |     let outline_geometry = outline.to_multipolygon();
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_outline_geometry`
+
+Some errors have detailed explanations: E0425, E0432.
+For more information about an error, try `rustc --explain E0425`.
+warning: `hyperdrc` (lib test) generated 12 warnings
+error: could not compile `hyperdrc` (lib test) due to 15 previous errors; 12 warnings emitted

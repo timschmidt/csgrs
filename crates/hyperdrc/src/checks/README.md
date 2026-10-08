@@ -77,9 +77,20 @@ signoff. They should be deterministic, explainable, and conservative:
   validate tool tables, unit declarations, and drill hit integrity.
 - [`manifest.rs`](manifest.rs) contains package-level readiness checks over the
   discovered input manifest and inferred Gerber roles.
-- [`distance.rs`](distance.rs) contains geometric distance helpers shared by
-  checks that need boundary-distance fallbacks in addition to polygon boolean
-  operations.
+- [`distance.rs`](distance.rs) exposes certified queries over regularized native
+  material and hole boundaries. Preparation, distance, inclusive clearance,
+  point clearance, and nearest-candidate comparisons retain typed uncertainty.
+  Optional outward finite bounds only schedule candidates. Missing bounds keep
+  candidates in the query; report chords cannot supply an exact metric.
+
+Metric gateways append an attributed `geometry-uncertainty` finding when a
+required query cannot be certified. The shared readiness runner serializes that
+execution as `Uncertain`, with a reason, and excludes it from complete coverage.
+Check implementation version 2 records this behavior; the registry schema
+remains version 1. This does not certify the older finite spatial indices,
+component/report projections, or non-metric `Option` consumers. The
+[adoption evidence](../../../../docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json)
+records those remaining boundaries and the full validation run.
 
 ```mermaid
 flowchart TB
