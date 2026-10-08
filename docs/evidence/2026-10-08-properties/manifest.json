@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-08",
+  "code_revision": "943e8a8c63cc4fc775cc11d7d476073489226332",
+  "scope": "Focused cache, WASM certainty, and explicit curve/preview policy changes. This is not the complete pre-push matrix or full properties.md validation.",
+  "phase_meanings": {
+    "final": "After the preview-policy correction.",
+    "before-preview-fix": "Before the later Hypercurve evaluate_under preview-isolation change; other code in this batch was present."
+  },
+  "reproduction_note": "Commands identify how to reproduce each check. WASM requires the Cargo.lock-matched CLI (0.2.126), the wasm32 target, Node.js, and npm ci --ignore-scripts --no-audit --no-fund --prefix tests/wasm. Set WASM_BINDGEN for a different CLI location.",
+  "checks": [
+    {
+      "name": "fmt",
+      "reproduce": "cargo fmt --all -- --check",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "csgrs-all-tests",
+      "reproduce": "cargo test --locked --all-features",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "csgrs-all-tests.log",
+      "sha256": "a555639b8121604bebc44408dbdc3f8957bfd0f4661a1d303e03bb2939c9d0b3",
+      "tests": {
+        "passed": 158,
+        "failed": 0,
+        "ignored": 1
+      }
+    },
+    {
+      "name": "csgrs-minimal-tests",
+      "reproduce": "cargo test --locked --no-default-features",
+      "phase": "before-preview-fix",
+      "exit_code": 0,
+      "log": "csgrs-minimal-tests.log",
+      "sha256": "8c47efded72adb22250a1e85ba9058f7c7230c03fe037ec4f20dbabb8c11baf5",
+      "tests": {
+        "passed": 58,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "cache-minimal-tests",
+      "reproduce": "cargo test --locked --no-default-features --test solid_cache",
+      "phase": "before-preview-fix",
+      "exit_code": 0,
+      "log": "cache-minimal-tests.log",
+      "sha256": "6e62033e65238b8daa8647166342418d25af768d9727b9c0d7c507b3a3953e12",
+      "tests": {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "csgrs-all-clippy",
+      "reproduce": "cargo clippy --locked --all-features --all-targets -- -D warnings",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "csgrs-all-clippy.log",
+      "sha256": "c7d90afdd69a31e2db7df94dc67720d6cf589ae4ad4daf0f0d6bb567faf06f72"
+    },
+    {
+      "name": "csgrs-minimal-clippy",
+      "reproduce": "cargo clippy --locked --no-default-features --all-targets -- -D warnings",
+      "phase": "before-preview-fix",
+      "exit_code": 0,
+      "log": "csgrs-minimal-clippy.log",
+      "sha256": "4497fcb09982fb5d9cf9b9cf6a1bf7caf030d18fde9ee59fc12ff621dae395b2"
+    },
+    {
+      "name": "hypersdf-tests",
+      "reproduce": "cargo test --locked -p hypersdf --lib",
+      "phase": "before-preview-fix",
+      "exit_code": 0,
+      "log": "hypersdf-tests.log",
+      "sha256": "edee35dbfb1e3171d52764fe748d0930c339ccd277fd47c8cb7aaa4352c9191f",
+      "tests": {
+        "passed": 57,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-policy-tests",
+      "reproduce": "cargo test --locked -p hypercurve --all-features --lib policy::tests",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "curve-policy-tests.log",
+      "sha256": "1d25d101fc797aecc51ae5ef83917b19e5336edfc7a0724803f38ee791255cb4",
+      "tests": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "wasm-clients",
+      "reproduce": "WASM_BINDGEN=/tmp/csgrs-properties-tools/bin/wasm-bindgen bash scripts/test-wasm-bindings.sh",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "wasm-clients.log",
+      "sha256": "24ac98ababe2c85e75b2d23c514fd2b5729a35dfe7ea87aa8aa1d863c4fb3d7a"
+    },
+    {
+      "name": "wasm-clippy",
+      "reproduce": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "22b6d7d5b32ea4f3280e95f8792ba486bdb12664c86292e3b65f8b4326aff740"
+    },
+    {
+      "name": "csgrs-docs",
+      "reproduce": "RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "csgrs-docs.log",
+      "sha256": "6bb0d4c3e2fb88e4791e050d1e7d1f1afa6cfecdce7b4fa3b1c5861df22929ea"
+    },
+    {
+      "name": "workflow-security",
+      "reproduce": "zizmor --pedantic --strict-collection .",
+      "phase": "final",
+      "exit_code": 0,
+      "log": "workflow-security.log",
+      "sha256": "a98bc92a6ca65e0d55211801aacfabf6477c434d0446d4e1b3ccddb9dbfce133"
+    }
+  ],
+  "pending": [
+    "cargo test --locked -p hypercurve --all-features --lib --tests",
+    "cargo clippy --locked -p hypercurve --all-features --all-targets -- -D warnings"
+  ],
+  "limitations": [
+    "Root all-feature tests leave the existing expensive README PNG byte-comparison test ignored.",
+    "Hypercurve broad-suite results are pending; focused policy tests passed.",
+    "No 100% coverage, full workspace validation, ASan/fuzz/Verus campaign, competitive-suite revalidation, or deployment is claimed.",
+    "Zizmor reports zero findings in its default offline mode; online-only audits were not run."
+  ],
+  "source_sha256": {
+    "Cargo.toml": "d91dee97961d70123f8732638338bb9af4f47f2a6758a15a1cf176d27706a38f",
+    "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+    ".github/workflows/rust.yml": "aa3efbe6f3030d9d2f623b9e1f3196a2c5dfcf5cd089729337102a2decf1908c",
+    "src/solid.rs": "520c3d7d2741e10ec2fc346def8b80a1c2f5cc8311629dd77399c482858a3fa0",
+    "src/solid/cache.rs": "f9e2ad21b7750aba5b5dbc30eb68a8b3127c4cdf15bcf8cb7123189d01ff90c5",
+    "src/solid/cache/storage.rs": "a145ffa34476b85d22c8f9942e7b182a71dafd3931be07d3de4232a05fd5c5dc",
+    "src/curve/native.rs": "b70460b6be05166f0bf93c1551fd1e308eea51d31df99a1c22ae271e7a2e8319",
+    "src/wasm/context_js.rs": "72aac95871241a773e7ae73afd838d0b883d1a565424280ba793b90dc3e4a0ea",
+    "src/wasm/curve_js.rs": "721fb142cc16c37688f2a6f325d020d02c9d448a8e60186f277398f92ad8ed0d",
+    "src/wasm/mesh_js.rs": "5fb00dd74dcfec4df7c8d1688941f6a753d8c0239523c4fc6560ae9f812688fa",
+    "src/parts/dimension.rs": "7d0fc9759f2dafd6ba95f08124dec8d859939fc74cf8ffe388e485f39247345e",
+    "crates/hypercurve/src/policy.rs": "67a714b27f315197326b4434df8f232f61c9506f0e5ff23760acdcae9932a107",
+    "crates/hypersdf/src/mesh.rs": "1037058360a8dcd14276cfcdf08536a7403bc0fe4a338916a010051b1d7a1a9f",
+    "tests/solid_cache.rs": "90e7b62e433249c51d128aa2f4ff0e5f46126df1ab87ef5bab9b3006bde8a5a4",
+    "tests/geometry_context.rs": "0587efee4c493e7f7ee9767a239818668766ca70cda81e8306e83d6f7d88f88a",
+    "tests/wasm_certainty.rs": "eca336cdff21a7f7a62d9123d017d65e7182b72561b061707e063c1653042b34",
+    "scripts/test-wasm-bindings.sh": "27fde7ac40e5d9ae29496a6e4c953701f8f67c70d3d3640a77af26457917c720",
+    "tests/wasm/geometry_certainty.cjs": "bd8d963f2a88be2f45b406d727cd008b7ceac3be54a8b21fa123ca7476556b2d",
+    "tests/wasm/geometry_certainty.ts": "0405b7fd676ea5acba7addafaa8fb193f8d0055f440cab74738106ad1eb0596d",
+    "tests/wasm/package.json": "fee5dfbeedb5c0134b64a3a9a11f9377bda25e0bdafd21c026d9c12db556945c",
+    "tests/wasm/package-lock.json": "da5a99ed3100038d23355b2569b1371e20489493b4a7c3b770685b82661452bc"
+  }
+}

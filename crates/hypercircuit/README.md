@@ -505,3 +505,9 @@ cargo check --all-features --benches
 ## License
 
 HyperCircuit is licensed under Apache-2.0 as declared in `Cargo.toml`.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

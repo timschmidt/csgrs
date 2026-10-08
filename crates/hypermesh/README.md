@@ -12,6 +12,10 @@ This README describes crate version `0.1.0`.
 
 ## Exactness and policy
 
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md),
+including closed PWN validation, exact coincidence, arrangement reuse,
+unbounded-output rejection, and replayable boundary evidence.
+
 Every predicate-bearing operation receives a `MeshContext` selecting one
 Hyperlimit policy:
 

@@ -271,6 +271,10 @@ signals.
 
 ## Guarantees and boundaries
 
+Scalar certificates and refinement caches follow the stack-wide
+[admission protocol](../../docs/admission.md), including exact construction,
+honest structural facts, typed domain errors, and monotone refinement.
+
 Verus verification is in progress. Production arithmetic kernels and an
 unbounded rational model have checked proofs; the full crate is **not yet
 formally verified**. See the [proof commands, current boundary, and remaining

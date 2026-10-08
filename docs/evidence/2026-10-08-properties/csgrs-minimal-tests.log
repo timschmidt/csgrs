@@ -1,0 +1,121 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.78s
+     Running unittests src/lib.rs (target/debug/deps/csgrs-e39dd02b5498cd0d)
+
+running 32 tests
+test adapter::tests::i128_adapter_rejects_fractional_output ... ok
+test context::tests::one_context_derives_matching_kernel_policies ... ok
+test context::tests::contexts_and_certainty_remain_one_byte ... ok
+test adapter::tests::f64_mesh_adapter_converts_at_edges ... ok
+test adapter::tests::f32_graphics_adapter_preserves_strict_overflow_error ... ok
+test parts::attachment::tests::zero_axis_is_rejected ... ok
+test parts::attachment::tests::mate_matches_origin_and_axis ... ok
+test adapter::tests::primitive_graphics_adapters_match_core_gpu_buffers ... ok
+test adapter::tests::exact_and_integer_graphics_adapters_keep_generic_conversion ... ok
+test parts::dimension::tests::zero_and_negative_lengths_are_rejected ... ok
+test parts::dimension::tests::dimension_x_keeps_the_exact_length ... ok
+test parts::bom::tests::quantities_merge_and_sort ... ok
+test parts::assembly::tests::suppressed_explode_stays_put ... ok
+test parts::blueprint::tests::overlapping_depth_splits_an_edge_into_visible_and_unknown ... ok
+test parts::assembly::tests::parent_explode_keeps_child_step_seated ... ok
+test parts::blueprint::tests::nearer_box_hides_a_covered_edge_and_no_explode_still_occludes ... ok
+test parts::manual::tests::manual_contains_instructions_and_reports_gaps ... ok
+test parts::occlude::tests::undecided_depth_stays_unknown ... ok
+test parts::blueprint::tests::svg_export_records_hidden_dashes ... ok
+test solid::tests::polyhedron_certifies_symbolically_planar_faces_before_normalization ... ok
+test solid::tests::constructors_return_native_hypermesh_geometry ... ok
+test solid::tests::loft_uses_each_cap_plane_and_rejects_nonplanar_sections ... ok
+test solid::tests::primitive_sample_count_arithmetic_is_checked ... ok
+test solid::tests::sampled_circle_retains_exact_cardinal_angles ... ok
+test parts::occlude::tests::cube_feature_edges_are_visible ... ok
+test parts::occlude::tests::front_box_hides_rear_feature_edges ... ok
+test parts::occlude::tests::svg_snapshot_mentions_a_rear_coordinate ... ok
+test solid::tests::fluent_boolean_returns_reusable_native_geometry ... ok
+test parts::occlude::tests::suppressed_front_box_still_hides_the_rear_box ... ok
+test parts::occlude::tests::half_covered_edge_splits ... ok
+test solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed ... ok
+test solid::tests::arrows_and_orientation_reversing_transforms_keep_outward_manifold_winding ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests/adversarial_fixtures.rs (target/debug/deps/adversarial_fixtures-35ad7fe1cb30e977)
+
+running 1 test
+test adversarial_regression_fixtures_are_recorded ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/geometry_context.rs (target/debug/deps/geometry_context-e53ec793c24e556e)
+
+running 6 tests
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.49s
+
+     Running tests/mesh_boolean_context.rs (target/debug/deps/mesh_boolean_context-45a82c6425ec05dd)
+
+running 4 tests
+test context_booleans_preserve_input_errors ... ok
+test rational_booleans_stay_certified_with_either_context ... ok
+test every_boolean_reports_approximation_without_affecting_later_strict_calls ... ok
+test drill_cylinder_uses_the_requested_context ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.56s
+
+     Running tests/native_queries.rs (target/debug/deps/native_queries-9cd1ce89b974c0a5)
+
+running 3 tests
+test disjoint_distributions_preserve_every_native_copy ... ok
+test sphere_diameter_ray_reports_only_surface_hits ... ok
+test sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.71s
+
+     Running tests/readme.rs (target/debug/deps/readme-38b1cca0d52cf2cf)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme_render_regression.rs (target/debug/deps/readme_render_regression-dc7a6c5ab6ac5632)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/solid_cache.rs (target/debug/deps/solid_cache-654e450c71bdf08d)
+
+running 9 tests
+test fifo_hits_do_not_refresh_insertion_order ... ok
+test merge_keys_include_input_order_and_both_storage_identities ... ok
+test nested_scopes_shrink_immediately_and_restore_after_unwinding ... ok
+test workers_have_independent_policy_and_retained_storage ... ok
+test primitives_preserve_scalar_structure_with_and_without_retention ... ok
+test all_active_caches_obey_their_limits_and_release_entries ... ok
+test every_cached_primitive_family_replays_the_same_exact_rows ... ok
+test each_distribution_family_preserves_geometry_and_certainty ... ok
+test approximate_distribution_cannot_satisfy_a_strict_request ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/wasm_certainty.rs (target/debug/deps/wasm_certainty-8b45f72e9ebcf979)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests csgrs
+
+running 1 test
+test src/solid/cache.rs - solid::cache (line 15) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.41s; merged doctests compilation took 0.40s

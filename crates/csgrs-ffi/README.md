@@ -96,3 +96,9 @@ exercise the same header. The crate is MIT-licensed, matching CSGRS.
 This crate is maintained with CSGRS by Timothy Schmidt and packages the work
 of the CSGRS and Hyper geometry contributors behind a language-neutral
 boundary.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

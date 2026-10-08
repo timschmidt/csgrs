@@ -310,3 +310,9 @@ Bug reports should include exact path inputs, source-grid/provenance records,
 the requested check, enabled features, and the complete result. Before
 proposing a change, run formatting, focused tests, all targets/features, and
 strict Clippy.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

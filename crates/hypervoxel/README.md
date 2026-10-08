@@ -331,3 +331,9 @@ Bug reports should include the exact frame, addresses or input geometry,
 voxelization policy, enabled features, and complete report. Before proposing a
 root-crate change, run formatting, the focused regression, the all-feature
 suite, and strict Clippy with `-p hypervoxel`.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

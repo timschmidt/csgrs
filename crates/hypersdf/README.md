@@ -257,3 +257,9 @@ Bug reports should include the smallest expression, exact query point or cell,
 enabled features, and all returned statuses. Before proposing a change, run
 formatting, the focused regression, the complete feature suite, and strict
 Clippy.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

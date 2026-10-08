@@ -1,0 +1,17 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.13s
+     Running tests/solid_cache.rs (target/debug/deps/solid_cache-654e450c71bdf08d)
+
+running 9 tests
+test fifo_hits_do_not_refresh_insertion_order ... ok
+test nested_scopes_shrink_immediately_and_restore_after_unwinding ... ok
+test workers_have_independent_policy_and_retained_storage ... ok
+test merge_keys_include_input_order_and_both_storage_identities ... ok
+test primitives_preserve_scalar_structure_with_and_without_retention ... ok
+test all_active_caches_obey_their_limits_and_release_entries ... ok
+test every_cached_primitive_family_replays_the_same_exact_rows ... ok
+test each_distribution_family_preserves_geometry_and_certainty ... ok
+test approximate_distribution_cannot_satisfy_a_strict_request ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+

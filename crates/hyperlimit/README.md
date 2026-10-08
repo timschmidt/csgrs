@@ -274,6 +274,10 @@ finite list of every possible tree.
 
 ## Guarantees and boundaries
 
+New predicates and certificates follow the stack-wide
+[admission protocol](../../docs/admission.md), including explicit policy,
+certainty receipts, bounded work, and cold/warm equivalence.
+
 - A decided result comes from structural, filtered, exact, or bounded-refined
   evidence recorded in the outcome.
 - Primitive floats are never an undocumented fallback for predicate decisions.

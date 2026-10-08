@@ -283,3 +283,9 @@ Licensed under the [Apache License 2.0](LICENSE).
 Bug reports should include exact shape/material inputs, the operation, enabled
 features, and the complete report. Before proposing a change, run formatting,
 the focused regression, all-feature tests, and strict Clippy.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

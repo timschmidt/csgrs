@@ -1,0 +1,15 @@
+ INFO zizmor: 🌈 zizmor v1.30.1
+ WARN audit: zizmor: zizmor is running in offline mode by default; some audits and auto-fixes will not be available. see https://docs.zizmor.sh/usage/#operating-modes for details
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/adversarial.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/csgrs-ffi.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hypercurve.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hypergraphics.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hyperlattice.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hypermesh.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hyperreal.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hypersolve.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/hypertri.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/pages.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/rust.yml
+ INFO audit: zizmor: 🌈 completed ./.github/workflows/workspace.yml
+No findings to report. Good job!

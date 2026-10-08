@@ -246,3 +246,9 @@ Licensed under Apache-2.0 as declared in [Cargo.toml](Cargo.toml).
 Bug reports should include the smallest graph/import bundle, source records,
 query or handoff, enabled features, and complete evidence. Before proposing a
 change, run formatting, focused tests, all targets/features, and strict Clippy.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

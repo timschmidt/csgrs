@@ -1,0 +1,69 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.20s
+     Running unittests src/lib.rs (target/debug/deps/hypersdf-755a1dcc128e17c8)
+
+running 57 tests
+test sdf::provenance_tests::csg_composition_preserves_approximate_certainty ... ok
+test sdf::provenance_tests::decisive_csg_child_can_dominate_an_unknown_child ... ok
+test status::tests::composed_certainty_never_upgrades_approximate_evidence ... ok
+test tests::abs_node_uses_exact_interval_sign_splits ... ok
+test tests::aabb_scalar_and_interval_use_exact_max_halfspace_field ... ok
+test tests::arithmetic_nodes_export_to_shader_preview ... ok
+test tests::affine_transform_rejects_non_affine_or_singular_matrices ... ok
+test tests::arithmetic_nodes_classify_and_interval_exactly ... ok
+test tests::batch_point_and_cell_classification_matches_scalar ... ok
+test tests::batch_cells_preserve_conservative_classification ... ok
+test tests::box_point_classification_preserves_boundary ... ok
+test tests::constants_and_coordinate_variables_classify_exactly ... ok
+test tests::coordinate_interval_normalizes_reversed_cell_bounds ... ok
+test tests::capsule_point_and_cell_classification_is_exact ... ok
+test tests::affine_transform_replays_points_and_cells_exactly ... ok
+test tests::csg_union_intersection_and_complement_classify_points ... ok
+test tests::gradient_reports_exact_symbolic_vectors_where_certified ... ok
+test tests::cylinder_point_and_cell_classification_is_exact ... ok
+test tests::gradient_reports_unknown_at_csg_ties_and_piecewise_branches ... ok
+test tests::grid_preview_sampling_constructs_exact_points_then_lowers ... ok
+test tests::grid_preview_sampling_rejects_empty_dimensions ... ok
+test tests::invalid_capsule_domain_is_unknown_not_outside ... ok
+test tests::interval_reports_cover_plane_and_sphere_cells ... ok
+test tests::invalid_cylinder_domain_is_unknown_not_outside ... ok
+test tests::invalid_rounded_box_domain_is_unknown_not_outside ... ok
+test tests::invalid_slab_half_width_is_unknown_not_outside ... ok
+test tests::invalid_torus_domain_is_unknown_not_outside ... ok
+test tests::linear_vector3_field_retains_exact_vector_coefficients ... ok
+test tests::local_lipschitz_reports_certified_exact_bounds_where_supported ... ok
+test tests::mesh_preview_report_counts_crossings_without_topology_on_degenerate_grid ... ok
+test tests::negative_squared_radius_is_invalid_domain_not_outside ... ok
+test tests::mesh_preview_runs_fast_surface_nets_as_preview_only_adapter ... ok
+test tests::normal_reports_require_certified_nonzero_gradients ... ok
+test tests::offset_amount_is_counted_as_retained_parameter ... ok
+test tests::plane_point_classification_uses_oriented_halfspace ... ok
+test tests::offset_expression_classifies_through_exact_scalar_signs ... ok
+test tests::preview_sampling_reports_lossy_non_topological_boundary ... ok
+test tests::primitive_cell_classification_is_conservative ... ok
+test tests::projection_replay_accepts_only_boundary_candidates ... ok
+test tests::shader_export_rejects_invalid_function_names ... ok
+test tests::shader_export_reports_preview_only_glsl_source ... ok
+test tests::reports_self_validate_summary_fields ... ok
+test tests::sphere_point_classification_is_square_root_free ... ok
+test tests::slab_point_and_cell_classification_is_exact ... ok
+test tests::rounded_box_point_and_cell_classification_is_square_root_free ... ok
+test tests::sqrt_node_exports_to_shader_preview ... ok
+test tests::structural_facts_count_nodes_and_transform_parameters ... ok
+test tests::sqrt_node_preserves_domain_and_exact_signs ... ok
+test tests::torus_point_and_cell_classification_is_exact ... ok
+test tests::translated_expression_replays_child_queries_exactly ... ok
+test tests::variable_facts_and_shader_export_are_available ... ok
+test tests::trig_nodes_use_hyperreal_exact_point_signs_and_unknown_cell_ranges ... ok
+test tests::voxel_batch_accepts_non_octree_dimensions_without_claiming_depth ... ok
+test tests::voxel_batch_rejects_empty_or_nonpositive_frames_before_classification ... ok
+test tests::voxel_batch_classifies_exact_cell_grid ... ok
+test tests::zero_radius_rounded_box_preserves_core_boundary ... ok
+test voxel::tests::approximate_cell_evidence_never_becomes_definite_occupancy ... ok
+
+test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

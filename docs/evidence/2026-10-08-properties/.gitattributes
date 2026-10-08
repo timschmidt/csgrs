@@ -1,0 +1,2 @@
+# Retain command output byte for byte, including Cargo's final empty line.
+*.log -text whitespace=-blank-at-eof
