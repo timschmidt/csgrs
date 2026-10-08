@@ -13,6 +13,11 @@ the maintenance shape flat:
 - JavaScript/TypeScript uses `js/csgrs.ts`, a typed wrapper around a native
   loader that exposes the C ABI operation names.
 
+Browser and Node.js consumers can instead use the generated
+[WebAssembly bindings](js/WASM.md), with named certainty receipts and explicit
+point-query status. These wrappers are generated directly from the `wasm`
+feature and do not require a C-ABI loader.
+
 Every binding preserves the same scalar families:
 
 - `f32`

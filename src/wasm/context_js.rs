@@ -5,18 +5,90 @@ use crate::{GeometryCertainty, GeometryOutcome};
 use hyperlattice::Aabb;
 use wasm_bindgen::prelude::*;
 
-/// Point classification. An absent value represents a curve boundary.
+/// Weakest predicate certainty consumed by a completed geometry operation.
+///
+/// This describes topology decisions, not the fidelity of a float projection.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GeometryCertaintyJs {
+    /// All consumed decisions have exact certificates.
+    Certified,
+    /// At least one decision consumed the authorized 512-bit terminal.
+    Approximate512Consumed,
+}
+
+impl From<GeometryCertainty> for GeometryCertaintyJs {
+    fn from(certainty: GeometryCertainty) -> Self {
+        match certainty {
+            GeometryCertainty::Certified => Self::Certified,
+            GeometryCertainty::Approximate512Consumed => Self::Approximate512Consumed,
+        }
+    }
+}
+
+impl From<hypercurve::CurveCertainty> for GeometryCertaintyJs {
+    fn from(certainty: hypercurve::CurveCertainty) -> Self {
+        match certainty {
+            hypercurve::CurveCertainty::Certified => Self::Certified,
+            hypercurve::CurveCertainty::Approximate512Consumed => Self::Approximate512Consumed,
+        }
+    }
+}
+
+/// Outcome of a point query, separate from its predicate certainty.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GeometryQueryStatusJs {
+    /// A Boolean membership value is available.
+    Decided,
+    /// The curve query placed the point on the boundary under the selected policy.
+    Boundary,
+    /// Hypercurve could not decide the query under the selected policy.
+    Uncertain,
+    /// Hypermesh could not decide the query under the selected policy.
+    Unknown,
+}
+
+/// Point-query value, status, and optional certainty receipt.
+///
+/// Read `status` before interpreting an absent `value`: it can denote a curve
+/// boundary, curve uncertainty, or an unknown mesh query. An unresolved query
+/// has no certainty receipt. Mesh membership is strict containment, so mesh
+/// boundary points have a decided `false` value.
 #[wasm_bindgen]
 pub struct GeometryBoolResultJs {
     value: Option<bool>,
-    certainty: GeometryCertainty,
+    status: GeometryQueryStatusJs,
+    certainty: Option<GeometryCertaintyJs>,
+    reason: Option<String>,
 }
 
 impl From<GeometryOutcome<Option<bool>>> for GeometryBoolResultJs {
     fn from(outcome: GeometryOutcome<Option<bool>>) -> Self {
         Self {
             value: outcome.value,
-            certainty: outcome.certainty,
+            status: if outcome.value.is_some() {
+                GeometryQueryStatusJs::Decided
+            } else {
+                GeometryQueryStatusJs::Boundary
+            },
+            certainty: Some(outcome.certainty.into()),
+            reason: None,
+        }
+    }
+}
+
+impl GeometryBoolResultJs {
+    pub(crate) fn unresolved(status: GeometryQueryStatusJs, reason: String) -> Self {
+        debug_assert!(matches!(
+            status,
+            GeometryQueryStatusJs::Uncertain | GeometryQueryStatusJs::Unknown
+        ));
+        Self {
+            value: None,
+            status,
+            certainty: None,
+            reason: Some(reason),
         }
     }
 }
@@ -29,9 +101,30 @@ impl GeometryBoolResultJs {
         self.value
     }
 
+    #[wasm_bindgen(getter)]
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn status(&self) -> GeometryQueryStatusJs {
+        self.status
+    }
+
+    /// Absent for an uncertain or unknown query.
+    #[wasm_bindgen(getter)]
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn certainty(&self) -> Option<GeometryCertaintyJs> {
+        self.certainty
+    }
+
+    /// Diagnostic reason for an unresolved query; absent for decided values.
+    #[wasm_bindgen(getter)]
+    pub fn reason(&self) -> Option<String> {
+        self.reason.clone()
+    }
+
+    /// True only for a completed query that consumed the approximate terminal.
+    /// A false value alone does not imply that the query was decided.
     #[wasm_bindgen(getter, js_name = approximate512Consumed)]
     pub fn approximate_512_consumed(&self) -> bool {
-        self.certainty == GeometryCertainty::Approximate512Consumed
+        self.certainty == Some(GeometryCertaintyJs::Approximate512Consumed)
     }
 }
 
@@ -53,6 +146,11 @@ impl From<GeometryOutcome<Aabb>> for GeometryBoundsResultJs {
 
 #[wasm_bindgen]
 impl GeometryBoundsResultJs {
+    #[wasm_bindgen(getter)]
+    pub fn certainty(&self) -> GeometryCertaintyJs {
+        self.certainty.into()
+    }
+
     #[wasm_bindgen(getter)]
     pub fn min(&self) -> Point3Js {
         self.bounds.mins.clone().into()
@@ -87,6 +185,11 @@ impl From<GeometryOutcome<hypermesh::Plane>> for GeometryPlaneResultJs {
 
 #[wasm_bindgen]
 impl GeometryPlaneResultJs {
+    #[wasm_bindgen(getter)]
+    pub fn certainty(&self) -> GeometryCertaintyJs {
+        self.certainty.into()
+    }
+
     #[wasm_bindgen(getter, js_name = approximate512Consumed)]
     pub fn approximate_512_consumed(&self) -> bool {
         self.certainty == GeometryCertainty::Approximate512Consumed
@@ -116,6 +219,11 @@ impl From<GeometryOutcome<hyperlattice::Matrix4>> for GeometryMatrixResultJs {
 
 #[wasm_bindgen]
 impl GeometryMatrixResultJs {
+    #[wasm_bindgen(getter)]
+    pub fn certainty(&self) -> GeometryCertaintyJs {
+        self.certainty.into()
+    }
+
     #[wasm_bindgen(getter, js_name = approximate512Consumed)]
     pub fn approximate_512_consumed(&self) -> bool {
         self.certainty == GeometryCertainty::Approximate512Consumed

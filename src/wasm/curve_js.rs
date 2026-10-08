@@ -2,7 +2,10 @@
 
 use crate::curve;
 use crate::wasm::{
-    context_js::{GeometryBoolResultJs, GeometryBoundsResultJs},
+    context_js::{
+        GeometryBoolResultJs, GeometryBoundsResultJs, GeometryCertaintyJs,
+        GeometryQueryStatusJs,
+    },
     geometry_context,
 };
 use crate::wasm::{
@@ -96,6 +99,11 @@ impl From<GeometryOutcome<TriangleMesh>> for GeometryMeshResultJs {
 
 #[wasm_bindgen]
 impl CurveBooleanResultJs {
+    #[wasm_bindgen(getter)]
+    pub fn certainty(&self) -> GeometryCertaintyJs {
+        self.certainty.into()
+    }
+
     #[wasm_bindgen(getter, js_name = approximate512Consumed)]
     pub fn approximate_512_consumed(&self) -> bool {
         self.certainty == CurveCertainty::Approximate512Consumed
@@ -109,6 +117,11 @@ impl CurveBooleanResultJs {
 
 #[wasm_bindgen]
 impl GeometryMeshResultJs {
+    #[wasm_bindgen(getter)]
+    pub fn certainty(&self) -> GeometryCertaintyJs {
+        self.certainty.into()
+    }
+
     #[wasm_bindgen(getter, js_name = approximate512Consumed)]
     pub fn approximate_512_consumed(&self) -> bool {
         self.certainty == GeometryCertainty::Approximate512Consumed
@@ -203,6 +216,12 @@ impl CurveRegionJs {
             &(outcome.certainty == GeometryCertainty::Approximate512Consumed).into(),
         )
         .expect("plain object accepts certainty");
+        Reflect::set(
+            &result,
+            &"certainty".into(),
+            &GeometryCertaintyJs::from(outcome.certainty).into(),
+        )
+        .expect("plain object accepts certainty");
         Ok(result.into())
     }
 
@@ -252,6 +271,12 @@ impl CurveRegionJs {
             &object,
             &"approximate512Consumed".into(),
             &(outcome.certainty == GeometryCertainty::Approximate512Consumed).into(),
+        )
+        .expect("plain object accepts certainty");
+        Reflect::set(
+            &object,
+            &"certainty".into(),
+            &GeometryCertaintyJs::from(outcome.certainty).into(),
         )
         .expect("plain object accepts certainty");
         Ok(object)
@@ -334,12 +359,17 @@ impl CurveRegionJs {
     }
 
     #[wasm_bindgen(js_name = containsXY)]
+    /// Strict membership. Only a certified boundary returns an absent value;
+    /// an undecidable query throws. Use `containsXYWithContext` for typed status.
     pub fn contains_xy(&self, x: f64, y: f64) -> Result<Option<bool>, JsValue> {
-        Ok(curve::contains_xy(
+        curve::contains_xy_with_context(
             &self.inner,
             real_from_js_named(x, "x")?,
             real_from_js_named(y, "y")?,
-        ))
+            &crate::GeometryContext::STRICT,
+        )
+        .map(GeometryOutcome::into_value)
+        .map_err(js_error)
     }
 
     #[wasm_bindgen(js_name = transformWithContext)]
@@ -413,14 +443,36 @@ impl CurveRegionJs {
         y: f64,
         approximate_512: bool,
     ) -> Result<GeometryBoolResultJs, JsValue> {
-        curve::contains_xy_with_context(
-            &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
-            &geometry_context(approximate_512),
-        )
-        .map(Into::into)
-        .map_err(js_error)
+        let point =
+            hypercurve::Point2::new(real_from_js_named(x, "x")?, real_from_js_named(y, "y")?);
+        let evaluated = hypercurve::evaluate_under(
+            geometry_context(approximate_512).predicate_policy(),
+            || self.inner.classify_point(&point.into()),
+        );
+        let certainty = match evaluated.certainty() {
+            CurveCertainty::Certified => GeometryCertainty::Certified,
+            CurveCertainty::Approximate512Consumed => {
+                GeometryCertainty::Approximate512Consumed
+            },
+        };
+        match evaluated.into_unverified() {
+            Ok(location) => Ok(GeometryOutcome {
+                value: match location {
+                    hypercurve::RegionPointLocation::Inside => Some(true),
+                    hypercurve::RegionPointLocation::Outside => Some(false),
+                    hypercurve::RegionPointLocation::Boundary => None,
+                },
+                certainty,
+            }
+            .into()),
+            Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
+                Ok(GeometryBoolResultJs::unresolved(
+                    GeometryQueryStatusJs::Uncertain,
+                    format!("{:?}", blocker.reason()),
+                ))
+            },
+            Err(error) => Err(js_error(error)),
+        }
     }
 
     #[wasm_bindgen(js_name = boundingBoxWithContext)]
