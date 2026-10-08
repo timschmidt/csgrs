@@ -52,6 +52,17 @@ global-scalar fallback. The associated solver
 [projection measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
 cover inactive accounting overhead, not a complete curve-operation bound.
 
+Shared bivariate and tensor-axis resultants now expose resource exhaustion
+through the curve projection adapters. The public rational-curve intersection
+regression retains a typed pair blocker after a denied elimination, then
+recovers all three certified contacts under a larger budget and compares their
+evidence with an unbudgeted query. These additional hooks also increase the
+admitted work counted inside existing tensor-image and tagged projections;
+the counters describe the instrumented algorithm and retained evidence, rather
+than a fixed cost for each public API call. See the
+[elimination measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
+for the selected solver workloads.
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate

@@ -1801,6 +1801,8 @@ fn interpolate_rectangular_tensor_cube(
 pub enum CurveIntersectionResultantStatus {
     /// The retained-parameter resultant polynomial was constructed exactly.
     Constructed,
+    /// The enclosing operation declined this algebraic elimination.
+    BudgetExhausted,
     /// At least one coordinate polynomial was empty.
     EmptyCoordinatePolynomial,
     /// A coefficient remained unknown after bounded refinement and the strict
@@ -1965,6 +1967,9 @@ pub struct BivariatePolynomialComponentReport {
 /// resulting polynomial is retained. It is candidate evidence only; callers
 /// must replay isolated roots against their original equations and geometric
 /// branch conditions.
+/// A work budget charges one promotion after degree admission, before the
+/// determinant or interpolation. A declined degree limit consumes no promotion
+/// unit, so the complete continuation shares the same remaining allowance.
 pub fn resultant_bivariate_polynomial_system(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
@@ -1975,6 +1980,9 @@ pub fn resultant_bivariate_polynomial_system(
         CurveResultantParameter::First => CurveResultantParameter::Second,
         CurveResultantParameter::Second => CurveResultantParameter::First,
     };
+    if crate::work_budget::exhaustion().is_some() {
+        return exhausted_resultant_report(retained_parameter, 0);
+    }
     if bivariate_polynomial_is_empty(first_equation)
         || bivariate_polynomial_is_empty(second_equation)
     {
@@ -2022,6 +2030,10 @@ pub fn resultant_bivariate_polynomial_system(
             Vec::new(),
             None,
         );
+    }
+
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return exhausted_resultant_report(retained_parameter, degree_bound);
     }
 
     // Rational coefficient systems with a modest determinant dimension are
@@ -3439,6 +3451,9 @@ pub fn resultant_parametric_curve_intersection(
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
 ) -> CurveIntersectionResultantReport {
+    if crate::work_budget::exhaustion().is_some() {
+        return exhausted_resultant_report(retained_parameter, 0);
+    }
     if first.x_coefficients.is_empty()
         || first.y_coefficients.is_empty()
         || second.x_coefficients.is_empty()
@@ -3479,6 +3494,9 @@ pub fn resultant_rational_parametric_curve_intersection(
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
 ) -> CurveIntersectionResultantReport {
+    if crate::work_budget::exhaustion().is_some() {
+        return exhausted_resultant_report(retained_parameter, 0);
+    }
     if rational_curve_has_empty_polynomial(first) || rational_curve_has_empty_polynomial(second) {
         return curve_resultant_report(
             CurveIntersectionResultantStatus::EmptyCoordinatePolynomial,
@@ -3523,6 +3541,20 @@ pub fn resultant_rational_parametric_curve_intersection(
         ),
         retained_parameter,
         config,
+    )
+}
+
+fn exhausted_resultant_report(
+    retained_parameter: CurveResultantParameter,
+    degree_bound: usize,
+) -> CurveIntersectionResultantReport {
+    curve_resultant_report(
+        CurveIntersectionResultantStatus::BudgetExhausted,
+        retained_parameter,
+        opposite_parameter(retained_parameter),
+        degree_bound,
+        Vec::new(),
+        None,
     )
 }
 
@@ -4948,6 +4980,8 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system_complete(
 
 #[cfg(test)]
 mod tests {
+    mod budget;
+
     use proptest::prelude::*;
 
     use super::*;

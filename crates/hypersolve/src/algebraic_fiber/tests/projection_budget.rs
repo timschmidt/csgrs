@@ -212,7 +212,7 @@ fn tagged_projection_shares_its_budget_with_the_final_quotient_norm() {
             let project = || project_selected_tensor_fiber_via_tagged_norm(&relation, &sources);
             let expected = project();
             assert_eq!(expected.status, AlgebraicFiberProjectionStatus::Constructed);
-            for promotions in [0, 1] {
+            for promotions in [0, 1, 2, 3] {
                 let denied = with_budget(budget(promotions), || {
                     let report = project();
                     assert_eq!(
@@ -227,9 +227,11 @@ fn tagged_projection_shares_its_budget_with_the_final_quotient_norm() {
                 );
                 assert_eq!(denied.usage.promotions, promotions);
             }
-            let retry = with_budget(budget(2), project);
+            // One tagged entry, two constrained tensor axes, and the final
+            // quotient norm all draw from this same allowance.
+            let retry = with_budget(budget(4), project);
             assert_eq!(retry.result.unwrap(), expected);
-            assert_eq!(retry.usage.promotions, 2);
+            assert_eq!(retry.usage.promotions, 4);
         }
     }
 }

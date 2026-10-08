@@ -3,6 +3,9 @@
 
 use super::*;
 
+#[cfg(test)]
+mod budget_tests;
+
 /// Eliminates every already-selected source axis and retains the exact
 /// univariate projection on the final axis.
 pub(super) fn selected_dense_last_axis_projection(
@@ -44,6 +47,11 @@ pub(super) fn selected_dense_last_axis_projection(
             hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         );
         projection = match report.status {
+            hypersolve::TensorConstraintResultantStatus::BudgetExhausted => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             hypersolve::TensorConstraintResultantStatus::Constructed => report
                 .resultant
                 .expect("a constructed tensor projection retains its polynomial"),
