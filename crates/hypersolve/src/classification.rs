@@ -49,6 +49,8 @@ pub enum UncertaintyReason {
     Boundary,
     /// The requested operation is not supported by this slice.
     Unsupported,
+    /// The caller's explicit operation work budget stopped a required proof.
+    BudgetExhausted,
 }
 
 impl UncertaintyReason {

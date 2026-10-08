@@ -1,0 +1,243 @@
+{
+  "scope": "Existing unbudgeted curve parameter benchmark; all reported counts and evidence must match.",
+  "limitations": "No active-budget throughput, allocator, full serialized geometry, or competitive-library comparison is claimed.",
+  "warmup_pairs": 2,
+  "sample_pairs": 11,
+  "cpu_affinity": 0,
+  "host": {
+    "system": "Linux",
+    "release": "7.2.5-100.fc43.x86_64",
+    "machine": "x86_64"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "executables": {
+    "before": {
+      "sha256": "8cd373240365dee663ab915598ed62095d615f2a8e7c482253a08d906b9f7afc",
+      "bytes": 11682280
+    },
+    "after": {
+      "sha256": "dd68e9cfc1d215e1e227a9af38021635c74c92e43b23fe9f0a6078cf51b32762",
+      "bytes": 11675920
+    }
+  },
+  "reported_evidence": [
+    [
+      "bezier_parameter_normal_form_zero_cold",
+      20000,
+      "equal=20000"
+    ],
+    [
+      "bezier_parameter_normal_form_zero_reused",
+      20000,
+      "equal=20000"
+    ],
+    [
+      "bezier_parameter_bernstein_32_to_power",
+      20000,
+      "degree_checksum=640000"
+    ],
+    [
+      "bezier_algebraic_parameter_sturm",
+      20000,
+      "total=40000"
+    ],
+    [
+      "bezier_algebraic_parameter_refined_ordering",
+      10000,
+      "ordered=10000"
+    ],
+    [
+      "bezier_algebraic_parameter_refined_even_root_ordering",
+      10000,
+      "ordered=10000"
+    ],
+    [
+      "bezier_parameter_quintic_unit_isolation",
+      2000,
+      "isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5"
+    ],
+    [
+      "bezier_parameter_boundary_root_isolation",
+      2000,
+      "isolated=2000, interval_counts=263, bisections=130, max_depth=130"
+    ],
+    [
+      "bezier_algebraic_parameter_exact_rational_reconstruction",
+      500000,
+      "reconstructed=500000"
+    ],
+    [
+      "bezier_algebraic_point_tangent_image",
+      20000,
+      "transformed=20000"
+    ],
+    [
+      "rational_bezier_algebraic_point_tangent_image",
+      20000,
+      "transformed=20000"
+    ]
+  ],
+  "median_ns_per_operation": {
+    "bezier_parameter_normal_form_zero_cold": {
+      "before": 2745.21015,
+      "after": 2787.49975,
+      "change_percent": 1.5404868002546257
+    },
+    "bezier_parameter_normal_form_zero_reused": {
+      "before": 54.39575,
+      "after": 53.43635,
+      "change_percent": -1.7637407334212707
+    },
+    "bezier_parameter_bernstein_32_to_power": {
+      "before": 19895.76445,
+      "after": 19297.65545,
+      "change_percent": -3.0062127117714277
+    },
+    "bezier_algebraic_parameter_sturm": {
+      "before": 3834.0664,
+      "after": 3847.13205,
+      "change_percent": 0.3407778748954371
+    },
+    "bezier_algebraic_parameter_refined_ordering": {
+      "before": 16031.291,
+      "after": 16337.3991,
+      "change_percent": 1.909441354411201
+    },
+    "bezier_algebraic_parameter_refined_even_root_ordering": {
+      "before": 64692.7093,
+      "after": 65291.8082,
+      "change_percent": 0.926068650521028
+    },
+    "bezier_parameter_quintic_unit_isolation": {
+      "before": 34431.8425,
+      "after": 35339.3855,
+      "change_percent": 2.6357665872803526
+    },
+    "bezier_parameter_boundary_root_isolation": {
+      "before": 47278.9065,
+      "after": 49775.6445,
+      "change_percent": 5.280870867857335
+    },
+    "bezier_algebraic_parameter_exact_rational_reconstruction": {
+      "before": 43.363366,
+      "after": 44.198408,
+      "change_percent": 1.925685381526887
+    },
+    "bezier_algebraic_point_tangent_image": {
+      "before": 2061.4696,
+      "after": 2082.03765,
+      "change_percent": 0.9977372453127797
+    },
+    "rational_bezier_algebraic_point_tangent_image": {
+      "before": 2174.6273,
+      "after": 2127.739,
+      "change_percent": -2.1561533785582454
+    }
+  },
+  "raw_logs": [
+    {
+      "log": "00-before.log",
+      "sha256": "3c5d4b8e4a1abaf236aa1967e585af128a14223499d3d45fd2810789ec2438ed"
+    },
+    {
+      "log": "00-after.log",
+      "sha256": "862a214d2f6889a02fc2863d29bbcb63bbcd153639c8ff3410f7b08d1c18f36e"
+    },
+    {
+      "log": "01-after.log",
+      "sha256": "3bf1ff4ea1305d0c99e3788c053dc22125a3a3389d9a7ccdb57a3ba5ec476281"
+    },
+    {
+      "log": "01-before.log",
+      "sha256": "4301cb4a13c2f34f2bae4a83588d0c11aacc5854982bccc6f8f3651dd5910b8c"
+    },
+    {
+      "log": "02-before.log",
+      "sha256": "8449cdcaa9189c9a875b164f188f6b73fe0b72f725cb0bde77e75f79cce740fc"
+    },
+    {
+      "log": "02-after.log",
+      "sha256": "9afa8ad1d7bf93aae25438f72a59b6b6759bb2931797d11996cf7b2d4ed774a0"
+    },
+    {
+      "log": "03-after.log",
+      "sha256": "50d7a7f0fb609337be9b558b9c3931c27a0504c55f2040f5a90a3b44c2bd0895"
+    },
+    {
+      "log": "03-before.log",
+      "sha256": "b10350422f1ab4975b9497130d2c1875d09e42fa46ec4283a8ac4a3c530dfcef"
+    },
+    {
+      "log": "04-before.log",
+      "sha256": "51bc59cb9dc0e222d9c1c733bbf553c803e35417f402f8c8f296054760251b3f"
+    },
+    {
+      "log": "04-after.log",
+      "sha256": "09faaee19e7fd86c83dd465f68d06d8de242cbee19b507448f7b01ed5737fb1b"
+    },
+    {
+      "log": "05-after.log",
+      "sha256": "e9957eb98a650b315f494e64dae7eda4ab2f3bdba7cf7a78275183eb1c19bade"
+    },
+    {
+      "log": "05-before.log",
+      "sha256": "e7b8a43393c072ae383c9e85d3dcc059e5b47904bcb617ed5498c9c01b4f4ac2"
+    },
+    {
+      "log": "06-before.log",
+      "sha256": "0ced859965877aa7800cdd9d08eedc9ab50c64b7cd65dea903a1745bd1ca9abb"
+    },
+    {
+      "log": "06-after.log",
+      "sha256": "6eae8251ba772cc2b861fa736947808bbc5dc30ac360e6c139208d0ac785dfe4"
+    },
+    {
+      "log": "07-after.log",
+      "sha256": "59420a14f581506f1315cb649de9c8cc84fda1b888b564e96dee8bac817206d3"
+    },
+    {
+      "log": "07-before.log",
+      "sha256": "92692e343897cb735eb572af0822967f3da29cdce4f426ff045f18909f4c6090"
+    },
+    {
+      "log": "08-before.log",
+      "sha256": "a9f11605d36d11f99ebaaeda6665dffe04bfc00e2025def7e921c43ae8d2883a"
+    },
+    {
+      "log": "08-after.log",
+      "sha256": "e8b9da33257964bdb1bd69716ac498c4a0887647845d410647de0c05219921d2"
+    },
+    {
+      "log": "09-after.log",
+      "sha256": "fa121325d4009e88509c7f83d00620985e289771bf844b7fdad6775f48efcac1"
+    },
+    {
+      "log": "09-before.log",
+      "sha256": "b5f3d92eee47cddf1e295a115213f46c5226d40da75e0220e4af61d87c5a2f6d"
+    },
+    {
+      "log": "10-before.log",
+      "sha256": "2e236ddbc55f11c5a6fca1b8d560c7e38a0abf1e0ffcf1e3eaea4a7bd1318ed6"
+    },
+    {
+      "log": "10-after.log",
+      "sha256": "ff710d2f2be20206227b65c90a390b3ec8f7bb1d9377ec4c47d009a2999cc731"
+    },
+    {
+      "log": "11-after.log",
+      "sha256": "ae3f49c565093097768ff46ab722a8b920bd0f84d063ba3b306f406170f23dae"
+    },
+    {
+      "log": "11-before.log",
+      "sha256": "0c91be698dc053dd2eab54bb96e7c4ded5b9b3ed59d3d26bb3c79d4824fede8a"
+    },
+    {
+      "log": "12-before.log",
+      "sha256": "46bd4e7e6c0dced4d73aa9787ba05e21e60ec848f42c12d179cead41fd4e0823"
+    },
+    {
+      "log": "12-after.log",
+      "sha256": "010c71ed457cab73843bf8ee3102e23cf4d96ec33cd40e6638493b0acd003ece"
+    }
+  ]
+}

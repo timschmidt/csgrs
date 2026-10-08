@@ -30,6 +30,7 @@ This README describes crate version `0.3.1`.
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
+| `evaluate_with_budget`, `WorkBudget`, `BudgetOutcome<T>`, `BudgetExceeded` | Shared operation work limits, admitted usage, and typed resource exhaustion |
 | `CurveError`, `ExactCurveError` | Construction and exact-topology failure information |
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
@@ -395,6 +396,17 @@ Hypercurve separates exact values from decisions about them:
   evaluates exactly (certified), and `APPROXIMATE_512` behaves as
   `provisional`. It suspends enclosing display-preview tolerances and restores
   them afterward; explicit topology policy does not inherit a preview scope.
+- `hypercurve::evaluate_with_budget(policy, budget, || ...)` adds an explicit
+  `WorkBudget { refinements, promotions }`. Nested synchronous calls share
+  actual admitted work; a child cannot replenish its parent. The outer
+  `BudgetOutcome::result` returns `BudgetExceeded` on exhaustion, and successful
+  results retain their normal certainty. Budget failures are retryable and do
+  not become permanent cached capability blockers. Existing exact proofs can
+  succeed with zero new work. These counters currently cover instrumented root
+  subdivisions and selected algebraic promotions, not every curve algorithm,
+  scalar refinement, coefficient growth, allocation, or wall-clock time. The
+  [accounting module](../hypersolve/src/work_budget.rs) lists the coverage and
+  remaining gaps; the full per-operation bound remains an open target.
 - `CurvePreviewOptions` owns finite display tolerances separately. Operations
   called inside `evaluate` use its edge-preview context; its scoped preview
   results are never exact topology or construction provenance.

@@ -5,6 +5,21 @@ This document records how every source in the README reference list maps to
 deliberately bounded or architecture-inapplicable. Solver proposals may cross a named lossy
 boundary, but no optimization may turn such a proposal into proof.
 
+## Shared operation budget accounting
+
+`work_budget` accounts for instrumented root subdivisions and algebraic
+promotions across nested synchronous operations. Resource exhaustion is typed
+and cannot authorize an approximate result. Native tests check total work
+across root refinements, tensor-image promotion plus its internal refinement,
+larger-budget retry, thread isolation, and unwind restoration.
+
+The [curve consumer probe](../../benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
+retains both the initial and inlined accounting variants, exact executable
+identities, all reported evidence, and timing samples. It measures inactive
+budget overhead in that consumer, not active-budget solver throughput or a
+whole-solver resource bound. The module contract lists the remaining coverage
+gaps.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |

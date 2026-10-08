@@ -545,6 +545,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<BezierParameter2>> {
         match self.promoted_bezier_parameter(policy)? {
             decided @ Classification::Decided(_) => return Ok(decided),
+            exhausted @ Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(exhausted);
+            }
             Classification::Uncertain(_) => {}
         }
         #[cfg(feature = "dispatch-trace")]
@@ -575,6 +578,16 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         self.validate_policy(policy)?;
         if let Some(parameter) = self.retained_bezier_parameter() {
             return Ok(Classification::Decided(parameter));
+        }
+        if hypersolve::work_budget::consume(
+            hypersolve::work_budget::WorkKind::AlgebraicPromotion,
+            1,
+        )
+        .is_err()
+        {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
         }
         let range = CurveParameterRange2::new_validated(
             CurveParameter2::from(BezierParameter2::Exact(self.data.root.lower.clone())),

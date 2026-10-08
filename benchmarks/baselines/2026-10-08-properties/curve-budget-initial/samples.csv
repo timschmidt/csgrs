@@ -1,0 +1,243 @@
+workload,iterations,elapsed_ns,evidence,implementation,sample
+bezier_parameter_normal_form_zero_cold,20000,54187742.0,equal=20000,before,0
+bezier_parameter_normal_form_zero_reused,20000,1083016.0,equal=20000,before,0
+bezier_parameter_bernstein_32_to_power,20000,393044272.0,degree_checksum=640000,before,0
+bezier_algebraic_parameter_sturm,20000,75390567.0,total=40000,before,0
+bezier_algebraic_parameter_refined_ordering,10000,158394362.0,ordered=10000,before,0
+bezier_algebraic_parameter_refined_even_root_ordering,10000,643849165.0,ordered=10000,before,0
+bezier_parameter_quintic_unit_isolation,2000,68430775.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,0
+bezier_parameter_boundary_root_isolation,2000,96670947.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,0
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22336697.0,reconstructed=500000,before,0
+bezier_algebraic_point_tangent_image,20000,41379391.0,transformed=20000,before,0
+rational_bezier_algebraic_point_tangent_image,20000,45702215.0,transformed=20000,before,0
+bezier_parameter_normal_form_zero_cold,20000,55483193.0,equal=20000,after,0
+bezier_parameter_normal_form_zero_reused,20000,1061657.0,equal=20000,after,0
+bezier_parameter_bernstein_32_to_power,20000,387179755.0,degree_checksum=640000,after,0
+bezier_algebraic_parameter_sturm,20000,77185004.0,total=40000,after,0
+bezier_algebraic_parameter_refined_ordering,10000,161013142.0,ordered=10000,after,0
+bezier_algebraic_parameter_refined_even_root_ordering,10000,646617924.0,ordered=10000,after,0
+bezier_parameter_quintic_unit_isolation,2000,72645386.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,0
+bezier_parameter_boundary_root_isolation,2000,100672152.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,0
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21590008.0,reconstructed=500000,after,0
+bezier_algebraic_point_tangent_image,20000,40750184.0,transformed=20000,after,0
+rational_bezier_algebraic_point_tangent_image,20000,42133719.0,transformed=20000,after,0
+bezier_parameter_normal_form_zero_cold,20000,58734100.0,equal=20000,after,1
+bezier_parameter_normal_form_zero_reused,20000,1071016.0,equal=20000,after,1
+bezier_parameter_bernstein_32_to_power,20000,382777607.0,degree_checksum=640000,after,1
+bezier_algebraic_parameter_sturm,20000,77906534.0,total=40000,after,1
+bezier_algebraic_parameter_refined_ordering,10000,165622936.0,ordered=10000,after,1
+bezier_algebraic_parameter_refined_even_root_ordering,10000,652918082.0,ordered=10000,after,1
+bezier_parameter_quintic_unit_isolation,2000,70558498.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,1
+bezier_parameter_boundary_root_isolation,2000,99885387.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,1
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22118032.0,reconstructed=500000,after,1
+bezier_algebraic_point_tangent_image,20000,41756385.0,transformed=20000,after,1
+rational_bezier_algebraic_point_tangent_image,20000,41839899.0,transformed=20000,after,1
+bezier_parameter_normal_form_zero_cold,20000,55528110.0,equal=20000,before,1
+bezier_parameter_normal_form_zero_reused,20000,1096915.0,equal=20000,before,1
+bezier_parameter_bernstein_32_to_power,20000,398732103.0,degree_checksum=640000,before,1
+bezier_algebraic_parameter_sturm,20000,79831143.0,total=40000,before,1
+bezier_algebraic_parameter_refined_ordering,10000,162556177.0,ordered=10000,before,1
+bezier_algebraic_parameter_refined_even_root_ordering,10000,649934557.0,ordered=10000,before,1
+bezier_parameter_quintic_unit_isolation,2000,69822260.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,1
+bezier_parameter_boundary_root_isolation,2000,94557813.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,1
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21751638.0,reconstructed=500000,before,1
+bezier_algebraic_point_tangent_image,20000,43224754.0,transformed=20000,before,1
+rational_bezier_algebraic_point_tangent_image,20000,43140890.0,transformed=20000,before,1
+bezier_parameter_normal_form_zero_cold,20000,56054674.0,equal=20000,before,2
+bezier_parameter_normal_form_zero_reused,20000,1085515.0,equal=20000,before,2
+bezier_parameter_bernstein_32_to_power,20000,408578217.0,degree_checksum=640000,before,2
+bezier_algebraic_parameter_sturm,20000,75956179.0,total=40000,before,2
+bezier_algebraic_parameter_refined_ordering,10000,160312910.0,ordered=10000,before,2
+bezier_algebraic_parameter_refined_even_root_ordering,10000,648898008.0,ordered=10000,before,2
+bezier_parameter_quintic_unit_isolation,2000,68863685.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,2
+bezier_parameter_boundary_root_isolation,2000,93396212.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,2
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22264702.0,reconstructed=500000,before,2
+bezier_algebraic_point_tangent_image,20000,41229392.0,transformed=20000,before,2
+rational_bezier_algebraic_point_tangent_image,20000,44803076.0,transformed=20000,before,2
+bezier_parameter_normal_form_zero_cold,20000,55008585.0,equal=20000,after,2
+bezier_parameter_normal_form_zero_reused,20000,1088855.0,equal=20000,after,2
+bezier_parameter_bernstein_32_to_power,20000,393445355.0,degree_checksum=640000,after,2
+bezier_algebraic_parameter_sturm,20000,78409150.0,total=40000,after,2
+bezier_algebraic_parameter_refined_ordering,10000,162721485.0,ordered=10000,after,2
+bezier_algebraic_parameter_refined_even_root_ordering,10000,653795482.0,ordered=10000,after,2
+bezier_parameter_quintic_unit_isolation,2000,70661692.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,2
+bezier_parameter_boundary_root_isolation,2000,97709876.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,2
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22099204.0,reconstructed=500000,after,2
+bezier_algebraic_point_tangent_image,20000,41519952.0,transformed=20000,after,2
+rational_bezier_algebraic_point_tangent_image,20000,42086842.0,transformed=20000,after,2
+bezier_parameter_normal_form_zero_cold,20000,55123618.0,equal=20000,after,3
+bezier_parameter_normal_form_zero_reused,20000,1086065.0,equal=20000,after,3
+bezier_parameter_bernstein_32_to_power,20000,387602416.0,degree_checksum=640000,after,3
+bezier_algebraic_parameter_sturm,20000,76912583.0,total=40000,after,3
+bezier_algebraic_parameter_refined_ordering,10000,159722891.0,ordered=10000,after,3
+bezier_algebraic_parameter_refined_even_root_ordering,10000,645546837.0,ordered=10000,after,3
+bezier_parameter_quintic_unit_isolation,2000,70682440.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,3
+bezier_parameter_boundary_root_isolation,2000,98117957.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,3
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21459388.0,reconstructed=500000,after,3
+bezier_algebraic_point_tangent_image,20000,40817479.0,transformed=20000,after,3
+rational_bezier_algebraic_point_tangent_image,20000,42554780.0,transformed=20000,after,3
+bezier_parameter_normal_form_zero_cold,20000,54278926.0,equal=20000,before,3
+bezier_parameter_normal_form_zero_reused,20000,1101594.0,equal=20000,before,3
+bezier_parameter_bernstein_32_to_power,20000,404333538.0,degree_checksum=640000,before,3
+bezier_algebraic_parameter_sturm,20000,79829303.0,total=40000,before,3
+bezier_algebraic_parameter_refined_ordering,10000,167109945.0,ordered=10000,before,3
+bezier_algebraic_parameter_refined_even_root_ordering,10000,658418235.0,ordered=10000,before,3
+bezier_parameter_quintic_unit_isolation,2000,68747563.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,3
+bezier_parameter_boundary_root_isolation,2000,95468670.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,3
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21283970.0,reconstructed=500000,before,3
+bezier_algebraic_point_tangent_image,20000,41796642.0,transformed=20000,before,3
+rational_bezier_algebraic_point_tangent_image,20000,43423231.0,transformed=20000,before,3
+bezier_parameter_normal_form_zero_cold,20000,56102320.0,equal=20000,before,4
+bezier_parameter_normal_form_zero_reused,20000,1080245.0,equal=20000,before,4
+bezier_parameter_bernstein_32_to_power,20000,415369121.0,degree_checksum=640000,before,4
+bezier_algebraic_parameter_sturm,20000,81458491.0,total=40000,before,4
+bezier_algebraic_parameter_refined_ordering,10000,167255064.0,ordered=10000,before,4
+bezier_algebraic_parameter_refined_even_root_ordering,10000,660066961.0,ordered=10000,before,4
+bezier_parameter_quintic_unit_isolation,2000,69569836.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,4
+bezier_parameter_boundary_root_isolation,2000,96641819.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,4
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21681683.0,reconstructed=500000,before,4
+bezier_algebraic_point_tangent_image,20000,42605297.0,transformed=20000,before,4
+rational_bezier_algebraic_point_tangent_image,20000,44368036.0,transformed=20000,before,4
+bezier_parameter_normal_form_zero_cold,20000,55861507.0,equal=20000,after,4
+bezier_parameter_normal_form_zero_reused,20000,1058528.0,equal=20000,after,4
+bezier_parameter_bernstein_32_to_power,20000,384988405.0,degree_checksum=640000,after,4
+bezier_algebraic_parameter_sturm,20000,76874106.0,total=40000,after,4
+bezier_algebraic_parameter_refined_ordering,10000,173141830.0,ordered=10000,after,4
+bezier_algebraic_parameter_refined_even_root_ordering,10000,655809303.0,ordered=10000,after,4
+bezier_parameter_quintic_unit_isolation,2000,70112079.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,4
+bezier_parameter_boundary_root_isolation,2000,98737196.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,4
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22148490.0,reconstructed=500000,after,4
+bezier_algebraic_point_tangent_image,20000,41914734.0,transformed=20000,after,4
+rational_bezier_algebraic_point_tangent_image,20000,42196005.0,transformed=20000,after,4
+bezier_parameter_normal_form_zero_cold,20000,55051933.0,equal=20000,after,5
+bezier_parameter_normal_form_zero_reused,20000,1082296.0,equal=20000,after,5
+bezier_parameter_bernstein_32_to_power,20000,386088360.0,degree_checksum=640000,after,5
+bezier_algebraic_parameter_sturm,20000,76471213.0,total=40000,after,5
+bezier_algebraic_parameter_refined_ordering,10000,163373991.0,ordered=10000,after,5
+bezier_algebraic_parameter_refined_even_root_ordering,10000,675352583.0,ordered=10000,after,5
+bezier_parameter_quintic_unit_isolation,2000,70466275.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,5
+bezier_parameter_boundary_root_isolation,2000,98223530.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,5
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,25469542.0,reconstructed=500000,after,5
+bezier_algebraic_point_tangent_image,20000,41562658.0,transformed=20000,after,5
+rational_bezier_algebraic_point_tangent_image,20000,41964360.0,transformed=20000,after,5
+bezier_parameter_normal_form_zero_cold,20000,53830157.0,equal=20000,before,5
+bezier_parameter_normal_form_zero_reused,20000,1110304.0,equal=20000,before,5
+bezier_parameter_bernstein_32_to_power,20000,394526880.0,degree_checksum=640000,before,5
+bezier_algebraic_parameter_sturm,20000,75964448.0,total=40000,before,5
+bezier_algebraic_parameter_refined_ordering,10000,157618066.0,ordered=10000,before,5
+bezier_algebraic_parameter_refined_even_root_ordering,10000,644842696.0,ordered=10000,before,5
+bezier_parameter_quintic_unit_isolation,2000,68432204.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,5
+bezier_parameter_boundary_root_isolation,2000,93995591.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,5
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21280450.0,reconstructed=500000,before,5
+bezier_algebraic_point_tangent_image,20000,40758323.0,transformed=20000,before,5
+rational_bezier_algebraic_point_tangent_image,20000,43131850.0,transformed=20000,before,5
+bezier_parameter_normal_form_zero_cold,20000,55488133.0,equal=20000,before,6
+bezier_parameter_normal_form_zero_reused,20000,1102554.0,equal=20000,before,6
+bezier_parameter_bernstein_32_to_power,20000,390501517.0,degree_checksum=640000,before,6
+bezier_algebraic_parameter_sturm,20000,76138535.0,total=40000,before,6
+bezier_algebraic_parameter_refined_ordering,10000,158710630.0,ordered=10000,before,6
+bezier_algebraic_parameter_refined_even_root_ordering,10000,640624176.0,ordered=10000,before,6
+bezier_parameter_quintic_unit_isolation,2000,69202952.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,6
+bezier_parameter_boundary_root_isolation,2000,94217655.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,6
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21436789.0,reconstructed=500000,before,6
+bezier_algebraic_point_tangent_image,20000,41168735.0,transformed=20000,before,6
+rational_bezier_algebraic_point_tangent_image,20000,43492546.0,transformed=20000,before,6
+bezier_parameter_normal_form_zero_cold,20000,55749995.0,equal=20000,after,6
+bezier_parameter_normal_form_zero_reused,20000,1052238.0,equal=20000,after,6
+bezier_parameter_bernstein_32_to_power,20000,383068837.0,degree_checksum=640000,after,6
+bezier_algebraic_parameter_sturm,20000,75990226.0,total=40000,after,6
+bezier_algebraic_parameter_refined_ordering,10000,165795064.0,ordered=10000,after,6
+bezier_algebraic_parameter_refined_even_root_ordering,10000,650556924.0,ordered=10000,after,6
+bezier_parameter_quintic_unit_isolation,2000,71269090.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,6
+bezier_parameter_boundary_root_isolation,2000,99551289.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,6
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21484426.0,reconstructed=500000,after,6
+bezier_algebraic_point_tangent_image,20000,41640753.0,transformed=20000,after,6
+rational_bezier_algebraic_point_tangent_image,20000,44239125.0,transformed=20000,after,6
+bezier_parameter_normal_form_zero_cold,20000,56203493.0,equal=20000,after,7
+bezier_parameter_normal_form_zero_reused,20000,1068727.0,equal=20000,after,7
+bezier_parameter_bernstein_32_to_power,20000,383841684.0,degree_checksum=640000,after,7
+bezier_algebraic_parameter_sturm,20000,75481611.0,total=40000,after,7
+bezier_algebraic_parameter_refined_ordering,10000,161270325.0,ordered=10000,after,7
+bezier_algebraic_parameter_refined_even_root_ordering,10000,651602952.0,ordered=10000,after,7
+bezier_parameter_quintic_unit_isolation,2000,72867860.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,7
+bezier_parameter_boundary_root_isolation,2000,99750046.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,7
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22498166.0,reconstructed=500000,after,7
+bezier_algebraic_point_tangent_image,20000,41886496.0,transformed=20000,after,7
+rational_bezier_algebraic_point_tangent_image,20000,42668313.0,transformed=20000,after,7
+bezier_parameter_normal_form_zero_cold,20000,55709347.0,equal=20000,before,7
+bezier_parameter_normal_form_zero_reused,20000,1087915.0,equal=20000,before,7
+bezier_parameter_bernstein_32_to_power,20000,395108031.0,degree_checksum=640000,before,7
+bezier_algebraic_parameter_sturm,20000,76114778.0,total=40000,before,7
+bezier_algebraic_parameter_refined_ordering,10000,160693414.0,ordered=10000,before,7
+bezier_algebraic_parameter_refined_even_root_ordering,10000,646927093.0,ordered=10000,before,7
+bezier_parameter_quintic_unit_isolation,2000,69369950.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,7
+bezier_parameter_boundary_root_isolation,2000,94485067.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,7
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22262023.0,reconstructed=500000,before,7
+bezier_algebraic_point_tangent_image,20000,40779362.0,transformed=20000,before,7
+rational_bezier_algebraic_point_tangent_image,20000,43334356.0,transformed=20000,before,7
+bezier_parameter_normal_form_zero_cold,20000,53469811.0,equal=20000,before,8
+bezier_parameter_normal_form_zero_reused,20000,1107914.0,equal=20000,before,8
+bezier_parameter_bernstein_32_to_power,20000,401904825.0,degree_checksum=640000,before,8
+bezier_algebraic_parameter_sturm,20000,80379185.0,total=40000,before,8
+bezier_algebraic_parameter_refined_ordering,10000,160073897.0,ordered=10000,before,8
+bezier_algebraic_parameter_refined_even_root_ordering,10000,639270338.0,ordered=10000,before,8
+bezier_parameter_quintic_unit_isolation,2000,68773642.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,8
+bezier_parameter_boundary_root_isolation,2000,93527372.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,8
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21584799.0,reconstructed=500000,before,8
+bezier_algebraic_point_tangent_image,20000,40495872.0,transformed=20000,before,8
+rational_bezier_algebraic_point_tangent_image,20000,43740589.0,transformed=20000,before,8
+bezier_parameter_normal_form_zero_cold,20000,55283057.0,equal=20000,after,8
+bezier_parameter_normal_form_zero_reused,20000,1059057.0,equal=20000,after,8
+bezier_parameter_bernstein_32_to_power,20000,385953109.0,degree_checksum=640000,after,8
+bezier_algebraic_parameter_sturm,20000,79704081.0,total=40000,after,8
+bezier_algebraic_parameter_refined_ordering,10000,167466000.0,ordered=10000,after,8
+bezier_algebraic_parameter_refined_even_root_ordering,10000,657078096.0,ordered=10000,after,8
+bezier_parameter_quintic_unit_isolation,2000,70553869.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,8
+bezier_parameter_boundary_root_isolation,2000,102918618.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,8
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22061877.0,reconstructed=500000,after,8
+bezier_algebraic_point_tangent_image,20000,42923175.0,transformed=20000,after,8
+rational_bezier_algebraic_point_tangent_image,20000,42640824.0,transformed=20000,after,8
+bezier_parameter_normal_form_zero_cold,20000,56196944.0,equal=20000,after,9
+bezier_parameter_normal_form_zero_reused,20000,1042758.0000000001,equal=20000,after,9
+bezier_parameter_bernstein_32_to_power,20000,385151684.0,degree_checksum=640000,after,9
+bezier_algebraic_parameter_sturm,20000,76942641.0,total=40000,after,9
+bezier_algebraic_parameter_refined_ordering,10000,161703176.0,ordered=10000,after,9
+bezier_algebraic_parameter_refined_even_root_ordering,10000,645106358.0,ordered=10000,after,9
+bezier_parameter_quintic_unit_isolation,2000,70678771.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,9
+bezier_parameter_boundary_root_isolation,2000,99230172.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,9
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21574410.0,reconstructed=500000,after,9
+bezier_algebraic_point_tangent_image,20000,40869056.0,transformed=20000,after,9
+rational_bezier_algebraic_point_tangent_image,20000,42949463.0,transformed=20000,after,9
+bezier_parameter_normal_form_zero_cold,20000,54773832.0,equal=20000,before,9
+bezier_parameter_normal_form_zero_reused,20000,1087695.0,equal=20000,before,9
+bezier_parameter_bernstein_32_to_power,20000,388061974.0,degree_checksum=640000,before,9
+bezier_algebraic_parameter_sturm,20000,76681328.0,total=40000,before,9
+bezier_algebraic_parameter_refined_ordering,10000,158612487.0,ordered=10000,before,9
+bezier_algebraic_parameter_refined_even_root_ordering,10000,638189153.0,ordered=10000,before,9
+bezier_parameter_quintic_unit_isolation,2000,69913803.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,9
+bezier_parameter_boundary_root_isolation,2000,95790277.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,9
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21338846.0,reconstructed=500000,before,9
+bezier_algebraic_point_tangent_image,20000,40983108.0,transformed=20000,before,9
+rational_bezier_algebraic_point_tangent_image,20000,42849970.0,transformed=20000,before,9
+bezier_parameter_normal_form_zero_cold,20000,54904203.0,equal=20000,before,10
+bezier_parameter_normal_form_zero_reused,20000,1078576.0,equal=20000,before,10
+bezier_parameter_bernstein_32_to_power,20000,397915289.0,degree_checksum=640000,before,10
+bezier_algebraic_parameter_sturm,20000,77418938.0,total=40000,before,10
+bezier_algebraic_parameter_refined_ordering,10000,160384585.0,ordered=10000,before,10
+bezier_algebraic_parameter_refined_even_root_ordering,10000,666401807.0,ordered=10000,before,10
+bezier_parameter_quintic_unit_isolation,2000,68662879.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",before,10
+bezier_parameter_boundary_root_isolation,2000,94841113.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",before,10
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,21695541.0,reconstructed=500000,before,10
+bezier_algebraic_point_tangent_image,20000,43463048.0,transformed=20000,before,10
+rational_bezier_algebraic_point_tangent_image,20000,46962378.0,transformed=20000,before,10
+bezier_parameter_normal_form_zero_cold,20000,59752541.0,equal=20000,after,10
+bezier_parameter_normal_form_zero_reused,20000,1481969.0,equal=20000,after,10
+bezier_parameter_bernstein_32_to_power,20000,432450269.0,degree_checksum=640000,after,10
+bezier_algebraic_parameter_sturm,20000,78175087.0,total=40000,after,10
+bezier_algebraic_parameter_refined_ordering,10000,171097311.0,ordered=10000,after,10
+bezier_algebraic_parameter_refined_even_root_ordering,10000,707674575.0,ordered=10000,after,10
+bezier_parameter_quintic_unit_isolation,2000,74469480.0,"isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",after,10
+bezier_parameter_boundary_root_isolation,2000,106953802.0,"isolated=2000, interval_counts=263, bisections=130, max_depth=130",after,10
+bezier_algebraic_parameter_exact_rational_reconstruction,500000,22386394.0,reconstructed=500000,after,10
+bezier_algebraic_point_tangent_image,20000,42255171.0,transformed=20000,after,10
+rational_bezier_algebraic_point_tangent_image,20000,46029591.0,transformed=20000,after,10

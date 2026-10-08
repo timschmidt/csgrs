@@ -28,6 +28,7 @@ This README describes crate version `0.3.1`.
 | `AffineResidual`, `QuadraticResidual`, `UnivariateQuadraticResidual` | Recognized exact subproblems |
 | `CandidateCertificationReport`, `CandidateDomainReport` | Candidate proof, violation, uncertainty, and domain evidence |
 | `AlgebraicRootRepresentation` | Isolated exact algebraic root carrier |
+| `work_budget::{WorkBudget, BudgetOutcome, BudgetExceeded}` | Shared synchronous refinement/promotion accounting with typed exhaustion |
 | `SolverConfig`, `SolverState`, `SolveReport` | Explicit proposal-engine state and diagnostics |
 | `SketchSolveProblem`, `SketchConstraintBuilder` | Sketch-specific equation construction and reports |
 
@@ -40,6 +41,13 @@ hypersolve = "0.3.1"
 
 Hypersolve has no default features. `dispatch-trace` is for exact-dispatch
 instrumentation and does not change the mathematical API.
+
+`work_budget::with_budget` bounds instrumented root-subdivision and tensor-image
+promotion attempts across nested synchronous operations. Exhaustion is a typed
+resource failure and never authorizes approximation. The counters do not yet
+cover every solver path or bound scalar arithmetic, coefficient sizes,
+allocation, or elapsed time. See the [module contract](src/work_budget.rs) for
+the current coverage, cache behavior, and thread-local scope rules.
 
 ## Quick start
 

@@ -2585,6 +2585,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "hypercurve",
                     "represented-circle-parallel-system",
                     match reason {
+                        UncertaintyReason::BudgetExhausted => "budget-exhausted",
                         UncertaintyReason::Unsupported => "unsupported",
                         UncertaintyReason::Predicate => "predicate",
                         UncertaintyReason::Ordering => "ordering",

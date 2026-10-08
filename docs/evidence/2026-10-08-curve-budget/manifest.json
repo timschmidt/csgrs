@@ -1,0 +1,117 @@
+{
+  "scope": "Shared explicit work accounting, native curve/solver hooks, retry-safe caches, and correction of the earlier preview regression fixture. This is not the full properties.md completion or pre-push matrix.",
+  "sources": "sources.json",
+  "checks": [
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "hypersolve-library",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "hypersolve-library.log",
+      "sha256": "a0a1dfe6eb4577713e4745523554b3db0e8faa5c7b4a45f8e8dd920384ef6760",
+      "tests": {
+        "passed": 581,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-policy",
+      "command": "cargo test --locked -p hypercurve --all-features --lib policy::",
+      "exit_code": 0,
+      "log": "curve-policy.log",
+      "sha256": "f11227339bf106c60fb50800a6b73f24bb67cc67d5dfb07d6c12f984c5bf6e02",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "arc-preview-regression",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget --test hypercurve_fragments explicit_arc_preview",
+      "exit_code": 0,
+      "log": "arc-preview-regression.log",
+      "sha256": "e44f9c8478e88df0b7fe38bf6288e31fc75e9e4e53e3288f50224a9caf33d18b",
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "e93593a425986a79a3c1cb237c06da24a228012677cf8f290f7d9de62acb9594",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "csgrs-all-features",
+      "command": "cargo test --locked --all-features",
+      "exit_code": 0,
+      "log": "csgrs-all-features.log",
+      "sha256": "9e55f3ef7891768733bf21a1b07a1c886225f99fe098415c5398cb000654562f",
+      "tests": {
+        "passed": 158,
+        "failed": 0,
+        "ignored": 1
+      }
+    },
+    {
+      "name": "kernel-clippy",
+      "command": "cargo clippy --locked -p hypercurve -p hypersolve --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "kernel-clippy.log",
+      "sha256": "5165d45e7be6dba7367169bb47e2ecdfd9144cfd2b5460c2782d6fb68bdd4c0a"
+    },
+    {
+      "name": "csgrs-clippy",
+      "command": "cargo clippy --locked --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "csgrs-clippy.log",
+      "sha256": "a14408a03b1975360ee5811ff61580ca2c445bb6dbac237cef70216f412a320b"
+    },
+    {
+      "name": "rustdoc",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypercurve -p hypersolve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "rustdoc.log",
+      "sha256": "cbb5ccc83c63f8d8bd4ae8650b677b48b6f2bd3077f9a136c6c8017ae5498d97"
+    },
+    {
+      "name": "doctests",
+      "command": "cargo test --locked -p hypercurve --all-features --doc",
+      "exit_code": 0,
+      "log": "doctests.log",
+      "sha256": "0f72d7c77b0e5020b6f8eb67e4b7ac545edcb3815759480ae7ef78ee6dfbda99",
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget/manifest.json",
+  "preceding_performance_variant": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget-initial/manifest.json",
+  "pending": [
+    "Complete Hypercurve library/integration rerun after the arc-preview fixture correction and new budget hooks."
+  ],
+  "limitations": [
+    "Current units bound only instrumented refinement/promotion attempts, not coefficient size, scalar work, memory, wall-clock time, or all curve paths. T3 remains in progress.",
+    "The prior debug Hypercurve broad run passed 2235 tests, ignored 20, and failed one preview-scope fixture; Cargo stopped before later integration binaries. The corrected focused fixture passes. Its original failure remains in ../2026-10-08-properties/curve-all-tests-before-fragment-test-correction.log.",
+    "Root all-feature tests retain the existing ignored README PNG byte-comparison test.",
+    "No 100% coverage, full workspace/feature matrix, ASan/fuzz/Verus campaign, competitive-library revalidation, or deployment is claimed."
+  ]
+}

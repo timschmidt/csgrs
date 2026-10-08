@@ -139,6 +139,9 @@ fn represented_tensor_coordinate(
         eprintln!("tensor image end status={:?}", report.status);
     }
     match report.status {
+        AlgebraicTensorImageStatus::BudgetExhausted => {
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+        }
         AlgebraicTensorImageStatus::Transformed => Classification::Decided(
             report
                 .representation
@@ -182,10 +185,16 @@ pub(crate) fn represented_tensor_coordinate_refined(
         );
     }
     loop {
+        if crate::work_budget::exhaustion().is_some() {
+            return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+        }
         let refined_sources = sources
             .iter()
             .map(|source| refined_represented_root(source, refinement_steps))
             .collect::<Vec<_>>();
+        if crate::work_budget::exhaustion().is_some() {
+            return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+        }
         if let Some(mut interval) = image_interval(&refined_sources, refinement_steps) {
             // A retained exact `Real` expression can collapse interval
             // arithmetic to one non-rational endpoint before its canonical
@@ -227,6 +236,9 @@ pub(crate) fn represented_tensor_coordinate_refined(
                 &interval.upper,
             ) {
                 decided @ Classification::Decided(_) => return decided,
+                exhausted @ Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return exhausted;
+                }
                 Classification::Uncertain(UncertaintyReason::Unsupported) => {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
                 }
@@ -538,7 +550,10 @@ pub fn refined_represented_root(
     source: &AlgebraicRootRepresentation,
     refinement_steps: usize,
 ) -> AlgebraicRootRepresentation {
-    if refinement_steps == 0 || source.interval.exact_root.is_some() {
+    if refinement_steps == 0
+        || source.interval.exact_root.is_some()
+        || crate::work_budget::exhaustion().is_some()
+    {
         return source.clone();
     }
     #[cfg(feature = "dispatch-trace")]
@@ -1946,6 +1961,7 @@ fn refine_root_by_sign_change(
     }
     let mut refined = root.clone();
     for _ in 0..steps {
+        crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1).ok()?;
         let midpoint = scalar_in_open_interval(&lower, &upper);
         match strict_real_sign(&Real::eval_poly(polynomial, &midpoint))? {
             RealSign::Zero => {
@@ -2137,6 +2153,10 @@ pub fn combined_sign_uncertainty(
     second: &Classification<RealSign>,
 ) -> UncertaintyReason {
     match (first, second) {
+        (Classification::Uncertain(UncertaintyReason::BudgetExhausted), _)
+        | (_, Classification::Uncertain(UncertaintyReason::BudgetExhausted)) => {
+            UncertaintyReason::BudgetExhausted
+        }
         (Classification::Uncertain(UncertaintyReason::Unsupported), _)
         | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
             UncertaintyReason::Unsupported

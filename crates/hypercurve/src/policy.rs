@@ -164,6 +164,41 @@ pub fn evaluate_under<T>(
     }
 }
 
+/// Evaluate under an explicit predicate policy and shared work budget.
+///
+/// The budget is independent of certainty: exhaustion never authorizes an
+/// approximate decision. The returned outer result reports resource exhaustion
+/// before a caller can consume a successful [`Provisional`] value. Domain
+/// errors remain inside the callback's return type.
+///
+/// Units, nesting, thread behavior, and current instrumentation limits are
+/// documented in [`hypersolve::work_budget`]. This limits admitted refinement
+/// and promotion attempts, not wall-clock time or coefficient sizes.
+///
+/// ```
+/// use std::cmp::Ordering;
+/// use hypercurve::{BezierParameter2, PredicatePolicy, Real, WorkBudget, evaluate_with_budget};
+///
+/// let left = BezierParameter2::Exact(Real::from(1));
+/// let right = BezierParameter2::Exact(Real::from(2));
+/// let attempt = evaluate_with_budget(PredicatePolicy::STRICT, WorkBudget::ZERO, || {
+///     left.cmp_by_refinement(&right)
+/// });
+/// // Handle resource failure before inspecting the certainty or domain result.
+/// let provisional = attempt.result?;
+/// let ordering = provisional.certified().expect("STRICT requires certification")?;
+/// assert_eq!(ordering, Ordering::Less);
+/// assert_eq!(attempt.usage.refinements, 0);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub fn evaluate_with_budget<T>(
+    policy: hyperlimit::PredicatePolicy,
+    budget: crate::WorkBudget,
+    evaluate: impl FnOnce() -> T,
+) -> crate::BudgetOutcome<Provisional<T>> {
+    hypersolve::work_budget::with_budget(budget, || evaluate_under(policy, evaluate))
+}
+
 /// The policy of a principal operation on this thread: STRICT, or
 /// `APPROXIMATE_512` inside [`provisional`]. Inside
 /// [`CurvePreviewOptions::evaluate`] it is the adapter's edge-preview context.
@@ -597,6 +632,9 @@ pub(crate) type BoundedPolicyResultCache<K, T> =
 /// Expensive evaluation runs outside the cache mutex. Approximate requests
 /// first preserve the strict result; only a strict blocker authorizes the
 /// approximate evaluation. Preview-derived contexts bypass retained state.
+/// Bounded dispatch passes bypass this cache. Explicit work budgets may reuse
+/// retained results but do not add entries: their blockers describe a
+/// particular attempt, not a permanent limitation of the input.
 pub(crate) fn resolve_bounded_cached_result<K, T>(
     cache: &BoundedPolicyResultCache<K, T>,
     key: K,
@@ -609,7 +647,7 @@ where
     T: Clone,
 {
     debug_assert!(capacity > 0);
-    if policy.is_edge_preview() {
+    if policy.is_edge_preview() || policy.has_bounded_exact_predicate_budget() {
         return evaluate(&key, policy);
     }
 
@@ -631,6 +669,10 @@ where
         }
     };
 
+    if hypersolve::work_budget::is_active() {
+        return evaluate(&key, policy);
+    }
+
     let resolved = match cached_strict_blocker {
         Some(strict_blocker) => {
             let result = evaluate(&key, policy);
@@ -642,6 +684,11 @@ where
         None if policy.permits_approximate_512() => {
             let strict = evaluate(&key, &policy.strict_counterpart());
             match strict {
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::BudgetExhausted =>
+                {
+                    return Err(ExactCurveError::Blocked(blocker));
+                }
                 Err(ExactCurveError::Blocked(strict_blocker)) => {
                     let result = evaluate(&key, policy);
                     PolicyResultCacheEntry::Approximate512(Box::new(ApproximateResult {
@@ -654,6 +701,21 @@ where
         }
         None => retain_strict_result(evaluate(&key, policy)),
     };
+
+    let budget_blocked = match &resolved {
+        PolicyResultCacheEntry::StrictBlocked(blocker) => {
+            blocker.reason() == UncertaintyReason::BudgetExhausted
+        }
+        PolicyResultCacheEntry::Approximate512(resolved) => matches!(
+            resolved.result,
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::BudgetExhausted
+        ),
+        _ => false,
+    };
+    if budget_blocked {
+        return replay_cached_result(&resolved, policy);
+    }
 
     let mut entries = entries.lock().expect("policy result cache mutex poisoned");
     if let Some((_, entry)) = entries
@@ -808,9 +870,23 @@ fn resolve_uncached_evaluation<'a, T, E>(
     policy: &CurveContext,
     mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
 ) -> Result<Classification<&'a T>, E> {
+    let mut evaluate = |context: &CurveContext| {
+        if hypersolve::work_budget::exhaustion().is_some() {
+            Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ))
+        } else {
+            evaluate(context).map(classification_after_work)
+        }
+    };
     let resolved = if policy.permits_approximate_512() {
         match evaluate(&policy.strict_counterpart())? {
             Classification::Decided(value) => (value, None),
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             Classification::Uncertain(strict_reason) => match evaluate(policy)? {
                 Classification::Decided(value) => (value, Some(strict_reason)),
                 Classification::Uncertain(reason) => {
@@ -880,10 +956,24 @@ fn resolve_uncached_classification<'a, T, E>(
     policy: &CurveContext,
     mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
 ) -> Result<Classification<&'a T>, E> {
+    let mut evaluate = |context: &CurveContext| {
+        if hypersolve::work_budget::exhaustion().is_some() {
+            Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ))
+        } else {
+            evaluate(context).map(classification_after_work)
+        }
+    };
     if policy.permits_approximate_512() {
         match evaluate(&policy.strict_counterpart())? {
             Classification::Decided(value) => {
                 let _ = cache.certified.set(value);
+            }
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
             }
             Classification::Uncertain(strict_reason) => match evaluate(policy)? {
                 Classification::Decided(value) => {
@@ -924,6 +1014,14 @@ fn resolve_uncached_classification<'a, T, E>(
     }
 }
 
+fn classification_after_work<T>(value: Classification<T>) -> Classification<T> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+    } else {
+        value
+    }
+}
+
 /// Run one composite operation while aggregating every consumed predicate.
 ///
 /// `APPROXIMATE_512` follows the same operation once. Hyperlimit performs its
@@ -959,6 +1057,9 @@ pub(crate) fn resolve_certified_value<T>(
     let observation = OperationObservation::begin();
     CurveOutcome::new(evaluate(policy), observation.finish())
 }
+
+#[cfg(test)]
+mod budget_tests;
 
 #[cfg(test)]
 mod layout_tests {

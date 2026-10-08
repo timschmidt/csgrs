@@ -10,6 +10,24 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Explicit operation work budgets
+
+The shared refinement/promotion budget adds typed resource exhaustion without
+changing the selected predicate policy. Its initial coverage and unbounded
+paths are documented in `hypersolve::work_budget`; this is not yet a complete
+time or memory bound for curve operations.
+
+The retained counters inline their scope lookups and admission helper. The
+[paired probe](../../benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
+preserves every reported workload count and trace value across 11 unbudgeted
+parameter workloads. Final median changes range from -3.74% to +2.91%; the
+initial variant's deepest isolation row was +5.28%. Both experiments and raw
+samples are retained. The change provides a caller-visible resource contract;
+no performance improvement, allocator reduction, or competitive-suite result
+is claimed. Native budget/cache regression tests compare exact outputs after
+exhaustion and retry, including simple roots, repeated roots, and the unchanged
+five-root stationary-distance quintic.
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate

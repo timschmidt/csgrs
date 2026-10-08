@@ -128,6 +128,21 @@
       "exit_code": 0,
       "log": "workflow-security.log",
       "sha256": "a98bc92a6ca65e0d55211801aacfabf6477c434d0446d4e1b3ccddb9dbfce133"
+    },
+    {
+      "name": "hypercurve-all-tests-before-fragment-test-correction",
+      "reproduce": "cargo test --locked -p hypercurve --all-features --lib --tests",
+      "phase": "final",
+      "exit_code": 101,
+      "log": "curve-all-tests-before-fragment-test-correction.log",
+      "sha256": "33a3e8c2927ac0e5a384b6b1108f513e9045fcd8de542614f2721499b00f39ff",
+      "tests": {
+        "passed": 2235,
+        "failed": 1,
+        "ignored": 20
+      },
+      "failure": "approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points expected an explicit STRICT query to inherit enclosing preview tolerances. Commit 43974ab63 retains the original geometry, verifies explicit-policy rejection, and exercises tolerant construction directly through the preview scope.",
+      "coverage": "Cargo stopped at the failing fragments integration binary; later test binaries did not execute."
     }
   ],
   "pending": [
@@ -136,7 +151,7 @@
   ],
   "limitations": [
     "Root all-feature tests leave the existing expensive README PNG byte-comparison test ignored.",
-    "Hypercurve broad-suite results are pending; focused policy tests passed.",
+    "The initial Hypercurve broad run passed its library suite and preceding integration binaries, then stopped at one preview-scope fixture. Its failure log is retained; the corrected focused regression passes. The complete rerun remains pending.",
     "No 100% coverage, full workspace validation, ASan/fuzz/Verus campaign, competitive-suite revalidation, or deployment is claimed.",
     "Zizmor reports zero findings in its default offline mode; online-only audits were not run."
   ],

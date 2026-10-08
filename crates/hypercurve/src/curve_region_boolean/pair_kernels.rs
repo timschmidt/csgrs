@@ -3226,6 +3226,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 "hypercurve",
                                 "algebraic-circle-chord-pair",
                                 match reason {
+                                    UncertaintyReason::BudgetExhausted => "kernel-budget-exhausted",
                                     UncertaintyReason::Unsupported => "kernel-unsupported",
                                     UncertaintyReason::Predicate => "kernel-predicate",
                                     UncertaintyReason::Ordering => "kernel-ordering",

@@ -345,9 +345,19 @@
       "id": "T3",
       "title": "Refinement budget for curves",
       "requirement": "make \"undecidable in bounded time\" an explicit, documented per-operation budget (the `APPROXIMATE_512` analog for curve queries) rather than emergent behavior (P11/P14).",
-      "status": "open",
-      "evidence": [],
-      "remaining": "make \"undecidable in bounded time\" an explicit, documented per-operation budget (the `APPROXIMATE_512` analog for curve queries) rather than emergent behavior (P11/P14)."
+      "status": "in-progress",
+      "evidence": [
+        "crates/hypersolve/src/work_budget.rs",
+        "crates/hypersolve/src/work_budget/tests.rs",
+        "crates/hypercurve/src/policy.rs",
+        "crates/hypercurve/src/policy/budget_tests.rs",
+        "crates/hypercurve/tests/work_budget.rs",
+        "crates/hypersolve/src/algebraic_tensor_image.rs",
+        "crates/hypercurve/README.md",
+        "docs/evidence/2026-10-08-curve-budget/manifest.json",
+        "benchmarks/baselines/2026-10-08-properties/curve-budget/manifest.json"
+      ],
+      "remaining": "Shared synchronous work accounting and typed exhaustion now cover instrumented root subdivisions and selected algebraic promotions, with retry-safe policy caches. Complete instrumentation of generic ordered-field/fiber isolators, elimination entry points, scalar precision/coefficient growth, and the remaining curve dispatch graph; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
     },
     {
       "id": "T4",
