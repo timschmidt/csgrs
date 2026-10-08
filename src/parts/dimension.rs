@@ -224,7 +224,7 @@ fn label_edges(
 }
 
 #[cfg(not(feature = "hershey-text"))]
-fn label_edges(
+const fn label_edges(
     _projection: BlueprintProjection,
     _start: &Point3,
     _end: &Point3,

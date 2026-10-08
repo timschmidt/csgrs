@@ -218,7 +218,7 @@ fn generate_surface_nets_preview(
     }
 
     let mut triangles = Vec::with_capacity(buffer.indices.len() / 3);
-    for triangle in buffer.indices.chunks_exact(3) {
+    for triangle in buffer.indices.as_chunks::<3>().0 {
         let a = mapped_index(triangle[0], &index_map);
         let b = mapped_index(triangle[1], &index_map);
         let c = mapped_index(triangle[2], &index_map);
