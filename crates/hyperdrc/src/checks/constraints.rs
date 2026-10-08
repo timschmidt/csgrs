@@ -11,6 +11,7 @@
 //! stackups. Verify any release-blocking result against the layout tool's
 //! constraint engine or a fabricator rule deck.
 
+use super::minimum_bounding_dimension;
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::distance::{
@@ -2339,23 +2340,6 @@ fn parsed_copper_layers(boards: &[BoardModel]) -> BTreeSet<String> {
 
 fn layer_selected(layer: &str, selected_layers: &[String]) -> bool {
     selected_layers.is_empty() || selected_layers.iter().any(|selected| selected == layer)
-}
-
-fn minimum_bounding_dimension(
-    region: &crate::PcbRegion,
-) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
-    let Some(bounds) = region.try_native_bounds()? else {
-        return Ok(None);
-    };
-    let width = &bounds[2] - &bounds[0];
-    let height = &bounds[3] - &bounds[1];
-    Ok(Some(
-        if crate::checks::distance::compare_metrics(&width, &height)?.is_le() {
-            width
-        } else {
-            height
-        },
-    ))
 }
 
 #[derive(Clone, Debug)]

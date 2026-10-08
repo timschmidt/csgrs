@@ -16,9 +16,10 @@
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native circle_polygon geometry, exact-decimal KiCad via copper, and authoritative profile-bound composition are repaired. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native circle_polygon geometry, exact-decimal KiCad via copper, and authoritative profile-bound composition are repaired. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P2",
@@ -44,9 +45,10 @@
         "docs/evidence/2026-10-08-properties/manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Grammar cache policy and regressions are verified for the five modeled cache families. Scalar, curve, predicate, and mesh cache invariants still need a complete audit across representations, policies, and precisions. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Grammar cache policy and regressions are verified for the five modeled cache families. Scalar, curve, predicate, and mesh cache invariants still need a complete audit across representations, policies, and precisions. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P5",
@@ -62,9 +64,10 @@
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native circle_polygon geometry, exact-decimal KiCad via copper, and authoritative profile-bound composition are repaired. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native circle_polygon geometry, exact-decimal KiCad via copper, and authoritative profile-bound composition are repaired. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P7",
@@ -84,9 +87,10 @@
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P9",
@@ -109,9 +113,10 @@
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P12",
@@ -134,9 +139,10 @@
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P15",
@@ -155,9 +161,10 @@
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P17",
@@ -165,9 +172,10 @@
       "status": "in-progress",
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P18",
@@ -233,9 +241,10 @@
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P27",
@@ -264,9 +273,10 @@
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P30",
@@ -280,9 +290,10 @@
         "tests/wasm/geometry_certainty.cjs",
         "docs/evidence/2026-10-08-properties/manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit every ABI, including uncertainty/error distinctions and receipt lifetime after conversion. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit every ABI, including uncertainty/error distinctions and receipt lifetime after conversion. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P31",
@@ -320,9 +331,10 @@
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P36",
@@ -332,9 +344,10 @@
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native DRC boundary metrics and their required comparisons now use authoritative regularized boundaries and retain uncertainty through readiness receipts (1,142 configured tests, strict Clippy/docs/formatting and candidate cost evidence). DRC component/report caches now retain successful native results under STRICT/source/budget guards; required projection failures reach uncertainty receipts, migrated candidate indices retain unknown bounds, and required net width reads native bounds. Six consumer snapshots were audited across 190 changed IDs and 202 feature pairs. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Other finite heuristics, source shapes, non-distance Option/filter_map consumers and the property-wide audit remain open."
     },
     {
       "id": "P37",
@@ -489,7 +502,8 @@
         "crates/comparisons/integration/provenance.json",
         "crates/comparisons/integration/validation/manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-projection/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-operations/manifest.json"
       ],
       "remaining": "The comparison repository is imported at its pinned revision with all 74,865 tracked paths and five verified LFS payloads. Current native comparisons pass (78 tests, 19 existing ignored) and all 480 Criterion fixtures execute. Full historical campaign and paper-claim revalidation, instrumented 100% coverage, exhaustive representations, ASan/fuzz/lexicase, matched timing/memory campaigns, and Verus coverage remain open."
     },
@@ -605,7 +619,7 @@
       {
         "path": "crates/hyperdrc/docs/design-readiness-plan.md",
         "status": "open",
-        "remaining": "Entire 1,855-line document read on 2026-10-08. The retained source-via failure is repaired on both copper layers, with exact decimal center/diameter retained, native primitive circles independent of report resolution, guarded polygon measurements, and authoritative profile bounds. Native clearance consumers now use regularized native boundaries and retain uncertainty through readiness receipts; configured tests pass 1,142 cases with strict Clippy/docs/formatting and candidate cost evidence. Native component extraction and report projection now use fallible guarded caches, migrated indices retain unavailable native bounds, and required net-width failures remain uncertainty. Final validation and the six-board native/chord snapshot audit are recorded in docs/evidence/2026-10-08-hyperdrc-projection/manifest.json. Other finite spatial/measurement heuristics and non-distance readiness uncertainty still need repair. Remaining breadth includes native pad/track/slot/custom geometry, richer impedance and routed-pair intent, mechanical/panel/process models, IPC/ODB/GenCAD/CAD/STEP and vendor/test adapters, lossless reporting/exports, and required pass/fail/config fixtures. Other existing implementation claims have not been independently revalidated."
+        "remaining": "Entire 1,855-line document read on 2026-10-08. The retained source-via failure is repaired on both copper layers, with exact decimal center/diameter retained, native primitive circles independent of report resolution, guarded polygon measurements, and authoritative profile bounds. Native clearance consumers now use regularized native boundaries and retain uncertainty through readiness receipts; configured tests pass 1,142 cases with strict Clippy/docs/formatting and candidate cost evidence. Native component extraction and report projection now use fallible guarded caches, migrated indices retain unavailable native bounds, and required net-width failures remain uncertainty. Final validation and the six-board native/chord snapshot audit are recorded in docs/evidence/2026-10-08-hyperdrc-projection/manifest.json. Guarded DRC Boolean/offset/classification/bounds operations and native circle callers now retain source/policy/budget failures; offset bounds come from the resulting set, and migrated envelope-dimension consumers retain uncertainty. Operation-boundary evidence is in docs/evidence/2026-10-08-hyperdrc-operations/manifest.json. Other finite spatial/measurement heuristics and non-distance readiness uncertainty still need repair. Remaining breadth includes native pad/track/slot/custom geometry, richer impedance and routed-pair intent, mechanical/panel/process models, IPC/ODB/GenCAD/CAD/STEP and vendor/test adapters, lossless reporting/exports, and required pass/fail/config fixtures. Other existing implementation claims have not been independently revalidated."
       },
       {
         "path": "crates/hypercircuit/CAPABILITY_MATRIX.md",
@@ -627,7 +641,7 @@
   "next_actions": [
     "The complete configured Hypercurve CI command passed at 774de5d9c with sources held fixed through rustdoc: 2,417 passed, 33 existing ignored. Preserve the earlier 4d3ec0237 compiled-test/source-overlap and separate committed-source doctest replay records. Complete the full repository pre-push matrix before any push.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
-    "Continue the HyperDRC audit after the guarded component/projection migration: propagate unavailable area/width/containment/source measurements, migrate translated_circle and review Boolean/offset/contains/bounding_box policy and budget boundaries, and replace remaining unsafe finite spatial/shape heuristics. Required net width now reads native bounds, but legacy Option helpers remain. Preserve all full fixtures, audited six-board snapshots, and native metric/projection failure and cost records.",
+    "Continue the HyperDRC source, measurement and scalar-threshold audit after guarded native operations: remove raw-Deref/source-failure bypasses and is_empty shortcuts that hide failed construction, propagate unavailable area and net-class length measurements, and replace finite source-coordinate/radius panics and unsafe heuristics. Native pad/track/slot/custom geometry and general exact aggregation remain open. Preserve all full fixtures, snapshot findings, and native metric/projection/operation failure and cost records; shared budget guards are not a total work bound.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."
   ],

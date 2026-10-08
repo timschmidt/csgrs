@@ -177,6 +177,67 @@ Boolean/offset/translation boundaries. General curve aggregation still has typed
 blockers. This repair does not establish complete DRC certification or a total
 time, memory or precision bound.
 
+## Guarded native operations and measurements, 2026-10-08
+
+PCB Boolean operations, offsets, point classification and bounds now retain
+source failures and known shared-budget exhaustion under STRICT. Classification
+distinguishes boundary from uncertainty, while empty geometry has no bounds.
+Offset bounds come from the resulting native set; collapsed or removed
+components cannot leave inferred input bounds. Circle callers use typed native
+construction, and migrated envelope-dimension consumers retain uncertainty
+through findings and readiness receipts. The former panicking circle adapter,
+origin-box fallback and ambiguous membership alias are removed.
+
+The [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-operations/manifest.json)
+retains nine failing pre-fix regressions. Sixteen final regressions include exact
+Boolean sets, eroded components, boundary/empty distinctions, unknown queries
+inside preview, concurrent preview/denied scopes, and readiness propagation.
+The configured release command passed 1,170 library tests, two README integration
+tests and two doctests. Strict all-feature/all-target Clippy, rustdoc and
+formatting pass, with source hashes fixed through the complete validation chain.
+
+Consumer validation passed nine tests selected by `hyperdrc` and all five
+curved-outline tests, with strict all-feature/all-target Clippy. All six
+Easyduino fast-DRC snapshots preserve their finding rows and counts; only the
+shared implementation version changes from 3 to 4. The
+[version audit](../../docs/evidence/2026-10-08-hyperdrc-operations/snapshot-versions.json)
+records the old/new hashes and exact field-only comparison.
+
+Five fresh processes pinned to CPU 0 measured the following median query costs,
+in microseconds, after every build and test exited:
+
+| Operation | Time |
+| --- | ---: |
+| Rectangle union and result bounds | 105.725 |
+| Rectangle intersection and result bounds | 100.514 |
+| Rectangle difference and result bounds | 101.231 |
+| Rectangle XOR and result bounds | 116.166 |
+| Circle offset and result bounds | 87.099 |
+| Drill circle construction and result bounds | 111.236 |
+| Circle point classification | 31.465 |
+| Circle bounds | 7.717 |
+
+Initial fixtures are constructed outside query timers. Each region row times
+the operation and checked result bounds with warm inputs and new PCB output
+wrappers; internal kernel evidence may already be warm. First/last native areas
+and report-coordinate fingerprints are checked outside timers. Eight witness
+rows retain the same 721 serialized bytes and SHA-256 in every trial. Peak
+process RSS was 10,336–10,608 KiB; the linked probe was 23,386,088 bytes.
+
+The full, unchanged two-board and Gerber fixture gate passed in 60.283 seconds
+against its 120-second limit, with 1,483,620 KiB peak RSS and a 42,319,320-byte
+executable. The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-operations/cost/manifest.json)
+retains all trials, source hashes, output witnesses and artifact identities.
+These are candidate capability costs; no matched speedup, allocation count or
+library-size delta is claimed.
+
+Raw native access through `Deref`, early empty-region shortcuts, aggregation,
+remaining optional area/length measurements, scalar threshold decisions and
+finite source adapters still require audit. Envelope dimensions and endpoint
+spans remain readiness proxies, not proofs of physical trace width or routed
+length. The shared exhaustion guard does not establish total runtime, memory or
+precision bounds.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

@@ -708,7 +708,7 @@ fn run_checks(
     let board_copper_layers = std::cell::OnceCell::<Vec<Vec<(String, PcbRegion)>>>::new();
 
     let cached_board_copper_layers = || {
-        crate::projection::evaluate("copper-layers", None, || {
+        crate::operations::evaluate("copper-layers", None, || {
             if board_copper_layers.get().is_none() {
                 let layers = boards
                     .iter()

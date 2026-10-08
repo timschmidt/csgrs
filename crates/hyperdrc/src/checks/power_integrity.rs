@@ -8,11 +8,12 @@
 //! estimate conductor support from parsed 2D copper. They are release-readiness
 //! prompts, not ampacity, temperature-rise, or electromigration calculations.
 
+use super::minimum_bounding_dimension;
 use super::spatial::CopperSpatialIndex;
+use crate::Scalar;
 use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbRegion, Scalar};
 
 /// Warn when a likely high-current pad has weak local same-net copper support.
 ///
@@ -251,7 +252,14 @@ fn local_pad_support(
             CopperKind::Zone => support.has_zone = true,
             CopperKind::Via => support.via_count += 1,
             CopperKind::Segment => {
-                let width = minimum_bounding_dimension_scalar(&feature.region);
+                let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                    minimum_bounding_dimension(&feature.region),
+                    "power-pad-entry-readiness",
+                    &[&feature.layer],
+                    violations,
+                ) else {
+                    continue;
+                };
                 if crate::scalar::gt(&width, &support.maximum_segment_width) {
                     support.maximum_segment_width = width;
                 }
@@ -315,26 +323,6 @@ fn selected_copper_features<'a>(
         .iter()
         .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
         .collect()
-}
-
-fn minimum_bounding_dimension_scalar(region: &PcbRegion) -> Scalar {
-    if let Some(bounds) = region.exact_bounds() {
-        let width = &bounds[2] - &bounds[0];
-        let height = &bounds[3] - &bounds[1];
-        return if crate::scalar::le(&width, &height) {
-            width
-        } else {
-            height
-        };
-    }
-    let bounds = region.bounding_box();
-    let width = &bounds.maxs.x - &bounds.mins.x;
-    let height = &bounds.maxs.y - &bounds.mins.y;
-    if crate::scalar::le(&width, &height) {
-        width
-    } else {
-        height
-    }
 }
 
 fn looks_high_current_net(net: &str) -> bool {

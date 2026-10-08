@@ -166,10 +166,14 @@ pub fn same_net_drill_break_readiness(
                 candidate_pairs += 1;
                 let feature = copper[candidate_index];
 
-                let drill_region = drill_region.get_or_insert_with(|| {
+                if drill_region.is_none() {
+                    let region = drill_keepout_region(drill)?;
                     keepouts_built += 1;
-                    drill_keepout_region(drill)
-                });
+                    drill_region = Some(region);
+                }
+                let drill_region = drill_region
+                    .as_ref()
+                    .expect("successful drill construction initialized the cache");
                 let overlap = match intersection_for_check(
                     drill_region,
                     &feature.region,
@@ -226,19 +230,17 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn drill_keepout_region(drill: &DrillFeature) -> PcbRegion {
+fn drill_keepout_region(drill: &DrillFeature) -> Result<PcbRegion, crate::PcbGeometryUncertainty> {
     let radius = crate::scalar::half(&drill.diameter);
-    PcbRegion::new(
-        crate::translated_circle(
-            radius,
-            32,
-            drill.location[0].clone(),
-            drill.location[1].clone(),
-        ),
+    Ok(PcbRegion::new(
+        crate::geometry::circle_region(
+            &[drill.location[0].clone(), drill.location[1].clone()],
+            &(radius),
+        )?,
         Some(LayerMetadata {
             name: "non-plated drill continuity keepout".to_string(),
         }),
-    )
+    ))
 }
 
 fn rects_overlap(left: &Rect<f64>, right: &Rect<f64>) -> bool {

@@ -272,17 +272,19 @@ fn regiones_within_clearance(
     right: &crate::PcbRegion,
     clearance: &Scalar,
 ) -> bool {
-    if left.is_empty() || right.is_empty() {
+    let (Some(left), Some(right)) = (
+        left.try_native_bounds().ok().flatten(),
+        right.try_native_bounds().ok().flatten(),
+    ) else {
         return true;
-    }
-    let left_bounds = left.bounding_box();
-    let right_bounds = right.bounding_box();
-
-    // Broad-phase culling before exact offset/intersection.
-    crate::scalar::le(&(&left_bounds.mins.x - clearance), &right_bounds.maxs.x)
-        && crate::scalar::ge(&(&left_bounds.maxs.x + clearance), &right_bounds.mins.x)
-        && crate::scalar::le(&(&left_bounds.mins.y - clearance), &right_bounds.maxs.y)
-        && crate::scalar::ge(&(&left_bounds.maxs.y + clearance), &right_bounds.mins.y)
+    };
+    !crate::scalar::compare(&(&left[0] - clearance), &right[2]).is_some_and(|order| order.is_gt())
+        && !crate::scalar::compare(&(&left[2] + clearance), &right[0])
+            .is_some_and(|order| order.is_lt())
+        && !crate::scalar::compare(&(&left[1] - clearance), &right[3])
+            .is_some_and(|order| order.is_gt())
+        && !crate::scalar::compare(&(&left[3] + clearance), &right[1])
+            .is_some_and(|order| order.is_lt())
 }
 
 fn looks_switching_net(net: &str) -> bool {

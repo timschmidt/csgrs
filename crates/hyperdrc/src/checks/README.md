@@ -86,7 +86,7 @@ signoff. They should be deterministic, explainable, and conservative:
 Metric gateways append an attributed `geometry-uncertainty` finding when a
 required query cannot be certified. The shared readiness runner serializes that
 execution as `Uncertain`, with a reason, and excludes it from complete coverage.
-Check implementation version 3 also covers fallible report projection and
+Check implementation version 4 includes fallible report projection and
 component extraction; the registry schema remains version 1. Generated report
 polygons retain certified native component identities, while parser-owned
 report profiles retain authored decomposition and sample counts. Both cache
@@ -97,6 +97,16 @@ whole shape about its authored anchor. Other finite index, heuristic and
 non-metric `Option` consumers remain under audit. The
 [projection evidence](../../../../docs/evidence/2026-10-08-hyperdrc-projection/manifest.json)
 records those remaining boundaries and the full validation run.
+
+Native Boolean/offset operations and point classification also use the shared
+STRICT/source/budget guard. `classify_xy` preserves boundary as a decided location;
+unknown membership cannot become inside/outside. Circle callers propagate
+construction errors, including negative or unresolved radii. Checked native
+envelope dimensions replace origin/zero placeholders and failed optional
+measurements in the migrated board, differential, assembly, power and thermal
+consumers. Offset bounds belong to the resulting set, including empty erosion.
+The [operation evidence](../../../../docs/evidence/2026-10-08-hyperdrc-operations/manifest.json)
+records coverage and the remaining measurement/threshold and source-adapter audit.
 
 ```mermaid
 flowchart TB

@@ -283,6 +283,9 @@ evidence can name the exact policy it used.
 
 - `PcbRegion::new`, `from_gerber`, `offset`, `try_union`,
   `try_difference`, `try_intersection`, `try_xor`, `metadata`;
+- `PcbRegion::classify_xy` returns inside, outside or boundary with typed
+  uncertainty; `try_bounding_box` returns checked bounds, `None` for an empty
+  region, or a typed failure. Both respect STRICT and the shared work budget;
 - `PcbRegionExt::try_to_multipolygon` returns an exact-backed report view or a
   `PcbGeometryUncertainty`; `BoardModel::copper_layers` and `all_copper` also
   return `Result` so callers retain geometry failures;
@@ -292,9 +295,11 @@ evidence can name the exact policy it used.
 - `geometry` exposes source-unit/grid facts, primitive construction, and
   report-shape projections.
 
-An uncertain certified offset becomes `PcbGeometryUncertainty` and then an
-error-severity `geometry-uncertainty` finding. The pipeline does not silently
-replace it with an approximate result.
+Boolean and offset operations check source failures and the active shared work
+budget under STRICT, including fast paths. Offset bounds come from the resulting
+native region, so vanished components cannot leave cached input bounds. Required
+operation failures become `geometry-uncertainty` findings and `Uncertain`
+readiness receipts.
 
 ### Check families
 

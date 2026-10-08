@@ -357,11 +357,8 @@ pub fn drill_to_copper_clearance_with_grid(
                     continue;
                 }
 
-                let Some(exact_keepout) =
-                    drill_keepout_region(&drill, keepout_radius_scalar.clone(), "drill keepout")
-                else {
-                    continue;
-                };
+                let exact_keepout =
+                    drill_keepout_region(&drill, keepout_radius_scalar.clone(), "drill keepout")?;
                 let keepout = keepout.get_or_insert(exact_keepout);
                 exact_intersections += 1;
                 let overlap = match intersection_for_check(
@@ -577,11 +574,7 @@ pub fn board_outline_drill_clearance_with_grid(
                 let Some(keepout_radius) = drill_radius_with_clearance(&drill, clearance) else {
                     continue;
                 };
-                let Some(keepout) =
-                    drill_keepout_region(&drill, keepout_radius, "drill edge keepout")
-                else {
-                    continue;
-                };
+                let keepout = drill_keepout_region(&drill, keepout_radius, "drill edge keepout")?;
                 exact_difference_count += 1;
                 let outside_outline = match difference_for_check(
                     &keepout,
@@ -650,9 +643,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violati
             plated_holes += 1;
 
             let drill_radius = crate::scalar::half(&drill.diameter);
-            let Some(hole) = drill_keepout_region(drill, drill_radius, "plated drill hole") else {
-                continue;
-            };
+            let hole = drill_keepout_region(drill, drill_radius, "plated drill hole")?;
             exact_difference_count += 1;
             let outside_outline = match difference_for_check(
                 &hole,
@@ -723,9 +714,7 @@ pub fn castellation_hole_readiness(
             undersized_plated_holes += 1;
 
             let drill_radius = crate::scalar::half(&drill.diameter);
-            let Some(hole) = drill_keepout_region(drill, drill_radius, "plated drill hole") else {
-                continue;
-            };
+            let hole = drill_keepout_region(drill, drill_radius, "plated drill hole")?;
             exact_difference_count += 1;
             let outside_outline = match difference_for_check(
                 &hole,
@@ -948,12 +937,17 @@ pub fn drills_to_region(
     for drill in drills {
         let radius = crate::scalar::half(&drill.diameter);
         let circle = PcbRegion::new(
-            crate::translated_circle(
-                radius,
-                48,
-                drill.location[0].clone(),
-                drill.location[1].clone(),
-            ),
+            crate::geometry::circle_region(
+                &[drill.location[0].clone(), drill.location[1].clone()],
+                &(radius),
+            )
+            .map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    requested_check,
+                    layers.clone(),
+                    uncertainty,
+                ))
+            })?,
             metadata.clone(),
         );
         combined = Some(match combined {
@@ -1072,11 +1066,15 @@ pub(super) fn drill_radius_with_clearance(
     Some(crate::scalar::half(&drill.diameter) + clearance)
 }
 
-fn drill_keepout_region(drill: &DrillFeature, radius: Scalar, name: &str) -> Option<PcbRegion> {
+fn drill_keepout_region(
+    drill: &DrillFeature,
+    radius: Scalar,
+    name: &str,
+) -> Result<PcbRegion, crate::PcbGeometryUncertainty> {
     let x = drill.location[0].clone();
     let y = drill.location[1].clone();
-    let profile = crate::translated_circle(radius, 64, x, y);
-    Some(PcbRegion::new(
+    let profile = crate::geometry::circle_region(&[x, y], &(radius))?;
+    Ok(PcbRegion::new(
         profile,
         Some(LayerMetadata {
             name: name.to_string(),
