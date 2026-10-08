@@ -392,7 +392,7 @@ fn contour_fragments_split_arc_segments_at_overlap_endpoints() {
 }
 
 #[test]
-fn approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points() {
+fn explicit_arc_preview_uses_source_radius_for_near_circle_split_points() {
     let contour = Contour2::from_bulge_vertices(&[
         BulgeVertex2::new(Point2::new(af(1.0), af(0.0)), af(1.0)),
         BulgeVertex2::new(Point2::new(af(-1.0), af(0.0)), af(1.0)),
@@ -432,14 +432,18 @@ fn approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points
     ])
     .unwrap();
 
-    let Classification::Decided(fragments) = preview(|| {
-        crate::support::under_classified_result(&PredicatePolicy::STRICT, || {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        assert_exact_topology_error(crate::support::under_value(&policy, || {
             ContourFragmentSet::from_split_markers(&contour, &markers)
-        })
-    })
-    .unwrap() else {
-        panic!("policy-on-circle split points should produce decided fragments");
-    };
+        }));
+        assert_exact_topology_error(preview(|| {
+            crate::support::under_value(&policy, || {
+                ContourFragmentSet::from_split_markers(&contour, &markers)
+            })
+        }));
+    }
+
+    let fragments = preview(|| ContourFragmentSet::from_split_markers(&contour, &markers)).unwrap();
 
     assert_eq!(fragments.len(), 3);
     assert_arc_approx(
