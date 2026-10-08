@@ -38,6 +38,16 @@ the release benchmark profile. Times are medians after two warmup batches.
 
 ## Retained changes
 
+The grammar's five thread-local caches now expose entry limits, scoped policies,
+usage, and clearing through `solid::cache`. A focused warm sphere-constructor
+probe on 8 October 2026 measured 36.202 ns/call before and 36.293 ns/call after
+(15 alternating pairs, one million calls each, pinned to one CPU). This is a
+retention-control change with no claimed speedup. Exact rows and certainty are
+checked independently across warm, cold, and disabled caches in
+`tests/solid_cache.rs`; the probe itself checks only triangle counts. The
+[raw samples, binary hashes, and reproduction instructions](benchmarks/baselines/2026-10-08-properties/README.md)
+also retain the earlier unpinned, uninlined experiment and delimit coverage.
+
 TriangleMesh broad-phase disjoint and point-outside tests now consume Hyperlimit's
 canonical exact AABB predicates instead of rebuilding six scalar comparisons.
 A serialized 20-sample disjoint-box competitive gate preserved every output and

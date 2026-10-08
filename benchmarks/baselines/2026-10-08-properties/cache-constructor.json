@@ -1,0 +1,35 @@
+{
+  "scope": "Warm sphere(10, 24, 12) constructor probe; each process includes one cold miss.",
+  "correctness": "Triangle counts only; exact row and certainty checks are separate tests.",
+  "environment": {
+    "CSGRS_CONSTRUCTION_BENCH_ITERS": "1000000",
+    "CSGRS_BUFFER_BENCH_ITERS": "1",
+    "CSGRS_BOOLEAN_BENCH_ITERS": "0",
+    "CSGRS_HULL_BENCH_ITERS": "0",
+    "CSGRS_RAW_HULL_BENCH_ITERS": "0",
+    "CSGRS_MINKOWSKI_BENCH_ITERS": "0"
+  },
+  "samples": 15,
+  "warmup_process_pairs": 2,
+  "cpu_affinity": 0,
+  "host": {
+    "system": "Linux",
+    "release": "7.2.5-100.fc43.x86_64",
+    "machine": "x86_64"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "executables": {
+    "before": {
+      "sha256": "e91250fb7f84390ed656b8ba118c6d5323391acf4d175efcec2c3bdab3fd7e2a",
+      "bytes": 5870360
+    },
+    "after": {
+      "sha256": "7f726cae67da91e1a4a1d82c381e5711d74c6c4e52b8e37012f6b344c09c6a53",
+      "bytes": 5882952
+    }
+  },
+  "median_ns_per_operation": {
+    "before": 36.202,
+    "after": 36.293
+  }
+}
