@@ -1,0 +1,19 @@
+crate	status	direct_surface	suite	notes
+hyperreal	compared	Rational and computable Real arithmetic	tests/scalars.rs;benches/comparable.rs	Direct scalar number-system overlap
+hyperlattice	compared	Complex vectors and matrices	tests/linear_algebra.rs;benches/comparable.rs	Direct linear-algebra overlap
+hyperlimit	compared	Exact 2D and 3D predicates constructions topology and distances	tests/geometry_2d.rs;tests/geometry_3d.rs;benches/comparable.rs	Direct geometry-kernel overlap
+hypersolve	compared	Univariate and bivariate polynomial operations resultants and root isolation	tests/polynomial.rs;benches/comparable.rs	Direct algebra and solver overlap
+hypertri	compared	Two-dimensional Delaunay complex and triangulation	tests/triangulation.rs;benches/comparable.rs	Compared to an independent empty-circle enumeration using exactCore arithmetic and the dt4 cell contract
+hypercurve	compared	Finite line segments supporting circles and circle relations	tests/curves.rs;benches/curves.rs	Feature curve; higher curve families have no exactCore counterpart
+hypermesh	compared	Planes convex triangles and pairwise triangle intersection	tests/meshes.rs;benches/meshes.rs	Feature mesh; general mesh booleans have no exactCore counterpart
+hyperpath	compared	Line-path metrics order and explicit-circle boundary predicates	tests/paths.rs;benches/paths.rs	Feature path; route constraints have no exactCore counterpart
+hyperbrep	comparison-pending	Finite Curve3 lines and planar Surface classification	-	Build compatibility is restored; a dedicated exactCore differential test and benchmark suite has not yet been added
+hypercircuit	no-direct-counterpart	Circuit MNA event routing board and interchange domain APIs	-	Uses exact-aware carriers but exactCore has no circuit model
+hyperdrc	no-direct-counterpart	Gerber parsing spatial indexing and PCB design-rule checking	-	No exactCore PCB or Gerber API
+hyperevolution	no-direct-counterpart	Evolutionary proposal and fitness carriers	-	No exactCore optimization-search API
+hypergraphics	no-direct-counterpart	Scene and rendering-boundary geometry carriers	-	Primitive arithmetic is delegated to compared crates; exactCore has no scene/render API
+hyperpack	no-direct-counterpart	Packing feasibility and replay carriers	-	No exactCore packing contract in this checkout
+hyperparts	no-direct-counterpart	Source-attributed part knowledge graph	-	No exactCore knowledge-graph or component API
+hyperphysics	no-direct-counterpart	Physical simulation and mass-property carriers	-	No exactCore physical simulation contract
+hypersdf	no-direct-counterpart	Signed-distance and implicit-field carriers	-	ExactCore distance primitives do not expose an SDF field contract
+hypervoxel	no-direct-counterpart	Voxel frames sparse-grid facts and reports	-	No exactCore voxel or sparse-grid API

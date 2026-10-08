@@ -1,0 +1,3 @@
+# Historical sources are opt-in for ordinary code searches.
+# Use rg --hidden --no-ignore audits to include the immutable evidence tree.
+/audits/

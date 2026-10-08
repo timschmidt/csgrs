@@ -1,0 +1,74 @@
+[package]
+name = "exactcore-hyper-comparison"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Differential tests and benchmarks for exactCorelib and the Hyper exact-geometry crates"
+license = "MIT OR Apache-2.0"
+
+[workspace]
+resolver = "3"
+
+[features]
+default = []
+curve = ["dep:hypercurve"]
+mesh = ["dep:hypermesh"]
+path = ["dep:hyperpath"]
+memory-profile = ["curve", "mesh", "path"]
+
+[dependencies]
+hyperreal = { path = "../hyperreal", features = ["simple"] }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { path = "../hypertri", default-features = false, features = ["all-algorithms", "runtime-select", "f64-interop"] }
+hypersolve = { path = "../hypersolve" }
+hypercurve = { path = "../hypercurve", optional = true }
+hypermesh = { path = "../hypermesh", optional = true }
+hyperpath = { path = "../hyperpath", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7"
+
+[[bench]]
+name = "comparable"
+harness = false
+
+[[bench]]
+name = "curves"
+harness = false
+required-features = ["curve"]
+
+[[bench]]
+name = "meshes"
+harness = false
+required-features = ["mesh"]
+
+[[bench]]
+name = "paths"
+harness = false
+required-features = ["path"]
+
+[[bin]]
+name = "memory-sweep"
+path = "src/bin/memory_sweep.rs"
+required-features = ["memory-profile"]
+
+[[test]]
+name = "curves"
+path = "tests/curves.rs"
+required-features = ["curve"]
+
+[[test]]
+name = "meshes"
+path = "tests/meshes.rs"
+required-features = ["mesh"]
+
+[[test]]
+name = "paths"
+path = "tests/paths.rs"
+required-features = ["path"]
+
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"

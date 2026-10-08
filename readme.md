@@ -457,6 +457,11 @@ key identity, FIFO eviction, nesting, and certainty semantics.
 
 ## Performance and hard tests
 
+The [exactCorelib comparison harness](crates/comparisons/INTEGRATION.md) keeps
+the pinned historical audit archive beside runnable native comparisons.
+Its validation record distinguishes current test and benchmark execution
+checks from historical timing, memory, and numerical claims.
+
 The reproducible harness, CSV schema, dependency policy, and interpretation
 rules are in [benchmarks/README.md](benchmarks/README.md). Retained
 measurements and optimization notes are in [PERFORMANCE.md](PERFORMANCE.md).
