@@ -149,7 +149,11 @@ exact signatures.
   contains_sweep_point, point_at_sweep_fraction, reversed, structural_facts}`
   covers directed circular arcs.
 - `Segment2::{from_bulge, kind, point_at, contains_point, reversed,
-  structural_facts}` dispatches over lines and arcs.
+  structural_facts, distance_squared, point_distance_squared}` dispatches over
+  lines and arcs. Minimum squared distances use exact endpoints and stationary
+  candidates on the native spans; unresolved candidates return typed blockers.
+  These primitive queries do not measure general Bézier/NURBS boundaries or
+  replace filled-region regularization.
 - `Similarity2::{try_from_real_affine, try_from_f64_affine, transform_point,
   scale, reverses_orientation}` validates exact translation, rotation, reflection,
   and uniform scale transforms. Curve and region types expose

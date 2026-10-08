@@ -51,6 +51,10 @@ name = "intersection"
 harness = false
 
 [[bench]]
+name = "segment_metric"
+harness = false
+
+[[bench]]
 name = "intersection_sweep"
 harness = false
 

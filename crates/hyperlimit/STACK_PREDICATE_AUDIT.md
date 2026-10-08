@@ -2,6 +2,22 @@
 
 Audit date: 2026-07-28
 
+## Follow-up boundary: 2026-10-08
+
+The historical ownership review below does not establish that every downstream
+adapter preserves authored geometry. The retained
+[HyperDRC regressions](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json)
+show that via copper is rebuilt from sampled chords. The separate
+[measurement failures](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-failures/manifest.json)
+show a finite report area replacing an unavailable native area, and successful
+measurements escaping failed construction or an exhausted operation. Those
+consumers need authoritative geometry, conservative bounds, and propagated
+uncertainty. Keeping DRC policy above Hyperlimit does not certify those choices.
+
+The two remaining lift candidates and the historical performance claims below
+still require independent current-source validation under the
+[properties execution ledger](../../docs/properties-status.json).
+
 ## Scope
 
 This audit followed exact or predicate-like decisions from CSGRS through

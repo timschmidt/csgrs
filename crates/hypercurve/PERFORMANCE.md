@@ -10,6 +10,37 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Native segment metrics
+
+`Segment2::distance_squared` and `point_distance_squared` measure exact native
+lines and circular arcs using endpoint, intersection, and stationary candidates.
+The [admission record](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json)
+retains independent distance oracles, both predicate policies, tiny separations,
+large translations, reversal, degeneracies, preview isolation, and resource
+failure tests. This adds a primitive measurement capability; HyperDRC's source
+geometry and readiness consumers still need integration.
+
+The [six-fixture probe](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/manifest.json)
+contains five sequential CPU-0-pinned trials of 1,000 iterations per row. Medians
+are descriptive; the slower third trial is retained and no speedup or statistical
+regression ceiling is asserted. There is no prior native metric implementation
+in this comparison.
+
+| Fixture | Warm query, µs | Construction and query, µs |
+| --- | ---: | ---: |
+| Line / line | 2.098 | 2.577 |
+| Line / arc | 17.772 | 18.800 |
+| Arc / arc | 27.729 | 29.437 |
+| Concentric arcs | 4.913 | 6.429 |
+| Disjoint angular sweeps | 7.064 | 8.705 |
+| Independent radical radii | 69.549 | 74.431 |
+
+The construction row includes fresh input and oracle construction; shared
+scalar caches may already be warm. The initial and final results in every row
+match exact fixture oracles. The benchmark executable is 4,752,824 bytes and
+whole-process peak resident memory was 4,240–4,452 KiB. These are not per-query
+allocation counts, a library-size delta, or a bound on scalar growth or runtime.
+
 ## Explicit operation work budgets
 
 The shared refinement/promotion budget adds typed resource exhaustion without
