@@ -22,7 +22,8 @@
 //! promotion units. Selected-fiber polynomial-image norms, bivariate quotient
 //! norms, tagged tensor-fiber projections, bivariate system resultants,
 //! constrained tensor-axis resultants, fixed-rank three/four-variable norms,
-//! their subresultants, and bivariate cofactor parameter lifts also participate.
+//! their subresultants, bivariate cofactor parameter lifts, common-component
+//! discovery, and axis-factor extraction also participate.
 //! Other elimination entry points,
 //! remaining curve dispatch paths,
 //! scalar precision refinement, and arbitrary caller arithmetic are not
@@ -40,6 +41,12 @@
 //! Cofactor parameter lifts charge one attempt after degree admission; their
 //! curve replay cache can reuse a completed report without a new charge and
 //! never retains a report of resource exhaustion.
+//! Common-component discovery charges once after degree admission, including
+//! its sampled-GCD and subresultant continuations. Axis-factor extraction
+//! charges once for a nonzero system and again before a projective-scale retry.
+//! Successive factor removals share the allowance. Saturation, multiplicity
+//! reduction, selector splitting, and trivariate factor normalization preserve
+//! exhaustion instead of publishing partially processed supports or factors.
 //! Usage depends on retained evidence,
 //! representation, and algorithm version. A ready proof may require no units.
 //! Resource blockers must not be retained as mathematical capability facts.
@@ -63,7 +70,7 @@ use std::fmt;
 pub struct WorkBudget {
     /// Root isolation subdivisions and singleton-isolator refinement attempts.
     pub refinements: usize,
-    /// Attempts to project retained algebraic evidence into a new root carrier.
+    /// Admitted algebraic projection, lifting, and common-factor attempts.
     pub promotions: usize,
 }
 

@@ -136,12 +136,26 @@
         "failed": 0,
         "ignored": 0
       }
+    },
+    {
+      "name": "hypercurve-committed-doctest-replay",
+      "command_record": "hypercurve-doctest-replay.json",
+      "source_revision": "4d3ec0237",
+      "verified_source_files": 435,
+      "exit_code": 0,
+      "log": "hypercurve-doctest-replay.log",
+      "sha256": "047174867ddf7c27ba9624dfe1e9e76ab2cb2e30ec18ff83f6bd001ab3027653",
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
     }
   ],
   "sources": "sources.json",
   "benchmark_provenance": "benchmark-provenance.json",
   "pending": [
-    "Run the full configured Hypercurve CI test command for this cofactor-lift extension."
+    "A single clean configured Hypercurve CI command for this exact commit was not obtained: compiled tests and the isolated committed-source doctest passed separately. Run the complete command with fixed sources for the component-budget successor."
   ],
   "limitations": [
     "Only instrumented work attempts are bounded. Common-component extraction, other elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time still require complete accounting and bounds.",
@@ -167,5 +181,22 @@
       "sha256": "04f39e41b9bbc34f89d92efa82ce8c3d1378fe52a3425e7b2bf551a4cb5951ed"
     }
   ],
-  "performance": "../../../benchmarks/baselines/2026-10-08-properties/lift-budget/manifest.json"
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/lift-budget/manifest.json",
+  "diagnostics": [
+    {
+      "name": "hypercurve-configured-ci-overlap",
+      "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "working_directory": "crates/hypercurve",
+      "source_revision_for_compiled_tests": "4d3ec0237",
+      "exit_code": 101,
+      "log": "hypercurve-configured-ci-overlap.log",
+      "sha256": "01a401d3862391088a071c81bb61f9cca3b407d121b459a1a9df83e99b204ab7",
+      "compiled_test_totals": {
+        "passed": 2412,
+        "failed": 0,
+        "ignored": 33
+      },
+      "reason": "All compiled unit/integration tests passed. The final rustdoc invocation read in-progress component-budget source edits while using the committed release dependencies and failed to resolve the interim BudgetExceeded path. The mixed-source doctest cannot validate either revision. Its exact command was replayed against a verified archive of 4d3ec0237, using the same untouched release dependencies."
+    }
+  ]
 }

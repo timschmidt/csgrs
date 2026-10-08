@@ -1132,10 +1132,13 @@ fn project_symmetric_self_intersection_system(
     // removed. Their rootless fibers do not describe self-contacts. Saturate
     // only with the shared algebraic domain certificate, preserving every
     // genuine component and the original parameter chart for replay.
-    let primitive = hypersolve::saturate_rootless_bivariate_axis_factors(
+    let primitive = match hypersolve::saturate_rootless_bivariate_axis_factors(
         equations,
         [[&Real::zero(), &Real::one()]; 2],
-    );
+    ) {
+        Classification::Decided(primitive) => primitive,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     let equations = primitive.as_ref().unwrap_or(equations);
     let report = resultant_bivariate_polynomial_system_complete(
         &equations[0],

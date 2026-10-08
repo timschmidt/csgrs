@@ -1,0 +1,25 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 37s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-c64b9a6905916d79)
+
+running 16 tests
+test bezier_offset::bivariate_replay::budget_tests::cofactor_lift_adapter_keeps_resource_failure_distinct_and_retries_certified_pairing ... ok
+test bezier_offset::bivariate_replay::budget_tests::cofactor_lift_cache_does_not_retain_exhaustion_and_reuses_complete_evidence ... ok
+test bezier_offset::selected_dense::budget_tests::bivariate_projection_adapter_preserves_budget_failure_through_degree_continuation ... ok
+test policy::budget_tests::exhausted_classification_cannot_seed_a_cache_or_start_an_approximate_retry ... ok
+test policy::budget_tests::budget_blockers_remain_transient_after_an_inner_scope_returns ... ok
+test policy::budget_tests::exhausted_evaluation_cannot_seed_an_immutable_cache ... ok
+test policy::budget_tests::work_limited_blockers_do_not_poison_the_operation_cache ... ok
+test bezier_algebraic_image::budget_tests::coordinate_promotion_exhaustion_preserves_typed_failure_and_lazy_point_retries ... ok
+test bezier_offset::selected_dense::budget_tests::dense_projection_charges_only_needed_selected_axis_resultants_and_retries_exactly ... ok
+test bezier_offset::parallel_components::budget_tests::parallel_source_components_and_candidate_saturation_keep_exhaustion_typed ... ok
+test bezier_offset::budget_tests::selected_trivariate_projection_propagates_norm_budget_without_tensor_fallback ... ok
+test bezier_offset::parallel_components::budget_tests::trivariate_factor_sign_propagates_normalization_exhaustion_before_policy_fallback ... ok
+test bezier_offset::parallel_components::budget_tests::selector_splits_and_branch_factor_removal_preserve_resource_failure_and_exact_retry ... ok
+test bezier_offset::selected_fiber::budget_tests::selected_image_helpers_stop_on_exhaustion_and_retry_with_exact_saturation_evidence ... ok
+test bezier_offset::parallel_components::budget_tests::multiplicity_reduction_does_not_publish_a_partially_reduced_component ... ok
+test bezier_offset::budget_tests::selected_pair_subresultant_budget_preserves_even_contact_after_selected_degree_drop ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 1694 filtered out; finished in 0.01s
+

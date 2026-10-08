@@ -385,3 +385,50 @@ pairing evidence are tested separately. No per-iteration checksum was added.
 python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
   '^linear_parameter_lifts/' /path/to/new-evidence-directory
 ```
+
+## Common components and axis factors
+
+Common-component discovery now charges one promotion after interpolation-degree
+admission. Axis-factor extraction charges once for a nonzero system and again
+before a projective-scale retry, when needed. Successive removals share the
+allowance. Curve saturation, selector splitting, branch-zero removal, source
+correspondence, and multiplicity reduction preserve resource failure instead
+of publishing a partially processed support. Trivariate factor normalization
+and sign replay propagate the same failure.
+
+[`component-budget/manifest.json`](component-budget/manifest.json) retains five
+alternating process pairs on CPU 0, with 30 Criterion samples, 0.2 seconds of
+warmup, and 0.5 seconds of measurement per workload. All task builds and tests
+had exited before measurement. Values are medians of process mean estimates
+with no active budget.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Both axis factors | 78.425 µs | 77.350 µs | -1.37% |
+| Primitive system | 3.885 µs | 3.902 µs | +0.44% |
+| Implicit component, first retained axis | 31.730 µs | 32.379 µs | +2.05% |
+| Implicit component, second retained axis | 13.075 µs | 12.857 µs | -1.67% |
+| Rational component fixture, first retained axis | 43.652 µs | 43.281 µs | -0.85% |
+| Rational component fixture, second retained axis | 64.254 µs | 66.222 µs | +3.06% |
+
+All six fixtures are new and are applied identically to baseline `4d3ec0237`
+and candidate. Both executables pass the fixtures in Criterion test mode. The
+"rational component" fixture names its first-axis map; reversing the retained
+axis may require an implicit representation. The isolated workspace, compiler,
+profiles, and pruned lockfile match the preceding gate. The executable grows
+by 7,112 bytes. [Build and source provenance](../../../docs/evidence/2026-10-08-curve-budget-components/benchmark-provenance.json)
+retains those identities, the shared benchmark additions, and all source hashes.
+
+These selected observations establish neither a general speedup nor a
+statistical regression ceiling. They do not measure whole-curve consumers,
+trivariate factorization throughput, allocations, or library size. Setup
+asserts exact construction statuses and retained residuals; separate tests
+compare full reports, factor products, exact retries, and both curve policies.
+No per-iteration checksum was added. The projective-scale retry regression
+calls that cold path explicitly: its independently scaled fixture already
+succeeds in the current initial field-GCD path.
+
+```sh
+python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
+  '^(parameter_components|axis_components)/' /path/to/new-evidence-directory
+```

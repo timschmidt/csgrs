@@ -1,0 +1,59 @@
+Benchmarking parameter_components/rational/first
+Benchmarking parameter_components/rational/first: Warming up for 200.00 ms
+Benchmarking parameter_components/rational/first: Collecting 30 samples in estimated 519.80 ms (12k iterations)
+Benchmarking parameter_components/rational/first: Analyzing
+parameter_components/rational/first
+                        time:   [43.029 µs 43.392 µs 43.771 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  2 (6.67%) high mild
+  1 (3.33%) high severe
+
+Benchmarking parameter_components/rational/second
+Benchmarking parameter_components/rational/second: Warming up for 200.00 ms
+Benchmarking parameter_components/rational/second: Collecting 30 samples in estimated 505.55 ms (7905 iterations)
+Benchmarking parameter_components/rational/second: Analyzing
+parameter_components/rational/second
+                        time:   [66.880 µs 70.906 µs 74.590 µs]
+Found 6 outliers among 30 measurements (20.00%)
+  6 (20.00%) high severe
+
+Benchmarking parameter_components/implicit/first
+Benchmarking parameter_components/implicit/first: Warming up for 200.00 ms
+Benchmarking parameter_components/implicit/first: Collecting 30 samples in estimated 500.99 ms (16k iterations)
+Benchmarking parameter_components/implicit/first: Analyzing
+parameter_components/implicit/first
+                        time:   [31.455 µs 31.551 µs 31.663 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  2 (6.67%) high mild
+  1 (3.33%) high severe
+
+Benchmarking parameter_components/implicit/second
+Benchmarking parameter_components/implicit/second: Warming up for 200.00 ms
+Benchmarking parameter_components/implicit/second: Collecting 30 samples in estimated 505.41 ms (39k iterations)
+Benchmarking parameter_components/implicit/second: Analyzing
+parameter_components/implicit/second
+                        time:   [12.786 µs 12.808 µs 12.835 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  1 (3.33%) high mild
+  2 (6.67%) high severe
+
+Benchmarking axis_components/primitive
+Benchmarking axis_components/primitive: Warming up for 200.00 ms
+Benchmarking axis_components/primitive: Collecting 30 samples in estimated 501.24 ms (130k iterations)
+Benchmarking axis_components/primitive: Analyzing
+axis_components/primitive
+                        time:   [3.9096 µs 3.9300 µs 3.9565 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking axis_components/both_axes
+Benchmarking axis_components/both_axes: Warming up for 200.00 ms
+Benchmarking axis_components/both_axes: Collecting 30 samples in estimated 502.39 ms (6510 iterations)
+Benchmarking axis_components/both_axes: Analyzing
+axis_components/both_axes
+                        time:   [76.830 µs 77.072 µs 77.400 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  1 (3.33%) high mild
+  2 (6.67%) high severe
+

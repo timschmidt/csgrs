@@ -14,6 +14,7 @@
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
 
 use crate::bareiss::{BareissError, determinant_bareiss, determinant_integer_polynomial_matrix};
+use crate::classification::{Classification, UncertaintyReason};
 use crate::curve_substitution::RationalParametricCurve2;
 use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::resultant::{
@@ -380,6 +381,8 @@ pub struct QuadrivariateConstraintSubresultantReport {
 /// Final status for exact univariate axis-factor extraction from two bivariate equations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BivariatePolynomialAxisFactorStatus {
+    /// The active operation budget declined a common-factor attempt.
+    BudgetExhausted,
     /// Neither equation pair has a nonconstant common factor depending on only
     /// one parameter.
     Primitive,
@@ -431,10 +434,24 @@ pub struct BivariatePolynomialAxisFactorReport {
 /// particular, APPROXIMATE_512 is never used to infer an algebraic factor.
 /// Callers remain responsible for domain-certified saturation as described by
 /// [`BivariatePolynomialAxisFactorReport`].
+/// A nonzero system charges one promotion before factor discovery and another
+/// before an independently scaled retry, if needed. A zero system is free.
 pub fn extract_bivariate_polynomial_system_axis_factors(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
 ) -> BivariatePolynomialAxisFactorReport {
+    if crate::work_budget::exhaustion().is_some() {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::BudgetExhausted);
+    }
+    if [first_equation, second_equation]
+        .iter()
+        .all(|equation| exact_bivariate_is_zero(equation))
+    {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::ZeroSystem);
+    }
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::BudgetExhausted);
+    }
     let initial =
         extract_bivariate_polynomial_system_axis_factors_once(first_equation, second_equation);
     if !matches!(
@@ -454,16 +471,27 @@ pub fn extract_bivariate_polynomial_system_axis_factors(
 /// certify that every removed factor is nonzero throughout its supplied
 /// interval. No root isolation or approximate terminal decision is needed.
 /// The returned equations have exactly the original zero set in that box.
-/// `None` means no factor was removed or a required proof was unavailable;
-/// callers can continue with the original equations.
+/// `Decided(None)` means no factor was removed or a required mathematical proof
+/// was unavailable; callers can continue with the original equations. Resource
+/// exhaustion is returned separately and must stop the budgeted operation.
 pub fn saturate_rootless_bivariate_axis_factors(
     equations: &[BivariatePolynomial; 2],
     bounds: [[&Real; 2]; 2],
-) -> Option<[BivariatePolynomial; 2]> {
+) -> Classification<Option<[BivariatePolynomial; 2]>> {
     let report = extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
-    if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
-        return None;
+    if report.status == BivariatePolynomialAxisFactorStatus::BudgetExhausted {
+        return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
     }
+    if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
+        return Classification::Decided(None);
+    }
+    Classification::Decided(certify_rootless_axis_factors(report, bounds))
+}
+
+fn certify_rootless_axis_factors(
+    report: BivariatePolynomialAxisFactorReport,
+    bounds: [[&Real; 2]; 2],
+) -> Option<[BivariatePolynomial; 2]> {
     let policy = hyperlimit::PredicatePolicy::STRICT;
     for (factor, [lower, upper]) in [
         &report.first_parameter_factor,
@@ -495,6 +523,11 @@ fn retry_bivariate_polynomial_system_axis_factors(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
 ) -> Option<BivariatePolynomialAxisFactorReport> {
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return Some(axis_factor_failure(
+            BivariatePolynomialAxisFactorStatus::BudgetExhausted,
+        ));
+    }
     let (Some((first_normalized, first_scale)), Some((second_normalized, second_scale))) = (
         normalize_bivariate_projective_scale(first_equation),
         normalize_bivariate_projective_scale(second_equation),
@@ -531,13 +564,6 @@ fn extract_bivariate_polynomial_system_axis_factors_once(
             .flatten()
             .any(|coefficient| coefficient.exact_rational_ref().is_none())
     });
-    if equations
-        .iter()
-        .all(|equation| exact_bivariate_is_zero(equation))
-    {
-        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::ZeroSystem);
-    }
-
     let Some(first_parameter_factor) =
         common_axis_factor(&equations, CurveResultantParameter::First)
     else {
@@ -1997,6 +2023,8 @@ pub struct CurveIntersectionParameterLiftReport {
 /// Final status for one generic positive-dimensional component of a bivariate system.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BivariatePolynomialComponentStatus {
+    /// The active operation budget declined common-component discovery.
+    BudgetExhausted,
     /// A rational map for one generic linear fiber factor was constructed.
     Rational,
     /// A non-linear generic common-fiber polynomial was constructed exactly.
@@ -2685,6 +2713,8 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system(
 /// [`BivariatePolynomialComponentReport`].
 /// An identically zero equation adds no constraint: its companion supplies
 /// the generic component, while the authored zero residual remains explicit.
+/// One promotion admits discovery after degree-limit checks. The sampled GCD,
+/// subresultant continuation, and exact division share that one attempt.
 pub fn parameter_component_bivariate_polynomial_system(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
@@ -2692,6 +2722,18 @@ pub fn parameter_component_bivariate_polynomial_system(
     config: CurveIntersectionResultantConfig,
 ) -> BivariatePolynomialComponentReport {
     let lifted_parameter = opposite_parameter(retained_parameter);
+    if crate::work_budget::exhaustion().is_some() {
+        return component_report(
+            BivariatePolynomialComponentStatus::BudgetExhausted,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+            None,
+        );
+    }
     if bivariate_polynomial_is_empty(first_equation)
         || bivariate_polynomial_is_empty(second_equation)
     {
@@ -2772,22 +2814,42 @@ pub fn parameter_component_bivariate_polynomial_system(
         );
     }
 
-    if terminal_degree >= 2 {
-        let degree_bound = (second_lifted_degree - 1) * first_retained_degree
-            + (first_lifted_degree - 1) * second_retained_degree;
-        if degree_bound > config.max_resultant_degree {
-            return component_report(
-                BivariatePolynomialComponentStatus::DegreeBoundExceeded,
-                retained_parameter,
-                lifted_parameter,
-                degree_bound,
-                Vec::new(),
-                Vec::new(),
-                None,
-                None,
-            );
+    let degree_bound = if terminal_degree == 1 {
+        if first_lifted_degree <= second_lifted_degree {
+            first_retained_degree
+        } else {
+            second_retained_degree
         }
-        if let Some(report) = sampled_common_fiber_component_report(
+    } else {
+        (second_lifted_degree - 1) * first_retained_degree
+            + (first_lifted_degree - 1) * second_retained_degree
+    };
+    if terminal_degree >= 2 && degree_bound > config.max_resultant_degree {
+        return component_report(
+            BivariatePolynomialComponentStatus::DegreeBoundExceeded,
+            retained_parameter,
+            lifted_parameter,
+            degree_bound,
+            Vec::new(),
+            Vec::new(),
+            None,
+            None,
+        );
+    }
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return component_report(
+            BivariatePolynomialComponentStatus::BudgetExhausted,
+            retained_parameter,
+            lifted_parameter,
+            degree_bound,
+            Vec::new(),
+            Vec::new(),
+            None,
+            None,
+        );
+    }
+    if terminal_degree >= 2
+        && let Some(report) = sampled_common_fiber_component_report(
             first_equation,
             second_equation,
             retained_parameter,
@@ -2798,38 +2860,23 @@ pub fn parameter_component_bivariate_polynomial_system(
             second_lifted_degree,
             terminal_degree,
             config,
-        ) {
-            return report;
-        }
+        )
+    {
+        return report;
     }
 
-    let (mut constant, mut linear, degree_bound) = if terminal_degree == 1 {
-        let (equation, degree_bound) = if first_lifted_degree <= second_lifted_degree {
-            (first_equation, first_retained_degree)
+    let (mut constant, mut linear) = if terminal_degree == 1 {
+        let equation = if first_lifted_degree <= second_lifted_degree {
+            first_equation
         } else {
-            (second_equation, second_retained_degree)
+            second_equation
         };
         let coefficients = bivariate_fiber_coefficient_polynomials(equation, retained_parameter);
         (
             coefficients.first().cloned().unwrap_or_default(),
             coefficients.get(1).cloned().unwrap_or_default(),
-            degree_bound,
         )
     } else {
-        let degree_bound = (second_lifted_degree - 1) * first_retained_degree
-            + (first_lifted_degree - 1) * second_retained_degree;
-        if degree_bound > config.max_resultant_degree {
-            return component_report(
-                BivariatePolynomialComponentStatus::DegreeBoundExceeded,
-                retained_parameter,
-                lifted_parameter,
-                degree_bound,
-                Vec::new(),
-                Vec::new(),
-                None,
-                None,
-            );
-        }
         let mut parameters = Vec::with_capacity(degree_bound + 1);
         let mut constant_samples = Vec::with_capacity(degree_bound + 1);
         let mut linear_samples = Vec::with_capacity(degree_bound + 1);
@@ -2915,7 +2962,7 @@ pub fn parameter_component_bivariate_polynomial_system(
                 None,
             );
         };
-        (constant, linear, degree_bound)
+        (constant, linear)
     };
 
     if exact_polynomial_is_zero(&linear) {
@@ -5102,6 +5149,7 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system_complete(
 #[cfg(test)]
 mod tests {
     mod budget;
+    mod component_budget;
     mod fixed_budget;
     mod lift_budget;
 
@@ -7735,13 +7783,15 @@ mod tests {
                 let result =
                     saturate_rootless_bivariate_axis_factors(&equations, [[&real(0), &real(1)]; 2]);
                 if rootless {
-                    let result = result.expect("rootless factors may be removed exactly");
+                    let Classification::Decided(Some(result)) = result else {
+                        panic!("rootless factors may be removed exactly");
+                    };
                     for (actual, expected) in result.iter().zip(&expected) {
                         assert_bivariate_exactly_equal(actual, expected);
                     }
                 } else {
                     assert!(
-                        result.is_none(),
+                        matches!(result, Classification::Decided(None)),
                         "a factor root belongs to the closed solution set"
                     );
                 }
@@ -7749,7 +7799,7 @@ mod tests {
         }
         assert_eq!(
             saturate_rootless_bivariate_axis_factors(&expected, [[&real(0), &real(1)]; 2]),
-            None
+            Classification::Decided(None)
         );
     }
 
@@ -7766,22 +7816,22 @@ mod tests {
                 &BivariatePolynomial::new(vec![vec![real(2), real(1)]]),
             ),
         ];
-        assert!(
-            saturate_rootless_bivariate_axis_factors(&equations, [[&real(0), &real(1)]; 2])
-                .is_some()
-        );
-        assert!(
-            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(3)]; 2])
-                .is_none()
-        );
-        assert!(
-            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(0)]; 2])
-                .is_none()
-        );
-        assert!(
-            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(1)]; 2])
-                .is_some()
-        );
+        assert!(matches!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(0), &real(1)]; 2]),
+            Classification::Decided(Some(_))
+        ));
+        assert!(matches!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(3)]; 2]),
+            Classification::Decided(None)
+        ));
+        assert!(matches!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(0)]; 2]),
+            Classification::Decided(None)
+        ));
+        assert!(matches!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(1)]; 2]),
+            Classification::Decided(Some(_))
+        ));
     }
 
     proptest! {

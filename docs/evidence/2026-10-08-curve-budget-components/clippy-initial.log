@@ -1,0 +1,29 @@
+    Blocking waiting for file lock on build directory
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+error: this `if` statement can be collapsed
+    --> crates/hypersolve/src/curve_resultant.rs:2851:5
+     |
+2851 | /     if terminal_degree >= 2 {
+2852 | |         if let Some(report) = sampled_common_fiber_component_report(
+2853 | |             first_equation,
+2854 | |             second_equation,
+...    |
+2866 | |     }
+     | |_____^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+     = note: `-D clippy::collapsible-if` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+     |
+2851 ~     if terminal_degree >= 2
+2852 ~         && let Some(report) = sampled_common_fiber_component_report(
+2853 |             first_equation,
+ ...
+2864 |             return report;
+2865 ~         }
+     |
+
+error: could not compile `hypersolve` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hypersolve` (lib test) due to 1 previous error

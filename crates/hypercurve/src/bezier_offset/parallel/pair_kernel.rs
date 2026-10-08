@@ -965,12 +965,16 @@ impl BezierParallel2 {
         let mut source_isolated_projection = None;
         let mut retained_contacts = Vec::new();
         let mut domain_components = Vec::new();
-        let axis_component = extract_bivariate_polynomial_system_axis_factors(
+        let axis_report = extract_bivariate_polynomial_system_axis_factors(
             &system.first_equation,
             &system.second_equation,
-        )
-        .status
-            == BivariatePolynomialAxisFactorStatus::Reduced;
+        );
+        if axis_report.status == BivariatePolynomialAxisFactorStatus::BudgetExhausted {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        let axis_component = axis_report.status == BivariatePolynomialAxisFactorStatus::Reduced;
         if axis_component
             || matches!(
                 projection.candidates,

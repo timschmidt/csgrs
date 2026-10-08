@@ -1,0 +1,27 @@
+{
+  "base_revision": "4d3ec0237",
+  "sha256": {
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+    "crates/hypersolve/Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+    "crates/hypercurve/Cargo.toml": "ca10638d0cf1999075ec9fe5d0c4a17d74e27ef179e479f96a238dfc4906ec92",
+    "crates/hyperpath/Cargo.toml": "d56333ca7c8101350d5e2df36780b2bd6fc8e12c6759e057aad6799e0734e027",
+    "scripts/compare-criterion-probe.py": "c767e0bfb80c3afbd50ba976761bfa3e4b18aa8d5b1f4a69a3cafff4a71fa988",
+    "crates/hypercurve/PERFORMANCE.md": "c7ecc5e213858047cbc820b5a21eb8c68d92d6a75096eb758fd731de0bc3f4e4",
+    "crates/hypercurve/src/bezier_offset/conversion_tests.rs": "0b1311f9ca5a72d9f873216c0bc6d629944aef36d0fb46522bd83faebfb64962",
+    "crates/hypercurve/src/bezier_offset/multivariate_sign.rs": "0c3dfa75a623af404278d5e7873ddeeee41ffd978a692198c91a07b13b6275e4",
+    "crates/hypercurve/src/bezier_offset/parallel/pair_kernel.rs": "a5f51073199f30fc54892252c8d3e4a956d676e058562c22421a6a12bc6dcfc2",
+    "crates/hypercurve/src/bezier_offset/parallel/rational_kernel.rs": "07337f4ba8bf8c98e38943001196bb293ccf522078f81b1b2c5a97d06e052bd5",
+    "crates/hypercurve/src/bezier_offset/parallel_components.rs": "aa753b9928997e78b2031fd1ec8e36ea1cefdcbd6fcc6a0929c8d712912fe462",
+    "crates/hypercurve/src/rational_bezier_general.rs": "d5a43cce232a3d9881f37fb0f1438f306a6bde6ce10ac0be80a3c0dd84eeffa2",
+    "crates/hypersolve/PERFORMANCE.md": "1c16ae2cbdaeebbb68bbf720168d70a0bf434beff44f2ae66c656850164d7884",
+    "crates/hypersolve/benches/certification.rs": "711844be11a1efc300702491478d419dad0e135109b91b2455a2071e6952accf",
+    "crates/hypersolve/src/bivariate_components.rs": "9fa743c7130dfff41d5a150ca955e55c97d553f4d1390be038022544d53cb121",
+    "crates/hypersolve/src/curve_resultant.rs": "fd0ef83ad24e455bb9d05a757f929a04a817b3cb6352afd67e34ffd965d75a2a",
+    "crates/hypersolve/src/trivariate_arithmetic.rs": "ffd150c29c8cdd8b22a7b7217249f8377226ad910e5500228277b2ec04a61a40",
+    "crates/hypersolve/src/work_budget.rs": "01cefba2901bc0e390f10934c65372c0fb35b5c1460397f542c6794ac9a3eac1",
+    "crates/hypersolve/src/curve_resultant/tests/component_budget.rs": "7253bddf1bc5a0e14489b592f2611deee385ba30b39f1541a887b6e8884600d9",
+    "crates/hypercurve/src/bezier_offset/parallel_components/budget_tests.rs": "ca82a51955fc8cf8673e0f8b4299051ecfb7a45bfcbb55377ee11159c00cea2e",
+    "crates/hypersolve/benches/support/components.rs": "17ef397bc704af7b77dbaf1a4d24514ad20228f76e046fd7c6f6b12c19fcf8f6"
+  }
+}

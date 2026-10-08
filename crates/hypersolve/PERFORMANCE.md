@@ -84,6 +84,19 @@ with and without a specialized degree drop. The
 uses identical new fixtures in the baseline and candidate; exact reports are
 checked separately from timing.
 
+Common-component discovery and axis-factor extraction now share the operation
+allowance. Discovery charges after interpolation-degree admission; successive
+factor removals cannot reset the allowance. A projective-scale retry admits
+another axis-factor attempt before normalization. Tests compare complete
+rational/implicit reports, zero-equation residuals, both retained axes, and
+exact trivariate division after resource denial. Rootless-axis saturation now
+returns `Classification<Option<_>>`, and the trivariate factor APIs return
+`Result<Option<_>, BudgetExceeded>` so callers can distinguish exhaustion from
+an unavailable factor. The
+[component probe](../../benchmarks/baselines/2026-10-08-properties/README.md#common-components-and-axis-factors)
+uses six identical new fixtures in the baseline and candidate; it covers
+native construction with no active budget, with exact retries tested separately.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |

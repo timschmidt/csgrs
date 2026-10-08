@@ -1,0 +1,20 @@
+{
+  "baseline_revision": "4d3ec0237",
+  "baseline_source_files_verified": 454,
+  "workspace": "../2026-10-08-curve-budget-isolators/benchmark-workspace.toml",
+  "lockfile": "../2026-10-08-curve-budget-isolators/benchmark-Cargo.lock",
+  "baseline_workspace_sources": "benchmark-baseline-sources.json",
+  "candidate_workspace_sources": "benchmark-candidate-sources.json",
+  "shared_benchmark_patch": "benchmark-fixture.patch",
+  "shared_new_benchmark_module": "benchmark-fixture.rs",
+  "benchmark_patch_sha256": "8c5ddd59c78b632661593e6717d48b8abe2eb11d72e00a88d08f6609290988f9",
+  "benchmark_module_sha256": "17ef397bc704af7b77dbaf1a4d24514ad20228f76e046fd7c6f6b12c19fcf8f6",
+  "build_command": "cargo bench --offline --locked --manifest-path /tmp/csgrs-isolator-baseline/Cargo.toml -p hypersolve --bench certification --no-run",
+  "method": "Verify all 454 existing isolated Rust files against 4d3ec0237. Add identical component/axis-factor fixtures and registration to both variants, retain the new module and patch, and build/preserve the baseline executable. Overlay the candidate four-crate Rust sources and rebuild with unchanged compiler, workspace, profiles, and lockfile. All 456 candidate Rust files match the root. Both executables pass all six new Criterion fixtures in test mode.",
+  "prior_build_provenance": "../2026-10-08-curve-budget-lifts/benchmark-provenance.json",
+  "limitations": "The isolated pruned lockfile has the same 215 package identities/checksums as the root, but omits unused workspace edges. Whole-executable size is neither library size nor allocation evidence. Timings cover native common-component and axis-factor extraction; they do not measure whole-curve selector, sign, or saturation paths.",
+  "baseline_executable_sha256": "b806092e3741f0cf0b4bb03fc561a8f9b35f920c654c7146ae4cd59d1ba908fc",
+  "baseline_executable_bytes": 16624880,
+  "candidate_executable_sha256": "a6987d9964b85a4b7d2a00d0c249b6c51cd01f0a5928792d2140f07f1e8bba14",
+  "candidate_executable_bytes": 16631992
+}

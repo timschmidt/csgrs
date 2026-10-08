@@ -1,0 +1,15 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+error[E0425]: cannot find function `trivariate_multiply` in this scope
+   --> crates/hypersolve/src/curve_resultant/tests/component_budget.rs:272:26
+    |
+272 |         let polynomial = trivariate_multiply(
+    |                          ^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `trivariate_multiply` in this scope
+   --> crates/hypersolve/src/curve_resultant/tests/component_budget.rs:296:20
+    |
+296 |         assert_eq!(trivariate_multiply(&recovered, &actual.1), polynomial);
+    |                    ^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `hypersolve` (lib test) due to 2 previous errors

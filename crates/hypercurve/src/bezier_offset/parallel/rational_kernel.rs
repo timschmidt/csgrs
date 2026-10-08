@@ -170,10 +170,13 @@ impl BezierParallel2 {
             }
         }
         if other.degree() >= 4 && bivariate_system_may_have_component(&equations) {
-            let reduced = hypersolve::saturate_rootless_bivariate_axis_factors(
+            let reduced = match hypersolve::saturate_rootless_bivariate_axis_factors(
                 &equations,
                 [[&Real::zero(), &Real::one()]; 2],
-            );
+            ) {
+                Classification::Decided(reduced) => reduced,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             let component_equations = reduced.as_ref().unwrap_or(&equations);
             if bivariate_system_may_have_component(component_equations) {
                 if tangent_field.is_none()
@@ -198,10 +201,18 @@ impl BezierParallel2 {
                     min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
                     max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
                 };
-                if let Classification::Decided(Some(component)) =
-                    parameter_component_system(component_equations, &branch, policy, config)?
-                {
-                    return parallel_candidate_system_from_parameter_components(component, policy);
+                match parameter_component_system(component_equations, &branch, policy, config)? {
+                    Classification::Decided(Some(component)) => {
+                        return parallel_candidate_system_from_parameter_components(
+                            component, policy,
+                        );
+                    }
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                        return Ok(Classification::Uncertain(
+                            UncertaintyReason::BudgetExhausted,
+                        ));
+                    }
+                    _ => {}
                 }
             }
         }

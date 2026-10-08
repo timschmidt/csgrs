@@ -1,0 +1,9 @@
+   Compiling hypersolve v0.3.1 (/tmp/csgrs-isolator-baseline/crates/hypersolve)
+error[E0432]: unresolved import `hypersolve::bivariate_multiply`
+ --> crates/hypersolve/benches/support/components.rs:5:64
+  |
+5 |     CurveIntersectionResultantConfig, CurveResultantParameter, bivariate_multiply,
+  |                                                                ^^^^^^^^^^^^^^^^^^ no `bivariate_multiply` in the root
+
+For more information about this error, try `rustc --explain E0432`.
+error: could not compile `hypersolve` (bench "certification") due to 1 previous error

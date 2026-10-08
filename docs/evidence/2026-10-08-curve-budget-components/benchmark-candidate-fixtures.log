@@ -1,0 +1,18 @@
+Testing parameter_components/rational/first
+Success
+
+Testing parameter_components/rational/second
+Success
+
+Testing parameter_components/implicit/first
+Success
+
+Testing parameter_components/implicit/second
+Success
+
+Testing axis_components/primitive
+Success
+
+Testing axis_components/both_axes
+Success
+

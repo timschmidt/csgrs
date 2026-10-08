@@ -1,0 +1,36 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.86s
+     Running unittests src/lib.rs (target/debug/deps/hypersolve-a89a091ce3328d58)
+
+running 6 tests
+test curve_resultant::tests::component_budget::zero_equation_components_and_nested_scopes_do_not_reset_or_double_charge ... ok
+test curve_resultant::tests::component_budget::rootless_axis_saturation_distinguishes_exhaustion_from_a_rootful_factor ... ok
+test curve_resultant::tests::component_budget::complete_component_extraction_cannot_publish_support_before_budgeted_residual_work ... ok
+test curve_resultant::tests::component_budget::axis_factor_extraction_charges_normalized_retry_and_preserves_authored_residuals ... FAILED
+test curve_resultant::tests::component_budget::common_components_retry_complete_rational_and_implicit_evidence_on_both_axes ... FAILED
+test curve_resultant::tests::component_budget::trivariate_factor_normalization_discards_partial_content_and_retries_exact_division ... ok
+
+failures:
+
+---- curve_resultant::tests::component_budget::axis_factor_extraction_charges_normalized_retry_and_preserves_authored_residuals stdout ----
+
+thread 'curve_resultant::tests::component_budget::axis_factor_extraction_charges_normalized_retry_and_preserves_authored_residuals' (329) panicked at crates/hypersolve/src/curve_resultant/tests/component_budget.rs:144:13:
+assertion failed: matches!(extract_bivariate_polynomial_system_axis_factors_once(&equations[0],
+    &equations[1]).status,
+    BivariatePolynomialAxisFactorStatus::UnsupportedCoefficient |
+    BivariatePolynomialAxisFactorStatus::DivisionFailed)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- curve_resultant::tests::component_budget::common_components_retry_complete_rational_and_implicit_evidence_on_both_axes stdout ----
+
+thread 'curve_resultant::tests::component_budget::common_components_retry_complete_rational_and_implicit_evidence_on_both_axes' (330) panicked at crates/hypersolve/src/curve_resultant/tests/component_budget.rs:66:32:
+called `Result::unwrap()` on an `Err` value: BudgetExceeded { kind: AlgebraicPromotion, limit: 0, used: 0, requested: 1 }
+
+
+failures:
+    curve_resultant::tests::component_budget::axis_factor_extraction_charges_normalized_retry_and_preserves_authored_residuals
+    curve_resultant::tests::component_budget::common_components_retry_complete_rational_and_implicit_evidence_on_both_axes
+
+test result: FAILED. 4 passed; 2 failed; 0 ignored; 0 measured; 600 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hypersolve --lib`

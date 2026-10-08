@@ -1,0 +1,35 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0425]: cannot find function `trivariate_multiply` in this scope
+     --> crates/hypercurve/src/bezier_offset/parallel_components/budget_tests.rs:171:19
+      |
+  171 |       let product = trivariate_multiply(
+      |                     ^^^^^^^^^^^^^^^^^^^
+      |
+     ::: crates/hypersolve/src/bivariate_arithmetic.rs:290:1
+      |
+  290 | / pub fn bivariate_multiply(
+  291 | |     first: &BivariatePolynomial,
+  292 | |     second: &BivariatePolynomial,
+  293 | | ) -> BivariatePolynomial {
+      | |________________________- similarly named function `bivariate_multiply` defined here
+      |
+note: function `crate::bezier_offset::conversion_tests::trivariate_multiply` exists but is inaccessible
+     --> crates/hypercurve/src/bezier_offset/conversion_tests.rs:29025:1
+      |
+29025 | / fn trivariate_multiply(
+29026 | |     left: &TrivariatePolynomial,
+29027 | |     right: &TrivariatePolynomial,
+29028 | | ) -> TrivariatePolynomial {
+...     |
+29051 | |     TrivariatePolynomial { coefficients }
+29052 | | }
+      | |_^ not accessible
+help: a function with a similar name exists
+      |
+  171 -     let product = trivariate_multiply(
+  171 +     let product = bivariate_multiply(
+      |
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `hypercurve` (lib test) due to 1 previous error

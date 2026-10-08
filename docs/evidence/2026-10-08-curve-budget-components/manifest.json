@@ -1,0 +1,214 @@
+{
+  "scope": "Shared promotion admission for common-component and axis-factor extraction; typed resource propagation through saturation, selector splitting, multiplicity reduction, source correspondence, and trivariate factor normalization/sign replay. T3 remains in progress.",
+  "base_revision": "4d3ec0237",
+  "checks": [
+    {
+      "name": "solver-all",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "solver-all.log",
+      "sha256": "26896f3670ffe53e7f30f0f558a1c5017cd19fe16b874e99cd77b542490f487c",
+      "tests": {
+        "passed": 606,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-tests",
+      "command": "cargo test --locked -p hypercurve --all-features --lib budget_tests",
+      "exit_code": 0,
+      "log": "curve-tests.log",
+      "sha256": "97233c3d202bb92593528963cb04399355a2f350eacaf74364ce5df1e3deebee",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "cfaaaea98186764a6dcea260b6e9eb02d3cdc4d95ced1116d2945caf0a1ca174",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "hyperpath",
+      "command": "cargo test --locked -p hyperpath",
+      "exit_code": 0,
+      "log": "hyperpath.log",
+      "sha256": "ee25b4717656438b0291fde0b4174d2c56bb797bc1aaff81efd52460ac5339ca",
+      "tests": {
+        "passed": 443,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypersolve -p hypercurve -p hyperpath --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "f86c37bd83f9554cb6bfe2af23c75854a6ade46264b8533bf0f5af65f5532139"
+    },
+    {
+      "name": "fuzz-clippy",
+      "command": "cargo clippy --locked --manifest-path crates/hypersolve/fuzz/Cargo.toml --bins -- -D warnings",
+      "exit_code": 0,
+      "log": "fuzz-clippy.log",
+      "sha256": "e300e5b101a8549e7fb098877b01dcf4bea64221e77ac0f1977c9c9a457ee93b"
+    },
+    {
+      "name": "wasm-clippy",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "b2c77d1ae2382c65c4a0ba21472d0832f567330cf4ff3d8ca623aae97d20e507"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypersolve -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "2fe33c02d1789bbab93337a5611919076795ebaebffe3466d001289c788dea75"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "release-solver",
+      "command": "cargo test --locked --release -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "release-solver.log",
+      "sha256": "680cb444c80f6362ceb8623ba29cbd7a3967432e190227af540096336d2ebd54",
+      "tests": {
+        "passed": 606,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib budget_tests",
+      "exit_code": 0,
+      "log": "release-curve.log",
+      "sha256": "34027677aca47a861231e1edbaaa06e34f2556e31ea625d0622e6dd22300ad84",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve-budget",
+      "command": "cargo test --locked --release -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "release-curve-budget.log",
+      "sha256": "c39ae93b3e96a02d1d8e737183b2df0b5b902a2c100faa6f9a2a51be1cb0fa15",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "benchmark-baseline-fixtures",
+      "command": "HYPERSOLVE_SKIP_BENCHMARK_REPORTS=1 /tmp/properties-component-budget-baseline-bin '^(parameter_components|axis_components)/' --test",
+      "exit_code": 0,
+      "log": "benchmark-baseline-fixtures.log",
+      "sha256": "7ac564dace35707de2113639cdf4546658027e11d78ac5ce3a78daa7ccf553ff",
+      "criterion_fixtures_passed": 6
+    },
+    {
+      "name": "benchmark-candidate-fixtures",
+      "command": "HYPERSOLVE_SKIP_BENCHMARK_REPORTS=1 /tmp/properties-component-budget-candidate-bin '^(parameter_components|axis_components)/' --test",
+      "exit_code": 0,
+      "log": "benchmark-candidate-fixtures.log",
+      "sha256": "7ac564dace35707de2113639cdf4546658027e11d78ac5ce3a78daa7ccf553ff",
+      "criterion_fixtures_passed": 6
+    }
+  ],
+  "sources": "sources.json",
+  "benchmark_provenance": "benchmark-provenance.json",
+  "diagnostics": [
+    {
+      "name": "benchmark-baseline-import-diagnostic",
+      "reason": "The new benchmark initially imported bivariate_multiply from the crate root; corrected to its public module.",
+      "source_snapshot": "Intermediate source was not snapshotted; these logs diagnose development iterations, not a reproducible candidate performance comparison.",
+      "log": "benchmark-baseline-import-diagnostic.log",
+      "sha256": "7ea8945b62dd02600a3fb1e4a6442e1fcbdb84b0ac6e1d9ef9f3148102827cfc"
+    },
+    {
+      "name": "solver-initial",
+      "reason": "Intermediate API migration used a crate-root WorkKind path and old Option assertions; corrected the module path and typed test matches.",
+      "source_snapshot": "Intermediate source was not snapshotted; these logs diagnose development iterations, not a reproducible candidate performance comparison.",
+      "log": "solver-initial.log",
+      "sha256": "6f2305d18ee5dd0ba7b0da7c673510fb28387ee4c6366bc67f1315f718d1c34e"
+    },
+    {
+      "name": "solver-new",
+      "reason": "The new test referred to a curve-only trivariate_multiply helper; corrected to TrivariatePolynomial::multiply.",
+      "source_snapshot": "Intermediate source was not snapshotted; these logs diagnose development iterations, not a reproducible candidate performance comparison.",
+      "log": "solver-new.log",
+      "sha256": "32472f7421137716031c4cd0d386a39a7c649ae79c1255d330c61d7e1efbd8cb"
+    },
+    {
+      "name": "solver-new-final",
+      "reason": "Two new fixture assumptions failed: the direct linear-component path has no interpolation degree cap, and independently scaled equations already succeed in the first field-GCD path. Tests now respect that admission and exercise the cold normalized retry explicitly.",
+      "source_snapshot": "Intermediate source was not snapshotted; these logs diagnose development iterations, not a reproducible candidate performance comparison.",
+      "log": "solver-new-final.log",
+      "sha256": "6736ed8632f13d36b71c6eae918d15fcd51ced83b956783e73d2fbbcee1e21e8"
+    },
+    {
+      "name": "curve-new",
+      "reason": "The new curve test referred to a sibling-private multiplication helper; corrected to the shared tensor method.",
+      "source_snapshot": "Intermediate source was not snapshotted; these logs diagnose development iterations, not a reproducible candidate performance comparison.",
+      "log": "curve-new.log",
+      "sha256": "3a1dbf9b90268356523eea73ce05d541dfdf9046bc044bac1f5cd1adb1a72eff"
+    },
+    {
+      "name": "clippy-initial",
+      "reason": "Strict Clippy requested a collapsed degree-admission/sampled-GCD conditional; corrected.",
+      "source_snapshot": "Intermediate source was not snapshotted; these logs diagnose development iterations, not a reproducible candidate performance comparison.",
+      "log": "clippy-initial.log",
+      "sha256": "1f5bbc299096e3de7980617909683cadf5ef491c0b100605529ed8d4ee6834ff"
+    }
+  ],
+  "benchmark_logs": [
+    {
+      "name": "benchmark-baseline-build",
+      "log": "benchmark-baseline-build.log",
+      "sha256": "dadd6773a8531aafee48c43a60a4c49bb51e3083aeb0fcb5642654cccd929078"
+    },
+    {
+      "name": "benchmark-candidate-build",
+      "log": "benchmark-candidate-build.log",
+      "sha256": "61bbad7ecb8d6fd86682b2bbb03ddaa415bc102958e2b69741426a8f71f7df25"
+    },
+    {
+      "name": "benchmark-probe",
+      "log": "benchmark-probe.log",
+      "sha256": "927e7d17e216eb0f555bf9ea73e1f91a60a50fd8aa7b366702c9959aa23de910"
+    }
+  ],
+  "pending": [
+    "Run the full configured Hypercurve CI test command for this component/axis-factor extension with sources fixed until rustdoc exits."
+  ],
+  "limitations": [
+    "Counts bound instrumented work attempts, not degree, coefficient growth, scalar precision, memory, allocation, or elapsed time. Other dispatch and elimination paths remain incomplete.",
+    "The projective retry is exercised directly in the regression; the independently scaled fixture already succeeds in the initial field-GCD route. It is not evidence that this fixture requires the retry.",
+    "The native six-fixture benchmark does not time full curve selector, factor-sign, or saturation consumers, nor establish a statistical regression ceiling.",
+    "No complete repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed."
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/component-budget/manifest.json"
+}

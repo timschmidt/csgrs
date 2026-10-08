@@ -81,6 +81,17 @@ The [native lift probe](../../benchmarks/baselines/2026-10-08-properties/README.
 measures cofactor construction; it does not time the entire curve replay/cache
 path.
 
+Common-component adapters now stop on budget exhaustion while extracting source
+correspondences, saturating rootless axis factors, splitting selector boundaries,
+removing branch-zero factors, and reducing multiplicity. A partially processed
+support cannot become a completed component result. Trivariate factor replay
+also propagates normalization failure before an alternate factor or approximate
+policy attempt. Both policies have exact retry regressions, including denial
+after a previously extracted factor. The
+[component probe](../../benchmarks/baselines/2026-10-08-properties/README.md#common-components-and-axis-factors)
+measures the native solver paths; it does not establish timing or allocation
+bounds for those complete curve consumers.
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate

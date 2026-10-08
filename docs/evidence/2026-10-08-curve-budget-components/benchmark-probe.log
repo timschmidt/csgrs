@@ -1,0 +1,42 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "axis_components/both_axes": {
+    "before": 78425.39117559655,
+    "after": 77349.61845936098,
+    "change_percent": -1.371714823617376
+  },
+  "axis_components/primitive": {
+    "before": 3885.0607166180375,
+    "after": 3902.233711902298,
+    "change_percent": 0.4420264324519918
+  },
+  "parameter_components/implicit/first": {
+    "before": 31729.643215456883,
+    "after": 32378.635056900686,
+    "change_percent": 2.0453802049928305
+  },
+  "parameter_components/implicit/second": {
+    "before": 13074.943361880181,
+    "after": 12856.873322573314,
+    "change_percent": -1.6678469135296359
+  },
+  "parameter_components/rational/first": {
+    "before": 43652.13282770405,
+    "after": 43280.602724674776,
+    "change_percent": -0.8511155789241998
+  },
+  "parameter_components/rational/second": {
+    "before": 64254.447831591104,
+    "after": 66222.37807864594,
+    "change_percent": 3.062714432178648
+  }
+}

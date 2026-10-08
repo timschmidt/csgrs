@@ -29085,6 +29085,7 @@ fn assert_rational_multi_affine_factor_on_every_axis(
             axis,
             PARALLEL_FACTOR_RESULTANT_CONFIG,
         )
+        .expect("unbudgeted factorization must not exhaust")
         .unwrap_or_else(|| panic!("{message}"));
         assert!(factorizations.iter().all(|(factor, quotient)| {
             trivariate_multiply(factor, quotient).coefficients == product.coefficients
@@ -29108,6 +29109,7 @@ fn quadratic_axis_factorization_replays_dense_multi_affine_products() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG,
             )
+            .expect("unbudgeted factorization must not exhaust")
             .expect("every authored linear-axis product must split exactly");
             assert!(factorizations.iter().all(|(factor, quotient)| {
                 trivariate_multiply(factor, quotient).coefficients == product.coefficients
@@ -29127,6 +29129,7 @@ fn repeated_cubic_axis_factorization_replays_double_and_triple_factors() {
     ] {
         for axis in 0..3 {
             let factorizations = trivariate_repeated_cubic_axis_factorizations(&product, axis)
+                .expect("unbudgeted factorization must not exhaust")
                 .expect("every authored repeated linear-axis factor must split exactly");
             assert!(factorizations.iter().all(|(factor, quotient)| {
                 trivariate_multiply(factor, quotient).coefficients == product.coefficients
@@ -29145,7 +29148,11 @@ fn repeated_cubic_axis_factorization_rejects_a_square_free_cubic() {
     for constant in [Real::one(), Real::from(2_i8), Real::from(3_i8)] {
         polynomial = trivariate_multiply_axis_linear(polynomial, 0, &constant, &Real::one());
     }
-    assert!(trivariate_repeated_cubic_axis_factorizations(&polynomial, 0).is_none());
+    assert!(
+        trivariate_repeated_cubic_axis_factorizations(&polynomial, 0)
+            .expect("unbudgeted factorization must not exhaust")
+            .is_none()
+    );
 
     // Delta-zero alone is insufficient: x^3+1 has no repeated root, and
     // its nonzero delta-one must reject the triple-root candidate.
@@ -29157,7 +29164,11 @@ fn repeated_cubic_axis_factorization_rejects_a_square_free_cubic() {
             vec![vec![Real::one()]],
         ],
     };
-    assert!(trivariate_repeated_cubic_axis_factorizations(&delta_zero_only, 0).is_none());
+    assert!(
+        trivariate_repeated_cubic_axis_factorizations(&delta_zero_only, 0)
+            .expect("unbudgeted factorization must not exhaust")
+            .is_none()
+    );
 }
 
 #[test]
@@ -29360,6 +29371,7 @@ fn rational_multi_affine_axis_factorization_reaches_the_balanced_resource_bounda
         0,
         PARALLEL_FACTOR_RESULTANT_CONFIG,
     )
+    .expect("unbudgeted factorization must not exhaust")
     .expect("the degree-24 balanced resource boundary must retain its repeated factor");
     assert!(factorizations.iter().any(|(factor, quotient)| {
         trivariate_multiply(factor, quotient).coefficients == product.coefficients
@@ -29438,6 +29450,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_cubic_factor() {
             axis,
             PARALLEL_FACTOR_RESULTANT_CONFIG,
         )
+        .expect("unbudgeted factorization must not exhaust")
         .expect("one rational multi-affine factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
@@ -29465,6 +29478,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_quartic_factor() {
             axis,
             PARALLEL_FACTOR_RESULTANT_CONFIG,
         )
+        .expect("unbudgeted factorization must not exhaust")
         .expect("one rational multi-affine quartic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
@@ -29492,6 +29506,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_quintic_factor() {
             axis,
             PARALLEL_FACTOR_RESULTANT_CONFIG,
         )
+        .expect("unbudgeted factorization must not exhaust")
         .expect("one rational multi-affine quintic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
@@ -29519,6 +29534,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_sextic_factor() {
             axis,
             PARALLEL_FACTOR_RESULTANT_CONFIG,
         )
+        .expect("unbudgeted factorization must not exhaust")
         .expect("one rational multi-affine sextic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
@@ -29546,6 +29562,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_septic_factor() {
             axis,
             PARALLEL_FACTOR_RESULTANT_CONFIG,
         )
+        .expect("unbudgeted factorization must not exhaust")
         .expect("one rational multi-affine septic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
@@ -29589,6 +29606,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_cubic() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29610,6 +29628,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quartic() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29631,6 +29650,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quintic() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29652,6 +29672,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_sextic() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29673,6 +29694,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_septic() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29694,6 +29716,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_octic() {
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29715,6 +29738,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic(
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG
             )
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
         );
     }
@@ -29731,6 +29755,7 @@ fn quadratic_axis_factorization_rejects_a_nonsquare_discriminant() {
     };
     assert!(
         trivariate_quadratic_axis_factorizations(&polynomial, 0, PARALLEL_FACTOR_RESULTANT_CONFIG)
+            .expect("unbudgeted factorization must not exhaust")
             .is_none()
     );
 }
@@ -29766,7 +29791,7 @@ fn quadratic_factor_sign_multiplies_exact_nonzero_factor_signs() {
     let parameter = BezierParameter2::Exact(half);
     assert_eq!(
         trivariate_bounded_factor_sign(&polynomial, &parameter, &parameter, &parameter,).unwrap(),
-        Some(RealSign::Negative)
+        Classification::Decided(Some(RealSign::Negative))
     );
 }
 
@@ -30063,6 +30088,7 @@ fn square_free_cubic_lift_retains_top_slice_content() {
         0,
         PARALLEL_FACTOR_RESULTANT_CONFIG,
     )
+    .expect("unbudgeted factorization must not exhaust")
     .expect("linear top-slice content must remain attached to its factor");
     assert!(factorizations.iter().all(|(recovered, quotient)| {
         trivariate_multiply(recovered, quotient).coefficients == product.coefficients
@@ -35011,7 +35037,7 @@ fn repeated_cubic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35074,7 +35100,7 @@ fn square_free_cubic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35109,7 +35135,7 @@ fn quartic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35140,7 +35166,7 @@ fn quintic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35179,7 +35205,7 @@ fn sextic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35214,7 +35240,7 @@ fn septic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35249,7 +35275,7 @@ fn octic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -35287,7 +35313,7 @@ fn bounded_nonic_coupled_factor_rational_three_field_zero_is_exact() {
             &parameters[2],
         )
         .unwrap(),
-        Some(RealSign::Zero)
+        Classification::Decided(Some(RealSign::Zero))
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -57353,9 +57379,11 @@ fn implicit_component_reduction_removes_mixed_factor_multiplicities() {
         CurveResultantParameter::First,
         CurveResultantParameter::Second,
     ] {
-        let reduced =
+        let Classification::Decided(Some(reduced)) =
             reduce_implicit_parameter_component_multiplicity(&repeated, retained_parameter, config)
-                .expect("mixed multiplicities must have exact square-free support");
+        else {
+            panic!("mixed multiplicities must have exact square-free support");
+        };
         let scale = reduced.coefficients[0][2].clone();
         assert!(
             matches!(

@@ -1,0 +1,6 @@
+   Compiling hyperreal v0.13.1 (/tmp/csgrs-isolator-baseline/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/tmp/csgrs-isolator-baseline/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/tmp/csgrs-isolator-baseline/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/tmp/csgrs-isolator-baseline/crates/hypersolve)
+    Finished `bench` profile [optimized] target(s) in 37.42s
+  Executable benches/certification.rs (/tmp/csgrs-isolator-baseline/target/release/deps/certification-1d93b3835522ecfa)
