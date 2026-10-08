@@ -37,6 +37,13 @@ against the same pre-budget executable. The separate
 retain both the initial overhead and the activity-flag variant. These focused
 probes do not establish a full-suite regression ceiling or a time bound.
 
+The subsequent represented-root image hooks preserve budget exhaustion through
+coordinate and arithmetic adapters. A denied coordinate promotion leaves a
+lazy point unresolved and retryable; a completed exact point remains reusable
+with no additional budget. Solver image timings and the constant-image
+overhead experiment are recorded in the
+[image-promotion gate](../../benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions).
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate

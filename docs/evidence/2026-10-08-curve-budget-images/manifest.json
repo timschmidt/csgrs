@@ -1,0 +1,189 @@
+{
+  "scope": "Promotion admission for polynomial, rational, and binary represented-root images; typed exhaustion through arithmetic and curve coordinate adapters; retry-safe rational-map elimination caches. The full T3 bound is still in progress.",
+  "base_revision": "fd3579925",
+  "checks": [
+    {
+      "name": "focused",
+      "command": "cargo test --locked -p hypersolve --all-features --lib algebraic_rational_image::budget_tests",
+      "exit_code": 0,
+      "log": "focused.log",
+      "sha256": "4e8cee97eafe52a4d39478c74b4b5d957a476e2d0b37339d5cd9ff8dbc2b1074",
+      "tests": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "solver-all",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "solver-all.log",
+      "sha256": "c6a91595f2ec72999633d4830b177bcf57a1a876074bcd1f5584f48a6c784db5",
+      "tests": {
+        "passed": 588,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-images",
+      "command": "cargo test --locked -p hypercurve --all-features --lib bezier_algebraic_image::",
+      "exit_code": 0,
+      "log": "curve-images.log",
+      "sha256": "684d47bc2ce811fe5dd722164079cf4e32134ceed68f9d712dc4f1418ee6d860",
+      "tests": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "24984f557f90ec0730c82263495a71e877c6b87baca26f43972e8a3286b5e91c",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "hyperpath",
+      "command": "cargo test --locked -p hyperpath",
+      "exit_code": 0,
+      "log": "hyperpath.log",
+      "sha256": "32ffd7140718d3c3fc951878ba69e23973772e07be1f9ecccdb1a40a25772258",
+      "tests": {
+        "passed": 443,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypersolve -p hypercurve -p hyperpath --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "dcae1d4f5da6b1b17f8999a18251e66a0cd4a4278e5e09368e7434741eb4af3c"
+    },
+    {
+      "name": "fuzz-clippy",
+      "command": "cargo clippy --locked --manifest-path crates/hypersolve/fuzz/Cargo.toml --bins -- -D warnings",
+      "exit_code": 0,
+      "log": "fuzz-clippy.log",
+      "sha256": "79a457dd58ccf96a0a5485b0eb12e3ae74f2cca32784cebd22f2ddad5ecc1fa4"
+    },
+    {
+      "name": "wasm-clippy",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "557dcbbff269818acd1722e18c34fde8f635f6c2489cd33558f31757e066e21d"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypersolve -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "13c0943076dd15fd5aa51a35a7fb457029d7f377d5b5dc9fc4992e1a51b5fe0e"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "release-solver",
+      "command": "cargo test --locked --release -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "release-solver.log",
+      "sha256": "f110b12534a7601c55b9a8b88036a8b0ce193efe0e91500ef0fecd875b84db9e",
+      "tests": {
+        "passed": 588,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-images",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib bezier_algebraic_image::",
+      "exit_code": 0,
+      "log": "release-images.log",
+      "sha256": "4ba8cbef7a26c7eb3c4e58400766919a3e26e71a7e1e98a6a29fe8eefe4ef6e8",
+      "tests": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-policy",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib policy::",
+      "exit_code": 0,
+      "log": "release-policy.log",
+      "sha256": "268ba27297768ab3123c345b403ec769aa44dcbf190645fdd223cdf320247888",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve",
+      "command": "cargo test --locked --release -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "release-curve.log",
+      "sha256": "375a53598685e13d45cdf0043aef3ba3efbdde0a6d59d36787eb1322864c6e9b",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/image-budget/manifest.json",
+  "benchmark_provenance": "benchmark-provenance.json",
+  "pending": [],
+  "limitations": [
+    "The preceding full Hypercurve CI run at fd3579925 predates these image hooks.",
+    "Only instrumented refinement/promotion attempts are bounded. Remaining elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time still need separate bounds.",
+    "The selected Criterion workloads do not checksum every timed result; exact-output regression tests are separate evidence.",
+    "No full repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed."
+  ],
+  "benchmark_logs": [
+    {
+      "name": "benchmark-build",
+      "log": "benchmark-build.log",
+      "sha256": "707415a5bfd94ab06018ecf654172ae97d49787b2b6253ccee29e2029195ed6c"
+    },
+    {
+      "name": "benchmark-probe",
+      "log": "benchmark-probe.log",
+      "sha256": "fca0e82d74ac97b8f0b15d0b691d1257603c45c66292e7a0b2b62a2b4b1ca0c8"
+    },
+    {
+      "name": "initial-benchmark-build",
+      "log": "initial-benchmark-build.log",
+      "sha256": "17e0712155d5ee83dfb4cfa7aeaa539b85d640511fb57d895fe7a8ea3e1f0b6b"
+    },
+    {
+      "name": "initial-benchmark-probe",
+      "log": "initial-benchmark-probe.log",
+      "sha256": "b1db123a9c4139d180e83e10d8f995b1d4f2ecf1bdf655d2463ab69957bae8ee"
+    },
+    {
+      "name": "concurrent-benchmark-probe",
+      "log": "concurrent-benchmark-probe.log",
+      "sha256": "f0ed879473f3449e74bd79cf8de279188ed09556857673ee43fae1480beb95eb"
+    }
+  ],
+  "sources": "sources.json",
+  "initial_performance": "../../../benchmarks/baselines/2026-10-08-properties/image-budget-initial/manifest.json",
+  "concurrent_diagnostic": "../../../benchmarks/baselines/2026-10-08-properties/image-budget-concurrent/manifest.json",
+  "performance_note": "The initial and final idle probes ran with no other task validation commands active. The concurrent diagnostic is separately labeled. Timing medians do not establish a statistical regression bound."
+}

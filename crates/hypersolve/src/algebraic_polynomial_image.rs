@@ -58,6 +58,8 @@ pub enum AlgebraicRootPolynomialImageStatus {
     InvalidTransformedEvidence,
     /// Exact comparisons or scalar operations did not decide.
     Undecided,
+    /// The enclosing operation declined required promotion or refinement work.
+    BudgetExhausted,
 }
 
 /// Report for `beta = q(alpha)`.
@@ -87,6 +89,14 @@ pub fn transform_algebraic_root_polynomial_image(
     image_coefficients: &[Real],
     policy: PredicatePolicy,
 ) -> AlgebraicRootPolynomialImageReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        return polynomial_image_report(
+            AlgebraicRootPolynomialImageStatus::BudgetExhausted,
+            image_coefficients.to_vec(),
+            None,
+            Some(error.to_string()),
+        );
+    }
     if !root.is_valid()
         || validate_algebraic_root_representation(root, PredicatePolicy::STRICT).status
             != AlgebraicRootValidationStatus::Valid
@@ -226,6 +236,16 @@ pub fn transform_algebraic_root_polynomial_image(
         );
     }
 
+    if let Err(error) =
+        crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1)
+    {
+        return polynomial_image_report(
+            AlgebraicRootPolynomialImageStatus::BudgetExhausted,
+            image,
+            None,
+            Some(error.to_string()),
+        );
+    }
     let Some(polynomial_coefficients) = resultant_polynomial_for_image(&source_polynomial, &image)
     else {
         return polynomial_image_report(
@@ -304,12 +324,14 @@ fn exact_constant_image(
         AlgebraicRootValidationStatus::Valid,
         "canonical exact polynomial-image output must validate",
     );
-    polynomial_image_report(
-        AlgebraicRootPolynomialImageStatus::Transformed,
-        image,
-        Some(representation),
-        None,
-    )
+    // Only reached after the entry exhaustion check and before any charged
+    // work. Constructing a constant witness does not need a second TLS lookup.
+    AlgebraicRootPolynomialImageReport {
+        status: AlgebraicRootPolynomialImageStatus::Transformed,
+        image_coefficients: image,
+        representation: Some(representation),
+        message: None,
+    }
 }
 
 fn exact_constant_source_relation(source: &[Real], image: &[Real]) -> Option<Real> {
@@ -640,11 +662,16 @@ fn sort_rationals(values: &mut [Rational]) -> Option<()> {
 }
 
 fn polynomial_image_report(
-    status: AlgebraicRootPolynomialImageStatus,
+    mut status: AlgebraicRootPolynomialImageStatus,
     image_coefficients: Vec<Real>,
-    representation: Option<AlgebraicRootRepresentation>,
-    message: Option<String>,
+    mut representation: Option<AlgebraicRootRepresentation>,
+    mut message: Option<String>,
 ) -> AlgebraicRootPolynomialImageReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        status = AlgebraicRootPolynomialImageStatus::BudgetExhausted;
+        representation = None;
+        message = Some(error.to_string());
+    }
     AlgebraicRootPolynomialImageReport {
         status,
         image_coefficients,

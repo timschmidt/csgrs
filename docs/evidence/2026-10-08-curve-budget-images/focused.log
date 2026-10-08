@@ -1,0 +1,13 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.74s
+     Running unittests src/lib.rs (target/debug/deps/hypersolve-a89a091ce3328d58)
+
+running 5 tests
+test algebraic_rational_image::budget_tests::polynomial_images_share_nested_promotion_limits_and_retry_exactly ... ok
+test algebraic_rational_image::budget_tests::algebraic_image_budget_preserves_zero_cost_exact_and_affine_paths ... ok
+test algebraic_rational_image::budget_tests::rational_image_domain_refinement_exhaustion_stops_before_elimination ... ok
+test algebraic_rational_image::budget_tests::rational_map_budget_failure_cannot_poison_elimination_or_later_selected_roots ... ok
+test algebraic_rational_image::budget_tests::binary_images_report_promotion_and_refinement_exhaustion_through_arithmetic ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 583 filtered out; finished in 0.01s
+

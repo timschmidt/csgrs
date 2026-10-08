@@ -1,0 +1,67 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "transform_algebraic_root_polynomial_image": {
+    "before": 3560.4096651497107,
+    "after": 3592.6975119064614,
+    "change_percent": 0.9068576313785881
+  },
+  "transform_algebraic_root_polynomial_image/constant": {
+    "before": 120.82982257288418,
+    "after": 117.4199030012287,
+    "change_percent": -2.8220843985752198
+  },
+  "transform_algebraic_root_polynomial_image/foreign_root_refinement": {
+    "before": 28325.86770474733,
+    "after": 29424.145741107342,
+    "change_percent": 3.877297062204188
+  },
+  "transform_algebraic_root_polynomial_image/repeated_degree_six_carrier": {
+    "before": 52322.870898584726,
+    "after": 52062.62018535439,
+    "change_percent": -0.4973937950285112
+  },
+  "transform_algebraic_root_polynomial_image/stationary": {
+    "before": 4382.791317632731,
+    "after": 4363.778662091879,
+    "change_percent": -0.4338024369164306
+  },
+  "transform_algebraic_root_rational_image": {
+    "before": 2710.15084997767,
+    "after": 2736.05282645075,
+    "change_percent": 0.9557392893201344
+  },
+  "transform_algebraic_root_rational_image/dependency_broadened_denominator": {
+    "before": 10604.620154172295,
+    "after": 10809.300376908634,
+    "change_percent": 1.930104235329999
+  },
+  "transform_algebraic_root_rational_image/monotone_quadratic": {
+    "before": 1931.3438819435091,
+    "after": 1871.189585234675,
+    "change_percent": -3.1146341814747625
+  },
+  "transform_algebraic_root_rational_image/stationary_cubic": {
+    "before": 3302.558491902889,
+    "after": 3284.1655572939794,
+    "change_percent": -0.5569298667685851
+  },
+  "transform_algebraic_roots_binary": {
+    "before": 19007.356245882307,
+    "after": 19349.084558777493,
+    "change_percent": 1.7978739834963564
+  },
+  "transform_algebraic_roots_binary_divide": {
+    "before": 17309.744120958618,
+    "after": 17641.368763124854,
+    "change_percent": 1.9158263683673127
+  }
+}

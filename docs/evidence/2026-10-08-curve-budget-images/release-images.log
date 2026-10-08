@@ -1,0 +1,14 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 39s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-c64b9a6905916d79)
+
+running 5 tests
+test bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads ... ok
+test bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values ... ok
+test bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images ... ok
+test bezier_algebraic_image::budget_tests::coordinate_promotion_exhaustion_preserves_typed_failure_and_lazy_point_retries ... ok
+test bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1694 filtered out; finished in 0.00s
+

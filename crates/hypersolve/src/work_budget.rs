@@ -16,7 +16,10 @@
 //! recursive-field refinements, and selected-fiber/local-field promotions.
 //! The shared ordered-field Bernstein isolator, selected-fiber Sturm isolator,
 //! reusable fiber-root refiner, and retained local-field root refinements also
-//! participate. Other elimination entry points, remaining curve dispatch paths,
+//! participate. Polynomial, rational, and binary represented-root images charge
+//! their eliminant constructions; rational maps can reuse a cached eliminant
+//! without a new promotion charge. Constant and affine shortcuts need no
+//! promotion units. Other elimination entry points, remaining curve dispatch paths,
 //! scalar precision refinement, and arbitrary caller arithmetic are not
 //! comprehensively instrumented. Those paths need additional work
 //! before any whole-operation completion or time bound can be claimed.
@@ -26,6 +29,8 @@
 //! it consume separate refinement units. Usage depends on retained evidence,
 //! representation, and algorithm version. A ready proof may require no units.
 //! Resource blockers must not be retained as mathematical capability facts.
+//! Budgeted rational-map requests may read existing elimination caches but
+//! leave new eliminants uncached, including failed construction attempts.
 //!
 //! Nested scopes share their actual charges: an inner budget cannot replenish
 //! its parent. A failed charge spends no units. An exhausted scope cannot

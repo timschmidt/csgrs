@@ -148,3 +148,53 @@ after two warmup pairs. Median changes across its 11 workloads range from
 hooks and the activity flag. Its benchmark executable is 11,072 bytes larger
 than the original baseline. These measurements have the same limited scope
 as the earlier curve probe and do not establish an operation-time bound.
+
+## Represented-root image promotions
+
+The next extension charges construction of new polynomial, rational, and
+binary algebraic image eliminants. It carries typed exhaustion through
+represented-root arithmetic and curve coordinate images. Rational maps may
+read a previously cached eliminant inside a budget, but leave new elimination
+attempts uncached. Native regressions exercise both policies, four binary
+operations, nested shared limits, denominator refinement, exact retries,
+different selected source roots, and zero-cost constant/affine paths. The
+curve regression also checks that a denied lazy point stays retryable and a
+completed point needs no new budget.
+
+[`image-budget/manifest.json`](image-budget/manifest.json) retains five
+alternating process pairs on CPU 0, with 30 Criterion samples, 0.2 seconds of
+warmup, and 0.5 seconds of measurement per selected workload. No other
+validation commands from this task ran during this final probe. As with the
+fiber probe, these are medians of process mean estimates, without a statistical
+regression bound or per-iteration result checksums.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Polynomial image | 3.560 µs | 3.593 µs | +0.91% |
+| Constant polynomial image | 120.830 ns | 117.420 ns | -2.82% |
+| Polynomial image with foreign-root refinement | 28.326 µs | 29.424 µs | +3.88% |
+| Repeated degree-six polynomial carrier | 52.323 µs | 52.063 µs | -0.50% |
+| Rational image with denominator refinement | 10.605 µs | 10.809 µs | +1.93% |
+| Independent binary image | 19.007 µs | 19.349 µs | +1.80% |
+| Independent binary quotient | 17.310 µs | 17.641 µs | +1.92% |
+
+Across all 11 workloads, final median changes range from -3.11% to +3.88%.
+The [initial idle probe](image-budget-initial/manifest.json) showed the constant
+image increasing from 123.039 to 132.618 ns (+7.79%). The retained change
+avoids a second exhaustion lookup after constructing a constant witness:
+this path has already checked exhaustion and performs no charged work before
+returning. A regression verifies that an already-exhausted scope still gets a
+typed failure for the same constant image. The timing difference between runs
+cannot be attributed wholly to this change, and no general speedup is claimed.
+An earlier [concurrent diagnostic](image-budget-concurrent/manifest.json) is
+also retained and labeled with its background validation load.
+
+The baseline source is `fd3579925`, using the same isolated workspace and
+pruned lockfile as the fiber gate. All 243 Rust source files were compared
+against that revision before copying the candidate changes. The final whole
+benchmark executable grows by 22,520 bytes; this is not a library-size or
+allocation measurement. The
+[provenance record](../../../docs/evidence/2026-10-08-curve-budget-images/benchmark-provenance.json)
+retains source fingerprints, the initial constant-image implementation, and
+build details. Exact-output tests and their limits are recorded separately in
+the [validation manifest](../../../docs/evidence/2026-10-08-curve-budget-images/manifest.json).

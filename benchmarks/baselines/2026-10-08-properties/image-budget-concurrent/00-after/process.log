@@ -1,0 +1,97 @@
+Benchmarking transform_algebraic_root_polynomial_image
+Benchmarking transform_algebraic_root_polynomial_image: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_polynomial_image: Collecting 30 samples in estimated 500.27 ms (134k iterations)
+Benchmarking transform_algebraic_root_polynomial_image: Analyzing
+transform_algebraic_root_polynomial_image
+                        time:   [3.8972 µs 4.0926 µs 4.3597 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high severe
+
+Benchmarking transform_algebraic_root_polynomial_image/constant
+Benchmarking transform_algebraic_root_polynomial_image/constant: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_polynomial_image/constant: Collecting 30 samples in estimated 500.05 ms (3.8M iterations)
+Benchmarking transform_algebraic_root_polynomial_image/constant: Analyzing
+transform_algebraic_root_polynomial_image/constant
+                        time:   [132.56 ns 133.22 ns 133.95 ns]
+
+Benchmarking transform_algebraic_root_polynomial_image/repeated_degree_six_carrier
+Benchmarking transform_algebraic_root_polynomial_image/repeated_degree_six_carrier: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_polynomial_image/repeated_degree_six_carrier: Collecting 30 samples in estimated 520.36 ms (9765 iterations)
+Benchmarking transform_algebraic_root_polynomial_image/repeated_degree_six_carrier: Analyzing
+transform_algebraic_root_polynomial_image/repeated_degree_six_carrier
+                        time:   [53.852 µs 55.855 µs 58.525 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking transform_algebraic_root_polynomial_image/stationary
+Benchmarking transform_algebraic_root_polynomial_image/stationary: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_polynomial_image/stationary: Collecting 30 samples in estimated 500.78 ms (113k iterations)
+Benchmarking transform_algebraic_root_polynomial_image/stationary: Analyzing
+transform_algebraic_root_polynomial_image/stationary
+                        time:   [4.3904 µs 4.4310 µs 4.4894 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking transform_algebraic_root_polynomial_image/foreign_root_refinement
+Benchmarking transform_algebraic_root_polynomial_image/foreign_root_refinement: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_polynomial_image/foreign_root_refinement: Collecting 30 samples in estimated 501.37 ms (17k iterations)
+Benchmarking transform_algebraic_root_polynomial_image/foreign_root_refinement: Analyzing
+transform_algebraic_root_polynomial_image/foreign_root_refinement
+                        time:   [39.814 µs 46.825 µs 52.291 µs]
+
+Benchmarking transform_algebraic_root_rational_image
+Benchmarking transform_algebraic_root_rational_image: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_rational_image: Collecting 30 samples in estimated 500.96 ms (179k iterations)
+Benchmarking transform_algebraic_root_rational_image: Analyzing
+transform_algebraic_root_rational_image
+                        time:   [2.7738 µs 2.8207 µs 2.8756 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high mild
+
+Benchmarking transform_algebraic_root_rational_image/monotone_quadratic
+Benchmarking transform_algebraic_root_rational_image/monotone_quadratic: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_rational_image/monotone_quadratic: Collecting 30 samples in estimated 500.01 ms (252k iterations)
+Benchmarking transform_algebraic_root_rational_image/monotone_quadratic: Analyzing
+transform_algebraic_root_rational_image/monotone_quadratic
+                        time:   [1.8744 µs 1.8863 µs 1.9014 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high mild
+
+Benchmarking transform_algebraic_root_rational_image/stationary_cubic
+Benchmarking transform_algebraic_root_rational_image/stationary_cubic: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_rational_image/stationary_cubic: Collecting 30 samples in estimated 500.57 ms (153k iterations)
+Benchmarking transform_algebraic_root_rational_image/stationary_cubic: Analyzing
+transform_algebraic_root_rational_image/stationary_cubic
+                        time:   [3.3811 µs 3.4081 µs 3.4413 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high mild
+
+Benchmarking transform_algebraic_root_rational_image/dependency_broadened_denominator
+Benchmarking transform_algebraic_root_rational_image/dependency_broadened_denominator: Warming up for 200.00 ms
+Benchmarking transform_algebraic_root_rational_image/dependency_broadened_denominator: Collecting 30 samples in estimated 502.41 ms (45k iterations)
+Benchmarking transform_algebraic_root_rational_image/dependency_broadened_denominator: Analyzing
+transform_algebraic_root_rational_image/dependency_broadened_denominator
+                        time:   [10.586 µs 11.155 µs 12.056 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  3 (10.00%) high severe
+
+Benchmarking transform_algebraic_roots_binary
+Benchmarking transform_algebraic_roots_binary: Warming up for 200.00 ms
+Benchmarking transform_algebraic_roots_binary: Collecting 30 samples in estimated 505.62 ms (27k iterations)
+Benchmarking transform_algebraic_roots_binary: Analyzing
+transform_algebraic_roots_binary
+                        time:   [19.228 µs 19.644 µs 20.137 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high mild
+
+Benchmarking transform_algebraic_roots_binary_divide
+Benchmarking transform_algebraic_roots_binary_divide: Warming up for 200.00 ms
+Benchmarking transform_algebraic_roots_binary_divide: Collecting 30 samples in estimated 501.28 ms (27k iterations)
+Benchmarking transform_algebraic_roots_binary_divide: Analyzing
+transform_algebraic_roots_binary_divide
+                        time:   [17.839 µs 17.966 µs 18.109 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high mild
+

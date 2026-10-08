@@ -135,6 +135,10 @@ impl BezierAlgebraicRationalCoordinateImage {
 }
 
 #[cfg(test)]
+#[path = "bezier_algebraic_image/budget_tests.rs"]
+mod budget_tests;
+
+#[cfg(test)]
 mod policy_tests {
     use hyperreal::{Rational, Real};
     use hypersolve::{
@@ -560,6 +564,7 @@ pub(crate) fn arithmetic_algebraic_representations_with_policy(
     );
     if algebraic_arithmetic_succeeded(&strict.status)
         || strict.status == AlgebraicRootArithmeticStatus::NonRationalInput
+        || strict.status == AlgebraicRootArithmeticStatus::BudgetExhausted
         || !policy.permits_approximate_512()
     {
         return strict;
@@ -2400,6 +2405,13 @@ fn rational_coordinate_image_pair(
             &denominator_coefficients,
             strict.predicate_policy(),
         );
+        if first_evidence.status == AlgebraicRootRationalImageStatus::BudgetExhausted
+            || second_evidence.status == AlgebraicRootRationalImageStatus::BudgetExhausted
+        {
+            return Ok(RationalCoordinateImagePair::Failed(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         if first_evidence.status == AlgebraicRootRationalImageStatus::Transformed
             && second_evidence.status == AlgebraicRootRationalImageStatus::Transformed
         {

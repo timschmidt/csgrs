@@ -1,0 +1,67 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "transform_algebraic_root_polynomial_image": {
+    "before": 3721.532299609989,
+    "after": 3580.277406482302,
+    "change_percent": -3.795611101977814
+  },
+  "transform_algebraic_root_polynomial_image/constant": {
+    "before": 123.03929872533473,
+    "after": 132.6179841214666,
+    "change_percent": 7.785061761051426
+  },
+  "transform_algebraic_root_polynomial_image/foreign_root_refinement": {
+    "before": 28311.589562675992,
+    "after": 28117.00657046014,
+    "change_percent": -0.6872909477056544
+  },
+  "transform_algebraic_root_polynomial_image/repeated_degree_six_carrier": {
+    "before": 51607.6990306281,
+    "after": 51981.16144096902,
+    "change_percent": 0.7236563872364821
+  },
+  "transform_algebraic_root_polynomial_image/stationary": {
+    "before": 4526.952659851244,
+    "after": 4332.609301852981,
+    "change_percent": -4.293028281957978
+  },
+  "transform_algebraic_root_rational_image": {
+    "before": 2753.555702426474,
+    "after": 2700.9048636583234,
+    "change_percent": -1.9121036382795498
+  },
+  "transform_algebraic_root_rational_image/dependency_broadened_denominator": {
+    "before": 10419.92445169714,
+    "after": 10408.826991086411,
+    "change_percent": -0.10650231354528694
+  },
+  "transform_algebraic_root_rational_image/monotone_quadratic": {
+    "before": 1852.973664213248,
+    "after": 1859.865357731206,
+    "change_percent": 0.3719261450423339
+  },
+  "transform_algebraic_root_rational_image/stationary_cubic": {
+    "before": 3401.6951222501475,
+    "after": 3285.3508344129245,
+    "change_percent": -3.4201856326343427
+  },
+  "transform_algebraic_roots_binary": {
+    "before": 18786.87384939891,
+    "after": 18989.08175268844,
+    "change_percent": 1.0763254435542935
+  },
+  "transform_algebraic_roots_binary_divide": {
+    "before": 17188.97160046814,
+    "after": 17519.551661654168,
+    "change_percent": 1.923210235433892
+  }
+}

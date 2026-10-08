@@ -162,6 +162,8 @@ pub enum AlgebraicRootArithmeticStatus {
     NonRationalInput,
     /// Exact arithmetic in the scalar package did not decide.
     Undecided,
+    /// The enclosing operation declined required promotion or refinement work.
+    BudgetExhausted,
 }
 
 /// Report for a narrow exact arithmetic operation on represented roots.
@@ -983,6 +985,7 @@ pub fn compare_algebraic_root_representations_by_difference(
             difference.message.clone(),
         ),
         AlgebraicRootArithmeticStatus::NonRationalInput
+        | AlgebraicRootArithmeticStatus::BudgetExhausted
         | AlgebraicRootArithmeticStatus::Undecided => algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Undecided,
             None,
@@ -1229,6 +1232,15 @@ pub fn arithmetic_algebraic_root_representations(
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootArithmeticReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::BudgetExhausted,
+            None,
+            None,
+            Some(error.to_string()),
+        );
+    }
     if !left.is_valid() || right.is_some_and(|root| !root.is_valid()) {
         return algebraic_arithmetic_report(
             operation,
@@ -1879,6 +1891,13 @@ fn arithmetic_with_same_representation(
             transform.representation,
             transform.message,
         ),
+        AlgebraicRootPolynomialImageStatus::BudgetExhausted => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::BudgetExhausted,
+            None,
+            None,
+            transform.message,
+        ),
     })
 }
 
@@ -1982,6 +2001,13 @@ fn arithmetic_with_independent_representations(
             AlgebraicRootArithmeticStatus::Undecided,
             None,
             transform.representation,
+            transform.message,
+        ),
+        AlgebraicRootBinaryTransformStatus::BudgetExhausted => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::BudgetExhausted,
+            None,
+            None,
             transform.message,
         ),
     })
@@ -3776,11 +3802,17 @@ fn algebraic_refinement_comparison_report(
 
 fn algebraic_arithmetic_report(
     operation: AlgebraicRootArithmeticOp,
-    status: AlgebraicRootArithmeticStatus,
-    exact_result: Option<Real>,
-    result_representation: Option<AlgebraicRootRepresentation>,
-    message: Option<String>,
+    mut status: AlgebraicRootArithmeticStatus,
+    mut exact_result: Option<Real>,
+    mut result_representation: Option<AlgebraicRootRepresentation>,
+    mut message: Option<String>,
 ) -> AlgebraicRootArithmeticReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        status = AlgebraicRootArithmeticStatus::BudgetExhausted;
+        exact_result = None;
+        result_representation = None;
+        message = Some(error.to_string());
+    }
     AlgebraicRootArithmeticReport {
         operation,
         status,

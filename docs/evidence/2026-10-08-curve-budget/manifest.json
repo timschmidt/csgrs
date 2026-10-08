@@ -118,13 +118,12 @@
   ],
   "performance": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget/manifest.json",
   "preceding_performance_variant": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget-initial/manifest.json",
-  "pending": [
-    "The complete debug-profile Hypercurve rerun remains required for the pre-push matrix; the release-profile library/integration rerun passed at 546cd35fa."
-  ],
+  "pending": [],
   "limitations": [
     "Current units bound only instrumented refinement/promotion attempts, not coefficient size, scalar work, memory, wall-clock time, or all curve paths. T3 remains in progress.",
     "The prior debug Hypercurve broad run passed 2235 tests, ignored 20, and failed one preview-scope fixture; Cargo stopped before later integration binaries. The corrected focused fixture passes. Its original failure remains in ../2026-10-08-properties/curve-all-tests-before-fragment-test-correction.log. The full release-profile rerun at 546cd35fa passed 2403 tests and ignored 33; this predates the further shared-isolator hooks.",
     "Root all-feature tests retain the existing ignored README PNG byte-comparison test.",
     "No 100% coverage, full workspace/feature matrix, ASan/fuzz/Verus campaign, competitive-library revalidation, or deployment is claimed."
-  ]
+  ],
+  "follow_up": "../2026-10-08-curve-budget-isolators/manifest.json records the complete configured Hypercurve CI command passing at fd3579925 (2404 tests including the doctest; 33 ignored). The actual workflow selects release, not debug, with two test threads. The full repository pre-push matrix remains open."
 }

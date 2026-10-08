@@ -115,6 +115,22 @@
       "exit_code": 0,
       "log": "curve-benchmark-probe.log",
       "sha256": "20f16ef963f206b932f5713490754b771e5aaf0f3dce69d524ac8771f6acaf60"
+    },
+    {
+      "name": "hypercurve-configured-ci",
+      "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "working_directory": "crates/hypercurve",
+      "exit_code": 0,
+      "code_revision": "fd3579925",
+      "source_note": "Library and integration binaries compiled before the later image-promotion edits. The policy.rs budget doctest is unchanged by those edits. No claim is made for the newer image-promotion source.",
+      "log": "hypercurve-configured-ci.log",
+      "sha256": "f3f7e4f785e7ba996365629ae3fbbdb5dfa7cc69fc3d6582a4388078f31a9e00",
+      "tests": {
+        "passed": 2404,
+        "failed": 0,
+        "ignored": 33
+      },
+      "includes_doctests": true
     }
   ],
   "performance": "../../../benchmarks/baselines/2026-10-08-properties/fiber-budget/manifest.json",
@@ -122,7 +138,7 @@
   "benchmark_provenance": "benchmark-provenance.json",
   "pending": [],
   "limitations": [
-    "The complete 2403-pass Hypercurve release run in ../2026-10-08-curve-budget/manifest.json predates these further hooks. The full debug-profile pre-push matrix is still pending.",
+    "The complete configured Hypercurve release suite passes at fd3579925. The newer image-promotion extension and the full repository pre-push matrix have separate validation scope.",
     "No bound on all elimination, coefficient growth, scalar precision, arbitrary caller work, allocation, or elapsed time is established.",
     "Criterion fixture assertions and exact regression tests are separate evidence; benchmark timing does not prove arbitrary-input correctness."
   ],

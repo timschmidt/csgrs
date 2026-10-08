@@ -145,12 +145,10 @@
       "coverage": "Cargo stopped at the failing fragments integration binary; later test binaries did not execute."
     }
   ],
-  "pending": [
-    "cargo test --locked -p hypercurve --all-features --lib --tests"
-  ],
+  "pending": [],
   "limitations": [
     "Root all-feature tests leave the existing expensive README PNG byte-comparison test ignored.",
-    "The initial Hypercurve broad run passed its library suite and preceding integration binaries, then stopped at one preview-scope fixture. Its failure log is retained; the corrected focused regression passes. The complete rerun remains pending.",
+    "The initial diagnostic Hypercurve debug run stopped at one preview-scope fixture. Its failure log is retained. The corrected fixture and full configured release suite now pass; see follow_up for exact revision and scope.",
     "No 100% coverage, full workspace validation, ASan/fuzz/Verus campaign, competitive-suite revalidation, or deployment is claimed.",
     "Zizmor reports zero findings in its default offline mode; online-only audits were not run."
   ],
@@ -177,5 +175,5 @@
     "tests/wasm/package.json": "fee5dfbeedb5c0134b64a3a9a11f9377bda25e0bdafd21c026d9c12db556945c",
     "tests/wasm/package-lock.json": "da5a99ed3100038d23355b2569b1371e20489493b4a7c3b770685b82661452bc"
   },
-  "follow_up": "../2026-10-08-curve-budget/manifest.json records the fixed preview regression, passing strict Hypercurve Clippy, and the complete 2403-pass release suite at 546cd35fa. The original debug-profile command remains pending for pre-push validation."
+  "follow_up": "../2026-10-08-curve-budget-isolators/manifest.json records the complete configured Hypercurve CI command passing at fd3579925 (2404 tests including the doctest; 33 ignored), after the corrected preview fixture and shared-isolator budget changes. The workflow selects release with two test threads. The original diagnostic debug failure remains archived; the full repository pre-push matrix is not yet complete."
 }

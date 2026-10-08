@@ -1,0 +1,36 @@
+{
+  "baseline_revision": "fd3579925",
+  "baseline_source_files_verified": 243,
+  "workspace": "docs/evidence/2026-10-08-curve-budget-isolators/benchmark-workspace.toml",
+  "lockfile": "docs/evidence/2026-10-08-curve-budget-isolators/benchmark-Cargo.lock",
+  "baseline_executable_sha256": "d081eaf35131ee4d1775c9c4e31ffe53fa2c01f8c0e47ad7d6e419ff9613e770",
+  "candidate_solver_sources": {
+    "crates/hypersolve/src/algebraic.rs": "cbd8352c96e73fcca3619643864c4d99253e5b2f1cf31878871691b56f46d26b",
+    "crates/hypersolve/src/algebraic_binary.rs": "f39401e6833bc22c530cdb61e24845fea60ca7d27911d1ca018a897c509c2e6d",
+    "crates/hypersolve/src/algebraic_polynomial_image.rs": "0cc030c69c19123a27acc2e14759828014075f0f2a2af3bc34577dfdba756a0d",
+    "crates/hypersolve/src/algebraic_rational_image.rs": "e753916bb4ab2813bfc6023d45c46daec270ead159f6bce214f99e780f7e385c",
+    "crates/hypersolve/src/work_budget.rs": "79f9a2a13499e78001ec764374ce6b86935ec94067097375dba59e1e16c93d1a",
+    "crates/hypersolve/src/algebraic_rational_image/budget_tests.rs": "4e8741e1b724eff5fee20f87b488baea1205e4d85542010b590a60526742fb68"
+  },
+  "method": "Reuse the preceding activity-flag executable after verifying all 243 Rust source files in its isolated four-crate workspace against fd3579925. Copy only the listed candidate sources into that same workspace and rebuild using the same pruned lockfile and profiles. The prior manifest documents the root-lockfile identity check and the narrower dependency graph.",
+  "build_command": "cargo bench --offline --locked --manifest-path /tmp/csgrs-isolator-baseline/Cargo.toml -p hypersolve --bench certification --no-run",
+  "prior_build_provenance": "../2026-10-08-curve-budget-isolators/benchmark-provenance.json",
+  "initial_candidate_executable_sha256": "b20c345f0adcff97a17d879ade5589d5c8d9bbb8a513a9425ae6f7581663a226",
+  "candidate_executable_sha256": "eefe329bf7ba7855e1029bbde805a18a72250dd200b9840d6d8b6a707c669107",
+  "initial_constant_image_source": "initial-algebraic_polynomial_image.rs",
+  "initial_constant_image_source_sha256": "3079361004c3cf709275e83b41340ed6149df046b5cc5fe66647beb2f0d30ccd",
+  "initial_solver_sources": {
+    "crates/hypersolve/src/algebraic.rs": "cbd8352c96e73fcca3619643864c4d99253e5b2f1cf31878871691b56f46d26b",
+    "crates/hypersolve/src/algebraic_binary.rs": "f39401e6833bc22c530cdb61e24845fea60ca7d27911d1ca018a897c509c2e6d",
+    "crates/hypersolve/src/algebraic_polynomial_image.rs": "3079361004c3cf709275e83b41340ed6149df046b5cc5fe66647beb2f0d30ccd",
+    "crates/hypersolve/src/algebraic_rational_image.rs": "e753916bb4ab2813bfc6023d45c46daec270ead159f6bce214f99e780f7e385c",
+    "crates/hypersolve/src/work_budget.rs": "79f9a2a13499e78001ec764374ce6b86935ec94067097375dba59e1e16c93d1a",
+    "crates/hypersolve/src/algebraic_rational_image/budget_tests.rs": "21dc5b040af9d25609ff4a7911f99f27eb609101431732743a6e6bb8548892e8"
+  },
+  "source_note": "The only production-code difference between the initial and final image-promotion variants is the retained constant-image return shown in initial-algebraic_polynomial_image.rs. A regression assertion was also added to budget_tests.rs; it is cfg(test) and absent from the benchmark executable.",
+  "initial_test_source": {
+    "path": "initial-budget_tests.rs",
+    "sha256": "21dc5b040af9d25609ff4a7911f99f27eb609101431732743a6e6bb8548892e8",
+    "reconstruction": "Reconstructed by removing the final constant-after-exhaustion assertion and verified against the contemporaneously recorded initial-source SHA-256. This cfg(test) source is excluded from both benchmark executables."
+  }
+}
