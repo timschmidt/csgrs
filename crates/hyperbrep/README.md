@@ -476,3 +476,9 @@ RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 HyperBREP does not use triangle meshes, voxel fields, physics shapes, or
 primitive floats as source topology. Those systems consume validated BREP data
 through explicitly derived adapters.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

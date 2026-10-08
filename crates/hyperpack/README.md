@@ -280,3 +280,9 @@ Licensed under Apache-2.0 as declared in [Cargo.toml](Cargo.toml).
 Bug reports should include exact bins/items/placements, policy inputs, enabled
 features, and full replay. Before proposing a change, run formatting, the
 focused regression, all-feature tests, and strict Clippy.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

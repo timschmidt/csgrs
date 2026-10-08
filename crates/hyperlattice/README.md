@@ -328,3 +328,9 @@ cargo test --all-targets --all-features
 cargo clippy --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 ```
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

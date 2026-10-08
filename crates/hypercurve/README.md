@@ -373,6 +373,9 @@ exact signatures.
 
 ## Precision, guarantees, and boundaries
 
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md),
+including semantic, representational, evidentiary, and computational closure.
+
 Hypercurve separates exact values from decisions about them:
 
 - Coordinates are `Real` values, not an implicit `f64` tolerance model.
@@ -390,7 +393,8 @@ Hypercurve separates exact values from decisions about them:
 - `hypercurve::evaluate_under(policy, || ...)` takes a Hyperlimit
   `PredicatePolicy` for callers whose policy is configuration: `STRICT`
   evaluates exactly (certified), and `APPROXIMATE_512` behaves as
-  `provisional`.
+  `provisional`. It suspends enclosing display-preview tolerances and restores
+  them afterward; explicit topology policy does not inherit a preview scope.
 - `CurvePreviewOptions` owns finite display tolerances separately. Operations
   called inside `evaluate` use its edge-preview context; its scoped preview
   results are never exact topology or construction provenance.

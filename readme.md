@@ -392,7 +392,9 @@ integer. The adapters do not implement another geometry kernel.
 The C ABI is the sibling
 [`csgrs-ffi`](https://github.com/timschmidt/csgrs-ffi) crate. C++, Go, Python,
 and TypeScript wrappers are documented in [bindings](bindings/README.md).
-The `wasm` feature provides browser-oriented wrappers over the same core.
+The `wasm` feature provides browser-oriented wrappers over the same core;
+the [WASM binding guide](bindings/js/WASM.md) covers ownership, named certainty
+receipts, and decided/boundary/uncertain point-query status.
 
 ## Features
 
@@ -429,6 +431,11 @@ wasm-pack build --profile wasm --target bundler --out-dir pkg -- --features wasm
 
 ## Correctness boundaries
 
+The stack-wide [admission protocol](docs/admission.md) defines the proof,
+certainty, cache, boundary, and validation requirements for extensions.
+The [properties execution ledger](docs/properties-status.json) records the
+remaining work and its evidence; unverified items are not completion claims.
+
 - Topology-sensitive decisions use `Real` and the Hyper predicate stack.
 - Boolean inputs must meet Hypermesh's documented finite, closed, oriented
   solid preconditions. Keep structured `try_*` errors.
@@ -440,6 +447,13 @@ wasm-pack build --profile wasm --target bundler --out-dir pkg -- --features wasm
   aligned boundary attributes.
 - Bevy, WebAssembly, scalar adapters, FFI, and serialization are application
   boundaries; their finite projections never become topology truth.
+
+`solid::cache::with_policy` gives synchronous callers explicit per-cache entry
+limits. `CachePolicy::DISABLED` clears grammar caches and retains no new entries;
+`policy`, `usage`, and `clear` expose their state. Scopes restore the prior policy
+on return or unwinding, and limits apply independently on each thread. These are
+entry budgets, not byte budgets. See the [cache contract](src/solid/cache.rs) for
+key identity, FIFO eviction, nesting, and certainty semantics.
 
 ## Performance and hard tests
 

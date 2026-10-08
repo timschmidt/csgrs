@@ -355,3 +355,9 @@ cargo check --manifest-path fuzz/Cargo.toml --bins --locked
 cargo clippy --all-targets --all-features --locked -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features --locked
 ```
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

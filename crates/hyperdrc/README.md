@@ -416,3 +416,9 @@ public support contract.
 ## License
 
 HyperDRC is available under the [MIT License](LICENSE).
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.

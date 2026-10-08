@@ -1,0 +1,544 @@
+{
+  "source": "properties.md",
+  "base_revision": "0c5508b89",
+  "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
+  "status_meanings": {
+    "unverified": "The requirement has not been audited to its full scope.",
+    "open": "Implementation or evidence is still required.",
+    "in-progress": "Concrete work exists, but the complete requirement is not yet proved.",
+    "verified": "Current implementation and linked evidence prove the complete requirement."
+  },
+  "properties": [
+    {
+      "id": "P1",
+      "requirement": "Exactness by construction. Exact rational values stay exact until an API *explicitly* requests approximation or float conversion. No hidden binary64 demotion anywhere in the core. *Criterion:* no code path demotes a scalar except at named boundary APIs.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P2",
+      "requirement": "Structure preservation. Recognizable symbolic forms — π, e, roots, logs, trig endpoints, removable small-angle limits, quadratic surds `a + b√d` — stay symbolic while that avoids precision loss or repeated approximation. *Criterion:* an identity provable from the certificate must not require refinement; `hypot` of 3-4-5 stays exact.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P3",
+      "requirement": "Conservative, honest facts. Structural facts are cheap-or-Unknown: \"Unknown\" means \"not cheaply proven,\" never \"false.\" Equality is structural, not theorem-proving, and says so. *Criterion:* no fact API returns a definite answer without a certificate behind it.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P4",
+      "requirement": "Monotone refinement caches. Cached approximations and facts must never weaken a later higher-precision request. Cache hits must not change semantics, structural facts, or later answers. *Criterion:* any query answered identically with and without a warm cache, at all precisions.",
+      "status": "in-progress",
+      "evidence": [
+        "src/solid/cache.rs",
+        "tests/solid_cache.rs",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "Grammar cache policy and regressions are verified for the five modeled cache families. Scalar, curve, predicate, and mesh cache invariants still need a complete audit across representations, policies, and precisions."
+    },
+    {
+      "id": "P5",
+      "requirement": "Bounded explosion. Growth is prevented at the earliest layer with enough information: dyadic recognition, shared-denominator reducers, product-sum shapes, perfect-root collapsing. `Computable` is the fallback, never the default container. *Criterion:* repeated operand chains do not force GCD work per term or build avoidable expression trees.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P6",
+      "requirement": "Typed failure, never silent wrongness. All known domain errors return `Problem`; `expect` only for invariants proven by construction; invalid float imports (NaN/Inf) are rejected at conversion. *Criterion:* no public API can panic on ordinary numeric domain failure.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P7",
+      "requirement": "Stable forms built in. Cancellation-prone compositions (`ln_1p`, `expm1`, `diff_of_products`, `sqrt1pm1`, `logsubexp`, `hypot2/3`...) are public primitives so callers cannot spell them unstably. *Criterion:* geometry code never hand-rolls a numerically unstable composition the scalar layer already owns.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P8",
+      "requirement": "Policy-explicit decisions. Every predicate-bearing operation receives an explicit policy (`STRICT`, `APPROXIMATE_512`); no internal default changes predicate semantics. *Criterion:* the same query under the same policy always answers through the same decision stratum.",
+      "status": "in-progress",
+      "evidence": [
+        "crates/hypercurve/src/policy.rs",
+        "tests/geometry_context.rs",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit."
+    },
+    {
+      "id": "P9",
+      "requirement": "Certainty receipts. Results carry `Certified` vs. `Approximate512Consumed` — the *cost class of the proof* is a return value. *Criterion:* a consumer can always distinguish exact from fallback-decided without inspecting internals.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P10",
+      "requirement": "Least-cost proof search. The decision cascade (structural shortcut → rational reducer → bounded refinement → deterministic terminal) finds the cheapest sufficient certificate, JIT-like for repeated queries. *Criterion:* repeated queries amortize; prepared objects beat one-shot paths on measured benches.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P11",
+      "requirement": "Never wrong, only unsure. Where a decision cannot be certified in budget, return Unknown — never a guess. *Criterion:* adversarial corpus contains zero false-positive/false-negative predicate answers at any policy.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P12",
+      "requirement": "One region carrier, many families. `CurveRegion2` is the sole filled-region carrier; line/arc specializations are private fast paths inside the unified kernel, never parallel semantics. *Criterion:* a mixed line/arc/Bézier/NURBS boundary classifies consistently with the pure-line equivalent.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P13",
+      "requirement": "Certified interior from winding. Interior sides are proven by arrangement from winding — authoring requires no orientation hints. Material/hole loops, nested islands, and fill rules (`NonZero`, `EvenOdd`) publish the regularized set. *Criterion:* same boundary with reversed author orientation yields the same region.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P14",
+      "requirement": "Uncertainty is a typed value. `Classification<T>` (decided/uncertain), `Provisional<T>`, `evaluate_under`: approximate evaluation is explicitly qualified and certainty-carrying. *Criterion:* no approximate answer is ever unlabelled or mislabeled as exact.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P15",
+      "requirement": "Boundary provenance. Curve operations emit evidence — retained roots, contact records, contour roles — not just coordinates. *Criterion:* every output boundary element can name the input elements that produced it.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P16",
+      "requirement": "Lossless promotion, typed blockers. Exact line/arc promotes losslessly to downstream consumers; anything uncertifiable (e.g. a general cubic) fails with a typed blocker rather than borrowing lossy display chords — unless a distinct bounded certificate admits it. *Criterion:* no display approximation ever feeds an exact downstream decision.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P17",
+      "requirement": "Semantic closure: every supported operation returns the intended exact regularized set, with consistent winding, boundary ownership, tangency, overlap, and degeneracy semantics.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P18",
+      "requirement": "Representational closure: every exact result needed by the next operation remains representable.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P19",
+      "requirement": "Evidentiary closure: roots, selected fibers, parameters, signs, and topology decisions retain enough identity and proof information to be reused or replayed.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P20",
+      "requirement": "Computational closure: the output may be mathematically valid, but repeated operations must not cause uncontrolled expression depth, coefficient growth, redundant refinement, allocation traffic, or reconstruction cost",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P21",
+      "requirement": "One exact arrangement. Booleans validate closed PWN input, corefine shared faces, build one radial cell complex, propagate absolute windings, and select closure-certified boundaries — one `boolean()` entry point, shared intersections across expression roots. *Criterion:* additional expression roots do not repeat arrangement work.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P22",
+      "requirement": "Broad input contract, typed rejections. Disconnected, nested, coincident, balanced-nonmanifold, and winding-multiplicity inputs are supported; open meshes, invalid indices, and degenerate triangles are typed failures — never hangs, never wrong output, never unbounded allocation. *Criterion:* adversarial Boolean matrix (tangent, coplanar, near-coplanar, sliver, inverted, duplicate, invalid) all decide or diagnose.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P23",
+      "requirement": "Unbounded sets never masquerade as finite. Negation/exterior-containing expressions return `UnboundedBooleanOutput` rather than a finite mesh that misrepresents the result. *Criterion:* no finite output is ever emitted for an exterior-inside result.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P24",
+      "requirement": "Tolerance-free coincidence. Near-coincident-but-distinct geometry stays distinct; there is no epsilon merge anywhere. *Criterion:* a point at 1e-12 outside a cube is outside; a 1e-12 translation is preserved in bounds.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P25",
+      "requirement": "Vocabulary, not a second kernel. CSGRS composes native Hyper types — it never introduces another mesh, region, or polygon carrier. *Criterion:* every public type is a re-export or adapter of a kernel type.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P26",
+      "requirement": "Intent-preserving interchange. IO and scalar adapters are lossy only at their documented boundaries; floats appear only at explicit rendering, serialization, adapter, FFI, and wasm edges. *Criterion:* round-trips through every supported format preserve exact geometry where the format allows.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P27",
+      "requirement": "Deterministic, checksum-auditable outputs. Repeated serialized runs are deterministic for geometry and checksums; performance changes must preserve rows, output size, and checksums to be retained. *Criterion:* every retained optimization in PERFORMANCE.md cites its preserved evidence.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P28",
+      "requirement": "FFI cannot violate the contract. Null-checked, family-checked handles; panics caught at the boundary (`Panic = 255`); thread-local last-error with documented lifetime; matched `*_free` ownership; no UB on misuse. *Criterion:* hostile C/JS input (incomplete triples, out-of-range indices, non-finite coordinates) is rejected before native geometry is created.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P29",
+      "requirement": "Display is a projection, never a source. Exact source, canonical machine, and lossy display values live in separate domains; GPU/export boundaries are the only f32/f64 demotion points and own their own checks. *Criterion:* changing display fidelity can never change a classified or computed result.",
+      "status": "in-progress",
+      "evidence": [
+        "crates/hypercurve/src/policy.rs",
+        "tests/geometry_context.rs",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit."
+    },
+    {
+      "id": "P30",
+      "requirement": "The certainty receipt survives every boundary. `Certified`/`Uncertain`/`Unknown` must remain queryable at each ABI — including wasm/JS. *Target:* any boundary that currently flattens certainty (e.g. JS) should surface it.",
+      "status": "in-progress",
+      "evidence": [
+        "src/wasm/context_js.rs",
+        "src/wasm/curve_js.rs",
+        "tests/geometry_context.rs",
+        "tests/wasm_certainty.rs",
+        "tests/wasm/geometry_certainty.cjs",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "Audit every ABI, including uncertainty/error distinctions and receipt lifetime after conversion."
+    },
+    {
+      "id": "P31",
+      "requirement": "Certified end-to-end demotion. Every float-shaped artifact in the chain (chord approximation, step rounding, timer rounding, time dilation) has an explicit position-error budget and a proof that the budget holds. *Criterion:* from sketch to microstep, every demotion either certifies or fails typed.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P32",
+      "requirement": "Fail-closed safety. The safety state machine is fail-closed; bounded channels; one core for real-time work; firmware consumes only bounded, independently admitted machine IR. *Criterion:* no audit/evidence data path enters the real-time core.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P33",
+      "requirement": "Replayable canonical evidence. Machine jobs are content-addressed, replay-verified against retained exact carriers, and their planning/lowering evidence is reconstructible from live state. *Criterion:* the same job always replays identically; policy changes change evidence even when bytes do not.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P34",
+      "requirement": "Lossless community inheritance. OpenSCAD numerics parse directly into `Real` (no f64 bottleneck); compatibility is defined as *intent-preserving*, and diffs against upstream on the artifact corpus are triaged and published, not silently absorbed. *Criterion:* the differential harness runs the corpus through both engines and classifies every difference.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P35",
+      "requirement": "Failure promotion. Every minimized, license-clean fuzz/adversarial failure becomes a deterministic regression fixture; full-resolution hard cases are never replaced with reduced proxies. *Criterion:* no fixture shrinks without explicit justification.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P36",
+      "requirement": "Evidence-gated retention. A change is retained only after focused correctness tests plus proportionate benchmark/allocation/size evidence; rejected experiments are recorded with decisive data. *Criterion:* the ledgers name kept, rejected, already-satisfied, or architecture-inapplicable for every idea.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P37",
+      "requirement": "No overclaiming. Completion claims state their coverage precisely; inventory is not credited as reading; probes are not claimed as matched benchmarks. *Criterion:* every public claim names its evidence artifact.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P38",
+      "requirement": "Selection-pressure verification. Fuzzing is directed by lexicase worst-performer selection across the stack, with asan, path tracing, and competitive benches as gates. *Criterion:* the adversarial campaign demonstrably hunts its own weakest cases.",
+      "status": "unverified",
+      "evidence": [],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+    },
+    {
+      "id": "P39",
+      "requirement": "Legible frontier. The completeness boundary is typed (Unknown, blockers, receipts), the admission protocol for new certificates/families is written in one normative place, and the open-problem list is a published, queryable corpus. *Target:* extensions convert Unknowns to Certified; nothing else changes.",
+      "status": "in-progress",
+      "evidence": [
+        "docs/admission.md"
+      ],
+      "remaining": "The normative admission protocol is linked from the root and every main crate. Build the full queryable corpus of supported and blocked operations across crates."
+    }
+  ],
+  "targets": [
+    {
+      "id": "T1",
+      "title": "Cache policy as contract",
+      "requirement": "`solid.rs` thread-local caches should acquire the same explicitness as the scalar caches: caller-visible budget/semantics (P4 applied at the grammar layer).",
+      "status": "verified",
+      "evidence": [
+        "src/solid/cache.rs",
+        "src/solid/cache/storage.rs",
+        "tests/solid_cache.rs",
+        "benchmarks/baselines/2026-10-08-properties/cache-constructor.csv",
+        "benchmarks/baselines/2026-10-08-properties/cache-constructor.json",
+        "benchmarks/baselines/2026-10-08-properties/README.md",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "",
+      "verification": "All five grammar caches have documented entry budgets, FIFO eviction, scoped restoration, clear/usage APIs, source identity and context-aware certainty retention. Ten all-feature and nine no-curve cache tests pass; the constructor probe is retained with explicit coverage limits."
+    },
+    {
+      "id": "T2",
+      "title": "JS certainty surface",
+      "requirement": "wasm boundary currently flattens `MeshCertainty`/`Classification`; expose it (P26).",
+      "status": "verified",
+      "evidence": [
+        "src/wasm/context_js.rs",
+        "src/wasm/curve_js.rs",
+        "src/wasm/mesh_js.rs",
+        "tests/wasm_certainty.rs",
+        "tests/wasm/geometry_certainty.cjs",
+        "tests/wasm/geometry_certainty.ts",
+        "scripts/test-wasm-bindings.sh",
+        "bindings/js/WASM.md",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "",
+      "verification": "All existing WASM result wrappers and curve array/profile projections expose named certainty. Point queries distinguish boundary from curve uncertainty and unknown mesh classification; unresolved results have no certified receipt. Real generated Node bindings, exhaustive TypeScript enum consumers, and native exact-expression regressions pass. Other language boundaries remain under T7 and P30."
+    },
+    {
+      "id": "T3",
+      "title": "Refinement budget for curves",
+      "requirement": "make \"undecidable in bounded time\" an explicit, documented per-operation budget (the `APPROXIMATE_512` analog for curve queries) rather than emergent behavior (P11/P14).",
+      "status": "open",
+      "evidence": [],
+      "remaining": "make \"undecidable in bounded time\" an explicit, documented per-operation budget (the `APPROXIMATE_512` analog for curve queries) rather than emergent behavior (P11/P14)."
+    },
+    {
+      "id": "T4",
+      "title": "One normative admission spec",
+      "requirement": "consolidate the distributed invariants (P1–P35) into the single documented protocol future extenders program against.",
+      "status": "verified",
+      "evidence": [
+        "docs/admission.md",
+        "docs/properties-status.json",
+        "readme.md",
+        "crates/hyperreal/README.md",
+        "crates/hyperlimit/README.md",
+        "crates/hypercurve/README.md",
+        "crates/hypermesh/README.md"
+      ],
+      "remaining": "",
+      "verification": "The normative protocol maps all P1–P39 requirements, defines admission inputs/witnesses/closure/cache/boundary/evidence gates, and is linked from the root and all 19 main crate README files. All relative links in the protocol resolve. This proves the documentation deliverable only."
+    },
+    {
+      "id": "T5",
+      "title": "Industry standard terminology",
+      "requirement": "wherever possible the codebase should favor unambiguous industry standard naming and terminology.  Names should be regularized across the stack such that functions and types are consistent and can be referenced directly.",
+      "status": "in-progress",
+      "evidence": [
+        "src/wasm/context_js.rs",
+        "docs/admission.md"
+      ],
+      "remaining": "WASM certainty/status terminology is explicit. Audit and regularize the rest of the public stack without losing distinctions or proof identity."
+    },
+    {
+      "id": "T6",
+      "title": "Exhaustive testing",
+      "requirement": "100% coverage with unit tests including adversarial inputs and all possible representations, benchmarks, competitive library benchmarks, asan, fuzzing including all representation types, and lexicase worst performers with independent buckets for each representation type, https://github.com/timschmidt/exactcore-hyper-comparison integrated under crates/comparisons with consolidated and re-validated logs and organized and complete code for all claims for reference in a future paper.  Verus coverage for hyperreal, hyperlattice, and hyperlimit.",
+      "status": "in-progress",
+      "evidence": [
+        "tests/solid_cache.rs",
+        "tests/wasm_certainty.rs",
+        "tests/wasm/geometry_certainty.cjs",
+        "scripts/test-wasm-bindings.sh"
+      ],
+      "remaining": "The exhaustive representation/coverage/ASan/lexicase/Verus program and complete comparison archive import/revalidation remain open. Current added tests are focused regressions, not 100% stack coverage."
+    },
+    {
+      "id": "T7",
+      "title": "Idiomatic bindings",
+      "requirement": "For C / C++, Python, Javascript / Typescript via WASM",
+      "status": "in-progress",
+      "evidence": [
+        "bindings/js/WASM.md",
+        "tests/wasm/geometry_certainty.ts"
+      ],
+      "remaining": "The generated WASM JS/TS receipt/query surface is tested. C/C++, Python, native JS loader ergonomics, and complete cross-boundary contract coverage remain open."
+    },
+    {
+      "id": "T8",
+      "title": "CI checks",
+      "requirement": "should exercise as much testing as possible, deploy demos and a static site for the project as a whole.",
+      "status": "in-progress",
+      "evidence": [
+        ".github/workflows/rust.yml",
+        "scripts/test-wasm-bindings.sh",
+        "tests/wasm/package-lock.json",
+        "docs/evidence/2026-10-08-properties/manifest.json"
+      ],
+      "remaining": "A locked TypeScript and actual WASM runtime/declaration job is added. Expand the remaining CI validation matrix and the complete project site/demos; hosted deployment has not run."
+    },
+    {
+      "id": "T9",
+      "title": "Documentation",
+      "requirement": "should synthesize the best aspects of current crates documentation, with hyperreal and csgrs being the flagship examples - the readme should explain what the crate does, why, and provide a quick entry into how along with an index of available types and functions which dive into deep educational-quality references in  rustdoc via good doc comments in the code and additional markdown documents in git where appropriate.",
+      "status": "in-progress",
+      "evidence": [
+        "docs/admission.md",
+        "readme.md",
+        "bindings/js/WASM.md",
+        "src/solid/cache.rs"
+      ],
+      "remaining": "Complete the educational API/type/function index and detailed documentation throughout the stack. The new cache, admission, and WASM references cover only this batch."
+    },
+    {
+      "id": "T10",
+      "title": "Paper",
+      "requirement": "A scientific paper detailing important aspects of the project suitable for publication and education of others should be prepared.",
+      "status": "open",
+      "evidence": [],
+      "remaining": "A scientific paper detailing important aspects of the project suitable for publication and education of others should be prepared."
+    },
+    {
+      "id": "T11",
+      "title": "Optimization",
+      "requirement": "Opportunities for reducing the amount of code and complexity throughout the stack while preserving or enhancing the exactness > completeness > performance > memory > binary > code priority ladder should be logged, prototyped, evaluated, considered in combination with previously evaluated and rejected ideas, and so on.  Only keeping changes which improve without significant regression.  APIs should be as narrow and thin as possible while retaining honesty and the priorities.  Consider the use of parallelism through fearless_simd and multithreading.",
+      "status": "in-progress",
+      "evidence": [
+        "scripts/compare-cache-probe.py",
+        "benchmarks/baselines/2026-10-08-properties/cache-constructor.csv",
+        "benchmarks/baselines/2026-10-08-properties/cache-constructor-factored.csv"
+      ],
+      "remaining": "Continue the full optimization idea/interaction ledger, matched comparative benchmarks, allocation/size gates, and SIMD/threading evaluation. The current measurement is a warm-constructor probe only."
+    },
+    {
+      "id": "T12",
+      "title": "Release",
+      "requirement": "All crates in the monorepo should be prepared for release.  With all that entails.",
+      "status": "open",
+      "evidence": [],
+      "remaining": "All crates in the monorepo should be prepared for release.  With all that entails."
+    },
+    {
+      "id": "T13",
+      "title": "File organization",
+      "requirement": "Files should be organized, sized, and split / combined semantically such that finding relevant code is easy and no file is too long for reading.",
+      "status": "in-progress",
+      "evidence": [
+        "src/solid/cache.rs",
+        "src/solid/cache/storage.rs"
+      ],
+      "remaining": "Cache policy and storage have been separated from solid modeling code. Semantic file-organization review of the rest of the stack remains open."
+    },
+    {
+      "id": "T14",
+      "title": "Future work",
+      "requirement": "each crate may have documentation discussing crate-specific future work which is also in scope.",
+      "status": "open",
+      "evidence": [],
+      "remaining": "each crate may have documentation discussing crate-specific future work which is also in scope."
+    }
+  ],
+  "future_work": {
+    "inventory_complete": false,
+    "sources": [
+      {
+        "path": "crates/hypercurve/FUTURE_WORK.md",
+        "status": "open",
+        "remaining": "Entire document read on 2026-10-08. All seven remaining directions (radical signs, generated representation, selected-fiber root counts, S6 promotion, S5/S7 consolidation, public restricted fragments, independent-radical contacts), ignored compositions, and measured-negative constraints remain in scope."
+      },
+      {
+        "path": "crates/hypermesh/FUTURE_WORK.md",
+        "status": "open",
+        "remaining": "Certify the unchanged full-resolution sampled-sphere convex-hull inputs, including 32 × 16, without substituting different geometry."
+      },
+      {
+        "path": "crates/hyperreal/verification/README.md",
+        "status": "open",
+        "remaining": "All eight remaining proof/completion obligations in the final section, including implementation-connected Real/Computable denotations, arithmetic/dependency boundaries, domains, caches, and API behavior."
+      },
+      {
+        "path": "crates/hyperdrc/docs/design-readiness-plan.md",
+        "status": "open",
+        "remaining": "Discovered through roadmap search; full document and all reporting/input/IO gaps still require review and implementation."
+      },
+      {
+        "path": "crates/hypercircuit/CAPABILITY_MATRIX.md",
+        "status": "open",
+        "remaining": "The matrix contains partial workflows, including external model, registry, and distributed editing integration. Inventory does not count as a complete audit."
+      },
+      {
+        "path": "docs/fully-certified-sdf-meshing-plan.md",
+        "status": "open",
+        "remaining": "Named plan discovered; all stated certification/meshing requirements still require an implementation and evidence audit."
+      }
+    ]
+  },
+  "next_actions": [
+    "Finish and retain the pending broad Hypercurve test and Clippy results; all other checks in the current focused evidence manifest passed.",
+    "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
+    "Import and revalidate the pinned comparison repository under crates/comparisons, preserving historical evidence and licensing.",
+    "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."
+  ],
+  "path_base": "repository root",
+  "external_sources": [
+    {
+      "requirement": "T6",
+      "repository": "https://github.com/timschmidt/exactcore-hyper-comparison",
+      "local_checkout": "../exactcore-hyper-comparison",
+      "revision": "1e3b1f7a8114b6bcf5078c31706719b054d87d46",
+      "worktree": "clean when inspected",
+      "tracked_files": 74865,
+      "tracked_bytes": 3131146225,
+      "inspected": [
+        "Cargo.toml",
+        "README.md (opening 150 lines)",
+        "audits/README.md",
+        "tracked file/size inventory"
+      ],
+      "not_done": "Import into crates/comparisons, archive/license/source-path audit, dependency relocation, compatibility fixes, numerical revalidation, and paper-ready claim evidence.",
+      "constraints": [
+        "Preserve historical archived bytes, licenses, and manifest hashes; inventory is not evidence of numerical correctness.",
+        "The native exactCore test oracle must run with --test-threads=1, per its README.",
+        "EXACTCORE_ROOT must identify a separately obtained dependency; do not silently vendor unreviewed external source.",
+        "Historical audit scripts may write absolute original locations; inspect and adapt execution destinations before rerunning."
+      ]
+    }
+  ]
+}

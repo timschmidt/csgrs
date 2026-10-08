@@ -534,3 +534,9 @@ Bug reports should include the smallest problem, initial candidate, selected
 proposal engine, enabled features, and complete analysis/certification report.
 Before proposing a change, run formatting, the focused regression, all-feature
 tests, and strict Clippy.
+
+## Extension protocol
+
+Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
+It defines the exactness, certainty, boundary, cache, validation, and evidence
+requirements shared by the Hyper crates.
