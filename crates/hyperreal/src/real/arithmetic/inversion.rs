@@ -154,6 +154,20 @@ impl Real {
         Some((negate_for_odd_multiple, residual))
     }
 
+    /// `sin(pi/12) = (sqrt(6) - sqrt(2))/4`, or `sin(5 pi/12) = (sqrt(6) + sqrt(2))/4`
+    /// when `large`. Both lie in `Q(sqrt(2), sqrt(3))`, so sampled circles and
+    /// spheres at 15-degree steps keep exact quadratic coordinates.
+    fn sin_pi_twelfth(large: bool) -> Real {
+        let sqrt_six = Self::from(6).sqrt().expect("six is positive");
+        let sqrt_two = constants::sqrt_constant(2).expect("sqrt(2) is canonical");
+        let sum = if large {
+            sqrt_six + sqrt_two
+        } else {
+            sqrt_six - sqrt_two
+        };
+        (sum / Self::from(4)).expect("four is nonzero")
+    }
+
     fn sin_pi_rational(rational: Rational) -> Real {
         if rational.is_integer() {
             return Self::zero();
@@ -173,6 +187,19 @@ impl Real {
         }
         if denominator == unsigned::SIX.deref() {
             exact = Some(constants::half());
+        }
+        if denominator == &BigUint::from(12_u8) {
+            // sin(k pi / 12) for k coprime to 12: the 15 and 75 degree values.
+            let turn = if rational.sign() == Sign::Minus {
+                rational.clone().neg()
+            } else {
+                rational.clone()
+            }
+            .fract();
+            let twelfths = &turn * &Rational::new(12);
+            exact = Some(Self::sin_pi_twelfth(
+                twelfths == Rational::new(5) || twelfths == Rational::new(7),
+            ));
         }
         if let Some(real) = exact {
             return if sin_pi_neg(rational) {
@@ -229,6 +256,12 @@ impl Real {
             if denominator == unsigned::SIX.deref() {
                 return CosPiRationalReduction::Exact(constants::sqrt_three_over_two());
             }
+            if denominator == &BigUint::from(12_u8) {
+                // cos(pi/12) = sin(5 pi/12); cos(5 pi/12) = sin(pi/12).
+                return CosPiRationalReduction::Exact(Self::sin_pi_twelfth(
+                    rational == Rational::fraction(1, 12).expect("twelve is nonzero"),
+                ));
+            }
             // This already is the principal positive cosine curve. Construct
             // its complementary SinPi certificate directly instead of first
             // adding one half and then reducing that sum back below one half.
@@ -264,6 +297,10 @@ impl Real {
             Some(constants::sqrt_two_over_two())
         } else if denominator == unsigned::SIX.deref() {
             Some(constants::sqrt_three_over_two())
+        } else if denominator == &BigUint::from(12_u8) {
+            Some(Self::sin_pi_twelfth(
+                reduced == Rational::fraction(1, 12).expect("twelve is nonzero"),
+            ))
         } else {
             None
         };

@@ -89,3 +89,24 @@ fn cancelled_independent_radicals_do_not_hide_a_quadratic_square() {
     assert_rational(&principal - &expected, 0);
     assert_rational((expected / principal).unwrap(), 1);
 }
+
+#[test]
+fn twelfth_turn_trigonometry_is_exact_in_the_two_three_biquadratic_field() {
+    // Sampled circles and spheres at 15-degree steps need these values in
+    // closed form: their coplanarity and orientation zeros are then exact
+    // multiquadratic identities.
+    let angle = |k: i64| (Real::pi() * Real::from(k) / Real::from(12)).unwrap();
+    let small = ((root(6) - root(2)) / Real::from(4)).unwrap();
+    let large = ((root(6) + root(2)) / Real::from(4)).unwrap();
+    assert_rational(angle(1).sin() - &small, 0);
+    assert_rational(angle(5).sin() - &large, 0);
+    assert_rational(angle(1).cos() - &large, 0);
+    assert_rational(angle(5).cos() - &small, 0);
+    assert_rational(angle(13).sin() + &small, 0);
+    assert_rational(angle(-7).sin() + &large, 0);
+    assert_rational(angle(7).cos() + &small, 0);
+    for k in -25..=25 {
+        let (sine, cosine) = (angle(k).sin(), angle(k).cos());
+        assert_rational(&sine * &sine + &cosine * &cosine, 1);
+    }
+}
