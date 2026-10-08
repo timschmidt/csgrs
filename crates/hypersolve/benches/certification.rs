@@ -5559,13 +5559,26 @@ fn certification(c: &mut Criterion) {
         rational_reduction.status,
         AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
     );
+    // The report fixes the value numerator(alpha) / denominator(alpha), not
+    // one coefficient normal form: check 1 / (4 + 2 alpha) cross-multiplied,
+    // with alpha = sqrt(1/2), the root of 2x^2 - 1 in [2/3, 3/4].
+    let alpha = (Real::one() / r(2)).unwrap().sqrt().unwrap();
+    let at_alpha = |coefficients: &[Real]| {
+        coefficients
+            .iter()
+            .rev()
+            .fold(Real::zero(), |value, coefficient| {
+                value * &alpha + coefficient
+            })
+    };
     assert_eq!(
-        rational_reduction.numerator_coefficients,
-        vec![(r(1) / r(2)).unwrap()]
-    );
-    assert_eq!(
-        rational_reduction.denominator_coefficients,
-        vec![r(2), Real::one()]
+        hyperlimit::compare_reals(
+            &(at_alpha(&rational_reduction.numerator_coefficients) * (r(4) + r(2) * &alpha)),
+            &at_alpha(&rational_reduction.denominator_coefficients),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
     );
     c.bench_function(
         "reduce_bivariate_rational_function/nonmonic_retained_denominator",
