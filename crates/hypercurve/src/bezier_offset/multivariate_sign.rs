@@ -398,7 +398,39 @@ pub(super) fn trivariate_affinely_related_parameter_sign(
 pub(super) fn trivariate_repeated_cubic_axis_factorizations(
     polynomial: &TrivariatePolynomial,
     axis: usize,
-) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
+) -> Result<
+    Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>>,
+    hypersolve::work_budget::BudgetExceeded,
+> {
+    if let Some(exceeded) = hypersolve::work_budget::exhaustion() {
+        return Err(exceeded);
+    }
+    let Some((raw, remaining)) = trivariate_repeated_cubic_factor_coefficients(polynomial, axis)
+    else {
+        return Ok(None);
+    };
+    let Some((factor_coefficients, quotient)) = trivariate_normalize_and_divide_linear_axis_factor(
+        polynomial,
+        axis,
+        raw,
+        PARALLEL_FACTOR_RESULTANT_CONFIG,
+    )?
+    else {
+        return Ok(None);
+    };
+    if trivariate_divide_linear_axis_factor(&quotient, axis, &factor_coefficients).is_none() {
+        return Ok(None);
+    }
+    Ok(
+        trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)
+            .map(|factor| vec![(factor, quotient)]),
+    )
+}
+
+fn trivariate_repeated_cubic_factor_coefficients(
+    polynomial: &TrivariatePolynomial,
+    axis: usize,
+) -> Option<([BivariatePolynomial; 2], [usize; 2])> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
     let [constant, linear, quadratic, cubic]: [BivariatePolynomial; 4] =
         coefficients.try_into().ok()?;
@@ -468,16 +500,7 @@ pub(super) fn trivariate_repeated_cubic_axis_factorizations(
         [factor_constant, factor_linear]
     };
     drop((quadratic_square, cubic_linear));
-    let (factor_coefficients, quotient) = trivariate_normalize_and_divide_linear_axis_factor(
-        polynomial,
-        axis,
-        raw,
-        PARALLEL_FACTOR_RESULTANT_CONFIG,
-    )?;
-    trivariate_divide_linear_axis_factor(&quotient, axis, &factor_coefficients)?;
-    let factor =
-        trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
-    Some(vec![(factor, quotient)])
+    Some((raw, remaining))
 }
 
 pub(super) fn signed_bivariate_at_parameter_pair_exact_first(
@@ -803,12 +826,23 @@ pub(super) fn trivariate_factored_component_sign(
     second: &BezierParameter2,
     third: &BezierParameter2,
     remaining_splits: usize,
-) -> CurveResult<Option<RealSign>> {
-    if let Some(sign) = trivariate_existing_symbolic_sign(polynomial, first, second, third)? {
-        return Ok(Some(sign));
+) -> CurveResult<Classification<Option<RealSign>>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
+    let existing = trivariate_existing_symbolic_sign(polynomial, first, second, third)?;
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
+    if let Some(sign) = existing {
+        return Ok(Classification::Decided(Some(sign)));
     }
     if remaining_splits == 0 {
-        return Ok(None);
+        return Ok(Classification::Decided(None));
     }
     trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, remaining_splits)
 }
@@ -819,7 +853,12 @@ pub(super) fn trivariate_bounded_factor_sign_with_budget(
     second: &BezierParameter2,
     third: &BezierParameter2,
     remaining_splits: usize,
-) -> CurveResult<Option<RealSign>> {
+) -> CurveResult<Classification<Option<RealSign>>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
     let dimensions = polynomial.dimensions();
     let counts = [dimensions.0, dimensions.1, dimensions.2];
     // A denser exact high-degree leading slice is less likely to lose
@@ -862,13 +901,14 @@ pub(super) fn trivariate_bounded_factor_sign_with_budget(
                 axis,
                 PARALLEL_FACTOR_RESULTANT_CONFIG,
             ),
-            4 => trivariate_repeated_cubic_axis_factorizations(polynomial, axis).or_else(|| {
-                trivariate_rational_multi_affine_axis_factorizations(
+            4 => match trivariate_repeated_cubic_axis_factorizations(polynomial, axis) {
+                Ok(None) => trivariate_rational_multi_affine_axis_factorizations(
                     polynomial,
                     axis,
                     PARALLEL_FACTOR_RESULTANT_CONFIG,
-                )
-            }),
+                ),
+                result => result,
+            },
             5..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS => {
                 trivariate_rational_multi_affine_axis_factorizations(
                     polynomial,
@@ -876,29 +916,54 @@ pub(super) fn trivariate_bounded_factor_sign_with_budget(
                     PARALLEL_FACTOR_RESULTANT_CONFIG,
                 )
             }
-            _ => None,
+            _ => Ok(None),
         };
-        let Some(factorizations) = factorizations else {
-            continue;
+        let factorizations = match factorizations {
+            Ok(Some(factorizations)) => factorizations,
+            Ok(None) => continue,
+            Err(_) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
         };
         for (factor, quotient) in factorizations {
             let next_budget = remaining_splits.saturating_sub(1);
-            let factor_sign =
-                trivariate_factored_component_sign(&factor, first, second, third, next_budget)?;
+            let factor_sign = match trivariate_factored_component_sign(
+                &factor,
+                first,
+                second,
+                third,
+                next_budget,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             if factor_sign == Some(RealSign::Zero) {
-                return Ok(factor_sign);
+                return Ok(Classification::Decided(factor_sign));
             }
-            let quotient_sign =
-                trivariate_factored_component_sign(&quotient, first, second, third, next_budget)?;
+            let quotient_sign = match trivariate_factored_component_sign(
+                &quotient,
+                first,
+                second,
+                third,
+                next_budget,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             if quotient_sign == Some(RealSign::Zero) {
-                return Ok(quotient_sign);
+                return Ok(Classification::Decided(quotient_sign));
             }
             if let (Some(factor_sign), Some(quotient_sign)) = (factor_sign, quotient_sign) {
-                return Ok(Some(product_sign(factor_sign, quotient_sign)));
+                return Ok(Classification::Decided(Some(product_sign(
+                    factor_sign,
+                    quotient_sign,
+                ))));
             }
         }
     }
-    Ok(None)
+    Ok(Classification::Decided(None))
 }
 
 /// Replays the bounded exact quadratic, repeated-cubic, and rational
@@ -912,7 +977,7 @@ pub(super) fn trivariate_bounded_factor_sign(
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
-) -> CurveResult<Option<RealSign>> {
+) -> CurveResult<Classification<Option<RealSign>>> {
     let dimensions = polynomial.dimensions();
     let total_degree = dimensions
         .0
@@ -939,27 +1004,35 @@ pub(super) fn trivariate_content_and_bounded_factor_sign(
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
-) -> CurveResult<Option<RealSign>> {
-    if let Some(sign) = trivariate_bounded_factor_sign(polynomial, first, second, third)? {
-        return Ok(Some(sign));
+) -> CurveResult<Classification<Option<RealSign>>> {
+    match trivariate_bounded_factor_sign(polynomial, first, second, third)? {
+        Classification::Decided(None) => {}
+        result => return Ok(result),
     }
-    let Some((primitive, factor_sign)) =
-        trivariate_strip_axis_contents(polynomial, first, second, third)?
-    else {
-        return Ok(None);
+    let stripped = trivariate_strip_axis_contents(polynomial, first, second, third)?;
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
+    let Some((primitive, factor_sign)) = stripped else {
+        return Ok(Classification::Decided(None));
     };
     if factor_sign == Some(RealSign::Zero)
         || trivariate_structurally_zero(&primitive, &CurveContext::STRICT)
     {
-        return Ok(Some(RealSign::Zero));
+        return Ok(Classification::Decided(Some(RealSign::Zero)));
     }
-    let Some(sign) = trivariate_bounded_factor_sign(&primitive, first, second, third)? else {
-        return Ok(None);
+    let sign = match trivariate_bounded_factor_sign(&primitive, first, second, third)? {
+        Classification::Decided(Some(sign)) => sign,
+        result => return Ok(result),
     };
     if sign == RealSign::Zero {
-        return Ok(Some(sign));
+        return Ok(Classification::Decided(Some(sign)));
     }
-    Ok(factor_sign.map(|factor_sign| product_sign(factor_sign, sign)))
+    Ok(Classification::Decided(
+        factor_sign.map(|factor_sign| product_sign(factor_sign, sign)),
+    ))
 }
 
 pub(super) fn trivariate_exceeds_bounded_symbolic_schedule(
@@ -1083,11 +1156,17 @@ pub(super) fn trivariate_parameter_triple_sign_by_refinement(
             // selected value while expanding an authored repeated factor.
             // Give an original cubic axis one exact replay first, and record
             // the attempt so a failed square-free tensor is not repeated.
-            if original_cubic_factor_attempted
-                && let Some(sign) =
-                    trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
-            {
-                return Ok(Classification::Decided(sign));
+            if original_cubic_factor_attempted {
+                match trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
+                {
+                    Classification::Decided(Some(sign)) => {
+                        return Ok(Classification::Decided(sign));
+                    }
+                    Classification::Decided(None) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
             let reduced =
                 trivariate_reduce_selected_root_relations(polynomial, first, second, third);
@@ -1181,28 +1260,36 @@ pub(super) fn trivariate_parameter_triple_sign_by_refinement(
             // invariant can propose a linear-axis factor. Split only after
             // exact factor-content removal and whole-tensor division have
             // replayed it; recursively replay the bounded quadratic quotient.
-            if let Some(sign) = trivariate_bounded_factor_sign(factor_source, first, second, third)?
-            {
-                if sign == RealSign::Zero {
-                    return Ok(Classification::Decided(sign));
+            match trivariate_bounded_factor_sign(factor_source, first, second, third)? {
+                Classification::Decided(Some(sign)) => {
+                    if sign == RealSign::Zero {
+                        return Ok(Classification::Decided(sign));
+                    }
+                    let removed_sign = stripped
+                        .as_ref()
+                        .map_or(Some(RealSign::Positive), |(_, factor_sign)| *factor_sign);
+                    if let Some(removed_sign) = removed_sign {
+                        return Ok(Classification::Decided(product_sign(removed_sign, sign)));
+                    }
                 }
-                let removed_sign = stripped
-                    .as_ref()
-                    .map_or(Some(RealSign::Positive), |(_, factor_sign)| *factor_sign);
-                if let Some(removed_sign) = removed_sign {
-                    return Ok(Classification::Decided(product_sign(removed_sign, sign)));
-                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
             // Reducing powers modulo a selected defining polynomial can
             // obscure an authored factorization even though it preserves the
             // value at the root tuple. Replay the exact original product only
             // after the smaller reduced tensor has exhausted its authorities.
-            if reduced.is_some()
-                && !original_cubic_factor_attempted
-                && let Some(sign) =
-                    trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
-            {
-                return Ok(Classification::Decided(sign));
+            if reduced.is_some() && !original_cubic_factor_attempted {
+                match trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
+                {
+                    Classification::Decided(Some(sign)) => {
+                        return Ok(Classification::Decided(sign));
+                    }
+                    Classification::Decided(None) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
         }
     }

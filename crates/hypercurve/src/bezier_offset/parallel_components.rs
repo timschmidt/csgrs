@@ -2,6 +2,9 @@
 
 use super::*;
 
+#[cfg(test)]
+mod budget_tests;
+
 pub(super) fn parallel_intersection_candidate_system(
     equations: [BivariatePolynomial; 2],
     candidates: CurveIntersectionCandidates2,
@@ -10,10 +13,19 @@ pub(super) fn parallel_intersection_candidate_system(
     if matches!(
         candidates,
         CurveIntersectionCandidates2::DegenerateResultant
-    ) && let Some(reduced) = hypersolve::saturate_rootless_bivariate_axis_factors(
-        &equations,
-        [[&Real::zero(), &Real::one()]; 2],
     ) {
+        let reduced = match hypersolve::saturate_rootless_bivariate_axis_factors(
+            &equations,
+            [[&Real::zero(), &Real::one()]; 2],
+        ) {
+            Classification::Decided(Some(reduced)) => reduced,
+            Classification::Decided(None) => {
+                return Ok(Classification::Decided(parallel_candidate_system(
+                    candidates, equations,
+                )));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         let candidates = match project_parallel_intersection_system(
             &reduced[0],
             &reduced[1],
@@ -1693,6 +1705,11 @@ pub(super) fn parameter_component_system_with_selector(
                 config,
             );
             match report.status {
+                BivariatePolynomialComponentStatus::BudgetExhausted => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
                 BivariatePolynomialComponentStatus::Rational => {
                     let Some(reduced_equations) = report.reduced_equations else {
                         continue;
@@ -1714,6 +1731,11 @@ pub(super) fn parameter_component_system_with_selector(
                             break;
                         }
                         Classification::Decided(None) => {}
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                            return Ok(Classification::Uncertain(
+                                UncertaintyReason::BudgetExhausted,
+                            ));
+                        }
                         Classification::Uncertain(reason) => blocker = Some(reason),
                     }
                 }
@@ -1740,6 +1762,11 @@ pub(super) fn parameter_component_system_with_selector(
                         }
                         Classification::Decided(None) => {
                             blocker = Some(UncertaintyReason::Boundary)
+                        }
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                            return Ok(Classification::Uncertain(
+                                UncertaintyReason::BudgetExhausted,
+                            ));
                         }
                         Classification::Uncertain(reason) => blocker = Some(reason),
                     }
@@ -1869,19 +1896,23 @@ pub(super) fn certify_parallel_pair_implicit_parameter_component(
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
     let boundaries = selector.boundary_polynomials();
-    let Some([first, second]) = split_parameter_component_at_selector_boundary(
+    let [first, second] = match split_parameter_component_at_selector_boundary(
         component,
         &boundaries,
         retained_parameter,
         config,
-    ) else {
-        return certify_implicit_parameter_component_once_with_selector(
-            component,
-            selector,
-            retained_parameter,
-            policy,
-            config,
-        );
+    ) {
+        Classification::Decided(Some(split)) => split,
+        Classification::Decided(None) => {
+            return certify_implicit_parameter_component_once_with_selector(
+                component,
+                selector,
+                retained_parameter,
+                policy,
+                config,
+            );
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
     let first = match certify_parallel_pair_implicit_parameter_component(
@@ -1923,10 +1954,13 @@ pub(super) fn split_parameter_component_at_selector_boundary(
     boundaries: &[BivariatePolynomial],
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
-) -> Option<[BivariatePolynomial; 2]> {
+) -> Classification<Option<[BivariatePolynomial; 2]>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+    }
     let component_degree = bivariate_storage_bidegree_sum(component);
     if component_degree <= 1 {
-        return None;
+        return Classification::Decided(None);
     }
     let alternate_parameter = match retained_parameter {
         CurveResultantParameter::First => CurveResultantParameter::Second,
@@ -1941,12 +1975,15 @@ pub(super) fn split_parameter_component_at_selector_boundary(
         if let Some(quotient) = divide_bivariate_polynomial_exact(component, boundary)
             && proper_parameter_component_split(component_degree, boundary, &quotient)
         {
-            return Some([boundary.clone(), quotient]);
+            return Classification::Decided(Some([boundary.clone(), quotient]));
         }
         for parameter in [retained_parameter, alternate_parameter] {
             let report = parameter_component_bivariate_polynomial_system_complete(
                 component, boundary, parameter, config,
             );
+            if report.status == BivariatePolynomialComponentStatus::BudgetExhausted {
+                return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+            }
             if !matches!(
                 report.status,
                 BivariatePolynomialComponentStatus::Rational
@@ -1961,11 +1998,11 @@ pub(super) fn split_parameter_component_at_selector_boundary(
                 continue;
             };
             if proper_parameter_component_split(component_degree, &factor, &quotient) {
-                return Some([factor, quotient]);
+                return Classification::Decided(Some([factor, quotient]));
             }
         }
     }
-    None
+    Classification::Decided(None)
 }
 
 pub(super) fn certify_regular_implicit_parameter_component(
@@ -1982,7 +2019,11 @@ pub(super) fn certify_regular_implicit_parameter_component(
         policy,
         config,
     )?;
-    if matches!(initial, Classification::Decided(Some(_))) {
+    if matches!(
+        initial,
+        Classification::Decided(Some(_))
+            | Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+    ) {
         return Ok(initial);
     }
     certify_regular_implicit_parameter_component_fallback(
@@ -2005,6 +2046,17 @@ pub(super) fn certify_regular_implicit_parameter_component_fallback(
     config: CurveIntersectionResultantConfig,
     initial: Classification<Option<ParameterComponentEvidence2>>,
 ) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
+    if matches!(
+        initial,
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+    ) {
+        return Ok(initial);
+    }
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
     if divide_bivariate_polynomial_exact(branch, component).is_some() {
         return Ok(Classification::Decided(Some(
             ParameterComponentEvidence2::default(),
@@ -2012,8 +2064,15 @@ pub(super) fn certify_regular_implicit_parameter_component_fallback(
     }
     let mut fallback = initial;
     let mut multiplicity_reduced = None;
-    if let Some(reduced) =
-        reduce_implicit_parameter_component_multiplicity(component, retained_parameter, config)
+    let reduced = match reduce_implicit_parameter_component_multiplicity(
+        component,
+        retained_parameter,
+        config,
+    ) {
+        Classification::Decided(reduced) => reduced,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if let Some(reduced) = reduced
         && reduced != *component
     {
         fallback = certify_implicit_parameter_component_once(
@@ -2023,7 +2082,11 @@ pub(super) fn certify_regular_implicit_parameter_component_fallback(
             policy,
             config,
         )?;
-        if matches!(fallback, Classification::Decided(Some(_))) {
+        if matches!(
+            fallback,
+            Classification::Decided(Some(_))
+                | Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+        ) {
             return Ok(fallback);
         }
         multiplicity_reduced = Some(reduced);
@@ -2033,17 +2096,24 @@ pub(super) fn certify_regular_implicit_parameter_component_fallback(
     match bivariate_system_has_positive_dimensional_relation(support, branch, policy)? {
         Classification::Decided(true) => {}
         Classification::Decided(false) => return Ok(fallback),
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         // The gate is only an optimization. A capped equality decision must
         // not suppress the exact component extractor that the prior path ran.
         Classification::Uncertain(_) => {}
     }
-    let Some(reduced) = remove_implicit_parameter_component_zero_branch_factors(
+    let reduced = match remove_implicit_parameter_component_zero_branch_factors(
         support,
         branch,
         retained_parameter,
         config,
-    ) else {
-        return Ok(fallback);
+    ) {
+        Classification::Decided(Some(reduced)) => reduced,
+        Classification::Decided(None) => return Ok(fallback),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     if bivariate_storage_bidegree_sum(&reduced) == 0 {
         return Ok(Classification::Decided(Some(
@@ -2057,14 +2127,22 @@ pub(super) fn certify_regular_implicit_parameter_component_fallback(
         policy,
         config,
     )?;
-    if matches!(fallback, Classification::Decided(Some(_))) {
+    if matches!(
+        fallback,
+        Classification::Decided(Some(_))
+            | Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+    ) {
         return Ok(fallback);
     }
 
-    let Some(square_free) =
-        reduce_implicit_parameter_component_multiplicity(&reduced, retained_parameter, config)
-    else {
-        return Ok(fallback);
+    let square_free = match reduce_implicit_parameter_component_multiplicity(
+        &reduced,
+        retained_parameter,
+        config,
+    ) {
+        Classification::Decided(Some(square_free)) => square_free,
+        Classification::Decided(None) => return Ok(fallback),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     if square_free == reduced {
         return Ok(fallback);
@@ -2093,7 +2171,10 @@ pub(super) fn remove_implicit_parameter_component_zero_branch_factors(
     branch: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
-) -> Option<BivariatePolynomial> {
+) -> Classification<Option<BivariatePolynomial>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+    }
     let alternate_parameter = match retained_parameter {
         CurveResultantParameter::First => CurveResultantParameter::Second,
         CurveResultantParameter::Second => CurveResultantParameter::First,
@@ -2102,7 +2183,9 @@ pub(super) fn remove_implicit_parameter_component_zero_branch_factors(
     let mut changed = false;
     loop {
         if divide_bivariate_polynomial_exact(branch, &reduced).is_some() {
-            return Some(BivariatePolynomial::new(vec![vec![Real::one()]]));
+            return Classification::Decided(Some(BivariatePolynomial::new(vec![
+                vec![Real::one()],
+            ])));
         }
         let degree = bivariate_storage_bidegree_sum(&reduced);
         let mut next = None;
@@ -2110,6 +2193,9 @@ pub(super) fn remove_implicit_parameter_component_zero_branch_factors(
             let report = parameter_component_bivariate_polynomial_system_complete(
                 &reduced, branch, parameter, config,
             );
+            if report.status == BivariatePolynomialComponentStatus::BudgetExhausted {
+                return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+            }
             if !matches!(
                 report.status,
                 BivariatePolynomialComponentStatus::Rational
@@ -2126,7 +2212,7 @@ pub(super) fn remove_implicit_parameter_component_zero_branch_factors(
             }
         }
         let Some(next) = next else {
-            return changed.then_some(reduced);
+            return Classification::Decided(changed.then_some(reduced));
         };
         reduced = next;
         changed = true;
@@ -2147,7 +2233,10 @@ pub(super) fn reduce_implicit_parameter_component_multiplicity(
     component: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
-) -> Option<BivariatePolynomial> {
+) -> Classification<Option<BivariatePolynomial>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+    }
     let differentiated_parameter = match retained_parameter {
         CurveResultantParameter::First => CurveResultantParameter::Second,
         CurveResultantParameter::Second => CurveResultantParameter::First,
@@ -2161,16 +2250,21 @@ pub(super) fn reduce_implicit_parameter_component_multiplicity(
             retained_parameter,
             config,
         );
+        if report.status == BivariatePolynomialComponentStatus::BudgetExhausted {
+            return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+        }
         if !matches!(
             report.status,
             BivariatePolynomialComponentStatus::Rational
                 | BivariatePolynomialComponentStatus::Implicit
         ) {
-            return Some(reduced);
+            return Classification::Decided(Some(reduced));
         }
-        let [next, _] = report.reduced_equations?;
+        let Some([next, _]) = report.reduced_equations else {
+            return Classification::Decided(None);
+        };
         if bivariate_storage_bidegree_sum(&next) >= bivariate_storage_bidegree_sum(&reduced) {
-            return None;
+            return Classification::Decided(None);
         }
         reduced = next;
     }
@@ -5333,6 +5427,9 @@ pub(super) fn parallel_source_parameter_components_from_equations(
                 config,
             );
             match report.status {
+                BivariatePolynomialComponentStatus::BudgetExhausted => {
+                    return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+                }
                 BivariatePolynomialComponentStatus::Rational => {
                     let (Some(component), Some(reduced)) = (
                         rational_parameter_component_support(
@@ -6661,6 +6758,11 @@ pub(super) fn select_parameter_component_in_domain(
             let retained_charts = std::cell::OnceCell::new();
             let axis_report =
                 extract_bivariate_polynomial_system_axis_factors(&chart_support, &chart_support);
+            if axis_report.status == BivariatePolynomialAxisFactorStatus::BudgetExhausted {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             let chart_support = if axis_report.status
                 == BivariatePolynomialAxisFactorStatus::Reduced
             {

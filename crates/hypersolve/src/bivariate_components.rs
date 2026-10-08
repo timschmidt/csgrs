@@ -73,6 +73,9 @@ pub fn extract_bivariate_axis_components(
     let report = extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
     if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
         return match report.status {
+            BivariatePolynomialAxisFactorStatus::BudgetExhausted => {
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+            }
             BivariatePolynomialAxisFactorStatus::ZeroSystem => {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             }
@@ -174,6 +177,9 @@ pub fn extract_bivariate_system_components(
                 config,
             );
             let component = match report.status {
+                BivariatePolynomialComponentStatus::BudgetExhausted => {
+                    return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+                }
                 BivariatePolynomialComponentStatus::Rational => {
                     rational_parameter_component_support(
                         retained_parameter,

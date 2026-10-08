@@ -14,6 +14,7 @@ use crate::curve_resultant::{
 };
 use crate::exact_factor::*;
 use crate::real_interval::strict_real_sign;
+use crate::work_budget::{BudgetExceeded, exhaustion};
 
 /// A balanced product of 24 multi-affine factors occupies 25^3 controls. Keep
 /// that measured-safe symbolic recursion envelope while sending larger exact
@@ -966,9 +967,12 @@ pub fn trivariate_restrict_to_box_bounds(
 fn bivariate_remove_common_factors(
     mut equations: [BivariatePolynomial; 2],
     config: CurveIntersectionResultantConfig,
-) -> [BivariatePolynomial; 2] {
+) -> Result<[BivariatePolynomial; 2], BudgetExceeded> {
     let axis_report =
         extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
+    if let Some(exceeded) = exhaustion() {
+        return Err(exceeded);
+    }
     if axis_report.status == BivariatePolynomialAxisFactorStatus::Reduced
         && let Some(reduced) = axis_report.reduced_equations
     {
@@ -988,6 +992,9 @@ fn bivariate_remove_common_factors(
                 retained,
                 config,
             );
+            if let Some(exceeded) = exhaustion() {
+                return Err(exceeded);
+            }
             if !matches!(
                 report.status,
                 BivariatePolynomialComponentStatus::Rational
@@ -1006,7 +1013,7 @@ fn bivariate_remove_common_factors(
             }
         }
         let Some(reduced) = next else {
-            return equations;
+            return Ok(equations);
         };
         equations = reduced;
     }
@@ -1015,6 +1022,7 @@ fn bivariate_remove_common_factors(
 /// Removes coefficient content only when the raw rational-function factor is
 /// not already an exact polynomial divisor. Whole-tensor division remains the
 /// authority in either case.
+/// Resource exhaustion is distinct from a proposal that does not divide.
 #[cold]
 #[inline(never)]
 pub fn trivariate_normalize_and_divide_linear_axis_factor(
@@ -1022,13 +1030,18 @@ pub fn trivariate_normalize_and_divide_linear_axis_factor(
     axis: usize,
     raw: [BivariatePolynomial; 2],
     config: CurveIntersectionResultantConfig,
-) -> Option<([BivariatePolynomial; 2], TrivariatePolynomial)> {
-    if let Some(quotient) = trivariate_divide_linear_axis_factor(polynomial, axis, &raw) {
-        return Some((raw, quotient));
+) -> Result<Option<([BivariatePolynomial; 2], TrivariatePolynomial)>, BudgetExceeded> {
+    if let Some(exceeded) = exhaustion() {
+        return Err(exceeded);
     }
-    let primitive = bivariate_remove_common_factors(raw, config);
-    let quotient = trivariate_divide_linear_axis_factor(polynomial, axis, &primitive)?;
-    Some((primitive, quotient))
+    if let Some(quotient) = trivariate_divide_linear_axis_factor(polynomial, axis, &raw) {
+        return Ok(Some((raw, quotient)));
+    }
+    let primitive = bivariate_remove_common_factors(raw, config)?;
+    Ok(
+        trivariate_divide_linear_axis_factor(polynomial, axis, &primitive)
+            .map(|quotient| (primitive, quotient)),
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1042,39 +1055,62 @@ fn trivariate_rational_multi_affine_factor_from_scale(
     anchor: &Real,
     lift_coordinate: usize,
     config: CurveIntersectionResultantConfig,
-) -> Option<(TrivariatePolynomial, TrivariatePolynomial)> {
-    let raw = rational_multi_affine_lift_factor_coefficients(
+) -> Result<Option<(TrivariatePolynomial, TrivariatePolynomial)>, BudgetExceeded> {
+    let Some(raw) = rational_multi_affine_lift_factor_coefficients(
         anchor_factor,
         top_factor,
         scale,
         anchor,
         lift_coordinate,
-    )?;
-    let (factor_coefficients, quotient) =
-        trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw, config)?;
-    let factor =
-        trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
-    Some((factor, quotient))
+    ) else {
+        return Ok(None);
+    };
+    let Some((factor_coefficients, quotient)) =
+        trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw, config)?
+    else {
+        return Ok(None);
+    };
+    Ok(
+        trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)
+            .map(|factor| (factor, quotient)),
+    )
 }
 
 /// Splits a quadratic tensor axis when its bivariate discriminant is an exact
 /// square, then verifies each recovered factor by exact tensor division.
+/// A denied common-factor normalization returns the operation's resource error.
 #[cold]
 #[inline(never)]
 pub fn trivariate_quadratic_axis_factorizations(
     polynomial: &TrivariatePolynomial,
     axis: usize,
     config: CurveIntersectionResultantConfig,
-) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
-    let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
-    let [constant, linear, quadratic]: [BivariatePolynomial; 3] = coefficients.try_into().ok()?;
-    let linear_square = try_bivariate_multiply(&linear, &linear)?;
-    let constant_quadratic = try_bivariate_multiply(&constant, &quadratic)?;
+) -> Result<Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>>, BudgetExceeded> {
+    if let Some(exceeded) = exhaustion() {
+        return Err(exceeded);
+    }
+    let Some((coefficients, remaining)) = trivariate_axis_bivariate_coefficients(polynomial, axis)
+    else {
+        return Ok(None);
+    };
+    let Ok([constant, linear, quadratic]): Result<[BivariatePolynomial; 3], _> =
+        coefficients.try_into()
+    else {
+        return Ok(None);
+    };
+    let (Some(linear_square), Some(constant_quadratic)) = (
+        try_bivariate_multiply(&linear, &linear),
+        try_bivariate_multiply(&constant, &quadratic),
+    ) else {
+        return Ok(None);
+    };
     let discriminant = bivariate_subtract(
         &linear_square,
         &bivariate_scale(constant_quadratic, &Real::from(4_i8)),
     );
-    let square_root = bivariate_exact_square_root(&discriminant)?;
+    let Some(square_root) = bivariate_exact_square_root(&discriminant) else {
+        return Ok(None);
+    };
     let doubled_quadratic = bivariate_scale(quadratic, &Real::from(2_i8));
     let mut factorizations: Vec<(TrivariatePolynomial, TrivariatePolynomial)> =
         Vec::with_capacity(2);
@@ -1084,12 +1120,15 @@ pub fn trivariate_quadratic_axis_factorizations(
     ] {
         let raw = [constant, doubled_quadratic.clone()];
         let Some((factor_coefficients, quotient)) =
-            trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw, config)
+            trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw, config)?
         else {
             continue;
         };
-        let factor =
-            trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
+        let Some(factor) =
+            trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)
+        else {
+            return Ok(None);
+        };
         if factorizations.iter().any(|(existing, _)| {
             existing.coefficients == factor.coefficients
                 || existing.coefficients == quotient.coefficients
@@ -1098,7 +1137,7 @@ pub fn trivariate_quadratic_axis_factorizations(
         }
         factorizations.push((factor, quotient));
     }
-    (!factorizations.is_empty()).then_some(factorizations)
+    Ok((!factorizations.is_empty()).then_some(factorizations))
 }
 
 /// Recovers one exact rational multi-affine factor from a resource-bounded
@@ -1109,17 +1148,24 @@ pub fn trivariate_quadratic_axis_factorizations(
 /// trivariate factor. Cubic through octic tensors retain exhaustive proposal
 /// enumeration; higher degrees receive bounded first-factor passes. Unsupported
 /// coefficient towers, exhausted proposal budgets, or degenerate slices make
-/// no claim.
+/// no claim. Exhausting the shared operation budget during normalization is
+/// returned separately from those mathematical and scheduling limitations.
 #[cold]
 #[inline(never)]
 pub fn trivariate_rational_multi_affine_axis_factorizations(
     polynomial: &TrivariatePolynomial,
     axis: usize,
     config: CurveIntersectionResultantConfig,
-) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
-    let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
+) -> Result<Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>>, BudgetExceeded> {
+    if let Some(exceeded) = exhaustion() {
+        return Err(exceeded);
+    }
+    let Some((coefficients, remaining)) = trivariate_axis_bivariate_coefficients(polynomial, axis)
+    else {
+        return Ok(None);
+    };
     if !(4..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS).contains(&coefficients.len()) {
-        return None;
+        return Ok(None);
     }
     let exhaustive = coefficients.len() <= MAX_EXHAUSTIVE_MULTI_AFFINE_COEFFICIENTS;
     // Try the first proved slice factors before enumerating every divisor. The
@@ -1147,12 +1193,18 @@ pub fn trivariate_rational_multi_affine_axis_factorizations(
             continue;
         }
         for lift_coordinate in 0..2 {
-            let lift_degree = trivariate_axis_lift_degree(&coefficients, lift_coordinate)?;
+            let Some(lift_degree) = trivariate_axis_lift_degree(&coefficients, lift_coordinate)
+            else {
+                return Ok(None);
+            };
             if lift_degree == 0 {
                 continue;
             }
-            let top_slice =
-                trivariate_axis_lift_power_slice(&coefficients, lift_coordinate, lift_degree)?;
+            let Some(top_slice) =
+                trivariate_axis_lift_power_slice(&coefficients, lift_coordinate, lift_degree)
+            else {
+                return Ok(None);
+            };
             let top_factorizations = bivariate_bilinear_factorizations_bounded(
                 &top_slice,
                 maximum_factorizations,
@@ -1162,18 +1214,22 @@ pub fn trivariate_rational_multi_affine_axis_factorizations(
                 continue;
             }
             for anchor in [1_i8, 0, -1, 2].map(Real::from) {
-                let anchor_slice = trivariate_axis_lift_taylor_slice(
+                let Some(anchor_slice) = trivariate_axis_lift_taylor_slice(
                     &coefficients,
                     lift_coordinate,
                     &anchor,
                     false,
-                )?;
-                let first_taylor_slice = trivariate_axis_lift_taylor_slice(
+                ) else {
+                    return Ok(None);
+                };
+                let Some(first_taylor_slice) = trivariate_axis_lift_taylor_slice(
                     &coefficients,
                     lift_coordinate,
                     &anchor,
                     true,
-                )?;
+                ) else {
+                    return Ok(None);
+                };
                 for (anchor_factor, anchor_quotient) in bivariate_bilinear_factorizations_bounded(
                     &anchor_slice,
                     maximum_factorizations,
@@ -1197,9 +1253,9 @@ pub fn trivariate_rational_multi_affine_axis_factorizations(
                                     &anchor,
                                     lift_coordinate,
                                     config,
-                                )
+                                )?
                             {
-                                return Some(vec![factorization]);
+                                return Ok(Some(vec![factorization]));
                             }
                             continue;
                         }
@@ -1207,12 +1263,14 @@ pub fn trivariate_rational_multi_affine_axis_factorizations(
                             if other_anchor == anchor {
                                 continue;
                             }
-                            let other_slice = trivariate_axis_lift_taylor_slice(
+                            let Some(other_slice) = trivariate_axis_lift_taylor_slice(
                                 &coefficients,
                                 lift_coordinate,
                                 &other_anchor,
                                 false,
-                            )?;
+                            ) else {
+                                return Ok(None);
+                            };
                             let anchor_delta = &other_anchor - &anchor;
                             for (other_factor, _) in bivariate_bilinear_factorizations_bounded(
                                 &other_slice,
@@ -1238,11 +1296,11 @@ pub fn trivariate_rational_multi_affine_axis_factorizations(
                                         &anchor,
                                         lift_coordinate,
                                         config,
-                                    )
+                                    )?
                                 else {
                                     continue;
                                 };
-                                return Some(vec![factorization]);
+                                return Ok(Some(vec![factorization]));
                             }
                         }
                     }
@@ -1250,5 +1308,5 @@ pub fn trivariate_rational_multi_affine_axis_factorizations(
             }
         }
     }
-    None
+    Ok(None)
 }

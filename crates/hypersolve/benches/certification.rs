@@ -4,6 +4,8 @@ use num::bigint::{BigInt, BigUint};
 
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
+#[path = "support/components.rs"]
+mod components;
 #[path = "support/parameter_lifts.rs"]
 mod parameter_lifts;
 #[path = "support/quadratic_extraction.rs"]
@@ -2701,6 +2703,7 @@ fn unary_endpoint_expression(row_count: usize) -> Expr {
 }
 
 fn certification(c: &mut Criterion) {
+    components::benchmarks(c);
     parameter_lifts::benchmarks(c);
     let problem = affine_problem(16);
     let analysis = problem.analyze();
