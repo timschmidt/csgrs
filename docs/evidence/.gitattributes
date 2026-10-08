@@ -1,2 +1,4 @@
 # Preserve raw command output, including blank lines emitted by test runners.
 *.log -text whitespace=-blank-at-eof
+# Unified diffs preserve a single space on empty context lines.
+*.patch -text whitespace=-blank-at-eol

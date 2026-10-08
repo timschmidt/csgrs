@@ -1,0 +1,32 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "linear_parameter_lifts/quadratic/first": {
+    "before": 30376.733243429833,
+    "after": 30854.78586089497,
+    "change_percent": 1.5737459773378815
+  },
+  "linear_parameter_lifts/quadratic/second": {
+    "before": 30254.949200600564,
+    "after": 30755.31544957512,
+    "change_percent": 1.6538327189279167
+  },
+  "linear_parameter_lifts/specialized_degree_drop/first": {
+    "before": 32363.44341683879,
+    "after": 32582.311710912614,
+    "change_percent": 0.6762824686323388
+  },
+  "linear_parameter_lifts/specialized_degree_drop/second": {
+    "before": 36171.70426064667,
+    "after": 36573.7353825441,
+    "change_percent": 1.1114519763859354
+  }
+}

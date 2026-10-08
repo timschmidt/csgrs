@@ -1,0 +1,20 @@
+{
+  "baseline_revision": "d5b893d37",
+  "baseline_source_files_verified": 452,
+  "workspace": "../2026-10-08-curve-budget-isolators/benchmark-workspace.toml",
+  "lockfile": "../2026-10-08-curve-budget-isolators/benchmark-Cargo.lock",
+  "baseline_workspace_sources": "benchmark-baseline-sources.json",
+  "candidate_workspace_sources": "benchmark-candidate-sources.json",
+  "shared_benchmark_patch": "benchmark-fixture.patch",
+  "shared_new_benchmark_module": "benchmark-fixture.rs",
+  "benchmark_patch_sha256": "c15ae291d2666365e95dc268d5b3e856eb1392e2032940ad5f738822cf34515c",
+  "benchmark_module_sha256": "d6b909ef49b03c793f542d317228e0337bec958e6d99a24449e76f7eb0f41ae7",
+  "build_command": "cargo bench --offline --locked --manifest-path /tmp/csgrs-isolator-baseline/Cargo.toml -p hypersolve --bench certification --no-run",
+  "method": "Verify every one of the 452 existing isolated Rust files against d5b893d37. Add the same four cofactor benchmark fixtures to baseline and candidate before timing: the certification module registration is retained as a patch, and the new module is retained verbatim. Build the baseline, preserve its executable, then overlay only curve_resultant.rs, its new lift_budget.rs test module, and work_budget.rs. Rebuild with unchanged compiler, profiles, workspace, and pruned lockfile. All 454 candidate Rust files match the root workspace; both executables pass all four new Criterion fixtures in test mode.",
+  "prior_build_provenance": "../2026-10-08-curve-budget-fixed-elimination/benchmark-provenance.json",
+  "limitations": "The pruned lockfile uses the same 215 package identities/checksums as the root but omits unused workspace edges. These source graphs are narrower than the full root workspace. Whole-executable size is neither library size nor allocation evidence.",
+  "baseline_executable_sha256": "de1607afbcd8340f27fad147a9a87c4475e4a0477093e4afde6a6d5e95f1bba7",
+  "baseline_executable_bytes": 16482112,
+  "candidate_executable_sha256": "273b7f4f0ee99278277988df9090c7c271ef7e44aaa7bd1edc43b39a893befda",
+  "candidate_executable_bytes": 16481720
+}

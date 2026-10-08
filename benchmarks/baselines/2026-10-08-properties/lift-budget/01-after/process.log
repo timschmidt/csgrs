@@ -1,0 +1,36 @@
+Benchmarking linear_parameter_lifts/quadratic/first
+Benchmarking linear_parameter_lifts/quadratic/first: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/quadratic/first: Collecting 30 samples in estimated 503.41 ms (16k iterations)
+Benchmarking linear_parameter_lifts/quadratic/first: Analyzing
+linear_parameter_lifts/quadratic/first
+                        time:   [30.658 µs 30.754 µs 30.856 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  1 (3.33%) high mild
+  2 (6.67%) high severe
+
+Benchmarking linear_parameter_lifts/quadratic/second
+Benchmarking linear_parameter_lifts/quadratic/second: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/quadratic/second: Collecting 30 samples in estimated 511.08 ms (17k iterations)
+Benchmarking linear_parameter_lifts/quadratic/second: Analyzing
+linear_parameter_lifts/quadratic/second
+                        time:   [31.204 µs 31.403 µs 31.631 µs]
+
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Collecting 30 samples in estimated 506.70 ms (15k iterations)
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Analyzing
+linear_parameter_lifts/specialized_degree_drop/first
+                        time:   [32.815 µs 32.941 µs 33.108 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Collecting 30 samples in estimated 515.64 ms (14k iterations)
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Analyzing
+linear_parameter_lifts/specialized_degree_drop/second
+                        time:   [36.302 µs 36.841 µs 37.404 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high mild
+

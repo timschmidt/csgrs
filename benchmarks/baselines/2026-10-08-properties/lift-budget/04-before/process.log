@@ -1,0 +1,35 @@
+Benchmarking linear_parameter_lifts/quadratic/first
+Benchmarking linear_parameter_lifts/quadratic/first: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/quadratic/first: Collecting 30 samples in estimated 509.02 ms (17k iterations)
+Benchmarking linear_parameter_lifts/quadratic/first: Analyzing
+linear_parameter_lifts/quadratic/first
+                        time:   [29.786 µs 30.133 µs 30.513 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  3 (10.00%) high mild
+
+Benchmarking linear_parameter_lifts/quadratic/second
+Benchmarking linear_parameter_lifts/quadratic/second: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/quadratic/second: Collecting 30 samples in estimated 500.38 ms (17k iterations)
+Benchmarking linear_parameter_lifts/quadratic/second: Analyzing
+linear_parameter_lifts/quadratic/second
+                        time:   [29.603 µs 29.776 µs 29.972 µs]
+
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Collecting 30 samples in estimated 503.22 ms (16k iterations)
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Analyzing
+linear_parameter_lifts/specialized_degree_drop/first
+                        time:   [32.115 µs 32.636 µs 33.109 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  2 (6.67%) high mild
+  2 (6.67%) high severe
+
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Collecting 30 samples in estimated 511.14 ms (13k iterations)
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Analyzing
+linear_parameter_lifts/specialized_degree_drop/second
+                        time:   [35.866 µs 37.695 µs 40.414 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  3 (10.00%) high severe
+

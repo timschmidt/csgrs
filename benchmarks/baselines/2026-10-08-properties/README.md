@@ -344,3 +344,44 @@ python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate 
   '^(resultant_trivariate_polynomial_univariate_constraint($|/)|resultant_tensor_polynomial_univariate_constraint$|resultant_parametric_curve_intersection$)' \
   /path/to/new-evidence-directory
 ```
+
+## Cofactor parameter lifts
+
+Bivariate parameter lifts now charge one promotion before cofactor sampling,
+after degree admission. Degree continuation shares the same allowance. Curve
+replay preserves the resource reason, stops alternate lift attempts after
+exhaustion, and leaves denied reports uncached. A completed exact report can
+be reused with no new promotion charge.
+
+[`lift-budget/manifest.json`](lift-budget/manifest.json) retains five alternating
+process pairs on CPU 0, with 30 Criterion samples, 0.2 seconds of warmup, and
+0.5 seconds of measurement per workload. All task builds and tests finished
+before measurement. Values are medians of process mean estimates with no
+active budget.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Quadratic pair, first retained axis | 30.377 µs | 30.855 µs | +1.57% |
+| Quadratic pair, second retained axis | 30.255 µs | 30.755 µs | +1.65% |
+| Sample degree drop, first retained axis | 32.363 µs | 32.582 µs | +0.68% |
+| Sample degree drop, second retained axis | 36.172 µs | 36.574 µs | +1.11% |
+
+All four fixtures are new and are applied identically to the baseline
+(`d5b893d37`) and candidate. Both executables pass the fixtures in Criterion
+test mode. The isolated workspace, compiler, profiles, and pruned lockfile
+are unchanged from the preceding gate. The benchmark executable shrinks by
+392 bytes. The [provenance record](../../../docs/evidence/2026-10-08-curve-budget-lifts/benchmark-provenance.json)
+retains both source inventories, the shared benchmark additions, and build
+identities.
+
+These observations record the cost of the resource contract on the selected
+native construction paths. They do not establish a general speedup, a
+statistical regression ceiling, allocation behavior, library size, or timing
+for the complete curve replay/cache path. Setup asserts constructed reports
+and nonempty maps/denominators; exact full reports, typed failures, and curve
+pairing evidence are tested separately. No per-iteration checksum was added.
+
+```sh
+python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
+  '^linear_parameter_lifts/' /path/to/new-evidence-directory
+```

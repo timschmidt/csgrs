@@ -1,0 +1,41 @@
+Benchmarking linear_parameter_lifts/quadratic/first
+Benchmarking linear_parameter_lifts/quadratic/first: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/quadratic/first: Collecting 30 samples in estimated 502.59 ms (17k iterations)
+Benchmarking linear_parameter_lifts/quadratic/first: Analyzing
+linear_parameter_lifts/quadratic/first
+                        time:   [30.396 µs 30.855 µs 31.371 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  1 (3.33%) high mild
+  3 (10.00%) high severe
+
+Benchmarking linear_parameter_lifts/quadratic/second
+Benchmarking linear_parameter_lifts/quadratic/second: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/quadratic/second: Collecting 30 samples in estimated 500.29 ms (17k iterations)
+Benchmarking linear_parameter_lifts/quadratic/second: Analyzing
+linear_parameter_lifts/quadratic/second
+                        time:   [30.025 µs 30.222 µs 30.427 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  1 (3.33%) high mild
+  3 (10.00%) high severe
+
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Collecting 30 samples in estimated 513.92 ms (16k iterations)
+Benchmarking linear_parameter_lifts/specialized_degree_drop/first: Analyzing
+linear_parameter_lifts/specialized_degree_drop/first
+                        time:   [32.062 µs 32.194 µs 32.388 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  1 (3.33%) low mild
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Warming up for 200.00 ms
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Collecting 30 samples in estimated 513.41 ms (14k iterations)
+Benchmarking linear_parameter_lifts/specialized_degree_drop/second: Analyzing
+linear_parameter_lifts/specialized_degree_drop/second
+                        time:   [35.508 µs 36.047 µs 36.776 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  1 (3.33%) high mild
+  4 (13.33%) high severe
+

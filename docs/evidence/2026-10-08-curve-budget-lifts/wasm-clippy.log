@@ -1,0 +1,5 @@
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `wasm` profile [optimized] target(s) in 20.16s

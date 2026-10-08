@@ -1,0 +1,21 @@
+{
+  "base_revision": "d5b893d37",
+  "sha256": {
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+    "crates/hypersolve/Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+    "crates/hypercurve/Cargo.toml": "ca10638d0cf1999075ec9fe5d0c4a17d74e27ef179e479f96a238dfc4906ec92",
+    "crates/hyperpath/Cargo.toml": "d56333ca7c8101350d5e2df36780b2bd6fc8e12c6759e057aad6799e0734e027",
+    "crates/hypersolve/src/curve_resultant.rs": "9efbdc8b8a2dc801755c80acae6a5fd0987cfd119bfe1bba82a4296df079d830",
+    "crates/hypersolve/src/curve_resultant/tests/lift_budget.rs": "75a8b131e7ef75256fb91ea5b08efee66a46298deb6d59eb70787cd8db997087",
+    "crates/hypersolve/src/work_budget.rs": "620aa8618cb8177de1050392ccd48114b7479e773959f88385f196b9ff4f2cfe",
+    "crates/hypersolve/benches/certification.rs": "ca142ad727ed92d8d69cf11ee2a97df327e1ed0ee6c2a74203a0ebc195e6dc13",
+    "crates/hypersolve/benches/support/parameter_lifts.rs": "d6b909ef49b03c793f542d317228e0337bec958e6d99a24449e76f7eb0f41ae7",
+    "crates/hypercurve/src/bezier_offset/bivariate_replay.rs": "bc7fb92a2594629612e0127d8dcfab2b996fe358f8bf9c65606e6dc88ee57c38",
+    "crates/hypercurve/src/bezier_offset/bivariate_replay/budget_tests.rs": "34d1a0f3ac1115203625b8e3bafa1e0cecc061e51370e4bc4c8762b9403b8ad4",
+    "crates/hypercurve/tests/work_budget.rs": "a60652fe11e1866706c2eb1b91e1b08387b1a5efc1a97b2c9e45a5b0dbff37e6",
+    "crates/hypercurve/PERFORMANCE.md": "fdc9c35faeb3e8be702a3fa393818ee36a25b3132c12d88a026496368c43e12a",
+    "crates/hypersolve/PERFORMANCE.md": "d3eab029544daa7f2e5db011ecb6f7d59b5b3423d57f21534aa7de68e5123c1b",
+    "scripts/compare-criterion-probe.py": "c767e0bfb80c3afbd50ba976761bfa3e4b18aa8d5b1f4a69a3cafff4a71fa988"
+  }
+}

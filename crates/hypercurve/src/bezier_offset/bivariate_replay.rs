@@ -2,6 +2,9 @@
 
 use super::*;
 
+#[cfg(test)]
+mod budget_tests;
+
 pub(super) fn parallel_pair_equation_system_with_tangent_fields(
     first: &BezierParallel2,
     second: &BezierParallel2,
@@ -583,6 +586,11 @@ pub(super) fn replay_bivariate_parameter_pair(
     config: CurveIntersectionResultantConfig,
     parameter_lifts: &mut [Option<CurveIntersectionParameterLiftReport>; 2],
 ) -> CurveResult<Classification<BivariateParameterPairReplay>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
     match bivariate_pair_satisfies_system(first, second, first_parameter, second_parameter, policy)?
     {
         Classification::Decided(true) => {
@@ -593,6 +601,11 @@ pub(super) fn replay_bivariate_parameter_pair(
         Classification::Decided(false) => {
             return Ok(Classification::Decided(
                 BivariateParameterPairReplay::Rejected,
+            ));
+        }
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
             ));
         }
         Classification::Uncertain(_) => {}
@@ -619,48 +632,71 @@ pub(super) fn replay_bivariate_parameter_pair(
             policy,
         )? {
             Classification::Decided(replay) => return Ok(Classification::Decided(replay)),
-            Classification::Uncertain(UncertaintyReason::Boundary) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            Classification::Uncertain(
+                reason @ (UncertaintyReason::Boundary | UncertaintyReason::BudgetExhausted),
+            ) => {
+                return Ok(Classification::Uncertain(reason));
             }
             Classification::Uncertain(_) => {}
         }
     }
 
-    let first_lifts = parameter_lifts[0].get_or_insert_with(|| {
-        linear_parameter_lifts_bivariate_polynomial_system_complete(
-            first,
-            second,
+    let mut blocker = UncertaintyReason::Predicate;
+    for ((axis, retained, lifted), cache) in [
+        (
             CurveResultantParameter::First,
-            config,
-        )
-    });
-    match parameter_pair_matches_linear_lift(
-        first_lifts,
-        first_parameter,
-        second_parameter,
-        policy,
-    )? {
-        Classification::Decided(replay) => return Ok(Classification::Decided(replay)),
-        Classification::Uncertain(_) => {}
-    }
-
-    let second_lifts = parameter_lifts[1].get_or_insert_with(|| {
-        linear_parameter_lifts_bivariate_polynomial_system_complete(
-            first,
-            second,
+            first_parameter,
+            second_parameter,
+        ),
+        (
             CurveResultantParameter::Second,
-            config,
-        )
-    });
-    match parameter_pair_matches_linear_lift(
-        second_lifts,
-        second_parameter,
-        first_parameter,
-        policy,
-    )? {
-        Classification::Decided(replay) => Ok(Classification::Decided(replay)),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            second_parameter,
+            first_parameter,
+        ),
+    ]
+    .into_iter()
+    .zip(parameter_lifts)
+    {
+        let report = match cached_linear_parameter_lifts(first, second, axis, config, cache) {
+            Ok(report) => report,
+            Err(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        match parameter_pair_matches_linear_lift(report, retained, lifted, policy)? {
+            Classification::Decided(replay) => return Ok(Classification::Decided(replay)),
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            Classification::Uncertain(reason) => blocker = reason,
+        }
     }
+    Ok(Classification::Uncertain(blocker))
+}
+
+/// Retain reusable lift evidence without retaining a resource denial.
+fn cached_linear_parameter_lifts<'a>(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    axis: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+    cache: &'a mut Option<CurveIntersectionParameterLiftReport>,
+) -> Result<&'a CurveIntersectionParameterLiftReport, UncertaintyReason> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Err(UncertaintyReason::BudgetExhausted);
+    }
+    if cache.is_none() {
+        let report = linear_parameter_lifts_bivariate_polynomial_system_complete(
+            first, second, axis, config,
+        );
+        if report.status == CurveIntersectionParameterLiftStatus::BudgetExhausted {
+            return Err(UncertaintyReason::BudgetExhausted);
+        }
+        *cache = Some(report);
+    }
+    Ok(cache
+        .as_ref()
+        .expect("a completed lift report was retained"))
 }
 
 /// Replays one Cartesian pair drawn from the two resultant projections of an
@@ -839,6 +875,13 @@ pub(super) fn parameter_pair_matches_linear_lift(
     lifted_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BivariateParameterPairReplay>> {
+    if report.status == CurveIntersectionParameterLiftStatus::BudgetExhausted
+        || hypersolve::work_budget::exhaustion().is_some()
+    {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
     if report.status != CurveIntersectionParameterLiftStatus::Constructed
         || report.retained_parameter == report.lifted_parameter
     {
@@ -861,6 +904,11 @@ pub(super) fn parameter_pair_matches_linear_lift(
             Classification::Decided(false) => {
                 return Ok(Classification::Decided(
                     BivariateParameterPairReplay::Rejected,
+                ));
+            }
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
                 ));
             }
             Classification::Uncertain(reason) => {

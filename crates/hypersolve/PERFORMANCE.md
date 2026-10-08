@@ -74,6 +74,16 @@ retries. The [fixed-rank probe](../../benchmarks/baselines/2026-10-08-properties
 measures the two existing constrained-trivariate workloads and two unchanged
 controls. It does not measure every subresultant or four-variable path.
 
+Bivariate cofactor parameter lifts now charge one promotion after degree
+admission and before sampling. Exact degree continuation shares the enclosing
+allowance. Regressions compare every map, cofactor row, degree bound, and
+orientation after retry, including samples with vanishing leading
+coefficients. Four dedicated Criterion fixtures exercise both retained axes
+with and without a specialized degree drop. The
+[lift probe](../../benchmarks/baselines/2026-10-08-properties/README.md#cofactor-parameter-lifts)
+uses identical new fixtures in the baseline and candidate; exact reports are
+checked separately from timing.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |

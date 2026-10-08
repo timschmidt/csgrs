@@ -1,0 +1,12 @@
+Testing linear_parameter_lifts/quadratic/first
+Success
+
+Testing linear_parameter_lifts/quadratic/second
+Success
+
+Testing linear_parameter_lifts/specialized_degree_drop/first
+Success
+
+Testing linear_parameter_lifts/specialized_degree_drop/second
+Success
+

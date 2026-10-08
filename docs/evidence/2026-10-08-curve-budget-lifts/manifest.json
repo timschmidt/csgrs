@@ -1,0 +1,171 @@
+{
+  "scope": "Shared promotion admission for bivariate cofactor parameter lifts. Curve replay preserves resource failure, leaves denied reports uncached, and reuses completed exact lift evidence. T3 remains in progress.",
+  "base_revision": "d5b893d37",
+  "checks": [
+    {
+      "name": "solver-all",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "solver-all.log",
+      "sha256": "d1e030327e0474cd1cbcf356036ebf5cacfc093ea9e1e9e37709486fdc8286e8",
+      "tests": {
+        "passed": 600,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-tests",
+      "command": "cargo test --locked -p hypercurve --all-features --lib budget_tests",
+      "exit_code": 0,
+      "log": "curve-tests.log",
+      "sha256": "7b7b1ec9186853769c42b45b73fe99bd4f2ed3c2788ba766fda65b0482dca044",
+      "tests": {
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "7dcfacd3e8aaf8ee121c7800497b25cbed9c7bfc0b94fd95ab746d59ab566c71",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "hyperpath",
+      "command": "cargo test --locked -p hyperpath",
+      "exit_code": 0,
+      "log": "hyperpath.log",
+      "sha256": "51d57409c699d164b19f969ddf539710cc6e12ee069e9ec0c0056b3e7ca3a465",
+      "tests": {
+        "passed": 443,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypersolve -p hypercurve -p hyperpath --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "79d3deb5cfdb11d7777d0de8265bc4431abd93c75af5cefb7b07036e6517381f"
+    },
+    {
+      "name": "fuzz-clippy",
+      "command": "cargo clippy --locked --manifest-path crates/hypersolve/fuzz/Cargo.toml --bins -- -D warnings",
+      "exit_code": 0,
+      "log": "fuzz-clippy.log",
+      "sha256": "9c2951e58e693adc673fe1e5fd21f4c5bc2c8686b53a33b328789c5d497cf376"
+    },
+    {
+      "name": "wasm-clippy",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "2734f1da24a4994e4d1904d6aad68450b98c5f0726e9b6e44ed6f23a25069aa8"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypersolve -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "186341c2d22dc9dcb365d2936d061be940822ac7b0b42ac75e01c8069aec9a6c"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "benchmark-baseline-fixtures",
+      "command": "HYPERSOLVE_SKIP_BENCHMARK_REPORTS=1 /tmp/properties-lift-budget-baseline-bin 'linear_parameter_lifts/' --test",
+      "exit_code": 0,
+      "log": "benchmark-baseline-fixtures.log",
+      "sha256": "a0a12a93bccc6e63318299f4c0ccf73214ea9511ef03e71b68d05557d21e9182",
+      "criterion_fixtures_passed": 4
+    },
+    {
+      "name": "benchmark-candidate-fixtures",
+      "command": "HYPERSOLVE_SKIP_BENCHMARK_REPORTS=1 /tmp/properties-lift-budget-candidate-bin 'linear_parameter_lifts/' --test",
+      "exit_code": 0,
+      "log": "benchmark-candidate-fixtures.log",
+      "sha256": "a0a12a93bccc6e63318299f4c0ccf73214ea9511ef03e71b68d05557d21e9182",
+      "criterion_fixtures_passed": 4
+    },
+    {
+      "name": "release-solver",
+      "command": "cargo test --locked --release -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "release-solver.log",
+      "sha256": "8cc6453671fa605e891c8dfe51401482a0dbc5ce6f3278144ba5f3dbcc406b99",
+      "tests": {
+        "passed": 600,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib budget_tests",
+      "exit_code": 0,
+      "log": "release-curve.log",
+      "sha256": "cfe67e0c236b4f03222d91c1a77e1093077166a7e23a5c476d75e0fbb83c62d8",
+      "tests": {
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve-budget",
+      "command": "cargo test --locked --release -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "release-curve-budget.log",
+      "sha256": "7c3a2dfd0a60b3be4ed6b0e0de27a68029c9952387c16079fe01895ea06e7857",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "sources": "sources.json",
+  "benchmark_provenance": "benchmark-provenance.json",
+  "pending": [
+    "Run the full configured Hypercurve CI test command for this cofactor-lift extension."
+  ],
+  "limitations": [
+    "Only instrumented work attempts are bounded. Common-component extraction, other elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time still require complete accounting and bounds.",
+    "Full exact lift reports and curve pairing evidence are compared separately from Criterion. The benchmark setup checks report construction and nonempty maps/denominators; it does not add a checksum to each timed iteration.",
+    "New timing fixtures isolate native cofactor construction. They do not measure the entire curve replay/cache path, allocations, or a statistical regression ceiling.",
+    "No complete repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed.",
+    "The full configured Hypercurve CI suite passed at d5b893d37 (2,411 passed, 33 existing ignored), before this cofactor-lift extension; its log is retained with the preceding fixed-rank evidence."
+  ],
+  "benchmark_logs": [
+    {
+      "name": "benchmark-baseline-build",
+      "log": "benchmark-baseline-build.log",
+      "sha256": "4a4db30b97b4c85a6fd4dc6306d09929c136d558bbe4494ec27f3a142db9257f"
+    },
+    {
+      "name": "benchmark-candidate-build",
+      "log": "benchmark-candidate-build.log",
+      "sha256": "e79c6ad69714cd85822545dd3bfbabb525533601a53a849f53222f176189c56f"
+    },
+    {
+      "name": "benchmark-probe",
+      "log": "benchmark-probe.log",
+      "sha256": "04f39e41b9bbc34f89d92efa82ce8c3d1378fe52a3425e7b2bf551a4cb5951ed"
+    }
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/lift-budget/manifest.json"
+}

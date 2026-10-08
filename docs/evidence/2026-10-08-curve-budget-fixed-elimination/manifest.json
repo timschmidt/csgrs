@@ -120,14 +120,27 @@
         "failed": 0,
         "ignored": 0
       }
+    },
+    {
+      "name": "hypercurve-configured-ci",
+      "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "cwd": "crates/hypercurve",
+      "source_revision": "d5b893d37",
+      "exit_code": 0,
+      "log": "hypercurve-configured-ci.log",
+      "sha256": "5b05ae0679956dac2ef7259a368711573b81bfc1fa702e709a79d220330cdc85",
+      "tests": {
+        "passed": 2411,
+        "failed": 0,
+        "ignored": 33
+      },
+      "provenance": "Every test executable was built at d5b893d37 before the following cofactor-lift extension was edited. No release rebuild ran before this process completed; the policy doctest source is unchanged. This log does not validate the subsequent cofactor-lift extension."
     }
   ],
   "development_diagnostics": "diagnostics.json",
   "benchmark_provenance": "benchmark-provenance.json",
   "sources": "sources.json",
-  "pending": [
-    "Run the full configured Hypercurve CI test command for this fixed-rank elimination extension."
-  ],
+  "pending": [],
   "limitations": [
     "Instrumented work attempts are bounded, not all scalar arithmetic, coefficient growth, allocations, memory, or elapsed time. Remaining elimination and curve paths require additional accounting.",
     "Exact reports and retry semantics are checked separately from Criterion. No checksum is added to every timed iteration.",

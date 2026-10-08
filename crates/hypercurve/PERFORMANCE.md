@@ -72,6 +72,15 @@ The [fixed-rank solver probe](../../benchmarks/baselines/2026-10-08-properties/R
 records selected inactive-accounting timings and executable size, with exact
 retry evidence tested separately.
 
+Cofactor lift replay now preserves budget exhaustion through candidate pairing
+and stops alternate lift attempts after a resource denial. Its operation cache
+leaves denied reports uncached, then retains a completed exact report for reuse
+without another promotion. Regressions cover both policies, cached proof reuse,
+an already exhausted scope, and certified pairing after a larger-budget retry.
+The [native lift probe](../../benchmarks/baselines/2026-10-08-properties/README.md#cofactor-parameter-lifts)
+measures cofactor construction; it does not time the entire curve replay/cache
+path.
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate
