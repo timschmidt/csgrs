@@ -359,9 +359,15 @@
         "crates/hypersolve/src/ordered_field_roots.rs",
         "crates/hypersolve/src/algebraic_fiber.rs",
         "crates/hypersolve/src/algebraic_fiber/refinement.rs",
-        "docs/evidence/2026-10-08-curve-budget-isolators/manifest.json"
+        "docs/evidence/2026-10-08-curve-budget-isolators/manifest.json",
+        "crates/hypersolve/src/algebraic_polynomial_image.rs",
+        "crates/hypersolve/src/algebraic_rational_image.rs",
+        "crates/hypersolve/src/algebraic_binary.rs",
+        "crates/hypersolve/src/algebraic_rational_image/budget_tests.rs",
+        "crates/hypercurve/src/bezier_algebraic_image/budget_tests.rs",
+        "docs/evidence/2026-10-08-curve-budget-images/manifest.json"
       ],
-      "remaining": "Shared synchronous work accounting and typed exhaustion cover instrumented native, ordered-field, and selected-fiber root subdivisions plus selected algebraic promotions, with retry-safe policy caches. Complete accounting across the remaining elimination entry points and curve dispatch graph, including scalar precision/coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
+      "remaining": "Shared synchronous work accounting and typed exhaustion cover instrumented native, ordered-field, and selected-fiber subdivisions plus tensor and polynomial/rational/binary image promotions. Policy and rational-map elimination caches permit exact retries after denial. Complete accounting across remaining elimination entry points and the curve dispatch graph, including scalar precision/coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
     },
     {
       "id": "T4",
@@ -504,7 +510,7 @@
       {
         "path": "crates/hypermesh/FUTURE_WORK.md",
         "status": "open",
-        "remaining": "Certify the unchanged full-resolution sampled-sphere convex-hull inputs, including 32 × 16, without substituting different geometry."
+        "remaining": "Entire document and its local AGENTS.md read on 2026-10-08. Certify the unchanged sampled-sphere hull inputs, including 32 × 16, without substituting rationalized geometry. Initial source inspection found source-fact hull entry points, but mesh.convex_hull still passes only positions; the full evidence/admission audit and implementation remain open."
       },
       {
         "path": "crates/hyperreal/verification/README.md",
@@ -524,12 +530,12 @@
       {
         "path": "docs/fully-certified-sdf-meshing-plan.md",
         "status": "open",
-        "remaining": "Named plan discovered; all stated certification/meshing requirements still require an implementation and evidence audit."
+        "remaining": "Entire 325-line plan read on 2026-10-08. All six delivery milestones, the separate mesh-validity/ambient-isotopy and exact-error receipts, adaptive topology/edge ownership, CSG degeneracies, and hardening gates remain in scope. The proposed certified API was not found in the inspected implicit/SDF sources; a complete implementation audit remains open."
       }
     ]
   },
   "next_actions": [
-    "Run and retain the complete debug-profile Hypercurve validation at the current source revision; the full release run passed before the shared-isolator extension, whose focused debug/release tests and strict Clippy pass.",
+    "Run the full configured Hypercurve CI command for the image-promotion revision, whose focused debug/release tests and strict native, fuzz-target, and WASM Clippy pass. Continue the full repository pre-push matrix before any push.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."

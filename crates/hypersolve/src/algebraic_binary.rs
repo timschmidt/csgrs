@@ -61,6 +61,8 @@ pub enum AlgebraicRootBinaryTransformStatus {
     /// Exact comparisons, resultant construction, or interpolation did not
     /// decide.
     Undecided,
+    /// The enclosing operation declined required promotion or refinement work.
+    BudgetExhausted,
 }
 
 /// Report for independent-root arithmetic construction.
@@ -104,6 +106,14 @@ pub fn transform_algebraic_roots_binary(
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootBinaryTransformReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        return binary_report(
+            operation,
+            AlgebraicRootBinaryTransformStatus::BudgetExhausted,
+            None,
+            Some(error.to_string()),
+        );
+    }
     if !left.is_valid()
         || !right.is_valid()
         || validate_algebraic_root_representation(left, PredicatePolicy::STRICT).status
@@ -210,6 +220,16 @@ pub fn transform_algebraic_roots_binary(
         );
     }
 
+    if let Err(error) =
+        crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1)
+    {
+        return binary_report(
+            operation,
+            AlgebraicRootBinaryTransformStatus::BudgetExhausted,
+            None,
+            Some(error.to_string()),
+        );
+    }
     let Some(mut polynomial_coefficients) = resultant_polynomial_for_binary_image(
         &left_polynomial,
         &right_polynomial,
@@ -634,10 +654,15 @@ struct ValueInterval {
 
 fn binary_report(
     operation: AlgebraicRootArithmeticOp,
-    status: AlgebraicRootBinaryTransformStatus,
-    representation: Option<AlgebraicRootRepresentation>,
-    message: Option<String>,
+    mut status: AlgebraicRootBinaryTransformStatus,
+    mut representation: Option<AlgebraicRootRepresentation>,
+    mut message: Option<String>,
 ) -> AlgebraicRootBinaryTransformReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        status = AlgebraicRootBinaryTransformStatus::BudgetExhausted;
+        representation = None;
+        message = Some(error.to_string());
+    }
     AlgebraicRootBinaryTransformReport {
         operation,
         status,

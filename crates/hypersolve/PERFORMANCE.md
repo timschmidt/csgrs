@@ -32,6 +32,19 @@ range from -4.28% to +3.59%; the repeated-root row changes from the initial
 general speedup or a statistical bound. Exact intervals, typed resource status,
 and retry behavior are covered separately by solver tests.
 
+Polynomial, rational, and binary represented-root image construction now
+admits each new eliminant against the enclosing promotion budget. Their
+reports distinguish resource exhaustion, and the arithmetic/curve adapters
+preserve that distinction. Constant and affine shortcuts still need no
+promotion charge. Budgeted rational maps read existing elimination caches but
+do not populate them, so a resource denial cannot permanently reject a later
+request for the same map or another root of its source polynomial.
+
+The [image-promotion gate](../../benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions)
+records the selected Criterion measurements, source provenance, and a change
+to avoid checking exhaustion twice on a constant-image path. This changes the
+resource contract without claiming a general performance improvement.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |

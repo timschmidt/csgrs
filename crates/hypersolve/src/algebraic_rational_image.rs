@@ -91,6 +91,8 @@ pub enum AlgebraicRootRationalImageStatus {
     InvalidTransformedEvidence,
     /// Exact comparison or scalar arithmetic did not decide.
     Undecided,
+    /// The enclosing operation declined required promotion or refinement work.
+    BudgetExhausted,
 }
 
 /// Report for `beta = p(alpha) / q(alpha)`.
@@ -250,6 +252,10 @@ pub fn transform_algebraic_root_rational_images<const N: usize>(
 /// [`Self::transform`] call still evaluates the denominator, constructs a
 /// one-root image interval (refining stationary maps when necessary), and
 /// validates the represented root independently.
+///
+/// An explicit [`crate::work_budget`] scope may reuse an existing eliminant,
+/// but does not populate the elimination cache. Resource exhaustion therefore
+/// cannot become a retained negative result that prevents a later retry.
 pub struct AlgebraicRootRationalMap {
     source_polynomial_coefficients: Vec<Real>,
     numerator_coefficients: Vec<Real>,
@@ -445,6 +451,16 @@ fn transform_algebraic_root_rational_image_with_domain_evaluation(
     evaluation: AlgebraicRootRationalEvaluationReport,
     retention: RationalImageRetention<'_>,
 ) -> AlgebraicRootRationalImageReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        return rational_image_report(
+            AlgebraicRootRationalImageStatus::BudgetExhausted,
+            numerator_coefficients,
+            denominator_coefficients,
+            evaluation,
+            RationalImageArtifacts::default(),
+            Some(error.to_string()),
+        );
+    }
     if target.is_some_and(|target| rational_evaluation_is_disjoint(&evaluation, target, policy)) {
         return rational_image_report(
             AlgebraicRootRationalImageStatus::ImageIntervalDisjoint,
@@ -603,6 +619,16 @@ fn transform_algebraic_root_rational_image_with_domain_evaluation(
         );
     }
 
+    if let Some(error) = crate::work_budget::exhaustion() {
+        return rational_image_report(
+            AlgebraicRootRationalImageStatus::BudgetExhausted,
+            numerator_coefficients,
+            denominator_coefficients,
+            evaluation,
+            RationalImageArtifacts::default(),
+            Some(error.to_string()),
+        );
+    }
     let numerator_image =
         transform_algebraic_root_polynomial_image(root, numerator_coefficients, policy);
     if numerator_image.status != AlgebraicRootPolynomialImageStatus::Transformed {
@@ -661,6 +687,19 @@ fn transform_algebraic_root_rational_image_with_domain_evaluation(
         policy,
     );
     match quotient.status {
+        AlgebraicRootArithmeticStatus::BudgetExhausted => rational_image_report(
+            AlgebraicRootRationalImageStatus::BudgetExhausted,
+            numerator_coefficients,
+            denominator_coefficients,
+            evaluation,
+            RationalImageArtifacts {
+                numerator_image: Some(numerator_image),
+                denominator_image: Some(denominator_image),
+                quotient: Some(quotient),
+                representation: None,
+            },
+            Some("the enclosing operation exhausted its work budget".into()),
+        ),
         AlgebraicRootArithmeticStatus::ComputedRepresentation => {
             let representation = quotient.result_representation.clone();
             let status = if representation.as_ref().is_some_and(|root| root.is_valid()) {
@@ -1030,26 +1069,29 @@ fn direct_rational_image_representation(
             clear_rational_map_denominators(&direct_map.numerator, &direct_map.denominator)
         })
         .as_ref()?;
-    let polynomial_coefficients = if let Some(retained) = retention.resultant_polynomial {
-        retained
-            .get_or_init(|| {
-                resultant_polynomial_for_rational_image(
-                    source_polynomial,
-                    resultant_numerator,
-                    resultant_denominator,
-                    source_degree,
-                    policy,
-                )
-            })
-            .clone()?
-    } else {
+    let construct_resultant = || {
+        crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).ok()?;
         resultant_polynomial_for_rational_image(
             source_polynomial,
             resultant_numerator,
             resultant_denominator,
             source_degree,
             policy,
-        )?
+        )
+    };
+    let polynomial_coefficients = if let Some(retained) = retention.resultant_polynomial {
+        if crate::work_budget::is_active() {
+            // Keep transient resource failures out of the persistent OnceLock.
+            // Unbudgeted callers retain its serialized initialization behavior.
+            retained
+                .get()
+                .cloned()
+                .unwrap_or_else(construct_resultant)?
+        } else {
+            retained.get_or_init(construct_resultant).clone()?
+        }
+    } else {
+        construct_resultant()?
     };
     let interval = certified_rational_image_interval(
         root,
@@ -1708,6 +1750,9 @@ fn polynomial_image_failure_status(
             AlgebraicRootRationalImageStatus::InvalidTransformedEvidence
         }
         AlgebraicRootPolynomialImageStatus::InvalidImagePolynomial => invalid_polynomial,
+        AlgebraicRootPolynomialImageStatus::BudgetExhausted => {
+            AlgebraicRootRationalImageStatus::BudgetExhausted
+        }
         AlgebraicRootPolynomialImageStatus::ImageIsolationFailed
         | AlgebraicRootPolynomialImageStatus::UnsupportedDegree
         | AlgebraicRootPolynomialImageStatus::Undecided => fallback,
@@ -1750,13 +1795,18 @@ struct RationalImageArtifacts {
 }
 
 fn rational_image_report(
-    status: AlgebraicRootRationalImageStatus,
+    mut status: AlgebraicRootRationalImageStatus,
     numerator_coefficients: &[Real],
     denominator_coefficients: &[Real],
     evaluation: AlgebraicRootRationalEvaluationReport,
-    artifacts: RationalImageArtifacts,
-    message: Option<String>,
+    mut artifacts: RationalImageArtifacts,
+    mut message: Option<String>,
 ) -> AlgebraicRootRationalImageReport {
+    if let Some(error) = crate::work_budget::exhaustion() {
+        status = AlgebraicRootRationalImageStatus::BudgetExhausted;
+        artifacts.representation = None;
+        message = Some(error.to_string());
+    }
     AlgebraicRootRationalImageReport {
         status,
         numerator_coefficients: numerator_coefficients.to_vec(),
@@ -1769,6 +1819,10 @@ fn rational_image_report(
         message,
     }
 }
+
+#[cfg(test)]
+#[path = "algebraic_rational_image/budget_tests.rs"]
+mod budget_tests;
 
 #[cfg(test)]
 mod tests {

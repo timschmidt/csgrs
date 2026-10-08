@@ -1498,10 +1498,16 @@ pub(super) fn rational_image_parameter(
                 "invalid-transformed-evidence"
             }
             AlgebraicRootRationalImageStatus::Undecided => "undecided",
+            AlgebraicRootRationalImageStatus::BudgetExhausted => "budget-exhausted",
         },
     );
     if evidence.status == AlgebraicRootRationalImageStatus::ImageIntervalDisjoint {
         return Ok(Classification::Decided(None));
+    }
+    if evidence.status == AlgebraicRootRationalImageStatus::BudgetExhausted {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
     }
     if evidence.status != AlgebraicRootRationalImageStatus::Transformed {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
