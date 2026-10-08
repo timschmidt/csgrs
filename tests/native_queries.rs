@@ -52,3 +52,14 @@ fn disjoint_distributions_preserve_every_native_copy() {
     assert!(grid.is_closed_manifold());
     assert!(arc.is_closed_manifold());
 }
+
+#[test]
+fn sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull() {
+    // Each latitude-band quad is an exactly planar trapezoid. With exact
+    // 15-degree trigonometry its coplanarity is a certified multiquadratic
+    // zero, so the hull is decided under the strict policy.
+    let sphere = solid::sphere(Real::from(8_u8), 24, 4);
+    let hull = solid::convex_hull(&sphere).expect("certified hull");
+    // 24 * 3 ring vertices plus two poles, all extreme: 2V - 4 triangles.
+    assert_eq!(hull.triangles.len(), 2 * (24 * 3 + 2) - 4);
+}
