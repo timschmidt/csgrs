@@ -2937,7 +2937,7 @@ pub fn contains_xy_with_context(
 ) -> Result<GeometryOutcome<Option<bool>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if input.is_empty() {
-        return Ok(decisions.finish(None));
+        return Ok(decisions.finish(Some(false)));
     }
     let classification = decisions
         .exact_curve(|| input.classify_point(&Point2::new(x, y).into()))

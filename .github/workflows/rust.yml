@@ -100,3 +100,24 @@ jobs:
         with:
           persist-credentials: false
       - uses: crate-ci/typos@5e38bf262baaf477ca9f241b3a7cd3d277fd7df8 # master
+
+  wasm-bindings:
+    name: WASM JavaScript and TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install binding tools
+        run: |
+          cargo install --locked --version 0.2.126 wasm-bindgen-cli
+          npm ci --ignore-scripts --no-audit --no-fund --prefix tests/wasm
+      - name: Exercise generated bindings and declarations
+        run: |
+          export PATH="${GITHUB_WORKSPACE}/tests/wasm/node_modules/.bin:${PATH}"
+          bash scripts/test-wasm-bindings.sh

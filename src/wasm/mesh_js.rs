@@ -2,7 +2,7 @@
 
 use crate::solid::{self, SolidExt};
 use crate::wasm::{
-    context_js::{GeometryBoolResultJs, GeometryBoundsResultJs},
+    context_js::{GeometryBoolResultJs, GeometryBoundsResultJs, GeometryQueryStatusJs},
     curve_js::GeometryMeshResultJs,
     geometry_context,
 };
@@ -398,13 +398,21 @@ impl MeshJs {
         point: &Point3Js,
         approximate_512: bool,
     ) -> Result<GeometryBoolResultJs, JsValue> {
-        solid::contains_point_with_context(
+        match solid::contains_point_with_context(
             &self.inner,
             &point.inner,
             &geometry_context(approximate_512),
-        )
-        .map(|outcome| outcome.map(Some).into())
-        .map_err(js_error)
+        ) {
+            Ok(outcome) => Ok(outcome.map(Some).into()),
+            Err(
+                error @ (hypermesh::HypermeshError::UnknownClassification
+                | hypermesh::HypermeshError::PredicateUndecided { .. }),
+            ) => Ok(GeometryBoolResultJs::unresolved(
+                GeometryQueryStatusJs::Unknown,
+                error.to_string(),
+            )),
+            Err(error) => Err(js_error(error)),
+        }
     }
 
     #[wasm_bindgen(js_name = boundingBoxWithContext)]
