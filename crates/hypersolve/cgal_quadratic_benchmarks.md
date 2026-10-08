@@ -4,4 +4,4 @@ Generated automatically by `benches/competitors/run_cgal_quadratic.sh`. The harn
 
 | Benchmark | CGAL | Median | p05 | p95 | Checksum |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `competitor_exact_quadratic_roots/cgal` | `6.0.3` | 416.232 ns | 414.141 ns | 455.085 ns | 1020000 |
+| `competitor_exact_quadratic_roots/cgal` | `6.0.3` | 420.918 ns | 418.659 ns | 424.473 ns | 1020000 |
