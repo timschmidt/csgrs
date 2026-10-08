@@ -1,0 +1,35 @@
+{
+  "scope": "Development diagnostics before the passing final checks. Intermediate test sources were not separately snapshotted; these logs do not support final validation claims.",
+  "logs": [
+    {
+      "log": "initial-solver.log",
+      "sha256": "3534742ff8f729c0cba81a9de9bc8803ae656e68d7c1770c461047d8456bfb27",
+      "exit_code": 101,
+      "disposition": "Two prior budget tests assumed the previous promotion counts. Their exact-result expectations are unchanged; they now admit the newly charged tensor-axis eliminations. The tensor-image refinement failure also now has a typed inner budget status."
+    },
+    {
+      "log": "initial-curve-tests.log",
+      "sha256": "e3110b28ed338edc2ee041d4d91e0f38afe0e142091e4b48bf79321d5d8be8bb",
+      "exit_code": 101,
+      "disposition": "Initial test compilation used a root re-export that does not exist. The final test uses hypersolve::curve_resultant::resultant_bivariate_polynomial_system_complete."
+    },
+    {
+      "log": "initial-curve-fixture.log",
+      "sha256": "15f6dd676b82caf2423f7ca4f019db56db7018cb030721e1ef841c0e39384d2f",
+      "exit_code": 101,
+      "disposition": "The product fixture needed only one resultant because exact quotient reduction removed the other axis. The final test preserves that shortcut and also checks a sum requiring two eliminations."
+    },
+    {
+      "log": "initial-public-curve-test.log",
+      "sha256": "32669f746ba84bb67e245cb5b4552d6a518a90062adbb213b904f4448ea8c94a",
+      "exit_code": 101,
+      "disposition": "The initial assertion expected an outer ExactCurveError. This API instead retains a typed per-pair blocker inside its incomplete result; the enclosing BudgetOutcome is the resource error."
+    },
+    {
+      "log": "public-blocker-diagnostic.log",
+      "sha256": "86d9afeffd862786e5a53ef368add528ec749ba9771365deed83d0c7c29f0398",
+      "exit_code": 101,
+      "disposition": "Confirms the typed BudgetExhausted pair blocker. The final integration test verifies this public contract, the outer failure, a successful exact retry, and three retained contacts."
+    }
+  ]
+}

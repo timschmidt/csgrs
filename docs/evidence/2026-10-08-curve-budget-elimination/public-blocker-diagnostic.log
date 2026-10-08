@@ -1,0 +1,22 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.54s
+     Running tests/work_budget.rs (target/debug/deps/work_budget-c1a6326c0932e74e)
+
+running 1 test
+test rational_curve_intersections_retry_after_denied_elimination ... FAILED
+
+failures:
+
+---- rational_curve_intersections_retry_after_denied_elimination stdout ----
+
+thread 'rational_curve_intersections_retry_after_denied_elimination' (114) panicked at crates/hypercurve/tests/work_budget.rs:118:13:
+complete=false contacts=0 blockers=[CurveIntersectionPairBlocker2 { first_span_index: 0, second_span_index: 0, kind: Uncertain(BudgetExhausted) }]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    rational_curve_intersections_retry_after_denied_elimination
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hypercurve --test work_budget`

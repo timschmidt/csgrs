@@ -464,6 +464,11 @@ pub(super) fn algebraic_selected_fiber_parameters_with_incident_ray(
             );
             match report.status {
                 CurveIntersectionResultantStatus::Constructed => report.resultant_coefficients,
+                CurveIntersectionResultantStatus::BudgetExhausted => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
                 CurveIntersectionResultantStatus::UndecidedCoefficient => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }

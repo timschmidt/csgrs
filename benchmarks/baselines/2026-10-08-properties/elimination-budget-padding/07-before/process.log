@@ -1,0 +1,20 @@
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2: Collecting 30 samples in estimated 500.92 ms (76k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2: Analyzing
+resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2
+                        time:   [6.3022 µs 6.3693 µs 6.4639 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  2 (6.67%) high mild
+  3 (10.00%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64: Collecting 30 samples in estimated 525.64 ms (6975 iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64: Analyzing
+resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64
+                        time:   [79.817 µs 86.091 µs 91.920 µs]
+Found 6 outliers among 30 measurements (20.00%)
+  1 (3.33%) high mild
+  5 (16.67%) high severe
+

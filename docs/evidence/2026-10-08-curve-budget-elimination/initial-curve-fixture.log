@@ -1,0 +1,31 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 16.69s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-d2a908ce8e621ff9)
+
+running 8 tests
+test policy::budget_tests::exhausted_classification_cannot_seed_a_cache_or_start_an_approximate_retry ... ok
+test policy::budget_tests::exhausted_evaluation_cannot_seed_an_immutable_cache ... ok
+test policy::budget_tests::budget_blockers_remain_transient_after_an_inner_scope_returns ... ok
+test policy::budget_tests::work_limited_blockers_do_not_poison_the_operation_cache ... ok
+test bezier_offset::selected_dense::budget_tests::bivariate_projection_adapter_preserves_budget_failure_through_degree_continuation ... ok
+test bezier_offset::selected_dense::budget_tests::dense_projection_charges_both_selected_axes_and_retries_exactly ... FAILED
+test bezier_algebraic_image::budget_tests::coordinate_promotion_exhaustion_preserves_typed_failure_and_lazy_point_retries ... ok
+test bezier_offset::selected_fiber::budget_tests::selected_image_helpers_stop_on_exhaustion_and_retry_with_exact_saturation_evidence ... ok
+
+failures:
+
+---- bezier_offset::selected_dense::budget_tests::dense_projection_charges_both_selected_axes_and_retries_exactly stdout ----
+
+thread 'bezier_offset::selected_dense::budget_tests::dense_projection_charges_both_selected_axes_and_retries_exactly' (307) panicked at crates/hypercurve/src/bezier_offset/selected_dense/budget_tests.rs:44:21:
+assertion `left == right` failed
+  left: Decided(DenseTensorPolynomial { dimensions: [3], coefficients: [Real { rational: Rational { sign: Minus, numerator: 1, denominator: 6 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }] })
+ right: Uncertain(BudgetExhausted)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    bezier_offset::selected_dense::budget_tests::dense_projection_charges_both_selected_axes_and_retries_exactly
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 1694 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

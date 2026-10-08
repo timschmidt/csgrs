@@ -635,6 +635,8 @@ impl DenseTensorPolynomial {
 pub enum TensorConstraintResultantStatus {
     /// The exact retained-axis tensor was reconstructed.
     Constructed,
+    /// The enclosing operation declined this algebraic elimination.
+    BudgetExhausted,
     /// The input tensor shape was invalid for axis elimination.
     InvalidAxis,
     /// A coefficient remained unknown after bounded refinement and the strict
@@ -676,6 +678,8 @@ pub struct TensorConstraintResultantReport {
 /// The output axis order is the input order with `eliminated_axis` removed.
 /// Degree growth is not artificially capped; impossible host dimensions and
 /// failed reservations are reported explicitly.
+/// A work budget charges one promotion before constraint normalization or
+/// elimination. A denied attempt returns no resultant tensor.
 pub fn resultant_tensor_polynomial_univariate_constraint(
     polynomial: &DenseTensorPolynomial,
     constraint: &[Real],
@@ -699,6 +703,17 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
             None,
             None,
             Some("tensor resultant requires one valid eliminated axis".to_owned()),
+        );
+    }
+    if let Err(error) =
+        crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1)
+    {
+        return report(
+            TensorConstraintResultantStatus::BudgetExhausted,
+            Vec::new(),
+            None,
+            None,
+            Some(error.to_string()),
         );
     }
     let constraint = match normalized_constraint(constraint, min_precision) {

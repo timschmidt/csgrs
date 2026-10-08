@@ -5799,6 +5799,11 @@ pub(crate) fn resultant_parameter_polynomial(
 ) -> CurveResult<Classification<Option<BezierParameterPolynomial>>> {
     match evidence.status {
         CurveIntersectionResultantStatus::Constructed => {}
+        CurveIntersectionResultantStatus::BudgetExhausted => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         CurveIntersectionResultantStatus::UndecidedCoefficient => {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }

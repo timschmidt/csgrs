@@ -1,0 +1,77 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers": {
+    "before": 206557.0955338092,
+    "after": 206404.60501264033,
+    "change_percent": -0.07382487673676108
+  },
+  "project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic": {
+    "before": 204154.54822183732,
+    "after": 203102.51388664896,
+    "change_percent": -0.5153127100774646
+  },
+  "project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers": {
+    "before": 213915.59154515385,
+    "after": 213957.17853043918,
+    "change_percent": 0.019440838783624237
+  },
+  "resultant_parametric_curve_intersection": {
+    "before": 1187.0456963299123,
+    "after": 1130.357264793139,
+    "change_percent": -4.775589660283652
+  },
+  "resultant_rational_parametric_curve_intersection": {
+    "before": 1435.1689630621383,
+    "after": 1384.7722702379938,
+    "change_percent": -3.5115511916183006
+  },
+  "resultant_tensor_polynomial_univariate_constraint": {
+    "before": 1058.5325770502611,
+    "after": 1088.073876151112,
+    "change_percent": 2.790778455129983
+  },
+  "resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2": {
+    "before": 6501.809351725801,
+    "after": 6506.427448430739,
+    "change_percent": 0.07102787016834977
+  },
+  "resultant_tensor_polynomial_univariate_constraint/direct_real_norm": {
+    "before": 1008.5287676808374,
+    "after": 980.1891292015652,
+    "change_percent": -2.809998027566496
+  },
+  "resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024": {
+    "before": 7789.056230475961,
+    "after": 7137.327327994898,
+    "change_percent": -8.367238381603492
+  },
+  "resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024": {
+    "before": 10335.282173185766,
+    "after": 10326.288067671649,
+    "change_percent": -0.0870233184097402
+  },
+  "resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64": {
+    "before": 73295.33526085816,
+    "after": 78994.04286272639,
+    "change_percent": 7.774993567580424
+  },
+  "resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint": {
+    "before": 10988.874454236135,
+    "after": 10589.141453982122,
+    "change_percent": -3.637615498463709
+  },
+  "resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree": {
+    "before": 4988.21473082937,
+    "after": 4758.224780190148,
+    "change_percent": -4.610666602176982
+  }
+}

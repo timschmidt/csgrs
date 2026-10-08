@@ -1,0 +1,21 @@
+{
+  "baseline_revision": "3464aa428",
+  "baseline_source_files_verified": 245,
+  "workspace": "../2026-10-08-curve-budget-isolators/benchmark-workspace.toml",
+  "lockfile": "../2026-10-08-curve-budget-isolators/benchmark-Cargo.lock",
+  "baseline_executable_sha256": "8d747dd85c3eccfea898b0451cd47a7868c1cc6bf9657eae6b4558b1dfe5760a",
+  "candidate_executable_sha256": "240cca85fd8e61a2df471521428cd7379192d4ba85864ef79a8db33620d55b0a",
+  "candidate_solver_sources": {
+    "crates/hypersolve/src/tensor_resultant.rs": "93577d8052d6f085bcd6f6baa3c9e560df3d3220a36cd586e91be0749193fd1c",
+    "crates/hypersolve/src/curve_resultant.rs": "46d3daab680cd5c5cef63d6ca1627cd01d3443f40fe9ba7fb6e3c32c1498eb98",
+    "crates/hypersolve/src/curve_resultant/tests/budget.rs": "a65e7bc8a8d379bc756be6f7e5eaf2342b8ab48f68825cf2e555bb5d5c040e4f",
+    "crates/hypersolve/src/algebraic_tensor_image.rs": "30fb9424184a5ca8c3f57cbe6e78827bbe25581d6d83139b703a84d63d894d46",
+    "crates/hypersolve/src/algebraic_fiber/tests/projection_budget.rs": "ca46a87c97c02e56916812a16f28ccf2c56d15c3cc8ce0b3009a6e4b1c44b69a",
+    "crates/hypersolve/src/work_budget.rs": "22db576ade9c25f9de1562508f8cb30fa5b5bd50a3cac699c9d09c592eb4605f"
+  },
+  "candidate_workspace_sources": "benchmark-sources.json",
+  "build_command": "cargo bench --offline --locked --manifest-path /tmp/csgrs-isolator-baseline/Cargo.toml -p hypersolve --bench certification --no-run",
+  "method": "Reuse the selected-fiber projection executable after verifying all 245 Rust source files in the isolated four-crate workspace against 3464aa428. Copy only the listed solver sources, including the cfg(test) modules, and rebuild with unchanged compiler, profiles, and pruned lockfile. Verify all 246 candidate Rust files against the root workspace before measurement.",
+  "prior_build_provenance": "../2026-10-08-curve-budget-projections/benchmark-provenance.json",
+  "limitations": "Registry package identities and checksums match the root lockfile, but unused workspace dependency edges are absent. These isolated dependency graphs are narrower than the full root workspace. Whole-executable sizes do not measure library size or allocations."
+}

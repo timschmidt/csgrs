@@ -1,0 +1,122 @@
+Benchmarking resultant_tensor_polynomial_univariate_constraint
+Benchmarking resultant_tensor_polynomial_univariate_constraint: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint: Collecting 30 samples in estimated 500.28 ms (462k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint: Analyzing
+resultant_tensor_polynomial_univariate_constraint
+                        time:   [1.0673 µs 1.0713 µs 1.0768 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) low mild
+  1 (3.33%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/direct_real_norm
+Benchmarking resultant_tensor_polynomial_univariate_constraint/direct_real_norm: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/direct_real_norm: Collecting 30 samples in estimated 500.39 ms (498k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/direct_real_norm: Analyzing
+resultant_tensor_polynomial_univariate_constraint/direct_real_norm
+                        time:   [1.0053 µs 1.0068 µs 1.0083 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024: Collecting 30 samples in estimated 501.09 ms (48k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024: Analyzing
+resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024
+                        time:   [10.310 µs 10.336 µs 10.368 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  3 (10.00%) high mild
+  1 (3.33%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024: Collecting 30 samples in estimated 503.43 ms (62k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024: Analyzing
+resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024
+                        time:   [7.7848 µs 7.8280 µs 7.8707 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  3 (10.00%) low mild
+  2 (6.67%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2: Collecting 30 samples in estimated 500.45 ms (79k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2: Analyzing
+resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2
+                        time:   [6.4372 µs 6.4506 µs 6.4666 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high mild
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64: Collecting 30 samples in estimated 503.87 ms (6975 iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64: Analyzing
+resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64
+                        time:   [72.058 µs 72.259 µs 72.452 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  4 (13.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic: Warming up for 200.00 ms
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic: Collecting 30 samples in estimated 566.87 ms (2790 iterations)
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic: Analyzing
+project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic
+                        time:   [201.95 µs 202.77 µs 203.66 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high mild
+
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers: Warming up for 200.00 ms
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers: Collecting 30 samples in estimated 576.57 ms (2790 iterations)
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers: Analyzing
+project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers
+                        time:   [204.56 µs 205.12 µs 205.70 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high mild
+
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers: Warming up for 200.00 ms
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers: Collecting 30 samples in estimated 598.82 ms (2790 iterations)
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers: Analyzing
+project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers
+                        time:   [212.79 µs 214.17 µs 216.49 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  1 (3.33%) high mild
+  2 (6.67%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree: Collecting 30 samples in estimated 500.47 ms (88k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree: Analyzing
+resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree
+                        time:   [4.7141 µs 4.8116 µs 4.9790 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  4 (13.33%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint: Collecting 30 samples in estimated 504.63 ms (32k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint: Analyzing
+resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint
+                        time:   [10.726 µs 10.767 µs 10.822 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high severe
+
+Benchmarking resultant_parametric_curve_intersection
+Benchmarking resultant_parametric_curve_intersection: Warming up for 200.00 ms
+Benchmarking resultant_parametric_curve_intersection: Collecting 30 samples in estimated 500.03 ms (432k iterations)
+Benchmarking resultant_parametric_curve_intersection: Analyzing
+resultant_parametric_curve_intersection
+                        time:   [1.1809 µs 1.1836 µs 1.1872 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high severe
+
+Benchmarking resultant_rational_parametric_curve_intersection
+Benchmarking resultant_rational_parametric_curve_intersection: Warming up for 200.00 ms
+Benchmarking resultant_rational_parametric_curve_intersection: Collecting 30 samples in estimated 500.34 ms (358k iterations)
+Benchmarking resultant_rational_parametric_curve_intersection: Analyzing
+resultant_rational_parametric_curve_intersection
+                        time:   [1.3986 µs 1.5080 µs 1.6991 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high severe
+

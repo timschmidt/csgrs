@@ -2685,6 +2685,11 @@ pub(super) fn selected_trivariate_third_axis_parameters_bounded(
         );
         match projection.status {
             CurveIntersectionResultantStatus::Constructed => projection.resultant_coefficients,
+            CurveIntersectionResultantStatus::BudgetExhausted => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             CurveIntersectionResultantStatus::UndecidedCoefficient => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }

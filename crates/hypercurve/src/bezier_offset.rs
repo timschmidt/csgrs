@@ -2363,6 +2363,7 @@ fn represented_biaffine_ratio(
     );
     if report.status != CurveIntersectionResultantStatus::Constructed {
         return Classification::Uncertain(match report.status {
+            CurveIntersectionResultantStatus::BudgetExhausted => UncertaintyReason::BudgetExhausted,
             CurveIntersectionResultantStatus::UndecidedCoefficient => UncertaintyReason::Predicate,
             _ => UncertaintyReason::Unsupported,
         });

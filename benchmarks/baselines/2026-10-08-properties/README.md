@@ -246,3 +246,62 @@ python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate 
   '^(project_bivariate_fiber/|project_algebraic_fiber_polynomial_image($|/)|project_selected_tensor_fiber_via_tagged_norm/)' \
   /path/to/new-evidence-directory
 ```
+
+## Shared bivariate and tensor elimination
+
+Bivariate system resultants, their polynomial/rational curve wrappers, and
+constrained tensor-axis resultants now participate in the shared promotion
+allowance. Bivariate degree admission itself needs no promotion; the complete
+continuation charges when it starts elimination. Nested tensor images and
+tagged projections count their required constrained-axis eliminations too.
+This extends the preceding accounting contract: the two-source tagged fixture
+now admits four units (entry, two axes, final quotient norm). Exact removal of
+an independent source axis still needs no resultant unit.
+
+Solver tests compare complete reports after denial and retry, including all
+three tensor axes, both bivariate orientations, continuation past a degree
+limit, and correlated-product multiplicity. Curve tests distinguish a sum
+needing two eliminations from a product needing only one after exact quotient
+reduction. The public intersection regression reports a typed pair blocker
+under denial, then returns all three certified contacts with a larger budget
+and matches their evidence against an unbudgeted query.
+
+[`elimination-budget/manifest.json`](elimination-budget/manifest.json) retains
+five alternating process pairs across thirteen workloads, pinned to CPU 0.
+Each uses 30 Criterion samples, 0.2 seconds of warmup, and 0.5 seconds of
+measurement. No other task build or validation ran during measurement.
+The table reports medians of process mean estimates.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Polynomial-curve resultant | 1.187 µs | 1.130 µs | -4.78% |
+| Rational-curve resultant | 1.435 µs | 1.385 µs | -3.51% |
+| Tensor resultant | 1.059 µs | 1.088 µs | +2.79% |
+| Compact 2 × 2 retained grid | 6.502 µs | 6.506 µs | +0.07% |
+| Padded 64 × 64 retained grid | 73.295 µs | 78.994 µs | +7.77% |
+| Padded closed-form norm | 7.789 µs | 7.137 µs | -8.37% |
+| Strict exact-normal constraint | 10.989 µs | 10.589 µs | -3.64% |
+| Tagged repeated degree-six carriers | 213.916 µs | 213.957 µs | +0.02% |
+
+The padded-grid increase prompted a separate nine-pair follow-up with the
+same binaries and settings, retaining the compact grid as a control. In
+[`elimination-budget-padding/manifest.json`](elimination-budget-padding/manifest.json),
+the padded row changes from 77.401 to 75.035 µs (-3.06%), and the compact row
+from 6.410 to 6.393 µs (-0.26%). No source change separates these runs. Both
+observations remain part of the evidence; they do not establish a stable
+speedup or a statistical regression ceiling.
+
+The baseline is `3464aa428`. The isolated workspace, pruned lockfile, compiler,
+and profiles are unchanged from the prior gate; all source fingerprints and
+build details are retained in
+[`benchmark-provenance.json`](../../../docs/evidence/2026-10-08-curve-budget-elimination/benchmark-provenance.json).
+The whole benchmark executable grows by 2,832 bytes. This measures neither
+library size nor allocations. Existing fixture setup assertions and separate
+exact-output tests remain the correctness evidence; no per-iteration checksum
+was added to Criterion.
+
+```sh
+python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
+  '^(resultant_tensor_polynomial_univariate_constraint($|/)|resultant_(rational_)?parametric_curve_intersection$|project_selected_tensor_fiber_via_tagged_norm/)' \
+  /path/to/new-evidence-directory
+```

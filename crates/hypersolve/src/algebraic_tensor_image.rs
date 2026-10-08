@@ -145,9 +145,10 @@ fn primitive_first_parameter_component_from_flat_rows(
 /// The caller must first prove that the authored selected fiber is not
 /// identically zero. A zero selected fiber is a component, not a finite root
 /// set, and therefore has no univariate projection.
-/// A work budget charges one promotion at this entry and another at the final
-/// bivariate quotient norm. Both share the caller's allowance; exhaustion
-/// returns `BudgetExhausted` without partial coefficients.
+/// A work budget charges one promotion at this entry, one for each tensor-axis
+/// resultant that is needed, and another at the final bivariate quotient norm.
+/// These share the caller's allowance; exhaustion returns `BudgetExhausted`
+/// without partial coefficients.
 pub fn project_selected_tensor_fiber_via_tagged_norm(
     relation: &DenseTensorPolynomial,
     source_roots: &[AlgebraicRootRepresentation],
@@ -232,7 +233,13 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
                 PredicatePolicy::MAX_REFINEMENT_PRECISION,
             );
             if elimination.status != TensorConstraintResultantStatus::Constructed {
-                return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+                return projection_report(
+                    if elimination.status == TensorConstraintResultantStatus::BudgetExhausted {
+                        AlgebraicFiberProjectionStatus::BudgetExhausted
+                    } else {
+                        AlgebraicFiberProjectionStatus::Undecided
+                    },
+                );
             }
             elimination
                 .resultant
@@ -784,7 +791,13 @@ pub fn represent_algebraic_tensor_image(
                     "one tensor-image constrained-axis resultant failed".to_owned()
                 });
                 return AlgebraicTensorImageReport {
-                    status: AlgebraicTensorImageStatus::EliminationFailed,
+                    status: if elimination.status
+                        == TensorConstraintResultantStatus::BudgetExhausted
+                    {
+                        AlgebraicTensorImageStatus::BudgetExhausted
+                    } else {
+                        AlgebraicTensorImageStatus::EliminationFailed
+                    },
                     elimination_count: eliminated_source_count,
                     failed_elimination: Some(elimination),
                     representation: None,
@@ -933,17 +946,23 @@ pub fn represent_algebraic_tensor_image(
             },
         );
         let Some(interval) = refinement.refined_interval else {
-            let status = match refinement.status {
-                IsolatedRootRefinementStatus::NonUnitIsolation => {
-                    AlgebraicTensorImageStatus::NonIsolatingImageInterval
+            let status = if crate::work_budget::exhaustion().is_some() {
+                AlgebraicTensorImageStatus::BudgetExhausted
+            } else {
+                match refinement.status {
+                    IsolatedRootRefinementStatus::NonUnitIsolation => {
+                        AlgebraicTensorImageStatus::NonIsolatingImageInterval
+                    }
+                    IsolatedRootRefinementStatus::InvalidPolynomial
+                    | IsolatedRootRefinementStatus::InvalidInterval => {
+                        AlgebraicTensorImageStatus::InvalidTransformedEvidence
+                    }
+                    IsolatedRootRefinementStatus::Undecided
+                    | IsolatedRootRefinementStatus::Refined
+                    | IsolatedRootRefinementStatus::ExactRoot => {
+                        AlgebraicTensorImageStatus::Undecided
+                    }
                 }
-                IsolatedRootRefinementStatus::InvalidPolynomial
-                | IsolatedRootRefinementStatus::InvalidInterval => {
-                    AlgebraicTensorImageStatus::InvalidTransformedEvidence
-                }
-                IsolatedRootRefinementStatus::Undecided
-                | IsolatedRootRefinementStatus::Refined
-                | IsolatedRootRefinementStatus::ExactRoot => AlgebraicTensorImageStatus::Undecided,
             };
             return AlgebraicTensorImageReport {
                 status,
@@ -2010,26 +2029,52 @@ mod tests {
             WorkKind::AlgebraicPromotion
         );
         assert_eq!(failed.usage.promotions, 0);
+        let elimination_limited = with_budget(
+            WorkBudget {
+                refinements: 64,
+                promotions: 1,
+            },
+            || {
+                let report = represent_algebraic_tensor_image(&relation, &roots, &interval);
+                assert_eq!(report.status, AlgebraicTensorImageStatus::BudgetExhausted);
+                assert!(report.representation.is_none());
+                let failure = report.failed_elimination.unwrap();
+                assert_eq!(
+                    failure.status,
+                    TensorConstraintResultantStatus::BudgetExhausted
+                );
+                assert!(failure.resultant.is_none());
+            },
+        );
+        assert_eq!(
+            elimination_limited.result.unwrap_err().kind,
+            WorkKind::AlgebraicPromotion
+        );
+        assert_eq!(elimination_limited.usage.promotions, 1);
         let refinement_limited = with_budget(
             WorkBudget {
                 refinements: 0,
-                promotions: 1,
+                promotions: 2,
             },
-            || represent_algebraic_tensor_image(&relation, &roots, &interval),
+            || {
+                let report = represent_algebraic_tensor_image(&relation, &roots, &interval);
+                assert_eq!(report.status, AlgebraicTensorImageStatus::BudgetExhausted);
+                assert!(report.representation.is_none());
+            },
         );
         assert_eq!(
             refinement_limited.result.unwrap_err().kind,
             WorkKind::RootRefinement
         );
-        assert_eq!(refinement_limited.usage.promotions, 1);
+        assert_eq!(refinement_limited.usage.promotions, 2);
         let completed = with_budget(
             WorkBudget {
                 refinements: 64,
-                promotions: 1,
+                promotions: 2,
             },
             || represent_algebraic_tensor_image(&relation, &roots, &interval),
         );
-        assert_eq!(completed.usage.promotions, 1);
+        assert_eq!(completed.usage.promotions, 2);
         assert!(completed.usage.refinements > 0);
         assert_eq!(completed.result.unwrap(), expected);
     }

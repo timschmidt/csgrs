@@ -47,12 +47,22 @@ resource contract without claiming a general performance improvement.
 
 Selected-fiber polynomial images and quotient norms now admit their projection
 work explicitly. A tagged tensor-fiber projection shares its budget with its
-final quotient norm, requiring two promotion units. Reports discard partial
+constrained-axis eliminations and final quotient norm. Reports discard partial
 coefficients and retained relations after exhaustion. Regression tests compare
 complete retry reports, including saturated foreign factors, both retained
 axes, both predicate policies, and repeated degree-six carriers. The
 [projection probe](../../benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
 records the cost of these additional admission checks on existing workloads.
+
+Bivariate system resultants and constrained tensor-axis resultants now charge
+their own promotion attempts. A degree-limited bivariate request can continue
+with the same allowance: admission by degree alone spends no promotion unit.
+Tensor reductions that remove an independent axis also need no resultant.
+Native tests preserve full reports and correlated-product multiplicity after
+retry; the curve tests cover both a two-norm sum and a one-norm product, where
+quotient reduction removes the remaining source axis. The
+[elimination probe](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
+records the inactive accounting cost on the existing resultant workloads.
 
 ## Reference-by-reference findings
 

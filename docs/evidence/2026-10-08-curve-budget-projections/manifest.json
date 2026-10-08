@@ -139,6 +139,21 @@
         "failed": 0,
         "ignored": 0
       }
+    },
+    {
+      "name": "hypercurve-configured-ci",
+      "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "working_directory": "crates/hypercurve",
+      "source_revision": "3464aa428",
+      "exit_code": 0,
+      "log": "hypercurve-configured-ci.log",
+      "sha256": "1e6e30baaf34c2be5bf0456c918a7931d778b6d1a0b192c82cba3a80f730864f",
+      "tests": {
+        "passed": 2406,
+        "failed": 0,
+        "ignored": 33
+      },
+      "source_note": "Test executables compiled from 3464aa428 before the next bivariate/tensor elimination edits. No later root-workspace release build ran during this suite; the sole policy.rs doctest was unchanged."
     }
   ],
   "benchmark_logs": [
@@ -162,11 +177,9 @@
   "concurrent_diagnostic": "../../../benchmarks/baselines/2026-10-08-properties/projection-budget-concurrent/manifest.json",
   "benchmark_provenance": "benchmark-provenance.json",
   "sources": "sources.json",
-  "pending": [
-    "Run the full configured Hypercurve CI test command for this projection extension."
-  ],
+  "pending": [],
   "limitations": [
-    "The full configured Hypercurve run at 12176ca1a (2,405 passed, 33 existing ignored) predates these projection hooks and is retained with the image-promotion evidence.",
+    "The full configured Hypercurve CI test command passed at 3464aa428; it does not cover the subsequent bivariate/tensor elimination extension.",
     "Only instrumented refinement/promotion attempts are bounded. Remaining elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time need separate bounds.",
     "Selected Criterion workloads do not checksum every timed result; complete-report and exact-retry regressions are separate evidence. Timing medians do not establish a statistical regression ceiling.",
     "No full repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed."

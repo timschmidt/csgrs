@@ -1,0 +1,30 @@
+Completed 1/9: before
+Completed 1/9: after
+Completed 2/9: after
+Completed 2/9: before
+Completed 3/9: before
+Completed 3/9: after
+Completed 4/9: after
+Completed 4/9: before
+Completed 5/9: before
+Completed 5/9: after
+Completed 6/9: after
+Completed 6/9: before
+Completed 7/9: before
+Completed 7/9: after
+Completed 8/9: after
+Completed 8/9: before
+Completed 9/9: before
+Completed 9/9: after
+{
+  "resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2": {
+    "before": 6409.727783807339,
+    "after": 6393.2027038998685,
+    "change_percent": -0.2578125072521309
+  },
+  "resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64": {
+    "before": 77401.05879251492,
+    "after": 75034.52444567536,
+    "change_percent": -3.057496090826617
+  }
+}

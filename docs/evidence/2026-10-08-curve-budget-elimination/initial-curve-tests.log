@@ -1,0 +1,26 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0425]: cannot find function `resultant_bivariate_polynomial_system_complete` in crate `hypersolve`
+    --> crates/hypercurve/src/bezier_offset/selected_dense/budget_tests.rs:78:21
+     |
+  78 |           hypersolve::resultant_bivariate_polynomial_system_complete(
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: crates/hypersolve/src/curve_resultant.rs:1973:1
+     |
+1973 | / pub fn resultant_bivariate_polynomial_system(
+1974 | |     first_equation: &BivariatePolynomial,
+1975 | |     second_equation: &BivariatePolynomial,
+1976 | |     retained_parameter: CurveResultantParameter,
+1977 | |     config: CurveIntersectionResultantConfig,
+1978 | | ) -> CurveIntersectionResultantReport {
+     | |_____________________________________- similarly named function `resultant_bivariate_polynomial_system` defined here
+     |
+help: a function with a similar name exists
+     |
+  78 -         hypersolve::resultant_bivariate_polynomial_system_complete(
+  78 +         hypersolve::resultant_bivariate_polynomial_system(
+     |
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `hypercurve` (lib test) due to 1 previous error
