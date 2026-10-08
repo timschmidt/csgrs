@@ -7,7 +7,6 @@
 
 use std::collections::HashMap;
 
-use crate::PcbRegionExt;
 use crate::geometry::{Polygon, Rect};
 use crate::kicad::{CopperFeature, DrillFeature};
 
@@ -27,7 +26,7 @@ pub(super) struct CopperSpatialIndex<'a> {
     buckets_by_layer: HashMap<String, HashMap<(i64, i64), Vec<usize>>>,
     all_layer_buckets: HashMap<(i64, i64), Vec<usize>>,
     cell_size: f64,
-    maximum_span: f64,
+    maximum_span: Option<f64>,
 }
 
 impl<'a> CopperSpatialIndex<'a> {
@@ -36,14 +35,18 @@ impl<'a> CopperSpatialIndex<'a> {
         let maximum_span = features
             .iter()
             .map(|feature| feature_span(feature))
-            .fold(0.0_f64, f64::max);
-        let cell_size = nominal_radius.max(maximum_span).max(SPATIAL_GRID_EPSILON);
+            .try_fold(0.0_f64, |maximum, span| span.map(|span| maximum.max(span)));
+        let cell_size = nominal_radius
+            .max(maximum_span.unwrap_or(1.0))
+            .max(SPATIAL_GRID_EPSILON);
         let mut buckets_by_layer: HashMap<String, HashMap<(i64, i64), Vec<usize>>> = HashMap::new();
         let mut all_layer_buckets: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
 
         for (index, feature) in features.iter().enumerate() {
-            let (bucket_x, bucket_y) =
-                center_bucket_key(feature.location_f64_compatibility_required(), cell_size);
+            let Some(location) = feature.location_f64_compatibility() else {
+                continue;
+            };
+            let (bucket_x, bucket_y) = center_bucket_key(location, cell_size);
             buckets_by_layer
                 .entry(feature.layer.clone())
                 .or_default()
@@ -76,7 +79,15 @@ impl<'a> CopperSpatialIndex<'a> {
         feature: &CopperFeature,
         radius: f64,
     ) -> Vec<usize> {
-        let query_radius = radius + feature_span(feature) / 2.0 + self.maximum_span / 2.0;
+        let Some((span, maximum)) = feature_span(feature).zip(self.maximum_span) else {
+            return self
+                .features
+                .iter()
+                .enumerate()
+                .filter_map(|(index, other)| (other.layer == feature.layer).then_some(index))
+                .collect();
+        };
+        let query_radius = (radius + span / 2.0 + maximum / 2.0).next_up();
         self.near_center_on_layer(
             feature.location_f64_compatibility_required(),
             &feature.layer,
@@ -95,7 +106,10 @@ impl<'a> CopperSpatialIndex<'a> {
         feature: &CopperFeature,
         radius: f64,
     ) -> Vec<usize> {
-        let query_radius = radius + feature_span(feature) / 2.0 + self.maximum_span / 2.0;
+        let Some((span, maximum)) = feature_span(feature).zip(self.maximum_span) else {
+            return (0..self.features.len()).collect();
+        };
+        let query_radius = (radius + span / 2.0 + maximum / 2.0).next_up();
         self.near_center_all_layers(feature.location_f64_compatibility_required(), query_radius)
     }
 
@@ -152,55 +166,33 @@ impl<'a> CopperSpatialIndex<'a> {
     /// Use this for source geometry that has no layer of its own, such as
     /// mechanical drills. Callers still need their exact shape predicate.
     pub(super) fn all_layers_near_circle(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
-        let query_radius = radius + self.maximum_span / 2.0;
+        let Some(maximum) = self.maximum_span else {
+            return (0..self.features.len()).collect();
+        };
+        let query_radius = (radius + maximum / 2.0).next_up();
         self.near_center_all_layers(center, query_radius)
     }
 
     fn near_center_all_layers(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
-        let min_x = bucket_coordinate(center[0] - radius, self.cell_size);
-        let max_x = bucket_coordinate(center[0] + radius, self.cell_size);
-        let min_y = bucket_coordinate(center[1] - radius, self.cell_size);
-        let max_y = bucket_coordinate(center[1] + radius, self.cell_size);
-        let mut candidates = Vec::new();
-
-        // Keep a second layerless bucket map for source geometry such as NPTH
-        // drills that can interact with copper on any selected layer. This
-        // avoids scanning every layer-qualified bucket
-        // for every mechanical feature on sparse, multi-layer boards.
-        for x in min_x..=max_x {
-            for y in min_y..=max_y {
-                if let Some(bucket) = self.all_layer_buckets.get(&(x, y)) {
-                    candidates.extend(bucket.iter().copied());
-                }
-            }
+        if self.maximum_span.is_none() {
+            return (0..self.features.len()).collect();
         }
-
-        candidates.sort_unstable();
-        candidates.dedup();
-        candidates
+        candidate_centers_within(&self.all_layer_buckets, self.cell_size, center, radius)
     }
 
     fn near_center_on_layer(&self, center: [f64; 2], layer: &str, radius: f64) -> Vec<usize> {
-        let Some(layer_buckets) = self.buckets_by_layer.get(layer) else {
+        if self.maximum_span.is_none() {
+            return self
+                .features
+                .iter()
+                .enumerate()
+                .filter_map(|(index, other)| (other.layer == layer).then_some(index))
+                .collect();
+        }
+        let Some(buckets) = self.buckets_by_layer.get(layer) else {
             return Vec::new();
         };
-        let min_x = bucket_coordinate(center[0] - radius, self.cell_size);
-        let max_x = bucket_coordinate(center[0] + radius, self.cell_size);
-        let min_y = bucket_coordinate(center[1] - radius, self.cell_size);
-        let max_y = bucket_coordinate(center[1] + radius, self.cell_size);
-        let mut candidates = Vec::new();
-
-        for x in min_x..=max_x {
-            for y in min_y..=max_y {
-                if let Some(bucket) = layer_buckets.get(&(x, y)) {
-                    candidates.extend(bucket.iter().copied());
-                }
-            }
-        }
-
-        candidates.sort_unstable();
-        candidates.dedup();
-        candidates
+        candidate_centers_within(buckets, self.cell_size, center, radius)
     }
 }
 
@@ -296,7 +288,17 @@ impl LayerPolygonSpatialIndex {
     fn candidates_near_bounds(&self, bounds: Rect<f64>, radius: f64) -> Vec<usize> {
         let query_radius = radius + rect_span(&bounds) / 2.0 + self.maximum_span / 2.0;
         let center = rect_center(&bounds);
-        candidate_centers_within(&self.buckets, self.cell_size, center, query_radius)
+        let mut candidates =
+            candidate_centers_within(&self.buckets, self.cell_size, center, query_radius);
+        candidates.extend(
+            self.bounds
+                .iter()
+                .enumerate()
+                .filter_map(|(index, bounds)| bounds.is_none().then_some(index)),
+        );
+        candidates.sort_unstable();
+        candidates.dedup();
+        candidates
     }
 }
 
@@ -504,6 +506,17 @@ fn candidate_centers_within(
     let max_x = bucket_coordinate(center[0] + radius, cell_size);
     let min_y = bucket_coordinate(center[1] - radius, cell_size);
     let max_y = bucket_coordinate(center[1] + radius, cell_size);
+    let x_count = i128::from(max_x) - i128::from(min_x) + 1;
+    let y_count = i128::from(max_y) - i128::from(min_y) + 1;
+    if !radius.is_finite()
+        || !center.into_iter().all(f64::is_finite)
+        || x_count.saturating_mul(y_count) > (buckets.len().max(1) as i128) * 16
+    {
+        let mut all = buckets.values().flatten().copied().collect::<Vec<_>>();
+        all.sort_unstable();
+        all.dedup();
+        return all;
+    }
     let mut candidates = Vec::new();
 
     for x in min_x..=max_x {
@@ -571,13 +584,21 @@ fn rect_span(bounds: &Rect<f64>) -> f64 {
     (width * width + height * height).sqrt()
 }
 
-fn feature_span(feature: &CopperFeature) -> f64 {
-    let Some(bounds) = feature.region.geometry().bounding_rect() else {
-        return 0.0;
-    };
-    let width = bounds.max().x - bounds.min().x;
-    let height = bounds.max().y - bounds.min().y;
-    (width * width + height * height).sqrt()
+pub(super) fn feature_span(feature: &CopperFeature) -> Option<f64> {
+    let bounds = feature.region.conservative_bounds()?;
+    let center = feature.location_f64_compatibility()?;
+    // Cover the entire native envelope around the authored anchor, which need
+    // not coincide with the geometric center (for example, custom artwork).
+    let dx = (bounds.max().x - center[0])
+        .abs()
+        .max((bounds.min().x - center[0]).abs())
+        .next_up();
+    let dy = (bounds.max().y - center[1])
+        .abs()
+        .max((bounds.min().y - center[1]).abs())
+        .next_up();
+    let span = (2.0 * dx.hypot(dy).next_up()).next_up();
+    span.is_finite().then_some(span)
 }
 
 #[cfg(test)]
@@ -768,5 +789,52 @@ mod tests {
             net: None,
             plated: true,
         }
+    }
+}
+
+#[cfg(test)]
+mod projection_index_regressions {
+    use super::CopperSpatialIndex;
+    use crate::geometry::{polygons_to_profile, rect_polygon};
+    use crate::kicad::{CopperFeature, CopperKind};
+    use crate::{PcbRegion, Scalar};
+
+    fn feature(region: PcbRegion, layer: &str, anchor_x: i32) -> CopperFeature {
+        CopperFeature {
+            layer: layer.into(),
+            net: Some("test".into()),
+            kind: CopperKind::Artwork,
+            region,
+            location: [Scalar::from(anchor_x), Scalar::zero()],
+        }
+    }
+
+    #[test]
+    fn missing_native_bounds_keep_all_same_layer_candidates() {
+        let make = || polygons_to_profile(vec![rect_polygon([0.0, 0.0], [1.0, 1.0], 0.0)], None);
+        let known = feature(make(), "F.Cu", 0);
+        let unknown = feature(
+            make().with_exact_construction_error("retained native failure"),
+            "F.Cu",
+            1_000,
+        );
+        let other_layer = feature(make(), "B.Cu", 0);
+        let features = [&unknown, &other_layer];
+        let index = CopperSpatialIndex::new(&features, 0.0);
+        assert_eq!(index.same_layer_near_feature(&known, 0.0), [0]);
+        assert_eq!(index.all_layers_near_feature(&known, 0.0), [0, 1]);
+        let known_features = [&known];
+        let known_index = CopperSpatialIndex::new(&known_features, 0.0);
+        assert_eq!(known_index.same_layer_near_feature(&unknown, 0.0), [0]);
+    }
+
+    #[test]
+    fn native_extent_is_measured_about_the_authored_anchor() {
+        let shape = || polygons_to_profile(vec![rect_polygon([100.0, 0.0], [1.0, 1.0], 0.0)], None);
+        let query = feature(shape(), "F.Cu", 100);
+        let displaced_anchor = feature(shape(), "F.Cu", 0);
+        let features = [&displaced_anchor];
+        let index = CopperSpatialIndex::new(&features, 0.0);
+        assert_eq!(index.same_layer_near_feature(&query, 0.0), [0]);
     }
 }

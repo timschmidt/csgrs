@@ -328,7 +328,15 @@ fn dense_pad_via_spacing_readiness_with_stats(
                     );
                 }
             };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+            let Some(projected) = crate::checks::geometry_result_for_check(
+                overlap.try_to_multipolygon(),
+                "dense-pad-via-spacing-readiness",
+                &[&layer, &via.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            let shapes = multipolygon_to_shapes_scalar(&projected, min_area);
             violations.push(Violation::new(
                 "dense-pad-via-spacing-readiness",
                 Severity::Warning,
@@ -496,7 +504,7 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
         return false;
     }
 
-    let Some(bounds) = feature.region.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.conservative_bounds() else {
         return false;
     };
     let width = bounds.max().x - bounds.min().x;
@@ -572,19 +580,19 @@ fn nearest_feature_pair_within<'a>(
     let mut candidate_pairs = 0_usize;
     let mut exact_pairs = 0_usize;
     for (left_index, left) in features.iter().enumerate() {
-        let Some(left_bounds) = left.region.geometry().bounding_rect() else {
-            continue;
-        };
+        let left_bounds = left.region.conservative_bounds();
         for right_index in index.same_layer_near_feature(left, broad_threshold) {
             if right_index <= left_index {
                 continue;
             }
             candidate_pairs += 1;
             let right = features[right_index];
-            let Some(right_bounds) = right.region.geometry().bounding_rect() else {
-                continue;
-            };
-            if !rects_within_clearance(&left_bounds, &right_bounds, broad_threshold) {
+            let right_bounds = right.region.conservative_bounds();
+            if left_bounds
+                .as_ref()
+                .zip(right_bounds.as_ref())
+                .is_some_and(|(left, right)| !rects_within_clearance(left, right, broad_threshold))
+            {
                 continue;
             }
             exact_pairs += 1;

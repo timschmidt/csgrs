@@ -29,76 +29,78 @@ pub fn switch_node_keepout_readiness(
     keepout: Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let switching = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_switching_net))
-        .collect::<Vec<_>>();
-    log::trace!(
-        "switch-node keepout readiness: source={} switching={} features={} keepout={keepout:#.6}",
-        board.source,
-        switching.len(),
-        features.len(),
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("switch-node-keepout-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let switching = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_switching_net))
+            .collect::<Vec<_>>();
+        log::trace!(
+            "switch-node keepout readiness: source={} switching={} features={} keepout={keepout:#.6}",
+            board.source,
+            switching.len(),
+            features.len(),
+        );
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
+        let mut exact_pair_count = 0_usize;
 
-    for switch_feature in switching {
-        for neighbor in &features {
-            let neighbor = *neighbor;
-            candidate_count += 1;
-            if std::ptr::eq(switch_feature, neighbor) {
-                continue;
-            }
-            if switch_feature.layer != neighbor.layer {
-                continue;
-            }
-            if switch_feature.net == neighbor.net {
-                continue;
-            }
-            if neighbor.net.as_deref().is_some_and(looks_ground_net) {
-                continue;
-            }
-            if !regiones_within_clearance(&switch_feature.region, &neighbor.region, &keepout) {
-                continue;
-            }
-            exact_pair_count += 1;
+        for switch_feature in switching {
+            for neighbor in &features {
+                let neighbor = *neighbor;
+                candidate_count += 1;
+                if std::ptr::eq(switch_feature, neighbor) {
+                    continue;
+                }
+                if switch_feature.layer != neighbor.layer {
+                    continue;
+                }
+                if switch_feature.net == neighbor.net {
+                    continue;
+                }
+                if neighbor.net.as_deref().is_some_and(looks_ground_net) {
+                    continue;
+                }
+                if !regiones_within_clearance(&switch_feature.region, &neighbor.region, &keepout) {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-            let expanded = match offset_for_check(
-                &switch_feature.region,
-                keepout.clone(),
-                "switch-node-keepout-readiness",
-                vec![switch_feature.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &neighbor.region,
-                "switch-node-keepout-readiness",
-                vec![switch_feature.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+                let expanded = match offset_for_check(
                     &switch_feature.region,
-                    &neighbor.region,
-                    &keepout,
+                    keepout.clone(),
                     "switch-node-keepout-readiness",
-                    &[&switch_feature.layer],
-                    &mut violations,
-                ) == Some(true);
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                    vec![switch_feature.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &neighbor.region,
+                    "switch-node-keepout-readiness",
+                    vec![switch_feature.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let fallback_hit = shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &switch_feature.region,
+                        &neighbor.region,
+                        &keepout,
+                        "switch-node-keepout-readiness",
+                        &[&switch_feature.layer],
+                        &mut violations,
+                    ) == Some(true);
+                if shapes.is_empty() && !fallback_hit {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "switch-node-keepout-readiness",
                 Severity::Warning,
                 vec![switch_feature.layer.clone()],
@@ -113,19 +115,20 @@ pub fn switch_node_keepout_readiness(
                     switch_feature.net, neighbor.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "switch-node keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+        log::trace!(
+            "switch-node keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+            board.source,
+            candidate_count,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely inductor or switch-node copper has same-layer copper inside
@@ -141,82 +144,87 @@ pub fn inductor_copper_keepout_readiness(
     keepout: Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if crate::scalar::le(&keepout, &Scalar::zero()) {
-        return Vec::new();
-    }
-
-    let features = selected_copper_features(board, selected_layers);
-    let inductors = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_inductor_or_switch_node)
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "inductor copper keepout readiness: source={} inductors={} features={} keepout={keepout:#.6}",
-        board.source,
-        inductors.len(),
-        features.len(),
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
-
-    for inductor in inductors {
-        for neighbor in &features {
-            let neighbor = *neighbor;
-            candidate_count += 1;
-            if std::ptr::eq(inductor, neighbor) {
-                continue;
-            }
-            if inductor.layer != neighbor.layer {
-                continue;
-            }
-            if inductor.net == neighbor.net {
-                continue;
-            }
-            if !regiones_within_clearance(&inductor.region, &neighbor.region, &keepout) {
-                continue;
-            }
-            exact_pair_count += 1;
-
-            let expanded = match offset_for_check(
-                &inductor.region,
-                keepout.clone(),
-                "inductor-copper-keepout-readiness",
-                vec![inductor.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &neighbor.region,
-                "inductor-copper-keepout-readiness",
-                vec![inductor.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
-                    &inductor.region,
-                    &neighbor.region,
-                    &keepout,
-                    "inductor-copper-keepout-readiness",
-                    &[&inductor.layer],
-                    &mut violations,
-                ) == Some(true);
-            if shapes.is_empty() && !fallback_hit {
-                continue;
+    crate::checks::run_geometry_check(
+        "inductor-copper-keepout-readiness",
+        &[&board.source],
+        || {
+            if crate::scalar::le(&keepout, &Scalar::zero()) {
+                return Ok(Vec::new());
             }
 
-            violations.push(Violation::new(
+            let features = selected_copper_features(board, selected_layers);
+            let inductors = features
+                .iter()
+                .copied()
+                .filter(|feature| {
+                    feature
+                        .net
+                        .as_deref()
+                        .is_some_and(looks_inductor_or_switch_node)
+                })
+                .collect::<Vec<_>>();
+            log::trace!(
+                "inductor copper keepout readiness: source={} inductors={} features={} keepout={keepout:#.6}",
+                board.source,
+                inductors.len(),
+                features.len(),
+            );
+            let mut violations = Vec::new();
+            let mut candidate_count = 0_usize;
+            let mut exact_pair_count = 0_usize;
+
+            for inductor in inductors {
+                for neighbor in &features {
+                    let neighbor = *neighbor;
+                    candidate_count += 1;
+                    if std::ptr::eq(inductor, neighbor) {
+                        continue;
+                    }
+                    if inductor.layer != neighbor.layer {
+                        continue;
+                    }
+                    if inductor.net == neighbor.net {
+                        continue;
+                    }
+                    if !regiones_within_clearance(&inductor.region, &neighbor.region, &keepout) {
+                        continue;
+                    }
+                    exact_pair_count += 1;
+
+                    let expanded = match offset_for_check(
+                        &inductor.region,
+                        keepout.clone(),
+                        "inductor-copper-keepout-readiness",
+                        vec![inductor.layer.clone()],
+                    ) {
+                        Ok(expanded) => expanded,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let overlap = match intersection_for_check(
+                        &expanded,
+                        &neighbor.region,
+                        "inductor-copper-keepout-readiness",
+                        vec![inductor.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    let fallback_hit = shapes.is_empty()
+                        && crate::checks::boundaries_within_for_check(
+                            &inductor.region,
+                            &neighbor.region,
+                            &keepout,
+                            "inductor-copper-keepout-readiness",
+                            &[&inductor.layer],
+                            &mut violations,
+                        ) == Some(true);
+                    if shapes.is_empty() && !fallback_hit {
+                        continue;
+                    }
+
+                    violations.push(Violation::new(
                 "inductor-copper-keepout-readiness",
                 Severity::Warning,
                 vec![inductor.layer.clone()],
@@ -231,19 +239,21 @@ pub fn inductor_copper_keepout_readiness(
                     inductor.net, neighbor.net
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "inductor copper keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+            log::trace!(
+                "inductor copper keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_count,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 fn selected_copper_features<'a>(

@@ -43,66 +43,74 @@ pub fn mask_island_keepout(
     keepout: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let polygons = region.to_multipolygon().0;
-    let doubled_keepout = keepout * crate::scalar::scalar("2");
-    let broad_phase_keepout = scalar_broad_phase_radius(&doubled_keepout);
-    let index = LayerPolygonSpatialIndex::new(&polygons, broad_phase_keepout);
-    log::trace!(
-        "mask-island keepout: layer={layer_name} islands={} buckets={} keepout={keepout:.6}",
-        polygons.len(),
-        index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0usize;
+    crate::checks::run_geometry_check("mask-island-keepout", &[layer_name], || {
+        let polygons = region.try_to_multipolygon()?.0;
+        let doubled_keepout = keepout * crate::scalar::scalar("2");
+        let broad_phase_keepout = scalar_broad_phase_radius(&doubled_keepout);
+        let index = LayerPolygonSpatialIndex::new(&polygons, broad_phase_keepout);
+        log::trace!(
+            "mask-island keepout: layer={layer_name} islands={} buckets={} keepout={keepout:.6}",
+            polygons.len(),
+            index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_pairs = 0usize;
 
-    for island_index in 0..polygons.len() {
-        let candidate_indexes = index.later_candidates_near(island_index, broad_phase_keepout);
-        candidate_pairs += candidate_indexes.len();
-        for neighbor_index in candidate_indexes {
-            if !polygons_within_clearance(
-                &polygons[island_index],
-                &polygons[neighbor_index],
-                broad_phase_keepout,
-            ) {
-                continue;
-            }
+        for island_index in 0..polygons.len() {
+            let candidate_indexes = index.later_candidates_near(island_index, broad_phase_keepout);
+            candidate_pairs += candidate_indexes.len();
+            for neighbor_index in candidate_indexes {
+                if !polygons_within_clearance(
+                    &polygons[island_index],
+                    &polygons[neighbor_index],
+                    broad_phase_keepout,
+                ) {
+                    continue;
+                }
 
-            // Offset both candidate islands and intersect only after a bounding
-            // box broad phase. This avoids rebuilding and offsetting the rest
-            // of a dense soldermask layer for every island while preserving the
-            // same exact polygon predicate for nearby island pairs.
-            let island =
-                polygon_to_profile(polygons[island_index].clone(), Some(metadata(layer_name)));
-            let neighbor =
-                polygon_to_profile(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
-            let layers = vec![layer_name.to_string()];
-            let expanded_island = match offset_for_check(
-                &island,
-                keepout.clone(),
-                "mask-island-keepout",
-                layers.clone(),
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let expanded_neighbor =
-                match offset_for_check(&neighbor, keepout.clone(), "mask-island-keepout", layers) {
+                // Offset both candidate islands and intersect only after a bounding
+                // box broad phase. This avoids rebuilding and offsetting the rest
+                // of a dense soldermask layer for every island while preserving the
+                // same exact polygon predicate for nearby island pairs.
+                let island =
+                    polygon_to_profile(polygons[island_index].clone(), Some(metadata(layer_name)));
+                let neighbor = polygon_to_profile(
+                    polygons[neighbor_index].clone(),
+                    Some(metadata(layer_name)),
+                );
+                let layers = vec![layer_name.to_string()];
+                let expanded_island = match offset_for_check(
+                    &island,
+                    keepout.clone(),
+                    "mask-island-keepout",
+                    layers.clone(),
+                ) {
                     Ok(expanded) => expanded,
-                    Err(uncertainty) => return vec![*uncertainty],
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
-            let overlap = match intersection_for_check(
-                &expanded_island,
-                &expanded_neighbor,
-                "mask-island-keepout",
-                vec![layer_name.to_string()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+                let expanded_neighbor = match offset_for_check(
+                    &neighbor,
+                    keepout.clone(),
+                    "mask-island-keepout",
+                    layers,
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded_island,
+                    &expanded_neighbor,
+                    "mask-island-keepout",
+                    vec![layer_name.to_string()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
 
-            if !shapes.is_empty() {
-                violations.push(Violation::new(
+                if !shapes.is_empty() {
+                    violations.push(Violation::new(
                     "mask-island-keepout",
                     Severity::Error,
                     vec![layer_name.to_string()],
@@ -113,17 +121,18 @@ pub fn mask_island_keepout(
                         "island keepout intersects neighboring mask geometry after {keepout} offset"
                     )),
                 ));
+                }
             }
         }
-    }
 
-    log::trace!(
-        "mask-island keepout finished: layer={layer_name} candidate_pairs={} violations={}",
-        candidate_pairs,
-        violations.len()
-    );
+        log::trace!(
+            "mask-island keepout finished: layer={layer_name} candidate_pairs={} violations={}",
+            candidate_pairs,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 fn polygons_within_clearance(left: &Polygon<f64>, right: &Polygon<f64>, clearance: f64) -> bool {
@@ -171,50 +180,57 @@ pub fn copper_overlap_with_ipc356(
     ipc356_points: &[Ipc356Point],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = match intersection_for_check(
-        left,
-        right,
-        "copper-overlap",
-        vec![left_name.to_string(), right_name.to_string()],
-    ) {
-        Ok(overlap) => overlap,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-    if shapes.is_empty() {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check(
+        "copper-overlap-with-ipc356",
+        &[left_name, right_name],
+        || {
+            let overlap = match intersection_for_check(
+                left,
+                right,
+                "copper-overlap",
+                vec![left_name.to_string(), right_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                return Ok(Vec::new());
+            }
 
-    let nets = ipc356_nets_in_region(&overlap, ipc356_points);
-    let (severity, message) = match nets.as_slice() {
-        [net] => (
-            Severity::Warning,
-            format!(
-                "copper regions overlap across layers with IPC-D-356 same-net evidence for {net}; review whether the overlap is intentional"
-            ),
-        ),
-        [] => (
-            Severity::Error,
-            "copper regions overlap across layers without IPC-D-356 same-net evidence".to_string(),
-        ),
-        _ => (
-            Severity::Error,
-            format!(
-                "copper regions overlap across layers with mixed IPC-D-356 net evidence: {}",
-                nets.join(", ")
-            ),
-        ),
-    };
+            let nets = ipc356_nets_in_region(&overlap, ipc356_points);
+            let (severity, message) = match nets.as_slice() {
+                [net] => (
+                    Severity::Warning,
+                    format!(
+                        "copper regions overlap across layers with IPC-D-356 same-net evidence for {net}; review whether the overlap is intentional"
+                    ),
+                ),
+                [] => (
+                    Severity::Error,
+                    "copper regions overlap across layers without IPC-D-356 same-net evidence"
+                        .to_string(),
+                ),
+                _ => (
+                    Severity::Error,
+                    format!(
+                        "copper regions overlap across layers with mixed IPC-D-356 net evidence: {}",
+                        nets.join(", ")
+                    ),
+                ),
+            };
 
-    vec![Violation::new(
-        "copper-overlap",
-        severity,
-        vec![left_name.to_string(), right_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some(message),
-    )]
+            Ok(vec![Violation::new(
+                "copper-overlap",
+                severity,
+                vec![left_name.to_string(), right_name.to_string()],
+                None,
+                shapes,
+                Vec::new(),
+                Some(message),
+            )])
+        },
+    )
 }
 
 fn ipc356_nets_in_region(overlap: &PcbRegion, ipc356_points: &[Ipc356Point]) -> Vec<String> {
@@ -240,41 +256,47 @@ pub fn board_edge_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = match offset_for_check(
-        board,
-        -clearance.clone(),
+    crate::checks::run_geometry_check(
         "copper-to-board-edge-clearance",
-        vec![copper_name.to_string(), board_name.to_string()],
-    ) {
-        Ok(allowed) => allowed,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let intrusion = match difference_for_check(
-        copper,
-        &allowed,
-        "copper-to-board-edge-clearance",
-        vec![copper_name.to_string(), board_name.to_string()],
-    ) {
-        Ok(intrusion) => intrusion,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
+        &[copper_name, board_name],
+        || {
+            let allowed = match offset_for_check(
+                board,
+                -clearance.clone(),
+                "copper-to-board-edge-clearance",
+                vec![copper_name.to_string(), board_name.to_string()],
+            ) {
+                Ok(allowed) => allowed,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let intrusion = match difference_for_check(
+                copper,
+                &allowed,
+                "copper-to-board-edge-clearance",
+                vec![copper_name.to_string(), board_name.to_string()],
+            ) {
+                Ok(intrusion) => intrusion,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
 
-    if shapes.is_empty() {
-        return Vec::new();
-    }
+            if shapes.is_empty() {
+                return Ok(Vec::new());
+            }
 
-    vec![Violation::new(
-        "copper-to-board-edge-clearance",
-        Severity::Error,
-        vec![copper_name.to_string(), board_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some(format!(
-            "copper falls outside the board outline eroded by clearance {clearance}"
-        )),
-    )]
+            Ok(vec![Violation::new(
+                "copper-to-board-edge-clearance",
+                Severity::Error,
+                vec![copper_name.to_string(), board_name.to_string()],
+                None,
+                shapes,
+                Vec::new(),
+                Some(format!(
+                    "copper falls outside the board outline eroded by clearance {clearance}"
+                )),
+            )])
+        },
+    )
 }
 
 /// Warn when geometry enters board-cutout regions created by nested outline
@@ -311,56 +333,61 @@ pub fn board_outline_cutout_clearance_with_grid(
     min_area: &Scalar,
     _grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let outline_polygons = outline.to_multipolygon();
-    let cutouts = match board_outline_cutouts(
-        &outline_polygons,
+    crate::checks::run_geometry_check(
         "board-outline-cutout-clearance",
-        vec![subject_name.to_string(), outline_name.to_string()],
-    ) {
-        Ok(cutouts) => cutouts,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    for cutout in cutouts {
-        let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
-        let clearance_band = if crate::scalar::gt(clearance, &Scalar::zero()) {
-            match offset_for_check(
-                &cutout,
-                clearance.clone(),
+        &[subject_name, outline_name],
+        || {
+            let mut violations = Vec::new();
+            let outline_polygons = outline.try_to_multipolygon()?;
+            let cutouts = match board_outline_cutouts(
+                &outline_polygons,
                 "board-outline-cutout-clearance",
                 vec![subject_name.to_string(), outline_name.to_string()],
             ) {
-                Ok(clearance_band) => clearance_band,
-                Err(uncertainty) => return vec![*uncertainty],
-            }
-        } else {
-            cutout.clone()
-        };
+                Ok(cutouts) => cutouts,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            for cutout in cutouts {
+                let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
+                let clearance_band = if crate::scalar::gt(clearance, &Scalar::zero()) {
+                    match offset_for_check(
+                        &cutout,
+                        clearance.clone(),
+                        "board-outline-cutout-clearance",
+                        vec![subject_name.to_string(), outline_name.to_string()],
+                    ) {
+                        Ok(clearance_band) => clearance_band,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    }
+                } else {
+                    cutout.clone()
+                };
 
-        let intrusion = match intersection_for_check(
-            subject,
-            &clearance_band,
-            "board-outline-cutout-clearance",
-            vec![subject_name.to_string(), outline_name.to_string()],
-        ) {
-            Ok(intrusion) => intrusion,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
-        let touches_cutout = shapes.is_empty()
-            && (crate::checks::boundaries_within_for_check(
-                subject,
-                &cutout,
-                clearance,
-                "board-outline-cutout-clearance",
-                &[subject_name, outline_name],
-                &mut violations,
-            ) == Some(true));
-        if shapes.is_empty() && !touches_cutout {
-            continue;
-        }
+                let intrusion = match intersection_for_check(
+                    subject,
+                    &clearance_band,
+                    "board-outline-cutout-clearance",
+                    vec![subject_name.to_string(), outline_name.to_string()],
+                ) {
+                    Ok(intrusion) => intrusion,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+                let touches_cutout = shapes.is_empty()
+                    && (crate::checks::boundaries_within_for_check(
+                        subject,
+                        &cutout,
+                        clearance,
+                        "board-outline-cutout-clearance",
+                        &[subject_name, outline_name],
+                        &mut violations,
+                    ) == Some(true));
+                if shapes.is_empty() && !touches_cutout {
+                    continue;
+                }
 
-        violations.push(Violation::new(
+                violations.push(Violation::new(
             "board-outline-cutout-clearance",
             Severity::Warning,
             vec![subject_name.to_string(), outline_name.to_string()],
@@ -371,9 +398,11 @@ pub fn board_outline_cutout_clearance_with_grid(
                 "subject geometry touches or intrudes into a nested board contour (cutout) with clearance {clearance}"
             )),
         ));
-    }
+            }
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 fn board_outline_cutouts(
@@ -590,27 +619,27 @@ pub fn paste_overhang_from_features(
     tolerance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(subjects) = exact_region_components(paste) else {
-        return paste_overhang(
-            paste_name,
-            paste,
-            copper_name,
-            aggregate_copper,
-            tolerance,
-            min_area,
-        );
+    let subjects = match exact_region_components(paste) {
+        Ok(components) => components,
+        Err(error) => {
+            return vec![crate::checks::geometry_uncertainty_violation(
+                "paste-aperture-overhang",
+                vec![paste_name.to_owned(), copper_name.to_owned()],
+                error,
+            )];
+        }
     };
     let mut covers = Vec::new();
     for feature in copper_features {
-        let Some(mut components) = exact_region_components_or_whole(feature) else {
-            return paste_overhang(
-                paste_name,
-                paste,
-                copper_name,
-                aggregate_copper,
-                tolerance,
-                min_area,
-            );
+        let mut components = match exact_region_components(feature) {
+            Ok(components) => components,
+            Err(error) => {
+                return vec![crate::checks::geometry_uncertainty_violation(
+                    "paste-aperture-overhang",
+                    vec![paste_name.to_owned(), copper_name.to_owned()],
+                    error,
+                )];
+            }
         };
         covers.append(&mut components);
     }
@@ -730,77 +759,81 @@ pub fn paste_aperture_ratio(
     max_ratio: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let paste_polygons = paste.to_multipolygon().0;
-    let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
-    log::trace!(
-        "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
-        paste_polygons.len(),
-        paste_index.bucket_count()
-    );
-    let mut candidate_apertures = 0usize;
+    crate::checks::run_geometry_check("paste-aperture-ratio", &[paste_name, copper_name], || {
+        let mut violations = Vec::new();
+        let paste_polygons = paste.try_to_multipolygon()?.0;
+        let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
+        log::trace!(
+            "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
+            paste_polygons.len(),
+            paste_index.bucket_count()
+        );
+        let mut candidate_apertures = 0usize;
 
-    for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
-        let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
-            continue;
-        };
-        if crate::scalar::le(&copper_area, min_area) {
-            continue;
-        }
-
-        let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
-        let candidate_indexes = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
-        candidate_apertures += candidate_indexes.len();
-        let mut qualifying_areas = Vec::new();
-        for index in candidate_indexes {
-            let paste_polygon = &paste_polygons[index];
-            let paste_island =
-                polygon_to_profile(paste_polygon.clone(), Some(metadata(paste_name)));
-            let overlap = match intersection_for_check(
-                &island,
-                &paste_island,
-                "paste-aperture-ratio",
-                vec![paste_name.to_string(), copper_name.to_string()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
+        for (island_index, copper_polygon) in
+            copper.try_to_multipolygon()?.0.into_iter().enumerate()
+        {
+            let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+                continue;
             };
-            if multipolygon_area_scalar(&overlap.to_multipolygon())
-                .is_some_and(|area| crate::scalar::gt(&area, min_area))
-                && let Some(area) = polygon_area_scalar(paste_polygon)
-            {
-                qualifying_areas.push(area);
+            if crate::scalar::le(&copper_area, min_area) {
+                continue;
             }
-        }
-        let paste_area = Scalar::sum_owned(qualifying_areas);
-        let Ok(ratio) = paste_area / copper_area else {
-            continue;
-        };
 
-        if crate::scalar::ge(&ratio, min_ratio) && crate::scalar::le(&ratio, max_ratio) {
-            continue;
-        }
+            let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
+            let candidate_indexes = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
+            candidate_apertures += candidate_indexes.len();
+            let mut qualifying_areas = Vec::new();
+            for index in candidate_indexes {
+                let paste_polygon = &paste_polygons[index];
+                let paste_island =
+                    polygon_to_profile(paste_polygon.clone(), Some(metadata(paste_name)));
+                let overlap = match intersection_for_check(
+                    &island,
+                    &paste_island,
+                    "paste-aperture-ratio",
+                    vec![paste_name.to_string(), copper_name.to_string()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                if multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+                    .is_some_and(|area| crate::scalar::gt(&area, min_area))
+                    && let Some(area) = polygon_area_scalar(paste_polygon)
+                {
+                    qualifying_areas.push(area);
+                }
+            }
+            let paste_area = Scalar::sum_owned(qualifying_areas);
+            let Ok(ratio) = paste_area / copper_area else {
+                continue;
+            };
 
-        violations.push(Violation::new(
+            if crate::scalar::ge(&ratio, min_ratio) && crate::scalar::le(&ratio, max_ratio) {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "paste-aperture-ratio",
             Severity::Warning,
             vec![paste_name.to_string(), copper_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
             Vec::new(),
             Some(format!(
                 "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "paste-aperture-ratio finished: paste_layer={paste_name} copper_layer={copper_name} candidate_apertures={} violations={}",
-        candidate_apertures,
-        violations.len()
-    );
+        log::trace!(
+            "paste-aperture-ratio finished: paste_layer={paste_name} copper_layer={copper_name} candidate_apertures={} violations={}",
+            candidate_apertures,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `minimum_paste_aperture` design-readiness check or report helper.
@@ -810,42 +843,46 @@ pub fn minimum_paste_aperture(
     min_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("minimum-paste-aperture", &[paste_name], || {
+        let mut violations = Vec::new();
 
-    for (island_index, polygon) in paste.to_multipolygon().0.into_iter().enumerate() {
-        let Some(bounds) = polygon_bounds_scalar(&polygon) else {
-            continue;
-        };
-        let width = &bounds[2] - &bounds[0];
-        let height = &bounds[3] - &bounds[1];
-        let smallest_dimension = if crate::scalar::le(&width, &height) {
-            width
-        } else {
-            height
-        };
-        let Some(area) = polygon_area_scalar(&polygon) else {
-            continue;
-        };
+        for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
+            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+                continue;
+            };
+            let width = &bounds[2] - &bounds[0];
+            let height = &bounds[3] - &bounds[1];
+            let smallest_dimension = if crate::scalar::le(&width, &height) {
+                width
+            } else {
+                height
+            };
+            let Some(area) = polygon_area_scalar(&polygon) else {
+                continue;
+            };
 
-        if crate::scalar::ge(&smallest_dimension, min_width) || crate::scalar::le(&area, min_area) {
-            continue;
-        }
+            if crate::scalar::ge(&smallest_dimension, min_width)
+                || crate::scalar::le(&area, min_area)
+            {
+                continue;
+            }
 
-        let aperture = polygon_to_profile(polygon, Some(metadata(paste_name)));
-        violations.push(Violation::new(
+            let aperture = polygon_to_profile(polygon, Some(metadata(paste_name)));
+            violations.push(Violation::new(
             "minimum-paste-aperture",
             Severity::Warning,
             vec![paste_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&aperture.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area),
             Vec::new(),
             Some(format!(
                 "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}"
             )),
         ));
-    }
+        }
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `paste_aperture_spacing` design-readiness check or report helper.
@@ -861,83 +898,86 @@ pub fn paste_aperture_spacing(
     min_spacing: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let polygons = paste.to_multipolygon().0;
-    let broad_phase_spacing = scalar_broad_phase_radius(min_spacing);
-    let index = LayerPolygonSpatialIndex::new(&polygons, broad_phase_spacing);
-    log::trace!(
-        "paste-aperture-spacing: layer={paste_name} apertures={} buckets={} min_spacing={min_spacing:.6}",
-        polygons.len(),
-        index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let expansion = crate::scalar::half(min_spacing);
-    let mut candidate_pairs = 0usize;
+    crate::checks::run_geometry_check("paste-aperture-spacing", &[paste_name], || {
+        let polygons = paste.try_to_multipolygon()?.0;
+        let broad_phase_spacing = scalar_broad_phase_radius(min_spacing);
+        let index = LayerPolygonSpatialIndex::new(&polygons, broad_phase_spacing);
+        log::trace!(
+            "paste-aperture-spacing: layer={paste_name} apertures={} buckets={} min_spacing={min_spacing:.6}",
+            polygons.len(),
+            index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let expansion = crate::scalar::half(min_spacing);
+        let mut candidate_pairs = 0usize;
 
-    for island_index in 0..polygons.len() {
-        let candidate_indexes = index.candidates_near(island_index, broad_phase_spacing);
-        candidate_pairs += candidate_indexes.len();
-        if candidate_indexes.is_empty() {
-            continue;
+        for island_index in 0..polygons.len() {
+            let candidate_indexes = index.candidates_near(island_index, broad_phase_spacing);
+            candidate_pairs += candidate_indexes.len();
+            if candidate_indexes.is_empty() {
+                continue;
+            }
+
+            let island =
+                polygon_to_profile(polygons[island_index].clone(), Some(metadata(paste_name)));
+            let candidate_polygons = candidate_indexes
+                .into_iter()
+                .map(|index| polygons[index].clone())
+                .collect::<Vec<_>>();
+            let remaining = polygons_to_profile(candidate_polygons, Some(metadata(paste_name)));
+            let expanded_island = match offset_for_check(
+                &island,
+                expansion.clone(),
+                "paste-aperture-spacing",
+                vec![paste_name.to_string()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let expanded_remaining = match offset_for_check(
+                &remaining,
+                expansion.clone(),
+                "paste-aperture-spacing",
+                vec![paste_name.to_string()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let overlap = match intersection_for_check(
+                &expanded_island,
+                &expanded_remaining,
+                "paste-aperture-spacing",
+                vec![paste_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "paste-aperture-spacing",
+                Severity::Warning,
+                vec![paste_name.to_string()],
+                Some(island_index),
+                shapes,
+                Vec::new(),
+                Some(format!(
+                    "paste apertures are closer than minimum spacing {min_spacing}"
+                )),
+            ));
         }
 
-        let island = polygon_to_profile(polygons[island_index].clone(), Some(metadata(paste_name)));
-        let candidate_polygons = candidate_indexes
-            .into_iter()
-            .map(|index| polygons[index].clone())
-            .collect::<Vec<_>>();
-        let remaining = polygons_to_profile(candidate_polygons, Some(metadata(paste_name)));
-        let expanded_island = match offset_for_check(
-            &island,
-            expansion.clone(),
-            "paste-aperture-spacing",
-            vec![paste_name.to_string()],
-        ) {
-            Ok(expanded) => expanded,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let expanded_remaining = match offset_for_check(
-            &remaining,
-            expansion.clone(),
-            "paste-aperture-spacing",
-            vec![paste_name.to_string()],
-        ) {
-            Ok(expanded) => expanded,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let overlap = match intersection_for_check(
-            &expanded_island,
-            &expanded_remaining,
-            "paste-aperture-spacing",
-            vec![paste_name.to_string()],
-        ) {
-            Ok(overlap) => overlap,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+        log::trace!(
+            "paste-aperture-spacing finished: layer={paste_name} candidate_pairs={} violations={}",
+            candidate_pairs,
+            violations.len()
+        );
 
-        violations.push(Violation::new(
-            "paste-aperture-spacing",
-            Severity::Warning,
-            vec![paste_name.to_string()],
-            Some(island_index),
-            shapes,
-            Vec::new(),
-            Some(format!(
-                "paste apertures are closer than minimum spacing {min_spacing}"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "paste-aperture-spacing finished: layer={paste_name} candidate_pairs={} violations={}",
-        candidate_pairs,
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `paste_mask_alignment` design-readiness check or report helper.
@@ -1063,76 +1103,86 @@ pub fn solder_mask_opening_ratio_readiness(
     max_ratio: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mask_polygons = mask_openings.to_multipolygon().0;
-    let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, 0.0);
-    log::trace!(
-        "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
-        mask_polygons.len(),
-        mask_index.bucket_count()
-    );
-    let mut candidate_openings = 0usize;
+    crate::checks::run_geometry_check(
+        "solder-mask-opening-ratio-readiness",
+        &[copper_name, mask_name],
+        || {
+            let mut violations = Vec::new();
+            let mask_polygons = mask_openings.try_to_multipolygon()?.0;
+            let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, 0.0);
+            log::trace!(
+                "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
+                mask_polygons.len(),
+                mask_index.bucket_count()
+            );
+            let mut candidate_openings = 0usize;
 
-    for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
-        let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
-            continue;
-        };
-        if crate::scalar::le(&copper_area, min_area) {
-            continue;
-        }
-
-        let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
-        let candidate_indexes = mask_index.candidates_near_polygon(&copper_polygon, 0.0);
-        candidate_openings += candidate_indexes.len();
-        let mut qualifying_areas = Vec::new();
-        for index in candidate_indexes {
-            let mask_polygon = &mask_polygons[index];
-            let mask_island = polygon_to_profile(mask_polygon.clone(), Some(metadata(mask_name)));
-            let overlap = match intersection_for_check(
-                &island,
-                &mask_island,
-                "solder-mask-opening-ratio-readiness",
-                vec![copper_name.to_string(), mask_name.to_string()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            if multipolygon_area_scalar(&overlap.to_multipolygon())
-                .is_some_and(|area| crate::scalar::gt(&area, min_area))
-                && let Some(area) = polygon_area_scalar(mask_polygon)
+            for (island_index, copper_polygon) in
+                copper.try_to_multipolygon()?.0.into_iter().enumerate()
             {
-                qualifying_areas.push(area);
-            }
-        }
-        let opening_area = Scalar::sum_owned(qualifying_areas);
-        let Ok(ratio) = opening_area / copper_area else {
-            continue;
-        };
+                let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+                    continue;
+                };
+                if crate::scalar::le(&copper_area, min_area) {
+                    continue;
+                }
 
-        if crate::scalar::ge(&ratio, min_ratio) && crate::scalar::le(&ratio, max_ratio) {
-            continue;
-        }
+                let island =
+                    polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
+                let candidate_indexes = mask_index.candidates_near_polygon(&copper_polygon, 0.0);
+                candidate_openings += candidate_indexes.len();
+                let mut qualifying_areas = Vec::new();
+                for index in candidate_indexes {
+                    let mask_polygon = &mask_polygons[index];
+                    let mask_island =
+                        polygon_to_profile(mask_polygon.clone(), Some(metadata(mask_name)));
+                    let overlap = match intersection_for_check(
+                        &island,
+                        &mask_island,
+                        "solder-mask-opening-ratio-readiness",
+                        vec![copper_name.to_string(), mask_name.to_string()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    if multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+                        .is_some_and(|area| crate::scalar::gt(&area, min_area))
+                        && let Some(area) = polygon_area_scalar(mask_polygon)
+                    {
+                        qualifying_areas.push(area);
+                    }
+                }
+                let opening_area = Scalar::sum_owned(qualifying_areas);
+                let Ok(ratio) = opening_area / copper_area else {
+                    continue;
+                };
 
-        violations.push(Violation::new(
+                if crate::scalar::ge(&ratio, min_ratio) && crate::scalar::le(&ratio, max_ratio) {
+                    continue;
+                }
+
+                violations.push(Violation::new(
             "solder-mask-opening-ratio-readiness",
             Severity::Warning,
             vec![copper_name.to_string(), mask_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
             Vec::new(),
             Some(format!(
                 "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth"
             )),
         ));
-    }
+            }
 
-    log::trace!(
-        "solder-mask opening-ratio readiness finished: copper_layer={copper_name} mask_layer={mask_name} candidate_openings={} violations={}",
-        candidate_openings,
-        violations.len()
-    );
+            log::trace!(
+                "solder-mask opening-ratio readiness finished: copper_layer={copper_name} mask_layer={mask_name} candidate_openings={} violations={}",
+                candidate_openings,
+                violations.len()
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when solder-mask openings do not provide minimum relief around copper.
@@ -1153,68 +1203,75 @@ pub fn solder_mask_annular_ring_readiness(
     min_mask_annular_ring: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if crate::scalar::le(min_mask_annular_ring, &Scalar::zero()) {
-        return Vec::new();
-    }
-
-    let copper_polygons = copper.to_multipolygon().0;
-    let copper_count = copper_polygons.len();
-    let mask_polygons = mask_openings.to_multipolygon().0;
-    let broad_phase_ring = scalar_broad_phase_radius(min_mask_annular_ring);
-    let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, broad_phase_ring);
-    log::trace!(
-        "solder-mask annular-ring readiness: copper={copper_name} copper_islands={} mask={mask_name} mask_openings={} mask_buckets={} min_ring={min_mask_annular_ring:.6}",
-        copper_count,
-        mask_polygons.len(),
-        mask_index.bucket_count()
-    );
-
-    let mut violations = Vec::new();
-    let mut candidate_openings = 0usize;
-
-    for (island_index, copper_polygon) in copper_polygons.into_iter().enumerate() {
-        if polygon_area_scalar(&copper_polygon)
-            .is_none_or(|area| crate::scalar::le(&area, min_area))
-        {
-            continue;
-        }
-
-        let candidates = mask_index.candidates_near_polygon(&copper_polygon, broad_phase_ring);
-        candidate_openings += candidates.len();
-        let copper_island = polygon_to_profile(copper_polygon, Some(metadata(copper_name)));
-        let required_opening = match offset_for_check(
-            &copper_island,
-            min_mask_annular_ring.clone(),
-            "solder-mask-annular-ring-readiness",
-            vec![copper_name.to_string(), mask_name.to_string()],
-        ) {
-            Ok(required_opening) => required_opening,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let missing_relief = if candidates.is_empty() {
-            required_opening
-        } else {
-            let candidate_openings = candidates
-                .into_iter()
-                .map(|index| mask_polygons[index].clone())
-                .collect::<Vec<_>>();
-            let mask_region = polygons_to_profile(candidate_openings, Some(metadata(mask_name)));
-            match difference_for_check(
-                &required_opening,
-                &mask_region,
-                "solder-mask-annular-ring-readiness",
-                vec![copper_name.to_string(), mask_name.to_string()],
-            ) {
-                Ok(missing_relief) => missing_relief,
-                Err(uncertainty) => return vec![*uncertainty],
+    crate::checks::run_geometry_check(
+        "solder-mask-annular-ring-readiness",
+        &[copper_name, mask_name],
+        || {
+            if crate::scalar::le(min_mask_annular_ring, &Scalar::zero()) {
+                return Ok(Vec::new());
             }
-        };
-        let shapes = multipolygon_to_shapes_scalar(&missing_relief.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
 
-        violations.push(Violation::new(
+            let copper_polygons = copper.try_to_multipolygon()?.0;
+            let copper_count = copper_polygons.len();
+            let mask_polygons = mask_openings.try_to_multipolygon()?.0;
+            let broad_phase_ring = scalar_broad_phase_radius(min_mask_annular_ring);
+            let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, broad_phase_ring);
+            log::trace!(
+                "solder-mask annular-ring readiness: copper={copper_name} copper_islands={} mask={mask_name} mask_openings={} mask_buckets={} min_ring={min_mask_annular_ring:.6}",
+                copper_count,
+                mask_polygons.len(),
+                mask_index.bucket_count()
+            );
+
+            let mut violations = Vec::new();
+            let mut candidate_openings = 0usize;
+
+            for (island_index, copper_polygon) in copper_polygons.into_iter().enumerate() {
+                if polygon_area_scalar(&copper_polygon)
+                    .is_none_or(|area| crate::scalar::le(&area, min_area))
+                {
+                    continue;
+                }
+
+                let candidates =
+                    mask_index.candidates_near_polygon(&copper_polygon, broad_phase_ring);
+                candidate_openings += candidates.len();
+                let copper_island = polygon_to_profile(copper_polygon, Some(metadata(copper_name)));
+                let required_opening = match offset_for_check(
+                    &copper_island,
+                    min_mask_annular_ring.clone(),
+                    "solder-mask-annular-ring-readiness",
+                    vec![copper_name.to_string(), mask_name.to_string()],
+                ) {
+                    Ok(required_opening) => required_opening,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let missing_relief = if candidates.is_empty() {
+                    required_opening
+                } else {
+                    let candidate_openings = candidates
+                        .into_iter()
+                        .map(|index| mask_polygons[index].clone())
+                        .collect::<Vec<_>>();
+                    let mask_region =
+                        polygons_to_profile(candidate_openings, Some(metadata(mask_name)));
+                    match difference_for_check(
+                        &required_opening,
+                        &mask_region,
+                        "solder-mask-annular-ring-readiness",
+                        vec![copper_name.to_string(), mask_name.to_string()],
+                    ) {
+                        Ok(missing_relief) => missing_relief,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    }
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&missing_relief.try_to_multipolygon()?, min_area);
+                if shapes.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
             "solder-mask-annular-ring-readiness",
             Severity::Warning,
             vec![copper_name.to_string(), mask_name.to_string()],
@@ -1225,15 +1282,17 @@ pub fn solder_mask_annular_ring_readiness(
                 "solder mask opening does not cover copper expanded by minimum mask annular ring {min_mask_annular_ring:.6}; review mask registration and opening growth"
             )),
         ));
-    }
+            }
 
-    log::trace!(
-        "solder-mask annular-ring readiness finished: copper={copper_name} mask={mask_name} candidate_openings={} violations={}",
-        candidate_openings,
-        violations.len()
-    );
+            log::trace!(
+                "solder-mask annular-ring readiness finished: copper={copper_name} mask={mask_name} candidate_openings={} violations={}",
+                candidate_openings,
+                violations.len()
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Run the `solder_mask_expansion` design-readiness check or report helper.
@@ -1296,27 +1355,27 @@ pub fn solder_mask_expansion_from_features(
     max_expansion: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(subjects) = exact_region_components(mask_openings) else {
-        return solder_mask_expansion(
-            copper_name,
-            aggregate_copper,
-            mask_name,
-            mask_openings,
-            max_expansion,
-            min_area,
-        );
+    let subjects = match exact_region_components(mask_openings) {
+        Ok(components) => components,
+        Err(error) => {
+            return vec![crate::checks::geometry_uncertainty_violation(
+                "solder-mask-expansion",
+                vec![mask_name.to_owned(), copper_name.to_owned()],
+                error,
+            )];
+        }
     };
     let mut covers = Vec::new();
     for feature in copper_features {
-        let Some(mut components) = exact_region_components_or_whole(feature) else {
-            return solder_mask_expansion(
-                copper_name,
-                aggregate_copper,
-                mask_name,
-                mask_openings,
-                max_expansion,
-                min_area,
-            );
+        let mut components = match exact_region_components(feature) {
+            Ok(components) => components,
+            Err(error) => {
+                return vec![crate::checks::geometry_uncertainty_violation(
+                    "solder-mask-expansion",
+                    vec![mask_name.to_owned(), copper_name.to_owned()],
+                    error,
+                )];
+            }
         };
         covers.append(&mut components);
     }
@@ -1428,86 +1487,89 @@ pub fn silkscreen_min_width(
     min_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let radius = crate::scalar::half(min_width);
-    let polygons = silk.to_multipolygon().0;
-    log::trace!(
-        "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}",
-        polygons.len()
-    );
-    let mut shapes = Vec::new();
+    crate::checks::run_geometry_check("silkscreen-min-width", &[silk_name], || {
+        let radius = crate::scalar::half(min_width);
+        let polygons = silk.try_to_multipolygon()?.0;
+        log::trace!(
+            "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}",
+            polygons.len()
+        );
+        let mut shapes = Vec::new();
 
-    for polygon in polygons {
-        // A convex island has no feature narrower than its minimum support
-        // width. Exact opening would otherwise report the rounded-off convex
-        // corners of any wide stroke, which are not thin features.
-        if convex_polygon_width_at_least(&polygon, min_width) {
-            continue;
+        for polygon in polygons {
+            // A convex island has no feature narrower than its minimum support
+            // width. Exact opening would otherwise report the rounded-off convex
+            // corners of any wide stroke, which are not thin features.
+            if convex_polygon_width_at_least(&polygon, min_width) {
+                continue;
+            }
+            // Apply morphological opening to one disconnected legend island at a
+            // time. Whole-layer opening can create pathological boolean operations
+            // on dense Gerber packages, while island-local opening is equivalent
+            // for independent silkscreen strokes.
+            let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(&polygon)
+                .is_some_and(|dimension| {
+                    crate::scalar::gt(&dimension, &Scalar::zero())
+                        && crate::scalar::lt(&dimension, min_width)
+                });
+            let area_above_gate = polygon_area_scalar(&polygon)
+                .is_some_and(|area| crate::scalar::gt(&area, min_area));
+            let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
+            let eroded = match offset_for_check(
+                &island,
+                -radius.clone(),
+                "silkscreen-min-width",
+                vec![silk_name.to_string()],
+            ) {
+                Ok(eroded) => eroded,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let reconstructed = match offset_for_check(
+                &eroded,
+                radius.clone(),
+                "silkscreen-min-width",
+                vec![silk_name.to_string()],
+            ) {
+                Ok(reconstructed) => reconstructed,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let thin_features = match difference_for_check(
+                &island,
+                &reconstructed,
+                "silkscreen-min-width",
+                vec![silk_name.to_string()],
+            ) {
+                Ok(thin_features) => thin_features,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let mut island_shapes =
+                multipolygon_to_shapes_scalar(&thin_features.try_to_multipolygon()?, min_area);
+            // Native offset can conservatively retain an island when collapse is
+            // uncertain. The exact promoted envelope remains a sound readiness
+            // fallback for a globally undersized disconnected stroke.
+            if island_shapes.is_empty() && dimension_below_limit && area_above_gate {
+                island_shapes =
+                    multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area);
+            }
+            shapes.extend(island_shapes);
         }
-        // Apply morphological opening to one disconnected legend island at a
-        // time. Whole-layer opening can create pathological boolean operations
-        // on dense Gerber packages, while island-local opening is equivalent
-        // for independent silkscreen strokes.
-        let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(&polygon)
-            .is_some_and(|dimension| {
-                crate::scalar::gt(&dimension, &Scalar::zero())
-                    && crate::scalar::lt(&dimension, min_width)
-            });
-        let area_above_gate =
-            polygon_area_scalar(&polygon).is_some_and(|area| crate::scalar::gt(&area, min_area));
-        let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
-        let eroded = match offset_for_check(
-            &island,
-            -radius.clone(),
-            "silkscreen-min-width",
-            vec![silk_name.to_string()],
-        ) {
-            Ok(eroded) => eroded,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let reconstructed = match offset_for_check(
-            &eroded,
-            radius.clone(),
-            "silkscreen-min-width",
-            vec![silk_name.to_string()],
-        ) {
-            Ok(reconstructed) => reconstructed,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let thin_features = match difference_for_check(
-            &island,
-            &reconstructed,
-            "silkscreen-min-width",
-            vec![silk_name.to_string()],
-        ) {
-            Ok(thin_features) => thin_features,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let mut island_shapes =
-            multipolygon_to_shapes_scalar(&thin_features.to_multipolygon(), min_area);
-        // Native offset can conservatively retain an island when collapse is
-        // uncertain. The exact promoted envelope remains a sound readiness
-        // fallback for a globally undersized disconnected stroke.
-        if island_shapes.is_empty() && dimension_below_limit && area_above_gate {
-            island_shapes = multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area);
+
+        if shapes.is_empty() {
+            return Ok(Vec::new());
         }
-        shapes.extend(island_shapes);
-    }
 
-    if shapes.is_empty() {
-        return Vec::new();
-    }
-
-    vec![Violation::new(
-        "silkscreen-min-width",
-        Severity::Warning,
-        vec![silk_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some(format!(
-            "silkscreen features are removed by opening with width {min_width}"
-        )),
-    )]
+        Ok(vec![Violation::new(
+            "silkscreen-min-width",
+            Severity::Warning,
+            vec![silk_name.to_string()],
+            None,
+            shapes,
+            Vec::new(),
+            Some(format!(
+                "silkscreen features are removed by opening with width {min_width}"
+            )),
+        )])
+    })
 }
 
 /// Warn when disconnected silkscreen islands are smaller than a text-height budget.
@@ -1526,50 +1588,51 @@ pub fn silkscreen_text_height_readiness(
     min_text_height: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if crate::scalar::le(min_text_height, &Scalar::zero()) {
-        return Vec::new();
-    }
-
-    let polygons = silk.to_multipolygon().0;
-    log::trace!(
-        "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}",
-        polygons.len()
-    );
-    let mut violations = Vec::new();
-    let mut measured_islands = 0usize;
-
-    for (island_index, polygon) in polygons.into_iter().enumerate() {
-        let Some(area) = polygon_area_scalar(&polygon) else {
-            continue;
-        };
-        if crate::scalar::le(&area, min_area) {
-            continue;
-        }
-        let Some(exact_bounds) = polygon_bounds_scalar(&polygon) else {
-            continue;
-        };
-        let Some(bounds) = polygon.bounding_rect() else {
-            continue;
-        };
-        measured_islands += 1;
-        let width = &exact_bounds[2] - &exact_bounds[0];
-        let height = &exact_bounds[3] - &exact_bounds[1];
-        let apparent_height = if crate::scalar::ge(&width, &height) {
-            width
-        } else {
-            height
-        };
-        if crate::scalar::ge(&apparent_height, min_text_height) {
-            continue;
+    crate::checks::run_geometry_check("silkscreen-text-height-readiness", &[silk_name], || {
+        if crate::scalar::le(min_text_height, &Scalar::zero()) {
+            return Ok(Vec::new());
         }
 
-        let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
-        violations.push(Violation::new(
+        let polygons = silk.try_to_multipolygon()?.0;
+        log::trace!(
+            "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}",
+            polygons.len()
+        );
+        let mut violations = Vec::new();
+        let mut measured_islands = 0usize;
+
+        for (island_index, polygon) in polygons.into_iter().enumerate() {
+            let Some(area) = polygon_area_scalar(&polygon) else {
+                continue;
+            };
+            if crate::scalar::le(&area, min_area) {
+                continue;
+            }
+            let Some(exact_bounds) = polygon_bounds_scalar(&polygon) else {
+                continue;
+            };
+            let Some(bounds) = polygon.bounding_rect() else {
+                continue;
+            };
+            measured_islands += 1;
+            let width = &exact_bounds[2] - &exact_bounds[0];
+            let height = &exact_bounds[3] - &exact_bounds[1];
+            let apparent_height = if crate::scalar::ge(&width, &height) {
+                width
+            } else {
+                height
+            };
+            if crate::scalar::ge(&apparent_height, min_text_height) {
+                continue;
+            }
+
+            let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
+            violations.push(Violation::new(
             "silkscreen-text-height-readiness",
             Severity::Warning,
             vec![silk_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
             vec![[
                 (bounds.min().x + bounds.max().x) / 2.0,
                 (bounds.min().y + bounds.max().y) / 2.0,
@@ -1578,15 +1641,16 @@ pub fn silkscreen_text_height_readiness(
                 "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "silkscreen text-height readiness finished: layer={silk_name} measured_islands={} violations={}",
-        measured_islands,
-        violations.len()
-    );
+        log::trace!(
+            "silkscreen text-height readiness finished: layer={silk_name} measured_islands={} violations={}",
+            measured_islands,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `min_copper_neck_width` design-readiness check or report helper.
@@ -1596,130 +1660,132 @@ pub fn min_copper_neck_width(
     min_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    const MAX_MORPHOLOGY_VERTICES: usize = 256;
-    let radius = crate::scalar::half(min_width);
-    let source_polygons = copper.to_multipolygon().0;
-    log::trace!(
-        "min-copper-neck: layer={copper_name} polygons={} min_width={min_width:.6} min_area={min_area:.6}",
-        source_polygons.len()
-    );
-
-    // Morphological opening: erode by r, then dilate by r. Features that cannot
-    // contain a disk of radius r disappear, which makes this a useful fast
-    // approximation for "minimum neck width" checks on copper. This follows the
-    // dilation/erosion algebra formalized in Heijmans and Ronse,
-    // "The algebraic basis of mathematical morphology I. Dilations and erosions",
-    // Computer Vision, Graphics, and Image Processing, 1990.
-    //
-    // Run the opening per polygon island instead of against the whole layer.
-    // Real production pours can contain hundreds or thousands of independent
-    // islands; feeding that entire multipolygon into one offset/difference can
-    // create pathological boolean work in the geometry kernel even though the
-    // minimum-neck question is local to each island. Per-island opening preserves
-    // the check's intent while bounding each offset operation to a much smaller
-    // contour set.
-    let mut shapes = Vec::new();
-    let mut complexity_retained_count = 0_usize;
-    for (island_index, polygon) in source_polygons.iter().enumerate() {
+    crate::checks::run_geometry_check("minimum-copper-neck-width", &[copper_name], || {
+        const MAX_MORPHOLOGY_VERTICES: usize = 256;
+        let radius = crate::scalar::half(min_width);
+        let source_polygons = copper.try_to_multipolygon()?.0;
         log::trace!(
-            "min-copper-neck: layer={copper_name} island={island_index} exterior_vertices={} holes={}",
-            polygon.exterior().0.len(),
-            polygon.interiors().len()
+            "min-copper-neck: layer={copper_name} polygons={} min_width={min_width:.6} min_area={min_area:.6}",
+            source_polygons.len()
         );
-        // A convex island has no local neck narrower than its minimum support
-        // width. Certify that width directly with exact dyadic input scalars so
-        // ordinary round/rectangular pads do not enter the much more expensive
-        // offset-and-Boolean morphology path.
-        if convex_polygon_width_at_least(polygon, min_width) {
-            continue;
-        }
-        let area_above_gate =
-            polygon_area_scalar(polygon).is_some_and(|area| crate::scalar::gt(&area, min_area));
-        if !area_above_gate {
-            continue;
-        }
-        let source = MultiPolygon(vec![polygon.clone()]);
-        let dimension_below_limit =
-            polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
-                crate::scalar::gt(&dimension, &Scalar::zero())
-                    && crate::scalar::lt(&dimension, min_width)
-            });
-        if dimension_below_limit {
-            // Either axis-aligned support width is itself a valid upper bound
-            // on global feature width. An island below the rule therefore
-            // needs review without an offset or Boolean construction.
-            shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
-            continue;
-        }
-        let morphology_vertices = polygon.exterior().0.len()
-            + polygon
-                .interiors()
-                .iter()
-                .map(|ring| ring.0.len())
-                .sum::<usize>();
-        if morphology_vertices > MAX_MORPHOLOGY_VERTICES {
-            // Readiness checks must have a deterministic work bound even for
-            // production pours with enormous merged contours. Retaining the
-            // candidate is conservative and avoids hiding a possible neck.
-            complexity_retained_count += 1;
-            shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
-            continue;
-        }
-        let island = polygon_to_profile(polygon.clone(), Some(metadata(copper_name)));
-        let eroded = match offset_for_check(
-            &island,
-            -radius.clone(),
-            "minimum-copper-neck-width",
-            vec![copper_name.to_string()],
-        ) {
-            Ok(eroded) => eroded,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let reconstructed = match offset_for_check(
-            &eroded,
-            radius.clone(),
-            "minimum-copper-neck-width",
-            vec![copper_name.to_string()],
-        ) {
-            Ok(reconstructed) => reconstructed,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let thin = match difference_for_check(
-            &island,
-            &reconstructed,
-            "minimum-copper-neck-width",
-            vec![copper_name.to_string()],
-        ) {
-            Ok(thin_features) => thin_features.to_multipolygon(),
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
-            continue;
-        }
-        shapes.extend(multipolygon_to_shapes_scalar(&thin, min_area));
-    }
 
-    if shapes.is_empty() && complexity_retained_count == 0 {
-        return Vec::new();
-    }
+        // Morphological opening: erode by r, then dilate by r. Features that cannot
+        // contain a disk of radius r disappear, which makes this a useful fast
+        // approximation for "minimum neck width" checks on copper. This follows the
+        // dilation/erosion algebra formalized in Heijmans and Ronse,
+        // "The algebraic basis of mathematical morphology I. Dilations and erosions",
+        // Computer Vision, Graphics, and Image Processing, 1990.
+        //
+        // Run the opening per polygon island instead of against the whole layer.
+        // Real production pours can contain hundreds or thousands of independent
+        // islands; feeding that entire multipolygon into one offset/difference can
+        // create pathological boolean work in the geometry kernel even though the
+        // minimum-neck question is local to each island. Per-island opening preserves
+        // the check's intent while bounding each offset operation to a much smaller
+        // contour set.
+        let mut shapes = Vec::new();
+        let mut complexity_retained_count = 0_usize;
+        for (island_index, polygon) in source_polygons.iter().enumerate() {
+            log::trace!(
+                "min-copper-neck: layer={copper_name} island={island_index} exterior_vertices={} holes={}",
+                polygon.exterior().0.len(),
+                polygon.interiors().len()
+            );
+            // A convex island has no local neck narrower than its minimum support
+            // width. Certify that width directly with exact dyadic input scalars so
+            // ordinary round/rectangular pads do not enter the much more expensive
+            // offset-and-Boolean morphology path.
+            if convex_polygon_width_at_least(polygon, min_width) {
+                continue;
+            }
+            let area_above_gate =
+                polygon_area_scalar(polygon).is_some_and(|area| crate::scalar::gt(&area, min_area));
+            if !area_above_gate {
+                continue;
+            }
+            let source = MultiPolygon(vec![polygon.clone()]);
+            let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(polygon)
+                .is_some_and(|dimension| {
+                    crate::scalar::gt(&dimension, &Scalar::zero())
+                        && crate::scalar::lt(&dimension, min_width)
+                });
+            if dimension_below_limit {
+                // Either axis-aligned support width is itself a valid upper bound
+                // on global feature width. An island below the rule therefore
+                // needs review without an offset or Boolean construction.
+                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
+                continue;
+            }
+            let morphology_vertices = polygon.exterior().0.len()
+                + polygon
+                    .interiors()
+                    .iter()
+                    .map(|ring| ring.0.len())
+                    .sum::<usize>();
+            if morphology_vertices > MAX_MORPHOLOGY_VERTICES {
+                // Readiness checks must have a deterministic work bound even for
+                // production pours with enormous merged contours. Retaining the
+                // candidate is conservative and avoids hiding a possible neck.
+                complexity_retained_count += 1;
+                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
+                continue;
+            }
+            let island = polygon_to_profile(polygon.clone(), Some(metadata(copper_name)));
+            let eroded = match offset_for_check(
+                &island,
+                -radius.clone(),
+                "minimum-copper-neck-width",
+                vec![copper_name.to_string()],
+            ) {
+                Ok(eroded) => eroded,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let reconstructed = match offset_for_check(
+                &eroded,
+                radius.clone(),
+                "minimum-copper-neck-width",
+                vec![copper_name.to_string()],
+            ) {
+                Ok(reconstructed) => reconstructed,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let thin = match difference_for_check(
+                &island,
+                &reconstructed,
+                "minimum-copper-neck-width",
+                vec![copper_name.to_string()],
+            ) {
+                Ok(thin_features) => thin_features.try_to_multipolygon()?,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
+                continue;
+            }
+            shapes.extend(multipolygon_to_shapes_scalar(&thin, min_area));
+        }
 
-    let message = if complexity_retained_count == 0 {
-        format!("copper features are removed by opening with width {min_width}")
-    } else {
-        format!(
-            "copper features are removed by opening with width {min_width}; {complexity_retained_count} island(s) were retained because their contours exceeded the bounded morphology complexity"
-        )
-    };
+        if shapes.is_empty() && complexity_retained_count == 0 {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "minimum-copper-neck-width",
-        Severity::Warning,
-        vec![copper_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some(message),
-    )]
+        let message = if complexity_retained_count == 0 {
+            format!("copper features are removed by opening with width {min_width}")
+        } else {
+            format!(
+                "copper features are removed by opening with width {min_width}; {complexity_retained_count} island(s) were retained because their contours exceeded the bounded morphology complexity"
+            )
+        };
+
+        Ok(vec![Violation::new(
+            "minimum-copper-neck-width",
+            Severity::Warning,
+            vec![copper_name.to_string()],
+            None,
+            shapes,
+            Vec::new(),
+            Some(message),
+        )])
+    })
 }
 
 fn whole_feature_removal_is_width_compliant(
@@ -1776,75 +1842,79 @@ pub fn solder_mask_sliver(
     min_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let radius = crate::scalar::half(min_width);
-    // Same opening operation as the copper neck-width check, applied to residual
-    // mask geometry. The result is the geometry that is too thin to survive the
-    // configured web width.
-    let eroded = match offset_for_check(
-        mask,
-        -radius.clone(),
-        "solder-mask-sliver",
-        vec![mask_name.to_string()],
-    ) {
-        Ok(eroded) => eroded,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let reconstructed = match offset_for_check(
-        &eroded,
-        radius,
-        "solder-mask-sliver",
-        vec![mask_name.to_string()],
-    ) {
-        Ok(reconstructed) => reconstructed,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let slivers = match difference_for_check(
-        mask,
-        &reconstructed,
-        "solder-mask-sliver",
-        vec![mask_name.to_string()],
-    ) {
-        Ok(slivers) => slivers,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let mut violations = shapes_violation_scalar(
-        "solder-mask-sliver",
-        Severity::Warning,
-        vec![mask_name.to_string()],
-        slivers,
-        min_area,
-        format!("solder mask geometry is removed by opening with width {min_width}"),
-    );
-    if violations.is_empty() {
-        let narrow = MultiPolygon(
-            mask.to_multipolygon()
-                .0
-                .into_iter()
-                .filter(|polygon| {
-                    polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
-                        crate::scalar::gt(&dimension, &Scalar::zero())
-                            && crate::scalar::lt(&dimension, min_width)
-                    }) && polygon_area_scalar(polygon)
-                        .is_some_and(|area| crate::scalar::gt(&area, min_area))
-                })
-                .collect(),
+    crate::checks::run_geometry_check("solder-mask-sliver", &[mask_name], || {
+        let radius = crate::scalar::half(min_width);
+        // Same opening operation as the copper neck-width check, applied to residual
+        // mask geometry. The result is the geometry that is too thin to survive the
+        // configured web width.
+        let eroded = match offset_for_check(
+            mask,
+            -radius.clone(),
+            "solder-mask-sliver",
+            vec![mask_name.to_string()],
+        ) {
+            Ok(eroded) => eroded,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
+        };
+        let reconstructed = match offset_for_check(
+            &eroded,
+            radius,
+            "solder-mask-sliver",
+            vec![mask_name.to_string()],
+        ) {
+            Ok(reconstructed) => reconstructed,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
+        };
+        let slivers = match difference_for_check(
+            mask,
+            &reconstructed,
+            "solder-mask-sliver",
+            vec![mask_name.to_string()],
+        ) {
+            Ok(slivers) => slivers,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
+        };
+        let mut violations = shapes_violation_scalar(
+            "solder-mask-sliver",
+            Severity::Warning,
+            vec![mask_name.to_string()],
+            slivers,
+            min_area,
+            format!("solder mask geometry is removed by opening with width {min_width}"),
         );
-        let shapes = multipolygon_to_shapes_scalar(&narrow, min_area);
-        if !shapes.is_empty() {
-            violations.push(Violation::new(
-                "solder-mask-sliver",
-                Severity::Warning,
-                vec![mask_name.to_string()],
-                None,
-                shapes,
-                Vec::new(),
-                Some(format!(
-                    "solder mask geometry is below configured width {min_width}"
-                )),
-            ));
+        if violations.is_empty() {
+            let narrow = MultiPolygon(
+                mask.try_to_multipolygon()?
+                    .0
+                    .into_iter()
+                    .filter(|polygon| {
+                        polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(
+                            |dimension| {
+                                crate::scalar::gt(&dimension, &Scalar::zero())
+                                    && crate::scalar::lt(&dimension, min_width)
+                            },
+                        ) && polygon_area_scalar(polygon)
+                            .is_some_and(|area| crate::scalar::gt(&area, min_area))
+                    })
+                    .collect(),
+            );
+            let shapes = multipolygon_to_shapes_scalar(&narrow, min_area);
+            if !shapes.is_empty() {
+                violations.push(Violation::new(
+                    "solder-mask-sliver",
+                    Severity::Warning,
+                    vec![mask_name.to_string()],
+                    None,
+                    shapes,
+                    Vec::new(),
+                    Some(format!(
+                        "solder mask geometry is below configured width {min_width}"
+                    )),
+                ));
+            }
         }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `minimum_mask_opening` design-readiness check or report helper.
@@ -1854,43 +1924,46 @@ pub fn minimum_mask_opening(
     min_opening: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("minimum-mask-opening", &[mask_name], || {
+        let mut violations = Vec::new();
 
-    for (island_index, polygon) in mask.to_multipolygon().0.into_iter().enumerate() {
-        let Some(bounds) = polygon_bounds_scalar(&polygon) else {
-            continue;
-        };
-        let width = &bounds[2] - &bounds[0];
-        let height = &bounds[3] - &bounds[1];
-        let smallest_dimension = if crate::scalar::le(&width, &height) {
-            width
-        } else {
-            height
-        };
-        let Some(area) = polygon_area_scalar(&polygon) else {
-            continue;
-        };
+        for (island_index, polygon) in mask.try_to_multipolygon()?.0.into_iter().enumerate() {
+            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+                continue;
+            };
+            let width = &bounds[2] - &bounds[0];
+            let height = &bounds[3] - &bounds[1];
+            let smallest_dimension = if crate::scalar::le(&width, &height) {
+                width
+            } else {
+                height
+            };
+            let Some(area) = polygon_area_scalar(&polygon) else {
+                continue;
+            };
 
-        if crate::scalar::ge(&smallest_dimension, min_opening) || crate::scalar::le(&area, min_area)
-        {
-            continue;
-        }
+            if crate::scalar::ge(&smallest_dimension, min_opening)
+                || crate::scalar::le(&area, min_area)
+            {
+                continue;
+            }
 
-        let opening = polygon_to_profile(polygon, Some(metadata(mask_name)));
-        violations.push(Violation::new(
+            let opening = polygon_to_profile(polygon, Some(metadata(mask_name)));
+            violations.push(Violation::new(
             "minimum-mask-opening",
             Severity::Warning,
             vec![mask_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&opening.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&opening.try_to_multipolygon()?, min_area),
             Vec::new(),
             Some(format!(
                 "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}"
             )),
         ));
-    }
+        }
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `solder_mask_opening_spacing` design-readiness check or report helper.
@@ -1905,88 +1978,92 @@ pub fn solder_mask_opening_spacing(
     min_spacing: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let openings = mask.to_multipolygon().0;
-    let broad_phase_spacing = scalar_broad_phase_radius(min_spacing);
-    let index = LayerPolygonSpatialIndex::new(&openings, broad_phase_spacing);
-    log::trace!(
-        "solder-mask-opening-spacing: layer={mask_name} openings={} buckets={} min_spacing={min_spacing:.6}",
-        openings.len(),
-        index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let expansion = crate::scalar::half(min_spacing);
-    let mut candidate_pairs = 0usize;
+    crate::checks::run_geometry_check("solder-mask-opening-spacing", &[mask_name], || {
+        let openings = mask.try_to_multipolygon()?.0;
+        let broad_phase_spacing = scalar_broad_phase_radius(min_spacing);
+        let index = LayerPolygonSpatialIndex::new(&openings, broad_phase_spacing);
+        log::trace!(
+            "solder-mask-opening-spacing: layer={mask_name} openings={} buckets={} min_spacing={min_spacing:.6}",
+            openings.len(),
+            index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let expansion = crate::scalar::half(min_spacing);
+        let mut candidate_pairs = 0usize;
 
-    for opening_index in 0..openings.len() {
-        let candidate_indexes = index.later_candidates_near(opening_index, broad_phase_spacing);
-        candidate_pairs += candidate_indexes.len();
-        for neighbor_index in candidate_indexes {
-            if !polygons_within_clearance(
-                &openings[opening_index],
-                &openings[neighbor_index],
-                broad_phase_spacing,
-            ) {
-                continue;
+        for opening_index in 0..openings.len() {
+            let candidate_indexes = index.later_candidates_near(opening_index, broad_phase_spacing);
+            candidate_pairs += candidate_indexes.len();
+            for neighbor_index in candidate_indexes {
+                if !polygons_within_clearance(
+                    &openings[opening_index],
+                    &openings[neighbor_index],
+                    broad_phase_spacing,
+                ) {
+                    continue;
+                }
+
+                let opening =
+                    polygon_to_profile(openings[opening_index].clone(), Some(metadata(mask_name)));
+                let neighbor =
+                    polygon_to_profile(openings[neighbor_index].clone(), Some(metadata(mask_name)));
+                let expanded_opening = match offset_for_check(
+                    &opening,
+                    expansion.clone(),
+                    "solder-mask-opening-spacing",
+                    vec![mask_name.to_string()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let expanded_neighbor = match offset_for_check(
+                    &neighbor,
+                    expansion.clone(),
+                    "solder-mask-opening-spacing",
+                    vec![mask_name.to_string()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let bridge_conflict = match intersection_for_check(
+                    &expanded_opening,
+                    &expanded_neighbor,
+                    "solder-mask-opening-spacing",
+                    vec![mask_name.to_string()],
+                ) {
+                    Ok(bridge_conflict) => bridge_conflict,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes = multipolygon_to_shapes_scalar(
+                    &bridge_conflict.try_to_multipolygon()?,
+                    min_area,
+                );
+                if shapes.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
+                    "solder-mask-opening-spacing",
+                    Severity::Warning,
+                    vec![mask_name.to_string()],
+                    Some(opening_index),
+                    shapes,
+                    Vec::new(),
+                    Some(format!(
+                        "solder mask openings are closer than minimum bridge width {min_spacing}"
+                    )),
+                ));
             }
-
-            let opening =
-                polygon_to_profile(openings[opening_index].clone(), Some(metadata(mask_name)));
-            let neighbor =
-                polygon_to_profile(openings[neighbor_index].clone(), Some(metadata(mask_name)));
-            let expanded_opening = match offset_for_check(
-                &opening,
-                expansion.clone(),
-                "solder-mask-opening-spacing",
-                vec![mask_name.to_string()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let expanded_neighbor = match offset_for_check(
-                &neighbor,
-                expansion.clone(),
-                "solder-mask-opening-spacing",
-                vec![mask_name.to_string()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let bridge_conflict = match intersection_for_check(
-                &expanded_opening,
-                &expanded_neighbor,
-                "solder-mask-opening-spacing",
-                vec![mask_name.to_string()],
-            ) {
-                Ok(bridge_conflict) => bridge_conflict,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes =
-                multipolygon_to_shapes_scalar(&bridge_conflict.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "solder-mask-opening-spacing",
-                Severity::Warning,
-                vec![mask_name.to_string()],
-                Some(opening_index),
-                shapes,
-                Vec::new(),
-                Some(format!(
-                    "solder mask openings are closer than minimum bridge width {min_spacing}"
-                )),
-            ));
         }
-    }
 
-    log::trace!(
-        "solder-mask-opening-spacing finished: layer={mask_name} candidate_pairs={} violations={}",
-        candidate_pairs,
-        violations.len()
-    );
+        log::trace!(
+            "solder-mask-opening-spacing finished: layer={mask_name} candidate_pairs={} violations={}",
+            candidate_pairs,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `acid_trap_candidates` design-readiness check or report helper.
@@ -1995,30 +2072,32 @@ pub fn acid_trap_candidates(
     copper: &PcbRegion,
     max_angle_degrees: &Scalar,
 ) -> Vec<Violation> {
-    let mut locations = Vec::new();
+    crate::checks::run_geometry_check("acid-trap-candidate", &[copper_name], || {
+        let mut locations = Vec::new();
 
-    for polygon in copper.to_multipolygon().0 {
-        collect_acute_vertices(polygon.exterior(), max_angle_degrees, &mut locations);
-        for hole in polygon.interiors() {
-            collect_acute_vertices(hole, max_angle_degrees, &mut locations);
+        for polygon in copper.try_to_multipolygon()?.0 {
+            collect_acute_vertices(polygon.exterior(), max_angle_degrees, &mut locations);
+            for hole in polygon.interiors() {
+                collect_acute_vertices(hole, max_angle_degrees, &mut locations);
+            }
         }
-    }
 
-    if locations.is_empty() {
-        return Vec::new();
-    }
+        if locations.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "acid-trap-candidate",
-        Severity::Warning,
-        vec![copper_name.to_string()],
-        None,
-        Vec::new(),
-        locations,
-        Some(format!(
-            "copper polygon vertices below {max_angle_degrees:#.3} degrees"
-        )),
-    )]
+        Ok(vec![Violation::new(
+            "acid-trap-candidate",
+            Severity::Warning,
+            vec![copper_name.to_string()],
+            None,
+            Vec::new(),
+            locations,
+            Some(format!(
+                "copper polygon vertices below {max_angle_degrees:#.3} degrees"
+            )),
+        )])
+    })
 }
 
 /// Run the `layer_sanity` design-readiness check or report helper.
@@ -2027,19 +2106,20 @@ pub fn layer_sanity(
     region: &PcbRegion,
     max_layer_area: Option<&Scalar>,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let multipolygon = region.to_multipolygon();
-    let area = balanced_scalar_sum(
-        multipolygon
-            .0
-            .iter()
-            .map(polygon_area_scalar)
-            .collect::<Option<Vec<_>>>()
-            .unwrap_or_default(),
-    );
+    crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+        let mut violations = Vec::new();
+        let multipolygon = region.try_to_multipolygon()?;
+        let area = balanced_scalar_sum(
+            multipolygon
+                .0
+                .iter()
+                .map(polygon_area_scalar)
+                .collect::<Option<Vec<_>>>()
+                .unwrap_or_default(),
+        );
 
-    if let Some(detail) = region.exact_construction_error() {
-        violations.push(Violation::new(
+        if let Some(detail) = region.exact_construction_error() {
+            violations.push(Violation::new(
             "layer-sanity",
             Severity::Error,
             vec![layer_name.to_string()],
@@ -2050,81 +2130,82 @@ pub fn layer_sanity(
                 "layer exact geometry could not be constructed and must not be treated as empty: {detail}"
             )),
         ));
-    }
+        }
 
-    if region.had_non_finite_input() || multipolygon_has_non_finite_coordinates(&multipolygon) {
-        violations.push(Violation::new(
-            "layer-sanity",
-            Severity::Error,
-            vec![layer_name.to_string()],
-            None,
-            Vec::new(),
-            Vec::new(),
-            Some(
-                "layer contains non-finite coordinates that cannot be validated geometrically"
-                    .to_string(),
-            ),
-        ));
-    }
+        if region.had_non_finite_input() || multipolygon_has_non_finite_coordinates(&multipolygon) {
+            violations.push(Violation::new(
+                "layer-sanity",
+                Severity::Error,
+                vec![layer_name.to_string()],
+                None,
+                Vec::new(),
+                Vec::new(),
+                Some(
+                    "layer contains non-finite coordinates that cannot be validated geometrically"
+                        .to_string(),
+                ),
+            ));
+        }
 
-    let intersections = collect_ring_self_intersections(&multipolygon);
-    if !intersections.is_empty() {
-        violations.push(Violation::new(
-            "layer-sanity",
-            Severity::Error,
-            vec![layer_name.to_string()],
-            None,
-            Vec::new(),
-            intersections,
-            Some("layer contains self-intersecting contours".to_string()),
-        ));
-    }
+        let intersections = collect_ring_self_intersections(&multipolygon);
+        if !intersections.is_empty() {
+            violations.push(Violation::new(
+                "layer-sanity",
+                Severity::Error,
+                vec![layer_name.to_string()],
+                None,
+                Vec::new(),
+                intersections,
+                Some("layer contains self-intersecting contours".to_string()),
+            ));
+        }
 
-    if matches!(
-        compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value(),
-        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-    ) {
-        violations.push(Violation::new(
-            "layer-sanity",
-            Severity::Warning,
-            vec![layer_name.to_string()],
-            None,
-            Vec::new(),
-            Vec::new(),
-            Some("layer parsed to empty polygon geometry".to_string()),
-        ));
-    }
+        if matches!(
+            compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) {
+            violations.push(Violation::new(
+                "layer-sanity",
+                Severity::Warning,
+                vec![layer_name.to_string()],
+                None,
+                Vec::new(),
+                Vec::new(),
+                Some("layer parsed to empty polygon geometry".to_string()),
+            ));
+        }
 
-    if let Some(max_layer_area) = max_layer_area
-        && compare_reals(&area, max_layer_area, PREDICATE_POLICY).value()
-            == Some(std::cmp::Ordering::Greater)
-    {
-        let shapes = multipolygon_to_shapes_scalar(&multipolygon, &Scalar::zero());
-        violations.push(Violation::new(
-            "layer-sanity",
-            Severity::Warning,
-            vec![layer_name.to_string()],
-            None,
-            shapes,
-            Vec::new(),
-            Some(format!(
-                "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}"
-            )),
-        ));
-    }
+        if let Some(max_layer_area) = max_layer_area
+            && compare_reals(&area, max_layer_area, PREDICATE_POLICY).value()
+                == Some(std::cmp::Ordering::Greater)
+        {
+            let shapes = multipolygon_to_shapes_scalar(&multipolygon, &Scalar::zero());
+            violations.push(Violation::new(
+                "layer-sanity",
+                Severity::Warning,
+                vec![layer_name.to_string()],
+                None,
+                shapes,
+                Vec::new(),
+                Some(format!(
+                    "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}"
+                )),
+            ));
+        }
 
-    if region.geometry().bounding_rect().is_none() {
-        violations.push(Violation::new(
-            "layer-sanity",
-            Severity::Warning,
-            vec![layer_name.to_string()],
-            None,
-            Vec::new(),
-            Vec::new(),
-            Some("layer has no finite bounding rectangle".to_string()),
-        ));
-    }
-    violations
+        if region.try_to_multipolygon()?.bounding_rect().is_none() {
+            violations.push(Violation::new(
+                "layer-sanity",
+                Severity::Warning,
+                vec![layer_name.to_string()],
+                None,
+                Vec::new(),
+                Vec::new(),
+                Some("layer has no finite bounding rectangle".to_string()),
+            ));
+        }
+        Ok(violations)
+    })
 }
 
 /// Warn when a parsed layer contains polygon islands at or below the configured
@@ -2140,50 +2221,52 @@ pub fn tiny_layer_feature_readiness(
     region: &PcbRegion,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if crate::scalar::le(min_area, &Scalar::zero()) {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+        if crate::scalar::le(min_area, &Scalar::zero()) {
+            return Ok(Vec::new());
+        }
 
-    let multipolygon = region.to_multipolygon();
-    let tiny_polygons = multipolygon
-        .0
-        .iter()
-        .filter(|polygon| {
-            polygon_area_scalar(polygon).is_some_and(|area| {
-                compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value()
-                    == Some(std::cmp::Ordering::Greater)
-                    && matches!(
-                        compare_reals(&area, min_area, PREDICATE_POLICY).value(),
-                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-                    )
+        let multipolygon = region.try_to_multipolygon()?;
+        let tiny_polygons = multipolygon
+            .0
+            .iter()
+            .filter(|polygon| {
+                polygon_area_scalar(polygon).is_some_and(|area| {
+                    compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value()
+                        == Some(std::cmp::Ordering::Greater)
+                        && matches!(
+                            compare_reals(&area, min_area, PREDICATE_POLICY).value(),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                        )
+                })
             })
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-    log::trace!(
-        "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}",
-        multipolygon.0.len(),
-        tiny_polygons.len()
-    );
+            .cloned()
+            .collect::<Vec<_>>();
+        log::trace!(
+            "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}",
+            multipolygon.0.len(),
+            tiny_polygons.len()
+        );
 
-    if tiny_polygons.is_empty() {
-        return Vec::new();
-    }
+        if tiny_polygons.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    let tiny = MultiPolygon(tiny_polygons);
-    let locations = duplicate_layer_locations(&tiny);
-    let shapes = multipolygon_to_shapes_scalar(&tiny, &Scalar::zero());
-    vec![Violation::new(
-        "layer-sanity",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        shapes,
-        locations,
-        Some(format!(
-            "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
-        )),
-    )]
+        let tiny = MultiPolygon(tiny_polygons);
+        let locations = duplicate_layer_locations(&tiny);
+        let shapes = multipolygon_to_shapes_scalar(&tiny, &Scalar::zero());
+        Ok(vec![Violation::new(
+            "layer-sanity",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            shapes,
+            locations,
+            Some(format!(
+                "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
+            )),
+        )])
+    })
 }
 
 /// Warn when a parsed layer contains long, skinny polygon islands.
@@ -2201,51 +2284,53 @@ pub fn skinny_layer_feature_readiness(
     min_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if crate::scalar::le(min_width, &Scalar::zero()) {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+        if crate::scalar::le(min_width, &Scalar::zero()) {
+            return Ok(Vec::new());
+        }
 
-    let multipolygon = region.to_multipolygon();
-    let skinny_polygons = multipolygon
-        .0
-        .iter()
-        .filter(|polygon| {
-            polygon_area_scalar(polygon).is_some_and(|area| {
-                compare_reals(&area, min_area, PREDICATE_POLICY).value()
-                    == Some(std::cmp::Ordering::Greater)
-            }) && polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
-                compare_reals(&dimension, &Scalar::zero(), PREDICATE_POLICY).value()
-                    == Some(std::cmp::Ordering::Greater)
-                    && compare_reals(&dimension, min_width, PREDICATE_POLICY).value()
-                        == Some(std::cmp::Ordering::Less)
+        let multipolygon = region.try_to_multipolygon()?;
+        let skinny_polygons = multipolygon
+            .0
+            .iter()
+            .filter(|polygon| {
+                polygon_area_scalar(polygon).is_some_and(|area| {
+                    compare_reals(&area, min_area, PREDICATE_POLICY).value()
+                        == Some(std::cmp::Ordering::Greater)
+                }) && polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
+                    compare_reals(&dimension, &Scalar::zero(), PREDICATE_POLICY).value()
+                        == Some(std::cmp::Ordering::Greater)
+                        && compare_reals(&dimension, min_width, PREDICATE_POLICY).value()
+                            == Some(std::cmp::Ordering::Less)
+                })
             })
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-    log::trace!(
-        "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}",
-        multipolygon.0.len(),
-        skinny_polygons.len()
-    );
+            .cloned()
+            .collect::<Vec<_>>();
+        log::trace!(
+            "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}",
+            multipolygon.0.len(),
+            skinny_polygons.len()
+        );
 
-    if skinny_polygons.is_empty() {
-        return Vec::new();
-    }
+        if skinny_polygons.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    let skinny = MultiPolygon(skinny_polygons);
-    let locations = duplicate_layer_locations(&skinny);
-    let shapes = multipolygon_to_shapes_scalar(&skinny, min_area);
-    vec![Violation::new(
-        "layer-sanity",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        shapes,
-        locations,
-        Some(format!(
-            "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
-        )),
-    )]
+        let skinny = MultiPolygon(skinny_polygons);
+        let locations = duplicate_layer_locations(&skinny);
+        let shapes = multipolygon_to_shapes_scalar(&skinny, min_area);
+        Ok(vec![Violation::new(
+            "layer-sanity",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            shapes,
+            locations,
+            Some(format!(
+                "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
+            )),
+        )])
+    })
 }
 
 fn polygon_minimum_bounding_dimension_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
@@ -2614,59 +2699,60 @@ pub fn duplicate_layer_island_readiness(
     region: &PcbRegion,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let multipolygon = region.to_multipolygon();
-    let mut buckets = BTreeMap::<DuplicateIslandSignature, Vec<&Polygon<f64>>>::new();
-    for polygon in &multipolygon.0 {
-        if polygon_area_scalar(polygon).is_none_or(|area| crate::scalar::le(&area, min_area)) {
-            continue;
-        }
-        let Some(signature) = duplicate_island_signature(polygon) else {
-            continue;
-        };
-        buckets.entry(signature).or_default().push(polygon);
-    }
-    let comparable_polygons = buckets.values().map(Vec::len).sum::<usize>();
-    log::trace!(
-        "duplicate-layer island readiness: layer={layer_name} polygons={} comparable_polygons={} candidate_buckets={} min_area={min_area:#.9}",
-        multipolygon.0.len(),
-        comparable_polygons,
-        buckets.values().filter(|bucket| bucket.len() > 1).count()
-    );
-
-    let mut locations = Vec::new();
-    for bucket in buckets.values().filter(|bucket| bucket.len() > 1) {
-        for left_index in 0..bucket.len() {
-            let mut matched_left = false;
-            for right_index in (left_index + 1)..bucket.len() {
-                let duplicate = match polygons_are_duplicate(
-                    bucket[left_index],
-                    bucket[right_index],
-                    &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-                    "layer-sanity",
-                    vec![layer_name.to_string()],
-                ) {
-                    Ok(duplicate) => duplicate,
-                    Err(uncertainty) => return vec![*uncertainty],
-                };
-                if duplicate {
-                    if let Some(location) = polygon_bounds_center(bucket[left_index]) {
-                        push_unique_location(&mut locations, location);
-                    }
-                    matched_left = true;
-                    break;
-                }
-            }
-            if matched_left {
+    crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+        let multipolygon = region.try_to_multipolygon()?;
+        let mut buckets = BTreeMap::<DuplicateIslandSignature, Vec<&Polygon<f64>>>::new();
+        for polygon in &multipolygon.0 {
+            if polygon_area_scalar(polygon).is_none_or(|area| crate::scalar::le(&area, min_area)) {
                 continue;
             }
+            let Some(signature) = duplicate_island_signature(polygon) else {
+                continue;
+            };
+            buckets.entry(signature).or_default().push(polygon);
         }
-    }
+        let comparable_polygons = buckets.values().map(Vec::len).sum::<usize>();
+        log::trace!(
+            "duplicate-layer island readiness: layer={layer_name} polygons={} comparable_polygons={} candidate_buckets={} min_area={min_area:#.9}",
+            multipolygon.0.len(),
+            comparable_polygons,
+            buckets.values().filter(|bucket| bucket.len() > 1).count()
+        );
 
-    if locations.is_empty() {
-        return Vec::new();
-    }
+        let mut locations = Vec::new();
+        for bucket in buckets.values().filter(|bucket| bucket.len() > 1) {
+            for left_index in 0..bucket.len() {
+                let mut matched_left = false;
+                for right_index in (left_index + 1)..bucket.len() {
+                    let duplicate = match polygons_are_duplicate(
+                        bucket[left_index],
+                        bucket[right_index],
+                        &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+                        "layer-sanity",
+                        vec![layer_name.to_string()],
+                    ) {
+                        Ok(duplicate) => duplicate,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    if duplicate {
+                        if let Some(location) = polygon_bounds_center(bucket[left_index]) {
+                            push_unique_location(&mut locations, location);
+                        }
+                        matched_left = true;
+                        break;
+                    }
+                }
+                if matched_left {
+                    continue;
+                }
+            }
+        }
 
-    vec![Violation::new(
+        if locations.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        Ok(vec![Violation::new(
         "layer-sanity",
         Severity::Warning,
         vec![layer_name.to_string()],
@@ -2677,7 +2763,8 @@ pub fn duplicate_layer_island_readiness(
             "layer contains duplicate polygon island geometry; review for repeated flashes, duplicated contours, or stale CAM artifacts"
                 .to_string(),
         ),
-    )]
+    )])
+    })
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -2722,74 +2809,81 @@ pub fn duplicate_layer_geometry_readiness<T>(
 where
     T: std::borrow::Borrow<PcbRegion>,
 {
-    let prepared = layers
-        .iter()
-        .filter_map(|(name, region)| {
+    crate::checks::run_geometry_check("layer-sanity", &[], || {
+        let mut prepared = Vec::new();
+        for (name, region) in layers {
             let region = region.borrow();
-            let multipolygon = region.to_multipolygon();
-            let area = multipolygon_area_scalar(&multipolygon)?;
-            let bounds = multipolygon_bounds_scalar(&multipolygon)?;
-            (compare_reals(&area, min_area, PREDICATE_POLICY).value()
-                == Some(std::cmp::Ordering::Greater))
-            .then_some(DuplicateLayer {
-                name,
-                region,
-                multipolygon,
-                area,
-                bounds,
-            })
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}",
-        layers.len(),
-        prepared.len()
-    );
-
-    let mut violations = Vec::new();
-    for left_index in 0..prepared.len() {
-        for right_index in (left_index + 1)..prepared.len() {
-            let left = &prepared[left_index];
-            let right = &prepared[right_index];
-            let geometry_tolerance = crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE);
-            if !areas_approximately_equal_scalar(&left.area, &right.area, &geometry_tolerance)
-                || !bounds_approximately_equal_scalar(
-                    &left.bounds,
-                    &right.bounds,
-                    &geometry_tolerance,
-                )
+            let multipolygon = region.try_to_multipolygon()?;
+            let Some(area) = multipolygon_area_scalar(&multipolygon) else {
+                continue;
+            };
+            let Some(bounds) = multipolygon_bounds_scalar(&multipolygon) else {
+                continue;
+            };
+            if compare_reals(&area, min_area, PREDICATE_POLICY).value()
+                == Some(std::cmp::Ordering::Greater)
             {
-                continue;
+                prepared.push(DuplicateLayer {
+                    name,
+                    region,
+                    multipolygon,
+                    area,
+                    bounds,
+                });
             }
+        }
+        log::trace!(
+            "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}",
+            layers.len(),
+            prepared.len()
+        );
 
-            let overlap = match intersection_for_check(
-                left.region,
-                right.region,
-                "layer-sanity",
-                vec![left.name.to_string(), right.name.to_string()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let Some(overlap_area) = multipolygon_area_scalar(&overlap.to_multipolygon()) else {
-                continue;
-            };
-            let Some(left_coverage) = (&overlap_area / &left.area).ok() else {
-                continue;
-            };
-            let Some(right_coverage) = (&overlap_area / &right.area).ok() else {
-                continue;
-            };
-            let overlap_ratio = crate::scalar::scalar(DUPLICATE_LAYER_OVERLAP_RATIO);
-            if crate::scalar::lt(&left_coverage, &overlap_ratio)
-                || crate::scalar::lt(&right_coverage, &overlap_ratio)
-            {
-                continue;
-            }
+        let mut violations = Vec::new();
+        for left_index in 0..prepared.len() {
+            for right_index in (left_index + 1)..prepared.len() {
+                let left = &prepared[left_index];
+                let right = &prepared[right_index];
+                let geometry_tolerance = crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE);
+                if !areas_approximately_equal_scalar(&left.area, &right.area, &geometry_tolerance)
+                    || !bounds_approximately_equal_scalar(
+                        &left.bounds,
+                        &right.bounds,
+                        &geometry_tolerance,
+                    )
+                {
+                    continue;
+                }
 
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let locations = duplicate_layer_locations(&left.multipolygon);
-            violations.push(Violation::new(
+                let overlap = match intersection_for_check(
+                    left.region,
+                    right.region,
+                    "layer-sanity",
+                    vec![left.name.to_string(), right.name.to_string()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let Some(overlap_area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+                else {
+                    continue;
+                };
+                let Some(left_coverage) = (&overlap_area / &left.area).ok() else {
+                    continue;
+                };
+                let Some(right_coverage) = (&overlap_area / &right.area).ok() else {
+                    continue;
+                };
+                let overlap_ratio = crate::scalar::scalar(DUPLICATE_LAYER_OVERLAP_RATIO);
+                if crate::scalar::lt(&left_coverage, &overlap_ratio)
+                    || crate::scalar::lt(&right_coverage, &overlap_ratio)
+                {
+                    continue;
+                }
+
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let locations = duplicate_layer_locations(&left.multipolygon);
+                violations.push(Violation::new(
                 "layer-sanity",
                 Severity::Warning,
                 vec![left.name.to_string(), right.name.to_string()],
@@ -2806,10 +2900,11 @@ where
                         * crate::scalar::scalar("100")
                 )),
             ));
+            }
         }
-    }
 
-    violations
+        Ok(violations)
+    })
 }
 
 struct DuplicateLayer<'a> {
@@ -2893,42 +2988,46 @@ pub fn copper_balance(
     max_imbalance_ratio: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut measured = copper_layers
-        .iter()
-        .filter_map(|(name, region)| {
-            let area = multipolygon_area_scalar(&region.to_multipolygon())?;
-            crate::scalar::gt(&area, min_area).then_some((name.clone(), area))
-        })
-        .collect::<Vec<_>>();
+    crate::checks::run_geometry_check("copper-balance-readiness", &[], || {
+        let mut measured = Vec::new();
+        for (name, region) in copper_layers {
+            let Some(area) = multipolygon_area_scalar(&region.try_to_multipolygon()?) else {
+                continue;
+            };
+            if crate::scalar::gt(&area, min_area) {
+                measured.push((name.clone(), area));
+            }
+        }
 
-    if measured.len() < 2 {
-        return Vec::new();
-    }
+        if measured.len() < 2 {
+            return Ok(Vec::new());
+        }
 
-    measured.sort_by(|left, right| {
-        crate::scalar::compare(&left.1, &right.1).expect("exact layer areas must be comparable")
-    });
-    let (smallest_layer, smallest_area) = &measured[0];
-    let (largest_layer, largest_area) = &measured[measured.len() - 1];
-    let Ok(ratio) = largest_area / smallest_area else {
-        return Vec::new();
-    };
+        measured.sort_by(|left, right| {
+            crate::scalar::compare(&left.1, &right.1).expect("exact layer areas must be comparable")
+        });
+        let (smallest_layer, smallest_area) = &measured[0];
+        let (largest_layer, largest_area) = &measured[measured.len() - 1];
+        let Ok(ratio) = largest_area / smallest_area else {
+            return Ok(Vec::new());
+        };
 
-    if crate::scalar::le(&ratio, max_imbalance_ratio) {
-        return Vec::new();
-    }
+        if crate::scalar::le(&ratio, max_imbalance_ratio) {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "copper-balance-readiness",
-        Severity::Warning,
-        vec![smallest_layer.clone(), largest_layer.clone()],
-        None,
-        Vec::new(),
-        Vec::new(),
-        Some(format!(
-            "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}"
-        )),
-    )]
+        Ok(vec![Violation::new(
+            "copper-balance-readiness",
+            Severity::Warning,
+            vec![smallest_layer.clone(), largest_layer.clone()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}"
+            )),
+        )])
+    })
 }
 
 /// Run a local copper-density balance check over matching windows on each layer.
@@ -2952,7 +3051,16 @@ pub fn local_copper_density_readiness(
         return Vec::new();
     }
 
-    let prepared_layers = prepare_density_layers(copper_layers, min_area);
+    let prepared_layers = match prepare_density_layers(copper_layers, min_area) {
+        Ok(layers) => layers,
+        Err(error) => {
+            return vec![crate::checks::geometry_uncertainty_violation(
+                "local-copper-density-readiness",
+                copper_layers.iter().map(|(name, _)| name.clone()).collect(),
+                error,
+            )];
+        }
+    };
     let Some(bounds) = combined_density_bounds(&prepared_layers) else {
         return Vec::new();
     };
@@ -3017,26 +3125,27 @@ struct DensityPolygon {
 fn prepare_density_layers(
     copper_layers: &[(String, PcbRegion)],
     min_area: &Scalar,
-) -> Vec<DensityLayer> {
-    copper_layers
-        .iter()
-        .filter_map(|(name, region)| {
-            let polygons = region
-                .to_multipolygon()
-                .0
-                .into_iter()
-                .filter_map(|polygon| {
-                    let area = polygon_area_scalar(&polygon)?;
-                    let bounds = polygon_bounds_scalar(&polygon)?;
-                    crate::scalar::gt(&area, min_area).then_some(DensityPolygon { bounds, area })
-                })
-                .collect::<Vec<_>>();
-            (!polygons.is_empty()).then_some(DensityLayer {
+) -> Result<Vec<DensityLayer>, crate::PcbGeometryUncertainty> {
+    let mut layers = Vec::new();
+    for (name, region) in copper_layers {
+        let polygons = region
+            .try_to_multipolygon()?
+            .0
+            .into_iter()
+            .filter_map(|polygon| {
+                let area = polygon_area_scalar(&polygon)?;
+                let bounds = polygon_bounds_scalar(&polygon)?;
+                crate::scalar::gt(&area, min_area).then_some(DensityPolygon { bounds, area })
+            })
+            .collect::<Vec<_>>();
+        if !polygons.is_empty() {
+            layers.push(DensityLayer {
                 name: name.clone(),
                 polygons,
-            })
-        })
-        .collect()
+            });
+        }
+    }
+    Ok(layers)
 }
 
 fn collect_local_density_window(
@@ -3112,7 +3221,15 @@ fn collect_local_density_window(
     let size_f64 = scalar_point_f64_compatibility(&size);
     let window_polygon = rect_polygon(center_f64, size_f64, 0.0);
     let window = polygons_to_profile(vec![window_polygon], Some(metadata("density window")));
-    let shapes = multipolygon_to_shapes_scalar(&window.to_multipolygon(), min_area);
+    let Some(projected) = crate::checks::geometry_result_for_check(
+        window.try_to_multipolygon(),
+        "local-copper-density-readiness",
+        &[sparse_layer, dense_layer],
+        violations,
+    ) else {
+        return;
+    };
+    let shapes = multipolygon_to_shapes_scalar(&projected, min_area);
     violations.push(Violation::new(
         "local-copper-density-readiness",
         Severity::Warning,
@@ -3219,24 +3336,26 @@ pub fn mechanical_layer_geometry(
     region: &PcbRegion,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if !looks_like_mechanical_layer(layer_name) {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("mechanical-layer-geometry", &[layer_name], || {
+        if !looks_like_mechanical_layer(layer_name) {
+            return Ok(Vec::new());
+        }
 
-    let shapes = multipolygon_to_shapes_scalar(&region.to_multipolygon(), min_area);
-    if shapes.is_empty() {
-        return Vec::new();
-    }
+        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area);
+        if shapes.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "mechanical-layer-geometry",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some("geometry is present on a mechanical/user layer".to_string()),
-    )]
+        Ok(vec![Violation::new(
+            "mechanical-layer-geometry",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            shapes,
+            Vec::new(),
+            Some("geometry is present on a mechanical/user layer".to_string()),
+        )])
+    })
 }
 
 /// Run the `board_outline_sanity` design-readiness check or report helper.
@@ -3245,20 +3364,22 @@ pub fn board_outline_sanity(
     outline: &PcbRegion,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes_scalar(&outline.to_multipolygon(), min_area);
-    if !shapes.is_empty() {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("board-outline-sanity", &[layer_name], || {
+        let shapes = multipolygon_to_shapes_scalar(&outline.try_to_multipolygon()?, min_area);
+        if !shapes.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "board-outline-sanity",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        Vec::new(),
-        Vec::new(),
-        Some("board outline layer has no closed polygon area".to_string()),
-    )]
+        Ok(vec![Violation::new(
+            "board-outline-sanity",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some("board outline layer has no closed polygon area".to_string()),
+        )])
+    })
 }
 
 /// Run the `board_outline_fragments` design-readiness check or report helper.
@@ -3267,20 +3388,22 @@ pub fn board_outline_fragments(
     outline: &PcbRegion,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes_scalar(&outline.to_multipolygon(), min_area);
-    if shapes.len() <= 1 {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("board-outline-fragments", &[layer_name], || {
+        let shapes = multipolygon_to_shapes_scalar(&outline.try_to_multipolygon()?, min_area);
+        if shapes.len() <= 1 {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "board-outline-fragments",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some("board outline parsed to multiple disconnected regions".to_string()),
-    )]
+        Ok(vec![Violation::new(
+            "board-outline-fragments",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            shapes,
+            Vec::new(),
+            Some("board outline parsed to multiple disconnected regions".to_string()),
+        )])
+    })
 }
 
 /// Reject outline rings that self-intersect, which usually produces an invalid
@@ -3306,20 +3429,27 @@ pub fn board_outline_self_intersection_readiness_with_grid(
     outline: &PcbRegion,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let intersections = collect_ring_self_intersections_with_grid(&outline.to_multipolygon(), grid);
-    if intersections.is_empty() {
-        return Vec::new();
-    }
-
-    vec![Violation::new(
+    crate::checks::run_geometry_check(
         "board-outline-self-intersection-readiness",
-        Severity::Error,
-        vec![layer_name.to_string()],
-        None,
-        Vec::new(),
-        intersections,
-        Some("board outline contains self-intersecting contour edges".to_string()),
-    )]
+        &[layer_name],
+        || {
+            let intersections =
+                collect_ring_self_intersections_with_grid(&outline.try_to_multipolygon()?, grid);
+            if intersections.is_empty() {
+                return Ok(Vec::new());
+            }
+
+            Ok(vec![Violation::new(
+                "board-outline-self-intersection-readiness",
+                Severity::Error,
+                vec![layer_name.to_string()],
+                None,
+                Vec::new(),
+                intersections,
+                Some("board outline contains self-intersecting contour edges".to_string()),
+            )])
+        },
+    )
 }
 
 /// Flag strong inside-corners on board outlines where a narrow notch is likely to
@@ -3344,29 +3474,31 @@ pub fn board_outline_notch_readiness_with_grid(
     outline: &PcbRegion,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let mut locations = Vec::new();
+    crate::checks::run_geometry_check("board-outline-notch-readiness", &[layer_name], || {
+        let mut locations = Vec::new();
 
-    let multipolygon = outline.to_multipolygon();
-    for polygon in &multipolygon.0 {
-        collect_board_outline_notches_with_grid(polygon.exterior(), &mut locations, grid);
-        for hole in polygon.interiors() {
-            collect_board_outline_notches_with_grid(hole, &mut locations, grid);
+        let multipolygon = outline.try_to_multipolygon()?;
+        for polygon in &multipolygon.0 {
+            collect_board_outline_notches_with_grid(polygon.exterior(), &mut locations, grid);
+            for hole in polygon.interiors() {
+                collect_board_outline_notches_with_grid(hole, &mut locations, grid);
+            }
         }
-    }
 
-    if locations.is_empty() {
-        return Vec::new();
-    }
+        if locations.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "board-outline-notch-readiness",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        Vec::new(),
-        locations,
-        Some("board outline contains sharp notch inside-corners".to_string()),
-    )]
+        Ok(vec![Violation::new(
+            "board-outline-notch-readiness",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            Vec::new(),
+            locations,
+            Some("board outline contains sharp notch inside-corners".to_string()),
+        )])
+    })
 }
 
 /// Warn when the outline contains duplicated contour polygons that would indicate
@@ -3388,34 +3520,36 @@ pub fn board_outline_duplicate_readiness_with_grid(
     outline: &PcbRegion,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let mut locations = Vec::new();
+    crate::checks::run_geometry_check("board-outline-duplicate-readiness", &[layer_name], || {
+        let mut locations = Vec::new();
 
-    if let Err(uncertainty) = collect_board_outline_overlapping_exteriors(
-        &outline.to_multipolygon(),
-        &crate::scalar::scalar(BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO),
-        &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-        false,
-        grid,
-        &mut locations,
-        "board-outline-duplicate-readiness",
-        vec![layer_name.to_string()],
-    ) {
-        return vec![*uncertainty];
-    }
+        if let Err(uncertainty) = collect_board_outline_overlapping_exteriors(
+            &outline.try_to_multipolygon()?,
+            &crate::scalar::scalar(BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO),
+            &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+            false,
+            grid,
+            &mut locations,
+            "board-outline-duplicate-readiness",
+            vec![layer_name.to_string()],
+        ) {
+            return Ok(vec![*uncertainty]);
+        }
 
-    if locations.is_empty() {
-        return Vec::new();
-    }
+        if locations.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "board-outline-duplicate-readiness",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        Vec::new(),
-        locations,
-        Some("board outline contains duplicate contour geometry".to_string()),
-    )]
+        Ok(vec![Violation::new(
+            "board-outline-duplicate-readiness",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            Vec::new(),
+            locations,
+            Some("board outline contains duplicate contour geometry".to_string()),
+        )])
+    })
 }
 
 /// Warn when one contour is fully contained by another, which can indicate
@@ -3438,34 +3572,36 @@ pub fn board_outline_nesting_readiness_with_grid(
     outline: &PcbRegion,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let mut locations = Vec::new();
+    crate::checks::run_geometry_check("board-outline-nesting-readiness", &[layer_name], || {
+        let mut locations = Vec::new();
 
-    if let Err(uncertainty) = collect_board_outline_overlapping_exteriors(
-        &outline.to_multipolygon(),
-        &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
-        &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-        true,
-        grid,
-        &mut locations,
-        "board-outline-nesting-readiness",
-        vec![layer_name.to_string()],
-    ) {
-        return vec![*uncertainty];
-    }
+        if let Err(uncertainty) = collect_board_outline_overlapping_exteriors(
+            &outline.try_to_multipolygon()?,
+            &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
+            &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+            true,
+            grid,
+            &mut locations,
+            "board-outline-nesting-readiness",
+            vec![layer_name.to_string()],
+        ) {
+            return Ok(vec![*uncertainty]);
+        }
 
-    if locations.is_empty() {
-        return Vec::new();
-    }
+        if locations.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        "board-outline-nesting-readiness",
-        Severity::Warning,
-        vec![layer_name.to_string()],
-        None,
-        Vec::new(),
-        locations,
-        Some("board outline contains nested contour geometry".to_string()),
-    )]
+        Ok(vec![Violation::new(
+            "board-outline-nesting-readiness",
+            Severity::Warning,
+            vec![layer_name.to_string()],
+            None,
+            Vec::new(),
+            locations,
+            Some("board outline contains nested contour geometry".to_string()),
+        )])
+    })
 }
 
 fn intersection_violation(
@@ -3476,28 +3612,30 @@ fn intersection_violation(
     right: &PcbRegion,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = match intersection_for_check(
-        left,
-        right,
-        spec.check,
-        vec![left_name.to_string(), right_name.to_string()],
-    ) {
-        Ok(overlap) => overlap,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-    if shapes.is_empty() {
-        return Vec::new();
-    }
-    vec![Violation::new(
-        spec.check,
-        spec.severity,
-        vec![left_name.to_string(), right_name.to_string()],
-        None,
-        shapes,
-        Vec::new(),
-        Some(spec.message.to_string()),
-    )]
+    crate::checks::run_geometry_check(spec.check, &[left_name, right_name], || {
+        let overlap = match intersection_for_check(
+            left,
+            right,
+            spec.check,
+            vec![left_name.to_string(), right_name.to_string()],
+        ) {
+            Ok(overlap) => overlap,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
+        };
+        let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+        if shapes.is_empty() {
+            return Ok(Vec::new());
+        }
+        Ok(vec![Violation::new(
+            spec.check,
+            spec.severity,
+            vec![left_name.to_string(), right_name.to_string()],
+            None,
+            shapes,
+            Vec::new(),
+            Some(spec.message.to_string()),
+        )])
+    })
 }
 
 const BOARD_OUTLINE_NOTCH_ANGLE_DEGREES: &str = "300";
@@ -3818,7 +3956,15 @@ fn polygon_intersection_area_scalar(
     let left_region = polygon_to_profile(left.clone(), None);
     let right_region = polygon_to_profile(right.clone(), None);
     let overlap = intersection_for_check(&left_region, &right_region, requested_check, layers)?;
-    Ok(multipolygon_area_scalar(&overlap.to_multipolygon()))
+    Ok(multipolygon_area_scalar(
+        &overlap.try_to_multipolygon().map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![],
+                uncertainty,
+            ))
+        })?,
+    ))
 }
 
 fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
@@ -4128,94 +4274,34 @@ enum IndexedCoverMode {
 
 struct ExactRegionComponent {
     region: PcbRegion,
-    conservative_finite_bounds: [f64; 4],
+    conservative_finite_bounds: Option<[f64; 4]>,
 }
 
-fn exact_region_components(region: &PcbRegion) -> Option<Vec<ExactRegionComponent>> {
-    let regions = region.exact_component_regions()?;
-    regions
+fn exact_region_components(
+    region: &PcbRegion,
+) -> Result<Vec<ExactRegionComponent>, crate::PcbGeometryUncertainty> {
+    Ok(region
+        .exact_component_regions()?
         .iter()
         .cloned()
         .map(|component_region| {
             let component = PcbRegion::new_shared(component_region, region.metadata().clone());
-            Some(ExactRegionComponent {
-                conservative_finite_bounds: conservative_exact_region_bounds(&component)?,
+            ExactRegionComponent {
+                conservative_finite_bounds: conservative_exact_region_bounds(&component),
                 region: component,
-            })
+            }
         })
-        .collect()
+        .collect())
 }
 
-fn exact_region_components_or_whole(region: &PcbRegion) -> Option<Vec<ExactRegionComponent>> {
-    if matches!(region.loop_role_counts(), Ok((1, 0))) {
-        return Some(vec![ExactRegionComponent {
-            region: region.clone(),
-            conservative_finite_bounds: conservative_exact_region_bounds(region)?,
-        }]);
-    }
-    if let Some(components) = exact_region_components(region) {
-        return Some(components);
-    }
-    let bounds = region.to_multipolygon().bounding_rect()?;
-    let points = [
-        [bounds.min().x, bounds.min().y],
-        [bounds.max().x, bounds.max().y],
-    ];
-    Some(vec![ExactRegionComponent {
-        region: region.clone(),
-        conservative_finite_bounds: conservative_projection_bounds(&points, 1.0e-3)?,
-    }])
-}
-
-/// Conservatively project an exact retained region AABB for broad-phase use.
-///
-/// The exact HyperCurve bounds, rather than the compatibility polygon
-/// projection, determine component identity. Expanding the lossy scalar
-/// projection by one representable float keeps rejection conservative without
-/// coupling exact decomposition to tessellation output.
+/// Optional native enclosure. Unknown bounds retain every candidate.
 fn conservative_exact_region_bounds(region: &PcbRegion) -> Option<[f64; 4]> {
-    let bounds = region.bounding_box();
-    let min_x = bounds.mins.x.to_f64_lossy()?;
-    let min_y = bounds.mins.y.to_f64_lossy()?;
-    let max_x = bounds.maxs.x.to_f64_lossy()?;
-    let max_y = bounds.maxs.y.to_f64_lossy()?;
-    if !min_x.is_finite() || !min_y.is_finite() || !max_x.is_finite() || !max_y.is_finite() {
-        return None;
-    }
+    let bounds = region.conservative_bounds()?;
     Some([
-        min_x.next_down(),
-        min_y.next_down(),
-        max_x.next_up(),
-        max_y.next_up(),
-    ])
-}
-
-/// Conservative finite bounds for exact-component candidate rejection.
-///
-/// HyperCurve's projection tolerance bounds the emitted chord's deviation from
-/// its retained curve. Expanding every side by that budget and one
-/// representable float means a strict separation can only reject an exact
-/// curve pair that cannot meet. These bounds never certify a topology result.
-fn conservative_projection_bounds(points: &[[f64; 2]], error: f64) -> Option<[f64; 4]> {
-    let first = *points.first()?;
-    if !first[0].is_finite() || !first[1].is_finite() {
-        return None;
-    }
-    let mut bounds = [first[0], first[1], first[0], first[1]];
-    for point in &points[1..] {
-        if !point[0].is_finite() || !point[1].is_finite() {
-            return None;
-        }
-        bounds[0] = bounds[0].min(point[0]);
-        bounds[1] = bounds[1].min(point[1]);
-        bounds[2] = bounds[2].max(point[0]);
-        bounds[3] = bounds[3].max(point[1]);
-    }
-    Some([
-        (bounds[0] - error).next_down(),
-        (bounds[1] - error).next_down(),
-        (bounds[2] + error).next_up(),
-        (bounds[3] + error).next_up(),
+        bounds.min().x,
+        bounds.min().y,
+        bounds.max().x,
+        bounds.max().y,
     ])
 }
 
@@ -4236,8 +4322,20 @@ fn exact_componentwise_difference(
     cover: &PcbRegion,
     cover_offset: Option<&Scalar>,
 ) -> Option<Result<PcbRegion, Box<Violation>>> {
-    let subjects = exact_region_components(subject)?;
-    let covers = exact_region_components(cover)?;
+    let components = exact_region_components(subject)
+        .and_then(|subjects| exact_region_components(cover).map(|covers| (subjects, covers)));
+    let (subjects, covers) = match components {
+        Ok(components) => components,
+        Err(error) => {
+            return Some(Err(Box::new(
+                crate::checks::geometry_uncertainty_violation(
+                    requested_check,
+                    vec![subject_name.to_owned(), cover_name.to_owned()],
+                    error,
+                ),
+            )));
+        }
+    };
     exact_componentwise_difference_from_components(
         requested_check,
         subject_name,
@@ -4262,14 +4360,19 @@ fn exact_componentwise_difference_from_components(
     // zone spanning most of the board. Preserve exact subtraction semantics
     // while deferring expensive large-component offsets until they are
     // genuinely needed.
-    covers.sort_by(|left, right| {
-        let left_width = left.conservative_finite_bounds[2] - left.conservative_finite_bounds[0];
-        let left_height = left.conservative_finite_bounds[3] - left.conservative_finite_bounds[1];
-        let right_width = right.conservative_finite_bounds[2] - right.conservative_finite_bounds[0];
-        let right_height =
-            right.conservative_finite_bounds[3] - right.conservative_finite_bounds[1];
-        (left_width * left_height).total_cmp(&(right_width * right_height))
-    });
+    let projected_area = |component: &ExactRegionComponent| {
+        component
+            .conservative_finite_bounds
+            .map(|b| (b[2] - b[0]) * (b[3] - b[1]))
+    };
+    covers.sort_by(
+        |left, right| match (projected_area(left), projected_area(right)) {
+            (Some(left), Some(right)) => left.total_cmp(&right),
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, None) => std::cmp::Ordering::Equal,
+        },
+    );
     let offset_covers = cover_offset
         .map(|_| {
             (0..covers.len())
@@ -4278,17 +4381,20 @@ fn exact_componentwise_difference_from_components(
         })
         .unwrap_or_default();
     if let Some(distance) = cover_offset {
-        let radius = distance
-            .to_f64_lossy()
-            .filter(|radius| radius.is_finite())
-            .map(f64::abs)?;
+        let radius = crate::projection::finite_enclosure(distance)
+            .map(|bounds| bounds[0].abs().max(bounds[1].abs()));
         for component in &mut covers {
-            component.conservative_finite_bounds = [
-                (component.conservative_finite_bounds[0] - radius).next_down(),
-                (component.conservative_finite_bounds[1] - radius).next_down(),
-                (component.conservative_finite_bounds[2] + radius).next_up(),
-                (component.conservative_finite_bounds[3] + radius).next_up(),
-            ];
+            component.conservative_finite_bounds = component
+                .conservative_finite_bounds
+                .zip(radius)
+                .map(|(b, radius)| {
+                    [
+                        (b[0] - radius).next_down(),
+                        (b[1] - radius).next_down(),
+                        (b[2] + radius).next_up(),
+                        (b[3] + radius).next_up(),
+                    ]
+                });
         }
     }
     let mut combined_remainder: Option<PcbRegion> = None;
@@ -4296,10 +4402,11 @@ fn exact_componentwise_difference_from_components(
     for component in subjects {
         let mut remainder = Some(component.region);
         for (cover_index, cover) in covers.iter().enumerate() {
-            if conservative_finite_bounds_are_disjoint(
-                component.conservative_finite_bounds,
-                cover.conservative_finite_bounds,
-            ) {
+            if component
+                .conservative_finite_bounds
+                .zip(cover.conservative_finite_bounds)
+                .is_some_and(|(left, right)| conservative_finite_bounds_are_disjoint(left, right))
+            {
                 continue;
             }
             let cover_region = if let Some(distance) = cover_offset {
@@ -4370,9 +4477,27 @@ fn indexed_difference(
     search_radius: f64,
     mode: IndexedDifferenceMode,
 ) -> Result<PcbRegion, Box<Violation>> {
-    let subject_polygons = subject.to_multipolygon().0;
+    let subject_polygons = subject
+        .try_to_multipolygon()
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![subject_name.to_owned(), cover_name.to_owned()],
+                uncertainty,
+            ))
+        })?
+        .0;
     let subject_count = subject_polygons.len();
-    let cover_polygons = cover.to_multipolygon().0;
+    let cover_polygons = cover
+        .try_to_multipolygon()
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![subject_name.to_owned(), cover_name.to_owned()],
+                uncertainty,
+            ))
+        })?
+        .0;
     let cover_index = LayerPolygonSpatialIndex::new(&cover_polygons, search_radius);
     let cover_cache = (0..cover_polygons.len())
         .map(|_| std::cell::OnceCell::<PcbRegion>::new())
@@ -4476,7 +4601,18 @@ fn indexed_difference(
                 vec![subject_name.to_string(), cover_name.to_string()],
             )?
         };
-        remainder_polygons.extend(remainder.to_multipolygon().0);
+        remainder_polygons.extend(
+            remainder
+                .try_to_multipolygon()
+                .map_err(|uncertainty| {
+                    Box::new(crate::checks::geometry_uncertainty_violation(
+                        requested_check,
+                        vec![subject_name.to_owned(), cover_name.to_owned()],
+                        uncertainty,
+                    ))
+                })?
+                .0,
+        );
     }
 
     log::trace!(
@@ -4521,9 +4657,27 @@ fn indexed_intersection_with_mode(
     search_radius: f64,
     mode: IndexedCoverMode,
 ) -> Result<PcbRegion, Box<Violation>> {
-    let subject_polygons = subject.to_multipolygon().0;
+    let subject_polygons = subject
+        .try_to_multipolygon()
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![subject_name.to_owned(), cover_name.to_owned()],
+                uncertainty,
+            ))
+        })?
+        .0;
     let subject_count = subject_polygons.len();
-    let cover_polygons = cover.to_multipolygon().0;
+    let cover_polygons = cover
+        .try_to_multipolygon()
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![subject_name.to_owned(), cover_name.to_owned()],
+                uncertainty,
+            ))
+        })?
+        .0;
     let cover_index = LayerPolygonSpatialIndex::new(&cover_polygons, search_radius);
     let mut overlap_polygons = Vec::new();
     let mut candidate_polygons = 0usize;
@@ -4570,7 +4724,18 @@ fn indexed_intersection_with_mode(
             requested_check,
             vec![subject_name.to_string(), cover_name.to_string()],
         )?;
-        overlap_polygons.extend(overlap.to_multipolygon().0);
+        overlap_polygons.extend(
+            overlap
+                .try_to_multipolygon()
+                .map_err(|uncertainty| {
+                    Box::new(crate::checks::geometry_uncertainty_violation(
+                        requested_check,
+                        vec![subject_name.to_owned(), cover_name.to_owned()],
+                        uncertainty,
+                    ))
+                })?
+                .0,
+        );
     }
 
     log::trace!(
@@ -4601,21 +4766,24 @@ fn shapes_violation(
     min_area: &Scalar,
     message: String,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes_scalar(&region.to_multipolygon(), min_area);
+    let layer_names = layers.iter().map(String::as_str).collect::<Vec<_>>();
+    crate::checks::run_geometry_check(check, &layer_names, || {
+        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area);
 
-    if shapes.is_empty() {
-        return Vec::new();
-    }
+        if shapes.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        check,
-        severity,
-        layers,
-        None,
-        shapes,
-        Vec::new(),
-        Some(message),
-    )]
+        Ok(vec![Violation::new(
+            check,
+            severity,
+            layers.clone(),
+            None,
+            shapes,
+            Vec::new(),
+            Some(message),
+        )])
+    })
 }
 
 fn shapes_violation_scalar(
@@ -4626,21 +4794,24 @@ fn shapes_violation_scalar(
     min_area: &Scalar,
     message: String,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes_scalar(&region.to_multipolygon(), min_area);
+    let layer_names = layers.iter().map(String::as_str).collect::<Vec<_>>();
+    crate::checks::run_geometry_check(check, &layer_names, || {
+        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area);
 
-    if shapes.is_empty() {
-        return Vec::new();
-    }
+        if shapes.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    vec![Violation::new(
-        check,
-        severity,
-        layers,
-        None,
-        shapes,
-        Vec::new(),
-        Some(message),
-    )]
+        Ok(vec![Violation::new(
+            check,
+            severity,
+            layers.clone(),
+            None,
+            shapes,
+            Vec::new(),
+            Some(message),
+        )])
+    })
 }
 
 fn collect_acute_vertices(
@@ -5790,7 +5961,7 @@ pub(crate) mod tests {
             let board_path = write_temp_fixture(board_entry, &board_bytes);
             let board =
                 load_kicad_pcb(&board_path).expect("complex project KiCad fixture should parse");
-            let copper_layers = board.copper_layers(&selected_layers);
+            let copper_layers = board.copper_layers(&selected_layers).unwrap();
             let check_started = Instant::now();
             for (layer_name, copper) in copper_layers {
                 let _ = min_copper_neck_width(&layer_name, &copper, &min_width, &min_area);

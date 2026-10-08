@@ -30,106 +30,104 @@ pub fn split_plane_crossing_readiness(
     search_distance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
-        })
-        .collect::<Vec<_>>();
-    let ground_zones = ground_features
-        .iter()
-        .filter_map(|feature| {
-            feature
-                .region
-                .to_multipolygon()
-                .bounding_rect()
-                .map(|bounds| GroundZone { feature, bounds })
-        })
-        .collect::<Vec<_>>();
-    let indexed_ground_features = ground_zones
-        .iter()
-        .map(|zone| zone.feature)
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(search_distance);
-    let ground_index = CopperSpatialIndex::new(&indexed_ground_features, broad_phase_distance);
-
-    let mut candidate_segments = 0usize;
-    let mut candidate_ground_zones = 0usize;
-    let mut exact_ground_zones = 0usize;
-    let mut violations = Vec::new();
-    for feature in &features {
-        if feature.kind != CopperKind::Segment {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_speed_net(net) {
-            continue;
-        }
-        candidate_segments += 1;
-        let Some(segment_bounds) = feature.region.to_multipolygon().bounding_rect() else {
-            continue;
-        };
-
-        let candidates = ground_index.same_layer_near_feature(feature, broad_phase_distance);
-        candidate_ground_zones += candidates.len();
-        let nearby = candidates
-            .into_iter()
-            .filter_map(|ground_index| ground_zones.get(ground_index))
-            .filter(|zone| {
-                expanded_rects_overlap(&segment_bounds, &zone.bounds, broad_phase_distance)
-            })
-            .filter(|zone| {
-                exact_ground_zones += 1;
-                crate::checks::boundaries_within_for_check(
-                    &feature.region,
-                    &zone.feature.region,
-                    search_distance,
-                    "split-plane-crossing-readiness",
-                    &[&feature.layer],
-                    &mut violations,
-                ) == Some(true)
-            })
-            .collect::<Vec<_>>();
-        if nearby.len() < 2
-            || !has_separated_ground_islands(
-                &nearby,
-                search_distance,
-                broad_phase_distance,
-                &mut violations,
-            )
-        {
-            continue;
-        }
-
-        let ground_polygons = nearby
+    crate::checks::run_geometry_check("split-plane-crossing-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let ground_features = features
             .iter()
-            .flat_map(|zone| zone.feature.region.to_multipolygon().0)
+            .copied()
+            .filter(|feature| {
+                feature.kind == CopperKind::Zone
+                    && feature.net.as_deref().is_some_and(looks_ground_net)
+            })
             .collect::<Vec<_>>();
-        let ground = polygons_to_profile(
-            ground_polygons,
-            Some(LayerMetadata {
-                name: "nearby KiCad ground zones".to_string(),
-            }),
-        );
-        let uncovered = match difference_for_check(
-            &feature.region,
-            &ground,
-            "split-plane-crossing-readiness",
-            vec![feature.layer.clone(), "nearby KiCad ground zones".into()],
-        ) {
-            Ok(uncovered) => uncovered,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&uncovered.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
+        let mut ground_zones = Vec::new();
+        for feature in &ground_features {
+            if let Some(bounds) = feature.region.try_to_multipolygon()?.bounding_rect() {
+                ground_zones.push(GroundZone { feature, bounds });
+            }
         }
+        let indexed_ground_features = ground_zones
+            .iter()
+            .map(|zone| zone.feature)
+            .collect::<Vec<_>>();
+        let broad_phase_distance = scalar_broad_phase_radius(search_distance);
+        let ground_index = CopperSpatialIndex::new(&indexed_ground_features, broad_phase_distance);
 
-        violations.push(Violation::new(
+        let mut candidate_segments = 0usize;
+        let mut candidate_ground_zones = 0usize;
+        let mut exact_ground_zones = 0usize;
+        let mut violations = Vec::new();
+        for feature in &features {
+            if feature.kind != CopperKind::Segment {
+                continue;
+            }
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_speed_net(net) {
+                continue;
+            }
+            candidate_segments += 1;
+            let Some(segment_bounds) = feature.region.try_to_multipolygon()?.bounding_rect() else {
+                continue;
+            };
+
+            let candidates = ground_index.same_layer_near_feature(feature, broad_phase_distance);
+            candidate_ground_zones += candidates.len();
+            let nearby = candidates
+                .into_iter()
+                .filter_map(|ground_index| ground_zones.get(ground_index))
+                .filter(|zone| {
+                    expanded_rects_overlap(&segment_bounds, &zone.bounds, broad_phase_distance)
+                })
+                .filter(|zone| {
+                    exact_ground_zones += 1;
+                    crate::checks::boundaries_within_for_check(
+                        &feature.region,
+                        &zone.feature.region,
+                        search_distance,
+                        "split-plane-crossing-readiness",
+                        &[&feature.layer],
+                        &mut violations,
+                    ) == Some(true)
+                })
+                .collect::<Vec<_>>();
+            if nearby.len() < 2
+                || !has_separated_ground_islands(
+                    &nearby,
+                    search_distance,
+                    broad_phase_distance,
+                    &mut violations,
+                )
+            {
+                continue;
+            }
+
+            let mut ground_polygons = Vec::new();
+            for zone in &nearby {
+                ground_polygons.extend(zone.feature.region.try_to_multipolygon()?.0);
+            }
+            let ground = polygons_to_profile(
+                ground_polygons,
+                Some(LayerMetadata {
+                    name: "nearby KiCad ground zones".to_string(),
+                }),
+            );
+            let uncovered = match difference_for_check(
+                &feature.region,
+                &ground,
+                "split-plane-crossing-readiness",
+                vec![feature.layer.clone(), "nearby KiCad ground zones".into()],
+            ) {
+                Ok(uncovered) => uncovered,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "split-plane-crossing-readiness",
             Severity::Warning,
             vec![feature.layer.clone(), "nearby KiCad ground zones".to_string()],
@@ -141,22 +139,23 @@ pub fn split_plane_crossing_readiness(
                 nearby.len()
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "split plane crossing readiness: source={} candidate_segments={} ground_zones={} ground_buckets={} candidate_ground_zones={} exact_ground_zones={} selected_layers={} search_distance={:.6} violations={}",
-        board.source,
-        candidate_segments,
-        ground_zones.len(),
-        ground_index.bucket_count(),
-        candidate_ground_zones,
-        exact_ground_zones,
-        selected_layers.len(),
-        search_distance,
-        violations.len()
-    );
+        log::trace!(
+            "split plane crossing readiness: source={} candidate_segments={} ground_zones={} ground_buckets={} candidate_ground_zones={} exact_ground_zones={} selected_layers={} search_distance={:.6} violations={}",
+            board.source,
+            candidate_segments,
+            ground_zones.len(),
+            ground_index.bucket_count(),
+            candidate_ground_zones,
+            exact_ground_zones,
+            selected_layers.len(),
+            search_distance,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-speed copper has no nearby same-layer ground return.

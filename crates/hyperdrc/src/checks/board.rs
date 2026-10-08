@@ -129,54 +129,56 @@ pub fn via_in_pad_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let vias = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .copied()
-        .collect::<Vec<_>>();
-    let pads = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Pad)
-        .copied()
-        .collect::<Vec<_>>();
-    let pad_spatial_index = CopperSpatialIndex::new(&pads, 1.0);
-    log::trace!(
-        "via-in-pad readiness: source={} vias={} pads={} buckets={} min_area={min_area:#.9}",
-        board.source,
-        vias.len(),
-        pads.len(),
-        pad_spatial_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
+    crate::checks::run_geometry_check("via-in-pad-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let vias = features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Via)
+            .copied()
+            .collect::<Vec<_>>();
+        let pads = features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Pad)
+            .copied()
+            .collect::<Vec<_>>();
+        let pad_spatial_index = CopperSpatialIndex::new(&pads, 1.0);
+        log::trace!(
+            "via-in-pad readiness: source={} vias={} pads={} buckets={} min_area={min_area:#.9}",
+            board.source,
+            vias.len(),
+            pads.len(),
+            pad_spatial_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
 
-    for via in vias {
-        for pad_index in pad_spatial_index.same_layer_near_feature(via, 0.0) {
-            candidate_count += 1;
-            let pad = pads[pad_index];
-            if via.layer != pad.layer || via.net.is_none() || via.net != pad.net {
-                continue;
-            }
-            if !regiones_within_clearance(&via.region, &pad.region, 0.0) {
-                continue;
-            }
+        for via in vias {
+            for pad_index in pad_spatial_index.same_layer_near_feature(via, 0.0) {
+                candidate_count += 1;
+                let pad = pads[pad_index];
+                if via.layer != pad.layer || via.net.is_none() || via.net != pad.net {
+                    continue;
+                }
+                if !regiones_within_clearance(&via.region, &pad.region, 0.0) {
+                    continue;
+                }
 
-            let overlap = match intersection_for_check(
-                &via.region,
-                &pad.region,
-                "via-in-pad-readiness",
-                vec![via.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
+                let overlap = match intersection_for_check(
+                    &via.region,
+                    &pad.region,
+                    "via-in-pad-readiness",
+                    vec![via.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                if shapes.is_empty() {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "via-in-pad-readiness",
                 Severity::Warning,
                 vec![via.layer.clone()],
@@ -188,17 +190,18 @@ pub fn via_in_pad_readiness(
                         .to_string(),
                 ),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "via-in-pad readiness: source={} candidate_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        violations.len()
-    );
+        log::trace!(
+            "via-in-pad readiness: source={} candidate_pairs={} violations={}",
+            board.source,
+            candidate_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `teardrop_readiness` design-readiness check or report helper.
@@ -214,56 +217,61 @@ pub fn teardrop_readiness(
     min_neck_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let segments = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Segment)
-        .copied()
-        .collect::<Vec<_>>();
-    let anchors = features
-        .iter()
-        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
-        .copied()
-        .collect::<Vec<_>>();
-    let anchor_index = CopperSpatialIndex::new(&anchors, 1.0);
-    log::trace!(
-        "teardrop readiness: source={} segments={} anchors={} buckets={} min_neck_width={min_neck_width:.6} min_area={min_area:.9}",
-        board.source,
-        segments.len(),
-        anchors.len(),
-        anchor_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
+    crate::checks::run_geometry_check("teardrop-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let segments = features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Segment)
+            .copied()
+            .collect::<Vec<_>>();
+        let anchors = features
+            .iter()
+            .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
+            .copied()
+            .collect::<Vec<_>>();
+        let anchor_index = CopperSpatialIndex::new(&anchors, 1.0);
+        log::trace!(
+            "teardrop readiness: source={} segments={} anchors={} buckets={} min_neck_width={min_neck_width:.6} min_area={min_area:.9}",
+            board.source,
+            segments.len(),
+            anchors.len(),
+            anchor_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
 
-    for segment in segments {
-        let segment_width = minimum_bounding_dimension_scalar(&segment.region);
-        if crate::scalar::ge(&segment_width, min_neck_width) {
-            continue;
-        }
-
-        for anchor_index in anchor_index.same_layer_near_feature(segment, 0.0) {
-            candidate_count += 1;
-            let anchor = anchors[anchor_index];
-            if segment.layer != anchor.layer || segment.net.is_none() || segment.net != anchor.net {
+        for segment in segments {
+            let segment_width = minimum_bounding_dimension_scalar(&segment.region);
+            if crate::scalar::ge(&segment_width, min_neck_width) {
                 continue;
             }
 
-            let overlap = match intersection_for_check(
-                &segment.region,
-                &anchor.region,
-                "teardrop-readiness",
-                vec![segment.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
+            for anchor_index in anchor_index.same_layer_near_feature(segment, 0.0) {
+                candidate_count += 1;
+                let anchor = anchors[anchor_index];
+                if segment.layer != anchor.layer
+                    || segment.net.is_none()
+                    || segment.net != anchor.net
+                {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                let overlap = match intersection_for_check(
+                    &segment.region,
+                    &anchor.region,
+                    "teardrop-readiness",
+                    vec![segment.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                if shapes.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
                 "teardrop-readiness",
                 Severity::Warning,
                 vec![segment.layer.clone()],
@@ -278,17 +286,18 @@ pub fn teardrop_readiness(
                     anchor.kind
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "teardrop readiness: source={} candidate_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        violations.len()
-    );
+        log::trace!(
+            "teardrop readiness: source={} candidate_pairs={} violations={}",
+            board.source,
+            candidate_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `plane_clearance_readiness` design-readiness check or report helper.
@@ -302,80 +311,82 @@ pub fn plane_clearance_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let zones = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-        .collect::<Vec<_>>();
-    let maximum_drill_radius = board
-        .drills
-        .iter()
-        .filter(|drill| !drill.plated)
-        .filter_map(DrillFeature::diameter_f64_compatibility)
-        .map(|diameter| diameter / 2.0)
-        .fold(0.0_f64, f64::max);
-    let zone_index = CopperSpatialIndex::new(&zones, maximum_drill_radius);
-    let mut violations = Vec::new();
-    let mut drill_count = 0usize;
-    let mut candidate_pairs = 0usize;
+    crate::checks::run_geometry_check("plane-clearance-readiness", &[&board.source], || {
+        let zones = selected_copper_features(board, selected_layers)
+            .into_iter()
+            .filter(|feature| feature.kind == CopperKind::Zone)
+            .collect::<Vec<_>>();
+        let maximum_drill_radius = board
+            .drills
+            .iter()
+            .filter(|drill| !drill.plated)
+            .filter_map(DrillFeature::diameter_f64_compatibility)
+            .map(|diameter| diameter / 2.0)
+            .fold(0.0_f64, f64::max);
+        let zone_index = CopperSpatialIndex::new(&zones, maximum_drill_radius);
+        let mut violations = Vec::new();
+        let mut drill_count = 0usize;
+        let mut candidate_pairs = 0usize;
 
-    for drill in &board.drills {
-        if drill.plated {
-            continue;
-        }
-        drill_count += 1;
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let broad_phase_radius = scalar_broad_phase_radius(&drill_radius);
-        let candidates = zone_index.all_layers_near_circle(
-            drill.location_f64_compatibility_required(),
-            broad_phase_radius,
-        );
-        candidate_pairs += candidates.len();
-        if candidates.is_empty() {
-            continue;
-        }
-        let hole = PcbRegion::new(
-            crate::translated_circle(
-                drill_radius.clone(),
-                64,
-                drill.location[0].clone(),
-                drill.location[1].clone(),
-            ),
-            Some(LayerMetadata {
-                name: "mechanical hole".to_string(),
-            }),
-        );
-
-        for candidate_index in candidates {
-            let zone = zones[candidate_index];
-            let overlap = match intersection_for_check(
-                &hole,
-                &zone.region,
-                "plane-clearance-readiness",
-                vec![zone.layer.clone(), "KiCad NPTH drills".into()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let mut shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let hole_contained = zone
-                .region
-                .contains_xy(drill.location[0].clone(), drill.location[1].clone())
-                == Some(true);
-            if shapes.is_empty() && hole_contained {
-                // A hole wholly contained by a zone has no boundary crossing.
-                // Classify the exact center against the exact filled region so
-                // containment does not depend on a finite polygon fallback.
-                shapes = multipolygon_to_shapes_scalar(&hole.to_multipolygon(), min_area);
-            }
-            let hole_area = Scalar::pi() * &drill_radius * &drill_radius;
-            let contained_area_exceeds_gate = hole_contained
-                && compare_reals(&hole_area, min_area, PREDICATE_POLICY).value()
-                    == Some(std::cmp::Ordering::Greater);
-            if shapes.is_empty() && !contained_area_exceeds_gate {
+        for drill in &board.drills {
+            if drill.plated {
                 continue;
             }
+            drill_count += 1;
+            let drill_radius = crate::scalar::half(&drill.diameter);
+            let broad_phase_radius = scalar_broad_phase_radius(&drill_radius);
+            let candidates = zone_index.all_layers_near_circle(
+                drill.location_f64_compatibility_required(),
+                broad_phase_radius,
+            );
+            candidate_pairs += candidates.len();
+            if candidates.is_empty() {
+                continue;
+            }
+            let hole = PcbRegion::new(
+                crate::translated_circle(
+                    drill_radius.clone(),
+                    64,
+                    drill.location[0].clone(),
+                    drill.location[1].clone(),
+                ),
+                Some(LayerMetadata {
+                    name: "mechanical hole".to_string(),
+                }),
+            );
 
-            violations.push(Violation::new(
+            for candidate_index in candidates {
+                let zone = zones[candidate_index];
+                let overlap = match intersection_for_check(
+                    &hole,
+                    &zone.region,
+                    "plane-clearance-readiness",
+                    vec![zone.layer.clone(), "KiCad NPTH drills".into()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let mut shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let hole_contained = zone
+                    .region
+                    .contains_xy(drill.location[0].clone(), drill.location[1].clone())
+                    == Some(true);
+                if shapes.is_empty() && hole_contained {
+                    // A hole wholly contained by a zone has no boundary crossing.
+                    // Classify the exact center against the exact filled region so
+                    // containment does not depend on a finite polygon fallback.
+                    shapes = multipolygon_to_shapes_scalar(&hole.try_to_multipolygon()?, min_area);
+                }
+                let hole_area = Scalar::pi() * &drill_radius * &drill_radius;
+                let contained_area_exceeds_gate = hole_contained
+                    && compare_reals(&hole_area, min_area, PREDICATE_POLICY).value()
+                        == Some(std::cmp::Ordering::Greater);
+                if shapes.is_empty() && !contained_area_exceeds_gate {
+                    continue;
+                }
+
+                violations.push(Violation::new(
                 "plane-clearance-readiness",
                 Severity::Warning,
                 vec![zone.layer.clone(), "KiCad NPTH drills".to_string()],
@@ -387,19 +398,20 @@ pub fn plane_clearance_readiness(
                         .to_string(),
                 ),
             ));
+            }
         }
-    }
-    log::trace!(
-        "plane clearance readiness: source={} zones={} non_plated_drills={} spatial_buckets={} candidate_pairs={} violations={}",
-        board.source,
-        zones.len(),
-        drill_count,
-        zone_index.bucket_count(),
-        candidate_pairs,
-        violations.len()
-    );
+        log::trace!(
+            "plane clearance readiness: source={} zones={} non_plated_drills={} spatial_buckets={} candidate_pairs={} violations={}",
+            board.source,
+            zones.len(),
+            drill_count,
+            zone_index.bucket_count(),
+            candidate_pairs,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `board_edge_exposure` design-readiness check or report helper.
@@ -427,39 +439,41 @@ pub fn board_edge_exposure_with_grid(
     min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let mut violations = Vec::new();
-    let mut skipped_rect_inside = 0_usize;
-    let mut exact_difference_count = 0_usize;
-
-    for feature in selected_copper_features(board, selected_layers) {
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| feature_bounds_inside_rect_with_grid(feature, rect, grid))
-        {
-            skipped_rect_inside += 1;
-            continue;
-        }
-
-        exact_difference_count += 1;
-        let outside_outline = match difference_for_check(
-            &feature.region,
-            outline,
-            "board-edge-exposure",
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
-        ) {
-            Ok(outside) => outside,
-            Err(uncertainty) => return vec![*uncertainty],
+    crate::checks::run_geometry_check("board-edge-exposure", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+        let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
+        let mut violations = Vec::new();
+        let mut skipped_rect_inside = 0_usize;
+        let mut exact_difference_count = 0_usize;
 
-        violations.push(Violation::new(
+        for feature in selected_copper_features(board, selected_layers) {
+            if outline_rect
+                .as_ref()
+                .is_some_and(|rect| feature_bounds_inside_rect_with_grid(feature, rect, grid))
+            {
+                skipped_rect_inside += 1;
+                continue;
+            }
+
+            exact_difference_count += 1;
+            let outside_outline = match difference_for_check(
+                &feature.region,
+                outline,
+                "board-edge-exposure",
+                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(outside) => outside,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes =
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "board-edge-exposure",
             Severity::Warning,
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
@@ -471,19 +485,20 @@ pub fn board_edge_exposure_with_grid(
                 feature.kind
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "board-edge exposure: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={}",
-        board.source,
-        selected_layers.len(),
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        exact_difference_count,
-        violations.len()
-    );
+        log::trace!(
+            "board-edge exposure: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={}",
+            board.source,
+            selected_layers.len(),
+            outline_rect.is_some(),
+            skipped_rect_inside,
+            exact_difference_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `high_speed_edge_readiness` design-readiness check or report helper.
@@ -513,54 +528,60 @@ pub fn high_speed_edge_readiness_with_grid(
     min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let allowed = match offset_for_check(
-        outline,
-        -edge_clearance.clone(),
-        "high-speed-edge-readiness",
-        vec!["KiCad Edge.Cuts".into()],
-    ) {
-        Ok(allowed) => allowed,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let mut violations = Vec::new();
-    let mut skipped_rect_inside = 0_usize;
-    let mut exact_difference_count = 0_usize;
-
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
+    crate::checks::run_geometry_check("high-speed-edge-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        if !looks_high_speed_net(net) {
-            continue;
-        }
-        if outline_rect.as_ref().is_some_and(|rect| {
-            feature_bounds_inside_rect_margin_with_grid(feature, rect, broad_phase_clearance, grid)
-        }) {
-            skipped_rect_inside += 1;
-            continue;
-        }
-
-        exact_difference_count += 1;
-        let intrusion = match difference_for_check(
-            &feature.region,
-            &allowed,
+        let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
+        let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
+        let allowed = match offset_for_check(
+            outline,
+            -edge_clearance.clone(),
             "high-speed-edge-readiness",
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            vec!["KiCad Edge.Cuts".into()],
         ) {
-            Ok(intrusion) => intrusion,
-            Err(uncertainty) => return vec![*uncertainty],
+            Ok(allowed) => allowed,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
         };
-        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+        let mut violations = Vec::new();
+        let mut skipped_rect_inside = 0_usize;
+        let mut exact_difference_count = 0_usize;
 
-        violations.push(Violation::new(
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_speed_net(net) {
+                continue;
+            }
+            if outline_rect.as_ref().is_some_and(|rect| {
+                feature_bounds_inside_rect_margin_with_grid(
+                    feature,
+                    rect,
+                    broad_phase_clearance,
+                    grid,
+                )
+            }) {
+                skipped_rect_inside += 1;
+                continue;
+            }
+
+            exact_difference_count += 1;
+            let intrusion = match difference_for_check(
+                &feature.region,
+                &allowed,
+                "high-speed-edge-readiness",
+                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(intrusion) => intrusion,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "high-speed-edge-readiness",
             Severity::Warning,
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
@@ -571,19 +592,20 @@ pub fn high_speed_edge_readiness_with_grid(
                 "likely high-speed net {net} is within {edge_clearance:.6} of the board edge; review EMC, return-current, and connector-edge intent"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "high-speed edge readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
-        board.source,
-        selected_layers.len(),
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        exact_difference_count,
-        violations.len()
-    );
+        log::trace!(
+            "high-speed edge readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
+            board.source,
+            selected_layers.len(),
+            outline_rect.is_some(),
+            skipped_rect_inside,
+            exact_difference_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when non-edge intent copper appears inside the board-edge pullback band.
@@ -614,64 +636,70 @@ pub fn edge_copper_pullback_readiness_with_grid(
     min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let allowed = match offset_for_check(
-        outline,
-        -edge_clearance.clone(),
-        "edge-copper-pullback-readiness",
-        vec!["KiCad Edge.Cuts".into()],
-    ) {
-        Ok(allowed) => allowed,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let mut violations = Vec::new();
-    let mut skipped_rect_inside = 0_usize;
-    let mut exact_difference_count = 0_usize;
-
-    for feature in selected_copper_features(board, selected_layers) {
-        if let Some(net) = &feature.net
-            && (looks_high_speed_net(net)
-                || looks_high_voltage_net(net)
-                || looks_edge_intent_net(net))
-        {
-            continue;
-        }
-        if outline_rect.as_ref().is_some_and(|rect| {
-            feature_bounds_inside_rect_margin_with_grid(feature, rect, broad_phase_clearance, grid)
-        }) {
-            skipped_rect_inside += 1;
-            continue;
-        }
-
-        exact_difference_count += 1;
-        let intrusion = match difference_for_check(
-            &feature.region,
-            &allowed,
-            "edge-copper-pullback-readiness",
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
-        ) {
-            Ok(intrusion) => intrusion,
-            Err(uncertainty) => return vec![*uncertainty],
+    crate::checks::run_geometry_check("edge-copper-pullback-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
-        let has_edge_intrusion = !shapes.is_empty()
-            || (crate::checks::boundaries_within_for_check(
-                &feature.region,
-                outline,
-                edge_clearance,
-                "edge-copper-pullback-readiness",
-                &[&feature.layer],
-                &mut violations,
-            ) == Some(true));
-        if !has_edge_intrusion {
-            continue;
-        }
+        let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
+        let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
+        let allowed = match offset_for_check(
+            outline,
+            -edge_clearance.clone(),
+            "edge-copper-pullback-readiness",
+            vec!["KiCad Edge.Cuts".into()],
+        ) {
+            Ok(allowed) => allowed,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
+        };
+        let mut violations = Vec::new();
+        let mut skipped_rect_inside = 0_usize;
+        let mut exact_difference_count = 0_usize;
 
-        violations.push(Violation::new(
+        for feature in selected_copper_features(board, selected_layers) {
+            if let Some(net) = &feature.net
+                && (looks_high_speed_net(net)
+                    || looks_high_voltage_net(net)
+                    || looks_edge_intent_net(net))
+            {
+                continue;
+            }
+            if outline_rect.as_ref().is_some_and(|rect| {
+                feature_bounds_inside_rect_margin_with_grid(
+                    feature,
+                    rect,
+                    broad_phase_clearance,
+                    grid,
+                )
+            }) {
+                skipped_rect_inside += 1;
+                continue;
+            }
+
+            exact_difference_count += 1;
+            let intrusion = match difference_for_check(
+                &feature.region,
+                &allowed,
+                "edge-copper-pullback-readiness",
+                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(intrusion) => intrusion,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            let has_edge_intrusion = !shapes.is_empty()
+                || (crate::checks::boundaries_within_for_check(
+                    &feature.region,
+                    outline,
+                    edge_clearance,
+                    "edge-copper-pullback-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) == Some(true));
+            if !has_edge_intrusion {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "edge-copper-pullback-readiness",
             Severity::Warning,
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
@@ -682,19 +710,20 @@ pub fn edge_copper_pullback_readiness_with_grid(
                 "non-edge-intent copper appears within {edge_clearance:.6} board-edge clearance band; review edge pullback and copper-to-edge intent"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "edge copper-pullback readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
-        board.source,
-        selected_layers.len(),
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        exact_difference_count,
-        violations.len()
-    );
+        log::trace!(
+            "edge copper-pullback readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
+            board.source,
+            selected_layers.len(),
+            outline_rect.is_some(),
+            skipped_rect_inside,
+            exact_difference_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when high-speed or RF/antenna nets near the edge have no nearby ground
@@ -733,96 +762,97 @@ pub fn edge_stitching_readiness_with_grid(
     min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let broad_phase_edge_clearance = scalar_broad_phase_radius(edge_clearance);
-    let broad_phase_stitching_distance = scalar_broad_phase_radius(stitching_distance);
-    let allowed = match offset_for_check(
-        outline,
-        -edge_clearance.clone(),
-        "edge-stitching-readiness",
-        vec!["KiCad Edge.Cuts".into()],
-    ) {
-        Ok(allowed) => allowed,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let features = selected_copper_features(board, selected_layers);
-    let ground_vias = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let ground_points = ground_vias
-        .iter()
-        .map(|feature| feature.location_f64_compatibility_required())
-        .collect::<Vec<_>>();
-    let ground_index = PointSpatialIndex::new(ground_points, broad_phase_stitching_distance);
-
-    let mut violations = Vec::new();
-    let mut candidate_features = 0usize;
-    let mut skipped_rect_inside = 0usize;
-    let mut stitch_hits = 0usize;
-    for feature in &features {
-        let feature = *feature;
-        let Some(net) = &feature.net else {
-            continue;
+    crate::checks::run_geometry_check("edge-stitching-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        if !looks_high_speed_net(net) && !looks_rf_or_antenna_net(net) {
-            continue;
-        }
-        candidate_features += 1;
-        if outline_rect.as_ref().is_some_and(|rect| {
-            feature_bounds_inside_rect_margin_with_grid(
-                feature,
-                rect,
-                broad_phase_edge_clearance,
-                grid,
-            )
-        }) {
-            skipped_rect_inside += 1;
-            continue;
-        }
-
-        let intrusion = match difference_for_check(
-            &feature.region,
-            &allowed,
+        let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
+        let broad_phase_edge_clearance = scalar_broad_phase_radius(edge_clearance);
+        let broad_phase_stitching_distance = scalar_broad_phase_radius(stitching_distance);
+        let allowed = match offset_for_check(
+            outline,
+            -edge_clearance.clone(),
             "edge-stitching-readiness",
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            vec!["KiCad Edge.Cuts".into()],
         ) {
-            Ok(intrusion) => intrusion,
-            Err(uncertainty) => return vec![*uncertainty],
+            Ok(allowed) => allowed,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
         };
-        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
-        let has_edge_intrusion = !shapes.is_empty()
-            || (crate::checks::boundaries_within_for_check(
+        let features = selected_copper_features(board, selected_layers);
+        let ground_vias = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.kind == CopperKind::Via)
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+            .collect::<Vec<_>>();
+        let ground_points = ground_vias
+            .iter()
+            .map(|feature| feature.location_f64_compatibility_required())
+            .collect::<Vec<_>>();
+        let ground_index = PointSpatialIndex::new(ground_points, broad_phase_stitching_distance);
+
+        let mut violations = Vec::new();
+        let mut candidate_features = 0usize;
+        let mut skipped_rect_inside = 0usize;
+        let mut stitch_hits = 0usize;
+        for feature in &features {
+            let feature = *feature;
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_speed_net(net) && !looks_rf_or_antenna_net(net) {
+                continue;
+            }
+            candidate_features += 1;
+            if outline_rect.as_ref().is_some_and(|rect| {
+                feature_bounds_inside_rect_margin_with_grid(
+                    feature,
+                    rect,
+                    broad_phase_edge_clearance,
+                    grid,
+                )
+            }) {
+                skipped_rect_inside += 1;
+                continue;
+            }
+
+            let intrusion = match difference_for_check(
                 &feature.region,
-                outline,
-                edge_clearance,
+                &allowed,
                 "edge-stitching-readiness",
-                &[&feature.layer],
-                &mut violations,
-            ) == Some(true));
-        if !has_edge_intrusion {
-            continue;
-        }
+                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(intrusion) => intrusion,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            let has_edge_intrusion = !shapes.is_empty()
+                || (crate::checks::boundaries_within_for_check(
+                    &feature.region,
+                    outline,
+                    edge_clearance,
+                    "edge-stitching-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) == Some(true));
+            if !has_edge_intrusion {
+                continue;
+            }
 
-        let nearby_stitches = point_candidates_within_radius_with_grid(
-            &ground_index,
-            feature.location_f64_compatibility_required(),
-            stitching_distance,
-            grid,
-            "edge-stitching-readiness",
-        );
-        stitch_hits += nearby_stitches.len();
-        let has_stitch = !nearby_stitches.is_empty();
-        if has_stitch {
-            continue;
-        }
+            let nearby_stitches = point_candidates_within_radius_with_grid(
+                &ground_index,
+                feature.location_f64_compatibility_required(),
+                stitching_distance,
+                grid,
+                "edge-stitching-readiness",
+            );
+            stitch_hits += nearby_stitches.len();
+            let has_stitch = !nearby_stitches.is_empty();
+            if has_stitch {
+                continue;
+            }
 
-        violations.push(Violation::new(
+            violations.push(Violation::new(
             "edge-stitching-readiness",
             Severity::Warning,
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
@@ -833,21 +863,22 @@ pub fn edge_stitching_readiness_with_grid(
                 "likely high-speed or RF net {net} is near board edge without nearby ground stitch vias within {stitching_distance:.6}"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "edge stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} outline_fast_path={} skipped_rect_inside={} edge_clearance={edge_clearance:.6} stitching_distance={stitching_distance:.6} violations={}",
-        board.source,
-        candidate_features,
-        ground_vias.len(),
-        ground_index.bucket_count(),
-        stitch_hits,
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        violations.len()
-    );
+        log::trace!(
+            "edge stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} outline_fast_path={} skipped_rect_inside={} edge_clearance={edge_clearance:.6} stitching_distance={stitching_distance:.6} violations={}",
+            board.source,
+            candidate_features,
+            ground_vias.len(),
+            ground_index.bucket_count(),
+            stitch_hits,
+            outline_rect.is_some(),
+            skipped_rect_inside,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `acid-trap` KiCad trace-junction readiness helper.
@@ -866,71 +897,81 @@ pub fn trace_junction_acid_trap_readiness(
     max_angle_degrees: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let segments = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.kind == CopperKind::Segment)
-        .filter(|feature| feature.net.is_some())
-        .collect::<Vec<_>>();
-    let segment_bounds = segments
-        .iter()
-        .map(|segment| segment.region.geometry().bounding_rect())
-        .collect::<Vec<_>>();
-    let segment_index = CopperSpatialIndex::new(&segments, 0.0);
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0usize;
-    let mut exact_pairs = 0usize;
+    crate::checks::run_geometry_check(
+        "trace-junction-acid-trap-readiness",
+        &[&board.source],
+        || {
+            let segments = selected_copper_features(board, selected_layers)
+                .into_iter()
+                .filter(|feature| feature.kind == CopperKind::Segment)
+                .filter(|feature| feature.net.is_some())
+                .collect::<Vec<_>>();
+            let segment_bounds = segments
+                .iter()
+                .map(|segment| {
+                    segment
+                        .region
+                        .try_to_multipolygon()
+                        .map(|view| view.bounding_rect())
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let segment_index = CopperSpatialIndex::new(&segments, 0.0);
+            let mut violations = Vec::new();
+            let mut candidate_pairs = 0usize;
+            let mut exact_pairs = 0usize;
 
-    for left_index in 0..segments.len() {
-        let left = segments[left_index];
-        let Some(left_bounds) = &segment_bounds[left_index] else {
-            continue;
-        };
-        for right_index in segment_index.same_layer_near_feature(left, 0.0) {
-            if right_index <= left_index {
-                continue;
-            }
-            let right = segments[right_index];
-            if left.layer != right.layer || left.net != right.net {
-                continue;
-            }
-            candidate_pairs += 1;
-            let Some(right_bounds) = &segment_bounds[right_index] else {
-                continue;
-            };
-            if !rects_overlap(left_bounds, right_bounds) {
-                continue;
-            }
+            for left_index in 0..segments.len() {
+                let left = segments[left_index];
+                let Some(left_bounds) = &segment_bounds[left_index] else {
+                    continue;
+                };
+                for right_index in segment_index.same_layer_near_feature(left, 0.0) {
+                    if right_index <= left_index {
+                        continue;
+                    }
+                    let right = segments[right_index];
+                    if left.layer != right.layer || left.net != right.net {
+                        continue;
+                    }
+                    candidate_pairs += 1;
+                    let Some(right_bounds) = &segment_bounds[right_index] else {
+                        continue;
+                    };
+                    if !rects_overlap(left_bounds, right_bounds) {
+                        continue;
+                    }
 
-            exact_pairs += 1;
-            let overlap = match intersection_for_check(
-                &left.region,
-                &right.region,
-                "trace-junction-acid-trap-readiness",
-                vec![left.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap_polygons = overlap.to_multipolygon();
-            let shapes = multipolygon_to_shapes_scalar(&overlap_polygons, min_area);
-            if shapes.is_empty() {
-                continue;
-            }
-            let Some(junction) = multipolygon_center(&overlap_polygons) else {
-                continue;
-            };
-            let Some(angle) = point_angle_degrees_scalar(&left.location, junction, &right.location)
-            else {
-                continue;
-            };
-            if crate::scalar::le(&angle, &Scalar::zero())
-                || crate::scalar::ge(&angle, max_angle_degrees)
-            {
-                continue;
-            }
+                    exact_pairs += 1;
+                    let overlap = match intersection_for_check(
+                        &left.region,
+                        &right.region,
+                        "trace-junction-acid-trap-readiness",
+                        vec![left.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let overlap_polygons = overlap.try_to_multipolygon()?;
+                    let shapes = multipolygon_to_shapes_scalar(&overlap_polygons, min_area);
+                    if shapes.is_empty() {
+                        continue;
+                    }
+                    let Some(junction) = multipolygon_center(&overlap_polygons) else {
+                        continue;
+                    };
+                    let Some(angle) =
+                        point_angle_degrees_scalar(&left.location, junction, &right.location)
+                    else {
+                        continue;
+                    };
+                    if crate::scalar::le(&angle, &Scalar::zero())
+                        || crate::scalar::ge(&angle, max_angle_degrees)
+                    {
+                        continue;
+                    }
 
-            let net = left.net.as_deref().unwrap_or("unknown");
-            violations.push(Violation::new(
+                    let net = left.net.as_deref().unwrap_or("unknown");
+                    violations.push(Violation::new(
                 "acid-trap-trace-junction",
                 Severity::Warning,
                 vec![left.layer.clone()],
@@ -945,20 +986,22 @@ pub fn trace_junction_acid_trap_readiness(
                     "same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk"
                 )),
             ));
-        }
-    }
-    log::trace!(
-        "trace-junction acid-trap readiness: source={} segments={} spatial_buckets={} candidate_pairs={} exact_pairs={} selected_layers={} violations={}",
-        board.source,
-        segments.len(),
-        segment_index.bucket_count(),
-        candidate_pairs,
-        exact_pairs,
-        selected_layers.len(),
-        violations.len()
-    );
+                }
+            }
+            log::trace!(
+                "trace-junction acid-trap readiness: source={} segments={} spatial_buckets={} candidate_pairs={} exact_pairs={} selected_layers={} violations={}",
+                board.source,
+                segments.len(),
+                segment_index.bucket_count(),
+                candidate_pairs,
+                exact_pairs,
+                selected_layers.len(),
+                violations.len()
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Run the `controlled_impedance_readiness` design-readiness check or report helper.
@@ -1498,62 +1541,69 @@ pub fn reference_plane_void_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
-        })
-        .collect::<Vec<_>>();
-    if ground_features.is_empty() {
-        return Vec::new();
-    }
-    let ground_index = CopperSpatialIndex::new(&ground_features, 0.0);
-
-    let mut violations = Vec::new();
-    let mut candidate_features = 0usize;
-    let mut candidate_ground_zones = 0usize;
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_speed_net(net) || feature.kind == CopperKind::Via {
-            continue;
+    crate::checks::run_geometry_check("reference-plane-void-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let ground_features = features
+            .iter()
+            .copied()
+            .filter(|feature| {
+                feature.kind == CopperKind::Zone
+                    && feature.net.as_deref().is_some_and(looks_ground_net)
+            })
+            .collect::<Vec<_>>();
+        if ground_features.is_empty() {
+            return Ok(Vec::new());
         }
-        candidate_features += 1;
+        let ground_index = CopperSpatialIndex::new(&ground_features, 0.0);
 
-        let candidates = ground_index.all_layers_near_feature(feature, 0.0);
-        candidate_ground_zones += candidates.len();
-        let shapes = if candidates.is_empty() {
-            multipolygon_to_shapes_scalar(&feature.region.to_multipolygon(), min_area)
-        } else {
-            let ground_polygons = candidates
-                .into_iter()
-                .flat_map(|ground_index| ground_features[ground_index].region.to_multipolygon().0)
-                .collect::<Vec<_>>();
-            let ground = polygons_to_profile(
-                ground_polygons,
-                Some(LayerMetadata {
-                    name: "KiCad ground zones".to_string(),
-                }),
-            );
-            let uncovered = match difference_for_check(
-                &feature.region,
-                &ground,
-                "reference-plane-void-readiness",
-                vec![feature.layer.clone(), "KiCad ground zones".into()],
-            ) {
-                Ok(uncovered) => uncovered,
-                Err(uncertainty) => return vec![*uncertainty],
+        let mut violations = Vec::new();
+        let mut candidate_features = 0usize;
+        let mut candidate_ground_zones = 0usize;
+        for feature in features {
+            let Some(net) = &feature.net else {
+                continue;
             };
-            multipolygon_to_shapes_scalar(&uncovered.to_multipolygon(), min_area)
-        };
-        if shapes.is_empty() {
-            continue;
-        }
+            if !looks_high_speed_net(net) || feature.kind == CopperKind::Via {
+                continue;
+            }
+            candidate_features += 1;
 
-        violations.push(Violation::new(
+            let candidates = ground_index.all_layers_near_feature(feature, 0.0);
+            candidate_ground_zones += candidates.len();
+            let shapes = if candidates.is_empty() {
+                multipolygon_to_shapes_scalar(&feature.region.try_to_multipolygon()?, min_area)
+            } else {
+                let mut ground_polygons = Vec::new();
+                for ground_index in candidates {
+                    ground_polygons.extend(
+                        ground_features[ground_index]
+                            .region
+                            .try_to_multipolygon()?
+                            .0,
+                    );
+                }
+                let ground = polygons_to_profile(
+                    ground_polygons,
+                    Some(LayerMetadata {
+                        name: "KiCad ground zones".to_string(),
+                    }),
+                );
+                let uncovered = match difference_for_check(
+                    &feature.region,
+                    &ground,
+                    "reference-plane-void-readiness",
+                    vec![feature.layer.clone(), "KiCad ground zones".into()],
+                ) {
+                    Ok(uncovered) => uncovered,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)
+            };
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "reference-plane-void-readiness",
             Severity::Warning,
             vec![feature.layer.clone(), "KiCad ground zones".to_string()],
@@ -1564,19 +1614,20 @@ pub fn reference_plane_void_readiness(
                 "likely high-speed net {net} has copper without overlapping parsed ground-zone coverage; review split-plane and void-crossing return path"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "reference-plane void readiness: source={} high_speed_features={} ground_zones={} ground_buckets={} candidate_ground_zones={} violations={}",
-        board.source,
-        candidate_features,
-        ground_features.len(),
-        ground_index.bucket_count(),
-        candidate_ground_zones,
-        violations.len()
-    );
+        log::trace!(
+            "reference-plane void readiness: source={} high_speed_features={} ground_zones={} ground_buckets={} candidate_ground_zones={} violations={}",
+            board.source,
+            candidate_features,
+            ground_features.len(),
+            ground_index.bucket_count(),
+            candidate_ground_zones,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `orphaned_zone_readiness` design-readiness check or report helper.
@@ -2258,52 +2309,54 @@ pub fn gold_finger_spacing_readiness(
     minimum_spacing: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let fingers = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
-        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Segment))
-        .collect::<Vec<_>>();
-    let broad_phase_spacing = scalar_broad_phase_radius(minimum_spacing);
-    let finger_index = CopperSpatialIndex::new(&fingers, broad_phase_spacing);
-    let mut exact_pair_count = 0_usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("gold-finger-spacing-readiness", &[&board.source], || {
+        let fingers = selected_copper_features(board, selected_layers)
+            .into_iter()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
+            .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Segment))
+            .collect::<Vec<_>>();
+        let broad_phase_spacing = scalar_broad_phase_radius(minimum_spacing);
+        let finger_index = CopperSpatialIndex::new(&fingers, broad_phase_spacing);
+        let mut exact_pair_count = 0_usize;
+        let mut violations = Vec::new();
 
-    for left_index in 0..fingers.len() {
-        let left = fingers[left_index];
-        for right_index in finger_index.same_layer_near_feature(left, broad_phase_spacing) {
-            if right_index <= left_index {
-                continue;
-            }
-            let right = fingers[right_index];
-            if left.net == right.net {
-                continue;
-            }
+        for left_index in 0..fingers.len() {
+            let left = fingers[left_index];
+            for right_index in finger_index.same_layer_near_feature(left, broad_phase_spacing) {
+                if right_index <= left_index {
+                    continue;
+                }
+                let right = fingers[right_index];
+                if left.net == right.net {
+                    continue;
+                }
 
-            exact_pair_count += 1;
-            let overlap = match intersection_for_check(
-                &left.region,
-                &right.region,
-                "gold-finger-spacing-readiness",
-                vec![left.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && (crate::checks::boundaries_within_for_check(
+                exact_pair_count += 1;
+                let overlap = match intersection_for_check(
                     &left.region,
                     &right.region,
-                    minimum_spacing,
                     "gold-finger-spacing-readiness",
-                    &[&left.layer],
-                    &mut violations,
-                ) == Some(true));
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                    vec![left.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let fallback_hit = shapes.is_empty()
+                    && (crate::checks::boundaries_within_for_check(
+                        &left.region,
+                        &right.region,
+                        minimum_spacing,
+                        "gold-finger-spacing-readiness",
+                        &[&left.layer],
+                        &mut violations,
+                    ) == Some(true));
+                if shapes.is_empty() && !fallback_hit {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "gold-finger-spacing-readiness",
                 Severity::Warning,
                 vec![left.layer.clone()],
@@ -2318,18 +2371,19 @@ pub fn gold_finger_spacing_readiness(
                     left.net, right.net
                 )),
             ));
+            }
         }
-    }
-    log::trace!(
-        "gold-finger spacing readiness: source={} fingers={} spatial_buckets={} exact_pairs={} minimum_spacing={minimum_spacing:.6} violations={}",
-        board.source,
-        fingers.len(),
-        finger_index.bucket_count(),
-        exact_pair_count,
-        violations.len()
-    );
+        log::trace!(
+            "gold-finger spacing readiness: source={} fingers={} spatial_buckets={} exact_pairs={} minimum_spacing={minimum_spacing:.6} violations={}",
+            board.source,
+            fingers.len(),
+            finger_index.bucket_count(),
+            exact_pair_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `gold_finger_drill_keepout_readiness` design-readiness check or report helper.
@@ -2863,68 +2917,63 @@ pub fn net_spacing(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let features = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.region.geometry().bounding_rect().is_some())
-        .collect::<Vec<_>>();
-    let bounds = features
-        .iter()
-        .map(|feature| {
-            feature
-                .region
-                .geometry()
-                .bounding_rect()
-                .expect("net-spacing features are filtered to bounded geometry")
-        })
-        .collect::<Vec<_>>();
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0_usize;
-    let mut exact_pairs = 0_usize;
+    crate::checks::run_geometry_check("different-net-spacing", &[&board.source], || {
+        let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+        let features = selected_copper_features(board, selected_layers);
+        let bounds = features
+            .iter()
+            .map(|feature| feature.region.conservative_bounds())
+            .collect::<Vec<_>>();
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
+        let mut violations = Vec::new();
+        let mut candidate_pairs = 0_usize;
+        let mut exact_pairs = 0_usize;
 
-    for left_index in 0..features.len() {
-        let left = features[left_index];
-        if left.net.is_none() {
-            continue;
-        }
-        for right_index in feature_index.same_layer_near_feature(left, broad_phase_clearance) {
-            if right_index <= left_index {
+        for left_index in 0..features.len() {
+            let left = features[left_index];
+            if left.net.is_none() {
                 continue;
             }
-            candidate_pairs += 1;
-            let right = features[right_index];
-            if left.net == right.net {
-                continue;
-            }
-            if !rects_within_clearance(
-                &bounds[left_index],
-                &bounds[right_index],
-                broad_phase_clearance,
-            ) {
-                continue;
-            }
-            exact_pairs += 1;
-            if let Err(uncertainty) =
-                collect_net_spacing_violation(left, right, clearance, min_area, &mut violations)
-            {
-                return vec![*uncertainty];
+            for right_index in feature_index.same_layer_near_feature(left, broad_phase_clearance) {
+                if right_index <= left_index {
+                    continue;
+                }
+                candidate_pairs += 1;
+                let right = features[right_index];
+                if left.net == right.net {
+                    continue;
+                }
+                if bounds[left_index]
+                    .as_ref()
+                    .zip(bounds[right_index].as_ref())
+                    .is_some_and(|(left, right)| {
+                        !rects_within_clearance(left, right, broad_phase_clearance)
+                    })
+                {
+                    continue;
+                }
+                exact_pairs += 1;
+                if let Err(uncertainty) =
+                    collect_net_spacing_violation(left, right, clearance, min_area, &mut violations)
+                {
+                    return Ok(vec![*uncertainty]);
+                }
             }
         }
-    }
 
-    log::trace!(
-        "different-net spacing: source={} features={} buckets={} candidate_pairs={} exact_pairs={} clearance={clearance:.6} selected_layers={} violations={}",
-        board.source,
-        features.len(),
-        feature_index.bucket_count(),
-        candidate_pairs,
-        exact_pairs,
-        selected_layers.len(),
-        violations.len()
-    );
+        log::trace!(
+            "different-net spacing: source={} features={} buckets={} candidate_pairs={} exact_pairs={} clearance={clearance:.6} selected_layers={} violations={}",
+            board.source,
+            features.len(),
+            feature_index.bucket_count(),
+            candidate_pairs,
+            exact_pairs,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 fn collect_net_spacing_violation(
@@ -2952,7 +3001,16 @@ fn collect_net_spacing_violation(
         "different-net-spacing",
         vec![left.layer.clone()],
     )?;
-    let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(
+        &overlap.try_to_multipolygon().map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                "different-net-spacing",
+                vec![left.layer.clone()],
+                uncertainty,
+            ))
+        })?,
+        min_area,
+    );
     let locations = if shapes.is_empty()
         && crate::checks::distance::region_boundaries_within(&left.region, &right.region, clearance)
             .map_err(|uncertainty| {
@@ -3004,82 +3062,77 @@ pub fn registration_tolerance(
     tolerance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
-    let features = selected_copper_features(board, &[])
-        .into_iter()
-        .filter(|feature| feature.region.geometry().bounding_rect().is_some())
-        .collect::<Vec<_>>();
-    let bounds = features
-        .iter()
-        .map(|feature| {
-            feature
-                .region
-                .geometry()
-                .bounding_rect()
-                .expect("registration-tolerance features are filtered to bounded geometry")
-        })
-        .collect::<Vec<_>>();
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_tolerance);
-    let mut violations = Vec::new();
-    let layers = features
-        .iter()
-        .map(|feature| feature.layer.clone())
-        .collect::<BTreeSet<_>>();
-    let mut candidate_pairs = 0_usize;
-    let mut exact_pairs = 0_usize;
+    crate::checks::run_geometry_check("layer-registration-tolerance", &[&board.source], || {
+        let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
+        let features = selected_copper_features(board, &[]);
+        let bounds = features
+            .iter()
+            .map(|feature| feature.region.conservative_bounds())
+            .collect::<Vec<_>>();
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_tolerance);
+        let mut violations = Vec::new();
+        let layers = features
+            .iter()
+            .map(|feature| feature.layer.clone())
+            .collect::<BTreeSet<_>>();
+        let mut candidate_pairs = 0_usize;
+        let mut exact_pairs = 0_usize;
 
-    for left_index in 0..features.len() {
-        let left = features[left_index];
-        for right_index in feature_index.all_layers_near_feature(left, broad_phase_tolerance) {
-            if right_index <= left_index {
-                continue;
-            }
-            let right = features[right_index];
-            if left.layer == right.layer {
-                continue;
-            }
-            candidate_pairs += 1;
-            if !rects_within_clearance(
-                &bounds[left_index],
-                &bounds[right_index],
-                broad_phase_tolerance,
-            ) {
-                continue;
-            }
-            exact_pairs += 1;
-            let (first, second) = if left.layer <= right.layer {
-                (left, right)
-            } else {
-                (right, left)
-            };
-            let first_layer = first.layer.clone();
-            let second_layer = second.layer.clone();
-            if let Err(uncertainty) = collect_registration_tolerance_violation(
-                first,
-                second,
-                &first_layer,
-                &second_layer,
-                tolerance,
-                min_area,
-                &mut violations,
-            ) {
-                return vec![*uncertainty];
+        for left_index in 0..features.len() {
+            let left = features[left_index];
+            for right_index in feature_index.all_layers_near_feature(left, broad_phase_tolerance) {
+                if right_index <= left_index {
+                    continue;
+                }
+                let right = features[right_index];
+                if left.layer == right.layer {
+                    continue;
+                }
+                candidate_pairs += 1;
+                if bounds[left_index]
+                    .as_ref()
+                    .zip(bounds[right_index].as_ref())
+                    .is_some_and(|(left, right)| {
+                        !rects_within_clearance(left, right, broad_phase_tolerance)
+                    })
+                {
+                    continue;
+                }
+                exact_pairs += 1;
+                let (first, second) = if left.layer <= right.layer {
+                    (left, right)
+                } else {
+                    (right, left)
+                };
+                let first_layer = first.layer.clone();
+                let second_layer = second.layer.clone();
+                if let Err(uncertainty) = collect_registration_tolerance_violation(
+                    first,
+                    second,
+                    &first_layer,
+                    &second_layer,
+                    tolerance,
+                    min_area,
+                    &mut violations,
+                ) {
+                    return Ok(vec![*uncertainty]);
+                }
             }
         }
-    }
 
-    log::trace!(
-        "registration tolerance: source={} features={} layers={} buckets={} candidate_pairs={} exact_pairs={} tolerance={tolerance:.6} violations={}",
-        board.source,
-        features.len(),
-        layers.len(),
-        feature_index.bucket_count(),
-        candidate_pairs,
-        exact_pairs,
-        violations.len()
-    );
+        log::trace!(
+            "registration tolerance: source={} features={} layers={} buckets={} candidate_pairs={} exact_pairs={} tolerance={tolerance:.6} violations={}",
+            board.source,
+            features.len(),
+            layers.len(),
+            feature_index.bucket_count(),
+            candidate_pairs,
+            exact_pairs,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 fn collect_registration_tolerance_violation(
@@ -3109,7 +3162,16 @@ fn collect_registration_tolerance_violation(
         "layer-registration-tolerance",
         vec![left_layer.to_string(), right_layer.to_string()],
     )?;
-    let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(
+        &overlap.try_to_multipolygon().map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                "layer-registration-tolerance",
+                vec![left_layer.to_owned(), right_layer.to_owned()],
+                uncertainty,
+            ))
+        })?,
+        min_area,
+    );
     let locations = if shapes.is_empty()
         && crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
             .map_err(|uncertainty| {
@@ -3155,144 +3217,147 @@ pub fn panelization_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let mut blockers = Vec::new();
+    crate::checks::run_geometry_check("panelization-clearance", &[&board.source], || {
+        let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+        let mut blockers = Vec::new();
 
-    if let Some(panel_features) = &board.panel_features {
-        blockers.push(panel_features.clone());
-    }
-
-    if !extra_drills.is_empty() {
-        match drills_to_region(
-            extra_drills,
-            "Excellon panel drills",
-            "panelization-clearance",
-        ) {
-            Ok(drills) => blockers.push(drills),
-            Err(uncertainty) => return vec![*uncertainty],
+        if let Some(panel_features) = &board.panel_features {
+            blockers.push(panel_features.clone());
         }
-    }
 
-    let npth = board
-        .drills
-        .iter()
-        .filter(|drill| !drill.plated)
-        .cloned()
-        .collect::<Vec<_>>();
-    if !npth.is_empty() {
-        match drills_to_region(&npth, "KiCad NPTH panel drills", "panelization-clearance") {
-            Ok(drills) => blockers.push(drills),
-            Err(uncertainty) => return vec![*uncertainty],
-        }
-    }
-
-    let bounded_copper = board
-        .copper
-        .iter()
-        .filter_map(|copper| {
-            copper
-                .region
-                .geometry()
-                .bounding_rect()
-                .map(|bounds| (copper, bounds))
-        })
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-    let blocker_count = blockers.len();
-    let mut blocker_polygon_count = 0_usize;
-    let mut candidate_pairs = 0_usize;
-    let mut exact_intersections = 0_usize;
-    let mut fallback_hits = 0_usize;
-    for blocker in blockers {
-        let mut shapes = Vec::new();
-        let mut fallback_hit = false;
-        let mut locations = Vec::new();
-        let mut layers = BTreeSet::new();
-
-        for blocker_polygon in blocker.to_multipolygon().0 {
-            blocker_polygon_count += 1;
-            let blocker_piece = PcbRegion::new_shared(blocker_polygon.shared_exact_region(), None);
-            let blocker_geometry = MultiPolygon(vec![blocker_polygon]);
-            let Some(blocker_bounds) = blocker_geometry.bounding_rect() else {
-                continue;
-            };
-
-            for (copper, copper_bounds) in &bounded_copper {
-                if !rects_within_clearance(&blocker_bounds, copper_bounds, broad_phase_clearance) {
-                    continue;
-                }
-
-                candidate_pairs += 1;
-                // Panel features can be long routed tabs or score lines.
-                // Offsetting the entire panel region is unnecessarily expensive
-                // on dense boards, so use exact feature intersections plus the
-                // same boundary distance predicate the offset fallback used to
-                // represent copper inside the requested keepout band.
-                exact_intersections += 1;
-                let overlap = match intersection_for_check(
-                    &blocker_piece,
-                    &copper.region,
-                    "panelization-clearance",
-                    vec![copper.layer.clone()],
-                ) {
-                    Ok(overlap) => overlap,
-                    Err(uncertainty) => return vec![*uncertainty],
-                };
-                let feature_shapes =
-                    multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-                if feature_shapes.is_empty()
-                    && (crate::checks::boundaries_within_for_check(
-                        &blocker_piece,
-                        &copper.region,
-                        clearance,
-                        "panelization-clearance",
-                        &[&copper.layer],
-                        &mut violations,
-                    ) == Some(true))
-                {
-                    fallback_hit = true;
-                    fallback_hits += 1;
-                    locations.push(copper.location_f64_compatibility_required());
-                }
-                shapes.extend(feature_shapes);
-                layers.insert(copper.layer.clone());
+        if !extra_drills.is_empty() {
+            match drills_to_region(
+                extra_drills,
+                "Excellon panel drills",
+                "panelization-clearance",
+            ) {
+                Ok(drills) => blockers.push(drills),
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
             }
         }
 
-        if shapes.is_empty() && !fallback_hit {
-            continue;
+        let npth = board
+            .drills
+            .iter()
+            .filter(|drill| !drill.plated)
+            .cloned()
+            .collect::<Vec<_>>();
+        if !npth.is_empty() {
+            match drills_to_region(&npth, "KiCad NPTH panel drills", "panelization-clearance") {
+                Ok(drills) => blockers.push(drills),
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            }
         }
 
-        violations.push(Violation::new(
-            "panelization-clearance",
-            Severity::Warning,
-            if layers.is_empty() {
-                vec!["KiCad copper".to_string()]
-            } else {
-                layers.into_iter().collect()
-            },
-            None,
-            shapes,
-            locations,
-            Some(format!(
-                "copper is within panel feature clearance {clearance}"
-            )),
-        ));
-    }
+        let bounded_copper = board
+            .copper
+            .iter()
+            .map(|copper| (copper, copper.region.conservative_bounds()))
+            .collect::<Vec<_>>();
+        let mut violations = Vec::new();
+        let blocker_count = blockers.len();
+        let mut blocker_polygon_count = 0_usize;
+        let mut candidate_pairs = 0_usize;
+        let mut exact_intersections = 0_usize;
+        let mut fallback_hits = 0_usize;
+        for blocker in blockers {
+            let mut shapes = Vec::new();
+            let mut fallback_hit = false;
+            let mut locations = Vec::new();
+            let mut layers = BTreeSet::new();
 
-    log::trace!(
-        "panelization clearance: source={} blockers={} blocker_polygons={} bounded_copper={} candidate_pairs={} exact_intersections={} fallback_hits={} clearance={clearance:.6} min_area={min_area:.9} violations={}",
-        board.source,
-        blocker_count,
-        blocker_polygon_count,
-        bounded_copper.len(),
-        candidate_pairs,
-        exact_intersections,
-        fallback_hits,
-        violations.len()
-    );
+            for blocker_polygon in blocker.try_to_multipolygon()?.0 {
+                blocker_polygon_count += 1;
+                let blocker_piece =
+                    PcbRegion::new_shared(blocker_polygon.shared_exact_region(), None);
+                let blocker_geometry = MultiPolygon(vec![blocker_polygon]);
+                let Some(blocker_bounds) = blocker_geometry.bounding_rect() else {
+                    continue;
+                };
 
-    violations
+                for (copper, copper_bounds) in &bounded_copper {
+                    if copper_bounds.as_ref().is_some_and(|copper_bounds| {
+                        !rects_within_clearance(
+                            &blocker_bounds,
+                            copper_bounds,
+                            broad_phase_clearance,
+                        )
+                    }) {
+                        continue;
+                    }
+
+                    candidate_pairs += 1;
+                    // Panel features can be long routed tabs or score lines.
+                    // Offsetting the entire panel region is unnecessarily expensive
+                    // on dense boards, so use exact feature intersections plus the
+                    // same boundary distance predicate the offset fallback used to
+                    // represent copper inside the requested keepout band.
+                    exact_intersections += 1;
+                    let overlap = match intersection_for_check(
+                        &blocker_piece,
+                        &copper.region,
+                        "panelization-clearance",
+                        vec![copper.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let feature_shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    if feature_shapes.is_empty()
+                        && (crate::checks::boundaries_within_for_check(
+                            &blocker_piece,
+                            &copper.region,
+                            clearance,
+                            "panelization-clearance",
+                            &[&copper.layer],
+                            &mut violations,
+                        ) == Some(true))
+                    {
+                        fallback_hit = true;
+                        fallback_hits += 1;
+                        locations.push(copper.location_f64_compatibility_required());
+                    }
+                    shapes.extend(feature_shapes);
+                    layers.insert(copper.layer.clone());
+                }
+            }
+
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "panelization-clearance",
+                Severity::Warning,
+                if layers.is_empty() {
+                    vec!["KiCad copper".to_string()]
+                } else {
+                    layers.into_iter().collect()
+                },
+                None,
+                shapes,
+                locations,
+                Some(format!(
+                    "copper is within panel feature clearance {clearance}"
+                )),
+            ));
+        }
+
+        log::trace!(
+            "panelization clearance: source={} blockers={} blocker_polygons={} bounded_copper={} candidate_pairs={} exact_intersections={} fallback_hits={} clearance={clearance:.6} min_area={min_area:.9} violations={}",
+            board.source,
+            blocker_count,
+            blocker_polygon_count,
+            bounded_copper.len(),
+            candidate_pairs,
+            exact_intersections,
+            fallback_hits,
+            violations.len()
+        );
+
+        Ok(violations)
+    })
 }
 
 /// Run the `apply_ipc356_nets` design-readiness check or report helper.
@@ -3644,10 +3709,10 @@ fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
 }
 
 fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64) -> bool {
-    let Some(left_bounds) = left.geometry().bounding_rect() else {
+    let Some(left_bounds) = left.conservative_bounds() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry().bounding_rect() else {
+    let Some(right_bounds) = right.conservative_bounds() else {
         return true;
     };
 
@@ -10461,7 +10526,7 @@ mod tests {
             region.metadata().as_ref().unwrap().name,
             "test panel drills"
         );
-        assert_eq!(region.to_multipolygon().0.len(), 2);
+        assert_eq!(region.try_to_multipolygon().unwrap().0.len(), 2);
     }
 
     #[test]

@@ -708,11 +708,17 @@ fn run_checks(
     let board_copper_layers = std::cell::OnceCell::<Vec<Vec<(String, PcbRegion)>>>::new();
 
     let cached_board_copper_layers = || {
-        board_copper_layers.get_or_init(|| {
-            boards
-                .iter()
-                .map(|board| board.copper_layers(kicad_copper_layers))
-                .collect()
+        crate::projection::evaluate("copper-layers", None, || {
+            if board_copper_layers.get().is_none() {
+                let layers = boards
+                    .iter()
+                    .map(|board| board.copper_layers(kicad_copper_layers))
+                    .collect::<std::result::Result<Vec<_>, _>>()?;
+                let _ = board_copper_layers.set(layers);
+            }
+            Ok(board_copper_layers
+                .get()
+                .expect("successful copper projection initialized the cache"))
         })
     };
 
@@ -1321,7 +1327,7 @@ fn run_checks(
                         ));
                     }
                     let mut item_index = gerber_copper_layer_count;
-                    for (board, copper_layers) in boards.iter().zip(cached_board_copper_layers()) {
+                    for (board, copper_layers) in boards.iter().zip(cached_board_copper_layers()?) {
                         for (layer_name, copper) in copper_layers {
                             let name = format!("{}:{layer_name}", board.source);
                             progress_check_item(
@@ -1350,7 +1356,7 @@ fn run_checks(
                             &rules.acid_trap_angle,
                         ));
                     }
-                    for (board, copper_layers) in boards.iter().zip(cached_board_copper_layers()) {
+                    for (board, copper_layers) in boards.iter().zip(cached_board_copper_layers()?) {
                         for (layer_name, copper) in copper_layers {
                             violations.extend(checks::acid_trap_candidates(
                                 &format!("{}:{layer_name}", board.source),
@@ -1402,7 +1408,7 @@ fn run_checks(
                         &explicit_layers,
                         &rules.min_area,
                     ));
-                    for (board, kicad_layers) in boards.iter().zip(cached_board_copper_layers()) {
+                    for (board, kicad_layers) in boards.iter().zip(cached_board_copper_layers()?) {
                         for (layer_name, copper) in kicad_layers {
                             let name = format!("{}:{layer_name}", board.source);
                             violations.extend(checks::layer_sanity(
@@ -1457,7 +1463,7 @@ fn run_checks(
                     }
                     for board in boards {
                         let kicad_copper = board
-                            .copper_layers(kicad_copper_layers)
+                            .copper_layers(kicad_copper_layers)?
                             .into_iter()
                             .map(|(layer_name, copper)| {
                                 (format!("{}:{layer_name}", board.source), copper)
@@ -1489,7 +1495,7 @@ fn run_checks(
                     }
                     for board in boards {
                         let kicad_copper = board
-                            .copper_layers(kicad_copper_layers)
+                            .copper_layers(kicad_copper_layers)?
                             .into_iter()
                             .map(|(layer_name, copper)| {
                                 (format!("{}:{layer_name}", board.source), copper)
@@ -2761,6 +2767,11 @@ fn run_checks(
                     elapsed.as_secs_f64()
                 );
             }
+            Err(error) if error.downcast_ref::<crate::PcbGeometryUncertainty>().is_some() => {
+                let uncertainty = error.downcast::<crate::PcbGeometryUncertainty>().expect("geometry error type was checked");
+                violations.push(checks::geometry_uncertainty_violation(&check_name, Vec::new(), uncertainty));
+                eprintln!("hyperdrc: uncertain geometry for check {check_name} after {:.3}s", elapsed.as_secs_f64());
+            }
             Err(error) => {
                 eprintln!(
                     "hyperdrc: failed check {check_name} after {:.3}s ({added_count} finding(s) before failure)",
@@ -3489,7 +3500,15 @@ fn run_board_edge_clearance(
 
     for board in boards {
         if let Some(outline) = &board.board_outline {
-            for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+            let Some(copper_layers) = checks::geometry_result_for_check(
+                board.copper_layers(kicad_copper_layers),
+                "board-edge-clearance",
+                &[&board.source],
+                violations,
+            ) else {
+                continue;
+            };
+            for (layer_name, copper) in copper_layers {
                 violations.extend(checks::board_edge_clearance(
                     &format!("{}:{layer_name}", board.source),
                     &copper,
@@ -3534,7 +3553,15 @@ fn run_board_outline_cutout_clearance(
 
     for board in boards {
         if let Some(outline) = &board.board_outline {
-            for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+            let Some(copper_layers) = checks::geometry_result_for_check(
+                board.copper_layers(kicad_copper_layers),
+                "board-outline-cutout-clearance",
+                &[&board.source],
+                violations,
+            ) else {
+                continue;
+            };
+            for (layer_name, copper) in copper_layers {
                 violations.extend(checks::board_outline_cutout_clearance_with_grid(
                     &format!("{}:{layer_name}", board.source),
                     &copper,

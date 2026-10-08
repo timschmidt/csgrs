@@ -338,47 +338,51 @@ pub fn authored_keepout_readiness(
     keepouts: &[AuthoredKeepout],
     minimum_report_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    for keepout in keepouts {
-        if keepout.scope == AuthoredKeepoutScope::Components {
-            continue;
+    crate::checks::run_geometry_check("authored-keepout-readiness", &[&board.source], || {
+        let mut violations = Vec::new();
+        for keepout in keepouts {
+            if keepout.scope == AuthoredKeepoutScope::Components {
+                continue;
+            }
+            for feature in &board.copper {
+                if !feature_matches_scope(feature.kind, &feature.layer, &keepout.scope) {
+                    continue;
+                }
+                let intersection = match intersection_for_check(
+                    &keepout.region,
+                    &feature.region,
+                    "authored-keepout-readiness",
+                    vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
+                ) {
+                    Ok(intersection) => intersection,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                if intersection.is_empty() {
+                    continue;
+                }
+                let polygons = multipolygon_to_shapes_scalar(
+                    &intersection.try_to_multipolygon()?,
+                    minimum_report_area,
+                );
+                if polygons.is_empty() {
+                    continue;
+                }
+                violations.push(Violation::new(
+                    "authored-keepout-readiness",
+                    Severity::Error,
+                    vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
+                    None,
+                    polygons,
+                    vec![feature.location_f64_compatibility_required()],
+                    Some(format!(
+                        "authored keepout {} intersects {:?} copper on {}",
+                        keepout.source, feature.kind, feature.layer
+                    )),
+                ));
+            }
         }
-        for feature in &board.copper {
-            if !feature_matches_scope(feature.kind, &feature.layer, &keepout.scope) {
-                continue;
-            }
-            let intersection = match intersection_for_check(
-                &keepout.region,
-                &feature.region,
-                "authored-keepout-readiness",
-                vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
-            ) {
-                Ok(intersection) => intersection,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            if intersection.is_empty() {
-                continue;
-            }
-            let polygons =
-                multipolygon_to_shapes_scalar(&intersection.to_multipolygon(), minimum_report_area);
-            if polygons.is_empty() {
-                continue;
-            }
-            violations.push(Violation::new(
-                "authored-keepout-readiness",
-                Severity::Error,
-                vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
-                None,
-                polygons,
-                vec![feature.location_f64_compatibility_required()],
-                Some(format!(
-                    "authored keepout {} intersects {:?} copper on {}",
-                    keepout.source, feature.kind, feature.layer
-                )),
-            ));
-        }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 /// Check exact authored routed-slot widths against cutter capability.
@@ -517,8 +521,16 @@ fn append_component_intersection(
     if intersection.is_empty() {
         return Ok(());
     }
-    let polygons =
-        multipolygon_to_shapes_scalar(&intersection.to_multipolygon(), minimum_report_area);
+    let polygons = multipolygon_to_shapes_scalar(
+        &intersection.try_to_multipolygon().map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                "authored-component-readiness",
+                layers.clone(),
+                uncertainty,
+            ))
+        })?,
+        minimum_report_area,
+    );
     if polygons.is_empty() {
         return Ok(());
     }

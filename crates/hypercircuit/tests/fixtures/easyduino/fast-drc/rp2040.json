@@ -9,7 +9,7 @@
     "checks": [
       {
         "check": "mask-island-keepout",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -20,7 +20,7 @@
       },
       {
         "check": "copper-overlap",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -31,7 +31,7 @@
       },
       {
         "check": "board-edge-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -42,7 +42,7 @@
       },
       {
         "check": "board-outline-cutout-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -53,7 +53,7 @@
       },
       {
         "check": "board-outline-sanity",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -64,7 +64,7 @@
       },
       {
         "check": "board-outline-fragments",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -75,7 +75,7 @@
       },
       {
         "check": "board-outline-self-intersection-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -86,7 +86,7 @@
       },
       {
         "check": "board-outline-notch-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -97,7 +97,7 @@
       },
       {
         "check": "board-outline-duplicate-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -108,7 +108,7 @@
       },
       {
         "check": "board-outline-nesting-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -119,7 +119,7 @@
       },
       {
         "check": "paste-overhang",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -129,7 +129,7 @@
       },
       {
         "check": "paste-aperture-coverage",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -140,7 +140,7 @@
       },
       {
         "check": "paste-aperture-ratio",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -151,7 +151,7 @@
       },
       {
         "check": "thermal-pad-paste-windowpane-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -162,7 +162,7 @@
       },
       {
         "check": "stencil-area-ratio-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -173,7 +173,7 @@
       },
       {
         "check": "paste-aperture-aspect-ratio-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -184,7 +184,7 @@
       },
       {
         "check": "tombstone-paste-imbalance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -195,7 +195,7 @@
       },
       {
         "check": "paste-via-exposure-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -206,7 +206,7 @@
       },
       {
         "check": "minimum-paste-aperture",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -217,7 +217,7 @@
       },
       {
         "check": "paste-aperture-spacing",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -228,7 +228,7 @@
       },
       {
         "check": "paste-mask-alignment",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -239,7 +239,7 @@
       },
       {
         "check": "exposed-copper",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -250,7 +250,7 @@
       },
       {
         "check": "solder-mask-opening-coverage",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -261,7 +261,7 @@
       },
       {
         "check": "solder-mask-opening-ratio-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -272,7 +272,7 @@
       },
       {
         "check": "solder-mask-annular-ring-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -283,7 +283,7 @@
       },
       {
         "check": "solder-mask-expansion",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -293,7 +293,7 @@
       },
       {
         "check": "solder-mask-overlap-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -304,7 +304,7 @@
       },
       {
         "check": "solder-mask-board-edge-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -314,7 +314,7 @@
       },
       {
         "check": "silkscreen-overlap",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -324,7 +324,7 @@
       },
       {
         "check": "silkscreen-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -335,7 +335,7 @@
       },
       {
         "check": "silkscreen-board-edge-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -345,7 +345,7 @@
       },
       {
         "check": "silkscreen-min-width",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -355,7 +355,7 @@
       },
       {
         "check": "silkscreen-text-height-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -366,7 +366,7 @@
       },
       {
         "check": "min-copper-neck",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -377,7 +377,7 @@
       },
       {
         "check": "acid-trap",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -388,7 +388,7 @@
       },
       {
         "check": "acid-trap-trace-junction",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -399,7 +399,7 @@
       },
       {
         "check": "layer-sanity",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -410,7 +410,7 @@
       },
       {
         "check": "copper-balance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -421,7 +421,7 @@
       },
       {
         "check": "local-copper-density-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -432,7 +432,7 @@
       },
       {
         "check": "mechanical-layer-geometry",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -443,7 +443,7 @@
       },
       {
         "check": "solder-mask-sliver",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -454,7 +454,7 @@
       },
       {
         "check": "minimum-mask-opening",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -464,7 +464,7 @@
       },
       {
         "check": "solder-mask-opening-spacing",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -474,7 +474,7 @@
       },
       {
         "check": "annular-ring",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -485,7 +485,7 @@
       },
       {
         "check": "annular-ring-tolerance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -496,7 +496,7 @@
       },
       {
         "check": "plating-intent",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -507,7 +507,7 @@
       },
       {
         "check": "routed-slot-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -518,7 +518,7 @@
       },
       {
         "check": "castellation-intent",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -529,7 +529,7 @@
       },
       {
         "check": "castellation-hole-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -540,7 +540,7 @@
       },
       {
         "check": "via-in-pad-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -551,7 +551,7 @@
       },
       {
         "check": "drill-to-copper-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -562,7 +562,7 @@
       },
       {
         "check": "board-outline-drill-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -573,7 +573,7 @@
       },
       {
         "check": "drill-spacing",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -584,7 +584,7 @@
       },
       {
         "check": "drill-aspect-ratio",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -595,7 +595,7 @@
       },
       {
         "check": "drill-table-consistency",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -606,7 +606,7 @@
       },
       {
         "check": "copper-width-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -617,7 +617,7 @@
       },
       {
         "check": "copper-net-intent",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -628,7 +628,7 @@
       },
       {
         "check": "teardrop-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -639,7 +639,7 @@
       },
       {
         "check": "thermal-relief-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -650,7 +650,7 @@
       },
       {
         "check": "plane-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -661,7 +661,7 @@
       },
       {
         "check": "board-edge-exposure",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -672,7 +672,7 @@
       },
       {
         "check": "high-speed-edge-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -683,7 +683,7 @@
       },
       {
         "check": "edge-copper-pullback-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -694,7 +694,7 @@
       },
       {
         "check": "high-voltage-edge-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -705,7 +705,7 @@
       },
       {
         "check": "controlled-impedance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -716,7 +716,7 @@
       },
       {
         "check": "differential-pair-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -727,7 +727,7 @@
       },
       {
         "check": "differential-pair-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -738,7 +738,7 @@
       },
       {
         "check": "differential-pair-width-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -749,7 +749,7 @@
       },
       {
         "check": "differential-pair-neckdown-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -760,7 +760,7 @@
       },
       {
         "check": "differential-pair-skew-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -771,7 +771,7 @@
       },
       {
         "check": "differential-pair-to-pair-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -782,7 +782,7 @@
       },
       {
         "check": "differential-pair-via-proximity-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -793,7 +793,7 @@
       },
       {
         "check": "differential-pair-via-return-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -804,7 +804,7 @@
       },
       {
         "check": "differential-pair-via-symmetry-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -815,7 +815,7 @@
       },
       {
         "check": "differential-pair-return-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -826,7 +826,7 @@
       },
       {
         "check": "reference-plane-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -837,7 +837,7 @@
       },
       {
         "check": "reference-plane-void-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -848,7 +848,7 @@
       },
       {
         "check": "split-plane-crossing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -859,7 +859,7 @@
       },
       {
         "check": "return-path-proximity-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -870,7 +870,7 @@
       },
       {
         "check": "orphaned-zone-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -881,7 +881,7 @@
       },
       {
         "check": "same-net-island-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -892,7 +892,7 @@
       },
       {
         "check": "same-net-drill-break-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -903,7 +903,7 @@
       },
       {
         "check": "different-net-short-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -914,7 +914,7 @@
       },
       {
         "check": "return-path-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -925,7 +925,7 @@
       },
       {
         "check": "high-current-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -936,7 +936,7 @@
       },
       {
         "check": "power-via-array-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -947,7 +947,7 @@
       },
       {
         "check": "power-via-return-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -958,7 +958,7 @@
       },
       {
         "check": "thermal-via-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -969,7 +969,7 @@
       },
       {
         "check": "thermal-via-distribution-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -980,7 +980,7 @@
       },
       {
         "check": "power-plane-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -991,7 +991,7 @@
       },
       {
         "check": "high-current-neck-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1002,7 +1002,7 @@
       },
       {
         "check": "power-pad-entry-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1013,7 +1013,7 @@
       },
       {
         "check": "voltage-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1024,7 +1024,7 @@
       },
       {
         "check": "protective-earth-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1035,7 +1035,7 @@
       },
       {
         "check": "surge-protection-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1046,7 +1046,7 @@
       },
       {
         "check": "sensitive-net-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1057,7 +1057,7 @@
       },
       {
         "check": "sensitive-return-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1068,7 +1068,7 @@
       },
       {
         "check": "mixed-signal-partition-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1079,7 +1079,7 @@
       },
       {
         "check": "rf-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1090,7 +1090,7 @@
       },
       {
         "check": "antenna-copper-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1101,7 +1101,7 @@
       },
       {
         "check": "rf-via-fence-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1112,7 +1112,7 @@
       },
       {
         "check": "chassis-stitching-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1123,7 +1123,7 @@
       },
       {
         "check": "edge-stitching-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1134,7 +1134,7 @@
       },
       {
         "check": "gold-finger-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1145,7 +1145,7 @@
       },
       {
         "check": "gold-finger-edge-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1156,7 +1156,7 @@
       },
       {
         "check": "gold-finger-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1167,7 +1167,7 @@
       },
       {
         "check": "gold-finger-drill-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1178,7 +1178,7 @@
       },
       {
         "check": "component-edge-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1189,7 +1189,7 @@
       },
       {
         "check": "component-hole-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1200,7 +1200,7 @@
       },
       {
         "check": "component-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1211,7 +1211,7 @@
       },
       {
         "check": "connector-rework-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1222,7 +1222,7 @@
       },
       {
         "check": "pad-pair-asymmetry-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1233,7 +1233,7 @@
       },
       {
         "check": "connector-return-path-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1244,7 +1244,7 @@
       },
       {
         "check": "decoupling-proximity-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1255,7 +1255,7 @@
       },
       {
         "check": "esd-protection-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1266,7 +1266,7 @@
       },
       {
         "check": "esd-return-path-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1277,7 +1277,7 @@
       },
       {
         "check": "switch-node-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1288,7 +1288,7 @@
       },
       {
         "check": "inductor-copper-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1299,7 +1299,7 @@
       },
       {
         "check": "testpoint-coverage-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1309,7 +1309,7 @@
       },
       {
         "check": "testpoint-accessibility-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1320,7 +1320,7 @@
       },
       {
         "check": "testpoint-copper-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1331,7 +1331,7 @@
       },
       {
         "check": "tooling-hole-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1342,7 +1342,7 @@
       },
       {
         "check": "mouse-bite-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1353,7 +1353,7 @@
       },
       {
         "check": "fiducial-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1364,7 +1364,7 @@
       },
       {
         "check": "local-fiducial-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1375,7 +1375,7 @@
       },
       {
         "check": "fiducial-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1386,7 +1386,7 @@
       },
       {
         "check": "dense-pad-escape-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1397,7 +1397,7 @@
       },
       {
         "check": "dense-pad-via-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1408,7 +1408,7 @@
       },
       {
         "check": "dense-pad-mask-bridge-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1419,7 +1419,7 @@
       },
       {
         "check": "selective-wave-solder-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1430,7 +1430,7 @@
       },
       {
         "check": "press-fit-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1441,7 +1441,7 @@
       },
       {
         "check": "conformal-coating-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1452,7 +1452,7 @@
       },
       {
         "check": "thermal-pad-via-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1463,7 +1463,7 @@
       },
       {
         "check": "thermal-copper-area-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1474,7 +1474,7 @@
       },
       {
         "check": "hot-component-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1485,7 +1485,7 @@
       },
       {
         "check": "thermal-mechanical-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1496,7 +1496,7 @@
       },
       {
         "check": "mounting-hole-grounding-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1507,7 +1507,7 @@
       },
       {
         "check": "mounting-hole-copper-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1518,7 +1518,7 @@
       },
       {
         "check": "mounting-hole-edge-clearance-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1529,7 +1529,7 @@
       },
       {
         "check": "mounting-hole-plating-intent-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1540,7 +1540,7 @@
       },
       {
         "check": "mounting-hole-distribution-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1551,7 +1551,7 @@
       },
       {
         "check": "mounting-hole-spacing-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1562,7 +1562,7 @@
       },
       {
         "check": "panel-feature-outline-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1573,7 +1573,7 @@
       },
       {
         "check": "edge-plating-intent-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1584,7 +1584,7 @@
       },
       {
         "check": "castellation-pitch-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1595,7 +1595,7 @@
       },
       {
         "check": "different-net-spacing",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1606,7 +1606,7 @@
       },
       {
         "check": "layer-registration-tolerance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1617,7 +1617,7 @@
       },
       {
         "check": "panelization-clearance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1628,7 +1628,7 @@
       },
       {
         "check": "ipc356-coverage",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1639,7 +1639,7 @@
       },
       {
         "check": "ipc356-drill-diameter",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1650,7 +1650,7 @@
       },
       {
         "check": "excellon-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1661,7 +1661,7 @@
       },
       {
         "check": "file-manifest-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1672,7 +1672,7 @@
       },
       {
         "check": "production-artifact-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1683,7 +1683,7 @@
       },
       {
         "check": "stackup-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 9,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1693,8 +1693,8 @@
       },
       {
         "check": "net-constraint-readiness",
-        "check_version": 1,
-        "finding_count": 270,
+        "check_version": 3,
+        "finding_count": 259,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
         "status": "failed",
@@ -1703,7 +1703,7 @@
       },
       {
         "check": "authored-keepout-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1713,7 +1713,7 @@
       },
       {
         "check": "authored-routed-slot-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1723,7 +1723,7 @@
       },
       {
         "check": "authored-component-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 65,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1733,7 +1733,7 @@
       },
       {
         "check": "authored-functional-role-readiness",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1743,7 +1743,7 @@
       },
       {
         "check": "waiver-governance",
-        "check_version": 1,
+        "check_version": 3,
         "finding_count": 0,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
@@ -1757,7 +1757,7 @@
   },
   "finding_counts": {
     "authored-component-readiness": 65,
-    "net-constraint-readiness": 270,
+    "net-constraint-readiness": 259,
     "stackup-readiness": 9
   },
   "handoff_omissions": [
@@ -1908,13 +1908,7 @@
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:a9bdc87fb53e2b2519b6b7198a96fa2622b9db140d00ec88d90b02af291a9553",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:b975197e6b4665d618eed9bb606a7dab5f51b7c58c028fd13fddb77b350c4040",
+      "evidence_id": "sha256:31dd8290303f227452863e5d539c22ee7fdc1b9bf933a5414c14fe6fdf184c2c",
       "severity": "error",
       "subjects": []
     },
@@ -1927,60 +1921,6 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:6a001422061cfbd37e2e877bb09f9d893b8603f1b69770024cea1c12ac53490c",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:7d53d2fddab74e6a80d6a11d89734f21c37598c6e8e410f6e596b44a3de4c246",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:fa9348b063d122a6ab55b76ac034cd764c4c890ee75a8dd6f5e9075b786da86b",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:83694846faaa5e58494030e734411e28f79845d1fb9fd1b9975c22f1fb38d66b",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:56a3a88e6da85acdf0be53c74fd0c3b5408e70f15a309564582a1b737881417b",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:4463b5dd325936269f9b26f6d6e2dd1b56e454afe4096e1749821109e7b837d3",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:b0869d58c8d9995700f4f0a190a6e32c89374fe3eafe2258dcd2e625c4eea3c6",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:2dff246ca5160f839ed1b06624a062cc40f99223604c3db53fc815373c9802fe",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:cc3959bc9a62f8d03f1f83aae11f7b9ff7f1b55042735d5d8c75777162978a56",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:54bce7c883a01c4c29180e35d7fb332c564c695a014aa4b095b13ac3ae0a4c41",
       "severity": "error",
       "subjects": []
     },
@@ -2322,25 +2262,19 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8aef8a833c93362582a26cc613ed45c294682bebeeb338993f023307fb17e3bf",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:5b2f14f797be86cd0f0e149678e0400424fa51d7f8a9cca67ffe510469ab6f74",
       "severity": "error",
       "subjects": []
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:49013eda7843477ff4cebe11bf4080aa917ab309ef303a1d40cbfea91b117d5f",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:e2aee35673e48e679b3619b0a3f44e7484b6594ae446cfa9c1babe9e93cd0788",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:c055913fb68fba94eae1ff8b96035ddadf92d51449145db47ba7bfa51f650692",
+      "evidence_id": "sha256:2bcf750a7b1636b6241649188e1891a1406b9b447e451b98431fc5cbaecfc110",
       "severity": "error",
       "subjects": []
     },
@@ -2538,18 +2472,6 @@
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:afd17f8cd9d5e92e442d055b9f0e287508c7662885452ac753616f6c94123550",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:77d5061dc56a542331a74f849f2db45d55a1a1c27e3e360322dccdc89279f0cd",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
       "evidence_id": "sha256:f7f9676ba0856f04defd4132d7bb18277f98438fb9a15478be5bfae10fe045f3",
       "severity": "error",
       "subjects": []
@@ -2580,7 +2502,7 @@
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:b0e9815e774acbe30854866628d29cfb74c0a54bf20398b8db10bfdb6243be72",
+      "evidence_id": "sha256:7253913751d3a269ad88004794cc879eae6aebea2b832748cb956d413d4eea11",
       "severity": "error",
       "subjects": []
     },
@@ -2635,12 +2557,6 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:53150af910a0f91d5ca9ff5f468ddeed391dd394ae8c4020540f6707810f01d1",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:c0b3f7be0da3ea668080bc5f54d2449d0d87f89e5c6552d689b8d7b1d7dc9d20",
       "severity": "error",
       "subjects": []
     },
@@ -2940,12 +2856,6 @@
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:36a81f11e786b31c5763db5cc93b4bbb8b6f934865fdb275ea2abae7809002ce",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
       "evidence_id": "sha256:2658a2d1470eada5f625c577d599528b13c30ffa1d3e940f8638a62854fcbd7e",
       "severity": "error",
       "subjects": []
@@ -3228,13 +3138,13 @@
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:5368a95d0a9fba719d9f3fe6db614031a3c8efeac3258208cd7866d9e04c6818",
+      "evidence_id": "sha256:7b3362f2d1645c4954d52a05b60244223c3cf27f4862c5f3c9c500ffdce99cee",
       "severity": "error",
       "subjects": []
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:dab5ded75b684c455ffd3ab97c62726a81b6ca53cbc67209759cffc9b49b708f",
+      "evidence_id": "sha256:efc6d65f5961e7da5985305541c0acfef73c7f9d5732194a614d24246303c01d",
       "severity": "error",
       "subjects": []
     },
@@ -3253,12 +3163,6 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:688f5fd3695d96aad7ed9e5b3d33b03e1cc2a75fdb50a25a5703b70f4a6855f3",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
-      "evidence_id": "sha256:f0b27f6805713a9854a8d75cb0f48fa4dc4fe4dd894e0f18b316d735290616c9",
       "severity": "error",
       "subjects": []
     },
@@ -3313,6 +3217,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:1ebd1c901d2f2c267c848f9063e0b8e9d8d5d30798c773d510126a771bdecbc2",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d45852d10ffef71e28c7b4ae9b4fd175636a76a05ac7d2e36c81394b6a098b5c",
       "severity": "error",
       "subjects": []
     },
@@ -3378,12 +3288,6 @@
     },
     {
       "check": "net-constraint-readiness",
-      "evidence_id": "sha256:2eda31e24fde27c1b23f3e632cfec0c5342ab0344e4f023cebc62bc988a870c2",
-      "severity": "error",
-      "subjects": []
-    },
-    {
-      "check": "net-constraint-readiness",
       "evidence_id": "sha256:6e932a149e1fd8f913c3faca29074834116381116575556da8d385ad25fa6264",
       "severity": "error",
       "subjects": []
@@ -3397,6 +3301,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:144558d66ef721fab702bf081b209709dc266224f9a6a8b7cca38d57e6b51c4a",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:485e633b640413471d4c0eda9934055b687ac8563c7088b3f4ec6df0087ab6c5",
       "severity": "error",
       "subjects": []
     },
@@ -3450,6 +3360,18 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d849c433f24f312b88939aa7d67d58252197e42c86ada6b92022de45b29a37b3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:075103bd0528b7f2754ffbde97ec39185e20b54931e1509f72c0be3cafada0a4",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:1c0563539bdd1857ee076a8962eb2a6a8ba6e07a71439c1e53bc57fb4e437e27",
       "severity": "error",
       "subjects": []
@@ -3474,6 +3396,12 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f71ac8b683b477b4d86e3b489c603f67b6cb403fa23bd25810e7ef461e458236",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:9114f827a462b552107bfb28308dbbc30a88b6a6d5c513998da5944fd5304800",
       "severity": "error",
       "subjects": []
@@ -3487,6 +3415,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:75ac63f99665bc16e3dc8ef801abb9e1c7585d3d111266de40a45fe714f4dedd",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:08f554a18723c42a91607f0aa69c5be3f30621e7b345d210b335c681762aba02",
       "severity": "error",
       "subjects": []
     },

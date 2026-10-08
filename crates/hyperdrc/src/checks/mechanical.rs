@@ -112,69 +112,74 @@ pub fn mounting_hole_copper_keepout_readiness(
     keepout: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let copper = selected_copper_features(board, selected_layers);
-    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
-    let copper_index = CopperSpatialIndex::new(&copper, broad_phase_keepout);
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
-    log::trace!(
-        "mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}",
-        board.source,
-        likely_mounting_holes(board, keepout).len(),
-        copper.len(),
-        copper_index.bucket_count()
-    );
+    crate::checks::run_geometry_check(
+        "mounting-hole-copper-keepout-readiness",
+        &[&board.source],
+        || {
+            let copper = selected_copper_features(board, selected_layers);
+            let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+            let copper_index = CopperSpatialIndex::new(&copper, broad_phase_keepout);
+            let mut violations = Vec::new();
+            let mut candidate_count = 0_usize;
+            let mut exact_pair_count = 0_usize;
+            log::trace!(
+                "mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}",
+                board.source,
+                likely_mounting_holes(board, keepout).len(),
+                copper.len(),
+                copper_index.bucket_count()
+            );
 
-    for drill in likely_mounting_holes(board, keepout) {
-        let keepout_region = drill_keepout(drill, keepout);
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
-        let broad_phase_radius = scalar_broad_phase_radius(&query_radius);
-        for feature_index in copper_index.all_layers_near_circle(
-            drill.location_f64_compatibility_required(),
-            broad_phase_radius,
-        ) {
-            candidate_count += 1;
-            let feature = copper[feature_index];
-            if feature
-                .net
-                .as_deref()
-                .is_some_and(looks_ground_or_chassis_net)
-            {
-                continue;
-            }
-            exact_pair_count += 1;
+            for drill in likely_mounting_holes(board, keepout) {
+                let keepout_region = drill_keepout(drill, keepout);
+                let drill_radius = crate::scalar::half(&drill.diameter);
+                let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
+                let broad_phase_radius = scalar_broad_phase_radius(&query_radius);
+                for feature_index in copper_index.all_layers_near_circle(
+                    drill.location_f64_compatibility_required(),
+                    broad_phase_radius,
+                ) {
+                    candidate_count += 1;
+                    let feature = copper[feature_index];
+                    if feature
+                        .net
+                        .as_deref()
+                        .is_some_and(looks_ground_or_chassis_net)
+                    {
+                        continue;
+                    }
+                    exact_pair_count += 1;
 
-            // IPC-2221B treats mounting holes, conductive hardware, and board
-            // edge/mechanical constraints as layout-clearance concerns. This is
-            // a conservative geometric readiness check: model the screw/hole
-            // region as a circular keepout and report nearby non-ground copper
-            // so the release package makes the grounding/isolation intent clear.
-            let overlap = match intersection_for_check(
-                &keepout_region,
-                &feature.region,
-                "mounting-hole-copper-keepout-readiness",
-                vec![feature.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && (crate::checks::boundaries_within_for_check(
-                    &keepout_region,
-                    &feature.region,
-                    keepout,
-                    "mounting-hole-copper-keepout-readiness",
-                    &[&feature.layer],
-                    &mut violations,
-                ) == Some(true));
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                    // IPC-2221B treats mounting holes, conductive hardware, and board
+                    // edge/mechanical constraints as layout-clearance concerns. This is
+                    // a conservative geometric readiness check: model the screw/hole
+                    // region as a circular keepout and report nearby non-ground copper
+                    // so the release package makes the grounding/isolation intent clear.
+                    let overlap = match intersection_for_check(
+                        &keepout_region,
+                        &feature.region,
+                        "mounting-hole-copper-keepout-readiness",
+                        vec![feature.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    let fallback_hit = shapes.is_empty()
+                        && (crate::checks::boundaries_within_for_check(
+                            &keepout_region,
+                            &feature.region,
+                            keepout,
+                            "mounting-hole-copper-keepout-readiness",
+                            &[&feature.layer],
+                            &mut violations,
+                        ) == Some(true));
+                    if shapes.is_empty() && !fallback_hit {
+                        continue;
+                    }
 
-            violations.push(Violation::new(
+                    violations.push(Violation::new(
                 "mounting-hole-copper-keepout-readiness",
                 Severity::Warning,
                 vec![feature.layer.clone()],
@@ -190,19 +195,21 @@ pub fn mounting_hole_copper_keepout_readiness(
                     feature.kind, keepout
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "mounting-hole copper keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+            log::trace!(
+                "mounting-hole copper keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_count,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Review mounting-hole screw/washer keepouts against the parsed board outline.
@@ -216,63 +223,72 @@ pub fn mounting_hole_edge_clearance_readiness(
     edge_clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let outline_rect = axis_aligned_outline_rect(outline);
-    let mut violations = Vec::new();
-    let mut skipped_rect_inside = 0_usize;
-    let mut exact_difference_count = 0_usize;
+    crate::checks::run_geometry_check(
+        "mounting-hole-edge-clearance-readiness",
+        &[&board.source],
+        || {
+            let Some(outline) = &board.board_outline else {
+                return Ok(Vec::new());
+            };
+            let outline_rect = axis_aligned_outline_rect(outline);
+            let mut violations = Vec::new();
+            let mut skipped_rect_inside = 0_usize;
+            let mut exact_difference_count = 0_usize;
 
-    for drill in likely_mounting_holes(board, edge_clearance) {
-        if let Some(rect) = &outline_rect {
-            if drill_keepout_inside_rect_scalar(drill, rect, edge_clearance) {
-                skipped_rect_inside += 1;
-                continue;
+            for drill in likely_mounting_holes(board, edge_clearance) {
+                if let Some(rect) = &outline_rect {
+                    if drill_keepout_inside_rect_scalar(drill, rect, edge_clearance) {
+                        skipped_rect_inside += 1;
+                        continue;
+                    }
+                    violations.push(mounting_hole_edge_violation(
+                        board,
+                        drill,
+                        edge_clearance,
+                        Vec::new(),
+                    ));
+                    continue;
+                }
+
+                let keepout_region = drill_keepout(drill, edge_clearance);
+                exact_difference_count += 1;
+                let outside_outline = match difference_for_check(
+                    &keepout_region,
+                    outline,
+                    "mounting-hole-edge-clearance-readiness",
+                    vec![board.source.clone()],
+                ) {
+                    Ok(outside_outline) => outside_outline,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes = multipolygon_to_shapes_scalar(
+                    &outside_outline.try_to_multipolygon()?,
+                    min_area,
+                );
+                if shapes.is_empty() {
+                    continue;
+                }
+
+                violations.push(mounting_hole_edge_violation(
+                    board,
+                    drill,
+                    edge_clearance,
+                    shapes,
+                ));
             }
-            violations.push(mounting_hole_edge_violation(
-                board,
-                drill,
-                edge_clearance,
-                Vec::new(),
-            ));
-            continue;
-        }
 
-        let keepout_region = drill_keepout(drill, edge_clearance);
-        exact_difference_count += 1;
-        let outside_outline = match difference_for_check(
-            &keepout_region,
-            outline,
-            "mounting-hole-edge-clearance-readiness",
-            vec![board.source.clone()],
-        ) {
-            Ok(outside_outline) => outside_outline,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+            log::trace!(
+                "mounting-hole edge clearance readiness: source={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} edge_clearance={edge_clearance:#.6} min_area={min_area:#.9}",
+                board.source,
+                outline_rect.is_some(),
+                skipped_rect_inside,
+                exact_difference_count,
+                violations.len()
+            );
 
-        violations.push(mounting_hole_edge_violation(
-            board,
-            drill,
-            edge_clearance,
-            shapes,
-        ));
-    }
-
-    log::trace!(
-        "mounting-hole edge clearance readiness: source={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} edge_clearance={edge_clearance:#.6} min_area={min_area:#.9}",
-        board.source,
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        exact_difference_count,
-        violations.len()
-    );
-
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Review large plated mounting-style holes for explicit bonding intent.
@@ -516,12 +532,13 @@ pub fn panel_feature_outline_readiness(
     edge_distance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(panel_features) = &board.panel_features else {
-        return Vec::new();
-    };
+    crate::checks::run_geometry_check("panel-feature-outline-readiness", &[&board.source], || {
+        let Some(panel_features) = &board.panel_features else {
+            return Ok(Vec::new());
+        };
 
-    let Some(outline) = &board.board_outline else {
-        return vec![Violation::new(
+        let Some(outline) = &board.board_outline else {
+            return Ok(vec![Violation::new(
             "panel-feature-outline-readiness",
             Severity::Warning,
             vec![board.source.clone()],
@@ -532,39 +549,39 @@ pub fn panel_feature_outline_readiness(
                 "KiCad panel or rout graphics were parsed, but no Edge.Cuts outline is available for edge proximity review"
                     .to_string(),
             ),
-        )];
-    };
+        )]);
+        };
 
-    let mut violations = Vec::new();
-    let mut feature_count = 0_usize;
-    let mut exact_boundary_count = 0_usize;
-    for polygon in panel_features.to_multipolygon().0 {
-        feature_count += 1;
-        exact_boundary_count += 1;
-        let feature = polygons_to_profile(
-            vec![polygon],
-            Some(LayerMetadata {
-                name: "KiCad panel feature".to_string(),
-            }),
-        );
-        if crate::checks::boundaries_within_for_check(
-            &feature,
-            outline,
-            edge_distance,
-            "panel-feature-outline-readiness",
-            &[&board.source],
-            &mut violations,
-        ) != Some(false)
-        {
-            continue;
-        }
+        let mut violations = Vec::new();
+        let mut feature_count = 0_usize;
+        let mut exact_boundary_count = 0_usize;
+        for polygon in panel_features.try_to_multipolygon()?.0 {
+            feature_count += 1;
+            exact_boundary_count += 1;
+            let feature = polygons_to_profile(
+                vec![polygon],
+                Some(LayerMetadata {
+                    name: "KiCad panel feature".to_string(),
+                }),
+            );
+            if crate::checks::boundaries_within_for_check(
+                &feature,
+                outline,
+                edge_distance,
+                "panel-feature-outline-readiness",
+                &[&board.source],
+                &mut violations,
+            ) != Some(false)
+            {
+                continue;
+            }
 
-        let shapes = multipolygon_to_shapes_scalar(&feature.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+            let shapes = multipolygon_to_shapes_scalar(&feature.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
 
-        violations.push(Violation::new(
+            violations.push(Violation::new(
             "panel-feature-outline-readiness",
             Severity::Warning,
             vec![board.source.clone()],
@@ -575,18 +592,19 @@ pub fn panel_feature_outline_readiness(
                 "parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:#.6} min_area={min_area:#.9}",
-        board.source,
-        feature_count,
-        exact_boundary_count,
-        violations.len()
-    );
-    debug_assert!(exact_boundary_count <= feature_count);
+        log::trace!(
+            "panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:#.6} min_area={min_area:#.9}",
+            board.source,
+            feature_count,
+            exact_boundary_count,
+            violations.len()
+        );
+        debug_assert!(exact_boundary_count <= feature_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review edge-reaching copper for explicit plated-edge or pullback intent.
@@ -603,65 +621,67 @@ pub fn edge_plating_intent_readiness(
     edge_distance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-
-    let outline_rect = axis_aligned_outline_rect(outline);
-    let broad_phase_edge_distance = scalar_broad_phase_radius(edge_distance);
-    let mut violations = Vec::new();
-    let mut exact_boundary_count = 0_usize;
-    let mut skipped_interior_count = 0_usize;
-    for feature in selected_copper_features(board, selected_layers) {
-        let boundary_candidate = if let Some(rect) = &outline_rect {
-            feature_near_rect_outline(feature, rect, broad_phase_edge_distance)
-        } else {
-            true
+    crate::checks::run_geometry_check("edge-plating-intent-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        let reaches_outline = boundary_candidate
-            && (crate::checks::boundaries_within_for_check(
+
+        let outline_rect = axis_aligned_outline_rect(outline);
+        let broad_phase_edge_distance = scalar_broad_phase_radius(edge_distance);
+        let mut violations = Vec::new();
+        let mut exact_boundary_count = 0_usize;
+        let mut skipped_interior_count = 0_usize;
+        for feature in selected_copper_features(board, selected_layers) {
+            let boundary_candidate = if let Some(rect) = &outline_rect {
+                feature_near_rect_outline(feature, rect, broad_phase_edge_distance)
+            } else {
+                true
+            };
+            let reaches_outline = boundary_candidate
+                && (crate::checks::boundaries_within_for_check(
+                    &feature.region,
+                    outline,
+                    edge_distance,
+                    "edge-plating-intent-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) == Some(true));
+            exact_boundary_count += usize::from(boundary_candidate);
+
+            if !reaches_outline
+                && outline_rect
+                    .as_ref()
+                    .is_some_and(|rect| feature_bounds_inside_rect(feature, rect))
+            {
+                skipped_interior_count += 1;
+                continue;
+            }
+
+            let outside_outline = match difference_for_check(
                 &feature.region,
                 outline,
-                edge_distance,
                 "edge-plating-intent-readiness",
-                &[&feature.layer],
-                &mut violations,
-            ) == Some(true));
-        exact_boundary_count += usize::from(boundary_candidate);
+                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(outside) => outside,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes =
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+            if !reaches_outline && shapes.is_empty() {
+                continue;
+            }
 
-        if !reaches_outline
-            && outline_rect
-                .as_ref()
-                .is_some_and(|rect| feature_bounds_inside_rect(feature, rect))
-        {
-            skipped_interior_count += 1;
-            continue;
-        }
+            if shapes.is_empty() && !looks_edge_plating_net(feature.net.as_deref()) {
+                continue;
+            }
 
-        let outside_outline = match difference_for_check(
-            &feature.region,
-            outline,
-            "edge-plating-intent-readiness",
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
-        ) {
-            Ok(outside) => outside,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
-        if !reaches_outline && shapes.is_empty() {
-            continue;
-        }
-
-        if shapes.is_empty() && !looks_edge_plating_net(feature.net.as_deref()) {
-            continue;
-        }
-
-        // IPC-2221B treats edge contacts, plated edges, and board-outline copper
-        // as fabrication notes that need explicit mechanical intent. This check
-        // does not decide whether edge copper is wrong; it catches geometry that
-        // should be paired with an edge-plating, castellation, bevel, or copper
-        // pullback instruction before release.
-        violations.push(Violation::new(
+            // IPC-2221B treats edge contacts, plated edges, and board-outline copper
+            // as fabrication notes that need explicit mechanical intent. This check
+            // does not decide whether edge copper is wrong; it catches geometry that
+            // should be paired with an edge-plating, castellation, bevel, or copper
+            // pullback instruction before release.
+            violations.push(Violation::new(
             "edge-plating-intent-readiness",
             Severity::Warning,
             vec![feature.layer.clone()],
@@ -677,19 +697,20 @@ pub fn edge_plating_intent_readiness(
                 feature.kind, feature.net
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "edge-plating intent readiness: source={} copper={} outline_fast_path={} skipped_interior={} exact_boundary_checks={} violations={}",
-        board.source,
-        selected_copper_features(board, selected_layers).len(),
-        outline_rect.is_some(),
-        skipped_interior_count,
-        exact_boundary_count,
-        violations.len()
-    );
+        log::trace!(
+            "edge-plating intent readiness: source={} copper={} outline_fast_path={} skipped_interior={} exact_boundary_checks={} violations={}",
+            board.source,
+            selected_copper_features(board, selected_layers).len(),
+            outline_rect.is_some(),
+            skipped_interior_count,
+            exact_boundary_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review edge-to-edge pitch between likely castellated holes.
@@ -932,7 +953,7 @@ fn feature_near_rect_outline(
     rect: &Rect<f64>,
     edge_distance: f64,
 ) -> bool {
-    let Some(bounds) = feature.region.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.conservative_bounds() else {
         return true;
     };
     let min = rect.min();

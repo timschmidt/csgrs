@@ -29,6 +29,9 @@ The source tree follows a few explicit boundaries:
 - [`lib.rs`](lib.rs) exposes the docs.rs-facing library API, crate-level
   documentation, shared PCB region aliases, parser/check/report modules, and
   crate-root re-exports such as `run`, `run_cli`, `Cli`, and `Report`.
+- [`region/projection.rs`](region/projection.rs) owns fallible report projection,
+  successful component caches, and optional conservative native envelopes.
+  Projection errors retain their operation and source through check findings.
 - [`app.rs`](app.rs) is the runtime pipeline. It loads configuration, converts
   requested input packages, discovers and parses inputs, applies IPC-D-356 net
   annotations, validates explicit layer roles, runs selected checks, applies

@@ -31,95 +31,97 @@ pub fn rf_keepout_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
-    log::trace!(
-        "RF keepout readiness: source={} features={} rf_buckets={} clearance={clearance:.6}",
-        board.source,
-        features.len(),
-        feature_index.bucket_count()
-    );
-    let rf_indices = features
-        .iter()
-        .enumerate()
-        .filter_map(|(index, feature)| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_rf_or_antenna_net)
-                .then_some(index)
-        })
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("rf-keepout-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
+        log::trace!(
+            "RF keepout readiness: source={} features={} rf_buckets={} clearance={clearance:.6}",
+            board.source,
+            features.len(),
+            feature_index.bucket_count()
+        );
+        let rf_indices = features
+            .iter()
+            .enumerate()
+            .filter_map(|(index, feature)| {
+                feature
+                    .net
+                    .as_deref()
+                    .is_some_and(looks_rf_or_antenna_net)
+                    .then_some(index)
+            })
+            .collect::<Vec<_>>();
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
+        let mut exact_pair_count = 0_usize;
 
-    for &rf_index in &rf_indices {
-        let rf = features[rf_index];
-        for neighbor_index in feature_index.same_layer_near_feature(rf, broad_phase_clearance) {
-            candidate_count += 1;
-            let neighbor = features[neighbor_index];
-            if rf_index == neighbor_index {
-                continue;
-            }
-            if rf.net.is_none() || rf.net == neighbor.net {
-                continue;
-            }
-            if neighbor.net.as_deref().is_some_and(looks_ground_net) {
-                continue;
-            }
-            if neighbor.net.as_deref().is_some_and(looks_rf_or_antenna_net)
-                && neighbor_index < rf_index
-            {
-                continue;
-            }
-            if !regiones_within_clearance(&rf.region, &neighbor.region, broad_phase_clearance) {
-                continue;
-            }
-            exact_pair_count += 1;
+        for &rf_index in &rf_indices {
+            let rf = features[rf_index];
+            for neighbor_index in feature_index.same_layer_near_feature(rf, broad_phase_clearance) {
+                candidate_count += 1;
+                let neighbor = features[neighbor_index];
+                if rf_index == neighbor_index {
+                    continue;
+                }
+                if rf.net.is_none() || rf.net == neighbor.net {
+                    continue;
+                }
+                if neighbor.net.as_deref().is_some_and(looks_ground_net) {
+                    continue;
+                }
+                if neighbor.net.as_deref().is_some_and(looks_rf_or_antenna_net)
+                    && neighbor_index < rf_index
+                {
+                    continue;
+                }
+                if !regiones_within_clearance(&rf.region, &neighbor.region, broad_phase_clearance) {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-            let expanded = match offset_for_check(
-                &rf.region,
-                clearance.clone(),
-                "rf-keepout-readiness",
-                vec![rf.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &neighbor.region,
-                "rf-keepout-readiness",
-                vec![rf.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+                let expanded = match offset_for_check(
                     &rf.region,
-                    &neighbor.region,
-                    clearance,
+                    clearance.clone(),
                     "rf-keepout-readiness",
-                    &[&rf.layer],
-                    &mut violations,
-                ) == Some(true)
-            {
-                vec![
-                    rf.location_f64_compatibility_required(),
-                    neighbor.location_f64_compatibility_required(),
-                ]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
+                    vec![rf.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &neighbor.region,
+                    "rf-keepout-readiness",
+                    vec![rf.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let locations = if shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &rf.region,
+                        &neighbor.region,
+                        clearance,
+                        "rf-keepout-readiness",
+                        &[&rf.layer],
+                        &mut violations,
+                    ) == Some(true)
+                {
+                    vec![
+                        rf.location_f64_compatibility_required(),
+                        neighbor.location_f64_compatibility_required(),
+                    ]
+                } else {
+                    Vec::new()
+                };
+                if shapes.is_empty() && locations.is_empty() {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "rf-keepout-readiness",
                 Severity::Warning,
                 vec![rf.layer.clone()],
@@ -131,20 +133,21 @@ pub fn rf_keepout_readiness(
                     rf.net, neighbor.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "RF keepout readiness: source={} rf_features={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        rf_indices.len(),
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+        log::trace!(
+            "RF keepout readiness: source={} rf_features={} candidate_pairs={} exact_pairs={} violations={}",
+            board.source,
+            rf_indices.len(),
+            candidate_count,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely antenna copper has any other copper inside its local
@@ -162,85 +165,93 @@ pub fn antenna_copper_keepout_readiness(
     keepout: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if crate::scalar::le(keepout, &Scalar::zero()) {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("antenna-copper-keepout-readiness", &[&board.source], || {
+        if crate::scalar::le(keepout, &Scalar::zero()) {
+            return Ok(Vec::new());
+        }
 
-    let features = selected_copper_features(board, selected_layers);
-    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);
-    log::trace!(
-        "antenna copper keepout readiness: source={} features={} buckets={} keepout={keepout:.6}",
-        board.source,
-        features.len(),
-        feature_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut antenna_count = 0_usize;
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+        let features = selected_copper_features(board, selected_layers);
+        let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);
+        log::trace!(
+            "antenna copper keepout readiness: source={} features={} buckets={} keepout={keepout:.6}",
+            board.source,
+            features.len(),
+            feature_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut antenna_count = 0_usize;
+        let mut candidate_count = 0_usize;
+        let mut exact_pair_count = 0_usize;
 
-    for antenna_index in features.iter().enumerate().filter_map(|(index, feature)| {
-        feature
-            .net
-            .as_deref()
-            .is_some_and(looks_antenna_net)
-            .then_some(index)
-    }) {
-        antenna_count += 1;
-        let antenna = features[antenna_index];
-        for neighbor_index in feature_index.same_layer_near_feature(antenna, broad_phase_keepout) {
-            candidate_count += 1;
-            let neighbor = features[neighbor_index];
-            if antenna_index == neighbor_index || antenna.net == neighbor.net {
-                continue;
-            }
-            if !regiones_within_clearance(&antenna.region, &neighbor.region, broad_phase_keepout) {
-                continue;
-            }
-            exact_pair_count += 1;
-
-            let expanded = match offset_for_check(
-                &antenna.region,
-                keepout.clone(),
-                "antenna-copper-keepout-readiness",
-                vec![antenna.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &neighbor.region,
-                "antenna-copper-keepout-readiness",
-                vec![antenna.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+        for antenna_index in features.iter().enumerate().filter_map(|(index, feature)| {
+            feature
+                .net
+                .as_deref()
+                .is_some_and(looks_antenna_net)
+                .then_some(index)
+        }) {
+            antenna_count += 1;
+            let antenna = features[antenna_index];
+            for neighbor_index in
+                feature_index.same_layer_near_feature(antenna, broad_phase_keepout)
+            {
+                candidate_count += 1;
+                let neighbor = features[neighbor_index];
+                if antenna_index == neighbor_index || antenna.net == neighbor.net {
+                    continue;
+                }
+                if !regiones_within_clearance(
                     &antenna.region,
                     &neighbor.region,
-                    keepout,
-                    "antenna-copper-keepout-readiness",
-                    &[&antenna.layer],
-                    &mut violations,
-                ) == Some(true)
-            {
-                vec![
-                    antenna.location_f64_compatibility_required(),
-                    neighbor.location_f64_compatibility_required(),
-                ]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
+                    broad_phase_keepout,
+                ) {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-            violations.push(Violation::new(
+                let expanded = match offset_for_check(
+                    &antenna.region,
+                    keepout.clone(),
+                    "antenna-copper-keepout-readiness",
+                    vec![antenna.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &neighbor.region,
+                    "antenna-copper-keepout-readiness",
+                    vec![antenna.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let locations = if shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &antenna.region,
+                        &neighbor.region,
+                        keepout,
+                        "antenna-copper-keepout-readiness",
+                        &[&antenna.layer],
+                        &mut violations,
+                    ) == Some(true)
+                {
+                    vec![
+                        antenna.location_f64_compatibility_required(),
+                        neighbor.location_f64_compatibility_required(),
+                    ]
+                } else {
+                    Vec::new()
+                };
+                if shapes.is_empty() && locations.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
                 "antenna-copper-keepout-readiness",
                 Severity::Warning,
                 vec![antenna.layer.clone()],
@@ -252,20 +263,21 @@ pub fn antenna_copper_keepout_readiness(
                     antenna.net, neighbor.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "antenna copper keepout readiness: source={} antenna_features={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        antenna_count,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+        log::trace!(
+            "antenna copper keepout readiness: source={} antenna_features={} candidate_pairs={} exact_pairs={} violations={}",
+            board.source,
+            antenna_count,
+            candidate_count,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely RF/antenna copper has no nearby ground via fence.
@@ -370,10 +382,10 @@ fn regiones_within_clearance(
     right: &crate::PcbRegion,
     clearance: f64,
 ) -> bool {
-    let Some(left_bounds) = left.geometry().bounding_rect() else {
+    let Some(left_bounds) = left.conservative_bounds() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry().bounding_rect() else {
+    let Some(right_bounds) = right.conservative_bounds() else {
         return true;
     };
 

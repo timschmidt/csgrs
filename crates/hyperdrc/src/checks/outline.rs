@@ -23,7 +23,8 @@ pub(super) fn axis_aligned_outline_rect_with_grid(
     outline: &PcbRegion,
     grid: SourceGridFacts,
 ) -> Option<Rect<f64>> {
-    let outline_geometry = outline.to_multipolygon();
+    // This optional shortcut falls back to the native check when no view is available.
+    let outline_geometry = outline.try_to_multipolygon().ok()?;
     let [polygon] = outline_geometry.0.as_slice() else {
         return None;
     };
@@ -79,7 +80,7 @@ pub(super) fn feature_bounds_inside_rect_with_grid(
     rect: &Rect<f64>,
     grid: SourceGridFacts,
 ) -> bool {
-    let Some(bounds) = feature.region.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.conservative_bounds() else {
         return false;
     };
     let min = rect.min();
@@ -116,7 +117,7 @@ pub(super) fn feature_bounds_inside_rect_margin_with_grid(
     margin: f64,
     grid: SourceGridFacts,
 ) -> bool {
-    let Some(bounds) = feature.region.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.conservative_bounds() else {
         return false;
     };
     let min = rect.min();

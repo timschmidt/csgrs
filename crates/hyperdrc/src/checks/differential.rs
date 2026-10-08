@@ -488,88 +488,97 @@ pub fn differential_pair_to_pair_spacing_readiness(
     selected_layers: &[String],
     minimum_pair_to_pair_gap: &Scalar,
 ) -> Vec<Violation> {
-    let mut features = Vec::new();
-    let mut pairs = Vec::new();
-    let mut bounds = Vec::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        if feature.kind == CopperKind::Via {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, _side)) = differential_pair_key(net) else {
-            continue;
-        };
-        let Some(feature_bounds) = feature.region.geometry().bounding_rect() else {
-            continue;
-        };
-        features.push(feature);
-        pairs.push(pair);
-        bounds.push(feature_bounds);
-    }
-    let broad_phase_gap = scalar_broad_phase_radius(minimum_pair_to_pair_gap);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_gap);
-    log::trace!(
-        "differential pair-to-pair spacing readiness: source={} features={} buckets={} selected_layers={} threshold={:.6}",
-        board.source,
-        features.len(),
-        feature_index.bucket_count(),
-        selected_layers.len(),
-        minimum_pair_to_pair_gap
-    );
-
-    let mut seen_pairs = BTreeSet::<(String, String, String)>::new();
-    let mut candidate_pairs = 0_usize;
-    let mut exact_pairs = 0_usize;
-    let mut violations = Vec::new();
-
-    for left_index in 0..features.len() {
-        let left = features[left_index];
-        for right_index in feature_index.same_layer_near_feature(left, broad_phase_gap) {
-            if right_index <= left_index {
-                continue;
+    crate::checks::run_geometry_check(
+        "differential-pair-to-pair-spacing-readiness",
+        &[&board.source],
+        || {
+            let mut features = Vec::new();
+            let mut pairs = Vec::new();
+            let mut bounds = Vec::new();
+            for feature in selected_copper_features(board, selected_layers) {
+                if feature.kind == CopperKind::Via {
+                    continue;
+                }
+                let Some(net) = &feature.net else {
+                    continue;
+                };
+                let Some((pair, _side)) = differential_pair_key(net) else {
+                    continue;
+                };
+                let Some(feature_bounds) = feature.region.try_to_multipolygon()?.bounding_rect()
+                else {
+                    continue;
+                };
+                features.push(feature);
+                pairs.push(pair);
+                bounds.push(feature_bounds);
             }
-            candidate_pairs += 1;
-            if pairs[left_index] == pairs[right_index]
-                || !expanded_rects_overlap(
-                    &bounds[left_index],
-                    &bounds[right_index],
-                    broad_phase_gap,
-                )
-            {
-                continue;
-            }
-            exact_pairs += 1;
-            let right = features[right_index];
-            let Some(gap) = crate::checks::boundary_distance_for_check(
-                &left.region,
-                &right.region,
-                "differential-pair-to-pair-spacing-readiness",
-                &[&left.layer],
-                &mut violations,
-            ) else {
-                continue;
-            };
-            if crate::checks::metric_cmp_for_check(
-                &gap,
-                minimum_pair_to_pair_gap,
-                "differential-pair-to-pair-spacing-readiness",
-                &[&left.layer],
-                &mut violations,
-            )
-            .is_none_or(|order| order.is_gt())
-            {
-                continue;
-            }
+            let broad_phase_gap = scalar_broad_phase_radius(minimum_pair_to_pair_gap);
+            let feature_index = CopperSpatialIndex::new(&features, broad_phase_gap);
+            log::trace!(
+                "differential pair-to-pair spacing readiness: source={} features={} buckets={} selected_layers={} threshold={:.6}",
+                board.source,
+                features.len(),
+                feature_index.bucket_count(),
+                selected_layers.len(),
+                minimum_pair_to_pair_gap
+            );
 
-            let (first_pair, second_pair) =
-                ordered_pair_names(&pairs[left_index], &pairs[right_index]);
-            if !seen_pairs.insert((left.layer.clone(), first_pair.clone(), second_pair.clone())) {
-                continue;
-            }
+            let mut seen_pairs = BTreeSet::<(String, String, String)>::new();
+            let mut candidate_pairs = 0_usize;
+            let mut exact_pairs = 0_usize;
+            let mut violations = Vec::new();
 
-            violations.push(Violation::new(
+            for left_index in 0..features.len() {
+                let left = features[left_index];
+                for right_index in feature_index.same_layer_near_feature(left, broad_phase_gap) {
+                    if right_index <= left_index {
+                        continue;
+                    }
+                    candidate_pairs += 1;
+                    if pairs[left_index] == pairs[right_index]
+                        || !expanded_rects_overlap(
+                            &bounds[left_index],
+                            &bounds[right_index],
+                            broad_phase_gap,
+                        )
+                    {
+                        continue;
+                    }
+                    exact_pairs += 1;
+                    let right = features[right_index];
+                    let Some(gap) = crate::checks::boundary_distance_for_check(
+                        &left.region,
+                        &right.region,
+                        "differential-pair-to-pair-spacing-readiness",
+                        &[&left.layer],
+                        &mut violations,
+                    ) else {
+                        continue;
+                    };
+                    if crate::checks::metric_cmp_for_check(
+                        &gap,
+                        minimum_pair_to_pair_gap,
+                        "differential-pair-to-pair-spacing-readiness",
+                        &[&left.layer],
+                        &mut violations,
+                    )
+                    .is_none_or(|order| order.is_gt())
+                    {
+                        continue;
+                    }
+
+                    let (first_pair, second_pair) =
+                        ordered_pair_names(&pairs[left_index], &pairs[right_index]);
+                    if !seen_pairs.insert((
+                        left.layer.clone(),
+                        first_pair.clone(),
+                        second_pair.clone(),
+                    )) {
+                        continue;
+                    }
+
+                    violations.push(Violation::new(
                 "differential-pair-to-pair-spacing-readiness",
                 Severity::Warning,
                 vec![left.layer.clone()],
@@ -584,18 +593,20 @@ pub fn differential_pair_to_pair_spacing_readiness(
                     left.layer
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "differential pair-to-pair spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_pairs,
-        exact_pairs,
-        violations.len()
-    );
+            log::trace!(
+                "differential pair-to-pair spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_pairs,
+                exact_pairs,
+                violations.len()
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]

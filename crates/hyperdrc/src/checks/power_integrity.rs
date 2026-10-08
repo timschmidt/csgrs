@@ -12,7 +12,7 @@ use super::spatial::CopperSpatialIndex;
 use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbRegion, PcbRegionExt, Scalar};
+use crate::{PcbRegion, Scalar};
 
 /// Warn when a likely high-current pad has weak local same-net copper support.
 ///
@@ -210,9 +210,7 @@ fn local_pad_support(
     violations: &mut Vec<Violation>,
 ) -> (PadSupport, usize, usize) {
     let mut support = PadSupport::default();
-    let Some(pad_bounds) = pad.region.to_multipolygon().bounding_rect() else {
-        return (support, 0, 0);
-    };
+    let pad_bounds = pad.region.conservative_bounds();
     let candidates = feature_index.same_layer_near_feature(pad, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
@@ -228,10 +226,12 @@ fn local_pad_support(
         {
             continue;
         }
-        let Some(feature_bounds) = feature.region.to_multipolygon().bounding_rect() else {
-            continue;
-        };
-        if !expanded_rects_overlap(&pad_bounds, &feature_bounds, broad_phase_distance) {
+        let feature_bounds = feature.region.conservative_bounds();
+        if pad_bounds
+            .as_ref()
+            .zip(feature_bounds.as_ref())
+            .is_some_and(|(left, right)| !expanded_rects_overlap(left, right, broad_phase_distance))
+        {
             continue;
         }
         exact_count += 1;
@@ -271,9 +271,7 @@ fn has_nearby_return(
     broad_phase_distance: f64,
     violations: &mut Vec<Violation>,
 ) -> (bool, usize, usize) {
-    let Some(via_bounds) = via.region.to_multipolygon().bounding_rect() else {
-        return (false, 0, 0);
-    };
+    let via_bounds = via.region.conservative_bounds();
     let candidates = return_index.same_layer_near_feature(via, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
@@ -281,10 +279,12 @@ fn has_nearby_return(
     let mut has_return = false;
     for feature_index in candidates {
         let feature = return_features[feature_index];
-        let Some(feature_bounds) = feature.region.to_multipolygon().bounding_rect() else {
-            continue;
-        };
-        if !expanded_rects_overlap(&via_bounds, &feature_bounds, broad_phase_distance) {
+        let feature_bounds = feature.region.conservative_bounds();
+        if via_bounds
+            .as_ref()
+            .zip(feature_bounds.as_ref())
+            .is_some_and(|(left, right)| !expanded_rects_overlap(left, right, broad_phase_distance))
+        {
             continue;
         }
 

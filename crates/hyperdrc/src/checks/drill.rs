@@ -53,7 +53,12 @@ pub fn annular_ring(
         // remain shape-agnostic. IPC-2221B and IPC-6012D both treat annular ring
         // as a finished-hole-to-land registration margin; exact containment can
         // be tightened once pad stack drill spans are modeled.
-        let Some(copper_radius) = equivalent_radius_scalar(&nearest.region) else {
+        let Some(Some(copper_radius)) = crate::checks::geometry_result_for_check(
+            equivalent_radius_scalar(&nearest.region),
+            "annular-ring-readiness",
+            &[&nearest.layer],
+            &mut violations,
+        ) else {
             continue;
         };
         let drill_radius = crate::scalar::half(&drill.diameter);
@@ -100,7 +105,12 @@ pub fn annular_ring_tolerance(
             continue;
         };
 
-        let Some(copper_radius) = equivalent_radius_scalar(&nearest.region) else {
+        let Some(Some(copper_radius)) = crate::checks::geometry_result_for_check(
+            equivalent_radius_scalar(&nearest.region),
+            "annular-ring-tolerance",
+            &[&nearest.layer],
+            &mut violations,
+        ) else {
             continue;
         };
         let drill_radius = crate::scalar::half(&drill.diameter);
@@ -280,117 +290,120 @@ pub fn drill_to_copper_clearance_with_grid(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut drills = board
-        .drills
-        .iter()
-        .cloned()
-        .map(|drill| {
-            (
-                drill,
-                SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
-            )
-        })
-        .collect::<Vec<_>>();
-    drills.extend(
-        extra_drills
+    crate::checks::run_geometry_check("drill-to-copper-clearance", &[&board.source], || {
+        let mut drills = board
+            .drills
             .iter()
             .cloned()
-            .map(|drill| (drill, extra_drill_grid)),
-    );
-    let copper_features = selected_copper_features(board, selected_layers);
-    let maximum_keepout_radius = drills
-        .iter()
-        .filter_map(|(drill, _)| drill_radius_with_clearance(drill, clearance))
-        .fold(None, |maximum: Option<Scalar>, radius| {
-            Some(match maximum {
-                Some(maximum) if crate::scalar::ge(&maximum, &radius) => maximum,
-                _ => radius,
+            .map(|drill| {
+                (
+                    drill,
+                    SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
+                )
             })
-        })
-        .map_or(0.0, |radius| scalar_broad_phase_radius(&radius));
-    // Clearance is still decided by exact geometry below. This grid is only the
-    // broad phase, reducing sparse drill/copper fields before CSG intersection.
-    let copper_index = CopperSpatialIndex::new(&copper_features, maximum_keepout_radius);
-    log::trace!(
-        "drill-to-copper clearance: source={} drills={} copper_features={} spatial_buckets={} clearance={clearance:.6}",
-        board.source,
-        drills.len(),
-        copper_features.len(),
-        copper_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0_usize;
-    let mut exact_intersections = 0_usize;
+            .collect::<Vec<_>>();
+        drills.extend(
+            extra_drills
+                .iter()
+                .cloned()
+                .map(|drill| (drill, extra_drill_grid)),
+        );
+        let copper_features = selected_copper_features(board, selected_layers);
+        let maximum_keepout_radius = drills
+            .iter()
+            .filter_map(|(drill, _)| drill_radius_with_clearance(drill, clearance))
+            .fold(None, |maximum: Option<Scalar>, radius| {
+                Some(match maximum {
+                    Some(maximum) if crate::scalar::ge(&maximum, &radius) => maximum,
+                    _ => radius,
+                })
+            })
+            .map_or(0.0, |radius| scalar_broad_phase_radius(&radius));
+        // Clearance is still decided by exact geometry below. This grid is only the
+        // broad phase, reducing sparse drill/copper fields before CSG intersection.
+        let copper_index = CopperSpatialIndex::new(&copper_features, maximum_keepout_radius);
+        log::trace!(
+            "drill-to-copper clearance: source={} drills={} copper_features={} spatial_buckets={} clearance={clearance:.6}",
+            board.source,
+            drills.len(),
+            copper_features.len(),
+            copper_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_pairs = 0_usize;
+        let mut exact_intersections = 0_usize;
 
-    for (drill, drill_grid) in drills {
-        let Some(keepout_radius_scalar) = drill_radius_with_clearance(&drill, clearance) else {
-            continue;
-        };
-        let keepout_radius = scalar_broad_phase_radius(&keepout_radius_scalar);
-        let mut keepout = None;
-
-        for candidate_index in copper_index
-            .all_layers_near_circle(drill.location_f64_compatibility_required(), keepout_radius)
-        {
-            candidate_pairs += 1;
-            let copper = copper_features[candidate_index];
-            if drill.plated && drill.net.is_some() && drill.net == copper.net {
-                continue;
-            }
-            if !copper_may_touch_drill_keepout_with_grid(
-                copper,
-                drill.location_f64_compatibility_required(),
-                keepout_radius,
-                drill_grid,
-            ) {
-                continue;
-            }
-
-            let Some(exact_keepout) =
-                drill_keepout_region(&drill, keepout_radius_scalar.clone(), "drill keepout")
-            else {
+        for (drill, drill_grid) in drills {
+            let Some(keepout_radius_scalar) = drill_radius_with_clearance(&drill, clearance) else {
                 continue;
             };
-            let keepout = keepout.get_or_insert(exact_keepout);
-            exact_intersections += 1;
-            let overlap = match intersection_for_check(
-                keepout,
-                &copper.region,
-                "drill-to-copper-clearance",
-                vec![copper.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
+            let keepout_radius = scalar_broad_phase_radius(&keepout_radius_scalar);
+            let mut keepout = None;
 
-            violations.push(Violation::new(
-                "drill-to-copper-clearance",
-                Severity::Error,
-                vec![copper.layer.clone()],
-                None,
-                shapes,
-                vec![drill.location_f64_compatibility_required()],
-                Some(format!(
-                    "drill keepout with clearance {clearance} intersects copper"
-                )),
-            ));
+            for candidate_index in copper_index
+                .all_layers_near_circle(drill.location_f64_compatibility_required(), keepout_radius)
+            {
+                candidate_pairs += 1;
+                let copper = copper_features[candidate_index];
+                if drill.plated && drill.net.is_some() && drill.net == copper.net {
+                    continue;
+                }
+                if !copper_may_touch_drill_keepout_with_grid(
+                    copper,
+                    drill.location_f64_compatibility_required(),
+                    keepout_radius,
+                    drill_grid,
+                ) {
+                    continue;
+                }
+
+                let Some(exact_keepout) =
+                    drill_keepout_region(&drill, keepout_radius_scalar.clone(), "drill keepout")
+                else {
+                    continue;
+                };
+                let keepout = keepout.get_or_insert(exact_keepout);
+                exact_intersections += 1;
+                let overlap = match intersection_for_check(
+                    keepout,
+                    &copper.region,
+                    "drill-to-copper-clearance",
+                    vec![copper.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                if shapes.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
+                    "drill-to-copper-clearance",
+                    Severity::Error,
+                    vec![copper.layer.clone()],
+                    None,
+                    shapes,
+                    vec![drill.location_f64_compatibility_required()],
+                    Some(format!(
+                        "drill keepout with clearance {clearance} intersects copper"
+                    )),
+                ));
+            }
         }
-    }
 
-    log::trace!(
-        "drill-to-copper clearance: source={} candidate_pairs={} exact_intersections={} violations={}",
-        board.source,
-        candidate_pairs,
-        exact_intersections,
-        violations.len()
-    );
-    debug_assert!(exact_intersections <= candidate_pairs);
+        log::trace!(
+            "drill-to-copper clearance: source={} candidate_pairs={} exact_intersections={} violations={}",
+            board.source,
+            candidate_pairs,
+            exact_intersections,
+            violations.len()
+        );
+        debug_assert!(exact_intersections <= candidate_pairs);
 
-    violations
+        Ok(violations)
+    })
 }
 
 fn copper_may_touch_drill_keepout_with_grid(
@@ -399,7 +412,7 @@ fn copper_may_touch_drill_keepout_with_grid(
     keepout_radius: f64,
     grid: SourceGridFacts,
 ) -> bool {
-    let Some(bounds) = copper.region.geometry().bounding_rect() else {
+    let Some(bounds) = copper.region.conservative_bounds() else {
         return true;
     };
 
@@ -542,66 +555,76 @@ pub fn board_outline_drill_clearance_with_grid(
     min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
-    let mut drills = board_drills.to_vec();
-    drills.extend_from_slice(extra_drills);
-    let mut violations = Vec::new();
-    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let mut skipped_rect_inside = 0_usize;
-    let mut exact_difference_count = 0_usize;
+    crate::checks::run_geometry_check(
+        "board-outline-drill-clearance",
+        &[drill_source, outline_name],
+        || {
+            let mut drills = board_drills.to_vec();
+            drills.extend_from_slice(extra_drills);
+            let mut violations = Vec::new();
+            let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
+            let mut skipped_rect_inside = 0_usize;
+            let mut exact_difference_count = 0_usize;
 
-    for drill in drills {
-        if outline_rect.as_ref().is_some_and(|rect| {
-            drill_keepout_inside_rect_scalar_with_grid(&drill, rect, clearance, grid)
-        }) {
-            skipped_rect_inside += 1;
-            continue;
-        }
+            for drill in drills {
+                if outline_rect.as_ref().is_some_and(|rect| {
+                    drill_keepout_inside_rect_scalar_with_grid(&drill, rect, clearance, grid)
+                }) {
+                    skipped_rect_inside += 1;
+                    continue;
+                }
 
-        let Some(keepout_radius) = drill_radius_with_clearance(&drill, clearance) else {
-            continue;
-        };
-        let Some(keepout) = drill_keepout_region(&drill, keepout_radius, "drill edge keepout")
-        else {
-            continue;
-        };
-        exact_difference_count += 1;
-        let outside_outline = match difference_for_check(
-            &keepout,
-            outline,
-            "board-outline-drill-clearance",
-            vec![drill_source.to_string(), outline_name.to_string()],
-        ) {
-            Ok(outside_outline) => outside_outline,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+                let Some(keepout_radius) = drill_radius_with_clearance(&drill, clearance) else {
+                    continue;
+                };
+                let Some(keepout) =
+                    drill_keepout_region(&drill, keepout_radius, "drill edge keepout")
+                else {
+                    continue;
+                };
+                exact_difference_count += 1;
+                let outside_outline = match difference_for_check(
+                    &keepout,
+                    outline,
+                    "board-outline-drill-clearance",
+                    vec![drill_source.to_string(), outline_name.to_string()],
+                ) {
+                    Ok(outside_outline) => outside_outline,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes = multipolygon_to_shapes_scalar(
+                    &outside_outline.try_to_multipolygon()?,
+                    min_area,
+                );
+                if shapes.is_empty() {
+                    continue;
+                }
 
-        violations.push(Violation::new(
-            "board-outline-drill-clearance",
-            Severity::Error,
-            vec![drill_source.to_string(), outline_name.to_string()],
-            None,
-            shapes,
-            vec![drill.location_f64_compatibility_required()],
-            Some(format!(
-                "drill edge is within board outline clearance {clearance}"
-            )),
-        ));
-    }
+                violations.push(Violation::new(
+                    "board-outline-drill-clearance",
+                    Severity::Error,
+                    vec![drill_source.to_string(), outline_name.to_string()],
+                    None,
+                    shapes,
+                    vec![drill.location_f64_compatibility_required()],
+                    Some(format!(
+                        "drill edge is within board outline clearance {clearance}"
+                    )),
+                ));
+            }
 
-    log::trace!(
-        "board-outline drill clearance: drill_source={drill_source} outline={outline_name} drills={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} clearance={clearance:.6} min_area={min_area:.9}",
-        board_drills.len() + extra_drills.len(),
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        exact_difference_count,
-        violations.len()
-    );
+            log::trace!(
+                "board-outline drill clearance: drill_source={drill_source} outline={outline_name} drills={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} clearance={clearance:.6} min_area={min_area:.9}",
+                board_drills.len() + extra_drills.len(),
+                outline_rect.is_some(),
+                skipped_rect_inside,
+                exact_difference_count,
+                violations.len()
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Review plated holes that cross the board outline for castellation intent.
@@ -612,39 +635,41 @@ pub fn board_outline_drill_clearance_with_grid(
 /// plated-edge, or accidental-outline-crossing cases are visible before
 /// release.
 pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let mut violations = Vec::new();
-    let mut plated_holes = 0_usize;
-    let mut exact_difference_count = 0_usize;
-
-    for drill in &board.drills {
-        if !drill.plated {
-            continue;
-        }
-        plated_holes += 1;
-
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let Some(hole) = drill_keepout_region(drill, drill_radius, "plated drill hole") else {
-            continue;
+    crate::checks::run_geometry_check("castellation-intent", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        exact_difference_count += 1;
-        let outside_outline = match difference_for_check(
-            &hole,
-            outline,
-            "castellation-intent",
-            vec![board.source.clone(), "KiCad Edge.Cuts".into()],
-        ) {
-            Ok(outside) => outside,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+        let mut violations = Vec::new();
+        let mut plated_holes = 0_usize;
+        let mut exact_difference_count = 0_usize;
 
-        violations.push(Violation::new(
+        for drill in &board.drills {
+            if !drill.plated {
+                continue;
+            }
+            plated_holes += 1;
+
+            let drill_radius = crate::scalar::half(&drill.diameter);
+            let Some(hole) = drill_keepout_region(drill, drill_radius, "plated drill hole") else {
+                continue;
+            };
+            exact_difference_count += 1;
+            let outside_outline = match difference_for_check(
+                &hole,
+                outline,
+                "castellation-intent",
+                vec![board.source.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(outside) => outside,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes =
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "castellation-intent",
             Severity::Warning,
             vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
@@ -656,18 +681,19 @@ pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violati
                     .to_string(),
             ),
         ));
-    }
+        }
 
-    log::trace!(
-        "castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:#.9}",
-        board.source,
-        plated_holes,
-        exact_difference_count,
-        violations.len()
-    );
-    debug_assert!(exact_difference_count <= plated_holes);
+        log::trace!(
+            "castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:#.9}",
+            board.source,
+            plated_holes,
+            exact_difference_count,
+            violations.len()
+        );
+        debug_assert!(exact_difference_count <= plated_holes);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review undersized plated edge holes that look like castellations.
@@ -682,39 +708,41 @@ pub fn castellation_hole_readiness(
     minimum_diameter: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let mut violations = Vec::new();
-    let mut undersized_plated_holes = 0_usize;
-    let mut exact_difference_count = 0_usize;
-
-    for drill in &board.drills {
-        if !drill.plated || crate::scalar::ge(&drill.diameter, minimum_diameter) {
-            continue;
-        }
-        undersized_plated_holes += 1;
-
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let Some(hole) = drill_keepout_region(drill, drill_radius, "plated drill hole") else {
-            continue;
+    crate::checks::run_geometry_check("castellation-hole-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        exact_difference_count += 1;
-        let outside_outline = match difference_for_check(
-            &hole,
-            outline,
-            "castellation-hole-readiness",
-            vec![board.source.clone(), "KiCad Edge.Cuts".into()],
-        ) {
-            Ok(outside) => outside,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+        let mut violations = Vec::new();
+        let mut undersized_plated_holes = 0_usize;
+        let mut exact_difference_count = 0_usize;
 
-        violations.push(Violation::new(
+        for drill in &board.drills {
+            if !drill.plated || crate::scalar::ge(&drill.diameter, minimum_diameter) {
+                continue;
+            }
+            undersized_plated_holes += 1;
+
+            let drill_radius = crate::scalar::half(&drill.diameter);
+            let Some(hole) = drill_keepout_region(drill, drill_radius, "plated drill hole") else {
+                continue;
+            };
+            exact_difference_count += 1;
+            let outside_outline = match difference_for_check(
+                &hole,
+                outline,
+                "castellation-hole-readiness",
+                vec![board.source.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(outside) => outside,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes =
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "castellation-hole-readiness",
             Severity::Warning,
             vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
@@ -726,18 +754,19 @@ pub fn castellation_hole_readiness(
                 drill.diameter, minimum_diameter
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "castellation hole readiness: source={} undersized_plated_holes={} exact_difference_checks={} violations={} minimum_diameter={minimum_diameter:.6} min_area={min_area:.9}",
-        board.source,
-        undersized_plated_holes,
-        exact_difference_count,
-        violations.len()
-    );
-    debug_assert!(exact_difference_count <= undersized_plated_holes);
+        log::trace!(
+            "castellation hole readiness: source={} undersized_plated_holes={} exact_difference_checks={} violations={} minimum_diameter={minimum_diameter:.6} min_area={min_area:.9}",
+            board.source,
+            undersized_plated_holes,
+            exact_difference_count,
+            violations.len()
+        );
+        debug_assert!(exact_difference_count <= undersized_plated_holes);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `drill_aspect_ratio` design-readiness check or report helper.
@@ -995,10 +1024,13 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn equivalent_radius_scalar(region: &PcbRegion) -> Option<Scalar> {
-    let area = multipolygon_area_scalar(&region.to_multipolygon())?;
-    let area_over_pi = (area / Scalar::pi()).ok()?;
-    area_over_pi.sqrt().ok()
+fn equivalent_radius_scalar(
+    region: &PcbRegion,
+) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
+    let projected = region.try_to_multipolygon()?;
+    Ok(multipolygon_area_scalar(&projected)
+        .and_then(|area| (area / Scalar::pi()).ok())
+        .and_then(|value| value.sqrt().ok()))
 }
 
 fn diameters_conflict(left: &Scalar, right: &Scalar, tolerance: &Scalar) -> bool {

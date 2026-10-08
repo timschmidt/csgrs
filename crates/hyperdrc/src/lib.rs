@@ -125,7 +125,7 @@ pub use test_intent::{
 };
 
 use csgrs::curve;
-use geometry::{Coord, LineString, MultiPolygon, Polygon, Rect};
+use geometry::MultiPolygon;
 use hypercurve::{CurveRegion2, OffsetCornerStyle2};
 use hyperlattice::Aabb;
 use std::fmt::{Display, Formatter};
@@ -144,7 +144,7 @@ pub struct PcbRegion {
     had_non_finite_input: bool,
     exact_construction_error: Option<Arc<str>>,
     finite_projection: OnceLock<MultiPolygon<f64>>,
-    exact_component_regions: OnceLock<Option<Vec<Arc<CurveRegion2>>>>,
+    exact_component_regions: OnceLock<Vec<Arc<CurveRegion2>>>,
 }
 
 /// Exact geometry operation that could not be certified for a PCB check.
@@ -255,12 +255,6 @@ impl PcbRegion {
     pub(crate) fn with_exact_construction_error(mut self, detail: impl Into<Arc<str>>) -> Self {
         self.exact_construction_error = Some(detail.into());
         self
-    }
-
-    pub(crate) fn exact_component_regions(&self) -> Option<&[Arc<CurveRegion2>]> {
-        self.exact_component_regions
-            .get_or_init(|| exact_component_regions(self.region.as_ref()))
-            .as_deref()
     }
 
     /// Return the PCB-owned layer metadata.
@@ -446,121 +440,9 @@ impl PcbRegion {
     }
 }
 
-/// PCB report projections over native filled curve topology.
-pub trait PcbRegionExt {
-    /// Project the exact region to finite report polygons.
-    fn to_multipolygon(&self) -> MultiPolygon<f64>;
-
-    /// Compatibility alias for callers that ask for region geometry.
-    fn geometry(&self) -> MultiPolygon<f64>;
-
-    /// Finite bounding rectangle of projected region geometry.
-    fn bounding_rect(&self) -> Option<Rect<f64>>;
-}
-
-impl PcbRegionExt for PcbRegion {
-    fn to_multipolygon(&self) -> MultiPolygon<f64> {
-        self.finite_projection
-            .get_or_init(|| {
-                let components = self.exact_component_regions();
-                exact_backed_finite_polygons(self.region.as_ref(), components)
-            })
-            .clone()
-    }
-
-    fn geometry(&self) -> MultiPolygon<f64> {
-        self.to_multipolygon()
-    }
-
-    fn bounding_rect(&self) -> Option<Rect<f64>> {
-        self.to_multipolygon().bounding_rect()
-    }
-}
-
-impl PcbRegionExt for CurveRegion2 {
-    fn to_multipolygon(&self) -> MultiPolygon<f64> {
-        let components = exact_component_regions(self);
-        exact_backed_finite_polygons(self, components.as_deref())
-    }
-
-    fn geometry(&self) -> MultiPolygon<f64> {
-        self.to_multipolygon()
-    }
-
-    fn bounding_rect(&self) -> Option<Rect<f64>> {
-        self.to_multipolygon().bounding_rect()
-    }
-}
-
-fn exact_backed_finite_polygons(
-    region: &CurveRegion2,
-    components: Option<&[Arc<CurveRegion2>]>,
-) -> MultiPolygon<f64> {
-    if let Some(components) = components {
-        return MultiPolygon(
-            components
-                .iter()
-                .flat_map(|component| {
-                    curve::try_finite_profiles(component.as_ref(), &csgrs::GeometryContext::STRICT)
-                        .expect("exact-backed DRC component must have a strict finite projection")
-                        .into_value()
-                        .into_iter()
-                        .filter_map(|profile| {
-                            let exterior = finite_ring_to_linestring(profile.material().points())?;
-                            let interiors = profile
-                                .holes()
-                                .iter()
-                                .filter_map(|hole| finite_ring_to_linestring(hole.points()))
-                                .collect();
-                            Some(Polygon::from_shared_exact_region(
-                                component.clone(),
-                                exterior,
-                                interiors,
-                            ))
-                        })
-                })
-                .collect(),
-        );
-    }
-
-    MultiPolygon(
-        curve::try_finite_profiles(region, &csgrs::GeometryContext::STRICT)
-            .expect("exact-backed DRC region must have a strict finite projection")
-            .into_value()
-            .into_iter()
-            .filter_map(|profile| {
-                let exterior = finite_ring_to_linestring(profile.material().points())?;
-                let interiors = profile
-                    .holes()
-                    .iter()
-                    .filter_map(|hole| finite_ring_to_linestring(hole.points()))
-                    .collect();
-                Some(Polygon::new(exterior, interiors))
-            })
-            .collect(),
-    )
-}
-
-fn exact_component_regions(region: &CurveRegion2) -> Option<Vec<Arc<CurveRegion2>>> {
-    region
-        .material_components()
-        .ok()
-        .map(|outcome| outcome.into_iter().map(Arc::new).collect())
-}
-
-fn finite_ring_to_linestring(points: &[[f64; 2]]) -> Option<LineString<f64>> {
-    (points.len() >= 4).then(|| {
-        LineString::from(
-            points
-                .iter()
-                .map(|point| Coord {
-                    x: point[0],
-                    y: point[1],
-                })
-                .collect::<Vec<_>>(),
-        )
-    })
-}
+#[path = "region/projection.rs"]
+mod projection;
+pub use projection::PcbRegionExt;
 
 /// Metadata carried with [`PcbRegion`] geometry.
 #[derive(Clone, Debug)]
@@ -569,6 +451,10 @@ pub struct LayerMetadata {
     /// Human-readable source or layer name for diagnostics and reports.
     pub name: String,
 }
+
+#[cfg(test)]
+#[path = "region/projection_regressions.rs"]
+mod projection_regressions;
 
 #[cfg(test)]
 pub(crate) mod test_support {

@@ -781,7 +781,14 @@ fn net_via_geometry_constraints(
         }) else {
             continue;
         };
-        let land_diameter = minimum_bounding_dimension(&via.region);
+        let Some(Some(land_diameter)) = crate::checks::geometry_result_for_check(
+            minimum_bounding_dimension(&via.region),
+            "net-via-policy-readiness",
+            &[&via.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
         for class_index in matching_class_indexes_for_feature(net_classes, via) {
             let class = &net_classes[class_index];
             let style = class
@@ -840,7 +847,14 @@ fn net_width_constraints(
             let class = &net_classes[class_index];
             let Some(min_width) = class.min_width.as_ref() else {
                 if let Some(min_current_width) = class.min_current_width.as_ref() {
-                    let width = minimum_bounding_dimension(&feature.region);
+                    let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                        minimum_bounding_dimension(&feature.region),
+                        "net-constraint-readiness",
+                        &[&feature.layer],
+                        &mut violations,
+                    ) else {
+                        continue;
+                    };
                     if crate::scalar::gt(&width, &Scalar::zero())
                         && crate::scalar::lt(&width, min_current_width)
                     {
@@ -861,7 +875,14 @@ fn net_width_constraints(
                 }
                 continue;
             };
-            let width = minimum_bounding_dimension(&feature.region);
+            let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&feature.region),
+                "net-constraint-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
             if crate::scalar::gt(&width, &Scalar::zero()) && crate::scalar::lt(&width, min_width) {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
@@ -1442,7 +1463,14 @@ fn net_impedance_target_constraints(
                 continue;
             }
             single_ended_candidates += 1;
-            let trace_width = minimum_bounding_dimension(&feature.region);
+            let Some(Some(trace_width)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&feature.region),
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
             let Some(estimate) =
                 estimate_single_ended_impedance(stackup, &feature.layer, trace_width.clone())
             else {
@@ -1634,7 +1662,14 @@ fn differential_impedance_target_violations(
         };
 
         for positive in &pair_use.positive.features {
-            let positive_width = minimum_bounding_dimension(&positive.region);
+            let Some(Some(positive_width)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&positive.region),
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                &[&positive.layer],
+                &mut report.violations,
+            ) else {
+                continue;
+            };
             let closest = crate::checks::geometry_result_for_check(
                 minimum_metric(
                     pair_use
@@ -1669,7 +1704,14 @@ fn differential_impedance_target_violations(
                 ));
                 continue;
             };
-            let negative_width = minimum_bounding_dimension(&negative.region);
+            let Some(Some(negative_width)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&negative.region),
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                &[&negative.layer],
+                &mut report.violations,
+            ) else {
+                continue;
+            };
             let width_delta = (&positive_width - &negative_width).abs();
             let maximum_width = if crate::scalar::ge(&positive_width, &negative_width) {
                 positive_width.clone()
@@ -2299,17 +2341,21 @@ fn layer_selected(layer: &str, selected_layers: &[String]) -> bool {
     selected_layers.is_empty() || selected_layers.iter().any(|selected| selected == layer)
 }
 
-fn minimum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {
-    let Some(bounds) = native_region_bounds_scalar(region) else {
-        return Scalar::zero();
+fn minimum_bounding_dimension(
+    region: &crate::PcbRegion,
+) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
+    let Some(bounds) = region.try_native_bounds()? else {
+        return Ok(None);
     };
-    let width = &bounds.max_x - &bounds.min_x;
-    let height = &bounds.max_y - &bounds.min_y;
-    if crate::scalar::le(&width, &height) {
-        width
-    } else {
-        height
-    }
+    let width = &bounds[2] - &bounds[0];
+    let height = &bounds[3] - &bounds[1];
+    Ok(Some(
+        if crate::checks::distance::compare_metrics(&width, &height)?.is_le() {
+            width
+        } else {
+            height
+        },
+    ))
 }
 
 #[derive(Clone, Debug)]
@@ -2322,12 +2368,16 @@ struct ScalarBounds2 {
 
 /// Optional certified bounds. Missing certificates disable culling.
 fn native_region_bounds_scalar(region: &crate::PcbRegion) -> Option<ScalarBounds2> {
-    region.exact_bounds().map(|bounds| ScalarBounds2 {
-        min_x: bounds[0].clone(),
-        min_y: bounds[1].clone(),
-        max_x: bounds[2].clone(),
-        max_y: bounds[3].clone(),
-    })
+    region
+        .try_native_bounds()
+        .ok()
+        .flatten()
+        .map(|bounds| ScalarBounds2 {
+            min_x: bounds[0].clone(),
+            min_y: bounds[1].clone(),
+            max_x: bounds[2].clone(),
+            max_y: bounds[3].clone(),
+        })
 }
 
 fn scalar_cmp(left: &Scalar, right: &Scalar) -> Option<std::cmp::Ordering> {
@@ -3960,5 +4010,58 @@ mod tests {
                 crate::geometry::exact_real(center[1]),
             ],
         }
+    }
+}
+
+#[cfg(test)]
+mod native_width_regressions {
+    use super::minimum_bounding_dimension;
+    use crate::{PREDICATE_POLICY, PcbRegion, Scalar};
+    #[test]
+    fn native_width_does_not_require_parser_cached_bounds() {
+        let width = crate::scalar::scalar("0.08");
+        let region = PcbRegion::new(csgrs::curve::rectangle(width.clone(), Scalar::one()), None);
+        assert!(region.exact_bounds().is_none());
+        let bounds = super::native_region_bounds_scalar(&region)
+            .expect("native geometry remains indexable without parser-attached bounds");
+        assert_eq!(&bounds.max_x - &bounds.min_x, width);
+        assert_eq!(minimum_bounding_dimension(&region).unwrap(), Some(width));
+        let failed = region.with_exact_construction_error("retained width source failure");
+        assert!(minimum_bounding_dimension(&failed).is_err());
+        assert_eq!(
+            minimum_bounding_dimension(&crate::geometry::empty_profile(None)).unwrap(),
+            None
+        );
+    }
+    #[test]
+    fn denied_native_width_cannot_become_zero_or_a_cached_value() {
+        let region = PcbRegion::new(
+            csgrs::curve::rectangle(Scalar::one(), Scalar::from(2)),
+            None,
+        );
+        assert_eq!(
+            minimum_bounding_dimension(&region).unwrap(),
+            Some(Scalar::one())
+        );
+        let denied = hypercurve::evaluate_with_budget(
+            PREDICATE_POLICY,
+            hypercurve::WorkBudget::ZERO,
+            || {
+                let polynomial = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+                    [-36, 1368, -11034, 31728, -38280, 16620]
+                        .into_iter()
+                        .map(Scalar::from)
+                        .collect(),
+                )
+                .unwrap();
+                assert!(polynomial.isolate_unit_interval_roots().is_err());
+                assert!(minimum_bounding_dimension(&region).is_err());
+            },
+        );
+        assert!(denied.result.is_err());
+        assert_eq!(
+            minimum_bounding_dimension(&region).unwrap(),
+            Some(Scalar::one())
+        );
     }
 }

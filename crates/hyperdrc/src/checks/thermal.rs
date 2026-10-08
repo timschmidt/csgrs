@@ -26,48 +26,50 @@ pub fn thermal_relief_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let anchors = features
-        .iter()
-        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
-        .copied()
-        .collect::<Vec<_>>();
-    let zones = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-        .copied()
-        .collect::<Vec<_>>();
-    let zone_index = CopperSpatialIndex::new(&zones, 0.0);
-    let mut violations = Vec::new();
-    let mut candidate_zones = 0usize;
+    crate::checks::run_geometry_check("thermal-relief-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let anchors = features
+            .iter()
+            .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
+            .copied()
+            .collect::<Vec<_>>();
+        let zones = features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Zone)
+            .copied()
+            .collect::<Vec<_>>();
+        let zone_index = CopperSpatialIndex::new(&zones, 0.0);
+        let mut violations = Vec::new();
+        let mut candidate_zones = 0usize;
 
-    for anchor in &anchors {
-        if anchor.net.is_none() {
-            continue;
-        }
-        let candidates = zone_index.same_layer_near_feature(anchor, 0.0);
-        candidate_zones += candidates.len();
-        for zone_index in candidates {
-            let zone = zones[zone_index];
-            if anchor.net != zone.net {
+        for anchor in &anchors {
+            if anchor.net.is_none() {
                 continue;
             }
+            let candidates = zone_index.same_layer_near_feature(anchor, 0.0);
+            candidate_zones += candidates.len();
+            for zone_index in candidates {
+                let zone = zones[zone_index];
+                if anchor.net != zone.net {
+                    continue;
+                }
 
-            let overlap = match intersection_for_check(
-                &anchor.region,
-                &zone.region,
-                "thermal-relief-readiness",
-                vec![anchor.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
+                let overlap = match intersection_for_check(
+                    &anchor.region,
+                    &zone.region,
+                    "thermal-relief-readiness",
+                    vec![anchor.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                if shapes.is_empty() {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "thermal-relief-readiness",
                 Severity::Warning,
                 vec![anchor.layer.clone()],
@@ -82,19 +84,20 @@ pub fn thermal_relief_readiness(
                     anchor.kind
                 )),
             ));
+            }
         }
-    }
-    log::trace!(
-        "thermal-relief readiness: source={} anchors={} zones={} zone_buckets={} candidate_zones={} violations={}",
-        board.source,
-        anchors.len(),
-        zones.len(),
-        zone_index.bucket_count(),
-        candidate_zones,
-        violations.len()
-    );
+        log::trace!(
+            "thermal-relief readiness: source={} anchors={} zones={} zone_buckets={} candidate_zones={} violations={}",
+            board.source,
+            anchors.len(),
+            zones.len(),
+            zone_index.bucket_count(),
+            candidate_zones,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `thermal_via_readiness` design-readiness check or report helper.
@@ -473,76 +476,79 @@ pub fn hot_component_spacing_readiness(
     spacing: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let broad_phase_spacing = scalar_broad_phase_radius(spacing);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_spacing);
-    let hot_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.net.as_deref().is_some_and(looks_hot_component_net)
-                && matches!(feature.kind, CopperKind::Pad | CopperKind::Zone)
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "hot-component spacing readiness: source={} hot_features={} features={} buckets={} spacing={spacing:.6}",
-        board.source,
-        hot_features.len(),
-        features.len(),
-        feature_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("hot-component-spacing-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let broad_phase_spacing = scalar_broad_phase_radius(spacing);
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_spacing);
+        let hot_features = features
+            .iter()
+            .copied()
+            .filter(|feature| {
+                feature.net.as_deref().is_some_and(looks_hot_component_net)
+                    && matches!(feature.kind, CopperKind::Pad | CopperKind::Zone)
+            })
+            .collect::<Vec<_>>();
+        log::trace!(
+            "hot-component spacing readiness: source={} hot_features={} features={} buckets={} spacing={spacing:.6}",
+            board.source,
+            hot_features.len(),
+            features.len(),
+            feature_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
+        let mut exact_pair_count = 0_usize;
 
-    for hot in hot_features {
-        for neighbor_index in feature_index.same_layer_near_feature(hot, broad_phase_spacing) {
-            candidate_count += 1;
-            let neighbor = features[neighbor_index];
-            if std::ptr::eq(hot, neighbor) {
-                continue;
-            }
-            if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net) {
-                continue;
-            }
-            if !regiones_within_clearance(&hot.region, &neighbor.region, broad_phase_spacing) {
-                continue;
-            }
-            exact_pair_count += 1;
+        for hot in hot_features {
+            for neighbor_index in feature_index.same_layer_near_feature(hot, broad_phase_spacing) {
+                candidate_count += 1;
+                let neighbor = features[neighbor_index];
+                if std::ptr::eq(hot, neighbor) {
+                    continue;
+                }
+                if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net)
+                {
+                    continue;
+                }
+                if !regiones_within_clearance(&hot.region, &neighbor.region, broad_phase_spacing) {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-            let expanded = match offset_for_check(
-                &hot.region,
-                spacing.clone(),
-                "hot-component-spacing-readiness",
-                vec![hot.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &neighbor.region,
-                "hot-component-spacing-readiness",
-                vec![hot.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+                let expanded = match offset_for_check(
                     &hot.region,
-                    &neighbor.region,
-                    spacing,
+                    spacing.clone(),
                     "hot-component-spacing-readiness",
-                    &[&hot.layer],
-                    &mut violations,
-                ) == Some(true);
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                    vec![hot.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &neighbor.region,
+                    "hot-component-spacing-readiness",
+                    vec![hot.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let fallback_hit = shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &hot.region,
+                        &neighbor.region,
+                        spacing,
+                        "hot-component-spacing-readiness",
+                        &[&hot.layer],
+                        &mut violations,
+                    ) == Some(true);
+                if shapes.is_empty() && !fallback_hit {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "hot-component-spacing-readiness",
                 Severity::Warning,
                 vec![hot.layer.clone()],
@@ -557,19 +563,20 @@ pub fn hot_component_spacing_readiness(
                     hot.net, neighbor.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "hot-component spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+        log::trace!(
+            "hot-component spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+            board.source,
+            candidate_count,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review likely hot copper against mechanical keepout holes.
@@ -586,97 +593,102 @@ pub fn thermal_mechanical_keepout_readiness(
     keepout: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut mechanical_drills = board
-        .drills
-        .iter()
-        .chain(extra_drills.iter())
-        .filter(|drill| !drill.plated)
-        .collect::<Vec<_>>();
-    mechanical_drills.sort_by(|left, right| {
-        crate::scalar::compare(&left.location[0], &right.location[0])
-            .expect("exact drill x coordinates must be comparable")
-            .then_with(|| {
-                crate::scalar::compare(&left.location[1], &right.location[1])
-                    .expect("exact drill y coordinates must be comparable")
-            })
-            .then_with(|| {
-                crate::scalar::compare(&left.diameter, &right.diameter)
-                    .expect("exact drill diameters must be comparable")
-            })
-    });
+    crate::checks::run_geometry_check(
+        "thermal-mechanical-keepout-readiness",
+        &[&board.source],
+        || {
+            let mut mechanical_drills = board
+                .drills
+                .iter()
+                .chain(extra_drills.iter())
+                .filter(|drill| !drill.plated)
+                .collect::<Vec<_>>();
+            mechanical_drills.sort_by(|left, right| {
+                crate::scalar::compare(&left.location[0], &right.location[0])
+                    .expect("exact drill x coordinates must be comparable")
+                    .then_with(|| {
+                        crate::scalar::compare(&left.location[1], &right.location[1])
+                            .expect("exact drill y coordinates must be comparable")
+                    })
+                    .then_with(|| {
+                        crate::scalar::compare(&left.diameter, &right.diameter)
+                            .expect("exact drill diameters must be comparable")
+                    })
+            });
 
-    let hot_features = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_hot_component_net))
-        .collect::<Vec<_>>();
-    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
-    let hot_index = CopperSpatialIndex::new(&hot_features, broad_phase_keepout);
-    log::trace!(
-        "thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:#.6}",
-        board.source,
-        hot_features.len(),
-        hot_index.bucket_count(),
-        mechanical_drills.len()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+            let hot_features = selected_copper_features(board, selected_layers)
+                .into_iter()
+                .filter(|feature| feature.net.as_deref().is_some_and(looks_hot_component_net))
+                .collect::<Vec<_>>();
+            let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+            let hot_index = CopperSpatialIndex::new(&hot_features, broad_phase_keepout);
+            log::trace!(
+                "thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:#.6}",
+                board.source,
+                hot_features.len(),
+                hot_index.bucket_count(),
+                mechanical_drills.len()
+            );
+            let mut violations = Vec::new();
+            let mut candidate_count = 0_usize;
+            let mut exact_pair_count = 0_usize;
 
-    for drill in mechanical_drills {
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let keepout_radius = drill_radius + keepout;
-        let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
-        let center = drill.location_f64_compatibility_required();
-        let broad_candidates = hot_index.all_layers_near_circle(center, broad_phase_radius);
-        candidate_count += broad_candidates.len();
-        let candidates = broad_candidates
-            .into_iter()
-            .filter(|&index| {
-                feature_may_touch_circle(hot_features[index], center, broad_phase_radius)
-            })
-            .collect::<Vec<_>>();
-        if candidates.is_empty() {
-            continue;
-        }
-        let keepout_region = PcbRegion::new(
-            crate::translated_circle(
-                keepout_radius,
-                64,
-                drill.location[0].clone(),
-                drill.location[1].clone(),
-            ),
-            Some(LayerMetadata {
-                name: "thermal mechanical keepout".to_string(),
-            }),
-        );
+            for drill in mechanical_drills {
+                let drill_radius = crate::scalar::half(&drill.diameter);
+                let keepout_radius = drill_radius + keepout;
+                let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
+                let center = drill.location_f64_compatibility_required();
+                let broad_candidates = hot_index.all_layers_near_circle(center, broad_phase_radius);
+                candidate_count += broad_candidates.len();
+                let candidates = broad_candidates
+                    .into_iter()
+                    .filter(|&index| {
+                        feature_may_touch_circle(hot_features[index], center, broad_phase_radius)
+                    })
+                    .collect::<Vec<_>>();
+                if candidates.is_empty() {
+                    continue;
+                }
+                let keepout_region = PcbRegion::new(
+                    crate::translated_circle(
+                        keepout_radius,
+                        64,
+                        drill.location[0].clone(),
+                        drill.location[1].clone(),
+                    ),
+                    Some(LayerMetadata {
+                        name: "thermal mechanical keepout".to_string(),
+                    }),
+                );
 
-        for hot_index in candidates {
-            let hot = hot_features[hot_index];
-            exact_pair_count += 1;
-            let overlap = match intersection_for_check(
-                &keepout_region,
-                &hot.region,
-                "thermal-mechanical-keepout-readiness",
-                vec![hot.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && (crate::checks::boundaries_within_for_check(
-                    &keepout_region,
-                    &hot.region,
-                    &Scalar::zero(),
-                    "thermal-mechanical-keepout-readiness",
-                    &[&hot.layer],
-                    &mut violations,
-                ) == Some(true));
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                for hot_index in candidates {
+                    let hot = hot_features[hot_index];
+                    exact_pair_count += 1;
+                    let overlap = match intersection_for_check(
+                        &keepout_region,
+                        &hot.region,
+                        "thermal-mechanical-keepout-readiness",
+                        vec![hot.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    let fallback_hit = shapes.is_empty()
+                        && (crate::checks::boundaries_within_for_check(
+                            &keepout_region,
+                            &hot.region,
+                            &Scalar::zero(),
+                            "thermal-mechanical-keepout-readiness",
+                            &[&hot.layer],
+                            &mut violations,
+                        ) == Some(true));
+                    if shapes.is_empty() && !fallback_hit {
+                        continue;
+                    }
 
-            violations.push(Violation::new(
+                    violations.push(Violation::new(
                 "thermal-mechanical-keepout-readiness",
                 Severity::Warning,
                 vec![hot.layer.clone()],
@@ -691,19 +703,21 @@ pub fn thermal_mechanical_keepout_readiness(
                     hot.net
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "thermal mechanical-keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+            log::trace!(
+                "thermal mechanical-keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_count,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 fn thermal_zone_vias_indexed<'a>(
@@ -788,15 +802,8 @@ fn selected_copper_features<'a>(
 }
 
 fn bounding_dimensions_scalar(region: &PcbRegion) -> Option<(Scalar, Scalar)> {
-    let (width, height) = if let Some(bounds) = region.exact_bounds() {
-        (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1])
-    } else {
-        let bounds = region.geometry().bounding_rect()?;
-        (
-            Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?,
-            Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?,
-        )
-    };
+    let bounds = region.try_native_bounds().ok()??;
+    let (width, height) = (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1]);
     Some(if crate::scalar::le(&width, &height) {
         (width, height)
     } else {
@@ -811,10 +818,10 @@ fn point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scal
 }
 
 fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64) -> bool {
-    let Some(left_bounds) = left.geometry().bounding_rect() else {
+    let Some(left_bounds) = left.conservative_bounds() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry().bounding_rect() else {
+    let Some(right_bounds) = right.conservative_bounds() else {
         return true;
     };
 
@@ -825,7 +832,7 @@ fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64
 }
 
 fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
-    let Some(bounds) = feature.region.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.conservative_bounds() else {
         return true;
     };
 

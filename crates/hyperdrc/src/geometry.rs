@@ -113,11 +113,11 @@ mod tests {
         assert_eq!(single.metadata().as_ref().unwrap().name, "single");
         assert_eq!(many.metadata().as_ref().unwrap().name, "many");
         assert_eq!(empty.metadata().as_ref().unwrap().name, "empty");
-        assert_eq!(single.to_multipolygon().0.len(), 1);
-        assert_eq!(many.to_multipolygon().0.len(), 2);
-        assert!(empty.to_multipolygon().0.is_empty());
+        assert_eq!(single.try_to_multipolygon().unwrap().0.len(), 1);
+        assert_eq!(many.try_to_multipolygon().unwrap().0.len(), 2);
+        assert!(empty.try_to_multipolygon().unwrap().0.is_empty());
         assert_close(
-            single.to_multipolygon().unsigned_area(),
+            single.try_to_multipolygon().unwrap().unsigned_area(),
             square.unsigned_area(),
         );
     }
@@ -145,7 +145,7 @@ mod tests {
         );
 
         assert_eq!(region.metadata().as_ref().unwrap().name, "empty multi");
-        assert!(region.to_multipolygon().0.is_empty());
+        assert!(region.try_to_multipolygon().unwrap().0.is_empty());
     }
 
     #[test]

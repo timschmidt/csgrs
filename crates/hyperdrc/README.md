@@ -283,7 +283,9 @@ evidence can name the exact policy it used.
 
 - `PcbRegion::new`, `from_gerber`, `offset`, `try_union`,
   `try_difference`, `try_intersection`, `try_xor`, `metadata`;
-- `PcbRegionExt` supplies conversions used by geometry checks;
+- `PcbRegionExt::try_to_multipolygon` returns an exact-backed report view or a
+  `PcbGeometryUncertainty`; `BoardModel::copper_layers` and `all_copper` also
+  return `Result` so callers retain geometry failures;
 - `exact_path_rules::certify_annular_ring` and
   `classify_via_drill_policy` delegate via geometry to Hyperpath while keeping
   DRC policy labels in HyperDRC;

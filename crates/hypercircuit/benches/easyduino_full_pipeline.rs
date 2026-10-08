@@ -98,7 +98,11 @@ fn main() {
                     Some(&document.test_intent),
                 );
                 for copper in &handoff.copper_layers {
-                    let polygons = copper.region.to_multipolygon().0;
+                    let polygons = copper
+                        .region
+                        .try_to_multipolygon()
+                        .expect("copper report projection must succeed for this benchmark")
+                        .0;
                     println!(
                         "easyduino-full-pipeline/{slug}: copper {} has {} polygons / {} rings / {} vertices",
                         copper.name,
@@ -121,7 +125,11 @@ fn main() {
                     );
                 }
                 for process in &handoff.process_layers {
-                    let polygons = process.region.to_multipolygon().0;
+                    let polygons = process
+                        .region
+                        .try_to_multipolygon()
+                        .expect("process report projection must succeed for this benchmark")
+                        .0;
                     println!(
                         "easyduino-full-pipeline/{slug}: process {} has {} polygons / {} rings / {} vertices",
                         process.name,
