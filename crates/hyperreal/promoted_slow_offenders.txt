@@ -6,8 +6,10 @@ generated_tan_p96	generated[12081] -1 262/383	277951	tan_generated_12081_neg_1_2
 generated_tan_p96	generated[17496] 3 190/219	267572	tan_generated_17496_3_190_219_p96
 generated_tan_p96	generated[12216] -1 268/517	267302	tan_generated_12216_neg_1_268_517_p96
 generated_tan_p96	generated[12111] -1 76/151	265942	tan_generated_12111_neg_1_76_151_p96
+generated_tan_p96	generated[3486] -2 37/80	260712	tan_generated_3486_neg_2_37_80_p96
 generated_tan_p96	generated[1071] -3 177/200	260352	tan_generated_1071_neg_3_177_200_p96
 generated_tan_p96	generated[1296] -3 71/91	259542	tan_generated_1296_neg_3_71_91_p96
+generated_tan_p96	generated[3591] -1 14/15	259472	tan_generated_3591_neg_1_14_15_p96
 generated_tan_p96	generated[11391] 3 29/36	254603	tan_generated_11391_3_29_36_p96
 generated_tan_p96	generated[3756] -1 123/214	251393	tan_generated_3756_neg_1_123_214_p96
 generated_tan_p96	generated[12186] -1 189/299	250393	tan_generated_12186_neg_1_189_299_p96
@@ -100,5 +102,3 @@ generated_cos_p96	generated[9950] -5 1/5	45227	cos_generated_9950_neg_5_1_5_p96
 generated_ln_abs_plus_one_p96	generated[10327] -1 19/732	45227	ln_generated_10327_neg_1_19_732_p96
 generated_ln_abs_plus_one_p96	generated[13837] -1 55/76	44937	ln_generated_13837_neg_1_55_76_p96
 generated_ln_abs_plus_one_p96	generated[2242] 5 103/129	44907	ln_generated_2242_5_103_129_p96
-generated_atan_p96	generated[5094] -1 347/604	44857	atan_generated_5094_neg_1_347_604_p96
-generated_atan_p96	generated[15504] -1 228/413	44477	atan_generated_15504_neg_1_228_413_p96

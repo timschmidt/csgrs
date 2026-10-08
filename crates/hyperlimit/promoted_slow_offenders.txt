@@ -3,6 +3,7 @@
 # The set is backfilled from worst historical offenders until it contains 100 cases.
 # Format: fuzz_target<TAB>input<TAB>worst_nanos<TAB>criterion_name
 predicate_invariants	seed[532]	45117	predicate_invariants_seed_532
+predicate_invariants	seed[531]	42827	predicate_invariants_seed_531
 predicate_invariants	seed[5449]	42427	predicate_invariants_seed_5449
 predicate_invariants	seed[5448]	41177	predicate_invariants_seed_5448
 predicate_invariants	seed[5279]	40407	predicate_invariants_seed_5279
@@ -101,4 +102,3 @@ predicate_invariants	seed[1401]	35757	predicate_invariants_seed_1401
 predicate_invariants	seed[815]	35748	predicate_invariants_seed_815
 predicate_invariants	seed[1701]	35737	predicate_invariants_seed_1701
 predicate_invariants	seed[2290]	35717	predicate_invariants_seed_2290
-predicate_invariants	seed[1914]	35708	predicate_invariants_seed_1914
