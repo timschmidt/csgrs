@@ -2463,7 +2463,7 @@ impl BezierParameter2 {
         max_refinement_steps: usize,
         policy: &CurveContext,
     ) -> Self {
-        if max_refinement_steps == 0 {
+        if max_refinement_steps == 0 || hypersolve::work_budget::exhaustion().is_some() {
             return self;
         }
         // A learned scalar is an additional view. Keep refining the native
@@ -2630,6 +2630,11 @@ impl BezierParameter2 {
         for steps in [1, 3, 7, 15, 31] {
             let refined_left = left_refinement.refine_to(steps);
             let refined_right = right_refinement.refine_to(steps);
+            if hypersolve::work_budget::exhaustion().is_some() {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             if let (Some(left), Some(right)) = (refined_left.scalar(), refined_right.scalar())
                 && let Some(ordering) = compare_reals(left, right, policy)
             {
@@ -3457,6 +3462,8 @@ fn refine_algebraic_sign_change(
         return None;
     }
     for _ in 0..max_refinement_steps {
+        hypersolve::work_budget::consume(hypersolve::work_budget::WorkKind::RootRefinement, 1)
+            .ok()?;
         let midpoint = scalar_in_open_interval(&start, &end);
         let midpoint_sign = real_sign(&polynomial.evaluate(&midpoint), policy)?;
         if midpoint_sign == RealSign::Zero {
@@ -3525,6 +3532,13 @@ impl<'a> RefinedParameter<'a> {
         else {
             return Ok(Classification::Decided(false));
         };
+        if hypersolve::work_budget::consume(hypersolve::work_budget::WorkKind::RootRefinement, 1)
+            .is_err()
+        {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         // An isolator may have algebraic or transcendental bounds. Its
         // subdivision point has no incidence obligation to either bound;
         // keep those expressions out of the Sturm evaluations whenever a
@@ -4558,6 +4572,11 @@ fn exact_nonrational_bernstein_unit_roots(
         if depth >= 64 {
             return Ok(None);
         }
+        if hypersolve::work_budget::consume(hypersolve::work_budget::WorkKind::RootRefinement, 1)
+            .is_err()
+        {
+            return Ok(None);
+        }
         let midpoint = Real::average_pair(&start, &end);
         let (left, right) = subdivide_rational_bernstein_half(&controls);
         let midpoint_sign = match rational_bernstein_basis_sign(
@@ -4691,6 +4710,11 @@ fn exact_rational_square_free_bernstein_unit_roots(
                 ),
             ));
             continue;
+        }
+        if hypersolve::work_budget::consume(hypersolve::work_budget::WorkKind::RootRefinement, 1)
+            .is_err()
+        {
+            return Ok(None);
         }
         let midpoint = Real::average_pair(&start, &end);
         let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
@@ -5092,6 +5116,13 @@ fn search_interval_roots(
                 }
             }
             continue;
+        }
+        if hypersolve::work_budget::consume(hypersolve::work_budget::WorkKind::RootRefinement, 1)
+            .is_err()
+        {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
         }
         let midpoint = Real::average_pair(&start, &end);
         let midpoint_variations = match sturm_point_evidence(&sequence, &midpoint, policy)? {

@@ -214,6 +214,7 @@ pub use finite_projection::{
     try_finite_ring_signed_area,
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
+pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
 pub use intersect::{
     ArcArcIntersection, ArcArcIntersectionPoint, CircleCircleRelation, IntersectionKind,
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
@@ -222,7 +223,10 @@ pub use intersect::{
 pub use nurbs::NurbsCurve2;
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
-pub use policy::{CurveCertainty, CurvePreviewOptions, Provisional, evaluate_under, provisional};
+pub use policy::{
+    CurveCertainty, CurvePreviewOptions, Provisional, evaluate_under, evaluate_with_budget,
+    provisional,
+};
 pub(crate) use policy::{CurveContext, CurveOutcome};
 pub use polynomial_spline::PolynomialSplineCurve2;
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};

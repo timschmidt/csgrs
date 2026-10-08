@@ -56,6 +56,8 @@ pub enum AlgebraicTensorImageStatus {
     Undecided,
     /// The final represented-root payload failed STRICT validation.
     InvalidTransformedEvidence,
+    /// The caller's operation budget declined this algebraic promotion.
+    BudgetExhausted,
 }
 
 /// Exact construction report for a correlated selected-root tensor image.
@@ -596,6 +598,17 @@ pub fn represent_algebraic_tensor_image(
             None,
             None,
             "a correlated tensor image requires one source root per non-output axis",
+        );
+    }
+    if let Err(error) =
+        crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1)
+    {
+        return report(
+            AlgebraicTensorImageStatus::BudgetExhausted,
+            0,
+            None,
+            None,
+            error.to_string(),
         );
     }
     for source in source_roots {
@@ -1963,6 +1976,56 @@ mod tests {
             validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
             AlgebraicRootValidationStatus::Valid
         );
+    }
+
+    #[test]
+    fn tensor_promotion_budget_is_typed_and_retryable() {
+        use crate::work_budget::{WorkBudget, WorkKind, with_budget};
+
+        let relation = sum_relation(1, Real::one());
+        let roots = [square_root(2)];
+        let interval = IsolatedRootInterval {
+            lower: real(2),
+            upper: real(3),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let expected = represent_algebraic_tensor_image(&relation, &roots, &interval);
+        assert_eq!(expected.status, AlgebraicTensorImageStatus::Transformed);
+        let failed = with_budget(WorkBudget::ZERO, || {
+            let report = represent_algebraic_tensor_image(&relation, &roots, &interval);
+            assert_eq!(report.status, AlgebraicTensorImageStatus::BudgetExhausted);
+            assert!(report.representation.is_none());
+            assert_eq!(report.elimination_count, 0);
+            report
+        });
+        assert_eq!(
+            failed.result.unwrap_err().kind,
+            WorkKind::AlgebraicPromotion
+        );
+        assert_eq!(failed.usage.promotions, 0);
+        let refinement_limited = with_budget(
+            WorkBudget {
+                refinements: 0,
+                promotions: 1,
+            },
+            || represent_algebraic_tensor_image(&relation, &roots, &interval),
+        );
+        assert_eq!(
+            refinement_limited.result.unwrap_err().kind,
+            WorkKind::RootRefinement
+        );
+        assert_eq!(refinement_limited.usage.promotions, 1);
+        let completed = with_budget(
+            WorkBudget {
+                refinements: 64,
+                promotions: 1,
+            },
+            || represent_algebraic_tensor_image(&relation, &roots, &interval),
+        );
+        assert_eq!(completed.usage.promotions, 1);
+        assert!(completed.usage.refinements > 0);
+        assert_eq!(completed.result.unwrap(), expected);
     }
 
     #[test]

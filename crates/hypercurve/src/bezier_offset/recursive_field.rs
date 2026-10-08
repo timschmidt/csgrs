@@ -909,6 +909,13 @@ impl BezierRecursiveMonotoneParameter2 {
         if self.exact_source_value().is_some() {
             return Ok(Classification::Decided(()));
         }
+        if hypersolve::work_budget::consume(hypersolve::work_budget::WorkKind::RootRefinement, 1)
+            .is_err()
+        {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         let midpoint = ((&self.source_lower + &self.source_upper) / Real::from(2_i8))?;
         let interval_system = self.prepared_interval_system();
         let target = interval_system
@@ -1514,6 +1521,16 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             if lower == upper {
                 break;
             }
+            if hypersolve::work_budget::consume(
+                hypersolve::work_budget::WorkKind::RootRefinement,
+                1,
+            )
+            .is_err()
+            {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             let (midpoint, midpoint_sign) = match self.bracket_split(&lower, &upper, &strict)? {
                 Classification::Decided(split) => split,
                 Classification::Uncertain(reason) => {
@@ -1853,6 +1870,16 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         parameter: &BezierRecursiveProjectiveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
+        if hypersolve::work_budget::consume(
+            hypersolve::work_budget::WorkKind::AlgebraicPromotion,
+            1,
+        )
+        .is_err()
+        {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         let Some((base, projection)) =
             recursive_quadratic_polynomial_projection(self.coefficients.clone())
         else {

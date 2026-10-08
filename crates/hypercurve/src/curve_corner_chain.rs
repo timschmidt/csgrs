@@ -2522,6 +2522,7 @@ impl<'a> CurveCornerChain2<'a> {
                         "hypercurve",
                         "curve-region-fillet-chord-parameter",
                         match reason {
+                            UncertaintyReason::BudgetExhausted => "budget-exhausted",
                             UncertaintyReason::Unsupported => "unsupported",
                             UncertaintyReason::Predicate => "predicate",
                             UncertaintyReason::Ordering => "ordering",

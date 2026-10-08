@@ -4919,6 +4919,7 @@ impl BezierAlgebraicChord2 {
             match forward {
                 Classification::Decided(true) => "equal",
                 Classification::Decided(false) => "different",
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => "budget-exhausted",
                 Classification::Uncertain(UncertaintyReason::Unsupported) => "unsupported",
                 Classification::Uncertain(UncertaintyReason::Predicate) => "predicate",
                 Classification::Uncertain(UncertaintyReason::Ordering) => "ordering",

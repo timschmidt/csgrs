@@ -1057,6 +1057,17 @@ fn refine_owned_one_root_interval(
                 }
             }
         }
+        if let Err(error) =
+            crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1)
+        {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                steps,
+                Some(error.to_string()),
+            );
+        }
         let midpoint = Real::average_pair(&lower, &upper);
         match sign_at(polynomial, &midpoint, policy) {
             Some(Ordering::Equal) => {
@@ -1904,6 +1915,7 @@ fn isolate_interval(
         }
     }
 
+    crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1).ok()?;
     let midpoint = ((lower.clone() + upper.clone()) / Real::from(2)).ok()?;
     let first = &sturm.polynomials[0];
     let midpoint_is_root = sign_at(first, &midpoint, policy)? == Ordering::Equal;
