@@ -5,7 +5,8 @@ use std::sync::Arc;
 use hypercurve::CurveRegion2;
 
 use crate::geometry::{Coord, LineString, MultiPolygon, Polygon, Rect};
-use crate::{PREDICATE_POLICY, PcbGeometryUncertainty, PcbRegion, Scalar};
+use crate::operations::evaluate;
+use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
 pub(crate) fn finite_enclosure(value: &Scalar) -> Option<[f64; 2]> {
     if let Some(value) = value.exact_rational_ref() {
@@ -13,30 +14,6 @@ pub(crate) fn finite_enclosure(value: &Scalar) -> Option<[f64; 2]> {
     }
     let [lower, upper] = value.certified_rational_interval(-64)?;
     Some([lower.to_f64_enclosure()?[0], upper.to_f64_enclosure()?[1]])
-}
-
-pub(super) fn evaluate<T>(
-    operation: &str,
-    source: Option<&str>,
-    body: impl FnOnce() -> Result<T, PcbGeometryUncertainty>,
-) -> Result<T, PcbGeometryUncertainty> {
-    check_budget(operation, source)?;
-    let result = hypercurve::evaluate_under(PREDICATE_POLICY, body);
-    check_budget(operation, source)?;
-    result
-        .certified()
-        .ok_or_else(|| failure(operation, source, "missing STRICT receipt"))?
-}
-
-fn check_budget(operation: &str, source: Option<&str>) -> Result<(), PcbGeometryUncertainty> {
-    match hypersolve::work_budget::exhaustion() {
-        Some(exhaustion) => Err(failure(
-            operation,
-            source,
-            format!("work budget exhausted: {exhaustion:?}"),
-        )),
-        None => Ok(()),
-    }
 }
 
 fn failure(

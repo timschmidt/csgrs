@@ -423,22 +423,20 @@ pub fn paste_via_exposure_readiness(
         let mut candidate_apertures = 0usize;
 
         for via in &vias {
-            let via_opening = matching_plated_drill(board, via)
-                .map(|drill| {
-                    let radius = crate::scalar::half(&drill.diameter);
-                    PcbRegion::new(
-                        crate::translated_circle(
-                            radius,
-                            48,
-                            drill.location[0].clone(),
-                            drill.location[1].clone(),
-                        ),
-                        Some(LayerMetadata {
-                            name: "via drill opening".to_string(),
-                        }),
-                    )
-                })
-                .unwrap_or_else(|| via.region.clone());
+            let via_opening = if let Some(drill) = matching_plated_drill(board, via) {
+                let radius = crate::scalar::half(&drill.diameter);
+                PcbRegion::new(
+                    crate::geometry::circle_region(
+                        &[drill.location[0].clone(), drill.location[1].clone()],
+                        &(radius),
+                    )?,
+                    Some(LayerMetadata {
+                        name: "via drill opening".to_string(),
+                    }),
+                )
+            } else {
+                via.region.clone()
+            };
             let via_polygons = via_opening.try_to_multipolygon()?.0;
             let paste_candidates = via_polygons
                 .iter()

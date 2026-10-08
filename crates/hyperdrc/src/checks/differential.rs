@@ -42,7 +42,14 @@ pub fn differential_pair_width_readiness(
         let Some((pair, side)) = differential_pair_key(net) else {
             continue;
         };
-        let estimated_width = estimated_segment_width(feature);
+        let Some(Some(estimated_width)) = crate::checks::geometry_result_for_check(
+            super::minimum_bounding_dimension(&feature.region),
+            "differential-pair-width-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
         if crate::scalar::le(&estimated_width, &Scalar::zero()) {
             continue;
         }
@@ -131,8 +138,22 @@ pub fn differential_pair_neckdown_readiness(
         let Some((pair, _side)) = differential_pair_key(net) else {
             continue;
         };
-        let estimated_width = estimated_segment_width(feature);
-        let estimated_length = estimated_segment_length(feature);
+        let Some(Some(estimated_width)) = crate::checks::geometry_result_for_check(
+            super::minimum_bounding_dimension(&feature.region),
+            "differential-pair-neckdown-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
+        let Some(Some(estimated_length)) = crate::checks::geometry_result_for_check(
+            estimated_segment_length(feature),
+            "differential-pair-neckdown-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
         if crate::scalar::le(&estimated_width, &Scalar::zero())
             || crate::scalar::le(&estimated_length, &Scalar::zero())
         {
@@ -181,6 +202,7 @@ pub fn differential_pair_skew_readiness(
     selected_layers: &[String],
     maximum_pair_skew: &Scalar,
 ) -> Vec<Violation> {
+    let mut violations = Vec::new();
     let mut pairs = BTreeMap::<String, PairLengthUse>::new();
     for feature in selected_copper_features(board, selected_layers) {
         if feature.kind != CopperKind::Segment {
@@ -192,7 +214,14 @@ pub fn differential_pair_skew_readiness(
         let Some((pair, side)) = differential_pair_key(net) else {
             continue;
         };
-        let estimated_length = estimated_segment_length(feature);
+        let Some(Some(estimated_length)) = crate::checks::geometry_result_for_check(
+            estimated_segment_length(feature),
+            "differential-pair-skew-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
         if crate::scalar::le(&estimated_length, &Scalar::zero()) {
             continue;
         }
@@ -212,7 +241,6 @@ pub fn differential_pair_skew_readiness(
         maximum_pair_skew
     );
 
-    let mut violations = Vec::new();
     for (pair, usage) in pairs {
         if crate::scalar::le(&usage.positive.estimated_length, &Scalar::zero())
             || crate::scalar::le(&usage.negative.estimated_length, &Scalar::zero())
@@ -816,60 +844,45 @@ fn ordered_pair_names(left: &str, right: &str) -> (String, String) {
     }
 }
 
-fn estimated_segment_length(feature: &CopperFeature) -> Scalar {
-    let region = match feature.region.native_contours_fast_path() {
-        Ok(Some(region)) => region,
-        Ok(None) | Err(_) => {
-            return maximum_bounding_dimension(&feature.region);
-        }
-    };
-    region
-        .material_contours()
-        .iter()
-        .flat_map(|contour| contour.segments())
-        .filter_map(|segment| {
+fn estimated_segment_length(
+    feature: &CopperFeature,
+) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("segment-length-proxy", Some(&feature.layer), || {
+        feature
+            .region
+            .ensure_exact_geometry("segment-length-proxy")?;
+        let Some(region) = feature
+            .region
+            .native_contours_fast_path()
+            .map_err(|error| {
+                feature
+                    .region
+                    .geometry_uncertainty("segment-length-proxy", error)
+            })?
+        else {
+            return super::maximum_bounding_dimension(&feature.region);
+        };
+        let mut maximum = None;
+        for segment in region
+            .material_contours()
+            .iter()
+            .flat_map(|contour| contour.segments())
+        {
             let dx = segment.end().x() - segment.start().x();
             let dy = segment.end().y() - segment.start().y();
-            (&dx * &dx + &dy * &dy).sqrt().ok()
-        })
-        .fold(Scalar::zero(), |maximum, length| {
-            if crate::scalar::gt(&length, &maximum) {
-                length
-            } else {
-                maximum
+            let length = (&dx * &dx + &dy * &dy).sqrt().map_err(|error| {
+                feature
+                    .region
+                    .geometry_uncertainty("segment-length-proxy", error)
+            })?;
+            if maximum.as_ref().map_or(Ok(true), |current| {
+                super::distance::compare_metrics(&length, current).map(|order| order.is_gt())
+            })? {
+                maximum = Some(length);
             }
-        })
-}
-
-fn maximum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {
-    let bounds = region.bounding_box();
-    let width = &bounds.maxs.x - &bounds.mins.x;
-    let height = &bounds.maxs.y - &bounds.mins.y;
-    if crate::scalar::ge(&width, &height) {
-        width
-    } else {
-        height
-    }
-}
-
-fn estimated_segment_width(feature: &CopperFeature) -> Scalar {
-    if let Some(bounds) = feature.region.exact_bounds() {
-        let width = &bounds[2] - &bounds[0];
-        let height = &bounds[3] - &bounds[1];
-        return if crate::scalar::le(&width, &height) {
-            width
-        } else {
-            height
-        };
-    }
-    let bounds = feature.region.bounding_box();
-    let width = &bounds.maxs.x - &bounds.mins.x;
-    let height = &bounds.maxs.y - &bounds.mins.y;
-    if crate::scalar::le(&width, &height) {
-        width
-    } else {
-        height
-    }
+        }
+        Ok(maximum)
+    })
 }
 
 fn exact_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {

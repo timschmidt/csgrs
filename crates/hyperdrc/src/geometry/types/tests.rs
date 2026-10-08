@@ -100,7 +100,7 @@ fn denied_bounds_query_remains_retryable() {
 #[test]
 fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
     let polygon = Polygon::from_exact_region(
-        crate::translated_circle(Real::one(), 16, Real::zero(), Real::zero()),
+        crate::geometry::circle_region(&[Real::zero(), Real::zero()], &(Real::one())).unwrap(),
         LineString::from(vec![
             Coord { x: 1.0, y: 0.0 },
             Coord { x: 0.0, y: 1.0 },

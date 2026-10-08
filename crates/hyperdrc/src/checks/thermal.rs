@@ -311,7 +311,12 @@ pub fn thermal_pad_via_readiness(
         if !looks_ground_net(net) && !looks_high_current_net(net) {
             continue;
         }
-        let Some((min_dimension, max_dimension)) = bounding_dimensions_scalar(&pad.region) else {
+        let Some(Some((min_dimension, max_dimension))) = crate::checks::geometry_result_for_check(
+            super::measurements::bounding_dimensions(&pad.region),
+            "thermal-pad-via-readiness",
+            &[&pad.layer],
+            &mut violations,
+        ) else {
             continue;
         };
         if crate::scalar::lt(&min_dimension, minimum_pad_dimension) {
@@ -650,12 +655,10 @@ pub fn thermal_mechanical_keepout_readiness(
                     continue;
                 }
                 let keepout_region = PcbRegion::new(
-                    crate::translated_circle(
-                        keepout_radius,
-                        64,
-                        drill.location[0].clone(),
-                        drill.location[1].clone(),
-                    ),
+                    crate::geometry::circle_region(
+                        &[drill.location[0].clone(), drill.location[1].clone()],
+                        &(keepout_radius),
+                    )?,
                     Some(LayerMetadata {
                         name: "thermal mechanical keepout".to_string(),
                     }),
@@ -736,7 +739,7 @@ fn thermal_zone_vias_indexed<'a>(
         if via.net != zone.net {
             continue;
         }
-        if feature_contains_point_scalar(zone, &via.location)
+        if feature_contains_point_scalar(zone, &via.location, requested_check)?
             || copper_features_touch_scalar(via, zone, anchor_tolerance, requested_check)?
         {
             zone_vias.push(via);
@@ -772,11 +775,22 @@ fn copper_features_touch_scalar(
         })?)
 }
 
-fn feature_contains_point_scalar(feature: &CopperFeature, point: &[Scalar; 2]) -> bool {
+fn feature_contains_point_scalar(
+    feature: &CopperFeature,
+    point: &[Scalar; 2],
+    requested_check: &str,
+) -> Result<bool, Box<Violation>> {
     feature
         .region
-        .contains_xy(point[0].clone(), point[1].clone())
-        == Some(true)
+        .classify_xy(point[0].clone(), point[1].clone())
+        .map(|location| location == hypercurve::RegionPointLocation::Inside)
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![feature.layer.clone()],
+                uncertainty,
+            ))
+        })
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
@@ -799,16 +813,6 @@ fn selected_copper_features<'a>(
         .iter()
         .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
         .collect()
-}
-
-fn bounding_dimensions_scalar(region: &PcbRegion) -> Option<(Scalar, Scalar)> {
-    let bounds = region.try_native_bounds().ok()??;
-    let (width, height) = (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1]);
-    Some(if crate::scalar::le(&width, &height) {
-        (width, height)
-    } else {
-        (height, width)
-    })
 }
 
 fn point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {

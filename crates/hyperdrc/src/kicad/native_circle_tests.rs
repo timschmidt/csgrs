@@ -15,7 +15,10 @@ fn authored_via_contains_points_between_its_circle_and_report_chords() {
     assert_eq!(board.copper[0].layer, "F.Cu");
     assert_eq!(board.copper[1].layer, "B.Cu");
     for feature in &board.copper {
-        assert_eq!(feature.region.contains_xy(x.clone(), y.clone()), Some(true));
+        assert_eq!(
+            feature.region.classify_xy(x.clone(), y.clone()),
+            Ok(hypercurve::RegionPointLocation::Inside)
+        );
     }
 }
 
@@ -53,14 +56,14 @@ fn via_source_center_and_size_retain_all_decimal_digits() {
         assert_eq!(
             feature
                 .region
-                .contains_xy(&center[0] + &radius - &tiny, center[1].clone()),
-            Some(true)
+                .classify_xy(&center[0] + &radius - &tiny, center[1].clone()),
+            Ok(hypercurve::RegionPointLocation::Inside)
         );
         assert_eq!(
             feature
                 .region
-                .contains_xy(&center[0] + &radius + &tiny, center[1].clone()),
-            Some(false)
+                .classify_xy(&center[0] + &radius + &tiny, center[1].clone()),
+            Ok(hypercurve::RegionPointLocation::Outside)
         );
     }
 }

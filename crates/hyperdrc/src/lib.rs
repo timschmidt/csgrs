@@ -124,10 +124,8 @@ pub use test_intent::{
     NativeTestRequirement, native_testpoint_coverage, native_testpoint_coverage_readiness,
 };
 
-use csgrs::curve;
 use geometry::MultiPolygon;
-use hypercurve::{CurveRegion2, OffsetCornerStyle2};
-use hyperlattice::Aabb;
+use hypercurve::CurveRegion2;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, OnceLock};
@@ -203,21 +201,6 @@ impl PcbRegion {
         }
     }
 
-    pub(crate) fn new_with_exact_bounds(
-        region: CurveRegion2,
-        metadata: Option<LayerMetadata>,
-        exact_bounds: Option<[Scalar; 4]>,
-        had_non_finite_input: bool,
-    ) -> Self {
-        Self::new_with_exact_bounds_and_projection(
-            region,
-            metadata,
-            exact_bounds,
-            had_non_finite_input,
-            None,
-        )
-    }
-
     pub(crate) fn new_with_exact_bounds_and_projection(
         region: CurveRegion2,
         metadata: Option<LayerMetadata>,
@@ -271,90 +254,6 @@ impl PcbRegion {
         Ok(Self::new(region, metadata))
     }
 
-    /// Offset the profile while retaining its PCB layer metadata.
-    ///
-    /// Exact topology indeterminacy is returned to the check rather than
-    /// unwinding or substituting approximate geometry.
-    pub fn offset(&self, distance: hyperreal::Real) -> Result<Self, PcbGeometryUncertainty> {
-        self.ensure_exact_geometry("profile-offset")?;
-        let exact_bounds = self.exact_bounds.as_ref().map(|bounds| {
-            [
-                &bounds[0] - &distance,
-                &bounds[1] - &distance,
-                &bounds[2] + &distance,
-                &bounds[3] + &distance,
-            ]
-        });
-        Ok(Self::new_with_exact_bounds(
-            self.region
-                .offset(distance, &OffsetCornerStyle2::Round)
-                .map_err(|error| PcbGeometryUncertainty {
-                    operation: "profile-offset".into(),
-                    source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
-                    detail: error.to_string(),
-                })?,
-            self.metadata.clone(),
-            exact_bounds,
-            self.had_non_finite_input,
-        ))
-    }
-
-    /// Compute a certified profile difference without panicking when the
-    /// native topology kernel cannot certify a boundary decision.
-    pub fn try_difference(&self, other: &Self) -> Result<Self, PcbGeometryUncertainty> {
-        self.ensure_binary_exact_geometry(other, "profile-difference")?;
-        let mut result = Self::new(
-            self.region
-                .boolean_region(&other.region, hypercurve::BooleanOp::Difference)
-                .map_err(|error| self.boolean_uncertainty("profile-difference", error))?,
-            self.metadata.clone(),
-        );
-        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
-        Ok(result)
-    }
-
-    /// Compute a certified profile union without panicking when the native
-    /// topology kernel cannot certify a boundary decision.
-    pub fn try_union(&self, other: &Self) -> Result<Self, PcbGeometryUncertainty> {
-        self.ensure_binary_exact_geometry(other, "profile-union")?;
-        let mut result = Self::new(
-            self.region
-                .boolean_region(&other.region, hypercurve::BooleanOp::Union)
-                .map_err(|error| self.boolean_uncertainty("profile-union", error))?,
-            self.metadata.clone(),
-        );
-        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
-        Ok(result)
-    }
-
-    /// Compute a certified profile intersection without panicking when the
-    /// native topology kernel cannot certify a boundary decision.
-    pub fn try_intersection(&self, other: &Self) -> Result<Self, PcbGeometryUncertainty> {
-        self.ensure_binary_exact_geometry(other, "profile-intersection")?;
-        let mut result = Self::new(
-            self.region
-                .boolean_region(&other.region, hypercurve::BooleanOp::Intersection)
-                .map_err(|error| self.boolean_uncertainty("profile-intersection", error))?,
-            self.metadata.clone(),
-        );
-        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
-        Ok(result)
-    }
-
-    /// Compute a certified profile symmetric difference without panicking when
-    /// the native topology kernel cannot certify a boundary decision.
-    pub fn try_xor(&self, other: &Self) -> Result<Self, PcbGeometryUncertainty> {
-        self.ensure_binary_exact_geometry(other, "profile-xor")?;
-        let mut result = Self::new(
-            self.region
-                .boolean_region(&other.region, hypercurve::BooleanOp::Xor)
-                .map_err(|error| self.boolean_uncertainty("profile-xor", error))?,
-            self.metadata.clone(),
-        );
-        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
-        Ok(result)
-    }
-
     fn ensure_exact_geometry(&self, operation: &str) -> Result<(), PcbGeometryUncertainty> {
         match self.exact_construction_error() {
             Some(detail) => Err(PcbGeometryUncertainty {
@@ -375,29 +274,13 @@ impl PcbRegion {
         other.ensure_exact_geometry(operation)
     }
 
-    fn boolean_uncertainty(&self, operation: &str, error: impl Display) -> PcbGeometryUncertainty {
+    fn geometry_uncertainty(&self, operation: &str, error: impl Display) -> PcbGeometryUncertainty {
         PcbGeometryUncertainty {
             operation: operation.to_string(),
             source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
             detail: error.to_string(),
         }
     }
-}
-
-pub(crate) fn translated_circle(
-    radius: Scalar,
-    _segments: usize,
-    x: Scalar,
-    y: Scalar,
-) -> CurveRegion2 {
-    if matches!(
-        crate::scalar::sign(&radius),
-        Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Zero)
-    ) {
-        return CurveRegion2::empty();
-    }
-    geometry::circle_region(&[x, y], &radius)
-        .expect("legacy translated-circle caller must supply admitted positive geometry")
 }
 
 impl Deref for PcbRegion {
@@ -417,28 +300,8 @@ impl DerefMut for PcbRegion {
     }
 }
 
-impl PcbRegion {
-    /// Certified exact bounds embedded in the XY plane.
-    pub fn bounding_box(&self) -> Aabb {
-        curve::bounding_box(&self.region)
-    }
-
-    /// Classifies a point against the native filled region.
-    ///
-    /// Boundary or uncertifiable cases return `None`.
-    pub fn contains_xy(&self, x: Scalar, y: Scalar) -> Option<bool> {
-        use hypercurve::{Point2, RegionPointLocation};
-
-        if self.region.is_empty() {
-            return None;
-        }
-        match self.region.classify_point(&Point2::new(x, y).into()).ok()? {
-            RegionPointLocation::Inside => Some(true),
-            RegionPointLocation::Outside => Some(false),
-            RegionPointLocation::Boundary => None,
-        }
-    }
-}
+#[path = "region/operations.rs"]
+mod operations;
 
 #[path = "region/projection.rs"]
 mod projection;
@@ -455,6 +318,10 @@ pub struct LayerMetadata {
 #[cfg(test)]
 #[path = "region/projection_regressions.rs"]
 mod projection_regressions;
+
+#[cfg(test)]
+#[path = "region/operation_regressions.rs"]
+mod operation_regressions;
 
 #[cfg(test)]
 pub(crate) mod test_support {

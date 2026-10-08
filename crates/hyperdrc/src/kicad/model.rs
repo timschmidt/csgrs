@@ -116,7 +116,7 @@ impl BoardModel {
         &self,
         selected_layers: &[String],
     ) -> Result<Vec<(String, PcbRegion)>, PcbGeometryUncertainty> {
-        crate::projection::evaluate("copper-layers", Some(&self.source), || {
+        crate::operations::evaluate("copper-layers", Some(&self.source), || {
             let mut by_layer: HashMap<String, Vec<Polygon<f64>>> = HashMap::new();
 
             for feature in &self.copper {
@@ -147,7 +147,7 @@ impl BoardModel {
 
     /// Combine all copper into an exact-backed report profile, retaining failures.
     pub fn all_copper(&self) -> Result<PcbRegion, PcbGeometryUncertainty> {
-        crate::projection::evaluate("all-copper", Some(&self.source), || {
+        crate::operations::evaluate("all-copper", Some(&self.source), || {
             let mut polygons = Vec::new();
             for feature in &self.copper {
                 polygons.extend(feature.region.try_to_multipolygon()?.0);

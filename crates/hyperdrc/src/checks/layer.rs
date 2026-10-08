@@ -198,7 +198,7 @@ pub fn copper_overlap_with_ipc356(
                 return Ok(Vec::new());
             }
 
-            let nets = ipc356_nets_in_region(&overlap, ipc356_points);
+            let nets = ipc356_nets_in_region(&overlap, ipc356_points)?;
             let (severity, message) = match nets.as_slice() {
                 [net] => (
                     Severity::Warning,
@@ -233,18 +233,23 @@ pub fn copper_overlap_with_ipc356(
     )
 }
 
-fn ipc356_nets_in_region(overlap: &PcbRegion, ipc356_points: &[Ipc356Point]) -> Vec<String> {
+fn ipc356_nets_in_region(
+    overlap: &PcbRegion,
+    ipc356_points: &[Ipc356Point],
+) -> Result<Vec<String>, crate::PcbGeometryUncertainty> {
     let mut nets = std::collections::BTreeSet::new();
     for point in ipc356_points {
         let net = point.net.trim();
         if net.is_empty() {
             continue;
         }
-        if overlap.contains_xy(point.location[0].clone(), point.location[1].clone()) == Some(true) {
+        if overlap.classify_xy(point.location[0].clone(), point.location[1].clone())?
+            == hypercurve::RegionPointLocation::Inside
+        {
             nets.insert(net.to_string());
         }
     }
-    nets.into_iter().collect()
+    Ok(nets.into_iter().collect())
 }
 
 /// Run the `board_edge_clearance` design-readiness check or report helper.

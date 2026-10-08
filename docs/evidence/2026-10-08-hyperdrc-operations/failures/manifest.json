@@ -1,0 +1,25 @@
+{
+  "base_revision": "c668e71e918bf833e8e401b59aa42b2b75f8d325",
+  "command": "cargo test --locked --release -p hyperdrc --lib operation_regressions",
+  "exit_code": 101,
+  "passed": 0,
+  "failed": 9,
+  "production_changes": "None; lib.rs only declares the regression module.",
+  "source_hashes": {
+    "crates/hyperdrc/src/lib.rs": "5a4f8108407a7b62fe22519d60acbea1ff5daee0a057f1e5b35e5b55e2c1b8cc",
+    "crates/hyperdrc/src/region/operation_regressions.rs": "5b1c7b7fe403b37125ed5770ee5737b3d998f84057dc7d45ac1dd14f23f9960d",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2"
+  },
+  "failures": [
+    "All four Boolean wrappers return geometry after the shared scope has already exhausted its work budget (four separate failing tests).",
+    "Zero-distance offset returns geometry after shared-budget exhaustion.",
+    "A retained source-construction failure still yields an Inside membership answer.",
+    "The translated-circle adapter panics on a terminally unresolved radius sign.",
+    "A circle eroded to empty retains inferred nonempty/inverted cached bounds.",
+    "Copper-width readiness publishes an ordinary width finding from failed source geometry instead of retaining uncertainty."
+  ],
+  "limitations": [
+    "The denied-operation fixtures first exhaust the scope with the retained polynomial refinement case; they do not claim a zero budget forbids every cheap operation before exhaustion.",
+    "The focused baseline has no production changes beyond declaring the test module. Final tests use the new typed classification/circle interfaces for the same failure scenarios."
+  ]
+}

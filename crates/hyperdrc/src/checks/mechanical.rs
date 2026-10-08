@@ -131,7 +131,7 @@ pub fn mounting_hole_copper_keepout_readiness(
             );
 
             for drill in likely_mounting_holes(board, keepout) {
-                let keepout_region = drill_keepout(drill, keepout);
+                let keepout_region = drill_keepout(drill, keepout)?;
                 let drill_radius = crate::scalar::half(&drill.diameter);
                 let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
                 let broad_phase_radius = scalar_broad_phase_radius(&query_radius);
@@ -250,7 +250,7 @@ pub fn mounting_hole_edge_clearance_readiness(
                     continue;
                 }
 
-                let keepout_region = drill_keepout(drill, edge_clearance);
+                let keepout_region = drill_keepout(drill, edge_clearance)?;
                 exact_difference_count += 1;
                 let outside_outline = match difference_for_check(
                     &keepout_region,
@@ -866,21 +866,28 @@ fn plated_edge_holes<'a>(
         return holes;
     }
 
-    let holes = board
-        .drills
-        .iter()
-        .filter(|drill| {
-            drill.plated
-                && (crate::checks::boundaries_within_for_check(
-                    &drill_keepout(drill, &Scalar::zero()),
-                    outline,
-                    edge_distance,
-                    "castellation-pitch-readiness",
-                    &[&board.source],
-                    violations,
-                ) == Some(true))
-        })
-        .collect::<Vec<_>>();
+    let mut holes = Vec::new();
+    for drill in board.drills.iter().filter(|drill| drill.plated) {
+        let Some(keepout) = crate::checks::geometry_result_for_check(
+            drill_keepout(drill, &Scalar::zero()),
+            "castellation-pitch-readiness",
+            &[&board.source],
+            violations,
+        ) else {
+            continue;
+        };
+        if crate::checks::boundaries_within_for_check(
+            &keepout,
+            outline,
+            edge_distance,
+            "castellation-pitch-readiness",
+            &[&board.source],
+            violations,
+        ) == Some(true)
+        {
+            holes.push(drill);
+        }
+    }
     log::trace!(
         "plated edge-hole classification: source={} outline=general drills={} edge_holes={} edge_distance={edge_distance:#.6}",
         board.source,
@@ -997,19 +1004,20 @@ fn feature_near_rect_outline(
     inside_gap <= edge_distance
 }
 
-fn drill_keepout(drill: &DrillFeature, keepout: &Scalar) -> PcbRegion {
+fn drill_keepout(
+    drill: &DrillFeature,
+    keepout: &Scalar,
+) -> Result<PcbRegion, crate::PcbGeometryUncertainty> {
     let radius = crate::scalar::half(&drill.diameter) + keepout;
-    PcbRegion::new(
-        crate::translated_circle(
-            radius,
-            64,
-            drill.location[0].clone(),
-            drill.location[1].clone(),
-        ),
+    Ok(PcbRegion::new(
+        crate::geometry::circle_region(
+            &[drill.location[0].clone(), drill.location[1].clone()],
+            &(radius),
+        )?,
         Some(LayerMetadata {
             name: "mounting-hole keepout".to_string(),
         }),
-    )
+    ))
 }
 
 fn drill_keepout_inside_rect_scalar(

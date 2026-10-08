@@ -1,0 +1,96 @@
+{
+  "base_revision": "c668e71e918bf833e8e401b59aa42b2b75f8d325",
+  "status": "Retained operation-boundary repair: final DRC/consumer validation and capability cost checks pass. The complete properties.md goal remains active.",
+  "scope": "Guard PCB Boolean, offset, point classification and bounds boundaries; replace legacy circle panics; propagate migrated native envelope measurements to readiness consumers.",
+  "baseline_failures": "failures/manifest.json",
+  "contract": [
+    "All four PcbRegion Boolean wrappers and offset evaluate under explicit STRICT with shared-budget checks before and after the kernel, including idempotent/zero-distance fast paths. Source-construction errors retain their operation and operand source.",
+    "Offsets retain native result geometry without inferring bounds by expanding/shrinking input bounds. Empty erosion has no bounds; removed components cannot leave stale extent or width measurements.",
+    "classify_xy returns Result<RegionPointLocation, PcbGeometryUncertainty>, distinguishing Inside, Outside, Boundary and uncertainty. Empty geometry is Outside; source/denied/unresolved queries are errors. The old contains_xy alias is removed.",
+    "try_bounding_box returns Result<Option<Aabb>, PcbGeometryUncertainty>. Empty geometry is None, and failures do not become an origin box. The old bounding_box alias is removed.",
+    "Legacy translated_circle is removed. All callers use checked native circle construction without the unused segment count and propagate errors; ordinary unknown or negative radii cannot panic or become empty geometry through that adapter.",
+    "Shared checked native envelope dimensions replace duplicated origin/zero/Option fallbacks in migrated board, net-width, differential, power, assembly and thermal consumers. Missing required measurements reach attributed geometry-uncertainty findings; optional power bounds retain pairs without certificates. The differential endpoint-span proxy also retains extraction/root/ordering errors.",
+    "Readiness implementation version is 4; schema remains 1. Six Easyduino expected snapshots only change implementation-version fields, preserving all finding rows and counts."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "source_frozen_through_fixture_build": true,
+    "configured_command": "cargo test --locked -p hyperdrc --release",
+    "passed": 1174,
+    "library": 1170,
+    "readme_integration": 2,
+    "doctests": 2,
+    "new_operation_regressions": 16,
+    "baseline_regressions": 9,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "source_frozen": true,
+    "snapshots": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "All six Easyduino fast-DRC boards, one impedance unit and two consumer smoke tests selected by the hyperdrc filter, plus five curved-outline tests. This is not the complete HyperCircuit suite. Snapshot differences are limited to check implementation version 3 to 4; all finding rows and expected counts are unchanged."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_source": "cost/operation_probe.rs",
+    "rows": {
+      "count": 8,
+      "bytes": 721,
+      "sha256": "d31ff3bc686e594de4d68274ff910a2819121b6d9b3bbc649beec5fb960bea98"
+    },
+    "trials": 5,
+    "medians_ns": {
+      "operation_union_and_bounds": 105725.15,
+      "operation_intersection_and_bounds": 100513.81,
+      "operation_difference_and_bounds": 101231.36,
+      "operation_xor_and_bounds": 116166.44,
+      "operation_circle_offset_and_bounds": 87099.33,
+      "operation_drill_circle_and_bounds": 111236.07,
+      "operation_classification": 31465.223,
+      "operation_bounds": 7716.722
+    },
+    "peak_rss_kib": [
+      10336,
+      10608
+    ],
+    "fixture_seconds": 60.282538,
+    "fixture_peak_rss_kib": 1483620,
+    "fixture_gate_seconds": 120,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes and one full fixture run pinned to CPU 0 after every build/test exits. Region rows measure the operation plus checked result bounds, using fixed warm inputs and new PCB output wrappers; internal native-kernel evidence may already be warm. Input construction, first/last exact area and report-coordinate fingerprint checks are outside query timers but inside process RSS. Classification and bounds rows each time one checked query. Eight witness rows and serialized bytes are identical across all five trials. The full two-board and Gerber fixture workload and its 120-second gate are unchanged. These are candidate capability costs; no matched speedup, allocation count or library-size delta is claimed."
+  },
+  "draft": {
+    "baseline_harness": "draft/baseline-harness-compilation.log: the initial regression harness assumed BoardModel implemented Default; it was corrected to an explicit struct literal before baseline semantic execution.",
+    "migration_compilation": "draft/migration-compilation.log: two Result call sites required explicit finding gateways, and an obsolete import was removed.",
+    "focused_before_concurrency": "draft/focused-before-concurrency.log: all fifteen initial regressions pass; an unused legacy constructor warning was then fixed by deleting that now-unneeded constructor. The final suite additionally includes concurrent preview/denied operations."
+  },
+  "replay": {
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-operations/reproduce_validation.py /tmp/hyperdrc-operations-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-operations/reproduce_consumer_validation.py /tmp/hyperdrc-operations-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-operations/reproduce_cost.py /tmp/hyperdrc-operations-validation-fresh /tmp/hyperdrc-operations-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. Run cost measurements only after all builds/tests have exited; the cost script compiles its own probe first."
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope; this is an operation-boundary repair, not full HyperDRC certification.",
+    "The raw native region remains accessible through Deref. Direct native queries, constructors/aggregation, is_empty shortcuts before failure guards, and invalid source adapters still need a complete audit.",
+    "Area conversion/filter_map consumers, remaining scalar threshold comparisons, net-class length aggregation, point distances and finite source-coordinate/radius adapters still have legacy optional or panicking paths.",
+    "Envelope dimensions and maximum native endpoint spans remain explicitly named readiness proxies; they do not prove physical trace width, routed length or controlled impedance.",
+    "Shared work guards reject known exhausted scopes, but do not establish a total runtime, memory or precision bound.",
+    "The full repository pre-push matrix has not run; no push is requested."
+  ],
+  "replay_script_hashes": {
+    "reproduce_consumer_validation.py": "824fde15d4492230547506ac7d3e0c89f660989e48903b4a2c61186255d29232",
+    "reproduce_cost.py": "5651d89823f1b615a351ae54aa4cd3abf8efbaa9dad30000593ac9d9b8315769",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  }
+}

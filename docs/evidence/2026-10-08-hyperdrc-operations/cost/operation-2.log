@@ -1,0 +1,31 @@
+operation_union_and_bounds	100	10635771	1:5:6989848621284363973
+operation_intersection_and_bounds	100	10051381	1:5:13624378369209772120
+operation_difference_and_bounds	100	10163733	1:5:2432745174150323013
+operation_xor_and_bounds	100	11616644	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	8628779	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	11294506	1:129:9913634850734995192
+operation_classification	1000	31465223	inside
+operation_bounds	1000	7429691	-1,-1,1,1
+	Command being timed: "/tmp/drc-operations-cost1/operation-probe"
+	User time (seconds): 0.10
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.11
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 10444
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 348
+	Voluntary context switches: 1
+	Involuntary context switches: 2
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

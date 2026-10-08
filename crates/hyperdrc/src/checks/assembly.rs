@@ -166,12 +166,10 @@ pub fn component_hole_clearance_readiness(
                     continue;
                 }
                 let keepout = PcbRegion::new(
-                    crate::translated_circle(
-                        keepout_radius,
-                        64,
-                        drill.location[0].clone(),
-                        drill.location[1].clone(),
-                    ),
+                    crate::geometry::circle_region(
+                        &[drill.location[0].clone(), drill.location[1].clone()],
+                        &(keepout_radius),
+                    )?,
                     Some(LayerMetadata {
                         name: "mechanical hole keepout".to_string(),
                     }),
@@ -241,16 +239,32 @@ pub fn component_spacing_readiness(
     clearance: &Scalar,
     minimum_pad_dimension: &Scalar,
 ) -> Vec<Violation> {
-    let pads = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.kind == CopperKind::Pad)
-        .filter(|feature| !likely_fiducial(feature))
-        .filter(|feature| {
-            minimum_bounding_dimension_scalar(&feature.region)
-                .is_some_and(|dimension| crate::scalar::ge(&dimension, minimum_pad_dimension))
-        })
-        .collect::<Vec<_>>();
     let mut violations = Vec::new();
+    let mut pads = Vec::new();
+    for feature in selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.kind == CopperKind::Pad && !likely_fiducial(feature))
+    {
+        let Some(Some(dimension)) = crate::checks::geometry_result_for_check(
+            super::minimum_bounding_dimension(&feature.region),
+            "component-spacing-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
+        if crate::checks::metric_cmp_for_check(
+            &dimension,
+            minimum_pad_dimension,
+            "component-spacing-readiness",
+            &[&feature.layer],
+            &mut violations,
+        )
+        .is_some_and(|order| order.is_ge())
+        {
+            pads.push(feature);
+        }
+    }
 
     let broad_phase_clearance = scalar_broad_phase_radius(clearance);
     let candidate_pairs = same_layer_feature_candidate_pairs(&pads, broad_phase_clearance);
@@ -342,17 +356,33 @@ pub fn connector_rework_clearance_readiness(
         .filter(|feature| feature.kind == CopperKind::Pad)
         .filter(|feature| !likely_fiducial(feature))
         .collect::<Vec<_>>();
-    let connector_pads = pads
+    let mut violations = Vec::new();
+    let mut connector_pads = BTreeSet::new();
+    for (index, feature) in pads
         .iter()
         .enumerate()
-        .filter_map(|(index, feature)| {
-            (feature.net.as_deref().is_some_and(looks_connector_net)
-                && minimum_bounding_dimension_scalar(&feature.region)
-                    .is_some_and(|dimension| crate::scalar::ge(&dimension, minimum_pad_dimension)))
-            .then_some(index)
-        })
-        .collect::<BTreeSet<_>>();
-    let mut violations = Vec::new();
+        .filter(|(_, feature)| feature.net.as_deref().is_some_and(looks_connector_net))
+    {
+        let Some(Some(dimension)) = crate::checks::geometry_result_for_check(
+            super::minimum_bounding_dimension(&feature.region),
+            "connector-rework-clearance-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
+        if crate::checks::metric_cmp_for_check(
+            &dimension,
+            minimum_pad_dimension,
+            "connector-rework-clearance-readiness",
+            &[&feature.layer],
+            &mut violations,
+        )
+        .is_some_and(|order| order.is_ge())
+        {
+            connector_pads.insert(index);
+        }
+    }
 
     let broad_phase_clearance = scalar_broad_phase_radius(clearance);
     let candidate_pairs = same_layer_feature_candidate_pairs(&pads, broad_phase_clearance);
@@ -459,7 +489,9 @@ pub fn pad_pair_asymmetry_readiness(
             else {
                 continue;
             };
-            let Some((_, max_dimension)) = bounding_dimensions_scalar(&feature.region) else {
+            let Some((_, max_dimension)) =
+                super::measurements::bounding_dimensions(&feature.region)?
+            else {
                 continue;
             };
             if crate::scalar::gt(&area, &Scalar::zero())
@@ -770,7 +802,15 @@ pub fn testpoint_accessibility_readiness(
             let x = point.location[0].clone();
             let y = point.location[1].clone();
 
-            let inside = outline.contains_xy(x, y) == Some(true);
+            let Some(location) = crate::checks::geometry_result_for_check(
+                outline.classify_xy(x, y),
+                "testpoint-accessibility-readiness",
+                &[&point.net],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            let inside = location == hypercurve::RegionPointLocation::Inside;
             if !inside
                 || (crate::checks::point_boundary_within_for_check(
                     &point.location,
@@ -974,7 +1014,15 @@ pub fn testpoint_copper_clearance_readiness(
             let x = point.location[0].clone();
             let y = point.location[1].clone();
 
-            let center_inside = feature.region.contains_xy(x, y) != Some(false);
+            let Some(location) = crate::checks::geometry_result_for_check(
+                feature.region.classify_xy(x, y),
+                "testpoint-copper-clearance-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            let center_inside = location != hypercurve::RegionPointLocation::Outside;
             if !center_inside
                 && (crate::checks::point_boundary_within_for_check(
                     &point.location,
@@ -1171,13 +1219,16 @@ pub fn tooling_hole_readiness(
         for drill in &candidates {
             edge_checks += 1;
             let radius = crate::scalar::half(&drill.diameter);
+            let Some(circle) = crate::checks::geometry_result_for_check(
+                crate::geometry::circle_region(&drill.location, &radius),
+                "tooling-hole-readiness",
+                &[&board.source],
+                &mut violations,
+            ) else {
+                continue;
+            };
             let keepout = PcbRegion::new(
-                crate::translated_circle(
-                    radius,
-                    64,
-                    drill.location[0].clone(),
-                    drill.location[1].clone(),
-                ),
+                circle,
                 Some(LayerMetadata {
                     name: "tooling hole".to_string(),
                 }),
@@ -1647,12 +1698,10 @@ pub fn selective_wave_solder_keepout_readiness(
                     continue;
                 }
                 let keepout_region = PcbRegion::new(
-                    crate::translated_circle(
-                        keepout_radius,
-                        64,
-                        drill.location[0].clone(),
-                        drill.location[1].clone(),
-                    ),
+                    crate::geometry::circle_region(
+                        &[drill.location[0].clone(), drill.location[1].clone()],
+                        &(keepout_radius),
+                    )?,
                     Some(LayerMetadata {
                         name: "selective/wave solder keepout".to_string(),
                     }),
@@ -1863,20 +1912,6 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn minimum_bounding_dimension_scalar(region: &PcbRegion) -> Option<Scalar> {
-    bounding_dimensions_scalar(region).map(|(minimum, _)| minimum)
-}
-
-fn bounding_dimensions_scalar(region: &PcbRegion) -> Option<(Scalar, Scalar)> {
-    let bounds = region.try_native_bounds().ok()??;
-    let (width, height) = (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1]);
-    if crate::scalar::le(&width, &height) {
-        Some((width, height))
-    } else {
-        Some((height, width))
-    }
-}
-
 fn feature_query_radius(feature: &CopperFeature, clearance: f64) -> Option<f64> {
     super::spatial::feature_span(feature).map(|span| (span / 2.0 + clearance).next_up())
 }
@@ -2051,12 +2086,10 @@ fn process_drill_keepout_readiness(
                 continue;
             }
             let keepout_region = PcbRegion::new(
-                crate::translated_circle(
-                    keepout_radius,
-                    64,
-                    drill.location[0].clone(),
-                    drill.location[1].clone(),
-                ),
+                crate::geometry::circle_region(
+                    &[drill.location[0].clone(), drill.location[1].clone()],
+                    &(keepout_radius),
+                )?,
                 Some(LayerMetadata {
                     name: format!("{process_label} keepout"),
                 }),

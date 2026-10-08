@@ -1,0 +1,18 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0599]: no associated function or constant named `default` found for struct `kicad::model::BoardModel` in the current scope
+  --> crates/hyperdrc/src/region/operation_regressions.rs:68:33
+   |
+68 |     let mut board = BoardModel::default();
+   |                                 ^^^^^^^ associated function or constant not found in `kicad::model::BoardModel`
+   |
+  ::: crates/hyperdrc/src/kicad/model.rs:13:1
+   |
+13 | pub struct BoardModel {
+   | --------------------- associated function or constant `default` not found for this struct
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `default`, perhaps you need to implement it:
+           candidate #1: `std::default::Default`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperdrc` (lib test) due to 1 previous error

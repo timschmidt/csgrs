@@ -1,0 +1,39 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: unused import: `PcbRegion`
+  --> crates/hyperdrc/src/checks/power_integrity.rs:16:13
+   |
+16 | use crate::{PcbRegion, Scalar};
+   |             ^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0277]: the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `FromResidual`)
+    --> crates/hyperdrc/src/checks/assembly.rs:1176:115
+     |
+1135 | / pub fn tooling_hole_readiness(
+1136 | |     board: &BoardModel,
+1137 | |     extra_drills: &[DrillFeature],
+1138 | |     minimum_diameter: &Scalar,
+1139 | |     maximum_diameter: &Scalar,
+1140 | |     edge_clearance: &Scalar,
+1141 | | ) -> Vec<Violation> {
+     | |___________________- this function should return `Result` or `Option` to accept `?`
+...
+1176 |                   crate::geometry::circle_region(&[drill.location[0].clone(), drill.location[1].clone()], &(radius))?,
+     |                                                                                                                     ^ cannot use the `?` operator in a function that returns `Vec<report::Violation>`
+
+error[E0277]: the `?` operator can only be used in a closure that returns `Result` or `Option` (or another type that implements `FromResidual`)
+   --> crates/hyperdrc/src/checks/mechanical.rs:875:59
+    |
+872 |         .filter(|drill| {
+    |                 ------- this function should return `Result` or `Option` to accept `?`
+...
+875 |                     &drill_keepout(drill, &Scalar::zero())?,
+    |                                                           ^ cannot use the `?` operator in a closure that returns `bool`
+
+For more information about this error, try `rustc --explain E0277`.
+warning: `hyperdrc` (lib) generated 1 warning
+error: could not compile `hyperdrc` (lib) due to 2 previous errors; 1 warning emitted
+warning: build failed, waiting for other jobs to finish...
+warning: `hyperdrc` (lib test) generated 1 warning (1 duplicate)
+error: could not compile `hyperdrc` (lib test) due to 2 previous errors; 1 warning emitted

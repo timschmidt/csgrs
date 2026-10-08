@@ -124,8 +124,8 @@ mod tests {
             Some(&[(-1).into(), (-1).into(), 1.into(), 1.into()])
         );
         assert_eq!(
-            profile.contains_xy(scalar("0.999"), scalar("0.03")),
-            Some(true)
+            profile.classify_xy(scalar("0.999"), scalar("0.03")),
+            Ok(hypercurve::RegionPointLocation::Inside)
         );
     }
 

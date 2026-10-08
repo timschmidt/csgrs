@@ -6,6 +6,7 @@
 //! custom footprints, filled zones, and panel drawings; release decisions should
 //! double-check the source board and fabrication notes.
 
+use super::minimum_bounding_dimension;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use hyperlimit::compare_reals;
@@ -44,7 +45,14 @@ pub fn copper_width_readiness(
     let mut violations = Vec::new();
 
     for feature in &features {
-        let width = minimum_bounding_dimension_scalar(&feature.region);
+        let Some(Some(width)) = crate::checks::geometry_result_for_check(
+            minimum_bounding_dimension(&feature.region),
+            "copper-width-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
         if crate::scalar::le(&width, &Scalar::zero()) {
             continue;
         }
@@ -241,7 +249,9 @@ pub fn teardrop_readiness(
         let mut candidate_count = 0_usize;
 
         for segment in segments {
-            let segment_width = minimum_bounding_dimension_scalar(&segment.region);
+            let Some(segment_width) = minimum_bounding_dimension(&segment.region)? else {
+                continue;
+            };
             if crate::scalar::ge(&segment_width, min_neck_width) {
                 continue;
             }
@@ -344,12 +354,10 @@ pub fn plane_clearance_readiness(
                 continue;
             }
             let hole = PcbRegion::new(
-                crate::translated_circle(
-                    drill_radius.clone(),
-                    64,
-                    drill.location[0].clone(),
-                    drill.location[1].clone(),
-                ),
+                crate::geometry::circle_region(
+                    &[drill.location[0].clone(), drill.location[1].clone()],
+                    &(drill_radius.clone()),
+                )?,
                 Some(LayerMetadata {
                     name: "mechanical hole".to_string(),
                 }),
@@ -370,8 +378,8 @@ pub fn plane_clearance_readiness(
                     multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
                 let hole_contained = zone
                     .region
-                    .contains_xy(drill.location[0].clone(), drill.location[1].clone())
-                    == Some(true);
+                    .classify_xy(drill.location[0].clone(), drill.location[1].clone())?
+                    == hypercurve::RegionPointLocation::Inside;
                 if shapes.is_empty() && hole_contained {
                     // A hole wholly contained by a zone has no boundary crossing.
                     // Classify the exact center against the exact filled region so
@@ -2029,7 +2037,14 @@ pub fn high_current_neck_readiness(
         }
         high_current_features += 1;
 
-        let width = minimum_bounding_dimension_scalar(&feature.region);
+        let Some(Some(width)) = crate::checks::geometry_result_for_check(
+            minimum_bounding_dimension(&feature.region),
+            "high-current-neck-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) else {
+            continue;
+        };
         if crate::scalar::le(&width, &Scalar::zero()) {
             continue;
         }
@@ -2431,10 +2446,17 @@ pub fn gold_finger_drill_keepout_readiness(
             let finger = finger_features[finger_index];
             exact_pair_count += 1;
 
-            let center_inside = finger
-                .region
-                .contains_xy(drill.location[0].clone(), drill.location[1].clone())
-                != Some(false);
+            let Some(location) = crate::checks::geometry_result_for_check(
+                finger
+                    .region
+                    .classify_xy(drill.location[0].clone(), drill.location[1].clone()),
+                "gold-finger-drill-keepout-readiness",
+                &[&finger.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            let center_inside = location != hypercurve::RegionPointLocation::Outside;
             if !center_inside
                 && (crate::checks::point_boundary_within_for_check(
                     &drill.location,
@@ -3669,26 +3691,6 @@ fn selected_copper_features<'a>(
         .iter()
         .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
         .collect()
-}
-
-fn minimum_bounding_dimension_scalar(region: &PcbRegion) -> Scalar {
-    if let Some(bounds) = region.exact_bounds() {
-        let width = &bounds[2] - &bounds[0];
-        let height = &bounds[3] - &bounds[1];
-        return if crate::scalar::le(&width, &height) {
-            width
-        } else {
-            height
-        };
-    }
-    let bounds = region.bounding_box();
-    let width = &bounds.maxs.x - &bounds.mins.x;
-    let height = &bounds.maxs.y - &bounds.mins.y;
-    if crate::scalar::le(&width, &height) {
-        width
-    } else {
-        height
-    }
 }
 
 fn exact_point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {

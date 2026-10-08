@@ -29,6 +29,10 @@ The source tree follows a few explicit boundaries:
 - [`lib.rs`](lib.rs) exposes the docs.rs-facing library API, crate-level
   documentation, shared PCB region aliases, parser/check/report modules, and
   crate-root re-exports such as `run`, `run_cli`, `Cli`, and `Report`.
+- [`region/operations.rs`](region/operations.rs) owns shared STRICT/budget guards,
+  native Boolean and offset operations, classified points and fallible bounds.
+- [`checks/measurements.rs`](checks/measurements.rs) shares checked native
+  envelope dimensions across readiness proxies.
 - [`region/projection.rs`](region/projection.rs) owns fallible report projection,
   successful component caches, and optional conservative native envelopes.
   Projection errors retain their operation and source through check findings.

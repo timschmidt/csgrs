@@ -1,0 +1,35 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: associated function `new_with_exact_bounds` is never used
+   --> crates/hyperdrc/src/lib.rs:204:19
+    |
+178 | impl PcbRegion {
+    | -------------- associated function in this implementation
+...
+204 |     pub(crate) fn new_with_exact_bounds(
+    |                   ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `hyperdrc` (lib test) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 28.27s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 15 tests
+test operation_regressions::denied_offset_cannot_publish_geometry ... ok
+test operation_regressions::classification_distinguishes_boundary_empty_failure_and_denial ... ok
+test operation_regressions::failed_source_cannot_classify_point ... ok
+test operation_regressions::failed_envelope_measurements_reach_readiness_and_pad_selection ... ok
+test operation_regressions::denied_xor_cannot_publish_geometry ... ok
+test operation_regressions::required_width_cannot_publish_a_placeholder_measurement ... ok
+test operation_regressions::denied_union_cannot_publish_geometry ... ok
+test operation_regressions::denied_intersection_cannot_publish_geometry ... ok
+test operation_regressions::denied_difference_cannot_publish_geometry ... ok
+test operation_regressions::invalid_drill_radius_reaches_the_requested_check_without_panicking ... ok
+test operation_regressions::unresolved_circle_construction_does_not_unwind ... ok
+test operation_regressions::guarded_booleans_preserve_sets_metadata_and_source_failures ... ok
+test operation_regressions::enclosing_preview_cannot_resolve_unknown_classification_or_offset ... ok
+test operation_regressions::collapsed_offset_cannot_retain_inferred_nonempty_bounds ... ok
+test operation_regressions::eroded_component_cannot_leave_stale_width_bounds ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 1154 filtered out; finished in 0.02s
+
