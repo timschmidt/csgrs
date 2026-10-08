@@ -1,0 +1,13 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.19s
+     Running unittests src/lib.rs (target/debug/deps/hyperdrc-8542f41f62512c71)
+
+running 5 tests
+test geometry::types::tests::failed_source_construction_does_not_publish_placeholder_area_or_bounds ... ok
+test geometry::types::tests::denied_area_query_remains_retryable_and_cannot_use_report_area ... ok
+test geometry::types::tests::denied_bounds_query_remains_retryable ... ok
+test geometry::types::tests::shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate ... ok
+test geometry::types::tests::unavailable_native_area_cannot_be_replaced_with_report_chords ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1114 filtered out; finished in 0.01s
+

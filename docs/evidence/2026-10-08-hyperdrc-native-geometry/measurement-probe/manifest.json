@@ -1,0 +1,202 @@
+{
+  "scope": "Matched cost probe for the polygon measurement cache and removal of the report-area fallback on unchanged valid inputs; not an allocation benchmark or an end-to-end DRC throughput claim.",
+  "base_revision": "d838034a762429b2bb517005ae5a6b0a711a3d0b",
+  "build": "CCACHE_DIR=/tmp/properties-drc-measurement-ccache cargo build --offline --release --manifest-path /tmp/properties-drc-measurement-probe/Cargo.toml",
+  "build_isolation": "Baseline and candidate used the same copied hyperdrc crate path and probe source. Baseline source came from the base revision; candidate applies candidate.patch and candidate-tests.rs. Relative dependencies in the copied manifest were replaced by absolute root paths. Dependency package identities and checksums match each other and the root lock, excluding the additional local probe package.",
+  "source_replay": "Copy the probe manifest/source and the base-revision hyperdrc crate into a temporary workspace. Adjust absolute dependency paths to the checkout. Build/copy baseline, apply the candidate DRC patch and tests, then build/copy candidate. The retained run-probe.py checks binary hashes before each run; update those hashes only for an explicitly identified replay. This temporary crate was subsequently reused for the separately retained circle draft; the two measurement binaries were copied before that reuse.",
+  "incidental_lint_cleanup": "The two Gerber ok_or lint edits were made after both benchmark executables had been built. Both executables therefore share the original Gerber dependency source. No performance claim is made for that static-error construction cleanup.",
+  "build_failure": {
+    "log": "baseline-initial-build.log",
+    "exit_code": 101,
+    "cause": "SQLite C compilation invoked ccache, whose default cache location was read-only in the sandbox. Retried successfully with CCACHE_DIR under /tmp; no approval rejection occurred."
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/properties-drc-measurement-baseline-bin",
+      "bytes": 18658032,
+      "sha256": "a5b269048a09b17dc4bba5a73d52e434e600f91342099be7b1dd16ea43526db3"
+    },
+    "candidate": {
+      "path": "/tmp/properties-drc-measurement-candidate-bin",
+      "bytes": 18650496,
+      "sha256": "d6d39e298359d58cdb04b874b249bdd1ac8d09061609bddf12a42303896ae59e"
+    }
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "host": "Linux fedora 7.2.5-100.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026 x86_64 GNU/Linux\n",
+  "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+  "affinity": [
+    0
+  ],
+  "iterations_per_row": 1000,
+  "trials": 5,
+  "trial_order": "Alternating baseline/candidate order; each measurement is a fresh process, pinned to CPU 0.",
+  "execution": "All task compilation and test sessions had exited before the sequential measurements. Root release tests and scratch-circle tests are not included in measurement timings.",
+  "environment": {
+    "RUSTFLAGS": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "RUSTC_WRAPPER": null,
+    "CARGO_PROFILE_RELEASE_OPT_LEVEL": null,
+    "CARGO_PROFILE_RELEASE_LTO": null,
+    "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": null,
+    "CARGO_BUILD_TARGET": null
+  },
+  "profile": "opt-level 3, debug false, debug-assertions false, overflow-checks false; probe manifest retained.",
+  "config_sha256": "a5b48f97a3eae472fd23aeffe79dc4bba316e42d6c415001f22d1d23861ca4a9",
+  "workspace_manifest_sha256": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+  "root_lock_sha256": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+  "outputs": "All 10 measured processes preserved each fixture row count, serialized report byte length, FNV-1a report checksum, and finite bounds. Serialization/checksum computation is outside timed loops. Initial and final observations are checked; individual loop outputs are not serialized.",
+  "whole_process_peak_rss_kib": {
+    "baseline": [
+      9828,
+      9828,
+      9816,
+      9756,
+      9844
+    ],
+    "candidate": [
+      9672,
+      9996,
+      9888,
+      9724,
+      9908
+    ]
+  },
+  "summary": [
+    {
+      "fixture": "native_circle",
+      "mode": "construct_and_measure",
+      "baseline_ns_per_query": [
+        1036231.637,
+        1140585.542,
+        1062930.196,
+        1060551.52,
+        1050194.92
+      ],
+      "candidate_ns_per_query": [
+        1043407.565,
+        1047928.415,
+        1067495.944,
+        1048534.544,
+        1048770.557
+      ],
+      "baseline_median_ns": 1060551.52,
+      "candidate_median_ns": 1048534.544,
+      "candidate_delta_percent": -1.1330874336024754
+    },
+    {
+      "fixture": "native_circle",
+      "mode": "warm",
+      "baseline_ns_per_query": [
+        280.091,
+        450.649,
+        288.07,
+        280.031,
+        282.33
+      ],
+      "candidate_ns_per_query": [
+        278.691,
+        274.091,
+        283.48,
+        276.031,
+        281.861
+      ],
+      "baseline_median_ns": 282.33,
+      "candidate_median_ns": 278.691,
+      "candidate_delta_percent": -1.2889172245244995
+    },
+    {
+      "fixture": "rectangle",
+      "mode": "construct_and_measure",
+      "baseline_ns_per_query": [
+        29507.976,
+        30950.038,
+        29690.164,
+        30462.572,
+        29369.437
+      ],
+      "candidate_ns_per_query": [
+        30411.615,
+        29545.154,
+        30409.635,
+        30752.901,
+        29802.947
+      ],
+      "baseline_median_ns": 29690.164,
+      "candidate_median_ns": 30409.635,
+      "candidate_delta_percent": 2.423263812217402
+    },
+    {
+      "fixture": "rectangle",
+      "mode": "warm",
+      "baseline_ns_per_query": [
+        89.434,
+        91.474,
+        89.864,
+        90.834,
+        88.974
+      ],
+      "candidate_ns_per_query": [
+        97.003,
+        68.786,
+        77.765,
+        80.614,
+        89.244
+      ],
+      "baseline_median_ns": 89.864,
+      "candidate_median_ns": 80.614,
+      "candidate_delta_percent": -10.293332146354494
+    },
+    {
+      "fixture": "rectangles_64",
+      "mode": "construct_and_measure",
+      "baseline_ns_per_query": [
+        2102784.905,
+        2151096.293,
+        2091894.572,
+        2110514.596,
+        2127159.694
+      ],
+      "candidate_ns_per_query": [
+        2110144.621,
+        2134992.927,
+        2103469.518,
+        2073971.941,
+        2099198.951
+      ],
+      "baseline_median_ns": 2110514.596,
+      "candidate_median_ns": 2103469.518,
+      "candidate_delta_percent": -0.33380854192395226
+    },
+    {
+      "fixture": "rectangles_64",
+      "mode": "warm",
+      "baseline_ns_per_query": [
+        4228.33,
+        4775.693,
+        4095.789,
+        4165.535,
+        4265.278
+      ],
+      "candidate_ns_per_query": [
+        3534.948,
+        3538.247,
+        3593.413,
+        3528.918,
+        3607.573
+      ],
+      "baseline_median_ns": 4228.33,
+      "candidate_median_ns": 3538.247,
+      "candidate_delta_percent": -16.3204622155792
+    }
+  ],
+  "limitations": [
+    "These are three fixed valid fixtures and five trials, not a statistical proof of equivalence or a stack-wide regression bound.",
+    "Warm measurements reuse one prepared input after an initial observation. construct_and_measure includes fixture creation; shared scalar caches may already be warm.",
+    "The single rectangle construction median increased by 2.42%; other observed construction medians changed between -1.14% and -0.33%. Small warm-path timings varied; no general speedup is claimed.",
+    "Peak RSS comes from /usr/bin/time for the complete process, not per-operation retained heap or allocation counts.",
+    "Executable sizes describe this linked probe, not the library or application binary.",
+    "Guarded invalid/unavailable results intentionally differ from the baseline; focused regressions validate those corrections independently of the unchanged-output performance fixtures."
+  ]
+}

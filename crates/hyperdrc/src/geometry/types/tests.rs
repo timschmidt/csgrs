@@ -1,0 +1,209 @@
+use super::*;
+use crate::geometry::polygon_area_scalar;
+
+fn square() -> Polygon<f64> {
+    Polygon::new(
+        LineString::from(vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 1.0, y: 1.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: 0.0, y: 0.0 },
+        ]),
+        Vec::new(),
+    )
+}
+
+fn deny_refinement() {
+    let polynomial = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+        [-36, 1368, -11034, 31728, -38280, 16620]
+            .into_iter()
+            .map(Real::from)
+            .collect(),
+    )
+    .unwrap();
+    assert!(matches!(
+        polynomial.isolate_unit_interval_roots(),
+        Err(hypercurve::ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::BudgetExhausted
+    ));
+}
+
+#[test]
+fn failed_source_construction_does_not_publish_placeholder_area_or_bounds() {
+    let invalid = Polygon::new(LineString(Vec::new()), Vec::new());
+    assert!(invalid.exact_construction_error().is_some());
+    assert!(invalid.exact_area().is_none());
+    assert!(polygon_area_scalar(&invalid).is_none());
+    assert!(invalid.exact_bounds().is_none());
+
+    let warm = square();
+    assert_eq!(warm.exact_area(), Some(&Real::one()));
+    assert!(warm.exact_bounds().is_some());
+    let valid_clone = warm.clone();
+    let invalid = warm.with_exact_construction_error("retained source failure");
+    assert!(invalid.exact_area().is_none());
+    assert!(polygon_area_scalar(&invalid).is_none());
+    assert!(invalid.exact_bounds().is_none());
+    assert_eq!(valid_clone.exact_area(), Some(&Real::one()));
+    assert!(valid_clone.exact_bounds().is_some());
+}
+
+#[test]
+fn denied_area_query_remains_retryable_and_cannot_use_report_area() {
+    for warm in [false, true] {
+        let polygon = square();
+        if warm {
+            assert_eq!(polygon.exact_area(), Some(&Real::one()));
+        }
+        let mut during = None;
+        let denied = hypercurve::evaluate_with_budget(
+            PREDICATE_POLICY,
+            hypercurve::WorkBudget::ZERO,
+            || {
+                deny_refinement();
+                during = Some((polygon.exact_area().cloned(), polygon_area_scalar(&polygon)));
+            },
+        );
+        assert!(denied.result.is_err());
+        assert_eq!(during, Some((None, None)));
+        assert_eq!(polygon.exact_area(), Some(&Real::one()));
+        assert_eq!(polygon_area_scalar(&polygon), Some(Real::one()));
+    }
+}
+
+#[test]
+fn denied_bounds_query_remains_retryable() {
+    for warm in [false, true] {
+        let polygon = square();
+        if warm {
+            assert!(polygon.exact_bounds().is_some());
+        }
+        let mut during = None;
+        let denied = hypercurve::evaluate_with_budget(
+            PREDICATE_POLICY,
+            hypercurve::WorkBudget::ZERO,
+            || {
+                deny_refinement();
+                during = Some(polygon.exact_bounds().cloned());
+            },
+        );
+        assert!(denied.result.is_err());
+        assert_eq!(during, Some(None));
+        assert_eq!(
+            polygon.exact_bounds(),
+            Some(&[0.into(), 0.into(), 1.into(), 1.into()])
+        );
+    }
+}
+
+#[test]
+fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
+    let polygon = Polygon::from_exact_region(
+        crate::translated_circle(Real::one(), 16, Real::zero(), Real::zero()),
+        LineString::from(vec![
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: -1.0, y: 0.0 },
+            Coord { x: 0.0, y: -1.0 },
+            Coord { x: 1.0, y: 0.0 },
+        ]),
+        Vec::new(),
+    );
+    assert_eq!(polygon.unsigned_area(), 2.0);
+    std::thread::scope(|scope| {
+        for denied in [true, false, true, false] {
+            let polygon = &polygon;
+            scope.spawn(move || {
+                if denied {
+                    let result = hypercurve::evaluate_with_budget(
+                        PREDICATE_POLICY,
+                        hypercurve::WorkBudget::ZERO,
+                        || {
+                            deny_refinement();
+                            assert!(polygon.exact_area().is_none());
+                            assert!(polygon.exact_bounds().is_none());
+                        },
+                    );
+                    assert!(result.result.is_err());
+                } else {
+                    hypercurve::CurvePreviewOptions::try_approximate_512(1.0, 1.0)
+                        .unwrap()
+                        .evaluate(|| {
+                            assert_eq!(
+                                crate::scalar::compare(polygon.exact_area().unwrap(), &Real::pi()),
+                                Some(std::cmp::Ordering::Equal)
+                            );
+                            assert_eq!(
+                                polygon.exact_bounds(),
+                                Some(&[(-1).into(), (-1).into(), 1.into(), 1.into()])
+                            );
+                        });
+                }
+            });
+        }
+    });
+    let cached =
+        hypercurve::evaluate_with_budget(PREDICATE_POLICY, hypercurve::WorkBudget::ZERO, || {
+            (
+                polygon.exact_area().cloned(),
+                polygon.exact_bounds().cloned(),
+            )
+        });
+    assert_eq!(cached.usage, hypercurve::WorkUsage::default());
+    let (area, bounds) = cached.result.unwrap().certified().unwrap();
+    assert_eq!(
+        crate::scalar::compare(&area.unwrap(), &Real::pi()),
+        Some(std::cmp::Ordering::Equal)
+    );
+    assert_eq!(bounds, Some([(-1).into(), (-1).into(), 1.into(), 1.into()]));
+}
+
+#[test]
+fn unavailable_native_area_cannot_be_replaced_with_report_chords() {
+    use hypercurve::{
+        Curve2, CurvePath2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, RationalBezier2,
+    };
+
+    // This full degree-five cap is also retained by Hypercurve's exact-closure
+    // suite. W(t) = 1 + 5t + t^5 is positive, but its native area currently has
+    // no scalar representation. The finite triangle samples t = 0, 1/2, 1.
+    let curve = RationalBezier2::try_new(
+        [(0, 0), (1, 1), (2, 2), (3, 2), (4, 1), (5, 0)]
+            .into_iter()
+            .map(|(x, y)| Point2::from_values(x, y))
+            .collect(),
+        [1, 2, 3, 4, 5, 7].into_iter().map(Real::from).collect(),
+    )
+    .unwrap();
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(curve),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(5, 0), Point2::from_values(0, 0)).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+    )
+    .unwrap();
+    assert_eq!(region.filled_area().unwrap(), None);
+    let polygon = Polygon::from_exact_region(
+        region,
+        LineString::from(vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 5.0, y: 0.0 },
+            Coord {
+                x: 325.0 / 113.0,
+                y: 175.0 / 113.0,
+            },
+            Coord { x: 0.0, y: 0.0 },
+        ]),
+        Vec::new(),
+    );
+    assert!(polygon.unsigned_area() > 0.0);
+    assert_eq!(polygon.exact_area(), None);
+    assert_eq!(polygon_area_scalar(&polygon), None);
+}

@@ -5,6 +5,45 @@ records only measured performance work. HyperDRC remains a conservative release
 reviewer: a spatial index may propose candidates, but exact or explicitly lossy
 narrow-phase geometry still decides findings.
 
+## Exact measurement cache repair, 2026-10-08
+
+Polygon area and bounds now cache completed STRICT measurements only. A retained
+source-construction failure or exhausted operation cannot publish a measurement,
+including a warm cached value. Unavailable native area is no longer replaced by
+the area of report chords. Five focused regressions cover invalid placeholders,
+warm and cold budget denial, retry, concurrent preview/budget scopes, and an
+unsupported degree-five rational cap. The complete release library suite passed
+1,119 tests; strict all-target Clippy and rustdoc also passed. The
+[validation manifest](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json)
+retains commands, failures, source hashes, and the separate Gerber lint cleanup.
+
+Five alternating baseline/candidate process pairs measured the same three valid
+fixtures, with 1,000 iterations per row, release compilation, and CPU 0 affinity.
+All task builds and tests had exited. Report row counts, serialized byte lengths,
+checksums, and bounds match. Median time per observation, in microseconds:
+
+| Fixture | Mode | Baseline | Guarded cache |
+| --- | --- | ---: | ---: |
+| Rectangle | Warm | 0.090 | 0.081 |
+| Rectangle | Construct and measure | 29.690 | 30.410 |
+| Native circle | Warm | 0.282 | 0.279 |
+| Native circle | Construct and measure | 1,060.552 | 1,048.535 |
+| 64 rectangles | Warm | 4.228 | 3.538 |
+| 64 rectangles | Construct and measure | 2,110.515 | 2,103.470 |
+
+The rectangle construction median increased 2.42%; the other construction
+medians changed by less than 1.14%. Warm timings are small and variable, so this
+probe supports no general speedup claim. Whole-process peak RSS was
+9,756–9,844 KiB for the baseline and 9,672–9,996 KiB for the candidate. Linked probe
+sizes were 18,658,032 and 18,650,496 bytes. These are process and executable
+measurements, not allocation counts or a library-size comparison. The
+[raw runs and replay inputs](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/manifest.json)
+retain all observations and limitations.
+
+This repair covers the measurement boundary. Readiness consumers that discard
+`None`, component/projection caches, native source geometry, and conservative
+spatial rejection still require integration work.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

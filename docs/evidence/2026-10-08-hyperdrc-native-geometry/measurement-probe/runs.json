@@ -1,0 +1,202 @@
+[
+  {
+    "trial": 1,
+    "mode": "baseline",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-1-baseline-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-baseline-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-1-baseline.jsonl",
+    "resources": "trial-1-baseline-resources.log",
+    "process_peak_rss_kib": 9828,
+    "started_unix": 1791493053.6588244,
+    "finished_unix": 1791493056.840305
+  },
+  {
+    "trial": 1,
+    "mode": "candidate",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-1-candidate-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-candidate-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-1-candidate.jsonl",
+    "resources": "trial-1-candidate-resources.log",
+    "process_peak_rss_kib": 9672,
+    "started_unix": 1791493056.860652,
+    "finished_unix": 1791493060.0569801
+  },
+  {
+    "trial": 2,
+    "mode": "candidate",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-2-candidate-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-candidate-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-2-candidate.jsonl",
+    "resources": "trial-2-candidate-resources.log",
+    "process_peak_rss_kib": 9996,
+    "started_unix": 1791493060.0686018,
+    "finished_unix": 1791493063.2928717
+  },
+  {
+    "trial": 2,
+    "mode": "baseline",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-2-baseline-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-baseline-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-2-baseline.jsonl",
+    "resources": "trial-2-baseline-resources.log",
+    "process_peak_rss_kib": 9828,
+    "started_unix": 1791493063.3051102,
+    "finished_unix": 1791493066.6413171
+  },
+  {
+    "trial": 3,
+    "mode": "baseline",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-3-baseline-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-baseline-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-3-baseline.jsonl",
+    "resources": "trial-3-baseline-resources.log",
+    "process_peak_rss_kib": 9816,
+    "started_unix": 1791493066.6531146,
+    "finished_unix": 1791493069.8502707
+  },
+  {
+    "trial": 3,
+    "mode": "candidate",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-3-candidate-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-candidate-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-3-candidate.jsonl",
+    "resources": "trial-3-candidate-resources.log",
+    "process_peak_rss_kib": 9888,
+    "started_unix": 1791493069.8642592,
+    "finished_unix": 1791493073.077904
+  },
+  {
+    "trial": 4,
+    "mode": "candidate",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-4-candidate-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-candidate-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-4-candidate.jsonl",
+    "resources": "trial-4-candidate-resources.log",
+    "process_peak_rss_kib": 9724,
+    "started_unix": 1791493073.0902288,
+    "finished_unix": 1791493076.2556512
+  },
+  {
+    "trial": 4,
+    "mode": "baseline",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-4-baseline-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-baseline-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-4-baseline.jsonl",
+    "resources": "trial-4-baseline-resources.log",
+    "process_peak_rss_kib": 9756,
+    "started_unix": 1791493076.2681186,
+    "finished_unix": 1791493079.4823875
+  },
+  {
+    "trial": 5,
+    "mode": "baseline",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-5-baseline-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-baseline-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-5-baseline.jsonl",
+    "resources": "trial-5-baseline-resources.log",
+    "process_peak_rss_kib": 9844,
+    "started_unix": 1791493079.4948585,
+    "finished_unix": 1791493082.7143936
+  },
+  {
+    "trial": 5,
+    "mode": "candidate",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/trial-5-candidate-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-measurement-candidate-bin"
+    ],
+    "exit_code": 0,
+    "stdout": "trial-5-candidate.jsonl",
+    "resources": "trial-5-candidate-resources.log",
+    "process_peak_rss_kib": 9908,
+    "started_unix": 1791493082.7269337,
+    "finished_unix": 1791493085.917203
+  }
+]

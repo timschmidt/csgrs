@@ -36,9 +36,8 @@ pub fn multipolygon_to_shapes(
 /// Convert projected polygons to report shapes while keeping the area release
 /// predicate in the exact scalar domain.
 ///
-/// Coordinates enter from the finite report projection and are lifted exactly
-/// as dyadics for the shoelace sum. The stored `ViolationPolygon::area` remains
-/// `f64` because it is report/output data.
+/// The release predicate uses the authoritative native region area. The stored
+/// `ViolationPolygon::area` remains `f64` because it is report/output data.
 pub fn multipolygon_to_shapes_scalar(
     multipolygon: &MultiPolygon<f64>,
     min_area: &Scalar,
@@ -63,17 +62,7 @@ pub fn multipolygon_to_shapes_scalar(
 }
 
 pub(crate) fn polygon_area_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
-    polygon.exact_area().cloned().or_else(|| {
-        let exterior = ring_area_scalar(polygon.exterior())?;
-        let holes = balanced_scalar_sum(
-            polygon
-                .interiors()
-                .iter()
-                .map(ring_area_scalar)
-                .collect::<Option<Vec<_>>>()?,
-        );
-        Some((exterior - holes).abs())
-    })
+    polygon.exact_area().cloned()
 }
 
 pub(crate) fn multipolygon_area_scalar(multipolygon: &MultiPolygon<f64>) -> Option<Scalar> {
@@ -113,24 +102,4 @@ pub(crate) fn polygon_bounds_scalar(polygon: &Polygon<f64>) -> Option<[Scalar; 4
 
 fn ring_to_coordinates(ring: &LineString<f64>) -> Vec<[f64; 2]> {
     ring.0.iter().map(|Coord { x, y }| [*x, *y]).collect()
-}
-
-fn ring_area_scalar(ring: &LineString<f64>) -> Option<Scalar> {
-    let mut points = ring.0.iter();
-    let first = points.next()?;
-    let mut previous = first;
-    let mut doubled = Scalar::zero();
-    for point in points {
-        let x0 = Scalar::try_from(previous.x).ok()?;
-        let y0 = Scalar::try_from(previous.y).ok()?;
-        let x1 = Scalar::try_from(point.x).ok()?;
-        let y1 = Scalar::try_from(point.y).ok()?;
-        doubled += x0 * y1 - x1 * y0;
-        previous = point;
-    }
-    if previous != first {
-        doubled += Scalar::try_from(previous.x).ok()? * Scalar::try_from(first.y).ok()?
-            - Scalar::try_from(first.x).ok()? * Scalar::try_from(previous.y).ok()?;
-    }
-    Some(crate::scalar::half(&doubled).abs())
 }

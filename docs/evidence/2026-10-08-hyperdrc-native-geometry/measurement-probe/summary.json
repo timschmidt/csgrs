@@ -1,0 +1,128 @@
+[
+  {
+    "fixture": "native_circle",
+    "mode": "construct_and_measure",
+    "baseline_ns_per_query": [
+      1036231.637,
+      1140585.542,
+      1062930.196,
+      1060551.52,
+      1050194.92
+    ],
+    "candidate_ns_per_query": [
+      1043407.565,
+      1047928.415,
+      1067495.944,
+      1048534.544,
+      1048770.557
+    ],
+    "baseline_median_ns": 1060551.52,
+    "candidate_median_ns": 1048534.544,
+    "candidate_delta_percent": -1.1330874336024754
+  },
+  {
+    "fixture": "native_circle",
+    "mode": "warm",
+    "baseline_ns_per_query": [
+      280.091,
+      450.649,
+      288.07,
+      280.031,
+      282.33
+    ],
+    "candidate_ns_per_query": [
+      278.691,
+      274.091,
+      283.48,
+      276.031,
+      281.861
+    ],
+    "baseline_median_ns": 282.33,
+    "candidate_median_ns": 278.691,
+    "candidate_delta_percent": -1.2889172245244995
+  },
+  {
+    "fixture": "rectangle",
+    "mode": "construct_and_measure",
+    "baseline_ns_per_query": [
+      29507.976,
+      30950.038,
+      29690.164,
+      30462.572,
+      29369.437
+    ],
+    "candidate_ns_per_query": [
+      30411.615,
+      29545.154,
+      30409.635,
+      30752.901,
+      29802.947
+    ],
+    "baseline_median_ns": 29690.164,
+    "candidate_median_ns": 30409.635,
+    "candidate_delta_percent": 2.423263812217402
+  },
+  {
+    "fixture": "rectangle",
+    "mode": "warm",
+    "baseline_ns_per_query": [
+      89.434,
+      91.474,
+      89.864,
+      90.834,
+      88.974
+    ],
+    "candidate_ns_per_query": [
+      97.003,
+      68.786,
+      77.765,
+      80.614,
+      89.244
+    ],
+    "baseline_median_ns": 89.864,
+    "candidate_median_ns": 80.614,
+    "candidate_delta_percent": -10.293332146354494
+  },
+  {
+    "fixture": "rectangles_64",
+    "mode": "construct_and_measure",
+    "baseline_ns_per_query": [
+      2102784.905,
+      2151096.293,
+      2091894.572,
+      2110514.596,
+      2127159.694
+    ],
+    "candidate_ns_per_query": [
+      2110144.621,
+      2134992.927,
+      2103469.518,
+      2073971.941,
+      2099198.951
+    ],
+    "baseline_median_ns": 2110514.596,
+    "candidate_median_ns": 2103469.518,
+    "candidate_delta_percent": -0.33380854192395226
+  },
+  {
+    "fixture": "rectangles_64",
+    "mode": "warm",
+    "baseline_ns_per_query": [
+      4228.33,
+      4775.693,
+      4095.789,
+      4165.535,
+      4265.278
+    ],
+    "candidate_ns_per_query": [
+      3534.948,
+      3538.247,
+      3593.413,
+      3528.918,
+      3607.573
+    ],
+    "baseline_median_ns": 4228.33,
+    "candidate_median_ns": 3538.247,
+    "candidate_delta_percent": -16.3204622155792
+  }
+]

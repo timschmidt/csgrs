@@ -1720,20 +1720,20 @@ fn repeat_curves(
             curves.push(
                 curve::try_translated_with_context(
                     &curve,
-                    real(f64::from(x) * step_repeat.distance_x).ok_or_else(|| {
+                    real(f64::from(x) * step_repeat.distance_x).ok_or(
                         IoError::UnrepresentableCoordinate {
                             format: "Gerber",
                             field: "step-repeat x translation",
                             target: "Real",
-                        }
-                    })?,
-                    real(f64::from(y) * step_repeat.distance_y).ok_or_else(|| {
+                        },
+                    )?,
+                    real(f64::from(y) * step_repeat.distance_y).ok_or(
                         IoError::UnrepresentableCoordinate {
                             format: "Gerber",
                             field: "step-repeat y translation",
                             target: "Real",
-                        }
-                    })?,
+                        },
+                    )?,
                     &GeometryContext::new(decisions.predicate_policy()),
                 )
                 .map(|outcome| decisions.consume_geometry(outcome))

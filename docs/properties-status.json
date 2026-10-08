@@ -18,7 +18,7 @@
     },
     {
       "id": "P2",
-      "requirement": "Structure preservation. Recognizable symbolic forms — π, e, roots, logs, trig endpoints, removable small-angle limits, quadratic surds `a + b√d` — stay symbolic while that avoids precision loss or repeated approximation. *Criterion:* an identity provable from the certificate must not require refinement; `hypot` of 3-4-5 stays exact.",
+      "requirement": "Structure preservation. Recognizable symbolic forms \u2014 \u03c0, e, roots, logs, trig endpoints, removable small-angle limits, quadratic surds `a + b\u221ad` \u2014 stay symbolic while that avoids precision loss or repeated approximation. *Criterion:* an identity provable from the certificate must not require refinement; `hypot` of 3-4-5 stays exact.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
@@ -37,9 +37,10 @@
       "evidence": [
         "src/solid/cache.rs",
         "tests/solid_cache.rs",
-        "docs/evidence/2026-10-08-properties/manifest.json"
+        "docs/evidence/2026-10-08-properties/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json"
       ],
-      "remaining": "Grammar cache policy and regressions are verified for the five modeled cache families. Scalar, curve, predicate, and mesh cache invariants still need a complete audit across representations, policies, and precisions."
+      "remaining": "Grammar cache policy and regressions are verified for the five modeled cache families. Scalar, curve, predicate, and mesh cache invariants still need a complete audit across representations, policies, and precisions. HyperDRC polygon measurements now reject invalid source construction and exhausted scopes, retain only completed STRICT cache values, and no longer substitute report area; five focused regressions and 1,119 release unit tests pass with matched valid-input cost evidence. Readiness propagation, component/projection caches, native source geometry and spatial consumers remain open."
     },
     {
       "id": "P5",
@@ -69,27 +70,28 @@
       "evidence": [
         "crates/hypercurve/src/policy.rs",
         "tests/geometry_context.rs",
-        "docs/evidence/2026-10-08-properties/manifest.json"
+        "docs/evidence/2026-10-08-properties/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json"
       ],
-      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit."
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. HyperDRC polygon measurements now reject invalid source construction and exhausted scopes, retain only completed STRICT cache values, and no longer substitute report area; five focused regressions and 1,119 release unit tests pass with matched valid-input cost evidence. Readiness propagation, component/projection caches, native source geometry and spatial consumers remain open."
     },
     {
       "id": "P9",
-      "requirement": "Certainty receipts. Results carry `Certified` vs. `Approximate512Consumed` — the *cost class of the proof* is a return value. *Criterion:* a consumer can always distinguish exact from fallback-decided without inspecting internals.",
+      "requirement": "Certainty receipts. Results carry `Certified` vs. `Approximate512Consumed` \u2014 the *cost class of the proof* is a return value. *Criterion:* a consumer can always distinguish exact from fallback-decided without inspecting internals.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
     },
     {
       "id": "P10",
-      "requirement": "Least-cost proof search. The decision cascade (structural shortcut → rational reducer → bounded refinement → deterministic terminal) finds the cheapest sufficient certificate, JIT-like for repeated queries. *Criterion:* repeated queries amortize; prepared objects beat one-shot paths on measured benches.",
+      "requirement": "Least-cost proof search. The decision cascade (structural shortcut \u2192 rational reducer \u2192 bounded refinement \u2192 deterministic terminal) finds the cheapest sufficient certificate, JIT-like for repeated queries. *Criterion:* repeated queries amortize; prepared objects beat one-shot paths on measured benches.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
     },
     {
       "id": "P11",
-      "requirement": "Never wrong, only unsure. Where a decision cannot be certified in budget, return Unknown — never a guess. *Criterion:* adversarial corpus contains zero false-positive/false-negative predicate answers at any policy.",
+      "requirement": "Never wrong, only unsure. Where a decision cannot be certified in budget, return Unknown \u2014 never a guess. *Criterion:* adversarial corpus contains zero false-positive/false-negative predicate answers at any policy.",
       "status": "in-progress",
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
@@ -98,14 +100,14 @@
     },
     {
       "id": "P12",
-      "requirement": "One region carrier, many families. `CurveRegion2` is the sole filled-region carrier; line/arc specializations are private fast paths inside the unified kernel, never parallel semantics. *Criterion:* a mixed line/arc/Bézier/NURBS boundary classifies consistently with the pure-line equivalent.",
+      "requirement": "One region carrier, many families. `CurveRegion2` is the sole filled-region carrier; line/arc specializations are private fast paths inside the unified kernel, never parallel semantics. *Criterion:* a mixed line/arc/B\u00e9zier/NURBS boundary classifies consistently with the pure-line equivalent.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
     },
     {
       "id": "P13",
-      "requirement": "Certified interior from winding. Interior sides are proven by arrangement from winding — authoring requires no orientation hints. Material/hole loops, nested islands, and fill rules (`NonZero`, `EvenOdd`) publish the regularized set. *Criterion:* same boundary with reversed author orientation yields the same region.",
+      "requirement": "Certified interior from winding. Interior sides are proven by arrangement from winding \u2014 authoring requires no orientation hints. Material/hole loops, nested islands, and fill rules (`NonZero`, `EvenOdd`) publish the regularized set. *Criterion:* same boundary with reversed author orientation yields the same region.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
@@ -121,20 +123,21 @@
     },
     {
       "id": "P15",
-      "requirement": "Boundary provenance. Curve operations emit evidence — retained roots, contact records, contour roles — not just coordinates. *Criterion:* every output boundary element can name the input elements that produced it.",
+      "requirement": "Boundary provenance. Curve operations emit evidence \u2014 retained roots, contact records, contour roles \u2014 not just coordinates. *Criterion:* every output boundary element can name the input elements that produced it.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
     },
     {
       "id": "P16",
-      "requirement": "Lossless promotion, typed blockers. Exact line/arc promotes losslessly to downstream consumers; anything uncertifiable (e.g. a general cubic) fails with a typed blocker rather than borrowing lossy display chords — unless a distinct bounded certificate admits it. *Criterion:* no display approximation ever feeds an exact downstream decision.",
+      "requirement": "Lossless promotion, typed blockers. Exact line/arc promotes losslessly to downstream consumers; anything uncertifiable (e.g. a general cubic) fails with a typed blocker rather than borrowing lossy display chords \u2014 unless a distinct bounded certificate admits it. *Criterion:* no display approximation ever feeds an exact downstream decision.",
       "status": "in-progress",
       "evidence": [
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open. HyperDRC polygon measurements now reject invalid source construction and exhausted scopes, retain only completed STRICT cache values, and no longer substitute report area; five focused regressions and 1,119 release unit tests pass with matched valid-input cost evidence. Readiness propagation, component/projection caches, native source geometry and spatial consumers remain open."
     },
     {
       "id": "P17",
@@ -166,14 +169,14 @@
     },
     {
       "id": "P21",
-      "requirement": "One exact arrangement. Booleans validate closed PWN input, corefine shared faces, build one radial cell complex, propagate absolute windings, and select closure-certified boundaries — one `boolean()` entry point, shared intersections across expression roots. *Criterion:* additional expression roots do not repeat arrangement work.",
+      "requirement": "One exact arrangement. Booleans validate closed PWN input, corefine shared faces, build one radial cell complex, propagate absolute windings, and select closure-certified boundaries \u2014 one `boolean()` entry point, shared intersections across expression roots. *Criterion:* additional expression roots do not repeat arrangement work.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
     },
     {
       "id": "P22",
-      "requirement": "Broad input contract, typed rejections. Disconnected, nested, coincident, balanced-nonmanifold, and winding-multiplicity inputs are supported; open meshes, invalid indices, and degenerate triangles are typed failures — never hangs, never wrong output, never unbounded allocation. *Criterion:* adversarial Boolean matrix (tangent, coplanar, near-coplanar, sliver, inverted, duplicate, invalid) all decide or diagnose.",
+      "requirement": "Broad input contract, typed rejections. Disconnected, nested, coincident, balanced-nonmanifold, and winding-multiplicity inputs are supported; open meshes, invalid indices, and degenerate triangles are typed failures \u2014 never hangs, never wrong output, never unbounded allocation. *Criterion:* adversarial Boolean matrix (tangent, coplanar, near-coplanar, sliver, inverted, duplicate, invalid) all decide or diagnose.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
@@ -194,7 +197,7 @@
     },
     {
       "id": "P25",
-      "requirement": "Vocabulary, not a second kernel. CSGRS composes native Hyper types — it never introduces another mesh, region, or polygon carrier. *Criterion:* every public type is a re-export or adapter of a kernel type.",
+      "requirement": "Vocabulary, not a second kernel. CSGRS composes native Hyper types \u2014 it never introduces another mesh, region, or polygon carrier. *Criterion:* every public type is a re-export or adapter of a kernel type.",
       "status": "unverified",
       "evidence": [],
       "remaining": "Audit production behavior and gather evidence at the full scope of this property."
@@ -231,13 +234,14 @@
         "tests/geometry_context.rs",
         "docs/evidence/2026-10-08-properties/manifest.json",
         "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json"
       ],
-      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open."
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open. HyperDRC polygon measurements now reject invalid source construction and exhausted scopes, retain only completed STRICT cache values, and no longer substitute report area; five focused regressions and 1,119 release unit tests pass with matched valid-input cost evidence. Readiness propagation, component/projection caches, native source geometry and spatial consumers remain open."
     },
     {
       "id": "P30",
-      "requirement": "The certainty receipt survives every boundary. `Certified`/`Uncertain`/`Unknown` must remain queryable at each ABI — including wasm/JS. *Target:* any boundary that currently flattens certainty (e.g. JS) should surface it.",
+      "requirement": "The certainty receipt survives every boundary. `Certified`/`Uncertain`/`Unknown` must remain queryable at each ABI \u2014 including wasm/JS. *Target:* any boundary that currently flattens certainty (e.g. JS) should surface it.",
       "status": "in-progress",
       "evidence": [
         "src/wasm/context_js.rs",
@@ -280,16 +284,20 @@
     {
       "id": "P35",
       "requirement": "Failure promotion. Every minimized, license-clean fuzz/adversarial failure becomes a deterministic regression fixture; full-resolution hard cases are never replaced with reduced proxies. *Criterion:* no fixture shrinks without explicit justification.",
-      "status": "unverified",
-      "evidence": [],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+      "status": "in-progress",
+      "evidence": [
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json"
+      ],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. HyperDRC polygon measurements now reject invalid source construction and exhausted scopes, retain only completed STRICT cache values, and no longer substitute report area; five focused regressions and 1,119 release unit tests pass with matched valid-input cost evidence. Readiness propagation, component/projection caches, native source geometry and spatial consumers remain open."
     },
     {
       "id": "P36",
       "requirement": "Evidence-gated retention. A change is retained only after focused correctness tests plus proportionate benchmark/allocation/size evidence; rejected experiments are recorded with decisive data. *Criterion:* the ledgers name kept, rejected, already-satisfied, or architecture-inapplicable for every idea.",
-      "status": "unverified",
-      "evidence": [],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+      "status": "in-progress",
+      "evidence": [
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json"
+      ],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. HyperDRC polygon measurements now reject invalid source construction and exhausted scopes, retain only completed STRICT cache values, and no longer substitute report area; five focused regressions and 1,119 release unit tests pass with matched valid-input cost evidence. Readiness propagation, component/projection caches, native source geometry and spatial consumers remain open."
     },
     {
       "id": "P37",
@@ -405,7 +413,7 @@
     {
       "id": "T4",
       "title": "One normative admission spec",
-      "requirement": "consolidate the distributed invariants (P1–P35) into the single documented protocol future extenders program against.",
+      "requirement": "consolidate the distributed invariants (P1\u2013P35) into the single documented protocol future extenders program against.",
       "status": "verified",
       "evidence": [
         "docs/admission.md",
@@ -417,7 +425,7 @@
         "crates/hypermesh/README.md"
       ],
       "remaining": "",
-      "verification": "The normative protocol maps all P1–P39 requirements, defines admission inputs/witnesses/closure/cache/boundary/evidence gates, and is linked from the root and all 19 main crate README files. All relative links in the protocol resolve. This proves the documentation deliverable only."
+      "verification": "The normative protocol maps all P1\u2013P39 requirements, defines admission inputs/witnesses/closure/cache/boundary/evidence gates, and is linked from the root and all 19 main crate README files. All relative links in the protocol resolve. This proves the documentation deliverable only."
     },
     {
       "id": "T5",
@@ -546,12 +554,13 @@
       {
         "path": "crates/hypermesh/FUTURE_WORK.md",
         "status": "open",
-        "remaining": "Entire document and its local AGENTS.md read on 2026-10-08. Certify the unchanged sampled-sphere hull inputs, including 32 × 16, without substituting rationalized geometry. Initial source inspection found source-fact hull entry points, but mesh.convex_hull still passes only positions; the full evidence/admission audit and implementation remain open."
+        "remaining": "Entire document and its local AGENTS.md read on 2026-10-08. Certify the unchanged sampled-sphere hull inputs, including 32 \u00d7 16, without substituting rationalized geometry. Initial source inspection found source-fact hull entry points, but mesh.convex_hull still passes only positions; the full evidence/admission audit and implementation remain open."
       },
       {
         "path": "crates/hyperreal/verification/README.md",
         "status": "open",
-        "remaining": "All eight remaining proof/completion obligations in the final section, including implementation-connected Real/Computable denotations, arithmetic/dependency boundaries, domains, caches, and API behavior."
+        "remaining": "Entire 442-line document read on 2026-10-08. All eight remaining proof/completion obligations, including implementation-connected Real/Computable denotations, arithmetic/dependency boundaries, domains, caches, concurrency, termination and API behavior, remain open. Its 94 production-contract and 119 model-theorem claims were read, not independently reverified in this batch; the immutable baseline and --require-complete acceptance gate remain required.",
+        "reviewed_sha256": "3f0749c0f77b58858f579a7a842508a0f2d2fdb2f912e4679192318feaa8b774"
       },
       {
         "path": "crates/hyperdrc/docs/design-readiness-plan.md",
@@ -578,7 +587,7 @@
   "next_actions": [
     "The complete configured Hypercurve CI command passed at 774de5d9c with sources held fixed through rustdoc: 2,417 passed, 33 existing ignored. Preserve the earlier 4d3ec0237 compiled-test/source-overlap and separate committed-source doctest replay records. Complete the full repository pre-push matrix before any push.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
-    "Integrate the validated native segment metrics into HyperDRC, preserve exact source circles and authoritative bounds/projections, and propagate unavailable measurements into readiness diagnostics. The retained source-circle and four measurement failures remain open until their runtime paths and consumers are repaired.",
+    "Integrate the validated native segment metrics into HyperDRC, preserve exact source circles and authoritative bounds/projections, and propagate unavailable measurements into readiness diagnostics. The five polygon measurement regressions now pass; source-circle fidelity, component/projection caches, conservative spatial rejection and downstream Option/filter_map consumers remain open.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."
   ],

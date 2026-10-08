@@ -1,0 +1,59 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error: unnecessary closure used to substitute value for `Option::None`
+    --> src/io/gerber.rs:1723:21
+     |
+1723 | /                     real(f64::from(x) * step_repeat.distance_x).ok_or_else(|| {
+1724 | |                         IoError::UnrepresentableCoordinate {
+1725 | |                             format: "Gerber",
+1726 | |                             field: "step-repeat x translation",
+...    |
+1729 | |                     })?,
+     | |______________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#unnecessary_lazy_evaluations
+     = note: `-D clippy::unnecessary-lazy-evaluations` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::unnecessary_lazy_evaluations)]`
+help: use `ok_or` instead
+     |
+1723 ~                     real(f64::from(x) * step_repeat.distance_x).ok_or({
+1724 +                         IoError::UnrepresentableCoordinate {
+1725 +                             format: "Gerber",
+1726 +                             field: "step-repeat x translation",
+1727 +                             target: "Real",
+1728 +                         }
+1729 ~                     })?,
+     |
+
+error: unnecessary closure used to substitute value for `Option::None`
+    --> src/io/gerber.rs:1730:21
+     |
+1730 | /                     real(f64::from(y) * step_repeat.distance_y).ok_or_else(|| {
+1731 | |                         IoError::UnrepresentableCoordinate {
+1732 | |                             format: "Gerber",
+1733 | |                             field: "step-repeat y translation",
+...    |
+1736 | |                     })?,
+     | |______________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#unnecessary_lazy_evaluations
+help: use `ok_or` instead
+     |
+1730 ~                     real(f64::from(y) * step_repeat.distance_y).ok_or({
+1731 +                         IoError::UnrepresentableCoordinate {
+1732 +                             format: "Gerber",
+1733 +                             field: "step-repeat y translation",
+1734 +                             target: "Real",
+1735 +                         }
+1736 ~                     })?,
+     |
+
+error: could not compile `csgrs` (lib) due to 2 previous errors

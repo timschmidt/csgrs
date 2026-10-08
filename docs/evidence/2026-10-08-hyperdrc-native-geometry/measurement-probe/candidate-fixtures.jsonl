@@ -1,0 +1,6 @@
+{"fixture":"rectangle","mode":"warm","iterations":1,"elapsed_ns":430,"rows":1,"output_bytes":94,"checksum":8154882106339021704,"bounds":[-1.0, -1.5, 1.0, 1.5]}
+{"fixture":"rectangle","mode":"construct_and_measure","iterations":1,"elapsed_ns":64056,"rows":1,"output_bytes":94,"checksum":8154882106339021704,"bounds":[-1.0, -1.5, 1.0, 1.5]}
+{"fixture":"native_circle","mode":"warm","iterations":1,"elapsed_ns":760,"rows":1,"output_bytes":4996,"checksum":1694851298520075004,"bounds":[-1.0, -1.0, 1.0, 1.0]}
+{"fixture":"native_circle","mode":"construct_and_measure","iterations":1,"elapsed_ns":1458540,"rows":1,"output_bytes":4996,"checksum":1694851298520075004,"bounds":[-1.0, -1.0, 1.0, 1.0]}
+{"fixture":"rectangles_64","mode":"warm","iterations":1,"elapsed_ns":4100,"rows":64,"output_bytes":6218,"checksum":14174055103819933552,"bounds":[-1.0, -1.5, 190.0, 1.5]}
+{"fixture":"rectangles_64","mode":"construct_and_measure","iterations":1,"elapsed_ns":2426803,"rows":64,"output_bytes":6218,"checksum":14174055103819933552,"bounds":[-1.0, -1.5, 190.0, 1.5]}

@@ -1,0 +1,15 @@
+[package]
+name = "hyperdrc-measurement-probe"
+version = "0.0.0"
+edition = "2024"
+[dependencies]
+hyperdrc = { path = "hyperdrc" }
+hypercurve = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal" }
+serde_json = "1.0"
+[workspace]
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false

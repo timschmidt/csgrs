@@ -1,0 +1,14 @@
+{
+  "exit_codes": {
+    "baseline": 0,
+    "candidate": 0
+  },
+  "rows_per_binary": 6,
+  "outputs_equal": true,
+  "compared_fields": "fixture, mode, iterations, row count, serialized report byte length, FNV-1a report checksum, finite bounds",
+  "dependency_identities_equal": true,
+  "probe_dependencies_are_root_locked_packages": true,
+  "timing_claim": false,
+  "limitation": "Correctness-only fixture runs occurred while the DRC release unit suite was active; elapsed times are unused.",
+  "bookkeeping_correction": "Initial pre-execution lock comparison forgot to exclude the additional local probe package; no dependency identity mismatch existed."
+}

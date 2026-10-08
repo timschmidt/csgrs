@@ -1,0 +1,87 @@
+{
+  "base_revision": "d838034a762429b2bb517005ae5a6b0a711a3d0b",
+  "status": "Retained measurement-boundary repair with focused regressions, full release unit validation, strict Clippy/docs, and matched valid-input cost evidence. Broader consumer integration remains open.",
+  "scope": "Guard exact polygon measurements against source-construction failure, exhausted budgets, and preview context; cache completed STRICT successes only; remove the report-chord area fallback.",
+  "cache_contract": "One completed STRICT area and bounds value per immutable region, shared by polygon clones. Unavailable results are retryable; concurrent cold queries may duplicate work. Warm values are denied after operation budget exhaustion. No new cache capacity or whole-operation time/memory bound is asserted.",
+  "tests": [
+    {
+      "command": "cargo test --locked -p hyperdrc --lib geometry::types::tests",
+      "exit_code": 0,
+      "passed": 5,
+      "log": "measurement-focused.log"
+    },
+    {
+      "command": "cargo check --offline -p hyperdrc --lib",
+      "exit_code": 0,
+      "log": "measurement-check.log"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "measurement-fmt.log"
+    },
+    {
+      "command": "cargo test --locked --release -p hyperdrc --lib",
+      "exit_code": 0,
+      "passed": 1119,
+      "log": "measurement-release-library.log",
+      "note": "Complete unit suite; this preceded the two dependency-only Gerber ok_or lint edits."
+    },
+    {
+      "command": "cargo clippy --locked -p hyperdrc --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "measurement-clippy.log"
+    },
+    {
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hyperdrc --all-features --no-deps",
+      "exit_code": 0,
+      "log": "measurement-docs.log"
+    },
+    {
+      "command": "cargo test --locked --release -p csgrs --test geometry_context --no-default-features --features curve,gerber-io,offset gerber",
+      "exit_code": 0,
+      "passed": 2,
+      "log": "gerber-context-tests.log"
+    }
+  ],
+  "pending": [],
+  "limitations": [
+    "This repairs the measurement boundary, not all readiness consumers: Option/filter_map paths can still suppress unavailable areas, and finite diagnostic bounds remain available to report consumers.",
+    "The retained failures demonstrate invalid placeholder measurement, exhausted-scope measurement, and report-area substitution. They do not independently reproduce cached-None poisoning or a preview-poisoned cache.",
+    "Component extraction/projection caches, source-native circles, clearance consumers, conservative spatial indices, and typed readiness propagation are separate follow-up work.",
+    "No complete configured integration suite, fuzz, ASan, formal, coverage, full-workspace, or pre-push result is asserted."
+  ],
+  "sources": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/src/geometry/types.rs": "e7a31ff1cd50a7b27b6d4e75cd14482d4c3b39e8adf608a5ac654db1e48f1b6b",
+    "crates/hyperdrc/src/geometry/types/tests.rs": "c38374193c70921d7271c6cd41f62b58796370737a21889e28acfaa3031b0226",
+    "crates/hyperdrc/src/geometry/violations.rs": "69346716a26455e6dc5ca4875a82034bb49c5e87550213484ab1085371c56564",
+    "crates/hypercurve/src/policy.rs": "67923745098557fb20229fadd9dde82e06e91c87449d561e2bf62e79b0243b2f",
+    "crates/hypersolve/src/work_budget.rs": "01cefba2901bc0e390f10934c65372c0fb35b5c1460397f542c6794ac9a3eac1",
+    "src/io/gerber.rs": "431ec06321b7c7f3c6455361c1c637e80e5de89a0c3e7d4d351ee65d21e8349b"
+  },
+  "performance_evidence": "measurement-probe/manifest.json",
+  "initial_validation_failure": {
+    "command": "cargo clippy --locked -p hyperdrc --all-features --all-targets -- -D warnings",
+    "exit_code": 101,
+    "log": "measurement-clippy-initial.log",
+    "repair": "Two pre-existing unnecessary ok_or_else closures in src/io/gerber.rs became direct ok_or errors. Each error contains only static string fields; no measurement algorithm changed."
+  },
+  "empty_test_filter": {
+    "command": "cargo test --locked --release -p csgrs --lib --no-default-features --features curve,gerber-io,offset io::gerber",
+    "exit_code": 0,
+    "passed": 0,
+    "log": "gerber-lint-empty-filter.log",
+    "note": "This did not validate Gerber behavior. Replaced by the integration-test command retained above."
+  },
+  "files": {
+    "measurement-check.log": "8b0c5218a203693e6fd34b21e29e88de581727f13232caaf1895380c773efdb1",
+    "measurement-clippy-initial.log": "4591369078a393e91ad6940dc6b70798ad73af0d8fb0f7138a38af1d9e6632ad",
+    "measurement-clippy.log": "8a1b17fb9174481b652094344b076acaf09e4d76035b9c4e61df005882460a5c",
+    "measurement-docs.log": "6f04135c9a20fd0b9365c52c7df17f181384bd696f4858a0b6ab7efc6f209c5c",
+    "measurement-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "measurement-focused.log": "82c867394fd5597faea5cdc233862fe526a754051ea64858698fde677eb67295",
+    "measurement-release-library.log": "d1a260d2c3780994ef31144cb07e85fda28eb827b957c99d66100aab41612a94"
+  }
+}

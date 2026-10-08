@@ -1,0 +1,160 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 77f7324dd..91453fae3 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -2698,6 +2698,7 @@ dependencies = [
+  "hyperlimit",
+  "hyperpath",
+  "hyperreal",
++ "hypersolve",
+  "libc",
+  "log",
+  "parquet",
+diff --git a/crates/hyperdrc/Cargo.toml b/crates/hyperdrc/Cargo.toml
+index ba830040e..71c43e442 100644
+--- a/crates/hyperdrc/Cargo.toml
++++ b/crates/hyperdrc/Cargo.toml
+@@ -31,6 +31,7 @@ hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = fal
+ hypercurve = { version = "0.3.1", path = "../hypercurve" }
+ hyperpath = { version = "0.3.0", path = "../hyperpath" }
+ hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
++hypersolve = { version = "0.3.1", path = "../hypersolve", default-features = false }
+ log = "0.4"
+ libc = "0.2"
+ parquet = { version = "57.3.1", default-features = false, features = ["arrow"] }
+diff --git a/crates/hyperdrc/src/geometry/types.rs b/crates/hyperdrc/src/geometry/types.rs
+index 396c2dc2b..ebc6ffe11 100644
+--- a/crates/hyperdrc/src/geometry/types.rs
++++ b/crates/hyperdrc/src/geometry/types.rs
+@@ -69,8 +69,8 @@ pub struct Polygon<T = f64> {
+     interiors: Vec<LineString<T>>,
+     region: Arc<CurveRegion2>,
+     exact_construction_error: Option<Arc<str>>,
+-    exact_area: Arc<OnceLock<Option<Real>>>,
+-    exact_bounds: Arc<OnceLock<Option<[Real; 4]>>>,
++    exact_area: Arc<OnceLock<Real>>,
++    exact_bounds: Arc<OnceLock<[Real; 4]>>,
+ }
+ 
+ impl PartialEq for Polygon<f64> {
+@@ -156,15 +156,15 @@ impl Polygon<f64> {
+     }
+ 
+     pub(crate) fn exact_area(&self) -> Option<&Real> {
+-        self.exact_area
+-            .get_or_init(|| exact_region_area(self.region.as_ref()))
+-            .as_ref()
++        self.exact_construction_error().is_none().then_some(())?;
++        cached_exact_measurement(&self.exact_area, || exact_region_area(self.region.as_ref()))
+     }
+ 
+     pub(crate) fn exact_bounds(&self) -> Option<&[Real; 4]> {
+-        self.exact_bounds
+-            .get_or_init(|| exact_region_bounds(self.region.as_ref()))
+-            .as_ref()
++        self.exact_construction_error().is_none().then_some(())?;
++        cached_exact_measurement(&self.exact_bounds, || {
++            exact_region_bounds(self.region.as_ref())
++        })
+     }
+ 
+     /// Returns the finite projected-ring area used in reports.
+@@ -264,7 +264,31 @@ impl Rect<f64> {
+     }
+ }
+ 
+-pub(crate) fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
++/// One completed STRICT measurement per immutable region, shared by polygon
++/// clones for their lifetime. Concurrent cold requests may duplicate work;
++/// only certified successes populate the slot. Unavailable results are
++/// retryable, and even a warm value cannot escape an exhausted operation.
++fn cached_exact_measurement<T>(
++    cache: &OnceLock<T>,
++    evaluate: impl FnOnce() -> Option<T>,
++) -> Option<&T> {
++    if hypersolve::work_budget::exhaustion().is_some() {
++        return None;
++    }
++    if let Some(value) = cache.get() {
++        return Some(value);
++    }
++    let value = hypercurve::evaluate_under(PREDICATE_POLICY, evaluate)
++        .certified()
++        .flatten();
++    if hypersolve::work_budget::exhaustion().is_some() {
++        return None;
++    }
++    let _ = cache.set(value?);
++    cache.get()
++}
++
++fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
+     region.filled_area().ok()?
+ }
+ 
+@@ -400,3 +424,6 @@ pub(crate) fn transform_exact_region(
+         )
+         .map_err(|error| format!("exact affine region transformation failed: {error}"))
+ }
++
++#[cfg(test)]
++mod tests;
+diff --git a/crates/hyperdrc/src/geometry/violations.rs b/crates/hyperdrc/src/geometry/violations.rs
+index b1e6609d4..76e7e8791 100644
+--- a/crates/hyperdrc/src/geometry/violations.rs
++++ b/crates/hyperdrc/src/geometry/violations.rs
+@@ -36,9 +36,8 @@ pub fn multipolygon_to_shapes(
+ /// Convert projected polygons to report shapes while keeping the area release
+ /// predicate in the exact scalar domain.
+ ///
+-/// Coordinates enter from the finite report projection and are lifted exactly
+-/// as dyadics for the shoelace sum. The stored `ViolationPolygon::area` remains
+-/// `f64` because it is report/output data.
++/// The release predicate uses the authoritative native region area. The stored
++/// `ViolationPolygon::area` remains `f64` because it is report/output data.
+ pub fn multipolygon_to_shapes_scalar(
+     multipolygon: &MultiPolygon<f64>,
+     min_area: &Scalar,
+@@ -63,17 +62,7 @@ pub fn multipolygon_to_shapes_scalar(
+ }
+ 
+ pub(crate) fn polygon_area_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
+-    polygon.exact_area().cloned().or_else(|| {
+-        let exterior = ring_area_scalar(polygon.exterior())?;
+-        let holes = balanced_scalar_sum(
+-            polygon
+-                .interiors()
+-                .iter()
+-                .map(ring_area_scalar)
+-                .collect::<Option<Vec<_>>>()?,
+-        );
+-        Some((exterior - holes).abs())
+-    })
++    polygon.exact_area().cloned()
+ }
+ 
+ pub(crate) fn multipolygon_area_scalar(multipolygon: &MultiPolygon<f64>) -> Option<Scalar> {
+@@ -114,23 +103,3 @@ pub(crate) fn polygon_bounds_scalar(polygon: &Polygon<f64>) -> Option<[Scalar; 4
+ fn ring_to_coordinates(ring: &LineString<f64>) -> Vec<[f64; 2]> {
+     ring.0.iter().map(|Coord { x, y }| [*x, *y]).collect()
+ }
+-
+-fn ring_area_scalar(ring: &LineString<f64>) -> Option<Scalar> {
+-    let mut points = ring.0.iter();
+-    let first = points.next()?;
+-    let mut previous = first;
+-    let mut doubled = Scalar::zero();
+-    for point in points {
+-        let x0 = Scalar::try_from(previous.x).ok()?;
+-        let y0 = Scalar::try_from(previous.y).ok()?;
+-        let x1 = Scalar::try_from(point.x).ok()?;
+-        let y1 = Scalar::try_from(point.y).ok()?;
+-        doubled += x0 * y1 - x1 * y0;
+-        previous = point;
+-    }
+-    if previous != first {
+-        doubled += Scalar::try_from(previous.x).ok()? * Scalar::try_from(first.y).ok()?
+-            - Scalar::try_from(first.x).ok()? * Scalar::try_from(previous.y).ok()?;
+-    }
+-    Some(crate::scalar::half(&doubled).abs())
+-}

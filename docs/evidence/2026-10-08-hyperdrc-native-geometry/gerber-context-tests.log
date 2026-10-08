@@ -1,0 +1,10 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 4.18s
+     Running tests/geometry_context.rs (target/release/deps/geometry_context-099e5a98f24c85cb)
+
+running 2 tests
+test gerber_boundary_contours_preserve_nested_parity_and_roundtrip ... ok
+test gerber_context_reaches_aperture_composition_and_projection ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.07s
+
