@@ -577,6 +577,11 @@ pub(super) fn selected_fiber_root_intervals_in_interval(
         AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
+        AlgebraicFiberRootIsolationStatus::BudgetExhausted => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         AlgebraicFiberRootIsolationStatus::DepthLimit
         | AlgebraicFiberRootIsolationStatus::Undecided => {
             Classification::Uncertain(UncertaintyReason::Predicate)
@@ -752,6 +757,11 @@ pub(super) fn selected_fiber_parameters_on_incident_ray(
         }
         AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        AlgebraicFiberRootIsolationStatus::BudgetExhausted => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
         }
         AlgebraicFiberRootIsolationStatus::DepthLimit
         | AlgebraicFiberRootIsolationStatus::Undecided => {
@@ -1193,6 +1203,11 @@ pub(super) fn algebraic_selected_parameters_from_norm(
             AlgebraicFiberRootIsolationStatus::InvalidEvidence
             | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
                 return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            AlgebraicFiberRootIsolationStatus::BudgetExhausted => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
             }
             AlgebraicFiberRootIsolationStatus::DepthLimit
             | AlgebraicFiberRootIsolationStatus::Undecided => {
@@ -1750,6 +1765,9 @@ pub(super) fn algebraic_selected_fiber_root_interval_refined(
         AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
+        AlgebraicFiberRootIsolationStatus::BudgetExhausted => Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        )),
         AlgebraicFiberRootIsolationStatus::DepthLimit
         | AlgebraicFiberRootIsolationStatus::Undecided => {
             Ok(Classification::Uncertain(UncertaintyReason::Predicate))
@@ -2256,6 +2274,11 @@ pub(super) fn selected_fiber_rebind_incidence(
             }
             AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            AlgebraicFiberRootIsolationStatus::BudgetExhausted => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
             }
             AlgebraicFiberRootIsolationStatus::DepthLimit
             | AlgebraicFiberRootIsolationStatus::Undecided => {

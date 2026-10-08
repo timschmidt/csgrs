@@ -101,16 +101,29 @@
         "failed": 0,
         "ignored": 0
       }
+    },
+    {
+      "name": "hypercurve-release-all",
+      "command": "cargo test --locked --release -j 4 -p hypercurve --all-features --lib --tests",
+      "code_revision": "546cd35fa",
+      "exit_code": 0,
+      "log": "hypercurve-release-all.log",
+      "sha256": "250a4f826588a73340fd456acb3577133868b8258c3bd7a9fdbbae019f62d387",
+      "tests": {
+        "passed": 2403,
+        "failed": 0,
+        "ignored": 33
+      }
     }
   ],
   "performance": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget/manifest.json",
   "preceding_performance_variant": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget-initial/manifest.json",
   "pending": [
-    "Complete Hypercurve library/integration rerun after the arc-preview fixture correction and new budget hooks."
+    "The complete debug-profile Hypercurve rerun remains required for the pre-push matrix; the release-profile library/integration rerun passed at 546cd35fa."
   ],
   "limitations": [
     "Current units bound only instrumented refinement/promotion attempts, not coefficient size, scalar work, memory, wall-clock time, or all curve paths. T3 remains in progress.",
-    "The prior debug Hypercurve broad run passed 2235 tests, ignored 20, and failed one preview-scope fixture; Cargo stopped before later integration binaries. The corrected focused fixture passes. Its original failure remains in ../2026-10-08-properties/curve-all-tests-before-fragment-test-correction.log.",
+    "The prior debug Hypercurve broad run passed 2235 tests, ignored 20, and failed one preview-scope fixture; Cargo stopped before later integration binaries. The corrected focused fixture passes. Its original failure remains in ../2026-10-08-properties/curve-all-tests-before-fragment-test-correction.log. The full release-profile rerun at 546cd35fa passed 2403 tests and ignored 33; this predates the further shared-isolator hooks.",
     "Root all-feature tests retain the existing ignored README PNG byte-comparison test.",
     "No 100% coverage, full workspace/feature matrix, ASan/fuzz/Verus campaign, competitive-library revalidation, or deployment is claimed."
   ]

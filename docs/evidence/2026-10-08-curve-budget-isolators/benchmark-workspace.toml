@@ -1,0 +1,9 @@
+[workspace]
+resolver = "3"
+members = ["crates/hypersolve", "crates/hyperreal", "crates/hyperlattice", "crates/hyperlimit"]
+
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false

@@ -14,9 +14,11 @@
 //! singleton refinement, represented-root sign-change refinement, tensor-image
 //! promotion, and Hypercurve's Bernstein/Sturm parameter subdivisions, native
 //! recursive-field refinements, and selected-fiber/local-field promotions.
-//! Generic ordered-field and selected-fiber isolators, other elimination
-//! entry points, scalar precision refinement, and arbitrary caller arithmetic
-//! are not comprehensively instrumented. Those paths need additional work
+//! The shared ordered-field Bernstein isolator, selected-fiber Sturm isolator,
+//! reusable fiber-root refiner, and retained local-field root refinements also
+//! participate. Other elimination entry points, remaining curve dispatch paths,
+//! scalar precision refinement, and arbitrary caller arithmetic are not
+//! comprehensively instrumented. Those paths need additional work
 //! before any whole-operation completion or time bound can be claimed.
 //!
 //! One promotion unit admits one instrumented projection entry, regardless of
@@ -34,7 +36,7 @@
 //! follow a future or propagate to spawned threads; configure each synchronous
 //! worker explicitly.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::fmt;
 
 /// Maximum admitted work of each kind in a synchronous operation.
@@ -131,6 +133,8 @@ impl Frame {
 }
 
 std::thread_local! {
+    // The common unbudgeted path need not initialize or borrow the frame stack.
+    static ACTIVE: Cell<bool> = const { Cell::new(false) };
     static FRAMES: RefCell<Vec<Frame>> = const { RefCell::new(Vec::new()) };
 }
 
@@ -140,12 +144,15 @@ std::thread_local! {
 /// permanent facts about an input's mathematical capabilities.
 #[inline]
 pub fn is_active() -> bool {
-    FRAMES.with_borrow(|frames| !frames.is_empty())
+    ACTIVE.with(Cell::get)
 }
 
 /// The innermost scope's first resource failure, if any.
 #[inline]
 pub fn exhaustion() -> Option<BudgetExceeded> {
+    if !is_active() {
+        return None;
+    }
     FRAMES.with_borrow(|frames| frames.last().and_then(|frame| frame.exhausted))
 }
 
@@ -158,6 +165,9 @@ pub fn exhaustion() -> Option<BudgetExceeded> {
 /// cannot clear an enclosing failure.
 #[inline]
 pub fn consume(kind: WorkKind, amount: usize) -> Result<(), BudgetExceeded> {
+    if !is_active() {
+        return Ok(());
+    }
     FRAMES.with_borrow_mut(|frames| {
         if let Some(error) = frames.last().and_then(|frame| frame.exhausted) {
             return Err(error);
@@ -196,7 +206,11 @@ pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> Budg
     impl Scope {
         fn finish(mut self) -> Frame {
             self.0 = false;
-            FRAMES.with_borrow_mut(|frames| frames.pop().expect("a budget scope owns its frame"))
+            FRAMES.with_borrow_mut(|frames| {
+                let frame = frames.pop().expect("a budget scope owns its frame");
+                ACTIVE.with(|active| active.set(!frames.is_empty()));
+                frame
+            })
         }
     }
 
@@ -205,6 +219,7 @@ pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> Budg
             if self.0 {
                 FRAMES.with_borrow_mut(|frames| {
                     let _ = frames.pop();
+                    ACTIVE.with(|active| active.set(!frames.is_empty()));
                 });
             }
         }
@@ -217,6 +232,7 @@ pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> Budg
             usage: WorkUsage::default(),
             exhausted,
         });
+        ACTIVE.with(|active| active.set(true));
     });
     let scope = Scope(true);
     let value = operation();

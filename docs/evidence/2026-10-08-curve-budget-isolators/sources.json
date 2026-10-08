@@ -1,0 +1,25 @@
+{
+  "base_revision": "546cd35fa",
+  "curve_benchmark_baseline_revision": "e225e6f69",
+  "sha256": {
+    "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "crates/hypercurve/Cargo.toml": "ca10638d0cf1999075ec9fe5d0c4a17d74e27ef179e479f96a238dfc4906ec92",
+    "crates/hypercurve/PERFORMANCE.md": "1c9bc4a1e6c260ded5a6b0c09143c9c3e52ca9bc27f11901fab5dbb89d40dbf7",
+    "crates/hypercurve/benches/bezier_algebraic_parameter.rs": "a190912e90cc7020a055684e112267297a6c57985e0dac1ad3e981d30206a368",
+    "crates/hypercurve/src/bezier_offset/fiber_sign.rs": "503f6756adcfef6623e39c52b6338520e716c8002e871a30104931a97227a0e5",
+    "crates/hypercurve/src/bezier_offset/recursive_quadratic.rs": "fbf2f05e5980569d3284b762a62ca7cf241bca511bbc3a71a46cf282f59faedc",
+    "crates/hypercurve/src/policy/budget_tests.rs": "bf51822528e18d0526fbea125ef7854d5d3fa6c56268ee002a7452f9ff656c85",
+    "crates/hypercurve/tests/work_budget.rs": "8c315cda05d9321c83fc2e94b949f78c5e815f607c20262c657ce97caf4db19a",
+    "crates/hypersolve/Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+    "crates/hypersolve/PERFORMANCE.md": "b770e4ee73261f76fc0410d91148ab288659f1d5ec56792e532524f782b71fae",
+    "crates/hypersolve/benches/certification.rs": "d4f9f95a966558098f098d8f93477f26c463769741ef8ea7240578c6240905e6",
+    "crates/hypersolve/src/algebraic_fiber.rs": "18e4fa13278c005061c9c118b741eb9089824ed4b7c6a248780be06007f4eecd",
+    "crates/hypersolve/src/algebraic_fiber/refinement.rs": "c7da0220440f8e73cb8a58057cb7394fda57911aaa56fac8f8367f193f7dcd26",
+    "crates/hypersolve/src/ordered_field_roots.rs": "8e990e89be1a85443229107bd4388125c9c85af0d1d19c3ca1e71e72966dc2e5",
+    "crates/hypersolve/src/work_budget.rs": "7c052227ab8be66251a0d8211d53788f625c413aefe7a01804dbfc25b725ab81",
+    "crates/hypersolve/src/work_budget/tests.rs": "be52c4d9d8a5467e51d5540f32e808528dc72009b954aded3d4c9123f1deff3b",
+    "scripts/compare-criterion-probe.py": "c767e0bfb80c3afbd50ba976761bfa3e4b18aa8d5b1f4a69a3cafff4a71fa988",
+    "scripts/compare-curve-budget-probe.py": "f5894493d742bdf3327ed6b33fb7fa09153ac5a2ed645eca5791427b5e1f11dc"
+  }
+}

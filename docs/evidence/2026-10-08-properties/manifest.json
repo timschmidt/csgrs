@@ -146,8 +146,7 @@
     }
   ],
   "pending": [
-    "cargo test --locked -p hypercurve --all-features --lib --tests",
-    "cargo clippy --locked -p hypercurve --all-features --all-targets -- -D warnings"
+    "cargo test --locked -p hypercurve --all-features --lib --tests"
   ],
   "limitations": [
     "Root all-feature tests leave the existing expensive README PNG byte-comparison test ignored.",
@@ -177,5 +176,6 @@
     "tests/wasm/geometry_certainty.ts": "0405b7fd676ea5acba7addafaa8fb193f8d0055f440cab74738106ad1eb0596d",
     "tests/wasm/package.json": "fee5dfbeedb5c0134b64a3a9a11f9377bda25e0bdafd21c026d9c12db556945c",
     "tests/wasm/package-lock.json": "da5a99ed3100038d23355b2569b1371e20489493b4a7c3b770685b82661452bc"
-  }
+  },
+  "follow_up": "../2026-10-08-curve-budget/manifest.json records the fixed preview regression, passing strict Hypercurve Clippy, and the complete 2403-pass release suite at 546cd35fa. The original debug-profile command remains pending for pre-push validation."
 }

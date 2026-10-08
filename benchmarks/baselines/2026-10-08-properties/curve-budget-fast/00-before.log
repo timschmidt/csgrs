@@ -1,0 +1,11 @@
+bezier_parameter_normal_form_zero_cold: 20000 iterations in 56.230532ms (2.811µs/iter), equal=20000
+bezier_parameter_normal_form_zero_reused: 20000 iterations in 1.116724ms (55ns/iter), equal=20000
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 415.137644ms (20.756µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 77.860529ms (3.893µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 172.256864ms (17.225µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 721.722633ms (72.172µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 75.432925ms (37.716µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 109.587653ms (54.793µs/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 23.678386ms (47ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 42.379503ms (2.118µs/iter), transformed=20000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 44.161661ms (2.208µs/iter), transformed=20000

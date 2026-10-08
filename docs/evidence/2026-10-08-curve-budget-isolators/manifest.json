@@ -1,0 +1,132 @@
+{
+  "scope": "Extend shared operation accounting into ordered-field and selected-fiber isolators; retain a cheap inactive-budget path. The full T3 operation/time bound remains in progress.",
+  "base_revision": "546cd35fa",
+  "checks": [
+    {
+      "name": "solver-all",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "solver-all.log",
+      "sha256": "e82b321f1dd258d787b3ebb6c34d9be90f2c10919d4c0266e52d4aa17befc44c",
+      "tests": {
+        "passed": 583,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-policy",
+      "command": "cargo test --locked -p hypercurve --all-features --lib policy::",
+      "exit_code": 0,
+      "log": "curve-policy.log",
+      "sha256": "ae46dc38c6c576999d48a7f3addbeee2942c474e9233d35b29c774fd4e7a2eb1",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "ffab631b26f025f2c27ff66dea8c897488543cc24b324bc63b824d92be9cab8a",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypercurve -p hypersolve --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "6ca69229a09ce99013cc35075737b282b6b0db7149a38a0f4c84766f11a4d7bb"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "release-solver",
+      "command": "cargo test --locked --release -p hypersolve --all-features --lib budget",
+      "exit_code": 0,
+      "log": "release-solver.log",
+      "sha256": "d6b7aac60d79084c2c5076667d3c413466dcfd18dde56e6b2134e302d342689e",
+      "tests": {
+        "passed": 15,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-policy",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib policy::",
+      "exit_code": 0,
+      "log": "release-policy.log",
+      "sha256": "4b3c69b2272ac0de91cce91f9b58210dbb80794e909f4512b73a465d749ef98a",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve",
+      "command": "cargo test --locked --release -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "release-curve.log",
+      "sha256": "3759304eb12ba1efaddc4a8246c981ef7964afd44300a72bb3a250d4da30ff37",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "wasm-clippy",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "8f243780c8b80b577286996c5494c30e39acb61596ee89ac30d98957086bff40"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypersolve -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "1d3302a07e193a242e2330097fa4396255cfa3f20c6412a8542b7f9d4d40d136"
+    },
+    {
+      "name": "curve-benchmark-build",
+      "command": "cargo bench --locked -p hypercurve --bench bezier_algebraic_parameter --no-run",
+      "exit_code": 0,
+      "log": "curve-benchmark-build.log",
+      "sha256": "daa863377ec63a30bdd279496db9fdce3179adb9a3ab0e2345eac4a32b60c368"
+    },
+    {
+      "name": "curve-benchmark-probe",
+      "command": "python3 scripts/compare-curve-budget-probe.py /tmp/properties-budget-baseline-bin /tmp/properties-budget-fast-curve-bin benchmarks/baselines/2026-10-08-properties/curve-budget-fast",
+      "exit_code": 0,
+      "log": "curve-benchmark-probe.log",
+      "sha256": "20f16ef963f206b932f5713490754b771e5aaf0f3dce69d524ac8771f6acaf60"
+    }
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/fiber-budget/manifest.json",
+  "initial_performance_variant": "../../../benchmarks/baselines/2026-10-08-properties/fiber-budget-initial/manifest.json",
+  "benchmark_provenance": "benchmark-provenance.json",
+  "pending": [],
+  "limitations": [
+    "The complete 2403-pass Hypercurve release run in ../2026-10-08-curve-budget/manifest.json predates these further hooks. The full debug-profile pre-push matrix is still pending.",
+    "No bound on all elimination, coefficient growth, scalar precision, arbitrary caller work, allocation, or elapsed time is established.",
+    "Criterion fixture assertions and exact regression tests are separate evidence; benchmark timing does not prove arbitrary-input correctness."
+  ],
+  "sources": "sources.json",
+  "curve_performance": "../../../benchmarks/baselines/2026-10-08-properties/curve-budget-fast/manifest.json",
+  "curve_benchmark_baseline_revision": "e225e6f69"
+}

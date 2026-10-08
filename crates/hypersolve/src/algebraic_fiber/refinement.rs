@@ -150,6 +150,8 @@ impl AlgebraicFiberRootRefiner {
             return Err(LocalFieldError::InvalidEvidence);
         }
         for _ in 0..steps {
+            crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1)
+                .map_err(|_| LocalFieldError::BudgetExhausted)?;
             let midpoint =
                 ((&lower + &upper) / Real::from(2_u8)).map_err(|_| LocalFieldError::Undecided)?;
             *subdivisions = subdivisions.saturating_add(1);
@@ -200,6 +202,83 @@ mod tests {
             upper: Real::from(upper),
             exact_root: None,
             distinct_root_count: 1,
+        }
+    }
+
+    #[test]
+    fn selected_fiber_refinement_retries_after_shared_budget_exhaustion() {
+        use crate::work_budget::{WorkBudget, WorkKind, with_budget};
+
+        for coefficients in [
+            vec![vec![0, 0, 1], vec![-1]],
+            vec![vec![0, 0, 0, 0, 1], vec![0, 0, -2], vec![1]],
+        ] {
+            let coefficients: Vec<Vec<Real>> = coefficients
+                .into_iter()
+                .map(|row| row.into_iter().map(Real::from).collect())
+                .collect();
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                let alpha = represented_root(
+                    vec![Real::from(-2), Real::zero(), Real::one()],
+                    Real::one(),
+                    Real::from(2),
+                    policy,
+                );
+                for axis in [
+                    CurveResultantParameter::First,
+                    CurveResultantParameter::Second,
+                ] {
+                    let polynomial = BivariatePolynomial::new(match axis {
+                        CurveResultantParameter::First => coefficients.clone(),
+                        CurveResultantParameter::Second => (0..coefficients[0].len())
+                            .map(|i| {
+                                coefficients
+                                    .iter()
+                                    .map(|row| row.get(i).cloned().unwrap_or_else(Real::zero))
+                                    .collect()
+                            })
+                            .collect(),
+                    });
+                    let fresh = || {
+                        AlgebraicFiberRootRefiner::try_new(&polynomial, axis, &alpha, policy)
+                            .unwrap()
+                    };
+                    let source = interval(1, 2);
+                    let expected = fresh().refine(&source, 4);
+                    assert_eq!(expected.status, AlgebraicFiberRootIsolationStatus::Isolated);
+                    let mut refiner = fresh();
+                    for limit in [0, 1] {
+                        let failed = with_budget(
+                            WorkBudget {
+                                refinements: limit,
+                                promotions: 0,
+                            },
+                            || {
+                                let report = refiner.refine(&source, 4);
+                                assert_eq!(
+                                    report.status,
+                                    AlgebraicFiberRootIsolationStatus::BudgetExhausted
+                                );
+                                assert!(report.intervals.is_empty());
+                                report
+                            },
+                        );
+                        assert_eq!(failed.result.unwrap_err().kind, WorkKind::RootRefinement);
+                        assert_eq!(failed.usage.refinements, limit);
+                    }
+                    let retry = with_budget(
+                        WorkBudget {
+                            refinements: 2048,
+                            promotions: 0,
+                        },
+                        || refiner.refine(&source, 4),
+                    );
+                    let report = retry.result.unwrap();
+                    assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+                    assert_eq!(report.certainty, Certainty::Exact);
+                    assert_eq!(report.intervals, expected.intervals);
+                }
+            }
         }
     }
 

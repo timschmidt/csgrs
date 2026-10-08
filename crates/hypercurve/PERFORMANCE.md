@@ -20,13 +20,22 @@ time or memory bound for curve operations.
 The retained counters inline their scope lookups and admission helper. The
 [paired probe](../../benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
 preserves every reported workload count and trace value across 11 unbudgeted
-parameter workloads. Final median changes range from -3.74% to +2.91%; the
+parameter workloads. The foundation's median changes range from -3.74% to +2.91%; the
 initial variant's deepest isolation row was +5.28%. Both experiments and raw
 samples are retained. The change provides a caller-visible resource contract;
 no performance improvement, allocator reduction, or competitive-suite result
 is claimed. Native budget/cache regression tests compare exact outputs after
 exhaustion and retry, including simple roots, repeated roots, and the unchanged
 five-root stationary-distance quintic.
+
+The subsequent shared-isolator extension checks a thread-local activity flag
+before accessing the budget stack. Its
+[curve probe](../../benchmarks/baselines/2026-10-08-properties/curve-budget-fast/manifest.json)
+again preserves all reported evidence, with medians from -4.18% to +3.95%
+against the same pre-budget executable. The separate
+[selected-fiber measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-ordered-field-and-selected-fiber-isolators)
+retain both the initial overhead and the activity-flag variant. These focused
+probes do not establish a full-suite regression ceiling or a time bound.
 
 ## Rational-image batch API gate
 

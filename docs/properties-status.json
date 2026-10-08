@@ -355,9 +355,13 @@
         "crates/hypersolve/src/algebraic_tensor_image.rs",
         "crates/hypercurve/README.md",
         "docs/evidence/2026-10-08-curve-budget/manifest.json",
-        "benchmarks/baselines/2026-10-08-properties/curve-budget/manifest.json"
+        "benchmarks/baselines/2026-10-08-properties/curve-budget/manifest.json",
+        "crates/hypersolve/src/ordered_field_roots.rs",
+        "crates/hypersolve/src/algebraic_fiber.rs",
+        "crates/hypersolve/src/algebraic_fiber/refinement.rs",
+        "docs/evidence/2026-10-08-curve-budget-isolators/manifest.json"
       ],
-      "remaining": "Shared synchronous work accounting and typed exhaustion now cover instrumented root subdivisions and selected algebraic promotions, with retry-safe policy caches. Complete instrumentation of generic ordered-field/fiber isolators, elimination entry points, scalar precision/coefficient growth, and the remaining curve dispatch graph; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
+      "remaining": "Shared synchronous work accounting and typed exhaustion cover instrumented native, ordered-field, and selected-fiber root subdivisions plus selected algebraic promotions, with retry-safe policy caches. Complete accounting across the remaining elimination entry points and curve dispatch graph, including scalar precision/coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
     },
     {
       "id": "T4",
@@ -525,7 +529,7 @@
     ]
   },
   "next_actions": [
-    "Finish and retain the pending broad Hypercurve test and Clippy results; all other checks in the current focused evidence manifest passed.",
+    "Run and retain the complete debug-profile Hypercurve validation at the current source revision; the full release run passed before the shared-isolator extension, whose focused debug/release tests and strict Clippy pass.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."

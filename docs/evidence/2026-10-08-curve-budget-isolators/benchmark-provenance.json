@@ -1,0 +1,30 @@
+{
+  "baseline_revision": "546cd35fa",
+  "method": "Both benchmark binaries were built in the same isolated four-crate workspace, first from the pinned commit, then after copying the listed candidate files. The identical pruned lockfile is retained; all package identities and registry checksums match the root lockfile. Removing unused workspace members prunes optional edges and disambiguating version text, so this is not the root workspace dependency graph.",
+  "archived_paths": [
+    "Cargo.lock",
+    "crates/hypersolve",
+    "crates/hyperreal",
+    "crates/hyperlattice",
+    "crates/hyperlimit"
+  ],
+  "workspace_manifest": "benchmark-workspace.toml",
+  "workspace_lockfile": "benchmark-Cargo.lock",
+  "build_command": "cargo bench --offline --locked -p hypersolve --bench certification --no-run",
+  "lockfile_note": "The first baseline build used --offline without --locked to prune the root lockfile for this isolated workspace; subsequent builds used the unchanged pruned lockfile with --locked.",
+  "candidate_solver_sources": {
+    "crates/hypersolve/src/algebraic_fiber.rs": "18e4fa13278c005061c9c118b741eb9089824ed4b7c6a248780be06007f4eecd",
+    "crates/hypersolve/src/algebraic_fiber/refinement.rs": "c7da0220440f8e73cb8a58057cb7394fda57911aaa56fac8f8367f193f7dcd26",
+    "crates/hypersolve/src/ordered_field_roots.rs": "8e990e89be1a85443229107bd4388125c9c85af0d1d19c3ca1e71e72966dc2e5",
+    "crates/hypersolve/src/work_budget.rs": "7c052227ab8be66251a0d8211d53788f625c413aefe7a01804dbfc25b725ab81"
+  },
+  "benchmark_source_sha256": "d4f9f95a966558098f098d8f93477f26c463769741ef8ea7240578c6240905e6",
+  "workspace_lockfile_sha256": "fe2381e6cb09a403587c5cda594a7bbd59d7366ab26e563a83c7bdb68eefc8cd",
+  "workspace_manifest_sha256": "830d8f0dc2475bdf5562ee998846461a5f76a32fb21395562b6f41eed0c7c77a",
+  "package_identities_checked": 215,
+  "initial_variant": {
+    "work_budget_source": "initial-work_budget.rs",
+    "sha256": "9bf045966b276495ebe4864a8d5d880e27e2e8bb9d6823466b9bd422a95e6615",
+    "reconstruction": "Reconstructed from 546cd35fa plus the documented coverage-paragraph update applied before the initial candidate build. The other three candidate solver source files are identical between the initial and activity-flag variants."
+  }
+}

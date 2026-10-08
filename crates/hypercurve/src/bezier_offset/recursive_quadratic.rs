@@ -1798,7 +1798,8 @@ pub(super) fn recursive_quadratic_polynomial_local_parameters(
     match report.status {
         OrderedFieldRootIsolationStatus::Isolated => {}
         OrderedFieldRootIsolationStatus::CompleteFallbackRequired
-        | OrderedFieldRootIsolationStatus::IdenticallyZero => return Ok(None),
+        | OrderedFieldRootIsolationStatus::IdenticallyZero
+        | OrderedFieldRootIsolationStatus::BudgetExhausted => return Ok(None),
         OrderedFieldRootIsolationStatus::InvalidInterval => {
             return Err(CurveError::InvalidBezierRange);
         }
@@ -2028,6 +2029,11 @@ pub(super) fn recursive_projective_polynomial_parameters_with_crossing(
         }
     }
 
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
     let Some((base, projection)) = recursive_quadratic_polynomial_projection(coefficients.clone())
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));

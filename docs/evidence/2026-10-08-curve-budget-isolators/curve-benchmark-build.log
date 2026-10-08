@@ -1,0 +1,4 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `bench` profile [optimized] target(s) in 1m 01s
+  Executable benches/bezier_algebraic_parameter.rs (target/release/deps/bezier_algebraic_parameter-d472f3300799ae76)

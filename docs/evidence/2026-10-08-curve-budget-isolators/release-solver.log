@@ -1,0 +1,23 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Finished `release` profile [optimized] target(s) in 22.22s
+     Running unittests src/lib.rs (target/release/deps/hypersolve-446cab2e5e17d2ba)
+
+running 15 tests
+test curve_resultant::tests::curve_resultant_rejects_empty_inputs_and_degree_over_budget ... ok
+test algebraic_rational_image::tests::rational_image_reduces_an_oversized_map_before_the_degree_budget ... ok
+test curve_resultant::tests::trivariate_constraint_resultant_obeys_each_retained_degree_budget ... ok
+test algebraic_tensor_image::tests::tensor_promotion_budget_is_typed_and_retryable ... ok
+test root_isolation::tests::isolated_interval_refinement_obeys_width_and_step_budgets_exactly ... ok
+test work_budget::tests::ignored_failure_cannot_publish_success_or_replenish_a_parent ... ok
+test algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget ... ok
+test ordered_field_roots::tests::operation_budget_bounds_both_isolation_and_singleton_refinement ... ok
+test work_budget::tests::native_root_refinements_share_the_outer_operation_budget ... ok
+test work_budget::tests::smaller_inner_budget_can_fail_without_poisoning_outer_work ... ok
+test work_budget::tests::scopes_restore_after_unwinding_without_refunding_admitted_work ... ok
+test work_budget::tests::work_is_shared_across_kinds_and_nested_scopes ... ok
+test work_budget::tests::threads_start_without_a_budget_and_overflow_is_a_typed_failure ... ok
+test root_sign::tests::dyadic_filter_budget_does_not_limit_exact_query_precision ... ok
+test algebraic_fiber::refinement::tests::selected_fiber_refinement_retries_after_shared_budget_exhaustion ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 568 filtered out; finished in 0.02s
+

@@ -1,0 +1,57 @@
+{
+  "bezier_parameter_normal_form_zero_cold": {
+    "before": 2794.49185,
+    "after": 2856.9155,
+    "change_percent": 2.233810415299664
+  },
+  "bezier_parameter_normal_form_zero_reused": {
+    "before": 55.00625,
+    "after": 57.1771,
+    "change_percent": 3.94655152823542
+  },
+  "bezier_parameter_bernstein_32_to_power": {
+    "before": 20308.8594,
+    "after": 19709.665,
+    "change_percent": -2.9504089235065534
+  },
+  "bezier_algebraic_parameter_sturm": {
+    "before": 3976.3372,
+    "after": 3861.04765,
+    "change_percent": -2.8993906754185783
+  },
+  "bezier_algebraic_parameter_refined_ordering": {
+    "before": 16567.6775,
+    "after": 15875.141,
+    "change_percent": -4.180045754753503
+  },
+  "bezier_algebraic_parameter_refined_even_root_ordering": {
+    "before": 66251.3275,
+    "after": 65692.5478,
+    "change_percent": -0.8434241562933154
+  },
+  "bezier_parameter_quintic_unit_isolation": {
+    "before": 35746.593,
+    "after": 35778.131,
+    "change_percent": 0.08822658987388543
+  },
+  "bezier_parameter_boundary_root_isolation": {
+    "before": 49632.9105,
+    "after": 51034.4395,
+    "change_percent": 2.823789670766952
+  },
+  "bezier_algebraic_parameter_exact_rational_reconstruction": {
+    "before": 43.545134,
+    "after": 43.243632,
+    "change_percent": -0.6923896479455016
+  },
+  "bezier_algebraic_point_tangent_image": {
+    "before": 2105.95955,
+    "after": 2106.79245,
+    "change_percent": 0.03954966751378297
+  },
+  "rational_bezier_algebraic_point_tangent_image": {
+    "before": 2216.9539,
+    "after": 2153.81025,
+    "change_percent": -2.848216645370927
+  }
+}

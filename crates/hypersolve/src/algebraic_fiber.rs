@@ -90,7 +90,9 @@ impl From<LocalFieldError> for AlgebraicFieldError {
                 Self::InvalidEvidence
             }
             LocalFieldError::DivisionByZero => Self::DivisionByZero,
-            LocalFieldError::UnsupportedCoefficient | LocalFieldError::Undecided => Self::Undecided,
+            LocalFieldError::UnsupportedCoefficient
+            | LocalFieldError::Undecided
+            | LocalFieldError::BudgetExhausted => Self::Undecided,
         }
     }
 }
@@ -695,6 +697,8 @@ pub enum AlgebraicFiberRootIsolationStatus {
     DepthLimit,
     /// Exact local-field arithmetic or a predicate did not complete.
     Undecided,
+    /// The enclosing operation budget declined a required root refinement.
+    BudgetExhausted,
 }
 
 /// Bounded subdivision controls for selected-fiber root isolation.
@@ -1157,6 +1161,16 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                         message: Some("selected fiber root refinement exceeded its depth limit"),
                     };
                 }
+                if crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1)
+                    .is_err()
+                {
+                    return fiber_root_isolation_error_report_with_progress(
+                        LocalFieldError::BudgetExhausted,
+                        sturm_sequence_length,
+                        subdivision_steps,
+                        &field,
+                    );
+                }
                 let midpoint = match (&node.lower + &node.upper) / Real::from(2_u8) {
                     Ok(midpoint) => midpoint,
                     Err(_) => {
@@ -1258,6 +1272,15 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                     certainty: field.certainty,
                     message: Some("selected fiber root separation exceeded its depth limit"),
                 };
+            }
+            if crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1).is_err()
+            {
+                return fiber_root_isolation_error_report_with_progress(
+                    LocalFieldError::BudgetExhausted,
+                    sturm_sequence_length,
+                    subdivision_steps,
+                    &field,
+                );
             }
             let midpoint = match (&node.lower + &node.upper) / Real::from(2_u8) {
                 Ok(midpoint) => midpoint,
@@ -1776,6 +1799,7 @@ fn predicate_sign_by_isolation(
         if let Some(sign) = bernstein_common_strict_sign(&controls, &mut context).ok()? {
             return Some(sign);
         }
+        crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1).ok()?;
         let midpoint = Real::average_pair(&lower, &upper);
         let midpoint_sign = defining_sign(&midpoint)?;
         if midpoint_sign == Ordering::Equal {
@@ -1828,6 +1852,7 @@ fn isolate_local_polynomial_roots_bernstein(
         OrderedFieldRootIsolationStatus::CompleteFallbackRequired => {
             Ok((None, report.subdivision_steps))
         }
+        OrderedFieldRootIsolationStatus::BudgetExhausted => Err(LocalFieldError::BudgetExhausted),
         OrderedFieldRootIsolationStatus::IdenticallyZero
         | OrderedFieldRootIsolationStatus::InvalidInterval => Err(LocalFieldError::Undecided),
     }
@@ -2158,9 +2183,9 @@ fn algebraic_fiber_rational_reduction_error_report(
         LocalFieldError::UnsupportedCoefficient => {
             AlgebraicFiberRationalReductionStatus::UnsupportedCoefficient
         }
-        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
-            AlgebraicFiberRationalReductionStatus::Undecided
-        }
+        LocalFieldError::DivisionByZero
+        | LocalFieldError::Undecided
+        | LocalFieldError::BudgetExhausted => AlgebraicFiberRationalReductionStatus::Undecided,
     };
     algebraic_fiber_rational_reduction_report(status, None, certainty)
 }
@@ -3189,7 +3214,9 @@ fn algebraic_fiber_polynomial_image_error_report(
         LocalFieldError::UnsupportedCoefficient => {
             AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
         }
-        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
+        LocalFieldError::DivisionByZero
+        | LocalFieldError::Undecided
+        | LocalFieldError::BudgetExhausted => {
             AlgebraicFiberPolynomialImageProjectionStatus::Undecided
         }
     };
@@ -3307,9 +3334,9 @@ fn diagonal_deflation_error_report(
         LocalFieldError::UnsupportedCoefficient => {
             AlgebraicFiberDiagonalDeflationStatus::UnsupportedCoefficient
         }
-        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
-            AlgebraicFiberDiagonalDeflationStatus::Undecided
-        }
+        LocalFieldError::DivisionByZero
+        | LocalFieldError::Undecided
+        | LocalFieldError::BudgetExhausted => AlgebraicFiberDiagonalDeflationStatus::Undecided,
     };
     AlgebraicFiberDiagonalDeflationReport {
         status,
@@ -3455,6 +3482,7 @@ enum LocalFieldError {
     UnsupportedCoefficient,
     DivisionByZero,
     Undecided,
+    BudgetExhausted,
 }
 
 fn local_evaluation_sign(
@@ -4874,6 +4902,8 @@ impl LocalAlgebraicField {
 
         let mut steps = 0_usize;
         for _ in 0..max_refinement_steps {
+            crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1)
+                .map_err(|_| LocalFieldError::BudgetExhausted)?;
             let midpoint = Real::average_pair(&lower, &upper);
             let midpoint_sign = self.consume(compare_reals(
                 &Real::eval_poly(self.modulus(), &midpoint),
@@ -4951,6 +4981,10 @@ fn fiber_root_isolation_error_report(
     certainty: Certainty,
 ) -> AlgebraicFiberRootIsolationReport {
     let (status, message) = match error {
+        LocalFieldError::BudgetExhausted => (
+            AlgebraicFiberRootIsolationStatus::BudgetExhausted,
+            "the enclosing operation exhausted its root refinement budget",
+        ),
         LocalFieldError::InvalidEvidence => (
             AlgebraicFiberRootIsolationStatus::InvalidEvidence,
             "the retained algebraic-root evidence is invalid",
@@ -5004,6 +5038,10 @@ fn fiber_root_count_error_report(
     certainty: Certainty,
 ) -> AlgebraicFiberRootCountReport {
     let (status, message) = match error {
+        LocalFieldError::BudgetExhausted => (
+            AlgebraicFiberRootCountStatus::Undecided,
+            "the enclosing operation exhausted its root refinement budget",
+        ),
         LocalFieldError::InvalidEvidence => (
             AlgebraicFiberRootCountStatus::InvalidEvidence,
             "the retained algebraic-root evidence is invalid",

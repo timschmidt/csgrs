@@ -1,0 +1,2 @@
+# Criterion and probe stdout is evidence; preserve the original bytes.
+*.log -text whitespace=-blank-at-eof

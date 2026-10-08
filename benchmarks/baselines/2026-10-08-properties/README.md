@@ -91,3 +91,60 @@ To reproduce, save each revision's executable separately and run:
 python3 scripts/compare-curve-budget-probe.py /path/to/baseline /path/to/candidate \
   /path/to/new-evidence-directory
 ```
+
+## Shared ordered-field and selected-fiber isolators
+
+The subsequent extension charges the shared Bernstein isolator, selected-fiber
+Sturm isolation, reusable fiber-root refinement, and local-field source-root
+refinement. The first version borrowed the frame stack even when no budget was
+active. The retained version checks a thread-local activity flag first, with
+scope restoration covered by nested, unwind, and thread tests.
+
+[`fiber-budget/manifest.json`](fiber-budget/manifest.json) records five
+alternating process pairs pinned to CPU 0. Each of the three existing
+`certification` Criterion workloads uses 30 samples, 0.2 seconds of warmup, and
+0.5 seconds of measurement per process. The table compares the median of the
+five process mean estimates, without claiming a statistical regression bound.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Bernstein rational deflation | 20.044 µs | 19.186 µs | -4.28% |
+| Repeated irrational root with Sturm fallback | 33.266 µs | 33.667 µs | +1.20% |
+| Partitioned rational roots with Sturm fallback | 410.539 µs | 425.266 µs | +3.59% |
+
+The benchmark's existing setup assertions verify isolation and expected
+fallback use; it does not checksum every timed result. Exact interval equality
+after exhausted attempts and larger-budget retries is checked separately for
+simple and repeated fibers, both parameter axes, and both predicate policies.
+All 583 Hypersolve library tests pass on the candidate.
+
+The initial extension is retained in
+[`fiber-budget-initial/manifest.json`](fiber-budget-initial/manifest.json).
+Its repeated-root row was +7.33% against its paired baseline. The activity-flag
+variant was retained to reduce that observed overhead; the other rows vary
+across runs, so there is no general speedup claim. Its whole benchmark binary
+is 2,592 bytes larger than the baseline, not a library-size or allocation result.
+
+Both binaries use the same isolated four-crate workspace, compiler, profiles,
+and pruned lockfile. The baseline sources are `546cd35fa`; only the listed
+solver source files change for the candidate. The lockfile, temporary workspace
+manifest, source fingerprints, and exact build procedure are retained in
+[`benchmark-provenance.json`](../../../docs/evidence/2026-10-08-curve-budget-isolators/benchmark-provenance.json).
+All package identities and registry checksums match the root lockfile; unused
+workspace dependency edges are absent, so these are explicitly isolated builds.
+
+```sh
+python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
+  isolate_bivariate_fiber_roots/ /path/to/new-evidence-directory
+```
+
+The final extension also reran the unchanged curve-parameter probe against
+the original pre-budget executable. In
+[`curve-budget-fast/manifest.json`](curve-budget-fast/manifest.json), all
+reported counts and trace evidence match across 11 alternating process pairs
+after two warmup pairs. Median changes across its 11 workloads range from
+-4.18% to +3.95%; deep boundary-root isolation changes from 49.633 to
+51.034 µs (+2.82%). This later candidate includes both the shared-isolator
+hooks and the activity flag. Its benchmark executable is 11,072 bytes larger
+than the original baseline. These measurements have the same limited scope
+as the earlier curve probe and do not establish an operation-time bound.

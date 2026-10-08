@@ -1,0 +1,28 @@
+Benchmarking isolate_bivariate_fiber_roots/bernstein_rational_deflation
+Benchmarking isolate_bivariate_fiber_roots/bernstein_rational_deflation: Warming up for 200.00 ms
+Benchmarking isolate_bivariate_fiber_roots/bernstein_rational_deflation: Collecting 30 samples in estimated 505.51 ms (28k iterations)
+Benchmarking isolate_bivariate_fiber_roots/bernstein_rational_deflation: Analyzing
+isolate_bivariate_fiber_roots/bernstein_rational_deflation
+                        time:   [18.410 µs 18.664 µs 18.948 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback
+Benchmarking isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback: Warming up for 200.00 ms
+Benchmarking isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback: Collecting 30 samples in estimated 502.85 ms (16k iterations)
+Benchmarking isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback: Analyzing
+isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback
+                        time:   [31.423 µs 31.573 µs 31.765 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high mild
+
+Benchmarking isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback
+Benchmarking isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback: Warming up for 200.00 ms
+Benchmarking isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback: Collecting 30 samples in estimated 568.21 ms (1395 iterations)
+Benchmarking isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback: Analyzing
+isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback
+                        time:   [434.90 µs 504.52 µs 562.81 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  5 (16.67%) high severe
+
