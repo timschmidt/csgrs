@@ -2650,6 +2650,11 @@ pub(super) fn selected_trivariate_third_axis_parameters_bounded(
             config,
         );
         match report.status {
+            TrivariateConstraintResultantStatus::BudgetExhausted => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             TrivariateConstraintResultantStatus::Constructed => report
                 .resultant
                 .expect("a constructed constrained resultant retains its polynomial"),

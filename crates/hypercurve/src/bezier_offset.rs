@@ -17,6 +17,8 @@
 mod algebraic_chord;
 mod approximation;
 mod bivariate_replay;
+#[cfg(test)]
+mod budget_tests;
 mod cusp_overlap;
 mod cusp_semicircle;
 mod dense_sign;
@@ -6604,6 +6606,11 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
         );
     }
     let resultant = match resultant.status {
+        TrivariateConstraintResultantStatus::BudgetExhausted => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         TrivariateConstraintResultantStatus::Constructed => resultant
             .resultant
             .expect("a constructed constrained resultant retains its polynomial"),
@@ -6660,6 +6667,11 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
         }
         match report.status {
             TrivariateConstraintSubresultantStatus::Constructed => {}
+            TrivariateConstraintSubresultantStatus::BudgetExhausted => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
             TrivariateConstraintSubresultantStatus::UndecidedCoefficient => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }

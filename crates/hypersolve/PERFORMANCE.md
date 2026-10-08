@@ -64,6 +64,16 @@ quotient reduction removes the remaining source axis. The
 [elimination probe](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
 records the inactive accounting cost on the existing resultant workloads.
 
+Three- and four-variable constrained norms and subresultants now share that
+allowance. Each interpolation attempt charges one promotion after degree and
+order admission. A terminal-order subresultant reuses an input polynomial
+without a new charge, but cannot publish evidence in an already exhausted
+scope. Native regressions compare complete exact reports across all three
+trivariate axes, the fourth-axis norm, nested scopes, and larger-budget
+retries. The [fixed-rank probe](../../benchmarks/baselines/2026-10-08-properties/README.md#fixed-rank-norms-and-subresultants)
+measures the two existing constrained-trivariate workloads and two unchanged
+controls. It does not measure every subresultant or four-variable path.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |

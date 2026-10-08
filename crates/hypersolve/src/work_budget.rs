@@ -20,9 +20,10 @@
 //! their eliminant constructions; rational maps can reuse a cached eliminant
 //! without a new promotion charge. Constant and affine shortcuts need no
 //! promotion units. Selected-fiber polynomial-image norms, bivariate quotient
-//! norms, tagged tensor-fiber projections, bivariate system resultants, and
-//! constrained tensor-axis resultants also participate. Other elimination
-//! entry points, remaining curve dispatch paths,
+//! norms, tagged tensor-fiber projections, bivariate system resultants,
+//! constrained tensor-axis resultants, fixed-rank three/four-variable norms,
+//! and their subresultants also participate. Other elimination entry points,
+//! remaining curve dispatch paths,
 //! scalar precision refinement, and arbitrary caller arithmetic are not
 //! comprehensively instrumented. Those paths need additional work
 //! before any whole-operation completion or time bound can be claimed.
@@ -32,7 +33,9 @@
 //! it consume separate refinement units. Nested projection entries share the
 //! budget and charge additional units: a tagged tensor-fiber projection charges
 //! its entry, each needed tensor-axis resultant, and its final bivariate quotient
-//! norm. Degree-limit admission alone does not charge a bivariate resultant.
+//! norm. Degree-limit admission alone does not charge a bivariate or fixed-rank
+//! resultant. Fixed-rank subresultants also charge once before interpolation;
+//! a terminal-order subresultant reuses an input without a promotion charge.
 //! Usage depends on retained evidence,
 //! representation, and algorithm version. A ready proof may require no units.
 //! Resource blockers must not be retained as mathematical capability facts.
