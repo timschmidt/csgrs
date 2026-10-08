@@ -31,6 +31,7 @@ hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = fal
 hypercurve = { version = "0.3.1", path = "../hypercurve" }
 hyperpath = { version = "0.3.0", path = "../hyperpath" }
 hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
+hypersolve = { version = "0.3.1", path = "../hypersolve", default-features = false }
 log = "0.4"
 libc = "0.2"
 parquet = { version = "57.3.1", default-features = false, features = ["arrow"] }

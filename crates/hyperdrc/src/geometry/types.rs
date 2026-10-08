@@ -69,8 +69,8 @@ pub struct Polygon<T = f64> {
     interiors: Vec<LineString<T>>,
     region: Arc<CurveRegion2>,
     exact_construction_error: Option<Arc<str>>,
-    exact_area: Arc<OnceLock<Option<Real>>>,
-    exact_bounds: Arc<OnceLock<Option<[Real; 4]>>>,
+    exact_area: Arc<OnceLock<Real>>,
+    exact_bounds: Arc<OnceLock<[Real; 4]>>,
 }
 
 impl PartialEq for Polygon<f64> {
@@ -156,15 +156,15 @@ impl Polygon<f64> {
     }
 
     pub(crate) fn exact_area(&self) -> Option<&Real> {
-        self.exact_area
-            .get_or_init(|| exact_region_area(self.region.as_ref()))
-            .as_ref()
+        self.exact_construction_error().is_none().then_some(())?;
+        cached_exact_measurement(&self.exact_area, || exact_region_area(self.region.as_ref()))
     }
 
     pub(crate) fn exact_bounds(&self) -> Option<&[Real; 4]> {
-        self.exact_bounds
-            .get_or_init(|| exact_region_bounds(self.region.as_ref()))
-            .as_ref()
+        self.exact_construction_error().is_none().then_some(())?;
+        cached_exact_measurement(&self.exact_bounds, || {
+            exact_region_bounds(self.region.as_ref())
+        })
     }
 
     /// Returns the finite projected-ring area used in reports.
@@ -264,7 +264,31 @@ impl Rect<f64> {
     }
 }
 
-pub(crate) fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
+/// One completed STRICT measurement per immutable region, shared by polygon
+/// clones for their lifetime. Concurrent cold requests may duplicate work;
+/// only certified successes populate the slot. Unavailable results are
+/// retryable, and even a warm value cannot escape an exhausted operation.
+fn cached_exact_measurement<T>(
+    cache: &OnceLock<T>,
+    evaluate: impl FnOnce() -> Option<T>,
+) -> Option<&T> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return None;
+    }
+    if let Some(value) = cache.get() {
+        return Some(value);
+    }
+    let value = hypercurve::evaluate_under(PREDICATE_POLICY, evaluate)
+        .certified()
+        .flatten();
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return None;
+    }
+    let _ = cache.set(value?);
+    cache.get()
+}
+
+fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
     region.filled_area().ok()?
 }
 
@@ -400,3 +424,6 @@ pub(crate) fn transform_exact_region(
         )
         .map_err(|error| format!("exact affine region transformation failed: {error}"))
 }
+
+#[cfg(test)]
+mod tests;

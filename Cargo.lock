@@ -2698,6 +2698,7 @@ dependencies = [
  "hyperlimit",
  "hyperpath",
  "hyperreal",
+ "hypersolve",
  "libc",
  "log",
  "parquet",
