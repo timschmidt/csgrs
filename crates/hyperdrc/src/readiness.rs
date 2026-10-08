@@ -11,6 +11,9 @@ use crate::{Check, Violation};
 /// Schema version for check descriptors and execution records.
 pub const CHECK_REGISTRY_VERSION: u32 = 1;
 
+/// Version of shared check execution and geometry-uncertainty reporting semantics.
+pub const CHECK_IMPLEMENTATION_VERSION: u32 = 2;
+
 /// Opinionated default check plan used by both CLI and native callers.
 pub fn default_checks() -> &'static [Check] {
     crate::cli::DEFAULT_CHECKS
@@ -191,6 +194,20 @@ impl ReadinessRunner {
             let before = violations.len();
             let disposition = execute(*check, violations)?;
             let finding_count = violations.len().saturating_sub(before);
+            // Geometry gateways retain their typed failure as an attributed
+            // finding. An adapter returning Executed must not flatten that
+            // missing certificate into an ordinary failed/passed decision.
+            let disposition = match violations[before..]
+                .iter()
+                .find(|finding| finding.check == "geometry-uncertainty")
+            {
+                Some(finding) => {
+                    CheckRunDisposition::Uncertain(finding.message.clone().unwrap_or_else(|| {
+                        "selected check contains an uncertified geometry query".to_owned()
+                    }))
+                }
+                None => disposition,
+            };
             let (status, reason) = match disposition {
                 CheckRunDisposition::Executed if finding_count == 0 => {
                     (CheckExecutionStatus::Passed, None)
@@ -208,7 +225,7 @@ impl ReadinessRunner {
             };
             records.push(CheckExecutionRecord {
                 check: check.slug(),
-                check_version: 1,
+                check_version: CHECK_IMPLEMENTATION_VERSION,
                 status,
                 finding_count,
                 policy_digest: self.context.policy_digest.clone(),
@@ -229,6 +246,46 @@ impl ReadinessRunner {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn geometry_findings_preserve_uncertainty_without_poisoning_later_checks() {
+        let runner =
+            ReadinessRunner::new([Check::StackupReadiness, Check::TestpointCoverageReadiness]);
+        let mut violations = Vec::new();
+        let coverage = runner
+            .run(&mut violations, |check, findings| {
+                if check == Check::StackupReadiness {
+                    assert!(
+                        crate::checks::geometry_result_for_check::<()>(
+                            Err(crate::PcbGeometryUncertainty {
+                                operation: "boundary-distance".into(),
+                                source: Some("native curve fixture".into()),
+                                detail: "retained unsupported boundary".into(),
+                            }),
+                            "stackup-readiness",
+                            &["F.Cu"],
+                            findings,
+                        )
+                        .is_none()
+                    );
+                }
+                Ok::<_, ()>(CheckRunDisposition::Executed)
+            })
+            .unwrap();
+        assert_eq!(coverage.checks[0].status, CheckExecutionStatus::Uncertain);
+        assert_eq!(coverage.checks[0].finding_count, 1);
+        assert!(
+            coverage.checks[0]
+                .reason
+                .as_deref()
+                .unwrap()
+                .contains("native curve fixture")
+        );
+        assert_eq!(coverage.checks[1].status, CheckExecutionStatus::Passed);
+        assert_eq!(coverage.checks[1].finding_count, 0);
+        assert_eq!(violations[0].check, "geometry-uncertainty");
+        assert_eq!(violations[0].layers, ["F.Cu"]);
+    }
 
     #[test]
     fn runner_records_every_selected_check_and_non_execution_reason() {

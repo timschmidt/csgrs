@@ -7,13 +7,14 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use crate::checks::distance::polygon_boundary_distance_scalar;
+use crate::checks::distance::{minimum_metric, region_boundary_distance};
+
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::{Rect, multipolygon_to_shapes_scalar};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbRegion, PcbRegionExt, Scalar};
+use crate::{PcbRegionExt, Scalar};
 
 const DENSE_PAD_CLUSTER_MIN_PADS: usize = 16;
 
@@ -271,13 +272,21 @@ fn dense_pad_via_spacing_readiness_with_stats(
             })
         {
             let Some((pad, clearance, pad_candidates)) =
-                nearest_pad_to_via(&pads, &pad_index, via, min_via_clearance)
+                nearest_pad_to_via(&pads, &pad_index, via, min_via_clearance, &mut violations)
             else {
                 continue;
             };
             pad_candidate_count += pad_candidates;
             exact_pad_clearance_count += pad_candidates;
-            if crate::scalar::ge(&clearance, min_via_clearance) {
+            if crate::checks::metric_cmp_for_check(
+                &clearance,
+                min_via_clearance,
+                "dense-pad-via-spacing-readiness",
+                &[&layer, &via.layer],
+                &mut violations,
+            )
+            .is_none_or(|order| !order.is_lt())
+            {
                 continue;
             }
 
@@ -402,7 +411,7 @@ pub fn dense_pad_mask_bridge_readiness(
             continue;
         };
         let (nearest_pair, candidate_pairs, exact_pairs) =
-            nearest_feature_pair_within(&pads, min_mask_web);
+            nearest_feature_pair_within(&pads, min_mask_web, &mut violations);
         let Some((left, right, clearance)) = nearest_pair else {
             log::trace!(
                 "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} exact_pairs={exact_pairs} violations=0",
@@ -547,6 +556,7 @@ fn pitch_cell(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 fn nearest_feature_pair_within<'a>(
     features: &[&'a CopperFeature],
     threshold: &Scalar,
+    violations: &mut Vec<Violation>,
 ) -> (
     Option<(&'a CopperFeature, &'a CopperFeature, Scalar)>,
     usize,
@@ -578,14 +588,37 @@ fn nearest_feature_pair_within<'a>(
                 continue;
             }
             exact_pairs += 1;
-            let clearance = copper_clearance(&left.region, &right.region);
-            if crate::scalar::ge(&clearance, threshold) {
+            let Some(clearance) = crate::checks::boundary_distance_for_check(
+                &left.region,
+                &right.region,
+                "dense-pad-mask-bridge-readiness",
+                &[&left.layer],
+                violations,
+            ) else {
+                continue;
+            };
+            if crate::checks::metric_cmp_for_check(
+                &clearance,
+                threshold,
+                "dense-pad-mask-bridge-readiness",
+                &[&left.layer],
+                violations,
+            )
+            .is_none_or(|order| !order.is_lt())
+            {
                 continue;
             }
             if nearest
                 .as_ref()
                 .is_none_or(|(_, _, current): &(_, _, Scalar)| {
-                    crate::scalar::lt(&clearance, current)
+                    crate::checks::metric_cmp_for_check(
+                        &clearance,
+                        current,
+                        "dense-pad-mask-bridge-readiness",
+                        &[&left.layer],
+                        violations,
+                    )
+                    .is_some_and(|order| order.is_lt())
                 })
             {
                 nearest = Some((*left, right, clearance));
@@ -618,28 +651,22 @@ fn nearest_pad_to_via<'a>(
     pad_index: &CopperSpatialIndex<'_>,
     via: &CopperFeature,
     clearance: &Scalar,
+    violations: &mut Vec<Violation>,
 ) -> Option<(&'a CopperFeature, Scalar, usize)> {
     let candidates = pad_index.all_layers_near_feature(via, scalar_broad_phase_radius(clearance));
     let candidate_count = candidates.len();
-    candidates
-        .into_iter()
-        .map(|index| {
+    crate::checks::geometry_result_for_check(
+        minimum_metric(candidates.into_iter().map(|index| {
             let pad = pads[index];
-            (
-                pad,
-                copper_clearance(&pad.region, &via.region),
-                candidate_count,
-            )
-        })
-        .min_by(|left, right| {
-            crate::scalar::compare(&left.1, &right.1)
-                .expect("exact pad clearances must be comparable")
-        })
-}
-
-fn copper_clearance(left: &PcbRegion, right: &PcbRegion) -> Scalar {
-    polygon_boundary_distance_scalar(&left.to_multipolygon(), &right.to_multipolygon())
-        .unwrap_or_else(Scalar::zero)
+            region_boundary_distance(&pad.region, &via.region)
+                .map(|clearance| clearance.map(|clearance| (pad, clearance)))
+        })),
+        "dense-pad-via-spacing-readiness",
+        &[&via.layer],
+        violations,
+    )
+    .flatten()
+    .map(|(pad, clearance)| (pad, clearance, candidate_count))
 }
 
 fn average_location(features: &[&CopperFeature]) -> [Scalar; 2] {

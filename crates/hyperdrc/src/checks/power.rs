@@ -10,7 +10,7 @@
 
 use crate::PcbRegionExt;
 use crate::Scalar;
-use crate::checks::distance::polygon_boundary_distance_scalar;
+
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
@@ -86,11 +86,14 @@ pub fn switch_node_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &switch_feature.region.to_multipolygon(),
-                    &neighbor.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, &keepout));
+                && crate::checks::boundaries_within_for_check(
+                    &switch_feature.region,
+                    &neighbor.region,
+                    &keepout,
+                    "switch-node-keepout-readiness",
+                    &[&switch_feature.layer],
+                    &mut violations,
+                ) == Some(true);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -201,11 +204,14 @@ pub fn inductor_copper_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &inductor.region.to_multipolygon(),
-                    &neighbor.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, &keepout));
+                && crate::checks::boundaries_within_for_check(
+                    &inductor.region,
+                    &neighbor.region,
+                    &keepout,
+                    "inductor-copper-keepout-readiness",
+                    &[&inductor.layer],
+                    &mut violations,
+                ) == Some(true);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }

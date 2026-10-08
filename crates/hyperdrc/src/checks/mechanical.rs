@@ -9,14 +9,10 @@
 //! stackups, fixtures, plating notes, and chassis bonds. Treat suspect findings
 //! as prompts for mechanical drawing and fabrication-note verification.
 
-use super::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
 use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex};
 use super::{difference_for_check, intersection_for_check};
-use crate::geometry::{
-    MultiPolygon, Polygon, Rect, multipolygon_to_shapes_scalar, polygon_bounds_scalar,
-    polygons_to_profile,
-};
+use crate::geometry::{Rect, multipolygon_to_shapes_scalar, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
@@ -166,11 +162,14 @@ pub fn mounting_hole_copper_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundaries_within_scalar(
-                    &keepout_region.to_multipolygon(),
-                    &feature.region.to_multipolygon(),
+                && (crate::checks::boundaries_within_for_check(
+                    &keepout_region,
+                    &feature.region,
                     keepout,
-                );
+                    "mounting-hole-copper-keepout-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) == Some(true));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -536,34 +535,30 @@ pub fn panel_feature_outline_readiness(
         )];
     };
 
-    let outline_geometry = outline.to_multipolygon();
-    let outline_rect_bounds = axis_aligned_outline_rect(outline)
-        .as_ref()
-        .and_then(rect_bounds_scalar);
     let mut violations = Vec::new();
     let mut feature_count = 0_usize;
     let mut exact_boundary_count = 0_usize;
     for polygon in panel_features.to_multipolygon().0 {
         feature_count += 1;
         exact_boundary_count += 1;
-        let polygon_geometry = MultiPolygon(vec![polygon.clone()]);
-        let Some(boundary_distance) = outline_rect_bounds
-            .as_ref()
-            .and_then(|bounds| polygon_inside_rect_boundary_gap_scalar(&polygon, bounds))
-            .or_else(|| polygon_boundary_distance_scalar(&polygon_geometry, &outline_geometry))
-        else {
-            continue;
-        };
-        if crate::scalar::le(&boundary_distance, edge_distance) {
-            continue;
-        }
-
         let feature = polygons_to_profile(
             vec![polygon],
             Some(LayerMetadata {
                 name: "KiCad panel feature".to_string(),
             }),
         );
+        if crate::checks::boundaries_within_for_check(
+            &feature,
+            outline,
+            edge_distance,
+            "panel-feature-outline-readiness",
+            &[&board.source],
+            &mut violations,
+        ) != Some(false)
+        {
+            continue;
+        }
+
         let shapes = multipolygon_to_shapes_scalar(&feature.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
@@ -612,22 +607,26 @@ pub fn edge_plating_intent_readiness(
         return Vec::new();
     };
 
-    let outline_geometry = outline.to_multipolygon();
     let outline_rect = axis_aligned_outline_rect(outline);
     let broad_phase_edge_distance = scalar_broad_phase_radius(edge_distance);
     let mut violations = Vec::new();
     let mut exact_boundary_count = 0_usize;
     let mut skipped_interior_count = 0_usize;
     for feature in selected_copper_features(board, selected_layers) {
-        let feature_geometry = feature.region.to_multipolygon();
         let boundary_candidate = if let Some(rect) = &outline_rect {
             feature_near_rect_outline(feature, rect, broad_phase_edge_distance)
         } else {
             true
         };
         let reaches_outline = boundary_candidate
-            && polygon_boundary_distance_scalar(&feature_geometry, &outline_geometry)
-                .is_some_and(|distance| crate::scalar::le(&distance, edge_distance));
+            && (crate::checks::boundaries_within_for_check(
+                &feature.region,
+                outline,
+                edge_distance,
+                "edge-plating-intent-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) == Some(true));
         exact_boundary_count += usize::from(boundary_candidate);
 
         if !reaches_outline
@@ -703,7 +702,8 @@ pub fn castellation_pitch_readiness(
     board: &BoardModel,
     minimum_edge_spacing: &Scalar,
 ) -> Vec<Violation> {
-    let holes = plated_edge_holes(board, minimum_edge_spacing);
+    let mut violations = Vec::new();
+    let holes = plated_edge_holes(board, minimum_edge_spacing, &mut violations);
     let indexed_holes = holes
         .iter()
         .map(|drill| (*drill).clone())
@@ -716,7 +716,6 @@ pub fn castellation_pitch_readiness(
         holes.len(),
         hole_index.bucket_count()
     );
-    let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
     let mut exact_pair_count = 0_usize;
 
@@ -821,7 +820,11 @@ fn likely_hardware_holes<'a>(
         .collect()
 }
 
-fn plated_edge_holes<'a>(board: &'a BoardModel, edge_distance: &Scalar) -> Vec<&'a DrillFeature> {
+fn plated_edge_holes<'a>(
+    board: &'a BoardModel,
+    edge_distance: &Scalar,
+    violations: &mut Vec<Violation>,
+) -> Vec<&'a DrillFeature> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
@@ -842,18 +845,19 @@ fn plated_edge_holes<'a>(board: &'a BoardModel, edge_distance: &Scalar) -> Vec<&
         return holes;
     }
 
-    let outline_geometry = outline.to_multipolygon();
-
     let holes = board
         .drills
         .iter()
         .filter(|drill| {
             drill.plated
-                && polygon_boundary_distance_scalar(
-                    &drill_keepout(drill, &Scalar::zero()).to_multipolygon(),
-                    &outline_geometry,
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, edge_distance))
+                && (crate::checks::boundaries_within_for_check(
+                    &drill_keepout(drill, &Scalar::zero()),
+                    outline,
+                    edge_distance,
+                    "castellation-pitch-readiness",
+                    &[&board.source],
+                    violations,
+                ) == Some(true))
         })
         .collect::<Vec<_>>();
     log::trace!(
@@ -1010,34 +1014,6 @@ fn rect_bounds_scalar(rect: &Rect<f64>) -> Option<[Scalar; 4]> {
         Scalar::try_from(rect.max().x).ok()?,
         Scalar::try_from(rect.max().y).ok()?,
     ])
-}
-
-fn polygon_inside_rect_boundary_gap_scalar(
-    polygon: &Polygon<f64>,
-    rect: &[Scalar; 4],
-) -> Option<Scalar> {
-    let bounds = polygon_bounds_scalar(polygon)?;
-    if crate::scalar::lt(&bounds[0], &rect[0])
-        || crate::scalar::lt(&bounds[1], &rect[1])
-        || crate::scalar::gt(&bounds[2], &rect[2])
-        || crate::scalar::gt(&bounds[3], &rect[3])
-    {
-        return None;
-    }
-    [
-        &bounds[0] - &rect[0],
-        &bounds[1] - &rect[1],
-        &rect[2] - &bounds[2],
-        &rect[3] - &bounds[3],
-    ]
-    .into_iter()
-    .reduce(|left, right| {
-        if crate::scalar::le(&left, &right) {
-            left
-        } else {
-            right
-        }
-    })
 }
 
 fn mounting_hole_edge_violation(

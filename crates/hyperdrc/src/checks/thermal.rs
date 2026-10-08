@@ -8,7 +8,6 @@
 //! inference, copper-area proxies, and via-count rules are suspect near heat
 //! spreaders, enclosures, unusual airflow, and package-specific requirements.
 
-use crate::checks::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::spread::maximum_point_spread;
 use crate::checks::{intersection_for_check, offset_for_check};
@@ -531,11 +530,14 @@ pub fn hot_component_spacing_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &hot.region.to_multipolygon(),
-                    &neighbor.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, spacing));
+                && crate::checks::boundaries_within_for_check(
+                    &hot.region,
+                    &neighbor.region,
+                    spacing,
+                    "hot-component-spacing-readiness",
+                    &[&hot.layer],
+                    &mut violations,
+                ) == Some(true);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -662,11 +664,14 @@ pub fn thermal_mechanical_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundaries_within_scalar(
-                    &keepout_region.to_multipolygon(),
-                    &hot.region.to_multipolygon(),
+                && (crate::checks::boundaries_within_for_check(
+                    &keepout_region,
+                    &hot.region,
                     &Scalar::zero(),
-                );
+                    "thermal-mechanical-keepout-readiness",
+                    &[&hot.layer],
+                    &mut violations,
+                ) == Some(true));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -739,11 +744,18 @@ fn copper_features_touch_scalar(
         vec![left.layer.clone()],
     )?;
     Ok(!overlap.is_empty()
-        || polygon_boundary_distance_scalar(
-            &left.region.to_multipolygon(),
-            &right.region.to_multipolygon(),
+        || crate::checks::distance::region_boundaries_within(
+            &left.region,
+            &right.region,
+            tolerance,
         )
-        .is_some_and(|distance| crate::scalar::le(&distance, tolerance)))
+        .map_err(|uncertainty| {
+            Box::new(crate::checks::geometry_uncertainty_violation(
+                requested_check,
+                vec![left.layer.clone()],
+                uncertainty,
+            ))
+        })?)
 }
 
 fn feature_contains_point_scalar(feature: &CopperFeature, point: &[Scalar; 2]) -> bool {

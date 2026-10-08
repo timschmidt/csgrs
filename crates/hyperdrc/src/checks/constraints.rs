@@ -13,14 +13,16 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::distance::{PreparedBoundaryDistance, polygon_boundary_distance_scalar};
+use super::distance::{
+    PreparedRegionBoundary, finite_enclosure, minimum_metric, region_boundary_distance,
+};
+
 use super::impedance::{
     DifferentialImpedanceModel, ImpedanceModel, estimate_equal_width_differential_impedance,
     estimate_single_ended_impedance,
 };
 use super::net_class::resolve_net_classes;
 use super::net_scope::{matching_class_indexes_for_feature, net_class_region_diagnostics};
-use crate::PcbRegionExt;
 use crate::Scalar;
 use crate::constraint_policy::{
     DifferentialRole, FabricationCapabilityConfig, NetClassConfig, StackupConfig, StackupLayerKind,
@@ -992,39 +994,60 @@ fn net_clearance_constraints(
     let mut bounded_features = features
         .iter()
         .copied()
-        .filter_map(|feature| {
-            native_region_bounds_scalar(&feature.region).map(|bounds| {
-                (
-                    feature,
-                    bounds,
-                    std::cell::OnceCell::<Option<PreparedBoundaryDistance>>::new(),
-                )
-            })
+        .map(|feature| {
+            let bounds = native_region_bounds_scalar(&feature.region);
+            let key = bounds
+                .as_ref()
+                .and_then(|bounds| finite_enclosure(&bounds.min_x))
+                .map(|b| b[0]);
+            (
+                feature,
+                bounds,
+                key,
+                std::cell::OnceCell::<PreparedRegionBoundary>::new(),
+            )
         })
         .collect::<Vec<_>>();
-    bounded_features.sort_by(
-        |(left_feature, left_bounds, _), (right_feature, right_bounds, _)| {
-            left_feature.layer.cmp(&right_feature.layer).then_with(|| {
-                scalar_cmp(&left_bounds.min_x, &right_bounds.min_x)
-                    .expect("exact feature bounds must be comparable")
+    bounded_features.sort_by(|left, right| {
+        left.0
+            .layer
+            .cmp(&right.0.layer)
+            .then_with(|| match (left.2, right.2) {
+                (None, None) => std::cmp::Ordering::Equal,
+                (None, Some(_)) => std::cmp::Ordering::Less,
+                (Some(_), None) => std::cmp::Ordering::Greater,
+                (Some(left), Some(right)) => left.total_cmp(&right),
             })
-        },
-    );
+    });
     let mut exact_pair_count = 0_usize;
     let mut violations = Vec::new();
-    for (left_index, (left, left_bounds, left_geometry)) in bounded_features.iter().enumerate() {
+    for (left_index, (left, left_bounds, _, left_geometry)) in bounded_features.iter().enumerate() {
         let Some(left_net) = &left.net else {
             continue;
         };
-        let maximum_x = &left_bounds.max_x + &maximum_clearance;
-        for (right, right_bounds, right_geometry) in bounded_features.iter().skip(left_index + 1) {
+        let maximum_x = left_bounds
+            .as_ref()
+            .and_then(|b| finite_enclosure(&(&b.max_x + &maximum_clearance)))
+            .map(|b| b[1]);
+        for (right, right_bounds, right_key, right_geometry) in
+            bounded_features.iter().skip(left_index + 1)
+        {
             if left.layer != right.layer {
                 break;
             }
-            if scalar_gt(&right_bounds.min_x, &maximum_x) {
+            if maximum_x
+                .zip(*right_key)
+                .is_some_and(|(maximum, minimum)| minimum > maximum)
+            {
                 break;
             }
-            if !exact_bounds_may_be_within(left_bounds, right_bounds, &maximum_clearance) {
+            if left_bounds
+                .as_ref()
+                .zip(right_bounds.as_ref())
+                .is_some_and(|(left, right)| {
+                    !exact_bounds_may_be_within(left, right, &maximum_clearance)
+                })
+            {
                 continue;
             }
             let Some(right_net) = &right.net else {
@@ -1039,20 +1062,29 @@ fn net_clearance_constraints(
                 continue;
             };
             exact_pair_count += 1;
-            let Some(left_geometry) = left_geometry
-                .get_or_init(|| PreparedBoundaryDistance::new(&left.region.to_multipolygon()))
-            else {
+            let measured = (|| {
+                let left = prepared_boundary(left_geometry, &left.region)?;
+                let right = prepared_boundary(right_geometry, &right.region)?;
+                left.distance_to(right)
+            })();
+            let Some(gap) = crate::checks::geometry_result_for_check(
+                measured,
+                "net-constraint-readiness",
+                &[&left.layer],
+                &mut violations,
+            )
+            .flatten() else {
                 continue;
             };
-            let Some(right_geometry) = right_geometry
-                .get_or_init(|| PreparedBoundaryDistance::new(&right.region.to_multipolygon()))
-            else {
-                continue;
-            };
-            let Some(gap) = left_geometry.distance_to(right_geometry) else {
-                continue;
-            };
-            if crate::scalar::lt(&gap, &min_clearance) {
+            if crate::checks::metric_cmp_for_check(
+                &gap,
+                &min_clearance,
+                "net-constraint-readiness",
+                &[&left.layer],
+                &mut violations,
+            )
+            .is_some_and(|order| order.is_lt())
+            {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
                     Severity::Error,
@@ -1077,6 +1109,19 @@ fn net_clearance_constraints(
         violations.len()
     );
     violations
+}
+
+fn prepared_boundary<'a>(
+    cache: &'a std::cell::OnceCell<PreparedRegionBoundary>,
+    region: &crate::PcbRegion,
+) -> Result<&'a PreparedRegionBoundary, crate::PcbGeometryUncertainty> {
+    if cache.get().is_none() {
+        let prepared = PreparedRegionBoundary::new(region)?;
+        let _ = cache.set(prepared);
+    }
+    Ok(cache
+        .get()
+        .expect("successful preparation initialized the cell"))
 }
 
 fn net_reference_plane_constraints(
@@ -1590,22 +1635,24 @@ fn differential_impedance_target_violations(
 
         for positive in &pair_use.positive.features {
             let positive_width = minimum_bounding_dimension(&positive.region);
-            let closest = pair_use
-                .negative
-                .features
-                .iter()
-                .copied()
-                .filter(|negative| negative.layer == positive.layer)
-                .filter_map(|negative| {
-                    polygon_boundary_distance_scalar(
-                        &positive.region.to_multipolygon(),
-                        &negative.region.to_multipolygon(),
-                    )
-                    .map(|gap| (negative, gap))
-                })
-                .min_by(|(_, left), (_, right)| {
-                    crate::scalar::compare(left, right).expect("exact pair gaps must be comparable")
-                });
+            let closest = crate::checks::geometry_result_for_check(
+                minimum_metric(
+                    pair_use
+                        .negative
+                        .features
+                        .iter()
+                        .copied()
+                        .filter(|negative| negative.layer == positive.layer)
+                        .map(|negative| {
+                            region_boundary_distance(&positive.region, &negative.region)
+                                .map(|gap| gap.map(|gap| (negative, gap)))
+                        }),
+                ),
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                &[&positive.layer],
+                &mut report.violations,
+            );
+            let Some(closest) = closest else { continue };
             let Some((negative, gap)) = closest else {
                 report.unsupported_segments += 1;
                 report.violations.push(Violation::new(
@@ -1874,32 +1921,14 @@ fn differential_pair_spacing_violations(
         return Vec::new();
     }
 
-    let mut negative_by_layer = BTreeMap::<&str, Vec<(&CopperFeature, ScalarBounds2)>>::new();
+    let mut negative_by_layer =
+        BTreeMap::<&str, Vec<(&CopperFeature, Option<ScalarBounds2>)>>::new();
     for feature in &negative_features {
-        if let Some(bounds) = native_region_bounds_scalar(&feature.region) {
-            negative_by_layer
-                .entry(feature.layer.as_str())
-                .or_default()
-                .push((feature, bounds));
-        }
+        negative_by_layer
+            .entry(feature.layer.as_str())
+            .or_default()
+            .push((feature, native_region_bounds_scalar(&feature.region)));
     }
-    for features in negative_by_layer.values_mut() {
-        features.sort_by(|(_, left), (_, right)| {
-            scalar_cmp(&left.min_x, &right.min_x).expect("exact feature bounds must be comparable")
-        });
-    }
-    let maximum_negative_width = negative_by_layer
-        .values()
-        .flatten()
-        .map(|(_, bounds)| &bounds.max_x - &bounds.min_x)
-        .fold(Scalar::zero(), |maximum, width| {
-            if scalar_gt(&width, &maximum) {
-                width
-            } else {
-                maximum
-            }
-        });
-
     let mut exact_pair_count = 0_usize;
     let mut closest_pair: Option<DifferentialGap<'_>> = None;
     let mut has_pair_within_max = max_spacing.is_none();
@@ -1909,22 +1938,23 @@ fn differential_pair_spacing_violations(
         let Some(negative_candidates) = negative_by_layer.get(positive.layer.as_str()) else {
             continue;
         };
-        let Some(positive_bounds) = native_region_bounds_scalar(&positive.region) else {
-            continue;
-        };
-        let lower_x = &positive_bounds.min_x - &query_spacing - &maximum_negative_width;
-        let upper_x = &positive_bounds.max_x + &query_spacing;
-        let start =
-            negative_candidates.partition_point(|(_, bounds)| scalar_lt(&bounds.min_x, &lower_x));
-        let end =
-            negative_candidates.partition_point(|(_, bounds)| scalar_le(&bounds.min_x, &upper_x));
-        for (negative, negative_bounds) in &negative_candidates[start..end] {
-            if !exact_bounds_may_be_within(&positive_bounds, negative_bounds, &query_spacing) {
+        let positive_bounds = native_region_bounds_scalar(&positive.region);
+        for (negative, negative_bounds) in negative_candidates {
+            if positive_bounds
+                .as_ref()
+                .zip(negative_bounds.as_ref())
+                .is_some_and(|(left, right)| {
+                    !exact_bounds_may_be_within(left, right, &query_spacing)
+                })
+            {
                 continue;
             }
-            let Some(gap) = polygon_boundary_distance_scalar(
-                &positive.region.to_multipolygon(),
-                &negative.region.to_multipolygon(),
+            let Some(gap) = crate::checks::boundary_distance_for_check(
+                &positive.region,
+                &negative.region,
+                "net-constraint-readiness",
+                &[&positive.layer],
+                &mut violations,
             ) else {
                 continue;
             };
@@ -1934,15 +1964,28 @@ fn differential_pair_spacing_violations(
                 negative,
                 gap: gap.clone(),
             };
-            if closest_pair
-                .as_ref()
-                .is_none_or(|closest| crate::scalar::lt(&gap, &closest.gap))
-            {
+            if closest_pair.as_ref().is_none_or(|closest| {
+                crate::checks::metric_cmp_for_check(
+                    &gap,
+                    &closest.gap,
+                    "net-constraint-readiness",
+                    &[&positive.layer],
+                    &mut violations,
+                )
+                .is_some_and(|order| order.is_lt())
+            }) {
                 closest_pair = Some(observed.clone());
             }
 
             if let Some(min_spacing) = min_spacing.as_ref()
-                && crate::scalar::lt(&gap, min_spacing)
+                && crate::checks::metric_cmp_for_check(
+                    &gap,
+                    min_spacing,
+                    "net-constraint-readiness",
+                    &[&positive.layer],
+                    &mut violations,
+                )
+                .is_some_and(|order| order.is_lt())
             {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
@@ -1960,7 +2003,14 @@ fn differential_pair_spacing_violations(
                 ));
             }
             if let Some(max_spacing) = max_spacing.as_ref()
-                && crate::scalar::le(&gap, max_spacing)
+                && crate::checks::metric_cmp_for_check(
+                    &gap,
+                    max_spacing,
+                    "net-constraint-readiness",
+                    &[&positive.layer],
+                    &mut violations,
+                )
+                .is_some_and(|order| !order.is_gt())
             {
                 has_pair_within_max = true;
             }
@@ -1969,10 +2019,21 @@ fn differential_pair_spacing_violations(
 
     if !has_pair_within_max {
         if closest_pair.is_none() {
-            closest_pair = first_same_layer_pair_gap(&positive_features, &negative_features);
+            closest_pair = nearest_same_layer_pair_gap(
+                &positive_features,
+                &negative_features,
+                &mut violations,
+            );
         }
         if let (Some(max_spacing), Some(closest)) = (max_spacing.as_ref(), closest_pair)
-            && crate::scalar::gt(&closest.gap, max_spacing)
+            && crate::checks::metric_cmp_for_check(
+                &closest.gap,
+                max_spacing,
+                "net-constraint-readiness",
+                &[&closest.positive.layer],
+                &mut violations,
+            )
+            .is_some_and(|order| order.is_gt())
         {
             violations.push(Violation::new(
                 "net-constraint-readiness",
@@ -2010,29 +2071,36 @@ struct DifferentialGap<'a> {
     gap: Scalar,
 }
 
-fn first_same_layer_pair_gap<'a>(
+fn nearest_same_layer_pair_gap<'a>(
     positive_features: &[&'a CopperFeature],
     negative_features: &[&'a CopperFeature],
+    violations: &mut Vec<Violation>,
 ) -> Option<DifferentialGap<'a>> {
-    for positive in positive_features {
-        for negative in negative_features {
-            if positive.layer != negative.layer {
-                continue;
-            }
-            let gap = polygon_boundary_distance_scalar(
-                &positive.region.to_multipolygon(),
-                &negative.region.to_multipolygon(),
-            );
-            if let Some(gap) = gap {
-                return Some(DifferentialGap {
-                    positive,
-                    negative,
-                    gap,
-                });
-            }
-        }
-    }
-    None
+    crate::checks::geometry_result_for_check(
+        minimum_metric(
+            positive_features
+                .iter()
+                .flat_map(|positive| {
+                    negative_features
+                        .iter()
+                        .map(move |negative| (*positive, *negative))
+                })
+                .filter(|(positive, negative)| positive.layer == negative.layer)
+                .map(|(positive, negative)| {
+                    region_boundary_distance(&positive.region, &negative.region)
+                        .map(|gap| gap.map(|gap| ((positive, negative), gap)))
+                }),
+        ),
+        "net-constraint-readiness",
+        &[],
+        violations,
+    )
+    .flatten()
+    .map(|((positive, negative), gap)| DifferentialGap {
+        positive,
+        negative,
+        gap,
+    })
 }
 
 fn net_length_constraints(
@@ -2252,112 +2320,18 @@ struct ScalarBounds2 {
     max_y: Scalar,
 }
 
-/// Compute a conservative envelope directly over native exact topology.
-///
-/// Circular arcs contribute their full circle rather than running the tighter
-/// certified sweep-extrema predicate. That can admit extra broad-phase
-/// candidates, but it can never discard a real violation. It also keeps sparse
-/// constraint indexing independent of finite polygon projection.
+/// Optional certified bounds. Missing certificates disable culling.
 fn native_region_bounds_scalar(region: &crate::PcbRegion) -> Option<ScalarBounds2> {
-    if let Some(bounds) = region.exact_bounds() {
-        return Some(ScalarBounds2 {
-            min_x: bounds[0].clone(),
-            min_y: bounds[1].clone(),
-            max_x: bounds[2].clone(),
-            max_y: bounds[3].clone(),
-        });
-    }
-    let mut bounds = None;
-    let native = match region.native_contours_fast_path() {
-        Ok(Some(native)) => native,
-        Ok(None) | Err(_) => {
-            return Some(certified_region_bounds_scalar(region));
-        }
-    };
-    for contour in native
-        .material_contours()
-        .iter()
-        .chain(native.hole_contours())
-    {
-        if include_native_segments(&mut bounds, contour.segments()).is_none() {
-            return Some(certified_region_bounds_scalar(region));
-        }
-    }
-    bounds
-}
-
-fn certified_region_bounds_scalar(region: &crate::PcbRegion) -> ScalarBounds2 {
-    let bounds = region.bounding_box();
-    ScalarBounds2 {
-        min_x: bounds.mins.x.clone(),
-        min_y: bounds.mins.y.clone(),
-        max_x: bounds.maxs.x.clone(),
-        max_y: bounds.maxs.y.clone(),
-    }
-}
-
-fn include_native_segments(
-    bounds: &mut Option<ScalarBounds2>,
-    segments: &[hypercurve::Segment2],
-) -> Option<()> {
-    for segment in segments {
-        include_exact_point(bounds, segment.start().x(), segment.start().y())?;
-        include_exact_point(bounds, segment.end().x(), segment.end().y())?;
-        if let hypercurve::Segment2::Arc(arc) = segment {
-            let radius = arc.radius_squared_ref().clone().sqrt().ok()?;
-            include_exact_point(bounds, &(arc.center().x() - &radius), arc.center().y())?;
-            include_exact_point(bounds, &(arc.center().x() + &radius), arc.center().y())?;
-            include_exact_point(bounds, arc.center().x(), &(arc.center().y() - &radius))?;
-            include_exact_point(bounds, arc.center().x(), &(arc.center().y() + &radius))?;
-        }
-    }
-    Some(())
-}
-
-fn include_exact_point(bounds: &mut Option<ScalarBounds2>, x: &Scalar, y: &Scalar) -> Option<()> {
-    let Some(current) = bounds else {
-        *bounds = Some(ScalarBounds2 {
-            min_x: x.clone(),
-            min_y: y.clone(),
-            max_x: x.clone(),
-            max_y: y.clone(),
-        });
-        return Some(());
-    };
-    include_exact_coordinate(&mut current.min_x, &mut current.max_x, x)?;
-    include_exact_coordinate(&mut current.min_y, &mut current.max_y, y)
-}
-
-fn include_exact_coordinate(
-    minimum: &mut Scalar,
-    maximum: &mut Scalar,
-    value: &Scalar,
-) -> Option<()> {
-    use std::cmp::Ordering;
-
-    match scalar_cmp(value, minimum)? {
-        Ordering::Less => *minimum = value.clone(),
-        Ordering::Equal | Ordering::Greater => {}
-    }
-    if scalar_cmp(value, maximum)? == Ordering::Greater {
-        *maximum = value.clone();
-    }
-    Some(())
+    region.exact_bounds().map(|bounds| ScalarBounds2 {
+        min_x: bounds[0].clone(),
+        min_y: bounds[1].clone(),
+        max_x: bounds[2].clone(),
+        max_y: bounds[3].clone(),
+    })
 }
 
 fn scalar_cmp(left: &Scalar, right: &Scalar) -> Option<std::cmp::Ordering> {
     crate::scalar::compare(left, right)
-}
-
-fn scalar_lt(left: &Scalar, right: &Scalar) -> bool {
-    scalar_cmp(left, right) == Some(std::cmp::Ordering::Less)
-}
-
-fn scalar_le(left: &Scalar, right: &Scalar) -> bool {
-    matches!(
-        scalar_cmp(left, right),
-        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-    )
 }
 
 fn scalar_gt(left: &Scalar, right: &Scalar) -> bool {
@@ -2369,10 +2343,10 @@ fn exact_bounds_may_be_within(
     right: &ScalarBounds2,
     clearance: &Scalar,
 ) -> bool {
-    scalar_le(&(&left.min_x - clearance), &right.max_x)
-        && scalar_le(&right.min_x, &(&left.max_x + clearance))
-        && scalar_le(&(&left.min_y - clearance), &right.max_y)
-        && scalar_le(&right.min_y, &(&left.max_y + clearance))
+    !scalar_gt(&(&left.min_x - clearance), &right.max_x)
+        && !scalar_gt(&right.min_x, &(&left.max_x + clearance))
+        && !scalar_gt(&(&left.min_y - clearance), &right.max_y)
+        && !scalar_gt(&right.min_y, &(&left.max_y + clearance))
 }
 
 fn maximum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {

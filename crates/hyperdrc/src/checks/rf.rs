@@ -12,7 +12,7 @@
 
 use crate::PcbRegionExt;
 use crate::Scalar;
-use crate::checks::distance::polygon_boundary_distance_scalar;
+
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
@@ -99,11 +99,14 @@ pub fn rf_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &rf.region.to_multipolygon(),
-                    &neighbor.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, clearance))
+                && crate::checks::boundaries_within_for_check(
+                    &rf.region,
+                    &neighbor.region,
+                    clearance,
+                    "rf-keepout-readiness",
+                    &[&rf.layer],
+                    &mut violations,
+                ) == Some(true)
             {
                 vec![
                     rf.location_f64_compatibility_required(),
@@ -217,11 +220,14 @@ pub fn antenna_copper_keepout_readiness(
             };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
-                && polygon_boundary_distance_scalar(
-                    &antenna.region.to_multipolygon(),
-                    &neighbor.region.to_multipolygon(),
-                )
-                .is_some_and(|distance| crate::scalar::le(&distance, keepout))
+                && crate::checks::boundaries_within_for_check(
+                    &antenna.region,
+                    &neighbor.region,
+                    keepout,
+                    "antenna-copper-keepout-readiness",
+                    &[&antenna.layer],
+                    &mut violations,
+                ) == Some(true)
             {
                 vec![
                     antenna.location_f64_compatibility_required(),
