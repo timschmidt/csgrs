@@ -1,0 +1,27 @@
+   Compiling hyperdrc v0.3.0 (/tmp/properties-drc-measurement-probe/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.24s
+     Running unittests src/lib.rs (/tmp/properties-drc-measurement-probe/target/release/deps/hyperdrc-967beeac8d31a877)
+
+running 4 tests
+test geometry::circle::tests::circle_construction_reports_unknown_or_denied_radius_and_allows_retry ... ok
+test geometry::circle::tests::report_resolution_does_not_change_circle_geometry ... FAILED
+test geometry::circle::tests::profile_bounds_come_from_native_circle_not_its_report_diamond ... ok
+test geometry::circle::tests::native_circle_preserves_decimal_center_and_radius_beyond_binary64_resolution ... ok
+
+failures:
+
+---- geometry::circle::tests::report_resolution_does_not_change_circle_geometry stdout ----
+
+thread 'geometry::circle::tests::report_resolution_does_not_change_circle_geometry' (84) panicked at hyperdrc/src/geometry/circle.rs:79:13:
+assertion `left == right` failed
+  left: 4
+ right: 2
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    geometry::circle::tests::report_resolution_does_not_change_circle_geometry
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 1122 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

@@ -1,0 +1,195 @@
+{
+  "scope": "Native-circle capability cost probe. No matched speedup or equivalence claim against the former sampled-line constructor, which represented different exact geometry.",
+  "source_evidence": "../circle-manifest.json",
+  "binary": {
+    "path": "/tmp/properties-drc-native-circle-cost-bin",
+    "bytes": 19035736,
+    "sha256": "ebc1c710d196b81ab3232f0d4e9a46c04545ff1ef94a32f20722801a627b733c"
+  },
+  "build_command": "CCACHE_DIR=/tmp/properties-drc-measurement-ccache CARGO_TARGET_DIR=/tmp/properties-drc-measurement-probe/target cargo build --offline --release --manifest-path /tmp/properties-drc-native-circle-cost/Cargo.toml",
+  "initial_build_failure": {
+    "exit_code": 101,
+    "log": "initial-build.log",
+    "cause": "The probe expected-bounds assertion used ambiguous integer into() calls. Explicit Real::from fixed type inference without changing the oracle values or production code."
+  },
+  "build_exit_code": 0,
+  "build_log": "build.log",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "host": "Linux fedora 7.2.5-100.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026 x86_64 GNU/Linux\n",
+  "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+  "profile": "Release: opt-level 3, debug false, debug-assertions false, overflow-checks false; retained probe manifest identifies dependencies.",
+  "environment": {
+    "RUSTFLAGS": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "RUSTC_WRAPPER": null,
+    "CARGO_PROFILE_RELEASE_OPT_LEVEL": null,
+    "CARGO_PROFILE_RELEASE_LTO": null,
+    "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": null,
+    "CARGO_BUILD_TARGET": null
+  },
+  "affinity": [
+    0
+  ],
+  "iterations_per_row": 100,
+  "trials": 5,
+  "execution": "Five sequential fresh processes after all task builds and tests exited; each pinned to CPU 0.",
+  "measurement": "warm_measure reuses a constructed circle and directly requests native filled area and bounds under STRICT, plus report point count; it does not use the Polygon measurement cache. construct_and_measure adds the complete requested report-ring construction. Source-via measurement includes file reading, parsing, source-native construction and classification of the independent analytic interior point on both layers.",
+  "oracles": "Each circle has center (1,1), radius 1, exact area pi, and native bounds [0,0,2,2]. Initial/final observations are checked. Fresh repeated report rings retain identical coordinate counts, logical coordinate-payload bytes, and FNV-1a checksums over f64 bit patterns. The via row checks feature count and native membership, not serialized report bytes.",
+  "million_sample_case": "All 1,000,001 closed report coordinates are retained. The row records 16,000,016 logical coordinate bytes, not a process allocation count.",
+  "process_peak_rss_kib": [
+    24304,
+    24212,
+    24384,
+    24316,
+    24336
+  ],
+  "summary": [
+    {
+      "fixture": "circle_1000000",
+      "mode": "construct_and_measure",
+      "ns_per_observation": [
+        13713312.12,
+        14034286.41,
+        13834083.83,
+        14956697.06,
+        14813765.06
+      ],
+      "median_ns": 14034286.41
+    },
+    {
+      "fixture": "circle_1000000",
+      "mode": "warm_measure",
+      "ns_per_observation": [
+        22048.29,
+        22182.68,
+        21568.82,
+        21608.12,
+        35900.94
+      ],
+      "median_ns": 22048.29
+    },
+    {
+      "fixture": "circle_128",
+      "mode": "construct_and_measure",
+      "ns_per_observation": [
+        150903.85,
+        147717.37,
+        157832.28,
+        196214.54,
+        205876.08
+      ],
+      "median_ns": 157832.28
+    },
+    {
+      "fixture": "circle_128",
+      "mode": "warm_measure",
+      "ns_per_observation": [
+        23505.09,
+        22129.68,
+        21664.12,
+        21946.39,
+        33630.09
+      ],
+      "median_ns": 22129.68
+    },
+    {
+      "fixture": "circle_16",
+      "mode": "construct_and_measure",
+      "ns_per_observation": [
+        147710.98,
+        169333.59,
+        148416.32,
+        163279.3,
+        203240.96
+      ],
+      "median_ns": 163279.3
+    },
+    {
+      "fixture": "circle_16",
+      "mode": "warm_measure",
+      "ns_per_observation": [
+        26305.69,
+        41335.07,
+        22403.06,
+        38300.68,
+        32862.35
+      ],
+      "median_ns": 32862.35
+    },
+    {
+      "fixture": "circle_48",
+      "mode": "construct_and_measure",
+      "ns_per_observation": [
+        147681.17,
+        148838.6,
+        146306.37,
+        151496.61,
+        203927.22
+      ],
+      "median_ns": 148838.6
+    },
+    {
+      "fixture": "circle_48",
+      "mode": "warm_measure",
+      "ns_per_observation": [
+        24136.55,
+        23082.22,
+        22973.53,
+        22269.37,
+        32522.07
+      ],
+      "median_ns": 23082.22
+    },
+    {
+      "fixture": "source_via",
+      "mode": "load_and_classify",
+      "ns_per_observation": [
+        186615.1,
+        188375.28,
+        191613.56,
+        274657.67,
+        187756.02
+      ],
+      "median_ns": 188375.28
+    }
+  ],
+  "replay": "Copy this directory to a temporary location, update manifest dependency paths to the checkout, build --offline --release, and run with HYPERDRC_CIRCLE_ITERATIONS=100. run-probe.py records the five pinned trials; use a newly identified binary hash for a replay.",
+  "limitations": [
+    "The fixtures are a capability cost probe, not a statistical regression bound, end-to-end throughput result, or cross-library comparison.",
+    "Scalar/kernel caches may already be warm in construct_and_measure; it is not a cold-process allocator or precision-refinement benchmark.",
+    "Observed warm and small-fixture times varied substantially across trials. Every trial is retained; no stable general speedup is claimed.",
+    "Report checksum traversal and exact circle oracle comparisons are outside the timed circle loops. Via oracle comparisons are inside its load_and_classify loop.",
+    "Peak RSS describes the whole process and executable size describes this linked probe; no allocation count, retained-heap bound, or library-size delta is asserted."
+  ],
+  "files": {
+    "Cargo.lock": "aba20231a0dc902d717b0f2ed27be4eaa5d64bd726d0c13af966c5d7b59d2e72",
+    "Cargo.toml": "66f12e16cbd28186e4c80c992596cfe722d56e32f9a42f61b395e3759180e62b",
+    "binary.json": "1f2bdf4dc6042803fc284134c0238b70710212f27c394b74847a87da45354b1d",
+    "build.log": "0dde0664e142ed10efc749a48462f392a7b80ead44ac14166bdbc86ca8fdf5bd",
+    "fixture-validation.json": "244dcdc3751b5f2cfc5106444a44ba778047dbf3cbafd781c9e654fb48fe9c28",
+    "fixtures.jsonl": "4a65105966fe1a8cc03523b9661e477cb0c8fd0964fd55e4f8c8e7e1170f4504",
+    "fixtures.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "initial-build.log": "b97b6bd7f722203acedd3c1915c382c1e04dd0c1f0033701bf83238bb9910845",
+    "run-probe.py": "604c0e0e5455e88e1e8f59eccfa2db24d7919ff6cdba6fb6684e03a761965474",
+    "runs.json": "eed3db3c3e68e1c88c6f6884167918fb34dad98ecd605310225efc044523fd6b",
+    "src/main.rs": "3442e58898ee7af58e01eb8ecccdba27720df3d92ac78745e0e703e0fd3728b5",
+    "summary.json": "1839b5e99bc4c5a35603f687c34a80498ed62bfeba2e2a908ce06ee86970779b",
+    "trial-1-resources.log": "0b405c7be14ef2ceb3b6876ce749270a95c1724af47981c33040fc2ace173f6e",
+    "trial-1.jsonl": "81eb246a93cfc54064917b7e82c2d090396487cf8ece8615d981f086dc47e797",
+    "trial-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "trial-2-resources.log": "0b36b885aa9a877cd6d3f549dd4fc64526b63bca0d3919e0540e3f26ae9214e5",
+    "trial-2.jsonl": "a916b1a6a5fdb76e9670168020eaae2aae7e4730d315d34d22960c5896b15bf8",
+    "trial-2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "trial-3-resources.log": "e08b90198649de073a03a6c19b720c4a19e0b140b59173fdf2c9f09f33a316de",
+    "trial-3.jsonl": "b8e876bb3531243648a2fc4eab26142d6e00bf8142da27c2f4e45119351d4b2c",
+    "trial-3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "trial-4-resources.log": "f1812699984887c43093affa8c27a1d005428e3710dc8514590417bc089176a8",
+    "trial-4.jsonl": "8d2fe70e5990c068b5331c0a35ecb1eaec018c3cf786300510c93ea362495b79",
+    "trial-4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "trial-5-resources.log": "dd572d65cdd2386e629a7c0c0e6309c1304256742cfe3069c316d7faeaf534ff",
+    "trial-5.jsonl": "f6e4b279e18c3bd92c9570b818b858b69b123430142df07e048893104baf97fd",
+    "trial-5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "via.kicad_pcb": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a"
+  }
+}

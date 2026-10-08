@@ -1,0 +1,58 @@
+{
+  "base_revision": "9aaae436b6ef5f8b17d4135c8d90c14aadd602a3",
+  "scope": "Preserve native circle geometry for circle_polygon and KiCad via copper; retain exact via center/diameter source decimals; derive combined profile bounds from authoritative regions.",
+  "status": "Retained native-circle and source-bound repair with configured HyperDRC tests, strict Clippy/docs, formatting and capability cost evidence. Full consumer integration remains open.",
+  "construction": "The fallible helper evaluates under STRICT, guards shared work-budget exhaustion, and constructs two semicircles. The kernel may split them during regularization. Generic circle_polygon uses the absolute finite radius for its native region while retaining signed report phase and every requested report sample (minimum 16); zero radius is the empty regularized region.",
+  "source_import": "Via copper is shared across expanded layers and constructed from retained exact decimal center and half of exact size. Invalid diameters retain a source-construction diagnostic instead of publishing an apparently valid empty circle. Incomplete objects and centers without the existing finite compatibility view retain the parser historical skip behavior.",
+  "bounds": "Profile construction combines each valid polygon native exact bounds through STRICT comparisons. A missing component certificate disables the cached bound; non-finite report coordinates are tracked independently. Finite spatial indices and nearest-rounded report bounding boxes are not newly certified by this change.",
+  "regressions": [
+    "The unchanged public-loader source-circle fixture now retains the independent interior point on both F.Cu and B.Cu.",
+    "Decimal source coordinates near 2^53 and a radius beyond binary64 resolution retain exact bounds and distinguish interior/exterior points separated by 10^-30.",
+    "16, 17, 48 and 128 report samples preserve native area, bounds, boundary topology count, and point distance.",
+    "A coarse report polygon cannot shrink its authoritative circle bounds during profile construction.",
+    "Negative or unresolved helper radii remain failures, including unresolved input under an enclosing preview. Exhausted operations fail and a subsequent admitted retry succeeds.",
+    "The existing million-sample fixture is unchanged and passes with all 1,000,001 closed report coordinates retained.",
+    "Existing negative/zero/non-finite primitive-circle behavior and the complete library suite pass."
+  ],
+  "validation": {
+    "status_file": "circle-validation/status.json",
+    "configured_command": "cargo test --locked -p hyperdrc --release",
+    "passed": 1130,
+    "breakdown": {
+      "library": 1126,
+      "binary": 0,
+      "readme_integration": 2,
+      "doctests": 2
+    },
+    "source_frozen_through_docs": true
+  },
+  "draft_evidence": "circle-draft/manifest.json retains the separately tested draft and test-authoring corrections; its concurrent-suite elapsed time is not a benchmark.",
+  "performance_evidence": "circle-cost/manifest.json",
+  "remaining": [
+    "Native line/arc clearance metrics still need adoption by DRC consumers, including filled-union boundary semantics and uncertainty propagation.",
+    "Component extraction/projection failures and caches, report-ring fallback promotion, finite spatial rejection and Option/filter_map readiness consumers remain open.",
+    "Broader pad, track, stroke, slot, custom geometry and other source-format fidelity remains open.",
+    "The legacy translated_circle wrapper still expects admitted input and can panic on an unresolved or denied construction; migration of its callers to fallible readiness paths remains open.",
+    "Report sampling is not covered by a total allocation/time budget. No full-workspace, pre-push, ASan, fuzz, coverage or formal completion is claimed."
+  ],
+  "sources": {
+    "crates/hyperdrc/src/geometry.rs": "972990ffcac9e0e9bd95ee788bf8820adf2ef921f9da69daab2c6435a6e7600b",
+    "crates/hyperdrc/src/geometry/circle.rs": "80072a46d806bc2263a5bc521fdc8299c13f145c1eeacdeb4a11220fe46d841c",
+    "crates/hyperdrc/src/geometry/primitives.rs": "b19c66a6e2e49dbb541095d2f18fe8d5f7e19324e72dffc71ce0620ad3155054",
+    "crates/hyperdrc/src/geometry/region.rs": "a36ff4654348f95c8104dfebb570d1fcf09ce4497dc34df00db4f38c3c2a1ad9",
+    "crates/hyperdrc/src/geometry/types.rs": "e7a31ff1cd50a7b27b6d4e75cd14482d4c3b39e8adf608a5ac654db1e48f1b6b",
+    "crates/hyperdrc/src/kicad.rs": "098753b9616322ac50cba3e311bd2c7d3dfea1c7e3763ade670f3a39483f59ed",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "0eee72483ba114bf551c5c52d94f66459d0cbb8f7bee905dd5a0fc3ef2d59ec8",
+    "crates/hyperdrc/src/lib.rs": "0cb3f468891e9dd13bad987e9e266ed713f5f553867dd58389e494872347d28f",
+    "crates/hyperdrc/tests/fixtures/native-circle-via.kicad_pcb": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a",
+    "src/io/gerber.rs": "431ec06321b7c7f3c6455361c1c637e80e5de89a0c3e7d4d351ee65d21e8349b",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2"
+  },
+  "validation_files": {
+    "circle-validation/clippy.log": "43fa70524de3227a8aae8fc3c62360308335cec47caa2d6941f05c2c846124d2",
+    "circle-validation/configured-tests.log": "0faa285ef5da50117cba9f6675570ee7a96afda69a5aafc82e21814eca09db94",
+    "circle-validation/docs.log": "8ba4c868e2f71de23ac65a94c6699cc4a3808346738cd70af60ca05e1612da6d",
+    "circle-validation/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "circle-validation/status.json": "9aacf4086cced69fa3dfab10f0d1d0c2aac5e770544171603681a6d678ca291d"
+  }
+}

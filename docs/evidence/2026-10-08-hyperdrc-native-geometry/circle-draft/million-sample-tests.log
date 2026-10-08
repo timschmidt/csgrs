@@ -1,0 +1,12 @@
+    Finished `release` profile [optimized] target(s) in 0.09s
+     Running unittests src/lib.rs (/tmp/properties-drc-measurement-probe/target/release/deps/hyperdrc-967beeac8d31a877)
+
+running 5 tests
+test geometry::tests::circle_polygon_rejects_non_finite_inputs ... ok
+test geometry::tests::circle_polygon_zero_radius_is_closed_zero_area_polygon ... ok
+test geometry::tests::circle_polygon_enforces_minimum_segment_count ... ok
+test geometry::tests::circle_polygon_negative_radius_flips_winding_but_not_area ... ok
+test geometry::tests::circle_polygon_normalizes_invalid_segment_counts ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1121 filtered out; finished in 0.02s
+

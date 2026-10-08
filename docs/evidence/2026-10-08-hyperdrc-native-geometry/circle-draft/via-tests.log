@@ -1,0 +1,10 @@
+    Finished `release` profile [optimized] target(s) in 0.09s
+     Running unittests src/lib.rs (/tmp/properties-drc-measurement-probe/target/release/deps/hyperdrc-967beeac8d31a877)
+
+running 3 tests
+test kicad::native_circle_tests::invalid_via_size_is_retained_as_a_geometry_failure ... ok
+test kicad::native_circle_tests::authored_via_contains_points_between_its_circle_and_report_chords ... ok
+test kicad::native_circle_tests::via_source_center_and_size_retain_all_decimal_digits ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1123 filtered out; finished in 0.00s
+

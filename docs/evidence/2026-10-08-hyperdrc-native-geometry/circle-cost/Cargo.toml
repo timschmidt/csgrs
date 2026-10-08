@@ -1,0 +1,18 @@
+[package]
+name = "hyperdrc-native-circle-cost"
+version = "0.0.0"
+edition = "2024"
+
+[workspace]
+
+[dependencies]
+hyperdrc = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc" }
+hypercurve = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve" }
+hyperlimit = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal" }
+
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false

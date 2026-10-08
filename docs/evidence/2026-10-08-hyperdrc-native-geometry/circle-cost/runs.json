@@ -1,0 +1,97 @@
+[
+  {
+    "trial": 1,
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/trial-1-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-native-circle-cost-bin"
+    ],
+    "exit_code": 0,
+    "started_unix": 1791493694.0257587,
+    "finished_unix": 1791493695.5427837,
+    "stdout": "trial-1.jsonl",
+    "resources": "trial-1-resources.log",
+    "process_peak_rss_kib": 24304
+  },
+  {
+    "trial": 2,
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/trial-2-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-native-circle-cost-bin"
+    ],
+    "exit_code": 0,
+    "started_unix": 1791493695.5429547,
+    "finished_unix": 1791493697.0945919,
+    "stdout": "trial-2.jsonl",
+    "resources": "trial-2-resources.log",
+    "process_peak_rss_kib": 24212
+  },
+  {
+    "trial": 3,
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/trial-3-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-native-circle-cost-bin"
+    ],
+    "exit_code": 0,
+    "started_unix": 1791493697.0947616,
+    "finished_unix": 1791493698.62325,
+    "stdout": "trial-3.jsonl",
+    "resources": "trial-3-resources.log",
+    "process_peak_rss_kib": 24384
+  },
+  {
+    "trial": 4,
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/trial-4-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-native-circle-cost-bin"
+    ],
+    "exit_code": 0,
+    "started_unix": 1791493698.6234815,
+    "finished_unix": 1791493700.28712,
+    "stdout": "trial-4.jsonl",
+    "resources": "trial-4-resources.log",
+    "process_peak_rss_kib": 24316
+  },
+  {
+    "trial": 5,
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/trial-5-resources.log",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/properties-drc-native-circle-cost-bin"
+    ],
+    "exit_code": 0,
+    "started_unix": 1791493700.2872925,
+    "finished_unix": 1791493701.9425564,
+    "stdout": "trial-5.jsonl",
+    "resources": "trial-5-resources.log",
+    "process_peak_rss_kib": 24336
+  }
+]

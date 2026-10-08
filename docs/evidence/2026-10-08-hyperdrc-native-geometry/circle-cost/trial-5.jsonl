@@ -1,0 +1,9 @@
+{"fixture":"circle_16","mode":"warm_measure","iterations":100,"elapsed_ns":3286235,"report_points":17,"report_coordinate_bytes":272,"checksum":11885328361140736915}
+{"fixture":"circle_16","mode":"construct_and_measure","iterations":100,"elapsed_ns":20324096,"report_points":17,"report_coordinate_bytes":272,"checksum":11885328361140736915}
+{"fixture":"circle_48","mode":"warm_measure","iterations":100,"elapsed_ns":3252207,"report_points":49,"report_coordinate_bytes":784,"checksum":219145841691522294}
+{"fixture":"circle_48","mode":"construct_and_measure","iterations":100,"elapsed_ns":20392722,"report_points":49,"report_coordinate_bytes":784,"checksum":219145841691522294}
+{"fixture":"circle_128","mode":"warm_measure","iterations":100,"elapsed_ns":3363009,"report_points":129,"report_coordinate_bytes":2064,"checksum":4055535887530326378}
+{"fixture":"circle_128","mode":"construct_and_measure","iterations":100,"elapsed_ns":20587608,"report_points":129,"report_coordinate_bytes":2064,"checksum":4055535887530326378}
+{"fixture":"circle_1000000","mode":"warm_measure","iterations":100,"elapsed_ns":3590094,"report_points":1000001,"report_coordinate_bytes":16000016,"checksum":6506792073977201161}
+{"fixture":"circle_1000000","mode":"construct_and_measure","iterations":100,"elapsed_ns":1481376506,"report_points":1000001,"report_coordinate_bytes":16000016,"checksum":6506792073977201161}
+{"fixture":"source_via","mode":"load_and_classify","iterations":100,"elapsed_ns":18775602,"copper_features":2}

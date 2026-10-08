@@ -398,21 +398,33 @@ fn parse_tracks_and_vias(
         let Some(location_source) = xy_from_child_source(via, "at") else {
             continue;
         };
-        let location = location_source.approximate;
         let location_exact = location_source.exact;
-        let size = via
-            .named_child("size")
-            .and_then(|size| size.f64_at(1))
-            .unwrap_or(0.0);
         let size_scalar = via
             .named_child("size")
             .and_then(|size| SourceScalar::parse(SourceUnit::KiCadMillimeter, size.atom_at(1)?))
-            .map(|size| size.value)
-            .unwrap_or_else(Scalar::zero);
+            .map(|size| size.value);
+        let circle = size_scalar
+            .as_ref()
+            .ok_or_else(|| "via diameter is missing or invalid".to_owned())
+            .and_then(|diameter| {
+                if !crate::scalar::gt(diameter, &Scalar::zero()) {
+                    return Err("via diameter must be certified positive".to_owned());
+                }
+                crate::geometry::circle_region(&location_exact, &crate::scalar::half(diameter))
+                    .map_err(|error| error.to_string())
+            });
+        let metadata = Some(LayerMetadata {
+            name: "KiCad via".to_string(),
+        });
+        let region = match circle {
+            Ok(circle) => crate::PcbRegion::new(circle, metadata),
+            Err(error) => crate::PcbRegion::new(hypercurve::CurveRegion2::empty(), metadata)
+                .with_exact_construction_error(error),
+        };
         let drill = via
             .named_child("drill")
             .and_then(drill_diameter_scalar)
-            .unwrap_or(size_scalar);
+            .unwrap_or_else(|| size_scalar.unwrap_or_else(Scalar::zero));
         let net = net_name(via, nets);
         let layers = atom_values(via.named_child("layers"))
             .unwrap_or_else(|| vec!["F.Cu".to_string(), "B.Cu".to_string()]);
@@ -422,12 +434,7 @@ fn parse_tracks_and_vias(
                 layer,
                 net: net.clone(),
                 kind: CopperKind::Via,
-                region: polygons_to_profile(
-                    vec![circle_polygon(location, size / 2.0, 48)],
-                    Some(LayerMetadata {
-                        name: "KiCad via".to_string(),
-                    }),
-                ),
+                region: region.clone(),
                 location: location_exact.clone(),
             });
         }
@@ -1735,3 +1742,6 @@ mod tests {
         let _ = fs::remove_file(path);
     }
 }
+
+#[cfg(test)]
+mod native_circle_tests;

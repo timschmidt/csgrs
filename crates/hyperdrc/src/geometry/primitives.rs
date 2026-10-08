@@ -8,7 +8,15 @@ use std::f64::consts::PI;
 use super::types::transform_exact_region;
 use super::{Coord, LineString, Polygon};
 
-/// Run the `circle_polygon` design-readiness check or report helper.
+/// Construct an authoritative native circle and a finite report ring.
+///
+/// The finite center and radius are imported exactly as dyadics. `segments`
+/// controls only the report ring, with a minimum of sixteen samples; every
+/// positive-radius circle is constructed from two exact semicircles, which the
+/// kernel may subdivide when regularizing its boundary. A
+/// negative radius retains the historical report phase and denotes the same
+/// region as its absolute value. A zero radius denotes the empty regularized
+/// region with a collapsed report ring.
 pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<f64> {
     if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
         return Polygon::new(LineString(vec![]), vec![]);
@@ -24,7 +32,17 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
         });
     }
     coords.push(coords[0]);
-    Polygon::new(LineString(coords), vec![])
+    let exact_center = center.map(super::exact_real);
+    let exact_radius = super::exact_real(radius.abs());
+    match super::circle_region(&exact_center, &exact_radius) {
+        Ok(region) => Polygon::from_exact_region(region, LineString(coords), vec![]),
+        Err(error) => Polygon::from_exact_region(
+            hypercurve::CurveRegion2::empty(),
+            LineString(coords),
+            vec![],
+        )
+        .with_exact_construction_error(error.to_string()),
+    }
 }
 
 /// Run the `rect_polygon` design-readiness check or report helper.

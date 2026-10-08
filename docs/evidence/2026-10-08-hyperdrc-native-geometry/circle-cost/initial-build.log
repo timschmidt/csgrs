@@ -1,0 +1,37 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+   Compiling hyperdrc-native-circle-cost v0.0.0 (/tmp/properties-drc-native-circle-cost)
+error[E0283]: type annotations needed
+  --> src/main.rs:34:28
+   |
+34 |     assert_eq!(value.2, [0.into(), 0.into(), 2.into(), 2.into()]);
+   |                            ^^^^
+   |
+   = note: the type must implement `From<i32>`
+   = note: required for `i32` to implement `Into<_>`
+help: try using a fully qualified path to specify the expected types
+   |
+34 -     assert_eq!(value.2, [0.into(), 0.into(), 2.into(), 2.into()]);
+34 +     assert_eq!(value.2, [<i32 as Into<T>>::into(0), 0.into(), 2.into(), 2.into()]);
+   |
+
+error[E0283]: type annotations needed
+  --> src/main.rs:34:28
+   |
+34 |     assert_eq!(value.2, [0.into(), 0.into(), 2.into(), 2.into()]);
+   |     -----------------------^^^^---------------------------------- type must be known at this point
+   |
+   = note: multiple `impl`s satisfying `hypercurve::Real: PartialEq<_>` found in the following crates: `hypercurve`, `hyperreal`:
+           - impl PartialEq for hypercurve::Real;
+           - impl PartialEq<BezierParameter2> for hypercurve::Real;
+           - impl PartialEq<f64> for hypercurve::Real;
+           - impl PartialEq<hypercurve::Rational> for hypercurve::Real;
+   = note: required for `[hypercurve::Real; 4]` to implement `PartialEq<[_; 4]>`
+help: try using a fully qualified path to specify the expected types
+   |
+34 -     assert_eq!(value.2, [0.into(), 0.into(), 2.into(), 2.into()]);
+34 +     assert_eq!(value.2, [<i32 as Into<T>>::into(0), 0.into(), 2.into(), 2.into()]);
+   |
+
+For more information about this error, try `rustc --explain E0283`.
+error: could not compile `hyperdrc-native-circle-cost` (bin "hyperdrc-native-circle-cost") due to 2 previous errors

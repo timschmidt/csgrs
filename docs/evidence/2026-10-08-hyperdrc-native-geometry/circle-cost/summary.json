@@ -1,0 +1,110 @@
+[
+  {
+    "fixture": "circle_1000000",
+    "mode": "construct_and_measure",
+    "ns_per_observation": [
+      13713312.12,
+      14034286.41,
+      13834083.83,
+      14956697.06,
+      14813765.06
+    ],
+    "median_ns": 14034286.41
+  },
+  {
+    "fixture": "circle_1000000",
+    "mode": "warm_measure",
+    "ns_per_observation": [
+      22048.29,
+      22182.68,
+      21568.82,
+      21608.12,
+      35900.94
+    ],
+    "median_ns": 22048.29
+  },
+  {
+    "fixture": "circle_128",
+    "mode": "construct_and_measure",
+    "ns_per_observation": [
+      150903.85,
+      147717.37,
+      157832.28,
+      196214.54,
+      205876.08
+    ],
+    "median_ns": 157832.28
+  },
+  {
+    "fixture": "circle_128",
+    "mode": "warm_measure",
+    "ns_per_observation": [
+      23505.09,
+      22129.68,
+      21664.12,
+      21946.39,
+      33630.09
+    ],
+    "median_ns": 22129.68
+  },
+  {
+    "fixture": "circle_16",
+    "mode": "construct_and_measure",
+    "ns_per_observation": [
+      147710.98,
+      169333.59,
+      148416.32,
+      163279.3,
+      203240.96
+    ],
+    "median_ns": 163279.3
+  },
+  {
+    "fixture": "circle_16",
+    "mode": "warm_measure",
+    "ns_per_observation": [
+      26305.69,
+      41335.07,
+      22403.06,
+      38300.68,
+      32862.35
+    ],
+    "median_ns": 32862.35
+  },
+  {
+    "fixture": "circle_48",
+    "mode": "construct_and_measure",
+    "ns_per_observation": [
+      147681.17,
+      148838.6,
+      146306.37,
+      151496.61,
+      203927.22
+    ],
+    "median_ns": 148838.6
+  },
+  {
+    "fixture": "circle_48",
+    "mode": "warm_measure",
+    "ns_per_observation": [
+      24136.55,
+      23082.22,
+      22973.53,
+      22269.37,
+      32522.07
+    ],
+    "median_ns": 23082.22
+  },
+  {
+    "fixture": "source_via",
+    "mode": "load_and_classify",
+    "ns_per_observation": [
+      186615.1,
+      188375.28,
+      191613.56,
+      274657.67,
+      187756.02
+    ],
+    "median_ns": 188375.28
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "configured-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release"
+    ],
+    "environment": {},
+    "started_unix": 1791493403.2654886,
+    "exit_code": 0,
+    "log": "configured-tests.log",
+    "finished_unix": 1791493634.4438777
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "started_unix": 1791493634.4441152,
+    "exit_code": 0,
+    "log": "clippy.log",
+    "finished_unix": 1791493637.832218
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "started_unix": 1791493637.8324354,
+    "exit_code": 0,
+    "log": "docs.log",
+    "finished_unix": 1791493642.834469
+  },
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "started_unix": 1791493642.8346908,
+    "exit_code": 0,
+    "log": "fmt.log",
+    "finished_unix": 1791493653.0266254
+  }
+]

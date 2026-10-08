@@ -1,0 +1,7 @@
+{
+  "exit_code": 0,
+  "rows": 9,
+  "million_sample_fixture_unchanged": true,
+  "timing_claim": false,
+  "note": "Correctness-only fixture run while root configured tests were still active. Its elapsed times are unused."
+}

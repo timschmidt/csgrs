@@ -1,0 +1,54 @@
+   Compiling getrandom v0.3.4
+   Compiling rustix v1.1.4
+   Compiling getrandom v0.4.2
+   Compiling fastrand v2.4.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling wait-timeout v0.2.1
+   Compiling fnv v1.0.7
+   Compiling bit-vec v0.8.0
+   Compiling quick-error v1.2.3
+   Compiling unarray v0.1.4
+   Compiling bit-set v0.8.0
+   Compiling ahash v0.8.12
+   Compiling rand_core v0.9.5
+   Compiling arrow-array v57.3.1
+   Compiling rand v0.9.4
+   Compiling rand_chacha v0.9.0
+   Compiling rand_xorshift v0.4.0
+   Compiling tempfile v3.27.0
+   Compiling xattr v1.6.1
+   Compiling tar v0.4.46
+   Compiling rusty-fork v0.3.1
+   Compiling proptest v1.11.0
+   Compiling arrow-select v57.3.1
+   Compiling arrow-ord v57.3.1
+   Compiling arrow-ipc v57.3.1
+   Compiling arrow-cast v57.3.1
+   Compiling parquet v57.3.1
+   Compiling hyperdrc v0.3.0 (/tmp/properties-drc-measurement-probe/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 54.82s
+     Running unittests src/lib.rs (/tmp/properties-drc-measurement-probe/target/release/deps/hyperdrc-967beeac8d31a877)
+
+running 4 tests
+test geometry::circle::tests::circle_construction_reports_unknown_or_denied_radius_and_allows_retry ... ok
+test geometry::circle::tests::native_circle_preserves_decimal_center_and_radius_beyond_binary64_resolution ... ok
+test geometry::circle::tests::report_resolution_does_not_change_circle_geometry ... FAILED
+test geometry::circle::tests::profile_bounds_come_from_native_circle_not_its_report_diamond ... ok
+
+failures:
+
+---- geometry::circle::tests::report_resolution_does_not_change_circle_geometry stdout ----
+
+thread 'geometry::circle::tests::report_resolution_does_not_change_circle_geometry' (695) panicked at hyperdrc/src/geometry/circle.rs:68:13:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(657159), approximation: Add(Computable { internal: Node { facts: AtomicFacts(526087), approximation: Add(Computable { internal: Node { facts: AtomicFacts(12885296919), approximation: Add(Computable { internal: Node { facts: AtomicFacts(12885165879), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(4295100215), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Minus, numerator: 1, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, 2), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4295231287), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(18446744069414717239), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Minus, numerator: 5, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, 2), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(12885165879), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(4295100215), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Plus, numerator: 1, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, 2), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(17180133175), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Plus, numerator: 5, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, 2), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: Pi, computable: Some(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }), primitive_approx_cache: Empty })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    geometry::circle::tests::report_resolution_does_not_change_circle_geometry
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 1122 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

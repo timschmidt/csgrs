@@ -17,6 +17,10 @@ Important consequences:
 - Copper is stored as independent features with layer, net, kind, region, and
   location so checks can filter and report without returning to raw
   S-expressions.
+- Via copper retains its exact decimal center and diameter as a native circle
+  on every expanded copper layer. Invalid diameters retain a source-construction
+  error so geometry checks can diagnose them. Report tessellation does not define
+  the via boundary.
 - Wildcard copper layers are expanded from the board layer table when that
   evidence is present, because readiness checks need the fabricated copper
   picture rather than only the source token.
@@ -87,6 +91,10 @@ used by the checks. Known limits include exact routed-slot geometry,
 subtractive custom pad primitive semantics, glyph-accurate text rendering,
 remaining non-copper KiCad graphical variants, full material stackup/rule
 parsing beyond copper-layer wildcard expansion, and schematic/PCB parity.
+Other pad/track/graphic adapters still pass through finite coordinates or sampled
+strokes. Incomplete objects and centers that cannot produce the existing finite
+compatibility view can still be skipped by the parser; native via construction
+does not repair those broader input-diagnostic paths.
 
 For typed or lossless KiCad support, the roadmap in
 [`../../docs/design-readiness-plan.md`](../../docs/design-readiness-plan.md)

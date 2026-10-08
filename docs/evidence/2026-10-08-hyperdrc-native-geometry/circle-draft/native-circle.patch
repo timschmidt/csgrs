@@ -1,0 +1,244 @@
+diff --git a/crates/hyperdrc/src/geometry.rs b/crates/hyperdrc/src/geometry.rs
+index 0af9b6a89..08fa4c558 100644
+--- a/crates/hyperdrc/src/geometry.rs
++++ b/crates/hyperdrc/src/geometry.rs
+@@ -4,12 +4,14 @@
+ //! report projections. Primitive construction and report conversion stay
+ //! separate from topology decisions.
+ 
++mod circle;
+ mod primitives;
+ mod region;
+ mod source_units;
+ mod types;
+ mod violations;
+ 
++pub(crate) use circle::circle_region;
+ pub use primitives::{
+     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
+     polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
+diff --git a/crates/hyperdrc/src/geometry/primitives.rs b/crates/hyperdrc/src/geometry/primitives.rs
+index fa9a94816..1b4dcccc4 100644
+--- a/crates/hyperdrc/src/geometry/primitives.rs
++++ b/crates/hyperdrc/src/geometry/primitives.rs
+@@ -8,7 +8,15 @@ use std::f64::consts::PI;
+ use super::types::transform_exact_region;
+ use super::{Coord, LineString, Polygon};
+ 
+-/// Run the `circle_polygon` design-readiness check or report helper.
++/// Construct an authoritative native circle and a finite report ring.
++///
++/// The finite center and radius are imported exactly as dyadics. `segments`
++/// controls only the report ring, with a minimum of sixteen samples; every
++/// positive-radius circle is constructed from two exact semicircles, which the
++/// kernel may subdivide when regularizing its boundary. A
++/// negative radius retains the historical report phase and denotes the same
++/// region as its absolute value. A zero radius denotes the empty regularized
++/// region with a collapsed report ring.
+ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<f64> {
+     if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
+         return Polygon::new(LineString(vec![]), vec![]);
+@@ -24,7 +32,17 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
+         });
+     }
+     coords.push(coords[0]);
+-    Polygon::new(LineString(coords), vec![])
++    let exact_center = center.map(super::exact_real);
++    let exact_radius = super::exact_real(radius.abs());
++    match super::circle_region(&exact_center, &exact_radius) {
++        Ok(region) => Polygon::from_exact_region(region, LineString(coords), vec![]),
++        Err(error) => Polygon::from_exact_region(
++            hypercurve::CurveRegion2::empty(),
++            LineString(coords),
++            vec![],
++        )
++        .with_exact_construction_error(error.to_string()),
++    }
+ }
+ 
+ /// Run the `rect_polygon` design-readiness check or report helper.
+diff --git a/crates/hyperdrc/src/geometry/region.rs b/crates/hyperdrc/src/geometry/region.rs
+index 50216dfa9..2a98b3a28 100644
+--- a/crates/hyperdrc/src/geometry/region.rs
++++ b/crates/hyperdrc/src/geometry/region.rs
+@@ -97,42 +97,45 @@ pub fn polygons_to_profile(
+ }
+ 
+ fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> (Option<[hyperreal::Real; 4]>, bool) {
+-    let mut bounds: Option<[f64; 4]> = None;
+-    for polygon in polygons {
+-        for coordinate in polygon
++    let had_non_finite_input = polygons.iter().any(|polygon| {
++        polygon
+             .exterior()
+             .0
+             .iter()
+             .chain(polygon.interiors().iter().flat_map(|ring| ring.0.iter()))
+-        {
+-            if !coordinate.x.is_finite() || !coordinate.y.is_finite() {
+-                return (None, true);
++            .any(|coordinate| !coordinate.x.is_finite() || !coordinate.y.is_finite())
++    });
++    let bounds = hypercurve::evaluate_under(crate::PREDICATE_POLICY, || {
++        let mut bounds: Option<[hyperreal::Real; 4]> = None;
++        for polygon in polygons {
++            polygon.exact_construction_error().is_none().then_some(())?;
++            if polygon.exact_region().is_empty() {
++                continue;
+             }
+-            match &mut bounds {
+-                Some([min_x, min_y, max_x, max_y]) => {
+-                    *min_x = min_x.min(coordinate.x);
+-                    *min_y = min_y.min(coordinate.y);
+-                    *max_x = max_x.max(coordinate.x);
+-                    *max_y = max_y.max(coordinate.y);
+-                }
+-                None => {
+-                    bounds = Some([coordinate.x, coordinate.y, coordinate.x, coordinate.y]);
++            let next = polygon.exact_bounds()?;
++            if let Some(bounds) = &mut bounds {
++                for axis in 0..4 {
++                    let order = crate::scalar::compare(&next[axis], &bounds[axis])?;
++                    if (axis < 2 && order.is_lt()) || (axis >= 2 && order.is_gt()) {
++                        bounds[axis] = next[axis].clone();
++                    }
+                 }
++            } else {
++                bounds = Some(next.clone());
+             }
+         }
+-    }
+-    let Some([min_x, min_y, max_x, max_y]) = bounds else {
+-        return (None, false);
++        bounds
++    })
++    .certified()
++    .flatten();
++    // A missing certificate disables this shortcut. Report samples can be
++    // interior to a curve and cannot prove a rejection bound.
++    let bounds = if hypersolve::work_budget::exhaustion().is_some() {
++        None
++    } else {
++        bounds
+     };
+-    (
+-        Some([
+-            hyperreal::Real::try_from(min_x).expect("finite polygon bounds promote exactly"),
+-            hyperreal::Real::try_from(min_y).expect("finite polygon bounds promote exactly"),
+-            hyperreal::Real::try_from(max_x).expect("finite polygon bounds promote exactly"),
+-            hyperreal::Real::try_from(max_y).expect("finite polygon bounds promote exactly"),
+-        ]),
+-        false,
+-    )
++    (bounds, had_non_finite_input)
+ }
+ 
+ /// Create an empty native filled region with layer metadata.
+diff --git a/crates/hyperdrc/src/kicad.rs b/crates/hyperdrc/src/kicad.rs
+index 457d6faf9..6ac5ef292 100644
+--- a/crates/hyperdrc/src/kicad.rs
++++ b/crates/hyperdrc/src/kicad.rs
+@@ -398,21 +398,33 @@ fn parse_tracks_and_vias(
+         let Some(location_source) = xy_from_child_source(via, "at") else {
+             continue;
+         };
+-        let location = location_source.approximate;
+         let location_exact = location_source.exact;
+-        let size = via
+-            .named_child("size")
+-            .and_then(|size| size.f64_at(1))
+-            .unwrap_or(0.0);
+         let size_scalar = via
+             .named_child("size")
+             .and_then(|size| SourceScalar::parse(SourceUnit::KiCadMillimeter, size.atom_at(1)?))
+-            .map(|size| size.value)
+-            .unwrap_or_else(Scalar::zero);
++            .map(|size| size.value);
++        let circle = size_scalar
++            .as_ref()
++            .ok_or_else(|| "via diameter is missing or invalid".to_owned())
++            .and_then(|diameter| {
++                if !crate::scalar::gt(diameter, &Scalar::zero()) {
++                    return Err("via diameter must be certified positive".to_owned());
++                }
++                crate::geometry::circle_region(&location_exact, &crate::scalar::half(diameter))
++                    .map_err(|error| error.to_string())
++            });
++        let metadata = Some(LayerMetadata {
++            name: "KiCad via".to_string(),
++        });
++        let region = match circle {
++            Ok(circle) => crate::PcbRegion::new(circle, metadata),
++            Err(error) => crate::PcbRegion::new(hypercurve::CurveRegion2::empty(), metadata)
++                .with_exact_construction_error(error),
++        };
+         let drill = via
+             .named_child("drill")
+             .and_then(drill_diameter_scalar)
+-            .unwrap_or(size_scalar);
++            .unwrap_or_else(|| size_scalar.unwrap_or_else(Scalar::zero));
+         let net = net_name(via, nets);
+         let layers = atom_values(via.named_child("layers"))
+             .unwrap_or_else(|| vec!["F.Cu".to_string(), "B.Cu".to_string()]);
+@@ -422,12 +434,7 @@ fn parse_tracks_and_vias(
+                 layer,
+                 net: net.clone(),
+                 kind: CopperKind::Via,
+-                region: polygons_to_profile(
+-                    vec![circle_polygon(location, size / 2.0, 48)],
+-                    Some(LayerMetadata {
+-                        name: "KiCad via".to_string(),
+-                    }),
+-                ),
++                region: region.clone(),
+                 location: location_exact.clone(),
+             });
+         }
+@@ -1735,3 +1742,6 @@ mod tests {
+         let _ = fs::remove_file(path);
+     }
+ }
++
++#[cfg(test)]
++mod native_circle_tests;
+diff --git a/crates/hyperdrc/src/lib.rs b/crates/hyperdrc/src/lib.rs
+index cdcc17ac9..59e357aaf 100644
+--- a/crates/hyperdrc/src/lib.rs
++++ b/crates/hyperdrc/src/lib.rs
+@@ -396,28 +396,14 @@ pub(crate) fn translated_circle(
+     x: Scalar,
+     y: Scalar,
+ ) -> CurveRegion2 {
+-    use hypercurve::{CircularArc2, Contour2, Point2, Segment2};
+-
+-    match crate::scalar::sign(&radius) {
+-        Some(hyperlimit::Sign::Positive) => {}
+-        Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Zero) => {
+-            return CurveRegion2::empty();
+-        }
+-        None => {
+-            panic!("translated circle radius sign is unresolved under the workspace policy");
+-        }
+-    }
+-    let center = Point2::new(x.clone(), y.clone());
+-    let right = Point2::new(&x + &radius, y.clone());
+-    let left = Point2::new(&x - &radius, y);
+-    let first = CircularArc2::try_from_center(right.clone(), left.clone(), center.clone(), false)
+-        .expect("positive-radius translated circle must construct its first exact semicircle");
+-    let second = CircularArc2::try_from_center(left, right, center, false)
+-        .expect("positive-radius translated circle must construct its second exact semicircle");
+-    let contour = Contour2::try_new(vec![Segment2::Arc(first), Segment2::Arc(second)])
+-        .expect("two exact semicircles must form a closed translated-circle contour");
+-    CurveRegion2::try_from_native_material_contours(vec![contour])
+-        .expect("closed translated-circle contour must construct an exact material region")
++    if matches!(
++        crate::scalar::sign(&radius),
++        Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Zero)
++    ) {
++        return CurveRegion2::empty();
++    }
++    geometry::circle_region(&[x, y], &radius)
++        .expect("legacy translated-circle caller must supply admitted positive geometry")
+ }
+ 
+ impl Deref for PcbRegion {

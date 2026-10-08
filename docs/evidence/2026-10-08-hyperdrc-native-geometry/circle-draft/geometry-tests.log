@@ -1,0 +1,12 @@
+   Compiling hyperdrc v0.3.0 (/tmp/properties-drc-measurement-probe/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 24.79s
+     Running unittests src/lib.rs (/tmp/properties-drc-measurement-probe/target/release/deps/hyperdrc-967beeac8d31a877)
+
+running 4 tests
+test geometry::circle::tests::circle_construction_reports_unknown_or_denied_radius_and_allows_retry ... ok
+test geometry::circle::tests::native_circle_preserves_decimal_center_and_radius_beyond_binary64_resolution ... ok
+test geometry::circle::tests::profile_bounds_come_from_native_circle_not_its_report_diamond ... ok
+test geometry::circle::tests::report_resolution_does_not_change_circle_geometry ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1122 filtered out; finished in 0.00s
+
