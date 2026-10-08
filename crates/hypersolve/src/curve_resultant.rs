@@ -1944,6 +1944,8 @@ pub struct CurveIntersectionResultantReport {
 pub enum CurveIntersectionParameterLiftStatus {
     /// Every requested parameter-recovery polynomial was constructed exactly.
     Constructed,
+    /// The enclosing operation declined this cofactor interpolation.
+    BudgetExhausted,
     /// At least one bivariate equation was empty.
     EmptyEquation,
     /// A coefficient remained unknown after bounded refinement and the strict
@@ -2433,6 +2435,8 @@ fn determinant_polynomial_matrix(matrix: &[Vec<Real>], dimension: usize) -> Opti
 /// parameter. Callers must still prove that a denominator is nonzero at their
 /// retained root and replay the resulting rational image against the intended
 /// lifted-root interval.
+/// A work budget charges one promotion before cofactor sampling, after degree
+/// admission. A degree-limited request spends no promotion unit.
 pub fn linear_parameter_lifts_bivariate_polynomial_system(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
@@ -2440,6 +2444,16 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system(
     config: CurveIntersectionResultantConfig,
 ) -> CurveIntersectionParameterLiftReport {
     let lifted_parameter = opposite_parameter(retained_parameter);
+    if crate::work_budget::exhaustion().is_some() {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::BudgetExhausted,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            None,
+        );
+    }
     if bivariate_polynomial_is_empty(first_equation)
         || bivariate_polynomial_is_empty(second_equation)
     {
@@ -2503,6 +2517,16 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system(
         );
     }
 
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::BudgetExhausted,
+            retained_parameter,
+            lifted_parameter,
+            degree_bound,
+            Vec::new(),
+            None,
+        );
+    }
     let mut parameters = Vec::with_capacity(degree_bound + 1);
     let mut numerators = vec![Vec::with_capacity(degree_bound + 1); sylvester_dimension];
     let mut denominators = vec![Vec::with_capacity(degree_bound + 1); sylvester_dimension];
@@ -5079,6 +5103,7 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system_complete(
 mod tests {
     mod budget;
     mod fixed_budget;
+    mod lift_budget;
 
     use proptest::prelude::*;
 

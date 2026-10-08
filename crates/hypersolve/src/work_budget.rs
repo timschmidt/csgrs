@@ -22,7 +22,8 @@
 //! promotion units. Selected-fiber polynomial-image norms, bivariate quotient
 //! norms, tagged tensor-fiber projections, bivariate system resultants,
 //! constrained tensor-axis resultants, fixed-rank three/four-variable norms,
-//! and their subresultants also participate. Other elimination entry points,
+//! their subresultants, and bivariate cofactor parameter lifts also participate.
+//! Other elimination entry points,
 //! remaining curve dispatch paths,
 //! scalar precision refinement, and arbitrary caller arithmetic are not
 //! comprehensively instrumented. Those paths need additional work
@@ -36,6 +37,9 @@
 //! norm. Degree-limit admission alone does not charge a bivariate or fixed-rank
 //! resultant. Fixed-rank subresultants also charge once before interpolation;
 //! a terminal-order subresultant reuses an input without a promotion charge.
+//! Cofactor parameter lifts charge one attempt after degree admission; their
+//! curve replay cache can reuse a completed report without a new charge and
+//! never retains a report of resource exhaustion.
 //! Usage depends on retained evidence,
 //! representation, and algorithm version. A ready proof may require no units.
 //! Resource blockers must not be retained as mathematical capability facts.
