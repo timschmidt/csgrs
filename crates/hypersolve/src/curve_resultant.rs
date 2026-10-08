@@ -210,6 +210,8 @@ impl TrivariatePolynomialAxis {
 pub enum TrivariateConstraintResultantStatus {
     /// The two-retained-axis resultant was reconstructed exactly.
     Constructed,
+    /// The enclosing operation declined this algebraic elimination.
+    BudgetExhausted,
     /// The trivariate polynomial or univariate constraint was empty.
     EmptyPolynomial,
     /// A coefficient remained unknown after bounded refinement and the strict
@@ -248,6 +250,8 @@ pub struct TrivariateConstraintResultantReport {
 pub enum TrivariateConstraintSubresultantStatus {
     /// Every coefficient of the requested subresultant was reconstructed.
     Constructed,
+    /// The enclosing operation declined this algebraic elimination.
+    BudgetExhausted,
     /// The trivariate polynomial or univariate constraint was empty.
     EmptyPolynomial,
     /// A coefficient remained unknown after bounded refinement and the strict
@@ -296,6 +300,8 @@ pub enum TrivariatePolynomialSystemSubresultantStatus {
     /// Every retained-axis coefficient of the requested subresultant was
     /// reconstructed exactly.
     Constructed,
+    /// The enclosing operation declined this algebraic elimination.
+    BudgetExhausted,
     /// At least one polynomial was identically zero.
     EmptyPolynomial,
     /// A coefficient remained unknown after bounded refinement and the strict
@@ -690,6 +696,8 @@ impl Default for CurveIntersectionResultantConfig {
 /// are sampled on a tensor-product integer grid and reconstructed by nested
 /// Lagrange interpolation. Downstream callers must still isolate and replay
 /// candidate roots against the selected algebraic branches.
+/// A work budget charges one promotion after degree admission, before the
+/// interpolation grid is constructed. Exhaustion returns no resultant.
 pub fn resultant_trivariate_polynomial_univariate_constraint(
     polynomial: &TrivariatePolynomial,
     constraint: &[Real],
@@ -711,6 +719,14 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
             resultant,
             resultant_error,
         };
+    if crate::work_budget::exhaustion().is_some() {
+        return report(
+            TrivariateConstraintResultantStatus::BudgetExhausted,
+            [0, 0],
+            None,
+            None,
+        );
+    }
     if trivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
         return report(
             TrivariateConstraintResultantStatus::EmptyPolynomial,
@@ -789,6 +805,14 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
         );
     }
 
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return report(
+            TrivariateConstraintResultantStatus::BudgetExhausted,
+            degree_bounds,
+            None,
+            None,
+        );
+    }
     let mut second_axis_polynomials = Vec::with_capacity(degree_bounds[0] + 1);
     for first_sample_index in 0..=degree_bounds[0] {
         let first_value = Real::from(first_sample_index as u64);
@@ -895,6 +919,9 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
 /// expose the first nonzero polynomial remainder in a selected algebraic
 /// fiber, allowing a caller to recover its GCD even when the original
 /// incidence has an even-multiplicity root.
+/// A work budget charges one promotion before interpolation. The terminal
+/// order reuses an input polynomial without a promotion charge; degree-limit
+/// admission alone also spends no promotion unit.
 pub fn subresultant_trivariate_polynomial_univariate_constraint(
     polynomial: &TrivariatePolynomial,
     constraint: &[Real],
@@ -919,6 +946,14 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
             determinant_error,
         }
     };
+    if crate::work_budget::exhaustion().is_some() {
+        return report(
+            TrivariateConstraintSubresultantStatus::BudgetExhausted,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
     if trivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
         return report(
             TrivariateConstraintSubresultantStatus::EmptyPolynomial,
@@ -1058,6 +1093,14 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
         );
     };
 
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return report(
+            TrivariateConstraintSubresultantStatus::BudgetExhausted,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    }
     let mut samples = (0..=order)
         .map(|_| vec![vec![Real::zero(); second_sample_count]; first_sample_count])
         .collect::<Vec<_>>();
@@ -1118,6 +1161,8 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
 /// leading coefficient which vanishes only at one grid point does not change
 /// the represented Sylvester minor. Order zero returns the resultant as one
 /// constant coefficient polynomial.
+/// A work budget charges one promotion before interpolation, after degree and
+/// order admission. A terminal-order input polynomial needs no new promotion.
 pub fn subresultant_trivariate_polynomial_system(
     first: &TrivariatePolynomial,
     second: &TrivariatePolynomial,
@@ -1142,6 +1187,14 @@ pub fn subresultant_trivariate_polynomial_system(
             determinant_error,
         }
     };
+    if crate::work_budget::exhaustion().is_some() {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::BudgetExhausted,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
     if trivariate_polynomial_is_empty(first) || trivariate_polynomial_is_empty(second) {
         return report(
             TrivariatePolynomialSystemSubresultantStatus::EmptyPolynomial,
@@ -1257,6 +1310,14 @@ pub fn subresultant_trivariate_polynomial_system(
         );
     };
 
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::BudgetExhausted,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    }
     let mut samples = (0..=order)
         .map(|_| vec![vec![Real::zero(); second_sample_count]; first_sample_count])
         .collect::<Vec<_>>();
@@ -1346,6 +1407,8 @@ pub fn subresultant_trivariate_polynomial_system(
 /// axis is exposed deliberately: geometry callers use the first three axes as
 /// an already selected coefficient field and need one additional fiber GCD,
 /// not a general-purpose four-variable elimination package.
+/// A work budget charges one promotion after degree admission, before the
+/// interpolation grid is constructed. Exhaustion returns no resultant.
 pub fn resultant_quadrivariate_polynomial_fourth_axis_constraint(
     polynomial: &QuadrivariatePolynomial,
     constraint: &[Real],
@@ -1359,6 +1422,14 @@ pub fn resultant_quadrivariate_polynomial_fourth_axis_constraint(
             resultant_error,
         }
     };
+    if crate::work_budget::exhaustion().is_some() {
+        return report(
+            TrivariateConstraintResultantStatus::BudgetExhausted,
+            [0, 0, 0],
+            None,
+            None,
+        );
+    }
     if quadrivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
         return report(
             TrivariateConstraintResultantStatus::EmptyPolynomial,
@@ -1416,6 +1487,14 @@ pub fn resultant_quadrivariate_polynomial_fourth_axis_constraint(
         );
     }
 
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return report(
+            TrivariateConstraintResultantStatus::BudgetExhausted,
+            degree_bounds,
+            None,
+            None,
+        );
+    }
     let mut samples = vec![
         vec![vec![Real::zero(); degree_bounds[2] + 1]; degree_bounds[1] + 1];
         degree_bounds[0] + 1
@@ -1489,6 +1568,8 @@ pub fn resultant_quadrivariate_polynomial_fourth_axis_constraint(
 /// [`resultant_quadrivariate_polynomial_fourth_axis_constraint`], scanning
 /// orders from one upward recovers the exact GCD in a selected three-root
 /// coefficient fiber, including an even-multiplicity fourth-axis contact.
+/// A work budget charges one promotion before interpolation. Degree-limit
+/// admission and terminal-order reuse do not spend a promotion unit.
 pub fn subresultant_quadrivariate_polynomial_fourth_axis_constraint(
     polynomial: &QuadrivariatePolynomial,
     constraint: &[Real],
@@ -1504,6 +1585,14 @@ pub fn subresultant_quadrivariate_polynomial_fourth_axis_constraint(
             determinant_error,
         }
     };
+    if crate::work_budget::exhaustion().is_some() {
+        return report(
+            TrivariateConstraintSubresultantStatus::BudgetExhausted,
+            [0, 0, 0],
+            Vec::new(),
+            None,
+        );
+    }
     if quadrivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
         return report(
             TrivariateConstraintSubresultantStatus::EmptyPolynomial,
@@ -1591,6 +1680,14 @@ pub fn subresultant_quadrivariate_polynomial_fourth_axis_constraint(
     if quadrivariate_grid_exceeds_budget(degree_bounds, config.max_resultant_degree) {
         return report(
             TrivariateConstraintSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    }
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return report(
+            TrivariateConstraintSubresultantStatus::BudgetExhausted,
             degree_bounds,
             Vec::new(),
             None,
@@ -4981,6 +5078,7 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system_complete(
 #[cfg(test)]
 mod tests {
     mod budget;
+    mod fixed_budget;
 
     use proptest::prelude::*;
 

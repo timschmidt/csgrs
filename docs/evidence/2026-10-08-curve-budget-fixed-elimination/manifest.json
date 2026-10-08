@@ -1,0 +1,151 @@
+{
+  "scope": "Shared promotion admission for fixed-rank constrained norms and subresultants, typed curve propagation, selected degree-drop/even-contact and exact retry regressions. T3 remains in progress.",
+  "base_revision": "c74e952b7",
+  "checks": [
+    {
+      "name": "solver-all",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "solver-all.log",
+      "sha256": "668a88a3d8d1ea7b2e749c7b22e682560c569e2a4e5090665ec2b52f6e582724",
+      "tests": {
+        "passed": 598,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-tests",
+      "command": "cargo test --locked -p hypercurve --all-features --lib budget_tests",
+      "exit_code": 0,
+      "log": "curve-tests.log",
+      "sha256": "b1f23e4a44990490f0bbd5c9faeb20fd3447769eedb868ba43e12e80955b0ac8",
+      "tests": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "c44c6101923be206b18a1946a7952933687c281b381b468ed97b8aa4a3ba08d3",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "hyperpath",
+      "command": "cargo test --locked -p hyperpath",
+      "exit_code": 0,
+      "log": "hyperpath.log",
+      "sha256": "0f41aa59e8300cb26c53aa75e537625e2ed559eb8ad100600406cbd5a3472b38",
+      "tests": {
+        "passed": 443,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypersolve -p hypercurve -p hyperpath --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "e5bf8e899a89837fabaf499fc59fbc724ddab020aa2a5d0d1904e1603a5f7b5b"
+    },
+    {
+      "name": "fuzz-clippy",
+      "command": "cargo clippy --locked --manifest-path crates/hypersolve/fuzz/Cargo.toml --bins -- -D warnings",
+      "exit_code": 0,
+      "log": "fuzz-clippy.log",
+      "sha256": "26ef8d2bd3bfccaee48cdff274fd3d03ba44fc498fc3ed5c59e1f102bc41e7e7"
+    },
+    {
+      "name": "wasm-clippy",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "803d3c1eb83bdc02762f1840b4d6297dc22ccdbc16396e7d4ed78226318a8c92"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypersolve -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "ac36987876b4f548326e09c469573fea5b66101583b5ba8607419a05b5b692c0"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "release-solver",
+      "command": "cargo test --locked --release -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "release-solver.log",
+      "sha256": "b62b29f137d50a00078eed0170bea6b09a73012153cf0ae5659feacad2c455b5",
+      "tests": {
+        "passed": 598,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib budget_tests",
+      "exit_code": 0,
+      "log": "release-curve.log",
+      "sha256": "35a8a0fc8245d1c1da22e9066acfc41f2a43e8924c17ade3d56731494ab55764",
+      "tests": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve-budget",
+      "command": "cargo test --locked --release -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "release-curve-budget.log",
+      "sha256": "080e9ebfdba5d628e02d0db00f024d26a11b89635c7ac695428659ebdff95e26",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "development_diagnostics": "diagnostics.json",
+  "benchmark_provenance": "benchmark-provenance.json",
+  "sources": "sources.json",
+  "pending": [
+    "Run the full configured Hypercurve CI test command for this fixed-rank elimination extension."
+  ],
+  "limitations": [
+    "Instrumented work attempts are bounded, not all scalar arithmetic, coefficient growth, allocations, memory, or elapsed time. Remaining elimination and curve paths require additional accounting.",
+    "Exact reports and retry semantics are checked separately from Criterion. No checksum is added to every timed iteration.",
+    "No complete repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed.",
+    "The full configured Hypercurve CI suite passed at c74e952b7 (2,409 passed, 33 existing ignored), before this fixed-rank extension; its log is retained with the preceding bivariate/tensor evidence.",
+    "Selected inactive-accounting timings cover the two existing constrained-trivariate workloads and two controls. Subresultants and four-variable paths have exact-report tests but no new timing or allocation measurements. Process medians do not establish a general speedup or statistical regression ceiling."
+  ],
+  "benchmark_logs": [
+    {
+      "name": "benchmark-build",
+      "log": "benchmark-build.log",
+      "sha256": "e7877f75217d7d76dcbe44d15ee1935b32865710cbf045466d849179ec810b99"
+    },
+    {
+      "name": "benchmark-probe",
+      "log": "benchmark-probe.log",
+      "sha256": "bfdbbac2decec906241c8cc5c595a3ea5abf93f1ed88276c89bb740a3baa2162"
+    }
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/fixed-elimination-budget/manifest.json"
+}

@@ -1,0 +1,11 @@
+{
+  "scope": "Retained development failure; the intermediate test source was not separately snapshotted and is not final validation evidence.",
+  "diagnostics": [
+    {
+      "log": "initial-curve-compile.log",
+      "sha256": "67a80de1e554da5042f8cf86d9f04cd9ee55eb1987ad9e5ca9a2cadb41c927b1",
+      "exit_code": 101,
+      "reason": "The new curve regression initially compared a projection enum that does not implement PartialEq. It now compares the retained parameter vector directly, including its exact defining polynomial and isolating interval."
+    }
+  ]
+}

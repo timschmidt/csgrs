@@ -373,9 +373,12 @@
         "crates/hypersolve/src/tensor_resultant.rs",
         "crates/hypersolve/src/curve_resultant/tests/budget.rs",
         "crates/hypercurve/src/bezier_offset/selected_dense/budget_tests.rs",
-        "docs/evidence/2026-10-08-curve-budget-elimination/manifest.json"
+        "docs/evidence/2026-10-08-curve-budget-elimination/manifest.json",
+        "crates/hypersolve/src/curve_resultant/tests/fixed_budget.rs",
+        "crates/hypercurve/src/bezier_offset/budget_tests.rs",
+        "docs/evidence/2026-10-08-curve-budget-fixed-elimination/manifest.json"
       ],
-      "remaining": "Shared synchronous accounting covers instrumented root/selected-fiber refinements, represented images, selected-fiber norms, tagged projections, bivariate system resultants, and constrained tensor-axis resultants. Typed curve blockers and outer budget failure preserve exact retries, including a public three-contact rational intersection. Complete accounting across fixed-rank resultants/subresultants, remaining elimination and curve dispatch paths, scalar precision, and coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
+      "remaining": "Shared synchronous accounting covers instrumented root/selected-fiber refinements, represented images, selected-fiber norms, tagged projections, bivariate and constrained tensor-axis resultants, and fixed-rank norms/subresultants. Typed curve blockers and outer budget failure preserve exact retries, including a public three-contact rational intersection and a selected even contact after a degree drop. Complete accounting across remaining elimination and curve dispatch paths, scalar precision, and coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
     },
     {
       "id": "T4",
@@ -533,7 +536,7 @@
       {
         "path": "crates/hypercircuit/CAPABILITY_MATRIX.md",
         "status": "open",
-        "remaining": "The matrix contains partial workflows, including external model, registry, and distributed editing integration. Inventory does not count as a complete audit."
+        "remaining": "Entire 310-line matrix read on 2026-10-08. Its six representative-board gates and ownership boundaries need executable revalidation. Remaining breadth includes device physics and sparse/adaptive simulation, placement optimization, material/impedance models, public routing corpora and memory metrics, editor/CAM conformance, STEP/B-rep model loading, distributed edits, and authenticated registry adapters; these remain in scope. Reading its prior implementation claims does not independently verify them."
       },
       {
         "path": "docs/fully-certified-sdf-meshing-plan.md",
@@ -543,7 +546,7 @@
     ]
   },
   "next_actions": [
-    "The configured Hypercurve CI test command passed at 3464aa428 (2,406 passed, 33 existing ignored). Run it for the subsequent bivariate/tensor elimination extension, whose solver and curve budget tests pass in debug/release with strict native, fuzz-target, and WASM Clippy. Continue the complete repository pre-push matrix before any push.",
+    "The configured Hypercurve CI test command passed at c74e952b7 (2,409 passed, 33 existing ignored). Run it for the subsequent fixed-rank elimination extension, whose solver and curve budget tests pass in debug/release with strict native, fuzz-target, and WASM Clippy. The selected inactive-accounting probe and its limits are retained. Continue the complete repository pre-push matrix before any push.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."

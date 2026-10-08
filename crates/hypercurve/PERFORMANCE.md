@@ -63,6 +63,15 @@ than a fixed cost for each public API call. See the
 [elimination measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
 for the selected solver workloads.
 
+Fixed-rank norm and subresultant adapters now preserve the same resource
+blocker. Curve regressions retain an even contact whose target degree drops
+only in the selected source factor, and recover the exact projected parameter
+after a denied three-variable norm. Both policies return certified results
+after retry; exhaustion does not authorize a tensor or approximate fallback.
+The [fixed-rank solver probe](../../benchmarks/baselines/2026-10-08-properties/README.md#fixed-rank-norms-and-subresultants)
+records selected inactive-accounting timings and executable size, with exact
+retry evidence tested separately.
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate

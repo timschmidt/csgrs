@@ -1,0 +1,38 @@
+Benchmarking resultant_trivariate_polynomial_univariate_constraint
+Benchmarking resultant_trivariate_polynomial_univariate_constraint: Warming up for 200.00 ms
+Benchmarking resultant_trivariate_polynomial_univariate_constraint: Collecting 30 samples in estimated 500.53 ms (21k iterations)
+Benchmarking resultant_trivariate_polynomial_univariate_constraint: Analyzing
+resultant_trivariate_polynomial_univariate_constraint
+                        time:   [23.785 µs 23.920 µs 24.077 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  4 (13.33%) high severe
+
+Benchmarking resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint
+Benchmarking resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint: Warming up for 200.00 ms
+Benchmarking resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint: Collecting 30 samples in estimated 503.76 ms (27k iterations)
+Benchmarking resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint: Analyzing
+resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint
+                        time:   [12.863 µs 12.915 µs 12.986 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  2 (6.67%) high mild
+  1 (3.33%) high severe
+
+Benchmarking resultant_tensor_polynomial_univariate_constraint
+Benchmarking resultant_tensor_polynomial_univariate_constraint: Warming up for 200.00 ms
+Benchmarking resultant_tensor_polynomial_univariate_constraint: Collecting 30 samples in estimated 500.20 ms (490k iterations)
+Benchmarking resultant_tensor_polynomial_univariate_constraint: Analyzing
+resultant_tensor_polynomial_univariate_constraint
+                        time:   [1.0243 µs 1.0283 µs 1.0326 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high mild
+
+Benchmarking resultant_parametric_curve_intersection
+Benchmarking resultant_parametric_curve_intersection: Warming up for 200.00 ms
+Benchmarking resultant_parametric_curve_intersection: Collecting 30 samples in estimated 500.46 ms (427k iterations)
+Benchmarking resultant_parametric_curve_intersection: Analyzing
+resultant_parametric_curve_intersection
+                        time:   [1.1415 µs 1.1441 µs 1.1477 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  1 (3.33%) high mild
+  3 (10.00%) high severe
+

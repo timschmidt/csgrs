@@ -1,0 +1,5 @@
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+ Documenting hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+ Documenting hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.89s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/doc/hypercurve/index.html and 1 other file

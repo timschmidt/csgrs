@@ -1,0 +1,17 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-d2a908ce8e621ff9)
+
+running 10 tests
+test bezier_offset::selected_dense::budget_tests::bivariate_projection_adapter_preserves_budget_failure_through_degree_continuation ... ok
+test policy::budget_tests::budget_blockers_remain_transient_after_an_inner_scope_returns ... ok
+test policy::budget_tests::exhausted_classification_cannot_seed_a_cache_or_start_an_approximate_retry ... ok
+test policy::budget_tests::exhausted_evaluation_cannot_seed_an_immutable_cache ... ok
+test policy::budget_tests::work_limited_blockers_do_not_poison_the_operation_cache ... ok
+test bezier_algebraic_image::budget_tests::coordinate_promotion_exhaustion_preserves_typed_failure_and_lazy_point_retries ... ok
+test bezier_offset::selected_dense::budget_tests::dense_projection_charges_only_needed_selected_axis_resultants_and_retries_exactly ... ok
+test bezier_offset::budget_tests::selected_trivariate_projection_propagates_norm_budget_without_tensor_fallback ... ok
+test bezier_offset::selected_fiber::budget_tests::selected_image_helpers_stop_on_exhaustion_and_retry_with_exact_saturation_evidence ... ok
+test bezier_offset::budget_tests::selected_pair_subresultant_budget_preserves_even_contact_after_selected_degree_drop ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 1694 filtered out; finished in 0.03s
+

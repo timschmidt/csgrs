@@ -1,0 +1,32 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "resultant_parametric_curve_intersection": {
+    "before": 1184.5335007215601,
+    "after": 1160.500992944603,
+    "change_percent": -2.028858429273439
+  },
+  "resultant_tensor_polynomial_univariate_constraint": {
+    "before": 1041.7414913715518,
+    "after": 1039.2727133213798,
+    "change_percent": -0.23698566972901736
+  },
+  "resultant_trivariate_polynomial_univariate_constraint": {
+    "before": 23929.439406487953,
+    "after": 23781.165475919435,
+    "change_percent": -0.6196297708851328
+  },
+  "resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint": {
+    "before": 13405.155056691605,
+    "after": 13358.139358573851,
+    "change_percent": -0.3507284915312048
+  }
+}

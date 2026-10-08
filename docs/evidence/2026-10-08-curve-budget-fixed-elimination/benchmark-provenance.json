@@ -1,0 +1,19 @@
+{
+  "baseline_revision": "c74e952b7",
+  "baseline_source_files_verified": 246,
+  "workspace": "../2026-10-08-curve-budget-isolators/benchmark-workspace.toml",
+  "lockfile": "../2026-10-08-curve-budget-isolators/benchmark-Cargo.lock",
+  "baseline_executable_sha256": "240cca85fd8e61a2df471521428cd7379192d4ba85864ef79a8db33620d55b0a",
+  "candidate_executable_sha256": "31e5a9558a331e2f398ec4d0840b5298303b0922d9e99b5cf5ed499eb2496274",
+  "candidate_solver_sources": {
+    "crates/hypersolve/src/curve_resultant.rs": "7412cb1445c87bef6aa80f951fcae0fb240a0c53944b5a9f0ca185fb25d103a4",
+    "crates/hypersolve/src/curve_resultant/tests/fixed_budget.rs": "02fd360da176026598217635b008b0a53224db1c46f7aa279696f3191af937e5",
+    "crates/hypersolve/src/work_budget.rs": "b43da8e88f4632b634cc873bbefe772421c5b1829980229927df5573382e8844"
+  },
+  "candidate_workspace_sources": "benchmark-sources.json",
+  "build_command": "cargo bench --offline --locked --manifest-path /tmp/csgrs-isolator-baseline/Cargo.toml -p hypersolve --bench certification --no-run",
+  "method": "Reuse the prior elimination-budget executable after verifying its 246 Rust source files against c74e952b7. Copy only the listed solver sources, including the new cfg(test) module, and rebuild with unchanged compiler, profiles, and pruned lockfile. The expanded candidate fingerprint inventory verifies all 452 Rust files under the four crates (including benches, examples, tests, and fuzz sources outside target directories) against the root workspace.",
+  "prior_build_provenance": "../2026-10-08-curve-budget-elimination/benchmark-provenance.json",
+  "registry_and_local_packages_matched": 215,
+  "limitations": "Package identities and checksums match the root lockfile, but unused workspace dependency edges are absent. These isolated dependency graphs are narrower than the full root workspace. Whole-executable sizes do not measure library size or allocations."
+}

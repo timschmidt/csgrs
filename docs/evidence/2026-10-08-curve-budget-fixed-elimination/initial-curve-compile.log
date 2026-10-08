@@ -1,0 +1,25 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0369]: binary operation `==` cannot be applied to type `hypersolve::classification::Classification<bezier_offset::BezierAlgebraicFiberProjection2>`
+   --> crates/hypercurve/src/bezier_offset/budget_tests.rs:149:9
+    |
+149 |         assert_eq!(retry.result.unwrap().certified().unwrap(), expected);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |         |
+    |         hypersolve::classification::Classification<bezier_offset::BezierAlgebraicFiberProjection2>
+    |         hypersolve::classification::Classification<bezier_offset::BezierAlgebraicFiberProjection2>
+    |
+note: an implementation of `PartialEq` might be missing for `bezier_offset::BezierAlgebraicFiberProjection2`
+   --> crates/hypercurve/src/bezier_offset.rs:933:1
+    |
+933 | pub(crate) enum BezierAlgebraicFiberProjection2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `bezier_offset::BezierAlgebraicFiberProjection2` with `#[derive(PartialEq)]`
+   --> crates/hypercurve/src/bezier_offset.rs:933:1
+    |
+933 + #[derive(PartialEq)]
+934 | pub(crate) enum BezierAlgebraicFiberProjection2 {
+    |
+
+For more information about this error, try `rustc --explain E0369`.
+error: could not compile `hypercurve` (lib test) due to 1 previous error

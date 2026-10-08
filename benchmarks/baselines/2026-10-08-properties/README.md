@@ -305,3 +305,42 @@ python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate 
   '^(resultant_tensor_polynomial_univariate_constraint($|/)|resultant_(rational_)?parametric_curve_intersection$|project_selected_tensor_fiber_via_tagged_norm/)' \
   /path/to/new-evidence-directory
 ```
+
+## Fixed-rank norms and subresultants
+
+The next extension admits three- and four-variable constrained norms and
+subresultants against the shared promotion allowance. Degree/order admission
+spends no unit; each interpolation attempt spends one. Terminal-order reuse
+also spends no unit. Exact-report regressions cover every trivariate axis,
+the constrained fourth axis, nested scopes, and exhausted-scope reuse. Curve
+regressions preserve selected degree drops, even contacts, typed exhaustion,
+and certified retries under both policies.
+
+[`fixed-elimination-budget/manifest.json`](fixed-elimination-budget/manifest.json)
+retains five alternating process pairs, pinned to CPU 0, with 30 Criterion
+samples, 0.2 seconds of warmup, and 0.5 seconds of measurement per workload.
+All task builds and tests had finished before measurement. These are medians
+of process mean estimates with no active budget.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Constrained trivariate norm | 23.929 µs | 23.781 µs | -0.62% |
+| Strict exact-normal constraint | 13.405 µs | 13.358 µs | -0.35% |
+| Polynomial-curve resultant control | 1.185 µs | 1.161 µs | -2.03% |
+| Tensor resultant control | 1.042 µs | 1.039 µs | -0.24% |
+
+The baseline is `c74e952b7`; compiler, isolated workspace, profiles, and pruned
+lockfile are unchanged. The benchmark executable grows by 456 bytes.
+[Build and source provenance](../../../docs/evidence/2026-10-08-curve-budget-fixed-elimination/benchmark-provenance.json)
+records those identities. These selected observations establish neither a
+general speedup nor a statistical regression ceiling. Subresultants and the
+four-variable paths have correctness coverage here, without new timing or
+allocation measurements. Whole-executable size is not library size. Exact
+reports and retained curve parameters are compared in separate tests; no
+per-iteration checksum was added to Criterion.
+
+```sh
+python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
+  '^(resultant_trivariate_polynomial_univariate_constraint($|/)|resultant_tensor_polynomial_univariate_constraint$|resultant_parametric_curve_intersection$)' \
+  /path/to/new-evidence-directory
+```

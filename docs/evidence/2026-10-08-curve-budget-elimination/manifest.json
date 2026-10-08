@@ -127,6 +127,21 @@
         "failed": 0,
         "ignored": 0
       }
+    },
+    {
+      "name": "hypercurve-configured-ci",
+      "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "cwd": "crates/hypercurve",
+      "source_revision": "c74e952b7",
+      "exit_code": 0,
+      "log": "hypercurve-configured-ci.log",
+      "sha256": "06657f85ee1c7eb64ea61369154ef5c4440759c1dbbdabda8dc45c95253ed011",
+      "tests": {
+        "passed": 2409,
+        "failed": 0,
+        "ignored": 33
+      },
+      "provenance": "The test executables were compiled at c74e952b7 before the following fixed-rank extension was edited. No release rebuild ran before this process completed; the policy doctest source is unchanged. This log does not validate the subsequent fixed-rank extension."
     }
   ],
   "development_diagnostics": "diagnostics.json",
@@ -151,9 +166,7 @@
   "padding_followup": "../../../benchmarks/baselines/2026-10-08-properties/elimination-budget-padding/manifest.json",
   "benchmark_provenance": "benchmark-provenance.json",
   "sources": "sources.json",
-  "pending": [
-    "Run the full configured Hypercurve CI test command for this bivariate/tensor elimination extension."
-  ],
+  "pending": [],
   "limitations": [
     "The full configured Hypercurve CI run at 3464aa428 (2,406 passed, 33 existing ignored) predates this extension and is retained with the preceding selected-fiber projection evidence.",
     "Only instrumented work attempts are bounded. Fixed-rank resultants/subresultants, other elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time still require complete accounting and bounds.",
