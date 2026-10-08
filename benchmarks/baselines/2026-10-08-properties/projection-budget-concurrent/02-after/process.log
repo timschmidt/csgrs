@@ -1,0 +1,96 @@
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic: Warming up for 200.00 ms
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic: Collecting 30 samples in estimated 567.34 ms (2790 iterations)
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic: Analyzing
+project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic
+                        time:   [206.98 µs 212.49 µs 219.26 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  1 (3.33%) high mild
+  3 (10.00%) high severe
+
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers: Warming up for 200.00 ms
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers: Collecting 30 samples in estimated 589.20 ms (2790 iterations)
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers: Analyzing
+project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers
+                        time:   [210.15 µs 211.62 µs 213.43 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  3 (10.00%) high mild
+  2 (6.67%) high severe
+
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers: Warming up for 200.00 ms
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers: Collecting 30 samples in estimated 551.86 ms (2325 iterations)
+Benchmarking project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers: Analyzing
+project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers
+                        time:   [218.69 µs 228.41 µs 246.67 µs]
+Found 1 outliers among 30 measurements (3.33%)
+  1 (3.33%) high severe
+
+Benchmarking project_bivariate_fiber/retained_first_quadratic
+Benchmarking project_bivariate_fiber/retained_first_quadratic: Warming up for 200.00 ms
+Benchmarking project_bivariate_fiber/retained_first_quadratic: Collecting 30 samples in estimated 500.14 ms (222k iterations)
+Benchmarking project_bivariate_fiber/retained_first_quadratic: Analyzing
+project_bivariate_fiber/retained_first_quadratic
+                        time:   [2.0366 µs 2.0720 µs 2.1150 µs]
+Found 3 outliers among 30 measurements (10.00%)
+  1 (3.33%) high mild
+  2 (6.67%) high severe
+
+Benchmarking project_bivariate_fiber/retained_second_quadratic
+Benchmarking project_bivariate_fiber/retained_second_quadratic: Warming up for 200.00 ms
+Benchmarking project_bivariate_fiber/retained_second_quadratic: Collecting 30 samples in estimated 500.72 ms (275k iterations)
+Benchmarking project_bivariate_fiber/retained_second_quadratic: Analyzing
+project_bivariate_fiber/retained_second_quadratic
+                        time:   [1.8738 µs 1.9924 µs 2.1629 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  2 (6.67%) high mild
+  2 (6.67%) high severe
+
+Benchmarking project_algebraic_fiber_polynomial_image
+Benchmarking project_algebraic_fiber_polynomial_image: Warming up for 200.00 ms
+Benchmarking project_algebraic_fiber_polynomial_image: Collecting 30 samples in estimated 501.45 ms (80k iterations)
+Benchmarking project_algebraic_fiber_polynomial_image: Analyzing
+project_algebraic_fiber_polynomial_image
+                        time:   [6.1272 µs 6.1500 µs 6.1782 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  2 (6.67%) high mild
+  2 (6.67%) high severe
+
+Benchmarking project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree
+Benchmarking project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree: Warming up for 200.00 ms
+Benchmarking project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree: Collecting 30 samples in estimated 504.50 ms (29k iterations)
+Benchmarking project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree: Analyzing
+project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree
+                        time:   [11.611 µs 11.671 µs 11.740 µs]
+Found 2 outliers among 30 measurements (6.67%)
+  1 (3.33%) high mild
+  1 (3.33%) high severe
+
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_conjugate_factor
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_conjugate_factor: Warming up for 200.00 ms
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_conjugate_factor: Collecting 30 samples in estimated 532.77 ms (6045 iterations)
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_conjugate_factor: Analyzing
+project_algebraic_fiber_polynomial_image/saturated_conjugate_factor
+                        time:   [87.545 µs 88.196 µs 89.254 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  5 (16.67%) high severe
+
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient: Warming up for 200.00 ms
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient: Collecting 30 samples in estimated 538.41 ms (240 iterations)
+Benchmarking project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient: Analyzing
+project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient
+                        time:   [2.2617 ms 2.2852 ms 2.3108 ms]
+
+Benchmarking project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image
+Benchmarking project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image: Warming up for 200.00 ms
+Benchmarking project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image: Collecting 30 samples in estimated 503.30 ms (25k iterations)
+Benchmarking project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image: Analyzing
+project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image
+                        time:   [20.023 µs 20.075 µs 20.161 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  2 (6.67%) low mild
+  2 (6.67%) high mild
+  1 (3.33%) high severe
+

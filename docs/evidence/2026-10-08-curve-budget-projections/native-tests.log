@@ -1,0 +1,12 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.58s
+     Running unittests src/lib.rs (target/debug/deps/hypersolve-a89a091ce3328d58)
+
+running 4 tests
+test algebraic_fiber::tests::projection_budget::degenerate_fiber_images_need_no_norm_but_cannot_escape_an_exhausted_scope ... ok
+test algebraic_fiber::tests::projection_budget::quotient_norm_exhaustion_is_typed_and_both_axes_retry_exactly ... ok
+test algebraic_fiber::tests::projection_budget::saturated_local_and_global_images_preserve_all_evidence_after_budget_retry ... ok
+test algebraic_fiber::tests::projection_budget::tagged_projection_shares_its_budget_with_the_final_quotient_norm ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 588 filtered out; finished in 0.02s
+

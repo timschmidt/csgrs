@@ -1,0 +1,174 @@
+{
+  "scope": "Promotion admission for selected-fiber local/global polynomial-image norms, bivariate quotient norms, and tagged tensor-fiber projections; typed exhaustion through curve projection and coordinate adapters. T3 remains in progress.",
+  "base_revision": "12176ca1a",
+  "checks": [
+    {
+      "name": "check",
+      "command": "cargo check --locked -p hypersolve -p hypercurve --all-features",
+      "exit_code": 0,
+      "log": "check.log",
+      "sha256": "4a578e0de7d6b1729d08cead32e6539e791e890fde894ef3de13d09db9b8ab22"
+    },
+    {
+      "name": "native-tests",
+      "command": "cargo test --locked -p hypersolve --all-features --lib projection_budget",
+      "exit_code": 0,
+      "log": "native-tests.log",
+      "sha256": "64f66c13f664078ba40254e33e4643cb73d13fae9cc7011790a27e3dcc94f590",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-tests",
+      "command": "cargo test --locked -p hypercurve --all-features --lib selected_fiber::budget_tests",
+      "exit_code": 0,
+      "log": "curve-tests.log",
+      "sha256": "58a92ebfa73841abb26c33cc23cb2486fe1bccdd2054221976000f83c9c10b12",
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "solver-all",
+      "command": "cargo test --locked -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "solver-all.log",
+      "sha256": "668e1e7589b75ee9a10a9765c37480c399b2a3461552c4ef40c5993ffc31402a",
+      "tests": {
+        "passed": 592,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve-budget",
+      "command": "cargo test --locked -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "curve-budget.log",
+      "sha256": "c90b94bef7c585ef838599d67446e1f7d542ea409bb5e1c2975ab79a9490e2c8",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "hyperpath",
+      "command": "cargo test --locked -p hyperpath",
+      "exit_code": 0,
+      "log": "hyperpath.log",
+      "sha256": "b0d8ec0a257d73878a7f1d696dce385d858a37146c448ca82c4647ccb1ddee8b",
+      "tests": {
+        "passed": 443,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypersolve -p hypercurve -p hyperpath --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "213717cbe8290b931f31f0e4aad66d18e623e3c4027dde43352ff70d5efc301a"
+    },
+    {
+      "name": "fuzz-clippy",
+      "command": "cargo clippy --locked --manifest-path crates/hypersolve/fuzz/Cargo.toml --bins -- -D warnings",
+      "exit_code": 0,
+      "log": "fuzz-clippy.log",
+      "sha256": "9c2951e58e693adc673fe1e5fd21f4c5bc2c8686b53a33b328789c5d497cf376"
+    },
+    {
+      "name": "wasm-clippy",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "wasm-clippy.log",
+      "sha256": "0279087433e1c146a1050230c30c6070c40d31aff288ca5ef7ef1aae59c33bc3"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypersolve -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "59384f59fdf292862c29c14660bdf1a29ee8ce8eb2d4523cd39a431600367e78"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "release-solver",
+      "command": "cargo test --locked --release -p hypersolve --all-features --lib",
+      "exit_code": 0,
+      "log": "release-solver.log",
+      "sha256": "39eab595076a39afabba41f4abf0897748e7ced38a0374560f6eddbe0feb93cf",
+      "tests": {
+        "passed": 592,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib selected_fiber::budget_tests",
+      "exit_code": 0,
+      "log": "release-curve.log",
+      "sha256": "c6cbc1416103b765b8cb034c6529bf9b9bb37ca6122d6768f7999b94bd894829",
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "release-curve-budget",
+      "command": "cargo test --locked --release -p hypercurve --all-features --test work_budget",
+      "exit_code": 0,
+      "log": "release-curve-budget.log",
+      "sha256": "7725d9778e39d023ce24cd728c902d537b1bce4c5e42f6a71c9eff2fa84ac596",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "benchmark_logs": [
+    {
+      "name": "benchmark-build",
+      "log": "benchmark-build.log",
+      "sha256": "ec99bfde3e84494fab7853198e684c2047ebadff674f113bc9a62b52338df030"
+    },
+    {
+      "name": "benchmark-probe",
+      "log": "benchmark-probe.log",
+      "sha256": "c90a67add780d88a55eaf0cc2e80ddbcbcfb37924f387de2f48dac448fe1477d"
+    },
+    {
+      "name": "concurrent-benchmark-probe",
+      "log": "concurrent-benchmark-probe.log",
+      "sha256": "684bd187bcf84a54e1e4d2058e882343532584db1623be83b493e5bc08be3c96"
+    }
+  ],
+  "performance": "../../../benchmarks/baselines/2026-10-08-properties/projection-budget/manifest.json",
+  "concurrent_diagnostic": "../../../benchmarks/baselines/2026-10-08-properties/projection-budget-concurrent/manifest.json",
+  "benchmark_provenance": "benchmark-provenance.json",
+  "sources": "sources.json",
+  "pending": [
+    "Run the full configured Hypercurve CI test command for this projection extension."
+  ],
+  "limitations": [
+    "The full configured Hypercurve run at 12176ca1a (2,405 passed, 33 existing ignored) predates these projection hooks and is retained with the image-promotion evidence.",
+    "Only instrumented refinement/promotion attempts are bounded. Remaining elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time need separate bounds.",
+    "Selected Criterion workloads do not checksum every timed result; complete-report and exact-retry regressions are separate evidence. Timing medians do not establish a statistical regression ceiling.",
+    "No full repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed."
+  ]
+}

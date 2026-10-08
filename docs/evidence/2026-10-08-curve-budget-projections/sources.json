@@ -1,0 +1,23 @@
+{
+  "base_revision": "12176ca1a",
+  "sha256": {
+    "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "crates/hypercurve/Cargo.toml": "ca10638d0cf1999075ec9fe5d0c4a17d74e27ef179e479f96a238dfc4906ec92",
+    "crates/hypercurve/PERFORMANCE.md": "c654f3407e5751515d7776cd788f9a671a8a1201f1ece16b893fe73009a2d1f8",
+    "crates/hypercurve/src/bezier_offset/fiber_sign.rs": "c0c61685585c531a3320f3bf0699f47055f7ee175624d72ffc4b62bcd965f3d6",
+    "crates/hypercurve/src/bezier_offset/parallel/point.rs": "c5ab015788b9f8bddb1f7de9b0b73df6a137a00cab0760aad83b7531cee00cb3",
+    "crates/hypercurve/src/bezier_offset/selected_dense.rs": "b18cd88c2398b596626e96a8b22921df1bee4e836aff80aa534f64d78532e44c",
+    "crates/hypercurve/src/bezier_offset/selected_fiber.rs": "7754c14940bf6e5636848359256ef5b00c6aa95b3a7523293b3f462d086a90dc",
+    "crates/hypercurve/src/bezier_offset/selected_fiber/budget_tests.rs": "c772ba975a3f4fb877ba1a0ed9cad0b83219b665910145a92c66839ef4cac4c3",
+    "crates/hyperpath/Cargo.toml": "d56333ca7c8101350d5e2df36780b2bd6fc8e12c6759e057aad6799e0734e027",
+    "crates/hypersolve/Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+    "crates/hypersolve/PERFORMANCE.md": "045ce2b32d631a75a7ad1994e9194ee99e4235dd3539458794c4c3c251628059",
+    "crates/hypersolve/benches/certification.rs": "d4f9f95a966558098f098d8f93477f26c463769741ef8ea7240578c6240905e6",
+    "crates/hypersolve/src/algebraic_fiber.rs": "401a1aa0c35c14b1b1b817ad5c2cc89c81f70b91f37fe453e112105969e8c804",
+    "crates/hypersolve/src/algebraic_fiber/tests/projection_budget.rs": "282f2096df75e1cf8961f7065c1b82cad61e0f18400820e7ac2e737d30e6a1e3",
+    "crates/hypersolve/src/algebraic_tensor_image.rs": "d5883d8e1728aed8197089803ebfaa73216cb69a61ed710e0bcf4251f0bf5792",
+    "crates/hypersolve/src/work_budget.rs": "778776ce1bdd75bc6e24bf74e6ab075c618f45170af0fa6e55a940457fbfbbe5",
+    "scripts/compare-criterion-probe.py": "c767e0bfb80c3afbd50ba976761bfa3e4b18aa8d5b1f4a69a3cafff4a71fa988"
+  }
+}

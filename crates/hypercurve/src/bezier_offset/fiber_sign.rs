@@ -430,6 +430,11 @@ pub(super) fn algebraic_selected_fiber_parameters_with_incident_ray(
     );
     let coefficients = match report.status {
         AlgebraicFiberProjectionStatus::Constructed => report.coefficients,
+        AlgebraicFiberProjectionStatus::BudgetExhausted => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         AlgebraicFiberProjectionStatus::InvalidEvidence => {
             return Err(CurveError::InvalidBezierAlgebraicParameter);
         }
@@ -1093,6 +1098,11 @@ pub(super) fn algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
     );
     match report.status {
         AlgebraicFiberProjectionStatus::Constructed => {}
+        AlgebraicFiberProjectionStatus::BudgetExhausted => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         AlgebraicFiberProjectionStatus::InvalidEvidence => {
             return Err(CurveError::InvalidBezierAlgebraicParameter);
         }

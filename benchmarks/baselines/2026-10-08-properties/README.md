@@ -198,3 +198,51 @@ allocation measurement. The
 retains source fingerprints, the initial constant-image implementation, and
 build details. Exact-output tests and their limits are recorded separately in
 the [validation manifest](../../../docs/evidence/2026-10-08-curve-budget-images/manifest.json).
+
+## Selected-fiber projection promotions
+
+Selected-fiber local/global image norms and bivariate quotient norms now
+charge promotion attempts. Tagged tensor-fiber projection and its final
+quotient norm share the enclosing budget and together require two units.
+Native tests exercise denied attempts, exact full-report retries, repeated
+carriers, both retained axes, and both predicate policies. Curve tests compare
+the retained saturated component and global schedule after an exact retry.
+A denied projection exposes no partial coefficients or retained relation.
+
+[`projection-budget/manifest.json`](projection-budget/manifest.json) retains
+five alternating process pairs on CPU 0 across ten existing Criterion
+workloads, with 30 samples, 0.2 seconds of warmup, and 0.5 seconds of
+measurement per workload. No other task validation or build commands ran
+during the final probe. The table reports medians of process mean estimates.
+
+| Workload | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| Polynomial fiber image | 6.175 µs | 6.422 µs | +4.01% |
+| Cubic source, quadratic image | 20.198 µs | 20.361 µs | +0.81% |
+| Saturated conjugate factor | 87.686 µs | 87.794 µs | +0.12% |
+| Saturated fourfold component | 2.281 ms | 2.252 ms | -1.26% |
+| Quotient norm, first retained axis | 2.175 µs | 2.050 µs | -5.71% |
+| Quotient norm, second retained axis | 1.916 µs | 1.888 µs | -1.45% |
+| Tagged opposite-conjugate cubic | 210.615 µs | 205.090 µs | -2.62% |
+| Tagged repeated degree-six carriers | 219.618 µs | 226.170 µs | +2.98% |
+
+Changes across all ten rows range from -5.71% to +4.01%. These measurements
+record the observed cost of a broader resource contract; they establish
+neither a general speedup nor a statistical regression ceiling. Existing
+benchmark setup assertions are retained, and exact-output tests supply
+separate evidence. The whole benchmark executable changes by -24,232 bytes;
+this is not an allocation or library-size measurement.
+
+The baseline is `12176ca1a`. Both executables use the same isolated four-crate
+workspace and pruned lockfile described in
+[`benchmark-provenance.json`](../../../docs/evidence/2026-10-08-curve-budget-projections/benchmark-provenance.json).
+The first probe overlapped the end of a release integration-test build and is
+preserved as a diagnostic in
+[`projection-budget-concurrent/manifest.json`](projection-budget-concurrent/manifest.json).
+No source optimization separates the diagnostic and final runs.
+
+```sh
+python3 scripts/compare-criterion-probe.py /path/to/baseline /path/to/candidate \
+  '^(project_bivariate_fiber/|project_algebraic_fiber_polynomial_image($|/)|project_selected_tensor_fiber_via_tagged_norm/)' \
+  /path/to/new-evidence-directory
+```

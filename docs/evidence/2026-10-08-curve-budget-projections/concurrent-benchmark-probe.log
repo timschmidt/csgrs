@@ -1,0 +1,62 @@
+Completed 1/5: before
+Completed 1/5: after
+Completed 2/5: after
+Completed 2/5: before
+Completed 3/5: before
+Completed 3/5: after
+Completed 4/5: after
+Completed 4/5: before
+Completed 5/5: before
+Completed 5/5: after
+{
+  "project_algebraic_fiber_polynomial_image": {
+    "before": 6199.094601742776,
+    "after": 6225.728016987138,
+    "change_percent": 0.42963395391442116
+  },
+  "project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image": {
+    "before": 21554.899082774464,
+    "after": 20376.507724674873,
+    "change_percent": -5.46693052736813
+  },
+  "project_algebraic_fiber_polynomial_image/saturated_conjugate_factor": {
+    "before": 87427.72515767255,
+    "after": 89644.57366792728,
+    "change_percent": 2.535635585000895
+  },
+  "project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient": {
+    "before": 2297584.191666667,
+    "after": 2284139.3125,
+    "change_percent": -0.5851746027602189
+  },
+  "project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree": {
+    "before": 12480.148038804373,
+    "after": 12288.803816850188,
+    "change_percent": -1.5331887198712701
+  },
+  "project_bivariate_fiber/retained_first_quadratic": {
+    "before": 2068.003213371467,
+    "after": 2108.430404445459,
+    "change_percent": 1.9548901477809189
+  },
+  "project_bivariate_fiber/retained_second_quadratic": {
+    "before": 1855.455354626972,
+    "after": 1936.8116319987807,
+    "change_percent": 4.3847068143639145
+  },
+  "project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers": {
+    "before": 208020.02762887877,
+    "after": 211808.28858574995,
+    "change_percent": 1.8211039581389254
+  },
+  "project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic": {
+    "before": 202009.52826502122,
+    "after": 209472.02274997707,
+    "change_percent": 3.694129949734659
+  },
+  "project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers": {
+    "before": 216560.26976349394,
+    "after": 219681.35026536646,
+    "change_percent": 1.4412064157848903
+  }
+}

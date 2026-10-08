@@ -2535,10 +2535,28 @@ impl BezierAnalyticParallelPoint2 {
                             &frame_y,
                             &speed_squared,
                         );
-                        if let Some((x_coefficients, provenance)) =
-                            parameter.represented_polynomial_image_eliminant(&x_relation, policy)?
-                            && let Some((y_coefficients, _)) = parameter
+                        let x_image = match parameter
+                            .represented_polynomial_image_eliminant(&x_relation, policy)?
+                        {
+                            Classification::Decided(image) => image,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        let y_image = if x_image.is_some() {
+                            match parameter
                                 .represented_polynomial_image_eliminant(&y_relation, policy)?
+                            {
+                                Classification::Decided(image) => image,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        } else {
+                            None
+                        };
+                        if let (Some((x_coefficients, provenance)), Some((y_coefficients, _))) =
+                            (x_image, y_image)
                         {
                             let mut represented_x = None;
                             let mut represented_y = None;

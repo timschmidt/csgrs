@@ -44,6 +44,14 @@ with no additional budget. Solver image timings and the constant-image
 overhead experiment are recorded in the
 [image-promotion gate](../../benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions).
 
+Selected-fiber image and quotient adapters also preserve typed budget failure.
+The analytic-point adapter stops after a denied coordinate projection, and
+selected-fiber helpers retain exact saturation evidence on a larger-budget
+retry. This prevents a resource denial from starting a general-resultant or
+global-scalar fallback. The associated solver
+[projection measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
+cover inactive accounting overhead, not a complete curve-operation bound.
+
 ## Rational-image batch API gate
 
 HyperSolve's shared-denominator transform is now consumed through the immediate

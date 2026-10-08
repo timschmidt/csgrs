@@ -1,0 +1,10 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.40s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-d2a908ce8e621ff9)
+
+running 1 test
+test bezier_offset::selected_fiber::budget_tests::selected_image_helpers_stop_on_exhaustion_and_retry_with_exact_saturation_evidence ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1699 filtered out; finished in 0.01s
+

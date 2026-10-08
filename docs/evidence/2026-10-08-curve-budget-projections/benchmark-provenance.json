@@ -1,0 +1,19 @@
+{
+  "baseline_revision": "12176ca1a",
+  "baseline_source_files_verified": 244,
+  "workspace": "../2026-10-08-curve-budget-isolators/benchmark-workspace.toml",
+  "lockfile": "../2026-10-08-curve-budget-isolators/benchmark-Cargo.lock",
+  "baseline_executable_sha256": "eefe329bf7ba7855e1029bbde805a18a72250dd200b9840d6d8b6a707c669107",
+  "candidate_executable_sha256": "8d747dd85c3eccfea898b0451cd47a7868c1cc6bf9657eae6b4558b1dfe5760a",
+  "candidate_solver_sources": {
+    "crates/hypersolve/src/algebraic_fiber.rs": "401a1aa0c35c14b1b1b817ad5c2cc89c81f70b91f37fe453e112105969e8c804",
+    "crates/hypersolve/src/algebraic_tensor_image.rs": "d5883d8e1728aed8197089803ebfaa73216cb69a61ed710e0bcf4251f0bf5792",
+    "crates/hypersolve/src/work_budget.rs": "778776ce1bdd75bc6e24bf74e6ab075c618f45170af0fa6e55a940457fbfbbe5",
+    "crates/hypersolve/src/algebraic_fiber/tests/projection_budget.rs": "282f2096df75e1cf8961f7065c1b82cad61e0f18400820e7ac2e737d30e6a1e3"
+  },
+  "candidate_workspace_sources": "benchmark-sources.json",
+  "build_command": "cargo bench --offline --locked --manifest-path /tmp/csgrs-isolator-baseline/Cargo.toml -p hypersolve --bench certification --no-run",
+  "method": "Reuse the image-promotion executable after verifying all 244 Rust source files in its isolated four-crate workspace against 12176ca1a. Copy only the listed solver files, including the new cfg(test) module, and rebuild with unchanged compiler, profiles, and pruned lockfile. All 245 resulting Rust files were also compared with the root workspace before measurement.",
+  "prior_build_provenance": "../2026-10-08-curve-budget-images/benchmark-provenance.json",
+  "limitations": "All package identities and registry checksums match the root lockfile; unused workspace dependency edges are absent. These are isolated builds, not identical whole-workspace dependency graphs. Whole-executable size is not library size or allocator usage."
+}

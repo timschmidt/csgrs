@@ -144,13 +144,28 @@
         "failed": 0,
         "ignored": 0
       }
+    },
+    {
+      "name": "hypercurve-configured-ci",
+      "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "working_directory": "crates/hypercurve",
+      "source_revision": "12176ca1a",
+      "exit_code": 0,
+      "log": "hypercurve-configured-ci.log",
+      "sha256": "b2c901e3b308b7f459dee6f5e92e768aaf861bb72adac83f78da29a8c6b0ce19",
+      "tests": {
+        "passed": 2405,
+        "failed": 0,
+        "ignored": 33
+      },
+      "source_note": "Library and integration test executables compiled from 12176ca1a before the next projection-budget edits. No later release build ran during this suite; the sole policy.rs doctest was unchanged."
     }
   ],
   "performance": "../../../benchmarks/baselines/2026-10-08-properties/image-budget/manifest.json",
   "benchmark_provenance": "benchmark-provenance.json",
   "pending": [],
   "limitations": [
-    "The preceding full Hypercurve CI run at fd3579925 predates these image hooks.",
+    "The full configured Hypercurve CI test command passed at 12176ca1a; it does not cover the subsequent projection-budget extension.",
     "Only instrumented refinement/promotion attempts are bounded. Remaining elimination and curve paths, scalar precision, coefficient growth, memory, and elapsed time still need separate bounds.",
     "The selected Criterion workloads do not checksum every timed result; exact-output regression tests are separate evidence.",
     "No full repository pre-push matrix, coverage percentage, sanitizer/fuzz campaign, or deployment is claimed."

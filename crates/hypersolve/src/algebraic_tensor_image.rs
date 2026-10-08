@@ -145,6 +145,9 @@ fn primitive_first_parameter_component_from_flat_rows(
 /// The caller must first prove that the authored selected fiber is not
 /// identically zero. A zero selected fiber is a component, not a finite root
 /// set, and therefore has no univariate projection.
+/// A work budget charges one promotion at this entry and another at the final
+/// bivariate quotient norm. Both share the caller's allowance; exhaustion
+/// returns `BudgetExhausted` without partial coefficients.
 pub fn project_selected_tensor_fiber_via_tagged_norm(
     relation: &DenseTensorPolynomial,
     source_roots: &[AlgebraicRootRepresentation],
@@ -155,6 +158,9 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
     };
     if source_roots.is_empty() || relation.dimensions().len() != source_roots.len() + 1 {
         return projection_report(AlgebraicFiberProjectionStatus::InvalidEvidence);
+    }
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return projection_report(AlgebraicFiberProjectionStatus::BudgetExhausted);
     }
     if source_roots.iter().any(|source| {
         !source.is_valid()

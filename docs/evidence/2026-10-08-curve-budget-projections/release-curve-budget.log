@@ -1,0 +1,11 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 53.88s
+     Running tests/work_budget.rs (target/release/deps/work_budget-9fefc193fdafb511)
+
+running 3 tests
+test zero_budget_reuses_direct_exact_ordering ... ok
+test polynomial_isolation_shares_a_total_subdivision_budget ... ok
+test overlapping_simple_and_even_roots_retry_under_a_larger_budget ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
