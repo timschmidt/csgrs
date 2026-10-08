@@ -74,6 +74,27 @@ pub use thermal::*;
 use crate::report::{Severity, Violation};
 use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
+/// Run a check whose report geometry can fail, retaining the operation and
+/// source in the same explicit finding path as native metric failures.
+pub(crate) fn run_geometry_check(
+    requested_check: &str,
+    layers: &[&str],
+    check: impl FnOnce() -> Result<Vec<Violation>, PcbGeometryUncertainty>,
+) -> Vec<Violation> {
+    check().unwrap_or_else(|uncertainty| {
+        let layers = if layers.is_empty() {
+            uncertainty.source.iter().cloned().collect()
+        } else {
+            layers.iter().map(|name| (*name).to_owned()).collect()
+        };
+        vec![geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            uncertainty,
+        )]
+    })
+}
+
 /// Retain a failed geometry query in the check's findings before allowing its
 /// candidate walk to continue. `None` must never silently erase uncertainty.
 pub(crate) fn geometry_result_for_check<T>(
@@ -237,7 +258,7 @@ pub(crate) fn xor_for_check(
     })
 }
 
-fn geometry_uncertainty_violation(
+pub(crate) fn geometry_uncertainty_violation(
     requested_check: &str,
     layers: Vec<String>,
     uncertainty: PcbGeometryUncertainty,

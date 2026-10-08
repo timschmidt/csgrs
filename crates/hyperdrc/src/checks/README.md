@@ -86,10 +86,16 @@ signoff. They should be deterministic, explainable, and conservative:
 Metric gateways append an attributed `geometry-uncertainty` finding when a
 required query cannot be certified. The shared readiness runner serializes that
 execution as `Uncertain`, with a reason, and excludes it from complete coverage.
-Check implementation version 2 records this behavior; the registry schema
-remains version 1. This does not certify the older finite spatial indices,
-component/report projections, or non-metric `Option` consumers. The
-[adoption evidence](../../../../docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json)
+Check implementation version 3 also covers fallible report projection and
+component extraction; the registry schema remains version 1. Generated report
+polygons retain certified native component identities, while parser-owned
+report profiles retain authored decomposition and sample counts. Both cache
+paths obey STRICT and shared-budget guards. Required projection errors become
+readiness uncertainty; they cannot trigger reconstruction from display chords.
+The shared copper index retains unavailable native bounds and measures the
+whole shape about its authored anchor. Other finite index, heuristic and
+non-metric `Option` consumers remain under audit. The
+[projection evidence](../../../../docs/evidence/2026-10-08-hyperdrc-projection/manifest.json)
 records those remaining boundaries and the full validation run.
 
 ```mermaid

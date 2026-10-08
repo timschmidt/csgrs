@@ -1,0 +1,4618 @@
+[
+  {
+    "id": "ae14c17da7033945",
+    "evidence_id": "sha256:e87bc3367aa8760b2e84cca43b41d4f46a6387f48ed27abde5b4e0d0a376944c",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup copper layer F.Cu is missing copper_weight_oz"
+  },
+  {
+    "id": "742dce79ab9a83b1",
+    "evidence_id": "sha256:1006f1f791b25defeb0c861178111ead738fa857823e05c9bc8a1519f15e367c",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:In1.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup copper layer In1.Cu is missing copper_weight_oz"
+  },
+  {
+    "id": "925418814fc937bd",
+    "evidence_id": "sha256:7f12e12889e15314368f241be73ecc4aaf3bcc8188bf9968974399cf23d7765b",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:In2.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup copper layer In2.Cu is missing copper_weight_oz"
+  },
+  {
+    "id": "d27c41c8675b0fd9",
+    "evidence_id": "sha256:537f045ecf311bea032456db3d12e2fd0bf728cfaceb6949f81940bae540a824",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:B.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup copper layer B.Cu is missing copper_weight_oz"
+  },
+  {
+    "id": "1572695516546df6",
+    "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:config"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup material_family is missing; review laminate family before fabrication release"
+  },
+  {
+    "id": "1572695516546df6",
+    "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:config"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup surface_finish is missing; review HASL/ENIG/ENEPIG/OSP/contact finish selection before fabrication release"
+  },
+  {
+    "id": "1572695516546df6",
+    "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:config"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup soldermask_color is missing; review mask color and process assumptions before release"
+  },
+  {
+    "id": "1572695516546df6",
+    "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:config"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup soldermask_process is missing; review LPI/dry-film/process assumptions before release"
+  },
+  {
+    "id": "1572695516546df6",
+    "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+    "check": "stackup-readiness",
+    "severity": "warning",
+    "layers": [
+      "stackup:config"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "stackup target_ipc_class is missing; review IPC class or fabricator acceptance class before release"
+  },
+  {
+    "id": "800bf33109508cd2",
+    "evidence_id": "sha256:2ae15665dd89b4dd1aff5192b715abcb4214e73d349f448b8e375d75d35171d8",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "B.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        143.51,
+        94.61
+      ],
+      [
+        143.95,
+        94.16
+      ]
+    ],
+    "message": "net /PB4 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "c3d8e050df6f7382",
+    "evidence_id": "sha256:c693b3f9c40cf719bda10defc388ba9b0017792989b001f6cef8f123dd7093f9",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "B.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        145.165,
+        96.265
+      ],
+      [
+        143.95,
+        94.16
+      ]
+    ],
+    "message": "net /PB4 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d93d45546f55f51b",
+    "evidence_id": "sha256:ea041cee5fec7c2f1f5e0f1c5a567d11b77a66b419c9000eeb550d45ec905a5d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        101.68
+      ],
+      [
+        139.15,
+        100.88
+      ]
+    ],
+    "message": "net GND to /Vbus spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d93d45546f55f51b",
+    "evidence_id": "sha256:ea041cee5fec7c2f1f5e0f1c5a567d11b77a66b419c9000eeb550d45ec905a5d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        101.68
+      ],
+      [
+        139.15,
+        100.88
+      ]
+    ],
+    "message": "net GND to /Vbus spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "317331bf78d2f94e",
+    "evidence_id": "sha256:ea041cee5fec7c2f1f5e0f1c5a567d11b77a66b419c9000eeb550d45ec905a5d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        100.88
+      ],
+      [
+        139.15,
+        101.68
+      ]
+    ],
+    "message": "net /Vbus to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a94724d77bd3fb0f",
+    "evidence_id": "sha256:0236449c0dc392a23d5b33bbb32f2118b4c70e6bca5520d55b87da8211376972",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        100.88
+      ],
+      [
+        139.15,
+        99.73
+      ]
+    ],
+    "message": "net /Vbus to /CC1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9b57408cfec5ace5",
+    "evidence_id": "sha256:c07699e01e0ec848ceefc2b0951a9b14439f00502f17487c15071778801eabeb",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        100.88
+      ],
+      [
+        139.15,
+        100.23
+      ]
+    ],
+    "message": "net /Vbus to unconnected-(J1-SBU2-PadB8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a927194aac71dbf6",
+    "evidence_id": "sha256:5c13dfd3e423760a9ddec9183db027701acb18222f2eb7a119c3291877fb590b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.08
+      ],
+      [
+        139.15,
+        95.28
+      ]
+    ],
+    "message": "net /Vbus to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a927194aac71dbf6",
+    "evidence_id": "sha256:5c13dfd3e423760a9ddec9183db027701acb18222f2eb7a119c3291877fb590b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.08
+      ],
+      [
+        139.15,
+        95.28
+      ]
+    ],
+    "message": "net /Vbus to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d5ceb6824addb6d0",
+    "evidence_id": "sha256:2eb70d02ebbd2aae725544eb6f37edb721744c6dae58e2ca78be62b6cf4a96c9",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.08
+      ],
+      [
+        139.15,
+        97.23
+      ]
+    ],
+    "message": "net /Vbus to unconnected-(J1-SBU1-PadA8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d72d5a6e08984e0a",
+    "evidence_id": "sha256:0ba559595784c3aa5ce3d8de724c8331bd916fc9b756a2dd58e05283c9c677b5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.08
+      ],
+      [
+        139.15,
+        96.73
+      ]
+    ],
+    "message": "net /Vbus to /CC2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1e4462556f53a8c0",
+    "evidence_id": "sha256:5c13dfd3e423760a9ddec9183db027701acb18222f2eb7a119c3291877fb590b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        95.28
+      ],
+      [
+        139.15,
+        96.08
+      ]
+    ],
+    "message": "net GND to /Vbus spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1e4462556f53a8c0",
+    "evidence_id": "sha256:5c13dfd3e423760a9ddec9183db027701acb18222f2eb7a119c3291877fb590b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        95.28
+      ],
+      [
+        139.15,
+        96.08
+      ]
+    ],
+    "message": "net GND to /Vbus spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d5ceb6824addb6d0",
+    "evidence_id": "sha256:2eb70d02ebbd2aae725544eb6f37edb721744c6dae58e2ca78be62b6cf4a96c9",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.08
+      ],
+      [
+        139.15,
+        97.23
+      ]
+    ],
+    "message": "net /Vbus to unconnected-(J1-SBU1-PadA8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d72d5a6e08984e0a",
+    "evidence_id": "sha256:0ba559595784c3aa5ce3d8de724c8331bd916fc9b756a2dd58e05283c9c677b5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.08
+      ],
+      [
+        139.15,
+        96.73
+      ]
+    ],
+    "message": "net /Vbus to /CC2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "317331bf78d2f94e",
+    "evidence_id": "sha256:ea041cee5fec7c2f1f5e0f1c5a567d11b77a66b419c9000eeb550d45ec905a5d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        100.88
+      ],
+      [
+        139.15,
+        101.68
+      ]
+    ],
+    "message": "net /Vbus to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a94724d77bd3fb0f",
+    "evidence_id": "sha256:0236449c0dc392a23d5b33bbb32f2118b4c70e6bca5520d55b87da8211376972",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        100.88
+      ],
+      [
+        139.15,
+        99.73
+      ]
+    ],
+    "message": "net /Vbus to /CC1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9b57408cfec5ace5",
+    "evidence_id": "sha256:c07699e01e0ec848ceefc2b0951a9b14439f00502f17487c15071778801eabeb",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        100.88
+      ],
+      [
+        139.15,
+        100.23
+      ]
+    ],
+    "message": "net /Vbus to unconnected-(J1-SBU2-PadB8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "14fd3f0cf4d0caac",
+    "evidence_id": "sha256:8a6f8faf514c8fdb2230e59f271ce1ecdd5d82ec0b87d7c8cd498d4c1bbc89a3",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        99.73
+      ],
+      [
+        139.15,
+        98.73
+      ]
+    ],
+    "message": "net /CC1 to /USB_D+ spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "308cac317ff877d3",
+    "evidence_id": "sha256:e5cf14e6326e9f24fa0c910448dd4fe9af1a68ebef293a0a316d678b31c00d23",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        99.73
+      ],
+      [
+        139.15,
+        99.23
+      ]
+    ],
+    "message": "net /CC1 to /USB_D- spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "475e60a2723cbc7b",
+    "evidence_id": "sha256:c4d6e5a1a58a5a3765ee31755a7ba06f8075515cb84287d713cfedfa2a930893",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        99.73
+      ],
+      [
+        139.15,
+        100.23
+      ]
+    ],
+    "message": "net /CC1 to unconnected-(J1-SBU2-PadB8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a30f23db4c5e8404",
+    "evidence_id": "sha256:ae0f7a23969e5f1a3334b135ca0f383707174a268ada5d24d6327e8d1800628e",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        98.73
+      ],
+      [
+        139.15,
+        98.23
+      ]
+    ],
+    "message": "net /USB_D+ to /USB_D- spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1b202c110a033f43",
+    "evidence_id": "sha256:a92a4883db8619550c364ee2ee508d896e6a4880f7daad4dc63dbffbe5639ef7",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        98.73
+      ],
+      [
+        139.15,
+        99.23
+      ]
+    ],
+    "message": "net /USB_D+ to /USB_D- spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4ad3abdd146bfaa7",
+    "evidence_id": "sha256:f80315a0d77a3f2e27b0aeb8b27d3a78e266bf717c463706a9aa720c7053d12b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        98.23
+      ],
+      [
+        139.15,
+        97.23
+      ]
+    ],
+    "message": "net /USB_D- to unconnected-(J1-SBU1-PadA8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "8003543c295d8795",
+    "evidence_id": "sha256:44febe056b616b036d8a8828bdc80e39614b1a8f5afb4973d09209913490ae83",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        98.23
+      ],
+      [
+        139.15,
+        97.73
+      ]
+    ],
+    "message": "net /USB_D- to /USB_D+ spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "7389989b4a67d428",
+    "evidence_id": "sha256:35ed0f3112447bee869276f066e4b8385121ff720e40c941673052f3462262cc",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        97.23
+      ],
+      [
+        139.15,
+        96.73
+      ]
+    ],
+    "message": "net unconnected-(J1-SBU1-PadA8) to /CC2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "bfca8e51fa28b31b",
+    "evidence_id": "sha256:57c732d9c4d2e5afd899e9ac8a820c2668828a39f633e18538287737070e2773",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        97.23
+      ],
+      [
+        139.15,
+        97.73
+      ]
+    ],
+    "message": "net unconnected-(J1-SBU1-PadA8) to /USB_D+ spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "fd94910ad1462752",
+    "evidence_id": "sha256:7c091c3a043f0a9b8d3ebfb84de015c80764979979175b5e9e0fefd243037623",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        96.73
+      ],
+      [
+        139.15,
+        97.73
+      ]
+    ],
+    "message": "net /CC2 to /USB_D+ spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ca08dd8bc95e0390",
+    "evidence_id": "sha256:8a1e37a8858d2faa424cc73780e1b9ede7a947e21b44353bca397b8d6c993f53",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        139.15,
+        99.23
+      ],
+      [
+        139.15,
+        100.23
+      ]
+    ],
+    "message": "net /USB_D- to unconnected-(J1-SBU2-PadB8) spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1388c349598a14fd",
+    "evidence_id": "sha256:ff607c95ddc8d818e4edcf396ff4f8157d097eb3308c6cf3d5fc4ba1110e7fad",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        146.6,
+        101.68
+      ],
+      [
+        148.33,
+        101.25
+      ]
+    ],
+    "message": "net GND to /CC2 spacing 0.064061 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "66fa45fd61a93714",
+    "evidence_id": "sha256:8c15578690d6895702a8166aee0ccb90bcfda246cc2813e3c905704df8112c34",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        148.03,
+        97.23
+      ],
+      [
+        148.33,
+        96.93
+      ]
+    ],
+    "message": "net /CC1 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9beab1b9ce8bd0fb",
+    "evidence_id": "sha256:5770cd8be9b660f33a4d47ce489bd1e0a1074e02b701741ee2371839d3427ac8",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        146.6,
+        100.23
+      ],
+      [
+        148.33,
+        100.23
+      ]
+    ],
+    "message": "net /CC2 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "94d31ce7885dae0f",
+    "evidence_id": "sha256:affde21be6e2d3e288a291de7358b44af7a2aceef212cc41a8de3289178f461c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        148.31,
+        95.91
+      ],
+      [
+        148.33,
+        95.91
+      ]
+    ],
+    "message": "net GND to /CC1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "6d93d1eca641711a",
+    "evidence_id": "sha256:2ee9ebefae29ab19386c6c420cec324f64449f1e807744a54182f11b6a15f6ff",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        147.88,
+        101.68
+      ],
+      [
+        148.33,
+        101.25
+      ]
+    ],
+    "message": "net GND to /CC2 spacing 0.060980 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1d7501df060d2c16",
+    "evidence_id": "sha256:d75ba78431e27fad29fa216bddaf0e0844773eb2eaf3cc01946a7a76b0833b33",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        148.33,
+        96.93
+      ],
+      [
+        148.33,
+        96.93
+      ]
+    ],
+    "message": "net /CC1 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "fa56d0eb16511c00",
+    "evidence_id": "sha256:28640cbcc24b6e5ea5cc5bfa831df675c330ad63d53130ee3560ceeefdbb32c6",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        148.33,
+        101.25
+      ],
+      [
+        148.38,
+        101.25
+      ]
+    ],
+    "message": "net /CC2 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "bd0b2804ec8a4919",
+    "evidence_id": "sha256:9ab699f1782f90896fecab720e028c1b0a655f8270f1b2644938399761f70554",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        148.33,
+        95.91
+      ],
+      [
+        148.33,
+        95.91
+      ]
+    ],
+    "message": "net /CC1 to GND spacing 0.125000 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "75d67a332c83d7c9",
+    "evidence_id": "sha256:cd415951f129138d3f54e2e67c82c6a4261ac05bc6a5c49cca1f9431781fdfdf",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        148.33,
+        95.91
+      ],
+      [
+        149.253816,
+        96.9
+      ]
+    ],
+    "message": "net /CC1 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "b92a06139ed4d028",
+    "evidence_id": "sha256:c2e2ac60616848ddce023ed7623c9500435a31e5ec9632a2546d9f2fb8b9b814",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        149.253816,
+        96.9
+      ],
+      [
+        149.6,
+        96.4
+      ]
+    ],
+    "message": "net GND to unconnected-(U3-~{RI}{slash}CLK-Pad2) spacing 0.128000 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ad0196cff06321eb",
+    "evidence_id": "sha256:333c81a770693a876ab58d1c2099be8d9fc55c394ea2502e29f9bd15f4f652ba",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        149.289171,
+        98.4
+      ],
+      [
+        149.6,
+        98.9
+      ]
+    ],
+    "message": "net +3.3V to /Vbus_f spacing 0.128000 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "815f448f272b352e",
+    "evidence_id": "sha256:c9bc22bb636fee30ede26ea5dd737cacc6b795d8a6bdd5f8f5b600bcbd25dc18",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        151.55,
+        94.639171
+      ],
+      [
+        151.05,
+        94.95
+      ]
+    ],
+    "message": "net /PD0 to unconnected-(U3-~{DSR}-Pad27) spacing 0.128000 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "54dcd88ace856109",
+    "evidence_id": "sha256:3898d17c0d217e9434d52b0e8a43647ff5bc75a6628332367fb0ee5cd0df69e0",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        154.087217,
+        102.28
+      ],
+      [
+        155.315,
+        102.32
+      ]
+    ],
+    "message": "net +5V to VCC spacing 0.128000 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "2adec371dd6b3702",
+    "evidence_id": "sha256:68f33fd1f949b91cce2db15f7b19e1f6ded76188d121e9dbfdb4c09ae3dfa329",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        157.59,
+        103.27
+      ],
+      [
+        159.3,
+        102.85
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.035366 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4dc8840461bb79a1",
+    "evidence_id": "sha256:255953764d963c0df20832d83adeea185e042bae3ea62d090b584c0d60d46652",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        158.119873,
+        94.248
+      ],
+      [
+        162.16775903598867,
+        97.39029901063333
+      ]
+    ],
+    "message": "net /PC6 to /PC1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "39cdf600e5a784e6",
+    "evidence_id": "sha256:37930fa96694eb69389ce358bc4ba227239dd79b85f5b00c86fd01fdec221c8d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        158.88,
+        103.27
+      ],
+      [
+        159.3,
+        102.85
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "f9e6b6e013aa4a91",
+    "evidence_id": "sha256:594eb83fe38c51ab2b06944297f321298551326a39edd90eab279960df526dd2",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        159.3,
+        102.85
+      ],
+      [
+        159.3,
+        102.85
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "98a20599109f4b87",
+    "evidence_id": "sha256:ece8e39db640edc38490beff24ac04c15d3fd7e01038bc9509634f006dd170ab",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        161.571178,
+        101.828822
+      ],
+      [
+        161.30999974503044,
+        101.82882225496954
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "f5bd37300b81e85d",
+    "evidence_id": "sha256:4203755769f1868cddc514bbcfa19b1ec62ccea58c3f40b0138b5a9bf0d377bb",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.088427,
+        97.328427
+      ],
+      [
+        162.16775903598867,
+        97.39029901063333
+      ]
+    ],
+    "message": "net /PB4 to /PC1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "dcfbc872cadf4922",
+    "evidence_id": "sha256:d43e4e579208f90b417bcc844afaf2a5011dc9cd82cb9d2b837b57718272568c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        161.30999974503044,
+        101.82882225496954
+      ],
+      [
+        161.988822,
+        101.828822
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0fb21e3297d92ece",
+    "evidence_id": "sha256:22567ef2b91380b06ac342ea949e3c772bcb6811d2726530c7ece5bb67ce7839",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        161.1,
+        95.2975
+      ],
+      [
+        162.16775903598867,
+        97.39029901063333
+      ]
+    ],
+    "message": "net /PB3 to /PC1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "8eeef8206d985108",
+    "evidence_id": "sha256:99d74af19c1190de15961a32d12ef4737bc3df76632c09335ccc662bbb843b23",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        161.1,
+        95.2975
+      ],
+      [
+        162.73344375383112,
+        96.82461429279087
+      ]
+    ],
+    "message": "net /PB3 to /PC0 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3a4ab0f963926dfc",
+    "evidence_id": "sha256:675c56b5182d188a07e09ec48818062ae119ad6f23ab942c5c28e71fb6863635",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.515278,
+        99.944722
+      ],
+      [
+        161.98882225496953,
+        101.14999974503046
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9b9a4552e1edc255",
+    "evidence_id": "sha256:66bd8f3eaf41262172b4a3569f66d58ef11f32d9ab581d49d581bf50a30ef63d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.515278,
+        99.944722
+      ],
+      [
+        162.73344375383112,
+        99.88284970720912
+      ]
+    ],
+    "message": "net +5V to /PC3 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9b179c7763af62f0",
+    "evidence_id": "sha256:e09ddc293e1e42e59380c3b381b251d2353041eabcedcd1aa928da7669084026",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.515278,
+        99.944722
+      ],
+      [
+        163.29912988588714,
+        100.44853583926515
+      ]
+    ],
+    "message": "net +5V to /PC4 spacing 0.101526 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "40745ee58a8eb66e",
+    "evidence_id": "sha256:d6e64a394cb2cf5f9857c2ef87c9b89820f2f29a31103093ede1b72e589cd408",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        161.42685,
+        98.7
+      ],
+      [
+        162.16775903598867,
+        99.31716498936667
+      ]
+    ],
+    "message": "net /PB5 to /PC2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ef2741e810267fc9",
+    "evidence_id": "sha256:6bb9bf68a44005ed692f2f49ee5c75903822d351d65a973fd95603ec23dd06fb",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.16775903598867,
+        99.31716498936667
+      ],
+      [
+        162.73344375383112,
+        99.88284970720912
+      ]
+    ],
+    "message": "net /PC2 to /PC3 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "62c922fb027b074c",
+    "evidence_id": "sha256:bbd21cdf8f2ca2dc8a473483b24cefef53fe25f8cb220d089af2208d3613f93e",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.16775903598867,
+        97.39029901063333
+      ],
+      [
+        162.105887,
+        97.328427
+      ]
+    ],
+    "message": "net /PC1 to /PB4 spacing 0.095668 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "69d85be6122bc54c",
+    "evidence_id": "sha256:b7c4ffffd982fa9808039292e1b15e70f22e835a475905e3115711b1ed0bd0c5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.16775903598867,
+        97.39029901063333
+      ],
+      [
+        162.73344375383112,
+        96.82461429279087
+      ]
+    ],
+    "message": "net /PC1 to /PC0 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "03f7ab07ba704b6b",
+    "evidence_id": "sha256:162eb14a6a9331ea405b43938ac8058bfe94cc35b833358d04e1cf5e070cfe0f",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.16775903598867,
+        97.39029901063333
+      ],
+      [
+        162.565242,
+        96.762742
+      ]
+    ],
+    "message": "net /PC1 to /PB3 spacing 0.023939 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "e0fbd031a0004d3c",
+    "evidence_id": "sha256:6d18140fc3a6fa039e9c820b119aaefd76e79176cc911380b50855f24875544c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73344375383112,
+        99.88284970720912
+      ],
+      [
+        162.671573,
+        99.944722
+      ]
+    ],
+    "message": "net /PC3 to +5V spacing 0.063128 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d9cc5b9684c13657",
+    "evidence_id": "sha256:8256de6727a5a33a2fae0ebfa4aa87c397cc5fb207b8c2822dcc5578aa9cc10a",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73344375383112,
+        99.88284970720912
+      ],
+      [
+        163.29912988588714,
+        100.44853583926515
+      ]
+    ],
+    "message": "net /PC3 to /PC4 spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a50986f3d361c0cc",
+    "evidence_id": "sha256:32e2462ab31308bb72533eca7890fdfc96133fe94f9930bc4ba1db91755d4a35",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73344375383112,
+        99.88284970720912
+      ],
+      [
+        163.249592,
+        100.510408
+      ]
+    ],
+    "message": "net /PC3 to /ADC6 spacing 0.049731 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "f87230687fc0be50",
+    "evidence_id": "sha256:a84455b76d493a7134eaa7751918993748c87189f8fd2310dc7416e6f5ed6d22",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.1,
+        95.059798
+      ],
+      [
+        162.73344375383112,
+        96.82461429279087
+      ]
+    ],
+    "message": "net /PB2 to /PC0 spacing 0.041010 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ad96cdf18a62c8a7",
+    "evidence_id": "sha256:532a2e4c32425222a99d201b75bb9a1d747aff03c3ecc26ac2b12e191e23f6b5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.1,
+        95.059798
+      ],
+      [
+        163.29912988588714,
+        96.25892816073485
+      ]
+    ],
+    "message": "net /PB2 to /ADC7 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ad6e6f22d804ef1e",
+    "evidence_id": "sha256:fa552e00b7b8ab87b8b9a88bbf4b84b3f2f5bf17035983ab04f2d86c83e4f633",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.191572,
+        94.02
+      ],
+      [
+        163.29912988588714,
+        96.25892816073485
+      ]
+    ],
+    "message": "net /PB1 to /ADC7 spacing 0.041008 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "29a19cef793e6f3e",
+    "evidence_id": "sha256:cd99050cb6e73b2ddc6fad76436bd7613ba85509017935bf435427690e568b01",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.191572,
+        94.02
+      ],
+      [
+        163.86481531083638,
+        95.69324273578562
+      ]
+    ],
+    "message": "net /PB1 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "40547c19de0d5d50",
+    "evidence_id": "sha256:c2338215990b13f59f426bd2283d206300d903ffa98b6356fff9eedfac0c9bc2",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.368629,
+        95.065685
+      ],
+      [
+        163.86481531083638,
+        95.69324273578562
+      ]
+    ],
+    "message": "net /PB0 to GND spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1b74ef7e7f5ecd72",
+    "evidence_id": "sha256:eab3fb92c06857755fe635113661b4a9bcb88905824fdde2ff2bcb8085fedff9",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.368629,
+        95.065685
+      ],
+      [
+        164.4305007357856,
+        95.12755731083638
+      ]
+    ],
+    "message": "net /PB0 to /AREF spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "2bb621c2b4928cf7",
+    "evidence_id": "sha256:f3bbbf2ef5f37630e0baa8ca4f90b21f9c2b42c067003a5e46a916838aa9b587",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.671573,
+        99.944722
+      ],
+      [
+        163.29912988588714,
+        100.44853583926515
+      ]
+    ],
+    "message": "net +5V to /PC4 spacing 0.079849 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "7370057508074693",
+    "evidence_id": "sha256:7f1bfd3ea0de2590304e0fa622d86ac1310b9387843674c60160d1221a4a97b5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73344375383112,
+        96.82461429279087
+      ],
+      [
+        162.565242,
+        96.762742
+      ]
+    ],
+    "message": "net /PC0 to /PB3 spacing 0.006798 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "df73997eb21a0cee",
+    "evidence_id": "sha256:634e39593ff54bbe7efe66b067a8878e3d9d62fd7e0d355bde5f66d7e4a5498a",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73344375383112,
+        96.82461429279087
+      ],
+      [
+        163.29912988588714,
+        96.25892816073485
+      ]
+    ],
+    "message": "net /PC0 to /ADC7 spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "acf4bc36253cc8e7",
+    "evidence_id": "sha256:b16b95d5dd57dea929609f3e97f63d93984472ae8ff9456db790dbdcd933b344",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.29912988588714,
+        100.44853583926515
+      ],
+      [
+        163.86481531083638,
+        101.01422126421438
+      ]
+    ],
+    "message": "net /PC4 to /PC5 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "7ed3fa1ca8ba6115",
+    "evidence_id": "sha256:ae6c1953c35f1190a7e929c34b89ccdffdfa410255790837d0f80acf2cee9ebc",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.29912988588714,
+        100.44853583926515
+      ],
+      [
+        163.237258,
+        100.510408
+      ]
+    ],
+    "message": "net /PC4 to /ADC6 spacing 0.113128 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0c84e9edf0ce7e2e",
+    "evidence_id": "sha256:631727bb4a5b90a0c2023d6cb89f566df94db1c707677c4831a60ba0fc396ccc",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.29912988588714,
+        100.44853583926515
+      ],
+      [
+        163.249592,
+        100.510408
+      ]
+    ],
+    "message": "net /PC4 to /ADC6 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3a3faacd7ce40e3f",
+    "evidence_id": "sha256:79c0e44e6611dc209feeedac3c1153657646022fd0e24580473691c4c5c8642c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73,
+        102.149036
+      ],
+      [
+        163.86481531083638,
+        101.01422126421438
+      ]
+    ],
+    "message": "net /AREF to /PC5 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4842114dbe0c8900",
+    "evidence_id": "sha256:f405889051b34b2fa88c53899eadb9e17ad307c4e6975eb4d4186003783de8ba",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        162.73,
+        102.149036
+      ],
+      [
+        164.4305007357856,
+        101.57990668916362
+      ]
+    ],
+    "message": "net /AREF to /PC6 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "dad1a7dc2f8932a1",
+    "evidence_id": "sha256:b830e0cca5c9100fcd784bb0a1814368307479d9f820e1a3ef0aa37e19e375f0",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.29912988588714,
+        96.25892816073485
+      ],
+      [
+        163.86481531083638,
+        95.69324273578562
+      ]
+    ],
+    "message": "net /ADC7 to GND spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3897fe7151c11b6e",
+    "evidence_id": "sha256:6a38e947a243a19a4c28c1a8cff67743ee03d32a6cf0de60924d65a9abcf7d1d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.934314,
+        94.5
+      ],
+      [
+        164.4305007357856,
+        95.12755731083638
+      ]
+    ],
+    "message": "net /PD7 to /AREF spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "af2feef96f2b2a76",
+    "evidence_id": "sha256:852a8a683fb55c1303008a885cd47c28f194f68a720d5e16c016ef3251eb6de2",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.934314,
+        94.5
+      ],
+      [
+        164.99618616073485,
+        94.56187188588713
+      ]
+    ],
+    "message": "net /PD7 to /ADC6 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "03d961bf9d2deb23",
+    "evidence_id": "sha256:5891e90ad7f8a580b5335531f335a9cedeea7affe8f70b97e3b16dee830b15de",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.86481531083638,
+        101.01422126421438
+      ],
+      [
+        164.4305007357856,
+        101.57990668916362
+      ]
+    ],
+    "message": "net /PC5 to /PC6 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "45240c24a46b1d45",
+    "evidence_id": "sha256:fda290c784e1fc417702683c81f7e1fa47f0754dd6e8c6e5b1b8fcaf4ed40a13",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.86481531083638,
+        101.01422126421438
+      ],
+      [
+        164.368629,
+        101.641779
+      ]
+    ],
+    "message": "net /PC5 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "751a50d2498513ef",
+    "evidence_id": "sha256:ff1eac22906cb9f84aadc257a8d73982f3fba7575c224edb35007d559e3e6b35",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.86481531083638,
+        101.01422126421438
+      ],
+      [
+        164.368629,
+        101.331371
+      ]
+    ],
+    "message": "net /PC5 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a18c575fcf9effc6",
+    "evidence_id": "sha256:ac2d6be546c549612fbc9176802467659c2a8e855ff57875e4308b54ccb7d0eb",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.408822,
+        102.601586
+      ],
+      [
+        164.4305007357856,
+        101.57990668916362
+      ]
+    ],
+    "message": "net GND to /PC6 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3b32520000485ce2",
+    "evidence_id": "sha256:caf819401aeba78920441ef03dda70c1fa630e3223223a5d33c0122f53c081e2",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.408822,
+        102.601586
+      ],
+      [
+        164.99618616073485,
+        102.14559211411286
+      ]
+    ],
+    "message": "net GND to /PD0 spacing 0.041008 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "cf0f583fcdcd8f60",
+    "evidence_id": "sha256:9d6485343ea67781eb553c83e6118ab4b8410901b04a1355bb62137e378d168f",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        163.86481531083638,
+        95.69324273578562
+      ],
+      [
+        164.4305007357856,
+        95.12755731083638
+      ]
+    ],
+    "message": "net GND to /AREF spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "48a225f810772b0b",
+    "evidence_id": "sha256:af03d82e3752aa30ae3823a22ad839270fa541497bdb68a2ca12ffb7a580f954",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.4305007357856,
+        101.57990668916362
+      ],
+      [
+        164.99618616073485,
+        102.14559211411286
+      ]
+    ],
+    "message": "net /PC6 to /PD0 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4581d5fbcc182f7e",
+    "evidence_id": "sha256:40f8f712901b4b480bd8a4a298123ff5a5fcc623a0ba0d4b8b025f2656389e13",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.4305007357856,
+        101.57990668916362
+      ],
+      [
+        164.368629,
+        101.641779
+      ]
+    ],
+    "message": "net /PC6 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "54c87bb613c8a3a6",
+    "evidence_id": "sha256:849f5f562171ac9a88dca90944858c354ddbe40ed7e402858f94ce5ec1eef7ba",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.4305007357856,
+        101.57990668916362
+      ],
+      [
+        164.368629,
+        101.331371
+      ]
+    ],
+    "message": "net /PC6 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "413964365fea9660",
+    "evidence_id": "sha256:3204926db4390d4379b40a0d96e27541d881ec3f8f82676cbca8c6e60bce9a82",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.4305007357856,
+        101.57990668916362
+      ],
+      [
+        164.934314,
+        102.165686
+      ]
+    ],
+    "message": "net /PC6 to /ADC7 spacing 0.011467 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "74ce6453d273f0b1",
+    "evidence_id": "sha256:35440f2145c7bb834963445948182798a9701d31ec0e56ba1030ebae23cf6d5a",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        165.5,
+        93.934315
+      ],
+      [
+        164.99618616073485,
+        94.56187188588713
+      ]
+    ],
+    "message": "net /PD6 to /ADC6 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "67dfe0592bbfb409",
+    "evidence_id": "sha256:f4bea4237a74d85df7f56ad6579918703f6b61c7872c6a9ba8fb884f6f3cbc95",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        165.5,
+        93.934315
+      ],
+      [
+        165.56187229279087,
+        93.99618575383111
+      ]
+    ],
+    "message": "net /PD6 to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "2396e5cae46c9a78",
+    "evidence_id": "sha256:49883d09fe3ea119d3b88f6a3fe404d5bb76919d3f1586dc8f1d862ded3c6ce0",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        165.5,
+        102.773149
+      ],
+      [
+        165.56187229279087,
+        102.71127824616887
+      ]
+    ],
+    "message": "net /PC0 to /PD1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "74138726d464aea5",
+    "evidence_id": "sha256:9a33d1db44362884f97e137de0cefead05ef23ceac1c163f97a48135590c88a0",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        165.5,
+        102.773149
+      ],
+      [
+        166.12755701063332,
+        103.27696296401133
+      ]
+    ],
+    "message": "net /PC0 to /PD2 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "2970abc9b3e3c92b",
+    "evidence_id": "sha256:8d886e8a6b04135498e73f7a9ffffd5d3a37d0908b33b739e5f124d121d7a33c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.4305007357856,
+        95.12755731083638
+      ],
+      [
+        164.99618616073485,
+        94.56187188588713
+      ]
+    ],
+    "message": "net /AREF to /ADC6 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "190fc4f35a389e6a",
+    "evidence_id": "sha256:49b38e6be9908d8f9ba52833ab9ba875e70c8e6a2fcdcccfc20996706f09e1f4",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.99618616073485,
+        102.14559211411286
+      ],
+      [
+        165.56187229279087,
+        102.71127824616887
+      ]
+    ],
+    "message": "net /PD0 to /PD1 spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "65123745c74886c5",
+    "evidence_id": "sha256:073b2083dc87b2f0efea16309516ea5b49473240d2dfda7bda8036644a4df6dd",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.99618616073485,
+        102.14559211411286
+      ],
+      [
+        164.934314,
+        102.165686
+      ]
+    ],
+    "message": "net /PD0 to /ADC7 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "fd42dacf2acf0401",
+    "evidence_id": "sha256:620a5050ef57992f6dfb92acffbd4051e3b6d8f39a596290bf2522300b7d0c60",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.99618616073485,
+        102.14559211411286
+      ],
+      [
+        164.934314,
+        102.207464
+      ]
+    ],
+    "message": "net /PD0 to /ADC7 spacing 0.113128 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "f55c68676f4725a0",
+    "evidence_id": "sha256:68b32fefe0682472932d4eb0ef61479bacdba9e0fb5a9b08f0ca26923427df13",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        166.065685,
+        93.368629
+      ],
+      [
+        165.56187229279087,
+        93.99618575383111
+      ]
+    ],
+    "message": "net /PD5 to +5V spacing 0.041008 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "30545d0103a3c8ce",
+    "evidence_id": "sha256:cf6eeb9012d74ec8a7ec91375919f633a3f9340a8bb5e373bb64f83460d4f952",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        166.065685,
+        93.368629
+      ],
+      [
+        166.12755701063332,
+        93.43050103598866
+      ]
+    ],
+    "message": "net /PD5 to /PB5 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "463122837c95bb4b",
+    "evidence_id": "sha256:4d0c50bb6379067055bd8ac7da62a28863a0dd6fc74c5ae5859dfd09fadac326",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        166.065685,
+        103.338835
+      ],
+      [
+        166.12755701063332,
+        103.27696296401133
+      ]
+    ],
+    "message": "net /PC1 to /PD2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "bdae43781091761a",
+    "evidence_id": "sha256:8cf76745ad1d00d59427019e282dd45d9c5a04df3f63578474748f13de822d04",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        164.99618616073485,
+        94.56187188588713
+      ],
+      [
+        165.56187229279087,
+        93.99618575383111
+      ]
+    ],
+    "message": "net /ADC6 to +5V spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "806a956ec79caa7f",
+    "evidence_id": "sha256:5f9a1a955ea262e506cbc5ddd5157dcccef976f7c9ae7333fc53553bf355cd18",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        165.56187229279087,
+        102.71127824616887
+      ],
+      [
+        166.12755701063332,
+        103.27696296401133
+      ]
+    ],
+    "message": "net /PD1 to /PD2 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "62e4e91e2000d601",
+    "evidence_id": "sha256:7096fa83c87c8ce7963a6de4c658086d2e7f8698c9f2ba5accf122be75e69bf7",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        165.56187229279087,
+        93.99618575383111
+      ],
+      [
+        166.12755701063332,
+        93.43050103598866
+      ]
+    ],
+    "message": "net +5V to /PB5 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "354f99b51f6488f4",
+    "evidence_id": "sha256:151e53f412d4466fb1f676c2036f08a6264683b1a8ad340dc0e9b6571ecd224b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.116295,
+        103.338835
+      ],
+      [
+        168.05442298936666,
+        103.27696296401133
+      ]
+    ],
+    "message": "net /PC2 to /PD3 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0c6812e060d2beed",
+    "evidence_id": "sha256:8902c1dd4d5aecaf25c7089cbc69ccd46a0a70f902c955849866e528ddf9885f",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        167.102944,
+        97.8
+      ],
+      [
+        169.75147926421437,
+        101.57990668916362
+      ]
+    ],
+    "message": "net /PC6 to +5V spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "8bc7bdba1247158e",
+    "evidence_id": "sha256:c794d82a45b1cf6e63eae99eba48f4e2e0241b7be1906e0b163343aa55d66237",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        167.102944,
+        97.8
+      ],
+      [
+        170.3171646891636,
+        101.01422126421438
+      ]
+    ],
+    "message": "net /PC6 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "c46b4c84733691a6",
+    "evidence_id": "sha256:b5122f6ea45321bc83767347c0e4e75e684766b65dfc444a17f0d9b713e056f1",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        167.102944,
+        97.8
+      ],
+      [
+        170.88285011411284,
+        100.44853583926515
+      ]
+    ],
+    "message": "net /PC6 to +5V spacing 0.041008 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a882e3915ca6ce7f",
+    "evidence_id": "sha256:327661d60a64b54b454c0dcb7676fa7bec8f94bb9a0935c0677cb25941c46631",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.2,
+        94.5
+      ],
+      [
+        169.18579383926513,
+        94.56187188588713
+      ]
+    ],
+    "message": "net +5V to /PB2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "767cbcf9810ed51b",
+    "evidence_id": "sha256:ece167f1d0c3d7bc52b9fa6ed76d742fd158dc2eb95b85dcb7552fe266722713",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.2,
+        94.5
+      ],
+      [
+        169.75147926421437,
+        95.12755731083638
+      ]
+    ],
+    "message": "net +5V to /PB1 spacing 0.074714 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "6970af5437f4bbb6",
+    "evidence_id": "sha256:a5a119c5041fa712898638f1ba2c0e80826ae72163c7e848874e87aec6c564c3",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.05442298936666,
+        93.43050103598866
+      ],
+      [
+        168.62010770720912,
+        93.99618575383111
+      ]
+    ],
+    "message": "net /PB4 to /PB3 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4858cd752fcbfc58",
+    "evidence_id": "sha256:890993203d7a0999dd1a83ebcf131d321cf10d43ac9d888f0d6df07a920ee164",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.05442298936666,
+        93.43050103598866
+      ],
+      [
+        168.116295,
+        93.368629
+      ]
+    ],
+    "message": "net /PB4 to /XTAL2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "bf3d4868cd34ec21",
+    "evidence_id": "sha256:7da770870a43cd2ffe5ddfce10d4bd72f6d8b5a17e62ac4cb8b20a571441df86",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.05442298936666,
+        93.43050103598866
+      ],
+      [
+        168.538749,
+        92.946175
+      ]
+    ],
+    "message": "net /PB4 to /XTAL2 spacing 0.109326 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "223b006d67b34834",
+    "evidence_id": "sha256:8f7654f1103f440f01463e1c5b7aee07084f708672ba2bda4cd2242020c9f853",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.05442298936666,
+        93.43050103598866
+      ],
+      [
+        168.68198,
+        93.934315
+      ]
+    ],
+    "message": "net /PB4 to /XTAL1 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ee32ccaf2b83d80a",
+    "evidence_id": "sha256:b067c7c25727354a5ac2182535c99bf011052f243772b6b6c0a4838d0c2dd6c7",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.05442298936666,
+        103.27696296401133
+      ],
+      [
+        168.62010770720912,
+        102.71127824616887
+      ]
+    ],
+    "message": "net /PD3 to /PD4 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "b730ded3f7f5697a",
+    "evidence_id": "sha256:0f5bf158f358fa3637d01854996e6efbb4a6ee6a2df8b45e87c18f706adef229",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.62010770720912,
+        93.99618575383111
+      ],
+      [
+        169.18579383926513,
+        94.56187188588713
+      ]
+    ],
+    "message": "net /PB3 to /PB2 spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "f717bdb28ec6a573",
+    "evidence_id": "sha256:a2388e2487f5c8efbf4f9022c747a1517931c797c65fd439910a00b717f29c62",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.62010770720912,
+        93.99618575383111
+      ],
+      [
+        168.68198,
+        93.934315
+      ]
+    ],
+    "message": "net /PB3 to /XTAL1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "71795c8965a03ea2",
+    "evidence_id": "sha256:7d5d7ed435731904cee79e5d760f8cc90209516d356a24af23d81a859e83c623",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.62010770720912,
+        93.99618575383111
+      ],
+      [
+        169.104435,
+        93.51186
+      ]
+    ],
+    "message": "net /PB3 to /XTAL1 spacing 0.109326 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "46e8bc38c015b166",
+    "evidence_id": "sha256:3cd1524c3182c26cbf066d47712b1288c77bfbbf5ad4458f064a01982cbd0ab7",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.4,
+        96.479036
+      ],
+      [
+        169.75147926421437,
+        95.12755731083638
+      ]
+    ],
+    "message": "net GND to /PB1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "40d4e9051c2cacb7",
+    "evidence_id": "sha256:cadd955fc41a871079c70fafae032d44ea79c172d38da80bfbcf36f488d7fb68",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.4,
+        96.479036
+      ],
+      [
+        170.3171646891636,
+        95.69324273578562
+      ]
+    ],
+    "message": "net GND to /PB0 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "da1c449f9f48a11e",
+    "evidence_id": "sha256:bda8300aee1647861e4b225fdb92740eb1c91eb1b609d5f06264e1bccccb41fc",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.62010770720912,
+        102.71127824616887
+      ],
+      [
+        169.694415,
+        103.785584
+      ]
+    ],
+    "message": "net /PD4 to /PC3 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "18477daf40b90e39",
+    "evidence_id": "sha256:16def8984d88ba0493602e20bfa7477c592547fd1c63ddf26f0692e56f7d0a42",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        168.62010770720912,
+        102.71127824616887
+      ],
+      [
+        169.18579383926513,
+        102.14559211411286
+      ]
+    ],
+    "message": "net /PD4 to GND spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a8f932bf39c91bf9",
+    "evidence_id": "sha256:3d697258d01fe1d0b0bc6ab6c0573f393191d5674ba7df42b644a4787e98a985",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.18579383926513,
+        94.56187188588713
+      ],
+      [
+        169.75147926421437,
+        95.12755731083638
+      ]
+    ],
+    "message": "net /PB2 to /PB1 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0ebf529f8de12412",
+    "evidence_id": "sha256:70daaf702e8d4790c3b7cb3e59b2997aaa4a01047a6c65f1c17be999fd6eb90e",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.18579383926513,
+        94.56187188588713
+      ],
+      [
+        169.247666,
+        94.5
+      ]
+    ],
+    "message": "net /PB2 to +5V spacing 0.113128 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "520f09ed69ba5175",
+    "evidence_id": "sha256:ab21aca9f3bdf45e3a047c6ddbac79e60e58fcba1b206e124d7802e0660db2de",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.694415,
+        103.785584
+      ],
+      [
+        169.18579383926513,
+        102.14559211411286
+      ]
+    ],
+    "message": "net /PC3 to GND spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4318381b546af2e9",
+    "evidence_id": "sha256:76e705b0b553b65cbea827c94b8993b884c44f149c2a0041812a5b7e9764f691",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.18579383926513,
+        102.14559211411286
+      ],
+      [
+        169.307464,
+        102.207464
+      ]
+    ],
+    "message": "net GND to /PC4 spacing 0.053330 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "14b39f56db80ab73",
+    "evidence_id": "sha256:8390d7cbd3dea0128fae2fd399d462a0c432a37fff05ae3da80695d46d22bd11",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.18579383926513,
+        102.14559211411286
+      ],
+      [
+        170.9,
+        103.8
+      ]
+    ],
+    "message": "net GND to /PC4 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "75d5c8552cd4a20f",
+    "evidence_id": "sha256:e74bcd8bfef0bdce91d90094fa822110c6ce20ada0f401f4a4f6cfa37d2c0435",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.18579383926513,
+        102.14559211411286
+      ],
+      [
+        169.75147926421437,
+        101.57990668916362
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "fbae10e180104b39",
+    "evidence_id": "sha256:28b925d71fc88a40d95819d89a29e2a92e1e490344717611885d7240f219d65a",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.75147926421437,
+        95.12755731083638
+      ],
+      [
+        170.3171646891636,
+        95.69324273578562
+      ]
+    ],
+    "message": "net /PB1 to /PB0 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "6f0120fff32c9dd5",
+    "evidence_id": "sha256:1ef89bac6bcdb2d49e28bb57e9cec8ab23b4fdd01ce0974a9fc565742ef6640c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.75147926421437,
+        95.12755731083638
+      ],
+      [
+        170.379037,
+        95.631371
+      ]
+    ],
+    "message": "net /PB1 to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "36a56b6be8fe5e67",
+    "evidence_id": "sha256:a842427d3c58c8772a4e83f195c6b6626690f44254657c9b1fa2373b59d73b77",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.307464,
+        102.207464
+      ],
+      [
+        169.75147926421437,
+        101.57990668916362
+      ]
+    ],
+    "message": "net /PC4 to +5V spacing 0.070252 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "dbe62b733b64c06d",
+    "evidence_id": "sha256:224958cc77840e7f02f5ceffc69f3880aa5a04566a462c43a53cd0dc11ec4ce7",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.9,
+        103.8
+      ],
+      [
+        169.75147926421437,
+        101.57990668916362
+      ]
+    ],
+    "message": "net /PC4 to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "40573a2dd65c8d72",
+    "evidence_id": "sha256:9ce976de884a7a24e8da360a0d9c53f21e33f5b34a012635d525e344ddca5be3",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.541778,
+        97.6
+      ],
+      [
+        170.88285011411284,
+        96.25892816073485
+      ]
+    ],
+    "message": "net GND to /PD7 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0355be30c9548f5e",
+    "evidence_id": "sha256:615fa04cfe7575722998386a7bc372a890eae0488151a7393c1f51ccb6543636",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.541778,
+        97.6
+      ],
+      [
+        171.44853624616889,
+        96.82461429279087
+      ]
+    ],
+    "message": "net GND to /PD6 spacing 0.041010 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "49ec8fd8264bb4c6",
+    "evidence_id": "sha256:79989a4170da8528d8bc5cd3bff901cdaf32e916408bdf5cb0dd08d5f054ff08",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.75147926421437,
+        101.57990668916362
+      ],
+      [
+        169.841779,
+        101.641779
+      ]
+    ],
+    "message": "net +5V to /PC5 spacing 0.084700 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "f7d29b3bff424950",
+    "evidence_id": "sha256:cfe63ef9b3c5d59a853fdd96bb1735203c4d7b03a452d30f2270dbf2290d3c60",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.75147926421437,
+        101.57990668916362
+      ],
+      [
+        172.0,
+        103.8
+      ]
+    ],
+    "message": "net +5V to /PC5 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1f4e5b87a2f3486d",
+    "evidence_id": "sha256:139e5d3283195f172a197c691a6084ea2ea8f2b9fd0b3d223e83ceec599c2958",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.75147926421437,
+        101.57990668916362
+      ],
+      [
+        170.3171646891636,
+        101.01422126421438
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "376140308b71dd6a",
+    "evidence_id": "sha256:ca869c9a14af679a09679ab78f2a1b32b112027816cee409990fa15b7aea5259",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.3171646891636,
+        95.69324273578562
+      ],
+      [
+        170.88285011411284,
+        96.25892816073485
+      ]
+    ],
+    "message": "net /PB0 to /PD7 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "fc144b1f995f968b",
+    "evidence_id": "sha256:e0c1dc7b77e00e84569061deb6bf9206b4f005cba9e3070cbdbab48b487fabf6",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.3171646891636,
+        95.69324273578562
+      ],
+      [
+        170.379037,
+        95.631371
+      ]
+    ],
+    "message": "net /PB0 to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ae5c88b3e0ca08c9",
+    "evidence_id": "sha256:44e3bd9c9bb44e0802021ecb7f55601f77eca41eff266b6b021ade95658328c3",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.3171646891636,
+        95.69324273578562
+      ],
+      [
+        170.851492,
+        95.158916
+      ]
+    ],
+    "message": "net /PB0 to +5V spacing 0.109327 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "e08881eda07b065e",
+    "evidence_id": "sha256:a28d6e8f3ef53b84a742b8e029306de436ac35a34b7b273b6be7b01938536327",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.841779,
+        101.641779
+      ],
+      [
+        170.3171646891636,
+        101.01422126421438
+      ]
+    ],
+    "message": "net /PC5 to GND spacing 0.101508 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "6dae44966f82bb20",
+    "evidence_id": "sha256:76a620c2b28124fa38d07bc5d2a6c5e065dfae9ce116f00e542a1ae80f73edb9",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.0,
+        103.8
+      ],
+      [
+        170.3171646891636,
+        101.01422126421438
+      ]
+    ],
+    "message": "net /PC5 to GND spacing 0.020908 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "b1f02ff13f2e0a82",
+    "evidence_id": "sha256:62ef735f238eb899fa88e552bdf0e6b8e857ecab66b72e68959e7f7529ffe499",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.873149,
+        98.4
+      ],
+      [
+        171.44853624616889,
+        96.82461429279087
+      ]
+    ],
+    "message": "net /PD4 to /PD6 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9933cfea78d6fb6f",
+    "evidence_id": "sha256:fa13a0db2c7ab637fdc6563999aacb3374d7eb4d0281703563a8fecdfb1f2efb",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.873149,
+        98.4
+      ],
+      [
+        172.01422096401134,
+        97.39029901063333
+      ]
+    ],
+    "message": "net /PD4 to /PD5 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "5e1941c5c5769d80",
+    "evidence_id": "sha256:cf542630b1f4edd6ffcc6feb2559fc57a24182229a2ab200f1b0e6c929acde26",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        169.901014,
+        93.51186
+      ],
+      [
+        170.38117774503044,
+        93.91000025496953
+      ]
+    ],
+    "message": "net /XTAL1 to /XTAL2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "82bad342ab7be488",
+    "evidence_id": "sha256:fe0bb4e9c014e42cee7d6c09b4a1224214893104354b7f52693f9c29697ef5e5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.3171646891636,
+        101.01422126421438
+      ],
+      [
+        170.88285011411284,
+        100.44853583926515
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "09ef85c91344ae6e",
+    "evidence_id": "sha256:fd794281b8af0d0a51a4a5e1587ae08e37a2d33aa567d3445ddf0f3ac3d31f46",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.88285011411284,
+        96.25892816073485
+      ],
+      [
+        171.44853624616889,
+        96.82461429279087
+      ]
+    ],
+    "message": "net /PD7 to /PD6 spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0d73d55c1f62b989",
+    "evidence_id": "sha256:9518610fe6197ce202dab88fd549e26e6f8e98515447c99177caaf8b1006afa5",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.381178,
+        93.231178
+      ],
+      [
+        171.06000025496954,
+        93.23117774503045
+      ]
+    ],
+    "message": "net /XTAL2 to GND spacing 0.020797 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "b8e8e7eadd3f74d7",
+    "evidence_id": "sha256:2f76a3b0eaa286f8f80886d6a622fe46b23fe814f51239cd96e822f2fe629145",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.88285011411284,
+        100.44853583926515
+      ],
+      [
+        170.944722,
+        100.510408
+      ]
+    ],
+    "message": "net +5V to /PD0 spacing 0.037442 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ffa347dc6c174550",
+    "evidence_id": "sha256:dd33152539ef3e77008a1a4861b9bd05154ea07d0da9facfc354b24ce227bc23",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.88285011411284,
+        100.44853583926515
+      ],
+      [
+        171.020408,
+        100.510408
+      ]
+    ],
+    "message": "net +5V to /PD0 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "b2dfba5b5048c36b",
+    "evidence_id": "sha256:a31ddb3de7734c60a3bb60c92617cb544742a9558c122999603b67459fc592a0",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.88285011411284,
+        100.44853583926515
+      ],
+      [
+        171.44853624616889,
+        99.88284970720912
+      ]
+    ],
+    "message": "net +5V to /XTAL1 spacing 0.015686 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "cd4fba34cfc1f206",
+    "evidence_id": "sha256:62eb35d7ade1bbc70028a5de2294000d7f77694fca126824bf6639210c4d4a5b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.851492,
+        95.158916
+      ],
+      [
+        171.79999974503045,
+        95.31882225496953
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "917db50aab96a069",
+    "evidence_id": "sha256:bb88c3131ec771ff5fbfb01d192e4bb62227abb72f6f5e017950996b9bb1b345",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.44853624616889,
+        96.82461429279087
+      ],
+      [
+        172.01422096401134,
+        97.39029901063333
+      ]
+    ],
+    "message": "net /PD6 to /PD5 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "392fd2e8e2d24203",
+    "evidence_id": "sha256:26207d99d0c2b3cb3d3ea6148a7e12288be1a38affc14302f0ddcb3f1d1110ab",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        170.944722,
+        100.510408
+      ],
+      [
+        171.44853624616889,
+        99.88284970720912
+      ]
+    ],
+    "message": "net /PD0 to /XTAL1 spacing 0.054432 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "8e795cc1e3e9f759",
+    "evidence_id": "sha256:51e53ef5237cce2b9132cf877d8fd4539234ff779080cc6eee32846d68803028",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.076093,
+        97.353907
+      ],
+      [
+        172.01422096401134,
+        97.39029901063333
+      ]
+    ],
+    "message": "net /PD3 to /PD5 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "009c1a7283b0ee1e",
+    "evidence_id": "sha256:1d39c579fce7c6cb2d3adbde5e505beb3a8b62706fd3c229cd8ed17d5455d176",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.020408,
+        100.510408
+      ],
+      [
+        171.44853624616889,
+        99.88284970720912
+      ]
+    ],
+    "message": "net /PD0 to /XTAL1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a4859ef868603b3e",
+    "evidence_id": "sha256:a4600d23090fd7c5afcc52c011b7fcf731645927ddb2e2ff787acbc1edff2e13",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.44853624616889,
+        99.88284970720912
+      ],
+      [
+        173.665685,
+        102.1
+      ]
+    ],
+    "message": "net /XTAL1 to /PD1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "807485fca4a9521d",
+    "evidence_id": "sha256:387f1ad47523b894137d224930f061ea8cd6a6001afd528c40af3e207255959b",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.44853624616889,
+        99.88284970720912
+      ],
+      [
+        172.01422096401134,
+        99.31716498936667
+      ]
+    ],
+    "message": "net /XTAL1 to /XTAL2 spacing 0.015685 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "b3ec91bd07c25c31",
+    "evidence_id": "sha256:e7cffda025b0ab4a9ba6c13d97d8ef9157d19f21782a722b6509164c6edd8888",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.01422096401134,
+        97.39029901063333
+      ],
+      [
+        172.076093,
+        97.328427
+      ]
+    ],
+    "message": "net /PD5 to /PD3 spacing 0.113128 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "608cf1855fe9fb4d",
+    "evidence_id": "sha256:dcabf2298b0b6df91f2c20f880b114a552f1ba37de0f029fac3b7d9e7f98532c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.431106,
+        95.158916
+      ],
+      [
+        171.79999974503045,
+        95.31882225496953
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d4a1e765a8fb6e9e",
+    "evidence_id": "sha256:b2439cdcf78ba95c31335f79aad293355e1edb73ff7e98b805551487d750115d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        173.665685,
+        102.1
+      ],
+      [
+        172.01422096401134,
+        99.31716498936667
+      ]
+    ],
+    "message": "net /PD1 to /XTAL2 spacing 0.041009 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "1919f29fe7cc07b6",
+    "evidence_id": "sha256:6d29420a89ee63be50acfcda3d768bb79dac09b05896f0b95393872ffe42bf37",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.591012,
+        95.318822
+      ],
+      [
+        171.79999974503045,
+        95.31882225496953
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "9e99a158cc62a078",
+    "evidence_id": "sha256:dc82e271e30743154848dd7e43e5abca7913a3b940c8fe876ab4224505dba9a1",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        171.8,
+        94.64
+      ],
+      [
+        172.47882225496954,
+        94.63999974503045
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d25fe272b13fcc05",
+    "evidence_id": "sha256:5e2eb41fc4c969a237c1faf0970d4416d8a0030e69b810a0462806cfca95c0c7",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.01422096401134,
+        99.31716498936667
+      ],
+      [
+        172.076093,
+        99.379037
+      ]
+    ],
+    "message": "net /XTAL2 to /PD2 spacing 0.113128 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "29d39ada19b2e124",
+    "evidence_id": "sha256:e8cab1738b8b53c80eb22e5d29c2aea96b370e7dc98ab15cbfb8d5917f4bd5bd",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.01422096401134,
+        99.31716498936667
+      ],
+      [
+        172.076093,
+        99.353907
+      ]
+    ],
+    "message": "net /XTAL2 to /PD2 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "5541fa131e0807b3",
+    "evidence_id": "sha256:577d200bd9ec631266a8d670763d2da1a968503a52035853108322eaf9b23a23",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.14999974503044,
+        94.01882225496954
+      ],
+      [
+        172.207644,
+        94.64
+      ]
+    ],
+    "message": "net /XTAL1 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a9bcbddf1b77b34d",
+    "evidence_id": "sha256:66901cedbd7fa5b3deddc1c2c172212a8318fb002d5a4bb2b43c95e7aef37492",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.14999974503044,
+        94.01882225496954
+      ],
+      [
+        172.47882225496954,
+        94.63999974503045
+      ]
+    ],
+    "message": "net /XTAL1 to +5V spacing 0.061177 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "526c8af1e94d5534",
+    "evidence_id": "sha256:2f51a397a574e71c51c781b176a811d37be9fa91a3052a7897b46ca92617e7b9",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.15,
+        93.34
+      ],
+      [
+        172.82882225496954,
+        93.33999974503045
+      ]
+    ],
+    "message": "net /XTAL1 to GND spacing 0.109395 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "c877d779524ed637",
+    "evidence_id": "sha256:ffc3ef7cb7ab1f8103ec644118ae4463e2c5e69a0a225d94c6e347c7bdaf835e",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.207644,
+        94.64
+      ],
+      [
+        172.47882225496954,
+        94.63999974503045
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3c307d92205faa8c",
+    "evidence_id": "sha256:01836f1085532868384c980b1b909856843d30ab1f491df7fd811298339d5683",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.47882225496954,
+        94.63999974503045
+      ],
+      [
+        172.828822,
+        94.018822
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.122520 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "39535a60aa77775e",
+    "evidence_id": "sha256:9674e96449c7849ee754f410fb3666640dd9ce10e2beef5f3376fa057be83386",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.47882225496954,
+        94.63999974503045
+      ],
+      [
+        172.828822,
+        94.128822
+      ]
+    ],
+    "message": "net +5V to GND spacing 0.099741 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3c44ed1078c8fcc6",
+    "evidence_id": "sha256:c75225fd626d022da57b414895565677b987e74ef38684135ce78a7d04bdc90d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.31,
+        93.5
+      ],
+      [
+        172.82882225496954,
+        93.33999974503045
+      ]
+    ],
+    "message": "net /XTAL1 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d0f992c9e7b1e808",
+    "evidence_id": "sha256:804117750540a10d73f364561aa463891c636c3041c6353f37ed3e245fa1ab0a",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.82882225496954,
+        93.33999974503045
+      ],
+      [
+        172.629224,
+        93.5
+      ]
+    ],
+    "message": "net GND to /XTAL1 spacing 0.004278 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a5029f151d98a808",
+    "evidence_id": "sha256:ee2e3fa695298398c44032aae1d7f69ff14eb24f5f0466a016b1f96fc97f6c0a",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.82882225496954,
+        93.33999974503045
+      ],
+      [
+        172.697605,
+        93.431619
+      ]
+    ],
+    "message": "net GND to /XTAL1 spacing 0.008049 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "ac3db689fa9fca9d",
+    "evidence_id": "sha256:53c1571cf6d7676bd07d419a0e06136a7a1aa32e98a28dd13723c99ccba5354d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.82882225496954,
+        93.33999974503045
+      ],
+      [
+        173.0,
+        92.8
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.010001 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "36b6fa028bae1cc4",
+    "evidence_id": "sha256:97fc37eba049fe74747b94e6c50297ac416e4fac1c84fa61a274a1b394c6dd99",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.82882225496954,
+        93.33999974503045
+      ],
+      [
+        173.030773,
+        93.431619
+      ]
+    ],
+    "message": "net GND to /XTAL1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "575ecd195a30bed2",
+    "evidence_id": "sha256:4f7d662ef87920505501572bc9e12cd394c1d99e37fc069c46a5395f867ab69d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        172.82882225496954,
+        93.33999974503045
+      ],
+      [
+        173.5425,
+        93.32
+      ]
+    ],
+    "message": "net GND to +5V spacing 0.059585 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4778299408b8df8c",
+    "evidence_id": "sha256:24ec766c3bd17d272db847b13a7a8aa54ac26c188b36d1b6805243356a6d847e",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        173.030773,
+        93.431619
+      ],
+      [
+        173.67999974503044,
+        93.99882225496954
+      ]
+    ],
+    "message": "net /XTAL1 to +5V spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "a7805169b8d99b8e",
+    "evidence_id": "sha256:182364aab83438898b67f1cb419cac1ccc5a6981920fbbd18715a2b9aa69d426",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        173.784365,
+        95.715635
+      ],
+      [
+        174.62436477668624,
+        95.36208130470337
+      ]
+    ],
+    "message": "net GND to /XTAL1 spacing 0.090000 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "d021b05523f55009",
+    "evidence_id": "sha256:83c61ca1fa44dd794a9d8a7d0910e76c45350bd42741e9a5ff0c5dc2bb61a791",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        174.624365,
+        95.715635
+      ],
+      [
+        174.62436477668624,
+        95.36208130470337
+      ]
+    ],
+    "message": "net GND to /XTAL1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "85d1e02b76eef02b",
+    "evidence_id": "sha256:1b38c15885de40e64168acce5c806a3a58478480e4e7d63520363b4b11b2cb05",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        174.62436477668624,
+        95.36208130470337
+      ],
+      [
+        175.82644630470335,
+        94.15999977668623
+      ]
+    ],
+    "message": "net /XTAL1 to GND spacing 0.085951 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4d78b86ded26c8ce",
+    "evidence_id": "sha256:c20958a8e4c4c194fa5dd4f5813d16d32c46ece30cb95d0631321359dc6e57db",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        174.4,
+        92.2
+      ],
+      [
+        175.82644630470335,
+        94.15999977668623
+      ]
+    ],
+    "message": "net /XTAL2 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0c757eba253b76ff",
+    "evidence_id": "sha256:16b42b1b8bb256d0d4d550d301c45f400d939e36b46a2c07351a210bdea30db0",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        174.789518,
+        94.568396
+      ],
+      [
+        175.82644630470335,
+        94.15999977668623
+      ]
+    ],
+    "message": "net /XTAL1 to GND spacing 0.106313 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "77adbe7e4f5d4148",
+    "evidence_id": "sha256:f05550fc31fdad1e48d7d87ce8568c29add87ed03ee119dbb8a6fca93b18e93c",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        176.17999969529663,
+        96.91771622331376
+      ],
+      [
+        175.826446,
+        95.605324
+      ]
+    ],
+    "message": "net GND to /XTAL1 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "c1bb0869eb9eb076",
+    "evidence_id": "sha256:3b76bea2e54b6416fef7323ce4a6fb7276c0ff5a92b6e1cc1fc11aa9812938d3",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        176.17999969529663,
+        96.91771622331376
+      ],
+      [
+        177.38208122331375,
+        95.71563469529663
+      ]
+    ],
+    "message": "net GND to /XTAL2 spacing 0.085951 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "acaa200d72ad02a2",
+    "evidence_id": "sha256:8a84b1cec1f3d5fbe84c44bc825dddb9d677c7ecff93d2535c176782c10c1f5d",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        177.38208122331375,
+        95.71563469529663
+      ],
+      [
+        177.437919,
+        95.362081
+      ]
+    ],
+    "message": "net /XTAL2 to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "4cedc6c207fdbc41",
+    "evidence_id": "sha256:241877eaf3fbdb054f0aafb8cbb00e5ace4ac924640efdfaf7a18f93776d24d4",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        180.58,
+        102.785
+      ],
+      [
+        180.58,
+        102.785
+      ]
+    ],
+    "message": "net Net-(R5-Pad2) to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "2baf6ceb3771acc8",
+    "evidence_id": "sha256:974e28173fc38cc12e0bea189231db2a2112ef82a30fa8119240daa20454e474",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        180.58,
+        95.035
+      ],
+      [
+        180.58,
+        95.035
+      ]
+    ],
+    "message": "net Net-(R5-Pad2) to GND spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "0c2f4d0ad1e4ba91",
+    "evidence_id": "sha256:12ddcc13403fab9afc36ab7591cac4b619d88cf44d9c0e626d68657e9662b0e6",
+    "check": "net-constraint-readiness",
+    "severity": "error",
+    "layers": [
+      "F.Cu"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "locations": [
+      [
+        180.58,
+        95.035
+      ],
+      [
+        181.8,
+        95.96
+      ]
+    ],
+    "message": "net Net-(R5-Pad2) to /PB4 spacing 0.000000e0 is below configured clearance 0.128000 from class Default"
+  },
+  {
+    "id": "3d99ef5fd09f3901",
+    "evidence_id": "sha256:aa8e4cb8a0b5880caf585685a09ea6f11beb811c00c631fea4e081d2899d8330",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C10"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C10 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "202f4a87e71a57b6",
+    "evidence_id": "sha256:2480a441e3d3c04077fa0466ff9cdda39dcd109b0e30e9d031b658165152865e",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C11"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C11 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "e0f32a0162a0efad",
+    "evidence_id": "sha256:5cfe687c7d93d255d883ca4666ef68f482b8d22360b2c376cfcc44292d78a5ee",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C6"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C6 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "8d815319c7048447",
+    "evidence_id": "sha256:8e8fc395f6676cea917c7b5e15ca7e88ca6e2e7e284a327877ca8a3fcd50811f",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C5"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C5 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "4fdda17054cceec0",
+    "evidence_id": "sha256:ee371138b3ca6080f0b0afddecdc63cd539e201fbe09f6ed5899afcc470fd3c3",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R6"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R6 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "1af4acabfae3e712",
+    "evidence_id": "sha256:c741f65cc57c708e1467f05de897444428fc58fa699cb03cde593b93a7effd21",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C3"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C3 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "15d8626051dd48ea",
+    "evidence_id": "sha256:d3d735795e4cd38efa47a0dd3f56a30693274deecf150bd220ded2c8f1a5fc2c",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R3"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R3 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "38033d59e34b73d7",
+    "evidence_id": "sha256:b43b566eab23c56d544b5f79135a228c1baa3ff5bde9cfc740790b26e41b937e",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C4"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C4 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "b85e3a184ef15577",
+    "evidence_id": "sha256:b2ef2f9231c5af022083140b4e1c302e8db46cc89228c228fccf4d65f04b28de",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C2"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C2 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "2c7dc54d698e7322",
+    "evidence_id": "sha256:28f123d504ebb9e64309eb39130825e3a1a934a89c8a2c4aaf45778a1b46113c",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:A1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component A1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "bdecfced80d5e078",
+    "evidence_id": "sha256:c3b5a76f0e84c3b33e7bbc7284d6b86c37967eaf10b717de3bf87d376945346c",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:J1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component J1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "c95a16cb57333a3c",
+    "evidence_id": "sha256:89e32ccc2c18b8559e70a4fd62935478d9cb76b79fa6fc7114f5afac5bf38eb0",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:U3"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component U3 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "fa8c6598caa630af",
+    "evidence_id": "sha256:996672f9baf78581597d81183b8874a32da5409d81dbe3e689a80688a6f4c87e",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R2"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R2 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "39318d33c581fbc5",
+    "evidence_id": "sha256:f6546f0cb006720a655700a9e3e3e30f54f58c2a4d5adbf73cee1c3fb65ac0f3",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C7"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C7 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "3299372ba5187127",
+    "evidence_id": "sha256:7f74a7b4b4aeec5a577c019adf86fa79fad6e672a039dcf675e8deda52ebfa2f",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R5"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R5 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "3aa55c99ef81f77f",
+    "evidence_id": "sha256:047b5821220dcbbf25b463bf8fde783753617fbee7f816ff41068cb5086407a9",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C9"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C9 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "ce8cb30959bf5453",
+    "evidence_id": "sha256:8bc732dff7baa0b68b62fa199115e08d34b12d72813a03095f78093f799a9892",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:F1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component F1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "ca048c8b110010c0",
+    "evidence_id": "sha256:6b32f4772811b124b12fe1f5cd81925d10ed54ac2a45eab032761720591e56d3",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "a962ea714a7ab35c",
+    "evidence_id": "sha256:fe9431e3d2633f41c9c6d03d39d6b57f9c12ad23535135d6ebf98b45d159e780",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:SW1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component SW1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "9f70a9ccd4146caa",
+    "evidence_id": "sha256:7c5ff07d55495ffe71beef20eb6361a06876f6ea45f7b3b90982f1cfdddc65ea",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:D2"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component D2 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "2ad2a86171769ad4",
+    "evidence_id": "sha256:f9ad62206d4c74df641903aab61418596ae8c5a0113e493daabebd82d9d88161",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:D3"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component D3 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "821cb28006c4caba",
+    "evidence_id": "sha256:0dc37093a75575d65ff9580cd6c3bbea915b31c2cd64ab564ec409e66daa7a17",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C8"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C8 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "7fab738bd22d771c",
+    "evidence_id": "sha256:07dd888e9e720d99f3aaa2022a402b73575261df673d531df0da3ee78a8f9fbb",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:D1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component D1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "d1cf25fcbe46c654",
+    "evidence_id": "sha256:f199a1733aa88b7999cc11c76329b166dec3035adc77ed1059c2efe0c4108bc4",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R4"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R4 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "b68a5dfc7bec0e34",
+    "evidence_id": "sha256:d3fecd502b2d0c328e39f235d43d7e22bdbc0791d7165233c2fcff85e8160c70",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:U2"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component U2 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "d675cc0b8c6619ab",
+    "evidence_id": "sha256:dfe454e18e3203d0d168a607a50e9ed6f8892a9bdf16d8d3aaf445a15e0d813c",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R7"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R7 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "9a08ccbed066032a",
+    "evidence_id": "sha256:9aed8e4880b379912e35b4658f60741393b0d5984a2a47b39826618496f88041",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:Y1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component Y1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "d7e9e951facb68a0",
+    "evidence_id": "sha256:93486a98c4ebbb7335b7add87c8897674684f94d4fa8f1ec11e12dea1a47b199",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:U1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component U1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "b4eaee0e58a7f9f8",
+    "evidence_id": "sha256:16b00295dd66e895eb9fc690dfe0534e8fe4042489789d5a4ba84356dd4133a8",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:R1"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component R1 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "0015005803b74acd",
+    "evidence_id": "sha256:a8770876de58fc48d51ffef396ae0d93653096a86d311945e9660d1012c1bcf8",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:C12"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component C12 has no usable courtyard or body envelope"
+  },
+  {
+    "id": "d87136653aac4d98",
+    "evidence_id": "sha256:b56e8f24a205b6bcc653f2f7ca5176f21cc1b9edbcfeb9f27ba0346e4e228ec4",
+    "check": "authored-component-readiness",
+    "severity": "error",
+    "layers": [
+      "component:J2"
+    ],
+    "total_area": -0.0,
+    "polygons": [],
+    "message": "placed component J2 has no usable courtyard or body envelope"
+  }
+]

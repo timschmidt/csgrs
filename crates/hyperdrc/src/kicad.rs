@@ -764,7 +764,14 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].location, [1.0, 2.0]);
-        assert!(!board.copper[0].region.to_multipolygon().0.is_empty());
+        assert!(
+            !board.copper[0]
+                .region
+                .try_to_multipolygon()
+                .unwrap()
+                .0
+                .is_empty()
+        );
         let _ = fs::remove_file(path);
     }
 
@@ -806,7 +813,13 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.region.to_multipolygon().unsigned_area())
+            .map(|feature| {
+                feature
+                    .region
+                    .try_to_multipolygon()
+                    .unwrap()
+                    .unsigned_area()
+            })
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 55);
@@ -849,7 +862,13 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.region.to_multipolygon().unsigned_area())
+            .map(|feature| {
+                feature
+                    .region
+                    .try_to_multipolygon()
+                    .unwrap()
+                    .unsigned_area()
+            })
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 16);
@@ -897,7 +916,13 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.region.to_multipolygon().unsigned_area())
+            .map(|feature| {
+                feature
+                    .region
+                    .try_to_multipolygon()
+                    .unwrap()
+                    .unsigned_area()
+            })
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 17);
@@ -942,11 +967,16 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let pad_area = board.copper[0].region.to_multipolygon().unsigned_area();
+        let pad_area = board.copper[0]
+            .region
+            .try_to_multipolygon()
+            .unwrap()
+            .unsigned_area();
         let panel_area = board
             .panel_features
             .unwrap()
-            .to_multipolygon()
+            .try_to_multipolygon()
+            .unwrap()
             .unsigned_area();
 
         assert_eq!(board.copper.len(), 1);
@@ -980,7 +1010,11 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
 
         assert_eq!(board.copper.len(), 1);
-        let area = board.copper[0].region.to_multipolygon().unsigned_area();
+        let area = board.copper[0]
+            .region
+            .try_to_multipolygon()
+            .unwrap()
+            .unsigned_area();
         assert_eq!(board.copper[0].kind, CopperKind::Pad);
         assert_eq!(board.copper[0].net.as_deref(), Some("GND"));
         assert!(area > 1.94);
@@ -1009,7 +1043,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let multipolygon = board.copper[0].region.to_multipolygon();
+        let multipolygon = board.copper[0].region.try_to_multipolygon().unwrap();
         let area = multipolygon.unsigned_area();
         let coords = &multipolygon.0[0].exterior().0;
 
@@ -1044,7 +1078,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let multipolygon = board.copper[0].region.to_multipolygon();
+        let multipolygon = board.copper[0].region.try_to_multipolygon().unwrap();
         let area = multipolygon.unsigned_area();
         let coords = &multipolygon.0[0].exterior().0;
 
@@ -1120,7 +1154,16 @@ mod tests {
                     && feature.location == [10.0, 22.0])
         );
         for feature in &board.copper {
-            assert!((feature.region.to_multipolygon().unsigned_area() - 8.0).abs() < 1.0e-9);
+            assert!(
+                (feature
+                    .region
+                    .try_to_multipolygon()
+                    .unwrap()
+                    .unsigned_area()
+                    - 8.0)
+                    .abs()
+                    < 1.0e-9
+            );
         }
         let _ = fs::remove_file(path);
     }
@@ -1155,12 +1198,14 @@ mod tests {
                 .iter()
                 .all(|feature| feature.location == [5.0, 6.0])
         );
-        assert!(
-            board
-                .copper
-                .iter()
-                .all(|feature| feature.region.to_multipolygon().unsigned_area() > 0.0)
-        );
+        assert!(board.copper.iter().all(|feature| {
+            feature
+                .region
+                .try_to_multipolygon()
+                .unwrap()
+                .unsigned_area()
+                > 0.0
+        }));
         let _ = fs::remove_file(path);
     }
 
@@ -1221,7 +1266,13 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.region.to_multipolygon().unsigned_area())
+            .map(|feature| {
+                feature
+                    .region
+                    .try_to_multipolygon()
+                    .unwrap()
+                    .unsigned_area()
+            })
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 37);
@@ -1351,12 +1402,14 @@ mod tests {
                 .iter()
                 .all(|feature| feature.kind == CopperKind::Segment && feature.layer == "F.Cu")
         );
-        assert!(
-            board
-                .copper
-                .iter()
-                .all(|feature| feature.region.to_multipolygon().unsigned_area() > 0.0)
-        );
+        assert!(board.copper.iter().all(|feature| {
+            feature
+                .region
+                .try_to_multipolygon()
+                .unwrap()
+                .unsigned_area()
+                > 0.0
+        }));
         let _ = fs::remove_file(path);
     }
 
@@ -1394,7 +1447,13 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.region.to_multipolygon().unsigned_area())
+            .map(|feature| {
+                feature
+                    .region
+                    .try_to_multipolygon()
+                    .unwrap()
+                    .unsigned_area()
+            })
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 55);
@@ -1450,7 +1509,8 @@ mod tests {
         let panel_area = board
             .panel_features
             .unwrap()
-            .to_multipolygon()
+            .try_to_multipolygon()
+            .unwrap()
             .unsigned_area();
 
         assert!(panel_area > 0.8);
@@ -1482,12 +1542,14 @@ mod tests {
         let outline_area = board
             .board_outline
             .unwrap()
-            .to_multipolygon()
+            .try_to_multipolygon()
+            .unwrap()
             .unsigned_area();
         let panel_area = board
             .panel_features
             .unwrap()
-            .to_multipolygon()
+            .try_to_multipolygon()
+            .unwrap()
             .unsigned_area();
 
         assert!((outline_area - 12.0).abs() < 1.0e-9);
@@ -1570,7 +1632,7 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
         let panel_features = board.panel_features.unwrap();
 
-        assert!(panel_features.to_multipolygon().0.len() >= 4);
+        assert!(panel_features.try_to_multipolygon().unwrap().0.len() >= 4);
         let _ = fs::remove_file(path);
     }
 
@@ -1590,7 +1652,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let outline = board.board_outline.unwrap().to_multipolygon();
+        let outline = board.board_outline.unwrap().try_to_multipolygon().unwrap();
 
         assert_eq!(outline.0.len(), 1);
         assert!((outline.unsigned_area() - 50.0).abs() < 1.0e-9);
@@ -1613,7 +1675,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let outline = board.board_outline.unwrap().to_multipolygon();
+        let outline = board.board_outline.unwrap().try_to_multipolygon().unwrap();
 
         assert!(
             outline.0.len() > 1,
@@ -1692,7 +1754,16 @@ mod tests {
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].kind, CopperKind::Zone);
         assert_eq!(board.copper[0].net.as_deref(), Some("PWR"));
-        assert!((board.copper[0].region.to_multipolygon().unsigned_area() - 2.0).abs() < 1.0e-9);
+        assert!(
+            (board.copper[0]
+                .region
+                .try_to_multipolygon()
+                .unwrap()
+                .unsigned_area()
+                - 2.0)
+                .abs()
+                < 1.0e-9
+        );
         let _ = fs::remove_file(path);
     }
 

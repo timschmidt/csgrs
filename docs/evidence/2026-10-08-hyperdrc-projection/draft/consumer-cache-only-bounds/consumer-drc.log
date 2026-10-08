@@ -1,0 +1,90 @@
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 1m 15s
+     Running unittests src/lib.rs (target/release/deps/hypercircuit-b169ddc8551970da)
+
+running 1 test
+test drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+
+     Running unittests src/bin/hypercircuit.rs (target/release/deps/hypercircuit-c6b11219df70db6a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/ac.rs (target/release/deps/ac-191e254d86d6cc3b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/authoring.rs (target/release/deps/authoring-aad532f72473fa42)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
+
+     Running tests/autoroute.rs (target/release/deps/autoroute-3d21c7856dd0463e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 41 filtered out; finished in 0.00s
+
+     Running tests/behavior.rs (target/release/deps/behavior-7fd73957ccc4e28c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/release/deps/cli-f9afd238fcc79974)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/coppertrace_erc.rs (target/release/deps/coppertrace_erc-12605387298b99fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/coppertrace_examples.rs (target/release/deps/coppertrace_examples-0970a2cf1eacd0f8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/curved_outline.rs (target/release/deps/curved_outline-603a16d56b3218ff)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/curved_routing.rs (target/release/deps/curved_routing-c136eccbe51e9eb7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/declarative.rs (target/release/deps/declarative-d7d54234a389a94f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/dispatch_trace.rs (target/release/deps/dispatch_trace-f85626bd0182ca7f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/easyduino.rs (target/release/deps/easyduino-dd5e52a01bac1f24)
+
+running 6 tests
+test esp32_runs_end_to_end_through_hyperdrc has been running for over 60 seconds
+test esp32s3_runs_end_to_end_through_hyperdrc has been running for over 60 seconds
+test nano_runs_end_to_end_through_hyperdrc has been running for over 60 seconds
+test rp2040_runs_end_to_end_through_hyperdrc has been running for over 60 seconds
+test stm32f103_runs_end_to_end_through_hyperdrc has been running for over 60 seconds
+test uno_runs_end_to_end_through_hyperdrc has been running for over 60 seconds

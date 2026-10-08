@@ -114,6 +114,69 @@ Finite spatial rejection elsewhere, component/projection failure handling,
 other source shapes, and non-distance readiness measurements remain open. The
 finite reference distance helpers are retained only in tests.
 
+## Fallible native components and report projection, 2026-10-08
+
+`PcbRegionExt::try_to_multipolygon` now returns typed failures. Native component
+and report caches retain successful results only, check source and shared-budget
+failures even when warm, and execute under STRICT. Generated report polygons
+retain each native component's identity and holes; authored profiles retain
+their duplicate decomposition and requested sample counts. Required callers
+propagate projection failures into uncertainty findings and readiness receipts.
+Migrated candidate indices retain unknown native bounds. Required net width now
+queries native bounds even without parser-attached bounds; unavailable width no
+longer becomes zero.
+
+Five original failing regressions and the consumer width failure are retained in
+the [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-projection/manifest.json).
+The final configured DRC release command passed 1,154 library tests, two README
+integration tests and two doctests, including sixteen new regressions. Strict
+all-feature/all-target Clippy, rustdoc and formatting pass. Consumer validation
+passed nine tests selected by `hyperdrc` and all five curved-outline tests, with
+strict all-feature/all-target Clippy. Source hashes remained fixed through each
+validation chain.
+
+All six Easyduino fast-DRC snapshots were audited before updating their expected
+findings and shared check implementation version. Every one of the 190 changed
+finding IDs flips the clearance threshold decision between native boundaries and
+the retained report-chord metric. Exhaustive native segment comparisons covered
+202 matching feature pairs with zero decision mismatches. This cross-check shares
+Hypercurve certificates with production; it is not an independent-library proof.
+The [snapshot audit](../../docs/evidence/2026-10-08-hyperdrc-projection/snapshot-audit/summary.json)
+retains exact values, source feature identities, old/new hashes and replay code.
+The fast gate's existing zone omission and all native fixtures are unchanged.
+
+Five sequential fresh processes pinned to CPU 0 measured six projection rows
+after all builds and tests exited. Median query times, in microseconds:
+
+| Fixture | PCB cache state | Time |
+| --- | --- | ---: |
+| Authored circle, 17 samples | Warm | 0.061 |
+| Authored circle, 1,000,000 samples | Warm | 1,097.348 |
+| Native circle | Fresh component/report caches | 892.325 |
+| Native circle | Warm | 0.095 |
+| 64 native components | Fresh component/report caches | 51.784 |
+| 64 native components | Warm | 2.670 |
+
+All 1,000,001 closed coordinates in the million-sample case and all 64 components
+are retained. First/last report fingerprints and native areas match across
+trials; six identity rows serialize to 768 bytes with a stable SHA-256. Input
+construction is outside query timers and inside process RSS. Fresh PCB caches
+clone a native region whose internal kernel evidence can already be warm. Peak
+RSS was 54,992–55,336 KiB; the linked probe was 22,798,256 bytes.
+
+The unchanged full fixture smoke gate passed in 60.113 seconds against its
+120-second limit, with 1,466,320 KiB peak RSS and a 42,234,920-byte executable.
+The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-projection/cost/manifest.json)
+retains every trial, source hash and artifact identity. These are candidate
+capability costs, with no matched speedup, allocation count or library-size
+delta claim. Sub-microsecond warm timings have limited precision.
+
+The remaining audit includes other finite spatial and shape heuristics,
+area/containment/source-value consumers, legacy optional dimensions, and native
+Boolean/offset/translation boundaries. General curve aggregation still has typed
+blockers. This repair does not establish complete DRC certification or a total
+time, memory or precision bound.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

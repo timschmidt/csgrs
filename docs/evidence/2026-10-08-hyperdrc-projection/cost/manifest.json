@@ -1,0 +1,451 @@
+{
+  "scope": "Candidate capability cost, not a matched speedup or allocation/library-size comparison.",
+  "library_build_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--release",
+    "-p",
+    "hyperdrc",
+    "--lib",
+    "--message-format=json"
+  ],
+  "build_command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-08-hyperdrc-projection/cost/projection_probe.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+    "--extern",
+    "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+    "-o",
+    "/tmp/drc-projection-cost1/projection-probe"
+  ],
+  "probe_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/tmp/drc-projection-cost1/projection-probe"
+  ],
+  "fixture_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/fixture_smoke-32e0f2841c818a1d"
+  ],
+  "fixture_exit_code": 0,
+  "observations": [
+    {
+      "rows": [
+        {
+          "name": "authored_circle_17_warm",
+          "iterations": 1000,
+          "ns_per_query": 74.515,
+          "polygons": 1,
+          "coordinates": 18,
+          "coordinate_fnv1a64": "10621196167203660418"
+        },
+        {
+          "name": "authored_circle_1000000_warm",
+          "iterations": 10,
+          "ns_per_query": 1097347.8,
+          "polygons": 1,
+          "coordinates": 1000001,
+          "coordinate_fnv1a64": "6778606631196480579"
+        },
+        {
+          "name": "native_circle_cold_drc_cache",
+          "iterations": 100,
+          "ns_per_query": 921356.13,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "native_circle_warm",
+          "iterations": 1000,
+          "ns_per_query": 94.904,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "components64_cold_drc_cache",
+          "iterations": 25,
+          "ns_per_query": 51660.48,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        },
+        {
+          "name": "components64_warm",
+          "iterations": 1000,
+          "ns_per_query": 3404.446,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        }
+      ],
+      "peak_rss_kib": 55336
+    },
+    {
+      "rows": [
+        {
+          "name": "authored_circle_17_warm",
+          "iterations": 1000,
+          "ns_per_query": 59.445,
+          "polygons": 1,
+          "coordinates": 18,
+          "coordinate_fnv1a64": "10621196167203660418"
+        },
+        {
+          "name": "authored_circle_1000000_warm",
+          "iterations": 10,
+          "ns_per_query": 1186678.7,
+          "polygons": 1,
+          "coordinates": 1000001,
+          "coordinate_fnv1a64": "6778606631196480579"
+        },
+        {
+          "name": "native_circle_cold_drc_cache",
+          "iterations": 100,
+          "ns_per_query": 921997.88,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "native_circle_warm",
+          "iterations": 1000,
+          "ns_per_query": 94.064,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "components64_cold_drc_cache",
+          "iterations": 25,
+          "ns_per_query": 51485.68,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        },
+        {
+          "name": "components64_warm",
+          "iterations": 1000,
+          "ns_per_query": 2675.747,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        }
+      ],
+      "peak_rss_kib": 54992
+    },
+    {
+      "rows": [
+        {
+          "name": "authored_circle_17_warm",
+          "iterations": 1000,
+          "ns_per_query": 64.495,
+          "polygons": 1,
+          "coordinates": 18,
+          "coordinate_fnv1a64": "10621196167203660418"
+        },
+        {
+          "name": "authored_circle_1000000_warm",
+          "iterations": 10,
+          "ns_per_query": 1054862.7,
+          "polygons": 1,
+          "coordinates": 1000001,
+          "coordinate_fnv1a64": "6778606631196480579"
+        },
+        {
+          "name": "native_circle_cold_drc_cache",
+          "iterations": 100,
+          "ns_per_query": 892324.92,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "native_circle_warm",
+          "iterations": 1000,
+          "ns_per_query": 95.433,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "components64_cold_drc_cache",
+          "iterations": 25,
+          "ns_per_query": 51910.04,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        },
+        {
+          "name": "components64_warm",
+          "iterations": 1000,
+          "ns_per_query": 2563.334,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        }
+      ],
+      "peak_rss_kib": 55060
+    },
+    {
+      "rows": [
+        {
+          "name": "authored_circle_17_warm",
+          "iterations": 1000,
+          "ns_per_query": 59.506,
+          "polygons": 1,
+          "coordinates": 18,
+          "coordinate_fnv1a64": "10621196167203660418"
+        },
+        {
+          "name": "authored_circle_1000000_warm",
+          "iterations": 10,
+          "ns_per_query": 1202549.6,
+          "polygons": 1,
+          "coordinates": 1000001,
+          "coordinate_fnv1a64": "6778606631196480579"
+        },
+        {
+          "name": "native_circle_cold_drc_cache",
+          "iterations": 100,
+          "ns_per_query": 871333.06,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "native_circle_warm",
+          "iterations": 1000,
+          "ns_per_query": 126.411,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "components64_cold_drc_cache",
+          "iterations": 25,
+          "ns_per_query": 51845.64,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        },
+        {
+          "name": "components64_warm",
+          "iterations": 1000,
+          "ns_per_query": 2670.127,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        }
+      ],
+      "peak_rss_kib": 55236
+    },
+    {
+      "rows": [
+        {
+          "name": "authored_circle_17_warm",
+          "iterations": 1000,
+          "ns_per_query": 61.166,
+          "polygons": 1,
+          "coordinates": 18,
+          "coordinate_fnv1a64": "10621196167203660418"
+        },
+        {
+          "name": "authored_circle_1000000_warm",
+          "iterations": 10,
+          "ns_per_query": 1092214.1,
+          "polygons": 1,
+          "coordinates": 1000001,
+          "coordinate_fnv1a64": "6778606631196480579"
+        },
+        {
+          "name": "native_circle_cold_drc_cache",
+          "iterations": 100,
+          "ns_per_query": 889556.81,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "native_circle_warm",
+          "iterations": 1000,
+          "ns_per_query": 95.704,
+          "polygons": 1,
+          "coordinates": 129,
+          "coordinate_fnv1a64": "9913634850734995192"
+        },
+        {
+          "name": "components64_cold_drc_cache",
+          "iterations": 25,
+          "ns_per_query": 51783.64,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        },
+        {
+          "name": "components64_warm",
+          "iterations": 1000,
+          "ns_per_query": 2648.869,
+          "polygons": 64,
+          "coordinates": 320,
+          "coordinate_fnv1a64": "7469503818148515133"
+        }
+      ],
+      "peak_rss_kib": 55168
+    }
+  ],
+  "medians_ns": {
+    "authored_circle_17_warm": 61.166,
+    "authored_circle_1000000_warm": 1097347.8,
+    "native_circle_cold_drc_cache": 892324.92,
+    "native_circle_warm": 95.433,
+    "components64_cold_drc_cache": 51783.64,
+    "components64_warm": 2670.127
+  },
+  "rows": {
+    "count": 6,
+    "bytes": 768,
+    "sha256": "010fd9442a3fa9507d82872ac4740d63daba3b460a0e9c5ab5232069023d5f5c"
+  },
+  "binaries": {
+    "/tmp/drc-projection-cost1/projection-probe": {
+      "bytes": 22798256,
+      "sha256": "b6a43432ebe920a746eb79752504a9cc7522187e448c67daa89edf47107e95d7"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/fixture_smoke-32e0f2841c818a1d": {
+      "bytes": 42234920,
+      "sha256": "e83db9e8884abdc250a92126c28c807d4f3dfc850895843835ba5500d2bdc740"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+      "bytes": 24793330,
+      "sha256": "75accd42042c9f2a97aee30af7b52e4bc92770172c06ac7f7e5360cbb344ffb7"
+    }
+  },
+  "probe_source": {
+    "bytes": 3733,
+    "sha256": "e83ffc80317304628ef4c342c8d38efff3ad4b8fd1ca5183768d3f864ee240ac"
+  },
+  "source_hashes": {
+    "crates/hyperdrc/tests/readme.rs": "a02497aa24f8677efa0028757084d7d69cdcc0e56e07b728dae43d094e9f703b",
+    "crates/hyperdrc/src/excellon.rs": "71224e1a4bbd3758260767da4d2844724bbe0f6cd660bdd5716c0ed0c789e841",
+    "crates/hyperdrc/src/svg_overlay.rs": "84a9bc1620caa6290381c02b548c639ff8b66a906ea250b68313bbadf9fa2152",
+    "crates/hyperdrc/src/sexp.rs": "29d65a408b83c28f0a6721cd8809465866c0d7d44d4992b5395dd5a19a19b8c3",
+    "crates/hyperdrc/src/readiness.rs": "32fde4d6ec2dd5eb1e1e579d622c4ff51d09a4c5bb60ec31a368abef8e189f89",
+    "crates/hyperdrc/src/app.rs": "9f93a4f5c17d9e992e692fb9092986bdc94c90c1cd353648a2cf8f6116dbbc93",
+    "crates/hyperdrc/src/exact_path_rules.rs": "e1d75ef5253fde1c50ea5567e67b8f8e29a0a81c63b51489130d442371705115",
+    "crates/hyperdrc/src/kicad_markers.rs": "d9cf547ecc48f6c30ca4ef9a4bf954eb5932f1f3ecd4cc7dbd76e85e1fbc44b2",
+    "crates/hyperdrc/src/scalar.rs": "1e96048b34e98594cab9d472ab7b065e0b0e4f2c82470a11c8a092b358d74528",
+    "crates/hyperdrc/src/gencad_review.rs": "a9f359679f4bc8618008fce01bd9657825ab965e7ea6815462cee6d44a3922b7",
+    "crates/hyperdrc/src/process_lifecycle.rs": "8eb0c84add9018d63ebcb1f3be6368a7447fcad378d227c88448de5811ecb325",
+    "crates/hyperdrc/src/arrow_report.rs": "4e8b66f92cc1ab77bfb2b35b9218ad1c3a2c428aa9d5797d7486f5eab4d4d33a",
+    "crates/hyperdrc/src/parquet_report.rs": "38684fb9fbe1e419e0ba37bba003755a9e4f68389f64709c77dd356814a54418",
+    "crates/hyperdrc/src/sarif.rs": "6101ef64555a4bf4538a90aa15ea30f5559bba386ad71e0e9a329131c51ad7e7",
+    "crates/hyperdrc/src/github_annotations.rs": "04830949d6428d0089324330eb30c5be9ef8746c088404014575393121bd6f92",
+    "crates/hyperdrc/src/package_policy.rs": "bedaaf53e0245bf5a6686e5c92a963cc4ab3a4706be8210d4a17cd604c5343ea",
+    "crates/hyperdrc/src/ipc356.rs": "2f79ff5fbfe63604553a2fad72fce179ba2bc3f78878b2abec83db35bf76a8aa",
+    "crates/hyperdrc/src/assembly_policy.rs": "90d2497703b8fc3de99eb3db9dcb60f05ce30220913cb931762e0fd8966f3ec6",
+    "crates/hyperdrc/src/html_report.rs": "d106984ebd86c053f9f5be71de10ad765b7d7b37f51aab20b6f54a34d50dfaba",
+    "crates/hyperdrc/src/gerber_metadata.rs": "98847c8820d34e2e17734164d71d0a2f0b4adf29980f07970f7f1544fe300116",
+    "crates/hyperdrc/src/kicad.rs": "3acf48c60368e442d74b0631c5bdbc701bd781cec0beb273d122408d91c33f6e",
+    "crates/hyperdrc/src/dxf_overlay.rs": "e4ac3c2408e42d464cd739eb3f25af88ac5a1d9aa6674142767e0976aa7ca53d",
+    "crates/hyperdrc/src/date.rs": "ba09c473f160971df4d4b0974580fe66faaecfb3060b95d373b677af1595e6ae",
+    "crates/hyperdrc/src/authoring_intent.rs": "4348f1118545fce1309b384b6d0136994405e78b839c167cda7c4c323f4bbec1",
+    "crates/hyperdrc/src/waiver.rs": "f85373699ffccefa1072bc3a26df616f405a3a1d84044ae809c22c4ba47d39f1",
+    "crates/hyperdrc/src/gerber_overlay.rs": "073d3b7bca5d418c7eb110146398da2e58f8e0f8ffe857e8c4704010e546602a",
+    "crates/hyperdrc/src/conversion.rs": "82530d53f3a777394ac6226446e57f52d4a3f5c35fd11da4861ff159a0eb7b1b",
+    "crates/hyperdrc/src/io.rs": "e0ee9b9ea404481af04c2ba0f5b09484415f240de2b09587bd5c27560186cfe4",
+    "crates/hyperdrc/src/baseline.rs": "ff873ed1fdaeffd912faddcf1df4bc64ae6a52b5d742cad905ba344692d2b58d",
+    "crates/hyperdrc/src/junit.rs": "d6501ae17b527e3494133adfd3f6ade64a0ee45b46141317107c8e706655cb9c",
+    "crates/hyperdrc/src/package_archive.rs": "a28f11ae4d6b881ca6866528eb4bca2967ec4427f7d788dee0ef8ef0d40f349b",
+    "crates/hyperdrc/src/ipc356_review.rs": "bd480be9e52c04a6407709801f0e9a03048407c12af9a093a7cdbd43a6b92081",
+    "crates/hyperdrc/src/main.rs": "23725b908d9905b33878be1f35f95da0fca6ece7fccfdbbec366ab1ea2ab327f",
+    "crates/hyperdrc/src/ipc2581_review.rs": "cbb185462fe471f30e4184833a655bcb73f2a99e3cff30bb1f9c97505e9cfafb",
+    "crates/hyperdrc/src/constraint_policy.rs": "633515b9e4aaeed5dab75eeb9dd142f13613cf4bad8a47cd3a674a8894fc1cb7",
+    "crates/hyperdrc/src/test_intent.rs": "2204558a015f450b82419ef320715515695ea2ce4d89bd9ccfacb25916b9a2e3",
+    "crates/hyperdrc/src/jsonl.rs": "1209d65421125f72157148168b1a3a678e9887332b1a40ff76b3c7578d5a96c5",
+    "crates/hyperdrc/src/config.rs": "ad5ef195969a5847d32e17389e5987879351591331730f2d0e8877ade1d36aca",
+    "crates/hyperdrc/src/kicad_dru.rs": "52fbfe0d2595632ed4531dddd19da63a90f38937c101196bca138c7f8aad4ba5",
+    "crates/hyperdrc/src/geometry.rs": "28fcd131ffa23092cd21c4d18fabff005c53110473fd05c30ff656d327cd6a13",
+    "crates/hyperdrc/src/report.rs": "cfc9df8c1a617c781645a4071ba511a2865a6a813471ea94d564e5c1d159b4ed",
+    "crates/hyperdrc/src/sqlite_report.rs": "27d6503c7443b14cb4fedd65451fc3927fa3e01ce8f417cb15a1411a632eda09",
+    "crates/hyperdrc/src/cli.rs": "08579c7357b880a9722f581b8dc98c5afbd38aef4702711e48c804478a87adfa",
+    "crates/hyperdrc/src/excellon_overlay.rs": "fbf8b9df1f4bad310760558fedf407d1b7c99d03ea4065bf78e84fe5f0f9ab11",
+    "crates/hyperdrc/src/pdf_overlay.rs": "bdae43c0016c6125e6eadc760f3a255057213ec5fc2e573793d8e575f20f0f4e",
+    "crates/hyperdrc/src/lib.rs": "996c268309cf41ca428568e886e1a0f93725753c19dd04e2679633ae2cc44434",
+    "crates/hyperdrc/src/capability.rs": "3680cf161a03e2b1c9b63c3afb75306c42f5fd4b66f0158d86ed596d9ceb1d92",
+    "crates/hyperdrc/benches/parser_geometry_smoke.rs": "d47e315a02262ed14a4ef916bc2bcd27067dd14b397bba643c208eb10b472455",
+    "crates/hyperdrc/benches/fixture_smoke.rs": "69ae95bbde6ea68b9f7720a8fb589ad4273f2ec7fc016c1f69e22c7218739f43",
+    "crates/hyperdrc/benches/spatial_index_audit.rs": "39d9f2c0068769b54494ee852c5448251e59937d697e9ab45c6f1abc8369d400",
+    "crates/hyperdrc/examples/basic.rs": "d9c4c64f43d9204b31054ac44af43d14e77412197f8426a6eb5516997dcd4e0b",
+    "crates/hyperdrc/src/kicad/custom_pad.rs": "67e389537b938ca23f00881bcc84e7833abc1d3d200c2af51747da9a4b094920",
+    "crates/hyperdrc/src/kicad/graphic_primitives.rs": "636bf8c9fe1958baf1826f91bcbdd916471408e9b6eb9950f62001784561c4be",
+    "crates/hyperdrc/src/kicad/model.rs": "2fddb028373df909f50d30490b6b9556179c3c22402eb306256b97e4ebecfebb",
+    "crates/hyperdrc/src/kicad/graphics.rs": "9f37e2d3243ea0ecf1712238fd9a8afb90cbfd05c5ac76f44080e304890717c0",
+    "crates/hyperdrc/src/kicad/footprint_graphics.rs": "8a2674ab60317449050c2cd28d7af572f94d1c11365c41308eead9eb6df43d47",
+    "crates/hyperdrc/src/kicad/text.rs": "b9701ad4471c2510c6e823fe439621ac29510edfde1c2cee7ee7284602dc2708",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "0eee72483ba114bf551c5c52d94f66459d0cbb8f7bee905dd5a0fc3ef2d59ec8",
+    "crates/hyperdrc/src/kicad/arcs.rs": "39ed0062e1286d805b3811512b92631b85f2f299c5993788d4f1b179b2682e94",
+    "crates/hyperdrc/src/region/projection_regressions.rs": "4fda3243eafeab775f87899856ca4ece0124f971e19722e88fc51e54951840f1",
+    "crates/hyperdrc/src/region/projection.rs": "d94f999f94eb8f70776da2b1a6c6835da551e833c41048253eb4908ec4706f31",
+    "crates/hyperdrc/src/checks/excellon.rs": "b708a32cd54bfcacf7a99c605c38b10ec5d15280a76665f4d952a6d21f84baef",
+    "crates/hyperdrc/src/checks/layer.rs": "0941d6d7c4c89b73af53218391479517cc35a847bece92704403713588e689c0",
+    "crates/hyperdrc/src/checks/constraints.rs": "eff01e53388f29de3641151c973ae17a00321ace0c3509233ba1ab630f858a19",
+    "crates/hyperdrc/src/checks/differential.rs": "91489ed2a50c559700725962753de81af4fe88c0cad013784713ab46e4c7f994",
+    "crates/hyperdrc/src/checks/assembly.rs": "42df575bc8f682ef770ecce2ce2647bd760ab3547a3592233bf86d6f8f0eb2dd",
+    "crates/hyperdrc/src/checks/rf.rs": "4487a0214b4216c780c23899d7cca19dfe4704d663ef9fa7c3ee5d8ec5d8a6ea",
+    "crates/hyperdrc/src/checks/safety.rs": "22c761f67c0e040cfaab6f24999c84709ffbd17efc6ddd6792654f14eeaab43d",
+    "crates/hyperdrc/src/checks/signal.rs": "f1a1c74b2680b60a028e175a47e0b08c52db12cc751955f3dd50457cf90e2e9e",
+    "crates/hyperdrc/src/checks/spread.rs": "0de7de6df8043ea0bc5c395891ab8033753e4fa9b82401ca1b5271932a890c3d",
+    "crates/hyperdrc/src/checks/manifest.rs": "1020ff0d1d33161da193962593d0270f54b72671f28f6b6b7997727c3121b6de",
+    "crates/hyperdrc/src/checks/surface_finish.rs": "8c1d946d6f2500875d6fc172fe93fc075815d62851432cb2b41f727716e287d6",
+    "crates/hyperdrc/src/checks/power_integrity.rs": "5f4b34677323851674aaa067c93780a7c5da803604d5bfe2bcf8dbdf84baa8ee",
+    "crates/hyperdrc/src/checks/net_scope.rs": "0c4708c59ba2d6626682aa071207599604d4219173bf12072c6af09e15b35666",
+    "crates/hyperdrc/src/checks/thermal.rs": "700624dc2ad8bc12379eeff56d2aa4fe857d5d3d850b174ca57e0487fb324375",
+    "crates/hyperdrc/src/checks/drill.rs": "f6c5ca9130ab928cca3183c1e0e6ce0ab6e3f89eb3d1a8e418bc1b9b4d569a47",
+    "crates/hyperdrc/src/checks/spatial.rs": "c95ee5da8cf546d18fa132f3ba02b2709ac158adeed65b2088cadca05af768ef",
+    "crates/hyperdrc/src/checks/power.rs": "8564c9cecbf6eeb041a2eb303a2dd789be4e68058f6a0b9790107dde32f1e7d6",
+    "crates/hyperdrc/src/checks/outline.rs": "c0bc98502b2e9f19180b8401750c04fa2bbbdcc2a72f33adce87980622ddbf91",
+    "crates/hyperdrc/src/checks/mechanical.rs": "f3e740cf1d3542ace32dda65a5b75db9ac7aabc3a0ef6554774fb2c27e7d27a7",
+    "crates/hyperdrc/src/checks/impedance.rs": "7c029c447b8ae238e04ebdd875f6c81f2f809c5ace171ce538456c6e1ab2b292",
+    "crates/hyperdrc/src/checks/artifact_table.rs": "d145c6a4f596d13bd11dca743f1cd69556e9e736a8d6beeb135dcbd207c483cd",
+    "crates/hyperdrc/src/checks/distance.rs": "f982588023253a4428eab03198a7075108f0f6d09fa65d0b231cd71d5f189779",
+    "crates/hyperdrc/src/checks/artifact_handoff.rs": "777287f569c5d2c53ef0ea2e2740c69266d387eca075f0a273d0f353b694442f",
+    "crates/hyperdrc/src/checks/return_path.rs": "020f205e72ea1f38d909266eec76cfcca68b79a6da4ad32cd57d8ec4fdb1453b",
+    "crates/hyperdrc/src/checks/stencil.rs": "e35f37ac12ae74612b1176784806861a1a80c5c3a6b832f989f5ef90469abb43",
+    "crates/hyperdrc/src/checks/continuity.rs": "153c80ce459eb2d5201fea51813bc3a84a957d118406542f8f61b980be79e827",
+    "crates/hyperdrc/src/checks/net_class.rs": "08c50fadab7e0ae54cb9a7ecfb9cafe608a8911a570823745b488523f5fc07bc",
+    "crates/hyperdrc/src/checks/artifacts.rs": "d4c65ec70523822b8717419ebd22e0e58452f95e6f87470a6e6d96f5c49791be",
+    "crates/hyperdrc/src/checks/dense_pad.rs": "26eb36be5af3a016ea46e945f9446a4010d6d0e520b002bb2694899ff9f6d1d2",
+    "crates/hyperdrc/src/checks/board.rs": "cd2d5c6fc604290ddfec0660678fdae2a971a8d150f37c694b26203956210afb",
+    "crates/hyperdrc/src/checks/mod.rs": "e4e93216405c41b47881ce1a72a4cc86cc3f1ff91c89a8d64c4465974f493c67",
+    "crates/hyperdrc/src/geometry/source_units.rs": "b098a7fb16832e5157ff4185e8e8a12f3c48f5e836d1f0917673339b0f886f77",
+    "crates/hyperdrc/src/geometry/types.rs": "e7a31ff1cd50a7b27b6d4e75cd14482d4c3b39e8adf608a5ac654db1e48f1b6b",
+    "crates/hyperdrc/src/geometry/region.rs": "a36ff4654348f95c8104dfebb570d1fcf09ce4497dc34df00db4f38c3c2a1ad9",
+    "crates/hyperdrc/src/geometry/violations.rs": "69346716a26455e6dc5ca4875a82034bb49c5e87550213484ab1085371c56564",
+    "crates/hyperdrc/src/geometry/circle.rs": "80072a46d806bc2263a5bc521fdc8299c13f145c1eeacdeb4a11220fe46d841c",
+    "crates/hyperdrc/src/geometry/primitives.rs": "b19c66a6e2e49dbb541095d2f18fe8d5f7e19324e72dffc71ce0620ad3155054",
+    "crates/hyperdrc/src/geometry/types/tests.rs": "c38374193c70921d7271c6cd41f62b58796370737a21889e28acfaa3031b0226",
+    "crates/hyperdrc/src/checks/distance/native.rs": "9637dda99bd1e530dd570ed9f3db5c9c327995c3ff39be35284759b663ac79cb",
+    "crates/hyperdrc/src/checks/distance/native_regressions.rs": "283be8f30b4cbb32ac4486079d2eceb18b4265aefec6224f177f6c2aab95676f",
+    "crates/hyperdrc/src/checks/distance/finite_legacy.rs": "8b9f0c6fd0048ecdf609372399af9cacdbe5c969e5d68033e5114d7dab8d5a37"
+  },
+  "source_unchanged": true,
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "conditions": "Five sequential fresh processes and one full fixture run pinned to CPU 0, after builds/tests exit. Probe compilation excluded; construction of input regions excluded from query timers but included in whole-process RSS. Cold rows create a fresh PcbRegion/component/report cache while cloning the same native region, whose internal kernel evidence may already be warm. First/last report coordinates, native exact area, row counts and fingerprints are checked outside the timer. All 1,000,001 million-sample report coordinates and 64 distinct components are retained. The full fixture smoke workload and 120-second gate are unchanged."
+}

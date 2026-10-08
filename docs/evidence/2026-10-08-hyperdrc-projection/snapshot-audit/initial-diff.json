@@ -1,0 +1,136 @@
+[
+  {
+    "board": "esp32",
+    "only_check_version_changed": false,
+    "finding_counts_before": {
+      "authored-component-readiness": 29,
+      "net-constraint-readiness": 129,
+      "net-via-policy-readiness": 4,
+      "stackup-readiness": 9
+    },
+    "finding_counts_after": {
+      "authored-component-readiness": 29,
+      "net-constraint-readiness": 124,
+      "net-via-policy-readiness": 4,
+      "stackup-readiness": 9
+    },
+    "violations_equal": false,
+    "versions_before": [
+      1
+    ],
+    "versions_after": [
+      3
+    ]
+  },
+  {
+    "board": "uno",
+    "only_check_version_changed": false,
+    "finding_counts_before": {
+      "authored-component-readiness": 38,
+      "net-constraint-readiness": 124,
+      "net-via-policy-readiness": 4,
+      "stackup-readiness": 9
+    },
+    "finding_counts_after": {
+      "authored-component-readiness": 38,
+      "net-constraint-readiness": 133,
+      "net-via-policy-readiness": 4,
+      "stackup-readiness": 9
+    },
+    "violations_equal": false,
+    "versions_before": [
+      1
+    ],
+    "versions_after": [
+      3
+    ]
+  },
+  {
+    "board": "rp2040",
+    "only_check_version_changed": false,
+    "finding_counts_before": {
+      "authored-component-readiness": 65,
+      "net-constraint-readiness": 270,
+      "stackup-readiness": 9
+    },
+    "finding_counts_after": {
+      "authored-component-readiness": 65,
+      "net-constraint-readiness": 259,
+      "stackup-readiness": 9
+    },
+    "violations_equal": false,
+    "versions_before": [
+      1
+    ],
+    "versions_after": [
+      3
+    ]
+  },
+  {
+    "board": "nano",
+    "only_check_version_changed": false,
+    "finding_counts_before": {
+      "authored-component-readiness": 31,
+      "net-constraint-readiness": 184,
+      "stackup-readiness": 9
+    },
+    "finding_counts_after": {
+      "authored-component-readiness": 31,
+      "net-constraint-readiness": 188,
+      "stackup-readiness": 9
+    },
+    "violations_equal": false,
+    "versions_before": [
+      1
+    ],
+    "versions_after": [
+      3
+    ]
+  },
+  {
+    "board": "esp32s3",
+    "only_check_version_changed": false,
+    "finding_counts_before": {
+      "authored-component-readiness": 35,
+      "net-constraint-readiness": 136,
+      "net-via-policy-readiness": 274,
+      "stackup-readiness": 9
+    },
+    "finding_counts_after": {
+      "authored-component-readiness": 35,
+      "net-constraint-readiness": 141,
+      "net-via-policy-readiness": 274,
+      "stackup-readiness": 9
+    },
+    "violations_equal": false,
+    "versions_before": [
+      1
+    ],
+    "versions_after": [
+      3
+    ]
+  },
+  {
+    "board": "stm32f103",
+    "only_check_version_changed": false,
+    "finding_counts_before": {
+      "authored-component-readiness": 30,
+      "net-constraint-readiness": 367,
+      "net-via-policy-readiness": 4,
+      "stackup-readiness": 9
+    },
+    "finding_counts_after": {
+      "authored-component-readiness": 30,
+      "net-constraint-readiness": 413,
+      "net-via-policy-readiness": 4,
+      "stackup-readiness": 9
+    },
+    "violations_equal": false,
+    "versions_before": [
+      1
+    ],
+    "versions_after": [
+      3
+    ]
+  }
+]

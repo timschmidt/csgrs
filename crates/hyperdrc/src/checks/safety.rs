@@ -33,54 +33,55 @@ pub fn high_voltage_edge_readiness(
     edge_clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let outline_rect = axis_aligned_outline_rect(outline);
-    let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let allowed = match offset_for_check(
-        outline,
-        -edge_clearance.clone(),
-        "high-voltage-edge-readiness",
-        vec!["KiCad Edge.Cuts".into()],
-    ) {
-        Ok(allowed) => allowed,
-        Err(uncertainty) => return vec![*uncertainty],
-    };
-    let mut violations = Vec::new();
-    let mut skipped_rect_inside = 0_usize;
-    let mut exact_difference_count = 0_usize;
-
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
+    crate::checks::run_geometry_check("high-voltage-edge-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
         };
-        if !looks_high_voltage_net(net) {
-            continue;
-        }
-        if outline_rect.as_ref().is_some_and(|rect| {
-            feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
-        }) {
-            skipped_rect_inside += 1;
-            continue;
-        }
-
-        exact_difference_count += 1;
-        let intrusion = match difference_for_check(
-            &feature.region,
-            &allowed,
+        let outline_rect = axis_aligned_outline_rect(outline);
+        let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
+        let allowed = match offset_for_check(
+            outline,
+            -edge_clearance.clone(),
             "high-voltage-edge-readiness",
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            vec!["KiCad Edge.Cuts".into()],
         ) {
-            Ok(intrusion) => intrusion,
-            Err(uncertainty) => return vec![*uncertainty],
+            Ok(allowed) => allowed,
+            Err(uncertainty) => return Ok(vec![*uncertainty]),
         };
-        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
+        let mut violations = Vec::new();
+        let mut skipped_rect_inside = 0_usize;
+        let mut exact_difference_count = 0_usize;
 
-        violations.push(Violation::new(
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_voltage_net(net) {
+                continue;
+            }
+            if outline_rect.as_ref().is_some_and(|rect| {
+                feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
+            }) {
+                skipped_rect_inside += 1;
+                continue;
+            }
+
+            exact_difference_count += 1;
+            let intrusion = match difference_for_check(
+                &feature.region,
+                &allowed,
+                "high-voltage-edge-readiness",
+                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+            ) {
+                Ok(intrusion) => intrusion,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
             "high-voltage-edge-readiness",
             Severity::Warning,
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
@@ -91,19 +92,20 @@ pub fn high_voltage_edge_readiness(
                 "likely high-voltage net {net} is within {edge_clearance:.6} of the board edge; review edge creepage, clearance, and routed-slot barrier intent"
             )),
         ));
-    }
+        }
 
-    log::trace!(
-        "high-voltage edge readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
-        board.source,
-        selected_layers.len(),
-        outline_rect.is_some(),
-        skipped_rect_inside,
-        exact_difference_count,
-        violations.len()
-    );
+        log::trace!(
+            "high-voltage edge readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
+            board.source,
+            selected_layers.len(),
+            outline_rect.is_some(),
+            skipped_rect_inside,
+            exact_difference_count,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-voltage copper is close to unrelated copper.
@@ -118,96 +120,98 @@ pub fn voltage_clearance_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
-    let high_voltage_indices = features
-        .iter()
-        .enumerate()
-        .filter_map(|(index, feature)| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_high_voltage_net)
-                .then_some(index)
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "voltage-clearance readiness: source={} features={} high_voltage_features={} buckets={} clearance={clearance:.6}",
-        board.source,
-        features.len(),
-        high_voltage_indices.len(),
-        feature_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("voltage-clearance-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
+        let high_voltage_indices = features
+            .iter()
+            .enumerate()
+            .filter_map(|(index, feature)| {
+                feature
+                    .net
+                    .as_deref()
+                    .is_some_and(looks_high_voltage_net)
+                    .then_some(index)
+            })
+            .collect::<Vec<_>>();
+        log::trace!(
+            "voltage-clearance readiness: source={} features={} high_voltage_features={} buckets={} clearance={clearance:.6}",
+            board.source,
+            features.len(),
+            high_voltage_indices.len(),
+            feature_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
+        let mut exact_pair_count = 0_usize;
 
-    for &left_index in &high_voltage_indices {
-        let left = features[left_index];
-        for right_index in feature_index.same_layer_near_feature(left, broad_phase_clearance) {
-            candidate_count += 1;
-            let right = features[right_index];
-            if left_index == right_index {
-                continue;
-            }
-            if left.net.is_none() || left.net == right.net {
-                continue;
-            }
-            let left_high_voltage = left.net.as_deref().is_some_and(looks_high_voltage_net);
-            let right_high_voltage = right.net.as_deref().is_some_and(looks_high_voltage_net);
-            if !left_high_voltage && !right_high_voltage {
-                continue;
-            }
-            if right_high_voltage && right_index < left_index {
-                continue;
-            }
-            if !regiones_within_clearance(&left.region, &right.region, broad_phase_clearance) {
-                continue;
-            }
-            exact_pair_count += 1;
+        for &left_index in &high_voltage_indices {
+            let left = features[left_index];
+            for right_index in feature_index.same_layer_near_feature(left, broad_phase_clearance) {
+                candidate_count += 1;
+                let right = features[right_index];
+                if left_index == right_index {
+                    continue;
+                }
+                if left.net.is_none() || left.net == right.net {
+                    continue;
+                }
+                let left_high_voltage = left.net.as_deref().is_some_and(looks_high_voltage_net);
+                let right_high_voltage = right.net.as_deref().is_some_and(looks_high_voltage_net);
+                if !left_high_voltage && !right_high_voltage {
+                    continue;
+                }
+                if right_high_voltage && right_index < left_index {
+                    continue;
+                }
+                if !regiones_within_clearance(&left.region, &right.region, broad_phase_clearance) {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-            let expanded = match offset_for_check(
-                &left.region,
-                clearance.clone(),
-                "voltage-clearance-readiness",
-                vec![left.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &right.region,
-                "voltage-clearance-readiness",
-                vec![left.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+                let expanded = match offset_for_check(
                     &left.region,
-                    &right.region,
-                    clearance,
+                    clearance.clone(),
                     "voltage-clearance-readiness",
-                    &[&left.layer],
-                    &mut violations,
-                ) == Some(true)
-            {
-                vec![
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
-                ]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
+                    vec![left.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &right.region,
+                    "voltage-clearance-readiness",
+                    vec![left.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let locations = if shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &left.region,
+                        &right.region,
+                        clearance,
+                        "voltage-clearance-readiness",
+                        &[&left.layer],
+                        &mut violations,
+                    ) == Some(true)
+                {
+                    vec![
+                        left.location_f64_compatibility_required(),
+                        right.location_f64_compatibility_required(),
+                    ]
+                } else {
+                    Vec::new()
+                };
+                if shapes.is_empty() && locations.is_empty() {
+                    continue;
+                }
 
-            violations.push(Violation::new(
+                violations.push(Violation::new(
                 "voltage-clearance-readiness",
                 Severity::Warning,
                 vec![left.layer.clone()],
@@ -220,19 +224,20 @@ pub fn voltage_clearance_readiness(
                     if left_high_voltage { &right.net } else { &left.net }
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "voltage-clearance readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+        log::trace!(
+            "voltage-clearance readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+            board.source,
+            candidate_count,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-voltage copper is close to protective earth/chassis.
@@ -248,80 +253,86 @@ pub fn protective_earth_spacing_readiness(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let high_voltage = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_high_voltage_net))
-        .collect::<Vec<_>>();
-    let protective = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_protective_earth_net)
-        })
-        .collect::<Vec<_>>();
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let protective_index = CopperSpatialIndex::new(&protective, broad_phase_clearance);
-    log::trace!(
-        "protective-earth spacing readiness: source={} high_voltage={} protective={} buckets={} clearance={clearance:.6}",
-        board.source,
-        high_voltage.len(),
-        protective.len(),
-        protective_index.bucket_count()
-    );
+    crate::checks::run_geometry_check(
+        "protective-earth-spacing-readiness",
+        &[&board.source],
+        || {
+            let features = selected_copper_features(board, selected_layers);
+            let high_voltage = features
+                .iter()
+                .copied()
+                .filter(|feature| feature.net.as_deref().is_some_and(looks_high_voltage_net))
+                .collect::<Vec<_>>();
+            let protective = features
+                .iter()
+                .copied()
+                .filter(|feature| {
+                    feature
+                        .net
+                        .as_deref()
+                        .is_some_and(looks_protective_earth_net)
+                })
+                .collect::<Vec<_>>();
+            let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+            let protective_index = CopperSpatialIndex::new(&protective, broad_phase_clearance);
+            log::trace!(
+                "protective-earth spacing readiness: source={} high_voltage={} protective={} buckets={} clearance={clearance:.6}",
+                board.source,
+                high_voltage.len(),
+                protective.len(),
+                protective_index.bucket_count()
+            );
 
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
-    for hv in high_voltage {
-        for pe_index in protective_index.same_layer_near_feature(hv, broad_phase_clearance) {
-            candidate_count += 1;
-            let pe = protective[pe_index];
-            if hv.net == pe.net {
-                continue;
-            }
-            if !regiones_within_clearance(&hv.region, &pe.region, broad_phase_clearance) {
-                continue;
-            }
-            exact_pair_count += 1;
+            let mut violations = Vec::new();
+            let mut candidate_count = 0_usize;
+            let mut exact_pair_count = 0_usize;
+            for hv in high_voltage {
+                for pe_index in protective_index.same_layer_near_feature(hv, broad_phase_clearance)
+                {
+                    candidate_count += 1;
+                    let pe = protective[pe_index];
+                    if hv.net == pe.net {
+                        continue;
+                    }
+                    if !regiones_within_clearance(&hv.region, &pe.region, broad_phase_clearance) {
+                        continue;
+                    }
+                    exact_pair_count += 1;
 
-            let expanded = match offset_for_check(
-                &hv.region,
-                clearance.clone(),
-                "protective-earth-spacing-readiness",
-                vec![hv.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &pe.region,
-                "protective-earth-spacing-readiness",
-                vec![hv.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
-                    &hv.region,
-                    &pe.region,
-                    clearance,
-                    "protective-earth-spacing-readiness",
-                    &[&hv.layer],
-                    &mut violations,
-                ) == Some(true);
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                    let expanded = match offset_for_check(
+                        &hv.region,
+                        clearance.clone(),
+                        "protective-earth-spacing-readiness",
+                        vec![hv.layer.clone()],
+                    ) {
+                        Ok(expanded) => expanded,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let overlap = match intersection_for_check(
+                        &expanded,
+                        &pe.region,
+                        "protective-earth-spacing-readiness",
+                        vec![hv.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    let fallback_hit = shapes.is_empty()
+                        && crate::checks::boundaries_within_for_check(
+                            &hv.region,
+                            &pe.region,
+                            clearance,
+                            "protective-earth-spacing-readiness",
+                            &[&hv.layer],
+                            &mut violations,
+                        ) == Some(true);
+                    if shapes.is_empty() && !fallback_hit {
+                        continue;
+                    }
 
-            violations.push(Violation::new(
+                    violations.push(Violation::new(
                 "protective-earth-spacing-readiness",
                 Severity::Warning,
                 vec![hv.layer.clone()],
@@ -340,19 +351,21 @@ pub fn protective_earth_spacing_readiness(
                     hv.net, pe.net
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "protective-earth spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+            log::trace!(
+                "protective-earth spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_count,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when ordinary copper crowds likely surge/fuse/MOV protection copper.
@@ -368,83 +381,94 @@ pub fn surge_protection_keepout_readiness(
     keepout: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let surge = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_surge_protection_net)
-        })
-        .collect::<Vec<_>>();
-    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);
-    log::trace!(
-        "surge protection keepout readiness: source={} features={} surge_features={} buckets={} keepout={keepout:.6}",
-        board.source,
-        features.len(),
-        surge.len(),
-        feature_index.bucket_count()
-    );
+    crate::checks::run_geometry_check(
+        "surge-protection-keepout-readiness",
+        &[&board.source],
+        || {
+            let features = selected_copper_features(board, selected_layers);
+            let surge = features
+                .iter()
+                .copied()
+                .filter(|feature| {
+                    feature
+                        .net
+                        .as_deref()
+                        .is_some_and(looks_surge_protection_net)
+                })
+                .collect::<Vec<_>>();
+            let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+            let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);
+            log::trace!(
+                "surge protection keepout readiness: source={} features={} surge_features={} buckets={} keepout={keepout:.6}",
+                board.source,
+                features.len(),
+                surge.len(),
+                feature_index.bucket_count()
+            );
 
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
-    for source in surge {
-        for neighbor_index in feature_index.same_layer_near_feature(source, broad_phase_keepout) {
-            candidate_count += 1;
-            let neighbor = features[neighbor_index];
-            if std::ptr::eq(source, neighbor) {
-                continue;
-            }
-            if source.net == neighbor.net
-                || neighbor
-                    .net
-                    .as_deref()
-                    .is_some_and(allowed_surge_neighbor_net)
-            {
-                continue;
-            }
-            if !regiones_within_clearance(&source.region, &neighbor.region, broad_phase_keepout) {
-                continue;
-            }
-            exact_pair_count += 1;
+            let mut violations = Vec::new();
+            let mut candidate_count = 0_usize;
+            let mut exact_pair_count = 0_usize;
+            for source in surge {
+                for neighbor_index in
+                    feature_index.same_layer_near_feature(source, broad_phase_keepout)
+                {
+                    candidate_count += 1;
+                    let neighbor = features[neighbor_index];
+                    if std::ptr::eq(source, neighbor) {
+                        continue;
+                    }
+                    if source.net == neighbor.net
+                        || neighbor
+                            .net
+                            .as_deref()
+                            .is_some_and(allowed_surge_neighbor_net)
+                    {
+                        continue;
+                    }
+                    if !regiones_within_clearance(
+                        &source.region,
+                        &neighbor.region,
+                        broad_phase_keepout,
+                    ) {
+                        continue;
+                    }
+                    exact_pair_count += 1;
 
-            let expanded = match offset_for_check(
-                &source.region,
-                keepout.clone(),
-                "surge-protection-keepout-readiness",
-                vec![source.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &neighbor.region,
-                "surge-protection-keepout-readiness",
-                vec![source.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
-                    &source.region,
-                    &neighbor.region,
-                    keepout,
-                    "surge-protection-keepout-readiness",
-                    &[&source.layer],
-                    &mut violations,
-                ) == Some(true);
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
+                    let expanded = match offset_for_check(
+                        &source.region,
+                        keepout.clone(),
+                        "surge-protection-keepout-readiness",
+                        vec![source.layer.clone()],
+                    ) {
+                        Ok(expanded) => expanded,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let overlap = match intersection_for_check(
+                        &expanded,
+                        &neighbor.region,
+                        "surge-protection-keepout-readiness",
+                        vec![source.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    let shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    let fallback_hit = shapes.is_empty()
+                        && crate::checks::boundaries_within_for_check(
+                            &source.region,
+                            &neighbor.region,
+                            keepout,
+                            "surge-protection-keepout-readiness",
+                            &[&source.layer],
+                            &mut violations,
+                        ) == Some(true);
+                    if shapes.is_empty() && !fallback_hit {
+                        continue;
+                    }
 
-            violations.push(Violation::new(
+                    violations.push(Violation::new(
                 "surge-protection-keepout-readiness",
                 Severity::Warning,
                 vec![source.layer.clone()],
@@ -463,19 +487,21 @@ pub fn surge_protection_keepout_readiness(
                     source.net, neighbor.net
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "surge protection keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+            log::trace!(
+                "surge protection keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_count,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 fn regiones_within_clearance(
@@ -483,10 +509,10 @@ fn regiones_within_clearance(
     right: &crate::PcbRegion,
     clearance: f64,
 ) -> bool {
-    let Some(left_bounds) = left.geometry().bounding_rect() else {
+    let Some(left_bounds) = left.conservative_bounds() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry().bounding_rect() else {
+    let Some(right_bounds) = right.conservative_bounds() else {
         return true;
     };
 

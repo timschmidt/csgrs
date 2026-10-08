@@ -1,0 +1,24 @@
+{
+  "base_revision": "d171b377755dcbd6b1a1dfe371f1739bee8ee52c",
+  "command": "cargo test --locked --release -p hyperdrc --lib projection_regressions",
+  "exit_code": 101,
+  "passed": 0,
+  "failed": 5,
+  "production_changes": "None; lib.rs only declares the regression module.",
+  "failures": [
+    "Failed source construction still yields a material component.",
+    "Cold component extraction ignores an already exhausted shared scope. The assertion fails before the retry; this is not evidence of a cached None on this fixture.",
+    "Warm component extraction ignores an already exhausted shared scope.",
+    "The missing-component branch rebuilds native circle geometry from report chords; its exact area is less than pi.",
+    "An exact circle centered at 10^400 panics when finite projection cannot represent its coordinates."
+  ],
+  "source_hashes": {
+    "crates/hyperdrc/src/region/projection_regressions.rs": "e6602eaf104161452bf73d329248f92f9f80d887dfb18918468a5ce0e0e26098",
+    "crates/hyperdrc/src/lib.rs": "4e784b6ba66bf347887cc03f8d6beaa829d3fb9651e560d273b056ccfc78420b",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2"
+  },
+  "limitations": [
+    "The missing-component fallback is invoked directly with None to isolate that branch; this fixture does not claim component extraction itself fails on a circle.",
+    "No claim of complete projection, source-geometry or spatial-index coverage."
+  ]
+}

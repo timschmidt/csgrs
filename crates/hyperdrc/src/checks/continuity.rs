@@ -32,62 +32,64 @@ pub fn different_net_short_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, Rect<f64>)>> = BTreeMap::new();
-    for feature in selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.is_some())
-    {
-        let Some(bounds) = feature.region.geometry().bounding_rect() else {
-            continue;
-        };
-        by_layer
-            .entry(feature.layer.clone())
-            .or_default()
-            .push((feature, bounds));
-    }
-    for features in by_layer.values_mut() {
-        features.sort_by(|left, right| {
-            left.1
-                .min()
-                .x
-                .total_cmp(&right.1.min().x)
-                .then(left.1.min().y.total_cmp(&right.1.min().y))
-        });
-    }
-    log::trace!(
-        "different-net short readiness: source={} layers={} selected_layers={}",
-        board.source,
-        by_layer.len(),
-        selected_layers.len()
-    );
+    crate::checks::run_geometry_check("different-net-short-readiness", &[&board.source], || {
+        let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, Rect<f64>)>> = BTreeMap::new();
+        for feature in selected_copper_features(board, selected_layers)
+            .into_iter()
+            .filter(|feature| feature.net.is_some())
+        {
+            let Some(bounds) = feature.region.try_to_multipolygon()?.bounding_rect() else {
+                continue;
+            };
+            by_layer
+                .entry(feature.layer.clone())
+                .or_default()
+                .push((feature, bounds));
+        }
+        for features in by_layer.values_mut() {
+            features.sort_by(|left, right| {
+                left.1
+                    .min()
+                    .x
+                    .total_cmp(&right.1.min().x)
+                    .then(left.1.min().y.total_cmp(&right.1.min().y))
+            });
+        }
+        log::trace!(
+            "different-net short readiness: source={} layers={} selected_layers={}",
+            board.source,
+            by_layer.len(),
+            selected_layers.len()
+        );
 
-    let mut violations = Vec::new();
-    for candidates in by_layer.values() {
-        for left_index in 0..candidates.len() {
-            let (left, left_bounds) = candidates[left_index];
-            for (right, right_bounds) in &candidates[(left_index + 1)..] {
-                if right_bounds.min().x > left_bounds.max().x {
-                    break;
-                }
-                if left.net == right.net || !rects_overlap(&left_bounds, right_bounds) {
-                    continue;
-                }
+        let mut violations = Vec::new();
+        for candidates in by_layer.values() {
+            for left_index in 0..candidates.len() {
+                let (left, left_bounds) = candidates[left_index];
+                for (right, right_bounds) in &candidates[(left_index + 1)..] {
+                    if right_bounds.min().x > left_bounds.max().x {
+                        break;
+                    }
+                    if left.net == right.net || !rects_overlap(&left_bounds, right_bounds) {
+                        continue;
+                    }
 
-                let overlap = match intersection_for_check(
-                    &left.region,
-                    &right.region,
-                    "different-net-short-readiness",
-                    vec![left.layer.clone()],
-                ) {
-                    Ok(overlap) => overlap,
-                    Err(uncertainty) => return vec![*uncertainty],
-                };
-                if overlap.is_empty() {
-                    continue;
-                }
-                let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+                    let overlap = match intersection_for_check(
+                        &left.region,
+                        &right.region,
+                        "different-net-short-readiness",
+                        vec![left.layer.clone()],
+                    ) {
+                        Ok(overlap) => overlap,
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    };
+                    if overlap.is_empty() {
+                        continue;
+                    }
+                    let shapes =
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
 
-                violations.push(Violation::new(
+                    violations.push(Violation::new(
                     "different-net-short-readiness",
                     Severity::Error,
                     vec![left.layer.clone()],
@@ -102,11 +104,12 @@ pub fn different_net_short_readiness(
                         left.net, right.net, left.layer
                     )),
                 ));
+                }
             }
         }
-    }
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when a non-plated drill or slot keepout intersects netted copper.
@@ -122,65 +125,67 @@ pub fn same_net_drill_break_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let drills = board
-        .drills
-        .iter()
-        .chain(extra_drills.iter())
-        .filter(|drill| !drill.plated)
-        .collect::<Vec<_>>();
-    if drills.is_empty() {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("same-net-drill-break-readiness", &[&board.source], || {
+        let drills = board
+            .drills
+            .iter()
+            .chain(extra_drills.iter())
+            .filter(|drill| !drill.plated)
+            .collect::<Vec<_>>();
+        if drills.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    let copper = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.is_some())
-        .filter(|feature| matches!(feature.kind, CopperKind::Segment | CopperKind::Zone))
-        .collect::<Vec<_>>();
-    let maximum_drill_radius = drills
-        .iter()
-        .filter_map(|drill| drill.diameter_f64_compatibility())
-        .map(|diameter| diameter / 2.0)
-        .fold(0.0_f64, f64::max);
-    // Drill-break review is a conservative continuity proxy for IPC-9252B
-    // electrical-test risk. The grid only proposes possible drill/copper
-    // contacts; exact CSG intersection below remains authoritative.
-    let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0_usize;
-    let mut keepouts_built = 0_usize;
-    for drill in &drills {
-        let Some(drill_diameter) = drill.diameter_f64_compatibility() else {
-            continue;
-        };
-        let drill_radius = drill_diameter / 2.0;
-        let mut drill_region = None;
-
-        for candidate_index in copper_index
-            .all_layers_near_circle(drill.location_f64_compatibility_required(), drill_radius)
-        {
-            candidate_pairs += 1;
-            let feature = copper[candidate_index];
-
-            let drill_region = drill_region.get_or_insert_with(|| {
-                keepouts_built += 1;
-                drill_keepout_region(drill)
-            });
-            let overlap = match intersection_for_check(
-                drill_region,
-                &feature.region,
-                "same-net-drill-break-readiness",
-                vec![feature.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            if overlap.is_empty() {
+        let copper = selected_copper_features(board, selected_layers)
+            .into_iter()
+            .filter(|feature| feature.net.is_some())
+            .filter(|feature| matches!(feature.kind, CopperKind::Segment | CopperKind::Zone))
+            .collect::<Vec<_>>();
+        let maximum_drill_radius = drills
+            .iter()
+            .filter_map(|drill| drill.diameter_f64_compatibility())
+            .map(|diameter| diameter / 2.0)
+            .fold(0.0_f64, f64::max);
+        // Drill-break review is a conservative continuity proxy for IPC-9252B
+        // electrical-test risk. The grid only proposes possible drill/copper
+        // contacts; exact CSG intersection below remains authoritative.
+        let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);
+        let mut violations = Vec::new();
+        let mut candidate_pairs = 0_usize;
+        let mut keepouts_built = 0_usize;
+        for drill in &drills {
+            let Some(drill_diameter) = drill.diameter_f64_compatibility() else {
                 continue;
-            }
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+            };
+            let drill_radius = drill_diameter / 2.0;
+            let mut drill_region = None;
 
-            violations.push(Violation::new(
+            for candidate_index in copper_index
+                .all_layers_near_circle(drill.location_f64_compatibility_required(), drill_radius)
+            {
+                candidate_pairs += 1;
+                let feature = copper[candidate_index];
+
+                let drill_region = drill_region.get_or_insert_with(|| {
+                    keepouts_built += 1;
+                    drill_keepout_region(drill)
+                });
+                let overlap = match intersection_for_check(
+                    drill_region,
+                    &feature.region,
+                    "same-net-drill-break-readiness",
+                    vec![feature.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                if overlap.is_empty() {
+                    continue;
+                }
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+
+                violations.push(Violation::new(
                 "same-net-drill-break-readiness",
                 Severity::Error,
                 vec![feature.layer.clone()],
@@ -192,21 +197,22 @@ pub fn same_net_drill_break_readiness(
                     feature.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "same-net drill break readiness: source={} netted_routing_features={} non_plated_drills={} spatial_buckets={} candidate_pairs={} keepouts_built={} violations={}",
-        board.source,
-        copper.len(),
-        drills.len(),
-        copper_index.bucket_count(),
-        candidate_pairs,
-        keepouts_built,
-        violations.len()
-    );
+        log::trace!(
+            "same-net drill break readiness: source={} netted_routing_features={} non_plated_drills={} spatial_buckets={} candidate_pairs={} keepouts_built={} violations={}",
+            board.source,
+            copper.len(),
+            drills.len(),
+            copper_index.bucket_count(),
+            candidate_pairs,
+            keepouts_built,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 fn selected_copper_features<'a>(

@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use crate::geometry::{Polygon, empty_profile, polygons_to_profile};
-use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
+use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, PcbRegionExt, Scalar};
 
 #[derive(Clone, Debug)]
 /// Public data model for `BoardModel`.
@@ -111,53 +111,57 @@ impl DrillFeature {
 }
 
 impl BoardModel {
-    /// Run or compute `copper_layers`.
-    pub fn copper_layers(&self, selected_layers: &[String]) -> Vec<(String, PcbRegion)> {
-        let mut by_layer: HashMap<String, Vec<Polygon<f64>>> = HashMap::new();
+    /// Build per-layer profiles, returning required geometry or projection failures.
+    pub fn copper_layers(
+        &self,
+        selected_layers: &[String],
+    ) -> Result<Vec<(String, PcbRegion)>, PcbGeometryUncertainty> {
+        crate::projection::evaluate("copper-layers", Some(&self.source), || {
+            let mut by_layer: HashMap<String, Vec<Polygon<f64>>> = HashMap::new();
 
-        for feature in &self.copper {
-            if !selected_layers.is_empty() && !selected_layers.contains(&feature.layer) {
-                continue;
+            for feature in &self.copper {
+                if !selected_layers.is_empty() && !selected_layers.contains(&feature.layer) {
+                    continue;
+                }
+                by_layer
+                    .entry(feature.layer.clone())
+                    .or_default()
+                    .extend(feature.region.try_to_multipolygon()?.0);
             }
-            by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .extend(feature.region.to_multipolygon().0);
-        }
 
-        by_layer
-            .into_iter()
-            .map(|(layer, polygons)| {
-                let region = polygons_to_profile(
-                    polygons,
-                    Some(LayerMetadata {
-                        name: format!("KiCad {layer}"),
-                    }),
-                );
-                (layer, region)
-            })
-            .collect()
+            by_layer
+                .into_iter()
+                .map(|(layer, polygons)| {
+                    let region = polygons_to_profile(
+                        polygons,
+                        Some(LayerMetadata {
+                            name: format!("KiCad {layer}"),
+                        }),
+                    );
+                    region.ensure_exact_geometry("copper-layer")?;
+                    Ok((layer, region))
+                })
+                .collect()
+        })
     }
 
-    /// Run or compute `all_copper`.
-    pub fn all_copper(&self) -> PcbRegion {
-        let polygons = self
-            .copper
-            .iter()
-            .flat_map(|feature| feature.region.to_multipolygon().0)
-            .collect::<Vec<_>>();
-
-        if polygons.is_empty() {
-            return empty_profile(Some(LayerMetadata {
+    /// Combine all copper into an exact-backed report profile, retaining failures.
+    pub fn all_copper(&self) -> Result<PcbRegion, PcbGeometryUncertainty> {
+        crate::projection::evaluate("all-copper", Some(&self.source), || {
+            let mut polygons = Vec::new();
+            for feature in &self.copper {
+                polygons.extend(feature.region.try_to_multipolygon()?.0);
+            }
+            let metadata = Some(LayerMetadata {
                 name: "KiCad copper".to_string(),
-            }));
-        }
-
-        polygons_to_profile(
-            polygons,
-            Some(LayerMetadata {
-                name: "KiCad copper".to_string(),
-            }),
-        )
+            });
+            let region = if polygons.is_empty() {
+                empty_profile(metadata)
+            } else {
+                polygons_to_profile(polygons, metadata)
+            };
+            region.ensure_exact_geometry("all-copper")?;
+            Ok(region)
+        })
     }
 }

@@ -1,0 +1,181 @@
+{
+  "board": "nano",
+  "rows": [
+    {
+      "change": "added",
+      "chord_display": 0.1281435689899678,
+      "chord_distance": "6376195409367/70368744177664 √(2)",
+      "evidence_id": "sha256:c2e2ac60616848ddce023ed7623c9500435a31e5ec9632a2546d9f2fb8b9b814",
+      "indices": [
+        195,
+        360
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.6,
+          96.4
+        ],
+        [
+          149.253816,
+          96.9
+        ]
+      ],
+      "native_display": 0.12799973205693851,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "unconnected-(U3-~{RI}{slash}CLK-Pad2)",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "16/125"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.12814380874113412,
+      "chord_distance": "35801866132748322246137449/8874139652123030368765128110625655881728 √(1008872874549869080597673941)",
+      "evidence_id": "sha256:333c81a770693a876ab58d1c2099be8d9fc55c394ea2502e29f9bd15f4f652ba",
+      "indices": [
+        200,
+        417
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.6,
+          98.9
+        ],
+        [
+          149.289171,
+          98.4
+        ]
+      ],
+      "native_display": 0.12799997180808814,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/Vbus_f",
+        "+3.3V"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "16/125"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1281438087411123,
+      "chord_distance": "120959159601947607706639531/50648018145991317326933693850509530628096 √(2879006509942389432520354481)",
+      "evidence_id": "sha256:c9bc22bb636fee30ede26ea5dd737cacc6b795d8a6bdd5f8f5b600bcbd25dc18",
+      "indices": [
+        220,
+        472
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          151.05,
+          94.95
+        ],
+        [
+          151.55,
+          94.639171
+        ]
+      ],
+      "native_display": 0.12799997180808814,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "unconnected-(U3-~{DSR}-Pad27)",
+        "/PD0"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "16/125"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.12811626005429452,
+      "chord_distance": "242238191461917284953575435/203215540621612335579612723653644184977408 √(11551466094579855938469150013)",
+      "evidence_id": "sha256:3898d17c0d217e9434d52b0e8a43647ff5bc75a6628332367fb0ee5cd0df69e0",
+      "indices": [
+        249,
+        391
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          155.315,
+          102.32
+        ],
+        [
+          154.087217,
+          102.28
+        ]
+      ],
+      "native_display": 0.12799971383693703,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "VCC",
+        "+5V"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "16/125"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.3234592305000524,
+      "chord_distance": "180741374609186846770233673/17748279304246060737530256221251311763456 √(1008872874549869080597673941)",
+      "evidence_id": "sha256:333c81a770693a876ab58d1c2099be8d9fc55c394ea2502e29f9bd15f4f652ba",
+      "indices": [
+        417,
+        447
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.289171,
+          98.4
+        ],
+        [
+          149.6,
+          98.9
+        ]
+      ],
+      "native_display": 0.3233426842827071,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "/Vbus_f"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "16/125"
+        }
+      ]
+    }
+  ],
+  "unmatched": []
+}

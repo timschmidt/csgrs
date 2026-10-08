@@ -1,0 +1,6 @@
+{
+  "exit_code": 130,
+  "command": "cargo test --locked -p hypercircuit --all-features --release hyperdrc",
+  "reason": "Stopped the draft six-board integration run after code inspection found that the clearance index consulted only parser-attached bounds. Native-only features therefore missed every spatial rejection. No timeout gate or semantic assertion is claimed for this interrupted run.",
+  "source_state": "DRC source remained fixed until the process was interrupted. The interrupted validation script did not write its final sources.json."
+}

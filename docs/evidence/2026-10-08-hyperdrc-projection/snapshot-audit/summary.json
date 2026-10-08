@@ -1,0 +1,73 @@
+{
+  "baseline_revision": "d171b377755dcbd6b1a1dfe371f1739bee8ee52c",
+  "legacy_metric_revision": "04ac60d9c84e1512278ef742e19eb10e4b7c565c",
+  "scope": "All changed net-constraint finding identities; unchanged categories and all complete fixtures retained. Unpruned native line/arc segment pairs audit production scheduling, while the old report-chord metric is preserved verbatim. This shares Hypercurve metric certificates with production and is not an independent library proof. Some evidence IDs cover multiple feature pairs with identical anchors; all matching pairs are checked.",
+  "boards": [
+    {
+      "board": "esp32",
+      "findings_before": 171,
+      "findings_after": 166,
+      "changed_finding_ids": 5,
+      "audited_feature_pairs": 7,
+      "native_decision_mismatches": 0,
+      "native_chord_decision_flips": 5,
+      "old_snapshot_sha256": "b258243815d497c72f15f0bbf8efbbb47357bf47665fb1998637e657a8f201f6",
+      "new_snapshot_sha256": "af8264e8a7287255622b6d866400987c678d5ee2e10f151ac2c43100dd8c838e"
+    },
+    {
+      "board": "esp32s3",
+      "findings_before": 454,
+      "findings_after": 459,
+      "changed_finding_ids": 15,
+      "audited_feature_pairs": 15,
+      "native_decision_mismatches": 0,
+      "native_chord_decision_flips": 15,
+      "old_snapshot_sha256": "c9d26bebf08da7ac440a9f088dca740226d7eedf2266ee6e1f58b891949ef92a",
+      "new_snapshot_sha256": "27bbd95644b1aa7389c6cb64ccfe6eb01969e10eb34caf7472ab8266b3d885d9"
+    },
+    {
+      "board": "nano",
+      "findings_before": 224,
+      "findings_after": 228,
+      "changed_finding_ids": 4,
+      "audited_feature_pairs": 5,
+      "native_decision_mismatches": 0,
+      "native_chord_decision_flips": 4,
+      "old_snapshot_sha256": "92918e58ac5dff5198237411a93d47282f5b77f2055ed5f01ebc3cc9ca48861d",
+      "new_snapshot_sha256": "d9414c8e55f18bc7c8834e6365c2a2bc6f177ba743b5c08f80bbed3dbc9298cb"
+    },
+    {
+      "board": "rp2040",
+      "findings_before": 344,
+      "findings_after": 333,
+      "changed_finding_ids": 35,
+      "audited_feature_pairs": 37,
+      "native_decision_mismatches": 0,
+      "native_chord_decision_flips": 35,
+      "old_snapshot_sha256": "67f5d0dab3814dca3b70af381e4f486caedd080df986abc1fef409b5b7608fa2",
+      "new_snapshot_sha256": "05cb5b544edaa482c95348ce4616642f2573c5892e96df48ee487a284a4767a3"
+    },
+    {
+      "board": "stm32f103",
+      "findings_before": 410,
+      "findings_after": 456,
+      "changed_finding_ids": 108,
+      "audited_feature_pairs": 115,
+      "native_decision_mismatches": 0,
+      "native_chord_decision_flips": 108,
+      "old_snapshot_sha256": "1e862916b26febcf758c363a5ffbe21d6cb63c4105073ae1e99f6cf5f8685af9",
+      "new_snapshot_sha256": "06c2f61d4b95940e40cb133f734c31f2595a8c59e11928d22dea0434d643c39a"
+    },
+    {
+      "board": "uno",
+      "findings_before": 175,
+      "findings_after": 184,
+      "changed_finding_ids": 23,
+      "audited_feature_pairs": 23,
+      "native_decision_mismatches": 0,
+      "native_chord_decision_flips": 23,
+      "old_snapshot_sha256": "faf61a08eab35df231a7bf52cc31292a643869f015c0adc0fb55474545e14914",
+      "new_snapshot_sha256": "01cda74957bd09d53ed382c7d677dda8621b79493bf3729e035c6e1f9a576b2b"
+    }
+  ]
+}

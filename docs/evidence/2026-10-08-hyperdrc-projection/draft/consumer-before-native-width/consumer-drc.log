@@ -1,0 +1,37 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 2m 41s
+     Running unittests src/lib.rs (target/release/deps/hypercircuit-b169ddc8551970da)
+
+running 1 test
+test drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate ... FAILED
+
+failures:
+
+---- drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate stdout ----
+
+thread 'drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate' (3031) panicked at crates/hypercircuit/src/drc.rs:1947:9:
+assertion failed: report.violations.iter().any(|violation|
+        {
+            violation.check == NET_IMPEDANCE_TARGET_READINESS_CHECK &&
+                    violation.severity == Severity::Error &&
+                violation.message.as_deref().is_some_and(|message|
+                        {
+                            message.contains("estimated outer microstrip impedance") &&
+                                message.contains("outside target")
+                        })
+        })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hypercircuit --lib`

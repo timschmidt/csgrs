@@ -1,0 +1,29 @@
+authored_circle_17_warm	1000	59506	1	18	10621196167203660418
+authored_circle_1000000_warm	10	12025496	1	1000001	6778606631196480579
+native_circle_cold_drc_cache	100	87133306	1	129	9913634850734995192
+native_circle_warm	1000	126411	1	129	9913634850734995192
+components64_cold_drc_cache	25	1296141	64	320	7469503818148515133
+components64_warm	1000	2670127	64	320	7469503818148515133
+	Command being timed: "/tmp/drc-projection-cost1/projection-probe"
+	User time (seconds): 0.15
+	System time (seconds): 0.03
+	Percent of CPU this job got: 98%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.18
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 55236
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 16305
+	Voluntary context switches: 1
+	Involuntary context switches: 1
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

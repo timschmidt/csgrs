@@ -1,0 +1,116 @@
+{
+  "base_revision": "d171b377755dcbd6b1a1dfe371f1739bee8ee52c",
+  "status": "Retained boundary repair: final DRC/consumer validation, snapshot audit and candidate capability cost checks pass. The complete properties.md goal remains active.",
+  "scope": "Fallible native component extraction and finite report projection, all workspace API callers, required-check uncertainty adoption, and conservative native candidate envelopes for migrated spatial consumers.",
+  "baseline_failures": "failures/manifest.json",
+  "contract": [
+    "PcbRegionExt exposes try_to_multipolygon returning Result. The to_multipolygon, geometry and bounding_rect aliases are removed. BoardModel copper_layers and all_copper also return Result; the app caches successful aggregation only.",
+    "Component and report caches store successful values only, guard source-construction failure and shared-budget exhaustion on warm and cold queries, and execute under STRICT independently of an enclosing preview. Mutation invalidates both caches.",
+    "Generated report polygons retain the Arc identity of each certified native material component and every owned hole. Failed component extraction cannot reconstruct a native region from report chords. A missing, malformed or unrepresentable component report is a typed error, never a skipped exterior/hole or expect panic.",
+    "Parser-owned report profiles retain authored decomposition (including duplicates) and requested sample counts. They do not claim the authored profiles are disjoint.",
+    "Required projections retain operation, source and requested check through geometry-uncertainty findings and Uncertain readiness receipts. Shared check implementation version is 3, registry schema version remains 1.",
+    "Native optional bounds use certified outward rational enclosures. Component subtraction retains components without finite bounds. The shared copper and assembly indices keep unknown envelopes, bound grid traversal, and enclose geometry about its authored anchor. Unknown polygon-index envelopes remain candidates.",
+    "Required net width and via/impedance width inputs query native bounds even when no parser cache exists. Failed/denied native bounds or width comparison retain geometry uncertainty rather than manufacturing zero. The optional native net-clearance index also queries these bounds; unavailable envelopes retain candidates."
+  ],
+  "validation": {
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "configured_command": "cargo test --locked -p hyperdrc --release",
+    "passed": 1158,
+    "library": 1154,
+    "readme_integration": 2,
+    "doctests": 2,
+    "projection_regressions": 12,
+    "new_index_regressions": 2,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true,
+    "focused_log": "draft/drc-before-native-width/focused.log",
+    "focused_filter_note": "The earlier projection_ focused run passed 15 tests: twelve projection regressions, two new index regressions and one existing finite-distance reference test. The final full suite includes those cases and both added native-width regressions.",
+    "status": "passed",
+    "new_native_width_regressions": 2,
+    "source_frozen_through_fixture_build": true
+  },
+  "draft": {
+    "expanded_test_compilation": "draft/expanded-test-compilation.log",
+    "explanation": "The added quadratic regression initially used the nonexistent QuadBezier2 spelling. It was corrected to the existing QuadraticBezier2 type; no production change or oracle relaxation was required.",
+    "consumer_width": "Consumer test failed because a valid native rectangle without parser-attached bounds received width zero. constraints.rs was unchanged at that failure; the assertion exposed the previous cache-only measurement assumption. The required width query now consumes checked native bounds and preserves missing or denied measurements as uncertainty; the original consumer assertion passes.",
+    "initial_drc_validation": "draft/drc-before-native-width: the completed 1,156-test validation predates the native-width and optional native-index follow-ups and is superseded by the final validation record.",
+    "interrupted_consumer": "draft/consumer-cache-only-bounds/interruption.json: after the width fix, the six-board run was interrupted when the cache-only native clearance index forced all-pairs work. This is an interrupted diagnostic run, not a measured timeout or an assertion failure.",
+    "snapshot_failures": "snapshot-audit/snapshot-failures.log.gz retains the six failing byte assertions before the exact-pair audit and expected-snapshot update.",
+    "probe_review": "Before compilation, the standalone probe was corrected to use public native-region area APIs under explicit STRICT, because crate-private area helpers cannot be linked externally. The corrected probe compiled and passed on its first execution."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_source": "cost/projection_probe.rs",
+    "rows": {
+      "count": 6,
+      "bytes": 768,
+      "sha256": "010fd9442a3fa9507d82872ac4740d63daba3b460a0e9c5ab5232069023d5f5c"
+    },
+    "trials": 5,
+    "medians_ns": {
+      "authored_circle_17_warm": 61.166,
+      "authored_circle_1000000_warm": 1097347.8,
+      "native_circle_cold_drc_cache": 892324.92,
+      "native_circle_warm": 95.433,
+      "components64_cold_drc_cache": 51783.64,
+      "components64_warm": 2670.127
+    },
+    "peak_rss_kib": [
+      54992,
+      55336
+    ],
+    "fixture_seconds": 60.112729,
+    "fixture_peak_rss_kib": 1466320,
+    "fixture_gate_seconds": 120,
+    "source_frozen": true,
+    "limitations": "Candidate capability cost only: no matched-baseline speedup, allocation count or library-size delta. Report row counts, all requested coordinates, bit-pattern fingerprints and first/last native area are checked. Query timers omit input construction, which remains in whole-process RSS. Cold rows refresh PCB component/report caches but clone native regions whose internal kernel evidence can be warm. Five sequential fresh processes and the full unchanged fixture workload are pinned to CPU 0 after builds/tests exit."
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "scope": "The hyperdrc filter exercises one native impedance unit, all six Easyduino fast-DRC boards and two consumer smoke tests. The curved_outline target passes all five tests; this is not the complete HyperCircuit suite."
+  },
+  "replay": {
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-projection/reproduce_validation.py /tmp/hyperdrc-projection-validation-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-projection/reproduce_cost.py /tmp/hyperdrc-projection-validation-fresh /tmp/hyperdrc-projection-cost-fresh",
+    "conditions": "Run from repository root. Output directories must not exist. Wait for every build and test process to exit before running cost measurements.",
+    "consumer_validation": "python3 docs/evidence/2026-10-08-hyperdrc-projection/reproduce_consumer_validation.py /tmp/hyperdrc-projection-consumer-fresh",
+    "snapshot_audit": "python3 docs/evidence/2026-10-08-hyperdrc-projection/snapshot-audit/reproduce.py /tmp/hyperdrc-projection-snapshot-fresh"
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope; this is one boundary repair, not full HyperDRC certification.",
+    "Area, width, containment, source-value and other Option/filter_map consumers remain under audit. Assembly/thermal dimension helpers now read native bounds but still expose legacy Option contracts. Several heuristic filters and source-coordinate adapters can still discard unknowns or require finite coordinates.",
+    "The translated_circle wrapper and other native Boolean/offset/contains/bounding_box boundaries still need complete typed-failure, STRICT and shared-budget review.",
+    "Board copper aggregation and polygons_to_profile retain native line/arc authority but still reject other exact curve families; this change propagates those blockers rather than implementing general aggregation.",
+    "Not every old finite spatial, angle, area or topology shortcut is repaired. Shared work limits still do not constitute a total time, memory or precision bound.",
+    "The full repository pre-push matrix was not run; no push was requested."
+  ],
+  "snapshot_audit": {
+    "summary": "snapshot-audit/summary.json",
+    "boards": 6,
+    "changed_finding_ids": 190,
+    "audited_feature_pairs": 202,
+    "added_ids": 119,
+    "removed_ids": 71,
+    "native_decision_mismatches": 0,
+    "native_chord_decision_flips": 190,
+    "scope": "All changed IDs belong to net-constraint-readiness; other finding categories retain their identities. Exact comparisons of every native line/arc segment pair validate the production decisions for all matching feature pairs, including shared-anchor IDs. Every changed ID has the opposite threshold decision using the retained report-chord metric. The audit shares Hypercurve certificates with production, so it is a scheduling/representation cross-check rather than an independent-library proof. Native input fixtures and the existing fast-DRC zone omission are unchanged; full zone workload remains in the separate full-pipeline benchmark.",
+    "baseline_revision": "d171b377755dcbd6b1a1dfe371f1739bee8ee52c",
+    "legacy_metric_revision": "04ac60d9c84e1512278ef742e19eb10e4b7c565c",
+    "version_note": "Snapshot check implementation version advances from 1 to 3, matching the shared current implementation. Schema version remains 1."
+  },
+  "replay_script_hashes": {
+    "reproduce_consumer_validation.py": "824fde15d4492230547506ac7d3e0c89f660989e48903b4a2c61186255d29232",
+    "reproduce_cost.py": "0330f00dffcb65bfa7a338f83457f10ba32c5b7e771a26f6114deafb0381c9c4",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63",
+    "snapshot-audit/reproduce.py": "c5f423a4a019192998979486702c26f66ff0688f6110087772a40f0b3f598b5b"
+  }
+}

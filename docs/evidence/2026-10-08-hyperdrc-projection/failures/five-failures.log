@@ -1,0 +1,59 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.49s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 5 tests
+test projection_regressions::warm_component_cache_cannot_bypass_an_exhausted_scope ... FAILED
+test projection_regressions::failed_source_construction_cannot_publish_components ... FAILED
+test projection_regressions::denied_component_extraction_is_retryable ... FAILED
+test projection_regressions::ordinary_finite_projection_failure_does_not_unwind ... FAILED
+test projection_regressions::missing_component_identity_cannot_promote_report_chords ... FAILED
+
+failures:
+
+---- projection_regressions::warm_component_cache_cannot_bypass_an_exhausted_scope stdout ----
+
+thread 'projection_regressions::warm_component_cache_cannot_bypass_an_exhausted_scope' (88) panicked at crates/hyperdrc/src/region/projection_regressions.rs:45:5:
+assertion `left == right` failed
+  left: Some(Some(1))
+ right: Some(None)
+
+---- projection_regressions::failed_source_construction_cannot_publish_components stdout ----
+
+thread 'projection_regressions::failed_source_construction_cannot_publish_components' (85) panicked at crates/hyperdrc/src/region/projection_regressions.rs:19:5:
+assertion failed: failed.exact_component_regions().is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- projection_regressions::denied_component_extraction_is_retryable stdout ----
+
+thread 'projection_regressions::denied_component_extraction_is_retryable' (84) panicked at crates/hyperdrc/src/region/projection_regressions.rs:31:5:
+assertion `left == right` failed
+  left: Some(Some(1))
+ right: Some(None)
+
+---- projection_regressions::ordinary_finite_projection_failure_does_not_unwind stdout ----
+
+thread 'projection_regressions::ordinary_finite_projection_failure_does_not_unwind' (87) panicked at crates/hyperdrc/src/lib.rs:505:26:
+exact-backed DRC component must have a strict finite projection: Geometry("invalid state during exact Evaluation: finite projection point is not finite")
+
+thread 'projection_regressions::ordinary_finite_projection_failure_does_not_unwind' (87) panicked at crates/hyperdrc/src/region/projection_regressions.rs:60:5:
+unrepresentable report coordinates require a typed failure
+
+---- projection_regressions::missing_component_identity_cannot_promote_report_chords stdout ----
+
+thread 'projection_regressions::missing_component_identity_cannot_promote_report_chords' (86) panicked at crates/hyperdrc/src/region/projection_regressions.rs:53:5:
+assertion `left == right` failed
+  left: Some(Less)
+ right: Some(Equal)
+
+
+failures:
+    projection_regressions::denied_component_extraction_is_retryable
+    projection_regressions::failed_source_construction_cannot_publish_components
+    projection_regressions::missing_component_identity_cannot_promote_report_chords
+    projection_regressions::ordinary_finite_projection_failure_does_not_unwind
+    projection_regressions::warm_component_cache_cannot_bypass_an_exhausted_scope
+
+test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 1138 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

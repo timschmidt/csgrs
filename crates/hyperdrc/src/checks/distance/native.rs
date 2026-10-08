@@ -305,13 +305,7 @@ fn compare(left: &Scalar, right: &Scalar, operation: &str) -> MetricResult<Order
     value.ok_or_else(|| failure(operation, "native metric comparison is unresolved"))
 }
 
-pub(in crate::checks) fn finite_enclosure(value: &Scalar) -> Option<[f64; 2]> {
-    if let Some(value) = value.exact_rational_ref() {
-        return value.to_f64_enclosure();
-    }
-    let [lower, upper] = value.certified_rational_interval(-64)?;
-    Some([lower.to_f64_enclosure()?[0], upper.to_f64_enclosure()?[1]])
-}
+pub(in crate::checks) use crate::projection::finite_enclosure;
 
 fn finite_bounds(bounds: &Aabb2) -> Option<[f64; 4]> {
     Some([

@@ -1,0 +1,531 @@
+{
+  "board": "esp32s3",
+  "rows": [
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:6b8bb91cac79df22eb1584745a14d1ab1de98641ca5403c10dad3adb73a4c153",
+      "indices": [
+        37,
+        663
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.32,
+          76.75
+        ],
+        [
+          130.87,
+          75.93
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB2_D+",
+        "/USB2_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:872b53c6a0761638daa8dacd11daf84952410ccc263067692dd4a98c40e9ec92",
+      "indices": [
+        37,
+        668
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.32,
+          76.75
+        ],
+        [
+          130.87,
+          76.05
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB2_D+",
+        "/USB2_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573296273,
+      "chord_distance": "7472318494207/70368744177664 √(2)",
+      "evidence_id": "sha256:d15a03e11b7875cd87ca176a3a2a2947e0c66c795d7f751274a83b37c0287b7b",
+      "indices": [
+        551,
+        839
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.9,
+          102.087332
+        ],
+        [
+          130.6,
+          99.918042
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573295896,
+      "chord_distance": "59154487709947875218608615/8820118950590836387574205518004109705216 √(501365715910585344521121301)",
+      "evidence_id": "sha256:aeb8494f6e74b96b2d63f3c2dff187afc0b0b85875134a1ac8d32796725886fe",
+      "indices": [
+        552,
+        819
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          131.35,
+          99.592306
+        ],
+        [
+          131.05,
+          97.423016
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:f7b5b4fc2b6aa6534a0e79011fd8bde2d2a26afcef10cb239198b4aa970dc70a",
+      "indices": [
+        552,
+        839
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          131.35,
+          99.592306
+        ],
+        [
+          130.6,
+          99.918042
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573296273,
+      "chord_distance": "7472318494207/70368744177664 √(2)",
+      "evidence_id": "sha256:4e4022b42b6a55e74ec12d00eaae15aaea225cc49a521123faac267afb104919",
+      "indices": [
+        554,
+        838
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          131.95,
+          96.94728
+        ],
+        [
+          131.65,
+          92.732964
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573299287,
+      "chord_distance": "14944636988417/140737488355328 √(2)",
+      "evidence_id": "sha256:b4a0a2502035a8eab4af66d1cf688fc63cbffb54785dfc0509d37c1a887316fc",
+      "indices": [
+        555,
+        826
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.55,
+          102.437332
+        ],
+        [
+          130.6,
+          101.963068
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573298913,
+      "chord_distance": "236617950839838999776754383/35280475802363345550296822072016438820864 √(501365715910585344521121301)",
+      "evidence_id": "sha256:fc9469c74a09764f990482b8dd1b6cbe17459203ddfa64d67b70f4eecb0d5c63",
+      "indices": [
+        557,
+        824
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.9,
+          100.042306
+        ],
+        [
+          131.05,
+          99.468042
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:5352a8e229afcb17b5b04f019b8521e4f1bc24efeef11584bd058c83e4fc1dc7",
+      "indices": [
+        557,
+        826
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.9,
+          100.042306
+        ],
+        [
+          130.6,
+          101.963068
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:6b08e5fc841bf6cace0d3efc0d5a95548ea3ae076d65039081185009fd250b65",
+      "indices": [
+        557,
+        839
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.9,
+          100.042306
+        ],
+        [
+          130.6,
+          99.918042
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573296273,
+      "chord_distance": "7472318494207/70368744177664 √(2)",
+      "evidence_id": "sha256:936f41e63348d6f362e7188ea7b7cfe2e7a5542f1455361dc8ea8d7a2a04c3e5",
+      "indices": [
+        558,
+        836
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          131.35,
+          97.54728
+        ],
+        [
+          131.65,
+          96.823016
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573297278,
+      "chord_distance": "14944636988415/140737488355328 √(2)",
+      "evidence_id": "sha256:6d2414db89b8ac3e3f22bd0a7f52230c5f1521b6e432fab9e5c2209b1c3f8aed",
+      "indices": [
+        559,
+        821
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.2,
+          104.832358
+        ],
+        [
+          130.25,
+          104.358094
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573296273,
+      "chord_distance": "7472318494207/70368744177664 √(2)",
+      "evidence_id": "sha256:29a04c4ce87081998954e359093f2c6283e17550c1348db7bab369e57119b466",
+      "indices": [
+        561,
+        834
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          130.55,
+          104.482358
+        ],
+        [
+          130.25,
+          102.313068
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/~{DTR}",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15017255573296387,
+      "chord_distance": "407895694917026349235990643/209684966487726231433126762501573298880512 √(5959605189438156896617521241)",
+      "evidence_id": "sha256:d1e8a57c217df063bd42b741f044b40c732b2f9a65257c9d7dcab508c0988187",
+      "indices": [
+        1034,
+        1090
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.275736,
+          107.1
+        ],
+        [
+          130.8,
+          92.3
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO43",
+        "/~{RTS}"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1501725557329791,
+      "chord_distance": "203947847458533858384446439/104842483243863115716563381250786649440256 √(5959605189438156896617521241)",
+      "evidence_id": "sha256:3892e68d03b53a9190646c7e0653348161025849c7dff70885b8fccf281de4a6",
+      "indices": [
+        1034,
+        1091
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.275736,
+          107.1
+        ],
+        [
+          131.2,
+          106.6
+        ]
+      ],
+      "native_display": 0.1499999514133294,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO43",
+        "/~{RTS}"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    }
+  ],
+  "unmatched": []
+}

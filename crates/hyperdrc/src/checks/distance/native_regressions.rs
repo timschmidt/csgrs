@@ -74,7 +74,7 @@ fn native_hole_boundary_retains_its_radius() {
         native_inner.material_contours().to_vec(),
     )
     .unwrap();
-    let polygons = PcbRegion::new(region, None).to_multipolygon();
+    let polygons = PcbRegion::new(region, None).try_to_multipolygon().unwrap();
     assert!(
         !point_region_boundary_within(
             &origin,

@@ -30,96 +30,102 @@ pub fn sensitive_net_spacing_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let sensitive_indices = features
-        .iter()
-        .enumerate()
-        .filter_map(|(index, feature)| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_sensitive_net)
-                .then_some(index)
-        })
-        .collect::<Vec<_>>();
-    let noisy_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_noisy_net))
-        .collect::<Vec<_>>();
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let noisy_index = CopperSpatialIndex::new(&noisy_features, broad_phase_clearance);
-    log::trace!(
-        "sensitive-net spacing readiness: source={} features={} sensitive={} noisy={} buckets={} clearance={clearance:.6}",
-        board.source,
-        features.len(),
-        sensitive_indices.len(),
-        noisy_features.len(),
-        noisy_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("sensitive-net-spacing-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let sensitive_indices = features
+            .iter()
+            .enumerate()
+            .filter_map(|(index, feature)| {
+                feature
+                    .net
+                    .as_deref()
+                    .is_some_and(looks_sensitive_net)
+                    .then_some(index)
+            })
+            .collect::<Vec<_>>();
+        let noisy_features = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_noisy_net))
+            .collect::<Vec<_>>();
+        let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+        let noisy_index = CopperSpatialIndex::new(&noisy_features, broad_phase_clearance);
+        log::trace!(
+            "sensitive-net spacing readiness: source={} features={} sensitive={} noisy={} buckets={} clearance={clearance:.6}",
+            board.source,
+            features.len(),
+            sensitive_indices.len(),
+            noisy_features.len(),
+            noisy_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut candidate_count = 0_usize;
+        let mut exact_pair_count = 0_usize;
 
-    for &sensitive_index in &sensitive_indices {
-        let sensitive = features[sensitive_index];
-        for noisy_candidate_index in
-            noisy_index.same_layer_near_feature(sensitive, broad_phase_clearance)
-        {
-            candidate_count += 1;
-            let noisy = noisy_features[noisy_candidate_index];
-            if std::ptr::eq(sensitive, noisy)
-                || sensitive.net.is_none()
-                || sensitive.net == noisy.net
+        for &sensitive_index in &sensitive_indices {
+            let sensitive = features[sensitive_index];
+            for noisy_candidate_index in
+                noisy_index.same_layer_near_feature(sensitive, broad_phase_clearance)
             {
-                continue;
-            }
-            if !regiones_within_clearance(&sensitive.region, &noisy.region, broad_phase_clearance) {
-                continue;
-            }
-            exact_pair_count += 1;
-
-            let expanded = match offset_for_check(
-                &sensitive.region,
-                clearance.clone(),
-                "sensitive-net-spacing-readiness",
-                vec![sensitive.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &noisy.region,
-                "sensitive-net-spacing-readiness",
-                vec![sensitive.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+                candidate_count += 1;
+                let noisy = noisy_features[noisy_candidate_index];
+                if std::ptr::eq(sensitive, noisy)
+                    || sensitive.net.is_none()
+                    || sensitive.net == noisy.net
+                {
+                    continue;
+                }
+                if !regiones_within_clearance(
                     &sensitive.region,
                     &noisy.region,
-                    clearance,
-                    "sensitive-net-spacing-readiness",
-                    &[&sensitive.layer],
-                    &mut violations,
-                ) == Some(true)
-            {
-                vec![
-                    sensitive.location_f64_compatibility_required(),
-                    noisy.location_f64_compatibility_required(),
-                ]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
+                    broad_phase_clearance,
+                ) {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-            violations.push(Violation::new(
+                let expanded = match offset_for_check(
+                    &sensitive.region,
+                    clearance.clone(),
+                    "sensitive-net-spacing-readiness",
+                    vec![sensitive.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &noisy.region,
+                    "sensitive-net-spacing-readiness",
+                    vec![sensitive.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let locations = if shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &sensitive.region,
+                        &noisy.region,
+                        clearance,
+                        "sensitive-net-spacing-readiness",
+                        &[&sensitive.layer],
+                        &mut violations,
+                    ) == Some(true)
+                {
+                    vec![
+                        sensitive.location_f64_compatibility_required(),
+                        noisy.location_f64_compatibility_required(),
+                    ]
+                } else {
+                    Vec::new()
+                };
+                if shapes.is_empty() && locations.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
                 "sensitive-net-spacing-readiness",
                 Severity::Warning,
                 vec![sensitive.layer.clone()],
@@ -131,19 +137,20 @@ pub fn sensitive_net_spacing_readiness(
                     sensitive.net, noisy.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "sensitive-net spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+        log::trace!(
+            "sensitive-net spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+            board.source,
+            candidate_count,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when sensitive analog/RF/sensor nets lack nearby same-layer ground.
@@ -249,140 +256,142 @@ pub fn mixed_signal_partition_readiness(
     guard_distance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_guard = scalar_broad_phase_radius(guard_distance);
-    let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);
-    let sensitive_indices = features
-        .iter()
-        .enumerate()
-        .filter_map(|(index, feature)| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_sensitive_net)
-                .then_some(index)
-        })
-        .collect::<Vec<_>>();
-    let digital_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_digital_control_net)
-        })
-        .collect::<Vec<_>>();
-    let broad_phase_separation = scalar_broad_phase_radius(separation);
-    let digital_index = CopperSpatialIndex::new(&digital_features, broad_phase_separation);
-    log::trace!(
-        "mixed-signal partition readiness: source={} features={} sensitive={} digital={} digital_buckets={} ground_features={} ground_buckets={} separation={separation:.6} guard_distance={guard_distance:.6}",
-        board.source,
-        features.len(),
-        sensitive_indices.len(),
-        digital_features.len(),
-        digital_index.bucket_count(),
-        ground_features.len(),
-        ground_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut digital_candidate_count = 0_usize;
-    let mut exact_digital_pair_count = 0_usize;
-    let mut guard_candidate_count = 0_usize;
-    let mut exact_guard_checks = 0_usize;
+    crate::checks::run_geometry_check("mixed-signal-partition-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let ground_features = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+            .collect::<Vec<_>>();
+        let broad_phase_guard = scalar_broad_phase_radius(guard_distance);
+        let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);
+        let sensitive_indices = features
+            .iter()
+            .enumerate()
+            .filter_map(|(index, feature)| {
+                feature
+                    .net
+                    .as_deref()
+                    .is_some_and(looks_sensitive_net)
+                    .then_some(index)
+            })
+            .collect::<Vec<_>>();
+        let digital_features = features
+            .iter()
+            .copied()
+            .filter(|feature| {
+                feature
+                    .net
+                    .as_deref()
+                    .is_some_and(looks_digital_control_net)
+            })
+            .collect::<Vec<_>>();
+        let broad_phase_separation = scalar_broad_phase_radius(separation);
+        let digital_index = CopperSpatialIndex::new(&digital_features, broad_phase_separation);
+        log::trace!(
+            "mixed-signal partition readiness: source={} features={} sensitive={} digital={} digital_buckets={} ground_features={} ground_buckets={} separation={separation:.6} guard_distance={guard_distance:.6}",
+            board.source,
+            features.len(),
+            sensitive_indices.len(),
+            digital_features.len(),
+            digital_index.bucket_count(),
+            ground_features.len(),
+            ground_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut digital_candidate_count = 0_usize;
+        let mut exact_digital_pair_count = 0_usize;
+        let mut guard_candidate_count = 0_usize;
+        let mut exact_guard_checks = 0_usize;
 
-    for &sensitive_index in &sensitive_indices {
-        let sensitive = features[sensitive_index];
-        for digital_candidate_index in
-            digital_index.same_layer_near_feature(sensitive, broad_phase_separation)
-        {
-            digital_candidate_count += 1;
-            let digital = digital_features[digital_candidate_index];
-            if std::ptr::eq(sensitive, digital)
-                || sensitive.net.is_none()
-                || sensitive.net == digital.net
+        for &sensitive_index in &sensitive_indices {
+            let sensitive = features[sensitive_index];
+            for digital_candidate_index in
+                digital_index.same_layer_near_feature(sensitive, broad_phase_separation)
             {
-                continue;
-            }
-            if !regiones_within_clearance(
-                &sensitive.region,
-                &digital.region,
-                broad_phase_separation,
-            ) {
-                continue;
-            }
-            exact_digital_pair_count += 1;
-
-            let guard_candidates =
-                ground_index.same_layer_near_feature(sensitive, broad_phase_guard);
-            guard_candidate_count += guard_candidates.len();
-            let mut has_guard = false;
-            for ground_index in guard_candidates {
-                exact_guard_checks += 1;
-                match copper_features_touch(
-                    sensitive,
-                    ground_features[ground_index],
-                    guard_distance,
-                    "mixed-signal-partition-readiness",
-                ) {
-                    Ok(true) => {
-                        has_guard = true;
-                        break;
-                    }
-                    Ok(false) => {}
-                    Err(uncertainty) => return vec![*uncertainty],
+                digital_candidate_count += 1;
+                let digital = digital_features[digital_candidate_index];
+                if std::ptr::eq(sensitive, digital)
+                    || sensitive.net.is_none()
+                    || sensitive.net == digital.net
+                {
+                    continue;
                 }
-            }
-            if has_guard {
-                continue;
-            }
-
-            let expanded = match offset_for_check(
-                &sensitive.region,
-                separation.clone(),
-                "mixed-signal-partition-readiness",
-                vec![sensitive.layer.clone()],
-            ) {
-                Ok(expanded) => expanded,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let overlap = match intersection_for_check(
-                &expanded,
-                &digital.region,
-                "mixed-signal-partition-readiness",
-                vec![sensitive.layer.clone()],
-            ) {
-                Ok(overlap) => overlap,
-                Err(uncertainty) => return vec![*uncertainty],
-            };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && crate::checks::boundaries_within_for_check(
+                if !regiones_within_clearance(
                     &sensitive.region,
                     &digital.region,
-                    separation,
-                    "mixed-signal-partition-readiness",
-                    &[&sensitive.layer],
-                    &mut violations,
-                ) == Some(true)
-            {
-                vec![
-                    sensitive.location_f64_compatibility_required(),
-                    digital.location_f64_compatibility_required(),
-                ]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
+                    broad_phase_separation,
+                ) {
+                    continue;
+                }
+                exact_digital_pair_count += 1;
 
-            violations.push(Violation::new(
+                let guard_candidates =
+                    ground_index.same_layer_near_feature(sensitive, broad_phase_guard);
+                guard_candidate_count += guard_candidates.len();
+                let mut has_guard = false;
+                for ground_index in guard_candidates {
+                    exact_guard_checks += 1;
+                    match copper_features_touch(
+                        sensitive,
+                        ground_features[ground_index],
+                        guard_distance,
+                        "mixed-signal-partition-readiness",
+                    ) {
+                        Ok(true) => {
+                            has_guard = true;
+                            break;
+                        }
+                        Ok(false) => {}
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    }
+                }
+                if has_guard {
+                    continue;
+                }
+
+                let expanded = match offset_for_check(
+                    &sensitive.region,
+                    separation.clone(),
+                    "mixed-signal-partition-readiness",
+                    vec![sensitive.layer.clone()],
+                ) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let overlap = match intersection_for_check(
+                    &expanded,
+                    &digital.region,
+                    "mixed-signal-partition-readiness",
+                    vec![sensitive.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                let shapes =
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                let locations = if shapes.is_empty()
+                    && crate::checks::boundaries_within_for_check(
+                        &sensitive.region,
+                        &digital.region,
+                        separation,
+                        "mixed-signal-partition-readiness",
+                        &[&sensitive.layer],
+                        &mut violations,
+                    ) == Some(true)
+                {
+                    vec![
+                        sensitive.location_f64_compatibility_required(),
+                        digital.location_f64_compatibility_required(),
+                    ]
+                } else {
+                    Vec::new()
+                };
+                if shapes.is_empty() && locations.is_empty() {
+                    continue;
+                }
+
+                violations.push(Violation::new(
                 "mixed-signal-partition-readiness",
                 Severity::Warning,
                 vec![sensitive.layer.clone()],
@@ -394,22 +403,23 @@ pub fn mixed_signal_partition_readiness(
                     sensitive.net, digital.net
                 )),
             ));
+            }
         }
-    }
 
-    log::trace!(
-        "mixed-signal partition readiness: source={} digital_candidates={} exact_digital_pairs={} guard_candidates={} exact_guard_checks={} violations={}",
-        board.source,
-        digital_candidate_count,
-        exact_digital_pair_count,
-        guard_candidate_count,
-        exact_guard_checks,
-        violations.len()
-    );
-    debug_assert!(exact_digital_pair_count <= digital_candidate_count);
-    debug_assert!(exact_guard_checks <= guard_candidate_count);
+        log::trace!(
+            "mixed-signal partition readiness: source={} digital_candidates={} exact_digital_pairs={} guard_candidates={} exact_guard_checks={} violations={}",
+            board.source,
+            digital_candidate_count,
+            exact_digital_pair_count,
+            guard_candidate_count,
+            exact_guard_checks,
+            violations.len()
+        );
+        debug_assert!(exact_digital_pair_count <= digital_candidate_count);
+        debug_assert!(exact_guard_checks <= guard_candidate_count);
 
-    violations
+        Ok(violations)
+    })
 }
 
 fn selected_copper_features<'a>(
@@ -532,10 +542,10 @@ fn regiones_within_clearance(
     right: &crate::PcbRegion,
     clearance: f64,
 ) -> bool {
-    let Some(left_bounds) = left.geometry().bounding_rect() else {
+    let Some(left_bounds) = left.conservative_bounds() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry().bounding_rect() else {
+    let Some(right_bounds) = right.conservative_bounds() else {
         return true;
     };
 

@@ -1,0 +1,251 @@
+{
+  "board": "esp32",
+  "rows": [
+    {
+      "change": "removed",
+      "chord_display": 0.25,
+      "chord_distance": "1/4",
+      "evidence_id": "sha256:8d764b6262b637206190311afeeab2b2e85c4a0a81040a579d0e4a91fdbd4b6b",
+      "indices": [
+        22,
+        379
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          146.11,
+          110.38
+        ],
+        [
+          145.61,
+          109.4
+        ]
+      ],
+      "native_display": 0.25,
+      "native_distance": "1/4",
+      "nets": [
+        "/USB_D-",
+        "/USB_D+"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.28348803696245173,
+      "chord_distance": "1/35184372088832 √(99487629499982472189581377)",
+      "evidence_id": "sha256:8d764b6262b637206190311afeeab2b2e85c4a0a81040a579d0e4a91fdbd4b6b",
+      "indices": [
+        22,
+        860
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          146.11,
+          110.38
+        ],
+        [
+          145.61,
+          109.4
+        ]
+      ],
+      "native_display": 0.2831529412902646,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/USB_D-",
+        "/USB_D+"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:8d764b6262b637206190311afeeab2b2e85c4a0a81040a579d0e4a91fdbd4b6b",
+      "indices": [
+        394,
+        860
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          146.11,
+          110.38
+        ],
+        [
+          145.61,
+          109.4
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D-",
+        "/USB_D+"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:61b9f8b4c1d31344be41d0133f88a53536bfaa33a58e8a2acddd8e2981feacb9",
+      "indices": [
+        397,
+        688
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          146.01,
+          111.35
+        ],
+        [
+          144.174594,
+          111.75
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D-",
+        "VBUS"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:65aa77f923c38be0adcc7db7a7af619faf0e0f5864ae54e0db112e98aff62103",
+      "indices": [
+        399,
+        687
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          145.21,
+          111.35
+        ],
+        [
+          145.9,
+          112.4
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D-",
+        "VBUS"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:4234c2a65c565fdcfefc5ca76b1acb3f4eba78efc289d4d56b79d5f9b6b7a168",
+      "indices": [
+        399,
+        688
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          145.21,
+          111.35
+        ],
+        [
+          144.174594,
+          111.75
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D-",
+        "VBUS"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:9058eab780d5c436f95636efa21c34f9b7f1918de30df74b2d7d431fcac83c21",
+      "indices": [
+        405,
+        688
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          145.11,
+          111.25
+        ],
+        [
+          144.174594,
+          111.75
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D-",
+        "VBUS"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    }
+  ],
+  "unmatched": []
+}

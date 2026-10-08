@@ -1,0 +1,23 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.10s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 15 tests
+test checks::distance::finite_legacy::tests::point_segment_distance_uses_projection_for_internal_foot ... ok
+test projection_regressions::failed_source_construction_cannot_publish_components ... ok
+test projection_regressions::denied_component_extraction_is_retryable ... ok
+test checks::spatial::projection_index_regressions::native_extent_is_measured_about_the_authored_anchor ... ok
+test projection_regressions::warm_component_cache_cannot_bypass_an_exhausted_scope ... ok
+test checks::spatial::projection_index_regressions::missing_native_bounds_keep_all_same_layer_candidates ... ok
+test projection_regressions::ordinary_finite_projection_failure_does_not_unwind ... ok
+test projection_regressions::projection_uncertainty_reaches_readiness_with_requested_check_and_source ... ok
+test projection_regressions::generated_quadratic_report_retains_native_curve_authority ... ok
+test projection_regressions::native_projection_retains_certified_component_identity ... ok
+test projection_regressions::concurrent_preview_and_denied_queries_keep_independent_scope_receipts ... ok
+test projection_regressions::authored_report_evidence_keeps_duplicate_profiles_and_sample_counts ... ok
+test projection_regressions::report_cache_denial_is_retryable_for_authored_cold_and_warm_generated_views ... ok
+test projection_regressions::projection_failure_is_not_cached_and_mutation_invalidates_components_and_views ... ok
+test projection_regressions::generated_report_retains_hole_and_nested_material_identity ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 1137 filtered out; finished in 0.01s
+

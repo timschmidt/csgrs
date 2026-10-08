@@ -1,0 +1,3743 @@
+{
+  "board": "rp2040",
+  "rows": [
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:b0e9815e774acbe30854866628d29cfb74c0a54bf20398b8db10bfdb6243be72",
+      "indices": [
+        55,
+        1310
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          141.99,
+          99.7625
+        ],
+        [
+          142.04,
+          100.65
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SS",
+        "/QSPI_SD1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:2eda31e24fde27c1b23f3e632cfec0c5342ab0344e4f023cebc62bc988a870c2",
+      "indices": [
+        189,
+        739
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.47,
+          104.2
+        ],
+        [
+          149.68,
+          104.76
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "+3.3V",
+        "/GPIO21"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15010857188550383,
+      "chord_distance": "21023745360236857965025731/2230074519853561451577411724919076552704 √(253530120045702625654645513)",
+      "evidence_id": "sha256:d45852d10ffef71e28c7b4ae9b4fd175636a76a05ac7d2e36c81394b6a098b5c",
+      "indices": [
+        189,
+        745
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.47,
+          104.2
+        ],
+        [
+          149.168457,
+          104.76
+        ]
+      ],
+      "native_display": 0.14999979541597197,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "/GPIO21"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.20000000000000284,
+      "chord_distance": "14073748835533/70368744177664",
+      "evidence_id": "sha256:d45852d10ffef71e28c7b4ae9b4fd175636a76a05ac7d2e36c81394b6a098b5c",
+      "indices": [
+        407,
+        745
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.47,
+          104.2
+        ],
+        [
+          149.168457,
+          104.76
+        ]
+      ],
+      "native_display": 0.2,
+      "native_distance": "1/5",
+      "nets": [
+        "+3.3V",
+        "/GPIO21"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.3093582925402615,
+      "chord_distance": "173311087721359027441267527/8920298079414245806309646899676306210816 √(253530120045702625654645513)",
+      "evidence_id": "sha256:d45852d10ffef71e28c7b4ae9b4fd175636a76a05ac7d2e36c81394b6a098b5c",
+      "indices": [
+        425,
+        745
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.47,
+          104.2
+        ],
+        [
+          149.168457,
+          104.76
+        ]
+      ],
+      "native_display": 0.3092028975838017,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "/GPIO21"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926555,
+      "chord_distance": "461437729588668733245810883/268687299934120429850060101903702021898240 √(7636552366367380666646911945)",
+      "evidence_id": "sha256:2bcf750a7b1636b6241649188e1891a1406b9b447e451b98431fc5cbaecfc110",
+      "indices": [
+        478,
+        491
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.723593,
+          101.8
+        ],
+        [
+          139.628619,
+          102.2
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO2",
+        "/GPIO3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926263,
+      "chord_distance": "115359432397164940079033639/67171824983530107462515025475925505474560 √(7636552366367380666646911945)",
+      "evidence_id": "sha256:8aef8a833c93362582a26cc613ed45c294682bebeeb338993f023307fb17e3bf",
+      "indices": [
+        479,
+        491
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.100499,
+          95.499501
+        ],
+        [
+          139.628619,
+          102.2
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO2",
+        "/GPIO3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:49013eda7843477ff4cebe11bf4080aa917ab309ef303a1d40cbfea91b117d5f",
+      "indices": [
+        479,
+        497
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.100499,
+          95.499501
+        ],
+        [
+          138.750499,
+          101.32188
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/GPIO2",
+        "/GPIO3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:e2aee35673e48e679b3619b0a3f44e7484b6594ae446cfa9c1babe9e93cd0788",
+      "indices": [
+        483,
+        497
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.669,
+          94.931
+        ],
+        [
+          138.750499,
+          101.32188
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/GPIO2",
+        "/GPIO3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:c055913fb68fba94eae1ff8b96035ddadf92d51449145db47ba7bfa51f650692",
+      "indices": [
+        488,
+        497
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.100499,
+          101.176906
+        ],
+        [
+          138.750499,
+          101.32188
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/GPIO2",
+        "/GPIO3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:c0b3f7be0da3ea668080bc5f54d2449d0d87f89e5c6552d689b8d7b1d7dc9d20",
+      "indices": [
+        639,
+        1274
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          144.011,
+          98.211
+        ],
+        [
+          143.65,
+          98.761
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "+1V1",
+        "/QSPI_SD3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:56a3a88e6da85acdf0be53c74fd0c3b5408e70f15a309564582a1b737881417b",
+      "indices": [
+        666,
+        681
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          144.2,
+          114.2
+        ],
+        [
+          144.55,
+          114.35
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "/SWD"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:4463b5dd325936269f9b26f6d6e2dd1b56e454afe4096e1749821109e7b837d3",
+      "indices": [
+        666,
+        685
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          144.2,
+          114.2
+        ],
+        [
+          144.55,
+          117.65
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "/SWD"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:b0869d58c8d9995700f4f0a190a6e32c89374fe3eafe2258dcd2e625c4eea3c6",
+      "indices": [
+        666,
+        686
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          144.2,
+          114.2
+        ],
+        [
+          145.96,
+          112.94
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "/SWD"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:2dff246ca5160f839ed1b06624a062cc40f99223604c3db53fc815373c9802fe",
+      "indices": [
+        671,
+        677
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          144.2,
+          117.7
+        ],
+        [
+          144.55,
+          119.0
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "/SWD"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:cc3959bc9a62f8d03f1f83aae11f7b9ff7f1b55042735d5d8c75777162978a56",
+      "indices": [
+        671,
+        679
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          144.2,
+          117.7
+        ],
+        [
+          144.55,
+          120.35
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "/SWD"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:54bce7c883a01c4c29180e35d7fb332c564c695a014aa4b095b13ac3ae0a4c41",
+      "indices": [
+        671,
+        685
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          144.2,
+          117.7
+        ],
+        [
+          144.55,
+          117.65
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "/SWD"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:f0b27f6805713a9854a8d75cb0f48fa4dc4fe4dd894e0f18b316d735290616c9",
+      "indices": [
+        719,
+        728
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.168297,
+          105.809002
+        ],
+        [
+          148.878921,
+          105.459002
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/GPIO18",
+        "/GPIO19"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007725978020736,
+      "chord_distance": "6373377817298904591278817/820124382561618120780320297748980039680 √(372949390367292890359895090)",
+      "evidence_id": "sha256:485e633b640413471d4c0eda9934055b687ac8563c7088b3f4ec6df0087ab6c5",
+      "indices": [
+        720,
+        727
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          149.74,
+          106.380705
+        ],
+        [
+          149.313272,
+          105.459002
+        ]
+      ],
+      "native_display": 0.14999956484067897,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO18",
+        "/GPIO19"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:dab5ded75b684c455ffd3ab97c62726a81b6ca53cbc67209759cffc9b49b708f",
+      "indices": [
+        723,
+        728
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          148.036502,
+          105.809002
+        ],
+        [
+          148.878921,
+          105.459002
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/GPIO18",
+        "/GPIO19"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:5368a95d0a9fba719d9f3fe6db614031a3c8efeac3258208cd7866d9e04c6818",
+      "indices": [
+        723,
+        730
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          148.036502,
+          105.809002
+        ],
+        [
+          148.819918,
+          105.4
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/GPIO18",
+        "/GPIO19"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925295,
+      "chord_distance": "256173294281478963627742601/331244467255516889483941413969440159039488 √(37658135995061103299569983161)",
+      "evidence_id": "sha256:7b3362f2d1645c4954d52a05b60244223c3cf27f4862c5f3c9c500ffdce99cee",
+      "indices": [
+        781,
+        786
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          150.588534,
+          102.2
+        ],
+        [
+          150.49356,
+          101.8
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO26_ADC0",
+        "/GPIO27_ADC1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924648,
+      "chord_distance": "128086647140733955932312889/165622233627758444741970706984720079519744 √(37658135995061103299569983161)",
+      "evidence_id": "sha256:075103bd0528b7f2754ffbde97ec39185e20b54931e1509f72c0be3cafada0a4",
+      "indices": [
+        781,
+        788
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          150.588534,
+          102.2
+        ],
+        [
+          151.75,
+          99.37
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO26_ADC0",
+        "/GPIO27_ADC1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:d849c433f24f312b88939aa7d67d58252197e42c86ada6b92022de45b29a37b3",
+      "indices": [
+        787,
+        790
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          151.75,
+          100.54356
+        ],
+        [
+          151.35,
+          97.9
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO27_ADC1",
+        "/GPIO28_ADC2"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:efc6d65f5961e7da5985305541c0acfef73c7f9d5732194a614d24246303c01d",
+      "indices": [
+        787,
+        793
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          151.75,
+          100.54356
+        ],
+        [
+          150.398586,
+          101.4
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO27_ADC1",
+        "/GPIO28_ADC2"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:36a81f11e786b31c5763db5cc93b4bbb8b6f934865fdb275ea2abae7809002ce",
+      "indices": [
+        808,
+        982
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          145.615,
+          99.7375
+        ],
+        [
+          145.065,
+          97.68
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_R_DP",
+        "+3.3V"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:fa9348b063d122a6ab55b76ac034cd764c4c890ee75a8dd6f5e9075b786da86b",
+      "indices": [
+        817,
+        831
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          143.630779,
+          89.560779
+        ],
+        [
+          143.980779,
+          98.230779
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SD3",
+        "/QSPI_SCLK"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:83694846faaa5e58494030e734411e28f79845d1fb9fd1b9975c22f1fb38d66b",
+      "indices": [
+        817,
+        833
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          143.630779,
+          89.560779
+        ],
+        [
+          144.85,
+          99.1
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SD3",
+        "/QSPI_SCLK"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:7d53d2fddab74e6a80d6a11d89734f21c37598c6e8e410f6e596b44a3de4c246",
+      "indices": [
+        820,
+        831
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          142.92,
+          88.85
+        ],
+        [
+          143.980779,
+          98.230779
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SD3",
+        "/QSPI_SCLK"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:a9bdc87fb53e2b2519b6b7198a96fa2622b9db140d00ec88d90b02af291a9553",
+      "indices": [
+        877,
+        1145
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          142.3,
+          100.35
+        ],
+        [
+          141.75,
+          96.75
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SD1",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:b975197e6b4665d618eed9bb606a7dab5f51b7c58c028fd13fddb77b350c4040",
+      "indices": [
+        877,
+        1217
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          142.3,
+          100.35
+        ],
+        [
+          141.75,
+          97.68
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SD1",
+        "+1V1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:afd17f8cd9d5e92e442d055b9f0e287508c7662885452ac753616f6c94123550",
+      "indices": [
+        893,
+        1142
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          141.2,
+          98.3
+        ],
+        [
+          141.75,
+          96.75
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SS",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:77d5061dc56a542331a74f849f2db45d55a1a1c27e3e360322dccdc89279f0cd",
+      "indices": [
+        893,
+        1214
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          141.2,
+          98.3
+        ],
+        [
+          141.75,
+          97.68
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/QSPI_SS",
+        "+1V1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "1V1",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "3V3",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "ANALOG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "DEBUG",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "GND",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "QSPI",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "SIGNAL",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "USB",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VBUS",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "VCC",
+          "native_below": false,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": true,
+          "class": "XTAL",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15016040133322936,
+      "chord_distance": "5434208826823348738336015/74446107858580777375376089936637722624 √(4231771291562198335633189)",
+      "evidence_id": "sha256:7253913751d3a269ad88004794cc879eae6aebea2b832748cb956d413d4eea11",
+      "indices": [
+        1030,
+        1038
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.074158,
+          105.712403
+        ],
+        [
+          142.7,
+          105.3
+        ]
+      ],
+      "native_display": 0.14950279744174405,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO13",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15016040133322936,
+      "chord_distance": "5434208826823348738336015/74446107858580777375376089936637722624 √(4231771291562198335633189)",
+      "evidence_id": "sha256:f71ac8b683b477b4d86e3b489c603f67b6cb403fa23bd25810e7ef461e458236",
+      "indices": [
+        1031,
+        1039
+      ],
+      "layer": "In1.Cu",
+      "locations": [
+        [
+          142.074158,
+          105.712403
+        ],
+        [
+          142.7,
+          105.3
+        ]
+      ],
+      "native_display": 0.14950279744174405,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO13",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15016040133322936,
+      "chord_distance": "5434208826823348738336015/74446107858580777375376089936637722624 √(4231771291562198335633189)",
+      "evidence_id": "sha256:08f554a18723c42a91607f0aa69c5be3f30621e7b345d210b335c681762aba02",
+      "indices": [
+        1032,
+        1040
+      ],
+      "layer": "In2.Cu",
+      "locations": [
+        [
+          142.074158,
+          105.712403
+        ],
+        [
+          142.7,
+          105.3
+        ]
+      ],
+      "native_display": 0.14950279744174405,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO13",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15016040133322936,
+      "chord_distance": "5434208826823348738336015/74446107858580777375376089936637722624 √(4231771291562198335633189)",
+      "evidence_id": "sha256:31dd8290303f227452863e5d539c22ee7fdc1b9bf933a5414c14fe6fdf184c2c",
+      "indices": [
+        1033,
+        1041
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          142.074158,
+          105.712403
+        ],
+        [
+          142.7,
+          105.3
+        ]
+      ],
+      "native_display": 0.14950279744174405,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/GPIO13",
+        "/GPIO14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "1V1",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "3V3",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "ANALOG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "DEBUG",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "GND",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "QSPI",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "SIGNAL",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "USB",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VBUS",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "VCC",
+          "native_below": true,
+          "threshold": "3/20"
+        },
+        {
+          "chords_below": false,
+          "class": "XTAL",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    }
+  ],
+  "unmatched": []
+}

@@ -1,0 +1,4031 @@
+{
+  "board": "stm32f103",
+  "rows": [
+    {
+      "change": "removed",
+      "chord_display": 0.15328110686268456,
+      "chord_distance": "4392690447139668215866901/23341788987373668555800571278824308736 √(663413544184938602819573)",
+      "evidence_id": "sha256:b3dd7755689c7ecc2729b45dc64f17e4a36cad3ca8549592dcab322f017e6d7d",
+      "indices": [
+        44,
+        330
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.85355289079908,
+          103.82087706257892
+        ],
+        [
+          140.8,
+          104.060218
+        ]
+      ],
+      "native_display": 0.15307606516780925,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB5",
+        "/PD1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:43376dac06ee8e21e1ef3cc5d4f63f8c935511d2c16e09b307a8437c72b853fd",
+      "indices": [
+        255,
+        795
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          129.794,
+          85.852
+        ],
+        [
+          133.152,
+          84.652
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA8",
+        "+5V"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:b3dd7755689c7ecc2729b45dc64f17e4a36cad3ca8549592dcab322f017e6d7d",
+      "indices": [
+        322,
+        330
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.853553,
+          103.820877
+        ],
+        [
+          140.8,
+          104.060218
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PD0",
+        "/PD1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:4ac5480aa704c8f4dfdb5b57e42c44b621310b31006e43acf6f03b147915c97e",
+      "indices": [
+        323,
+        330
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          140.45,
+          104.417324
+        ],
+        [
+          140.8,
+          104.060218
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PD0",
+        "/PD1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:84def1ec4d9f8ad7819d0fb7b41ce8c1293361237dfd66b642c6998e015163e1",
+      "indices": [
+        324,
+        330
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          140.45,
+          107.45
+        ],
+        [
+          140.8,
+          104.060218
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PD0",
+        "/PD1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:d2462515f1c02209bac3ad86acc09e76217361f0942f09daa6cf54bb8dcbba6b",
+      "indices": [
+        335,
+        706
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.825,
+          84.4
+        ],
+        [
+          137.175,
+          82.145001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:69210d9e43acae075b952c517e88da8fcfbf6a2d86d4b153eba67a610031087a",
+      "indices": [
+        338,
+        706
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.825,
+          91.427512
+        ],
+        [
+          137.175,
+          82.145001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.23168042346089487,
+      "chord_distance": "1/35184372088832 √(66447445004952260435410885)",
+      "evidence_id": "sha256:f33dbeb52b4b4ceca90b2948dc402306fc7fcc55c3e9e25cefd2472e8d90b7f4",
+      "indices": [
+        339,
+        703
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.75,
+          82.070001
+        ],
+        [
+          137.25,
+          82.070001
+        ]
+      ],
+      "native_display": 0.23156691254080172,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:5a91950994322b5024eed144a3172f0cd5c3e48ad409cb7337307a4c683b66df",
+      "indices": [
+        339,
+        706
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.75,
+          82.070001
+        ],
+        [
+          137.175,
+          82.145001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:f33dbeb52b4b4ceca90b2948dc402306fc7fcc55c3e9e25cefd2472e8d90b7f4",
+      "indices": [
+        339,
+        707
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.75,
+          82.070001
+        ],
+        [
+          137.25,
+          82.070001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.23188769405655357,
+      "chord_distance": "8641478787507460777052207/39470345484128923062099340465046290432 √(1121814690467571240961301)",
+      "evidence_id": "sha256:cf3f4a31f6bd0fe01c2ef0060fa314ec218d1f00bdfa302a42008cb2887b5ef8",
+      "indices": [
+        349,
+        703
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.825,
+          82.145001
+        ],
+        [
+          137.25,
+          82.070001
+        ]
+      ],
+      "native_display": 0.23156691254080172,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:59c06bee2a7029f5de5f3548b641e5beb8491d7dcd685eef3324ac2347a28783",
+      "indices": [
+        349,
+        706
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.825,
+          82.145001
+        ],
+        [
+          137.175,
+          82.145001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:cf3f4a31f6bd0fe01c2ef0060fa314ec218d1f00bdfa302a42008cb2887b5ef8",
+      "indices": [
+        349,
+        707
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.825,
+          82.145001
+        ],
+        [
+          137.25,
+          82.070001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:473a338958342f2527f6d48aec1eeb8ccc7083662c62eba9c1ac6476990f4bdd",
+      "indices": [
+        351,
+        706
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.21,
+          84.4
+        ],
+        [
+          137.175,
+          82.145001
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/USB_D+",
+        "/USB_D-"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926377,
+      "chord_distance": "14935144479791/140737488355328 √(2)",
+      "evidence_id": "sha256:6cea79f8f7e2262e2548782b2089722c0f92193f574c79d92bf088ad3f12c03c",
+      "indices": [
+        383,
+        408
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          138.950497,
+          116.883621
+        ],
+        [
+          139.6995,
+          116.124072
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/VBAT",
+        "/PC13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:c76b41cb0b67a94c82c89bce0fa0ecd3c6841285620e689df5e5cb476f1cde27",
+      "indices": [
+        390,
+        412
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          139.8,
+          117.733124
+        ],
+        [
+          139.6995,
+          117.13765
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/VBAT",
+        "/PC13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999999147,
+      "chord_distance": "10555311626649/70368744177664",
+      "evidence_id": "sha256:3f76b558dc90b4831c34fab183c9f525dc7e2436c1fb40a97cd9facad1e90fa5",
+      "indices": [
+        459,
+        818
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          135.6,
+          88.2
+        ],
+        [
+          142.5,
+          87.7
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/NRST",
+        "+3.3V"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:c065b81392da7b43e8d39504d2c723d9218fd9acca7926782e0685a1b40bab6b",
+      "indices": [
+        508,
+        518
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.884,
+          103.473949
+        ],
+        [
+          143.234,
+          103.328975
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925914,
+      "chord_distance": "96688997226246902014935979/11797094210023290050139451289053945659392 √(335293583760383457108089581)",
+      "evidence_id": "sha256:8251413aeb0aa6e85e32e9baf83874fd7af9daba8e941cbb2535a4a7ca6f06f0",
+      "indices": [
+        508,
+        520
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.884,
+          103.473949
+        ],
+        [
+          143.05,
+          103.144975
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:e8d061bf2ab703f2ca3a8c32e2eba69c12e476026db99ec345707119f5f57119",
+      "indices": [
+        508,
+        523
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.884,
+          103.473949
+        ],
+        [
+          143.234,
+          105.361948
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1500776750193249,
+      "chord_distance": "183919645108251584410793419/42684898149537095496054915735537886167040 √(1213177772272533033403047845)",
+      "evidence_id": "sha256:21b54e98cdde29a6ad0b64d3f5efbeb6c8f36cbec8c5ce54a50828dd81df8f77",
+      "indices": [
+        509,
+        518
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.884,
+          105.506923
+        ],
+        [
+          143.234,
+          103.328975
+        ]
+      ],
+      "native_display": 0.1499999719106329,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:2b9506b9b1850c159b8c9b1e12eeb74727e46640f6a8b9ab997db696d32bd42f",
+      "indices": [
+        511,
+        520
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.7,
+          103.13179
+        ],
+        [
+          143.05,
+          103.144975
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:cce9b2f5d943e4f373fc3a3ec492c8418d4cf2e3ad67d1212f5a9831babc7e7a",
+      "indices": [
+        511,
+        525
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.7,
+          103.13179
+        ],
+        [
+          143.05,
+          102.774684
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:1f41f7b67d935e08647b216933461cf727010e8d5ae1bf9e6e8ac1ae036352e9",
+      "indices": [
+        512,
+        525
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          141.62132,
+          102.05311
+        ],
+        [
+          143.05,
+          102.774684
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:36cbf60f15bc5c1359db5299fad7c30d1898b7df13075f52a90b81466107e85c",
+      "indices": [
+        513,
+        518
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.7,
+          103.289949
+        ],
+        [
+          143.234,
+          103.328975
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924912,
+      "chord_distance": "48344498613120214045235817/5898547105011645025069725644526972829696 √(335293583760383457108089581)",
+      "evidence_id": "sha256:4418cf8f49816ec9b398d5ef1a144eac49ec3086521fe750b609fcc4530b215c",
+      "indices": [
+        513,
+        525
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.7,
+          103.289949
+        ],
+        [
+          143.05,
+          102.774684
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:055ab58e63c1c41bca43208fd0a6510f270e1d51f780ca432a2f86714e9ec496",
+      "indices": [
+        514,
+        523
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.234,
+          105.856922
+        ],
+        [
+          143.234,
+          105.361948
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:ce3c8f17a44d5bf4378948d8782c9465c024d52df784c4773bb7ecc9cf13fea9",
+      "indices": [
+        515,
+        519
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.234,
+          107.901948
+        ],
+        [
+          143.584,
+          105.711948
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:84f9ab4116567e9ca5ba199480a3927b7f931a83f6c88b36cb4b1f27311645c7",
+      "indices": [
+        516,
+        517
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.584,
+          108.251948
+        ],
+        [
+          143.584,
+          107.756974
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA0",
+        "/PA1"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926377,
+      "chord_distance": "14935144479791/140737488355328 √(2)",
+      "evidence_id": "sha256:1dffa8a741e10bd4652c7739e867449155622b4fb70a92f0855f619f82853548",
+      "indices": [
+        517,
+        530
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.584,
+          107.756974
+        ],
+        [
+          143.934,
+          105.566974
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA1",
+        "/PA2"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:f2de058cd1440b6892667da8b7ced179edf3945bf8f128eed50e107ebc0e8efc",
+      "indices": [
+        519,
+        531
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.584,
+          105.711948
+        ],
+        [
+          143.584,
+          105.216974
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA1",
+        "/PA2"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938923818,
+      "chord_distance": "289016024317540471161664767/105405865977431532523266775123952761044992 √(2995814895070666708627037881)",
+      "evidence_id": "sha256:f090e7a0a08413bc2ada3e57be0b71e63f12bdc344f15fb84d091cc22fd370e9",
+      "indices": [
+        522,
+        527
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.934,
+          108.106974
+        ],
+        [
+          143.934,
+          107.612
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA1",
+        "/PA2"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1500771693892465,
+      "chord_distance": "45979822050520187433942057/10671255026640716870014177670253462421504 √(1213181238499682521025326613)",
+      "evidence_id": "sha256:c53cc79432239f019e8df479d10798fba44d26610f4bc61a5194749fdfaed6c6",
+      "indices": [
+        523,
+        532
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.234,
+          105.361948
+        ],
+        [
+          143.584,
+          103.184
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA1",
+        "/PA2"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924592,
+      "chord_distance": "578032048635114573189244587/421623463909731577029239956176057474744320 √(11983259580282821645745342385)",
+      "evidence_id": "sha256:e3eef831e9df72952c6901a31caa2709ffce0bcc9e81c947823f33816c709889",
+      "indices": [
+        530,
+        539
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.934,
+          105.566974
+        ],
+        [
+          143.934,
+          105.072
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA2",
+        "/PA3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926663,
+      "chord_distance": "183919288202105378796230411/42685020106562867480056710681013849686016 √(1213181238499682521025326613)",
+      "evidence_id": "sha256:60966dd95c937c11dd1cee785ca4c606a3fd02ab18b78eca27801e30654d510c",
+      "indices": [
+        531,
+        541
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.584,
+          105.216974
+        ],
+        [
+          143.934,
+          103.026974
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA2",
+        "/PA3"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926377,
+      "chord_distance": "14935144479791/140737488355328 √(2)",
+      "evidence_id": "sha256:acfeb196526d0d6b6be096876fdb00e0aa9cfe1389f6294814de5a65fa39286f",
+      "indices": [
+        534,
+        545
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.75,
+          102.842974
+        ],
+        [
+          144.1,
+          101.692893
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA3",
+        "/PA4"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:e4b27d0be8118715efcc210ac183707de1980740f1a9544ec2b961e87be1f6d5",
+      "indices": [
+        535,
+        548
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.55,
+          99.613584
+        ],
+        [
+          143.584,
+          99.15261
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA3",
+        "/PA4"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1500771693892563,
+      "chord_distance": "201785733341720247218885119/51380916937412745513041169022132542242816 √(1460333491462868821402059013)",
+      "evidence_id": "sha256:d9fc45202ed3009199fe3eb90dd2b95c4012fc6ca0ff44e3acfed4bef9e548d8",
+      "indices": [
+        536,
+        552
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.234,
+          98.928974
+        ],
+        [
+          143.2,
+          98.4
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA3",
+        "/PA4"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:bd2dff4e22c7844241dd98d58d5643d93b6a9a3205d36b7b84a4c47da898526d",
+      "indices": [
+        538,
+        544
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.234,
+          99.297584
+        ],
+        [
+          143.584,
+          98.784
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA3",
+        "/PA4"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:f66a5f867834f80718bc423340a3ed8c6ab2202b1f0be98c3d120fc7def0e868",
+      "indices": [
+        541,
+        547
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.934,
+          103.026974
+        ],
+        [
+          144.1,
+          102.698
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA3",
+        "/PA4"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925092,
+      "chord_distance": "100892866670856516753906617/25690458468706372756520584511066271121408 √(1460333491462868821402059013)",
+      "evidence_id": "sha256:e698816dd0cdb2134fe0c42ead66c015363f0cd1a6282405f1de1cbab90c59d0",
+      "indices": [
+        543,
+        552
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.926854,
+          98.75
+        ],
+        [
+          143.2,
+          98.4
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA3",
+        "/PA4"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924584,
+      "chord_distance": "119179698754948072752772889/17923610682826264151082024211353310330880 √(509419654770973242849607465)",
+      "evidence_id": "sha256:aab1559f40ffc82d3a584ac75d65e46e8311e11601095b3bf931f694ef37c06c",
+      "indices": [
+        579,
+        584
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.9,
+          89.526
+        ],
+        [
+          143.9,
+          89.031026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB10",
+        "/PB11"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926377,
+      "chord_distance": "14935144479791/140737488355328 √(2)",
+      "evidence_id": "sha256:f3ea96cf861baa78881b80cf7dd3d8b762facd9eb9d53af5f60c160ba859f07c",
+      "indices": [
+        580,
+        587
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          143.9,
+          92.12
+        ],
+        [
+          143.55,
+          89.381026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB10",
+        "/PB11"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:1805c72794f7f850b6dc8ddecf46b671c2988acd62aa61d7e1ffe1aab7d2368f",
+      "indices": [
+        589,
+        609
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          133.049,
+          88.869103
+        ],
+        [
+          131.944,
+          88.259077
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924368,
+      "chord_distance": "14935144479789/140737488355328 √(2)",
+      "evidence_id": "sha256:b74f573f64fa4ab46950dd9fe6233dd909391d304bdfd89c0ed538432d9ffd18",
+      "indices": [
+        589,
+        613
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          133.049,
+          88.869103
+        ],
+        [
+          132.5495,
+          90.9
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:93e6ad45facfcbeacc434db6fed93e0b477ac56547eb7d233162109b39fc1d68",
+      "indices": [
+        590,
+        609
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.294,
+          86.372104
+        ],
+        [
+          131.944,
+          88.259077
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927382,
+      "chord_distance": "933446529987/8796093022208 √(2)",
+      "evidence_id": "sha256:a427127ff631fcc222f37c1f1b72f6bfcab8a33adac2df257275c584c1c21a88",
+      "indices": [
+        591,
+        615
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.244,
+          81.232052
+        ],
+        [
+          131.25,
+          81.733026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.150077169389268,
+      "chord_distance": "45191596529661494859730717/5154259734010638970789575173317612011520 √(292985744977763657220155845)",
+      "evidence_id": "sha256:3c8be64b17a76f95a291d8c2c9c06be1979fd9f24e60108c04d6adcad704a6e3",
+      "indices": [
+        593,
+        612
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.95,
+          86.028104
+        ],
+        [
+          131.944,
+          86.517078
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:80a9eb2392501fcc98ddd3a7e4d7c6c12195960e7c7ea39cc17ae4583cc567aa",
+      "indices": [
+        594,
+        616
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.95,
+          83.983078
+        ],
+        [
+          131.6,
+          86.173078
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925536,
+      "chord_distance": "318180368589609291979653159/127751996676924660268662613919904963756032 √(3630930128705491036631162101)",
+      "evidence_id": "sha256:4608bc8f30f6cd32621c39feac20ae688e6e406730740eebbb5ca63dde4f575c",
+      "indices": [
+        595,
+        608
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.294,
+          88.114103
+        ],
+        [
+          132.5495,
+          88.864577
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:63d76c80c81189b812515cc71e035e811653bd7ec4a1e26bcbdda889b39a5ff8",
+      "indices": [
+        595,
+        609
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.294,
+          88.114103
+        ],
+        [
+          131.944,
+          88.259077
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:e2ef411c9ce9f631ff4a2e7be62aa0f16fb27bcb4a8935f662f5c672aee47186",
+      "indices": [
+        595,
+        612
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.294,
+          88.114103
+        ],
+        [
+          131.944,
+          86.517078
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:1ba83ce5e8c33e914d7575dae270d72010d445641bf6bfc347ab783667060684",
+      "indices": [
+        596,
+        611
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.244,
+          79.187026
+        ],
+        [
+          130.894,
+          81.377026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924368,
+      "chord_distance": "14935144479789/140737488355328 √(2)",
+      "evidence_id": "sha256:12f3d0baba32158ff6059b7ce0a601870e5fce9af4f38e09731aa19c105c61cf",
+      "indices": [
+        597,
+        618
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          130.9,
+          78.843026
+        ],
+        [
+          130.894,
+          79.332
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926816,
+      "chord_distance": "46768047571393955495467285/5520131334924054784802118402563077308416 √(313783137637759340623354001)",
+      "evidence_id": "sha256:5faf603f16af1b66237e876f1973278342a3f4bf0ca7db154df503c630fda9d7",
+      "indices": [
+        599,
+        617
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.6,
+          81.588052
+        ],
+        [
+          131.25,
+          83.778052
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927382,
+      "chord_distance": "933446529987/8796093022208 √(2)",
+      "evidence_id": "sha256:650f89662a43468e4c6a6a61038d73c8edeb33c04eccf2fbdbd0728eaa1f8e0e",
+      "indices": [
+        600,
+        614
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.6,
+          83.633078
+        ],
+        [
+          131.6,
+          84.128052
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925453,
+      "chord_distance": "639331821909207051563781779/515790784223785908518946382484458965041152 √(14659655796088654498104983261)",
+      "evidence_id": "sha256:22ca117a539ed236ad8af9166de3154bdec1e82b83c648f9fe4f8a803c02a202",
+      "indices": [
+        602,
+        620
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.416356,
+          92.393699
+        ],
+        [
+          134.28301,
+          93.755327
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926796,
+      "chord_distance": "271599393208542643741995791/93084747719398193607663346097534837719040 √(2645627652083197563333196345)",
+      "evidence_id": "sha256:4e599bb12a915b33377bd4c721e2d9033fe77aeae7ee6a0e769aab1baeb3f5b4",
+      "indices": [
+        603,
+        621
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.1,
+          91.805026
+        ],
+        [
+          133.066356,
+          92.266356
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924368,
+      "chord_distance": "14935144479789/140737488355328 √(2)",
+      "evidence_id": "sha256:9626a733a6c1e5a61aa5d654a4325454ad6fcdacf6b98707f9725501ce0549a6",
+      "indices": [
+        605,
+        625
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          135.516052,
+          94.493395
+        ],
+        [
+          134.28301,
+          94.08301
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1500771693892569,
+      "chord_distance": "166239915252742112103696289/34873180126801725251637533535306587832320 √(991155392478098214372651385)",
+      "evidence_id": "sha256:0d2a756ac6349bcd7ed4244519ee8f2e7ebf604aa3003d2d8bde10929bdece33",
+      "indices": [
+        606,
+        622
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.416356,
+          92.121382
+        ],
+        [
+          133.066356,
+          92.538673
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB12",
+        "/PB13"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926377,
+      "chord_distance": "14935144479791/140737488355328 √(2)",
+      "evidence_id": "sha256:35dbd78059c7a248e6494dcb6ec0e48ee94fbd2b0d464f9c43721503e6570b1e",
+      "indices": [
+        608,
+        635
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.5495,
+          88.864577
+        ],
+        [
+          132.05,
+          91.208104
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926155,
+      "chord_distance": "119810279171655364985718699/36227560575014614023309040438823769604096 √(2059298400070850563185390481)",
+      "evidence_id": "sha256:01e078481c8622ca6365b874e29907759afa8dbe523fc93383ffba91c5a5cdb0",
+      "indices": [
+        609,
+        628
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.944,
+          88.259077
+        ],
+        [
+          132.05,
+          88.860051
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:d94c23e7d63ea6ad02b0750d658eb5f2594e664af06a70067d9843dbcd47d1ed",
+      "indices": [
+        611,
+        639
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          130.894,
+          81.377026
+        ],
+        [
+          130.9,
+          81.878
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925664,
+      "chord_distance": "180766386118628565206991249/41234077872083408360822544627002916208640 √(1171942979911006215184629145)",
+      "evidence_id": "sha256:9564309268e0ad2a963fbf0c2860d9b4a533b542eb0a50c17028fd6673644303",
+      "indices": [
+        612,
+        634
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.944,
+          86.517078
+        ],
+        [
+          131.594,
+          88.404051
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927093,
+      "chord_distance": "91959644101059071648622217/21342510053283166856083354915113030123520 √(1213181238499781037267175345)",
+      "evidence_id": "sha256:daec2476c03114054dd61b23111be0e9fc8ebab10ce72ddff9254913bf25509d",
+      "indices": [
+        614,
+        638
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.6,
+          84.128052
+        ],
+        [
+          131.25,
+          86.318052
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925653,
+      "chord_distance": "187072190285557563325007389/44161050679390675451801004760461643612160 √(1255132550550987259947561505)",
+      "evidence_id": "sha256:8b3af9f94cb7904cc6579e9b4644fa75aac14fe16e14d4e05356be201997204f",
+      "indices": [
+        615,
+        633
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.25,
+          81.733026
+        ],
+        [
+          130.9,
+          83.923026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926668,
+      "chord_distance": "11297899132415041789436863/2577129867005213022551409039187682263040 √(1171942979911006215184629145)",
+      "evidence_id": "sha256:cdafabe7e10c0e51b39bc23eaae88c132f54467e40e5ddc0d0246f177fb0ad28",
+      "indices": [
+        616,
+        630
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.6,
+          86.173078
+        ],
+        [
+          131.594,
+          86.662052
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926663,
+      "chord_distance": "183919288202105378796230411/42685020106562867480056710681013849686016 √(1213181238499682521025326613)",
+      "evidence_id": "sha256:2416934ae541da22db6e1e188b701e237d55ebe4c8061515b748c0aad9cb0b14",
+      "indices": [
+        617,
+        629
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.25,
+          83.778052
+        ],
+        [
+          131.25,
+          84.273026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:a50b6002b3e3e4a368177e72df3160dfb85ff450c7ef9f32cd2dba3ee0027997",
+      "indices": [
+        620,
+        643
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          134.28301,
+          93.755327
+        ],
+        [
+          133.93301,
+          94.43301
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925555,
+      "chord_distance": "359077186997912402847398427/325406751655635941855064622699750019301376 √(18497232284496245816573299561)",
+      "evidence_id": "sha256:41265c95a7c01ce7629f72d40a173c25cf2a3cc6c5edf5961c96a35a4758f0ff",
+      "indices": [
+        622,
+        641
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.066356,
+          92.538673
+        ],
+        [
+          133.93301,
+          93.900301
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:a4a760c8f291b54d7ee3e13fe5a431b84ebd6fcde65c793c01253906eaf73beb",
+      "indices": [
+        622,
+        1030
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.066356,
+          92.538673
+        ],
+        [
+          132.566356,
+          92.533647
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB13",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:8ebdb4b1e181143fa60c45adccf7526050e31514c494d2dab721190fc83aff4e",
+      "indices": [
+        627,
+        648
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.3,
+          91.458104
+        ],
+        [
+          131.7,
+          91.353078
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:ddd25ecc64399a7092c36d665e967297e9dd257d807ba12092b209faef91337b",
+      "indices": [
+        627,
+        650
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.3,
+          91.458104
+        ],
+        [
+          131.95,
+          92.623691
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:d605c0bc095c3c726f01028dcf2badef4ad01ae3a1f190df21ad4c9a194daf9b",
+      "indices": [
+        629,
+        653
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.25,
+          84.273026
+        ],
+        [
+          130.9,
+          86.463026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.150077169389268,
+      "chord_distance": "45191596529661494859730717/5154259734010638970789575173317612011520 √(292985744977763657220155845)",
+      "evidence_id": "sha256:fbaeef54e59d07d2d46179c9db318ae859cb0c00d7b00bec5c2c1bd1f2b14b4c",
+      "indices": [
+        630,
+        645
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.594,
+          86.662052
+        ],
+        [
+          131.244,
+          88.549026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:bcaa492e7ac7ac09484d6c61fe9ce7e035402e55151ad94543c82aff8a37ea32",
+      "indices": [
+        632,
+        650
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.3,
+          92.267291
+        ],
+        [
+          131.95,
+          92.623691
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:264f8fcc4458ce7d3eb7a1c71d9142015e6dff42cf9f8bac22d845dab6045d4f",
+      "indices": [
+        632,
+        651
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.3,
+          92.267291
+        ],
+        [
+          131.95,
+          91.603078
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925142,
+      "chord_distance": "290592475359296348013152629/42623553677609197885016077060324122951680 √(484573703006494700787426121)",
+      "evidence_id": "sha256:3529b9a8e650d6272dbd8b5a451598b141e946cd8843998dee5652e31561f6d5",
+      "indices": [
+        633,
+        649
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          130.9,
+          83.923026
+        ],
+        [
+          130.9,
+          84.418
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:bdb954dc4e4ed711d3cacdd61df537946ad119c9fdc0c1bc8a70b53ebdaf31db",
+      "indices": [
+        635,
+        646
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.05,
+          91.208104
+        ],
+        [
+          131.7,
+          89.005026
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:88bd4b865d7a2d0398e3d5777a9df97b25afacc6d7c302c623e7adbda5ad93ae",
+      "indices": [
+        635,
+        648
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.05,
+          91.208104
+        ],
+        [
+          131.7,
+          91.353078
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938924368,
+      "chord_distance": "14935144479789/140737488355328 √(2)",
+      "evidence_id": "sha256:fab6164bf20be0b67e9bf63ba01382ffd05c065598dbaf1e63eb260371098d86",
+      "indices": [
+        635,
+        651
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.05,
+          91.208104
+        ],
+        [
+          131.95,
+          91.603078
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:23701a8478dd03eb761e06f977d9011ae3744d8bef64cb825e4ce07b3ce0c697",
+      "indices": [
+        637,
+        650
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          132.566356,
+          92.533647
+        ],
+        [
+          131.95,
+          92.623691
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938926377,
+      "chord_distance": "14935144479791/140737488355328 √(2)",
+      "evidence_id": "sha256:9e5f674980f90dee143cd0722a30a2ff527b77d56f4d94fbb3ae5e00741f279d",
+      "indices": [
+        638,
+        644
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.25,
+          86.318052
+        ],
+        [
+          131.244,
+          86.807026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1684375591939701,
+      "chord_distance": "1613300651778385581991593/2607371623217031382343898647490461696 √(74105958652155305297353)",
+      "evidence_id": "sha256:0eac8e028d89c3747d90a1f4dff5c5ea668066da8375510e5fee437696f26450",
+      "indices": [
+        640,
+        1038
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          136.896602,
+          97.078396
+        ],
+        [
+          136.496192,
+          97.589792
+        ]
+      ],
+      "native_display": 0.16796077692427638,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:944cd9063bda7e4370acb014db44257f397851a2aef03fcdf3e75e414fb670f9",
+      "indices": [
+        644,
+        668
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.244,
+          86.807026
+        ],
+        [
+          130.894,
+          88.694
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927132,
+      "chord_distance": "106673187157223725867336921/28718481527695095157657395051407721103360 √(1632456674525149944523570585)",
+      "evidence_id": "sha256:640bd84ac2ee647603a9a1fa0142a373becf3f3963ba98f9f0bca8d0cd7387be",
+      "indices": [
+        645,
+        666
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.244,
+          88.549026
+        ],
+        [
+          131.3,
+          89.1
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925716,
+      "chord_distance": "9216175320896152651822311/1393367714423595577768969699307900895232 √(514824600017696596722675113)",
+      "evidence_id": "sha256:49b5847193a0cb39fbdbf1d906c50e98c1754145ee6b32972058886e33e48536",
+      "indices": [
+        646,
+        661
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.7,
+          89.005026
+        ],
+        [
+          131.3,
+          91.448052
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1500771693892688,
+      "chord_distance": "15764510417322957492300323/3136042293543160905351860443412279853056 √(891316828285414688182260205)",
+      "evidence_id": "sha256:c7564735f5a36d86c13d1183da6064dfee5ca73d3072bfe6ef389ef0c4e89648",
+      "indices": [
+        648,
+        664
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.7,
+          91.353078
+        ],
+        [
+          131.6,
+          91.748052
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:c2cbead5bc72e12552210f61a225fced8e8a88464287a4ad718191a1a1d3d079",
+      "indices": [
+        651,
+        662
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.95,
+          91.603078
+        ],
+        [
+          131.6,
+          92.980092
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:1a411524aaf031341975a9e81a5cb226f5f693cd247c0f6e3d228f73adb81d2f",
+      "indices": [
+        653,
+        665
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          130.9,
+          86.463026
+        ],
+        [
+          130.894,
+          86.952
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.1500771693892763,
+      "chord_distance": "534411648310486830414052587/360390028995558886919163301484089380438016 √(10242900685726649695628887613)",
+      "evidence_id": "sha256:03e20193c2a9769a275fe489d1ed5cf802cd4ca1aa2a8eedb827607d3665b177",
+      "indices": [
+        655,
+        670
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.58301,
+          94.679554
+        ],
+        [
+          134.1,
+          95.691518
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925256,
+      "chord_distance": "455589096223797961944679201/261919346325733453860224388688751645163520 √(7444195555471351720490940485)",
+      "evidence_id": "sha256:8a9030d015f656154bc14a02cf5109ed2308a31147bbe60a0f379cafea50f120",
+      "indices": [
+        656,
+        673
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          134.45,
+          95.546544
+        ],
+        [
+          134.1,
+          95.9
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.23317651982242282,
+      "chord_distance": "1/8796093022208 √(4206774758218497515814497)",
+      "evidence_id": "sha256:7a6d265af1067b46e3218fe4b7076b9d665e48622939f29b6a653d8f7d101cb4",
+      "indices": [
+        658,
+        674
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          136.496192,
+          97.589792
+        ],
+        [
+          136.151275,
+          98.19181
+        ]
+      ],
+      "native_display": 0.23308234618603424,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.3000471121925878,
+      "chord_distance": "10373718582862510416950151/33973494245310884128716552565600288768 √(965584781775728632985549)",
+      "evidence_id": "sha256:0eac8e028d89c3747d90a1f4dff5c5ea668066da8375510e5fee437696f26450",
+      "indices": [
+        658,
+        1026
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          136.496192,
+          97.589792
+        ],
+        [
+          136.896602,
+          97.078396
+        ]
+      ],
+      "native_display": 0.2995029152482689,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PB14"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.150077169389258,
+      "chord_distance": "183919288202094823484603761/42685020106562867480056710681013849686016 √(1213181238499682521025326613)",
+      "evidence_id": "sha256:810f0ea15ebc2eb6c176cd1b1d5e4459d42392d9a962ac96db5570756b7f87cb",
+      "indices": [
+        661,
+        679
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.3,
+          91.448052
+        ],
+        [
+          131.25,
+          91.893026
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA8",
+        "/PA9"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927046,
+      "chord_distance": "78822552086619410493404185/15680211467717290054806444659317529378816 √(891316828285499130675273401)",
+      "evidence_id": "sha256:33f79ca66ff96a526c4302e343d125088760a348c2acbc49c2f15b452eefb62b",
+      "indices": [
+        664,
+        682
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.6,
+          91.748052
+        ],
+        [
+          131.25,
+          93.242893
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA8",
+        "/PA9"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927182,
+      "chord_distance": "133602912077618690035543441/9009750724889098070243137822730045358080 √(102429006857267928242471701)",
+      "evidence_id": "sha256:da03d199dc06613bb85bf41017b7158736735575752dd90ccb9f23510ecce504",
+      "indices": [
+        670,
+        685
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          134.1,
+          95.691518
+        ],
+        [
+          133.75,
+          96.25
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA8",
+        "/PA9"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.150077169389277,
+      "chord_distance": "176463463000243874347353741/157177552645823800585615081125845902819328 √(17869018921126530652329061141)",
+      "evidence_id": "sha256:3678799c88c9cd118405d807080ead46a56153e5c6317f9990f412591739b0e2",
+      "indices": [
+        672,
+        687
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          133.08301,
+          94.674528
+        ],
+        [
+          133.75,
+          95.836492
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA8",
+        "/PA9"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15011967607081042,
+      "chord_distance": "1660598400423434036634037/6955593357336661755726710263540350976 √(395379706636541741075161)",
+      "evidence_id": "sha256:7a6d265af1067b46e3218fe4b7076b9d665e48622939f29b6a653d8f7d101cb4",
+      "indices": [
+        674,
+        1038
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          136.151275,
+          98.19181
+        ],
+        [
+          136.496192,
+          97.589792
+        ]
+      ],
+      "native_display": 0.14963756481873938,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA8",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:c8d02b7a23d32f50f06ad51b29ea92face85690f9eb26141f51ce0d4de10cf70",
+      "indices": [
+        679,
+        689
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.25,
+          91.893026
+        ],
+        [
+          130.9,
+          93.6
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA9",
+        "/PA10"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938925372,
+      "chord_distance": "7467572239895/70368744177664 √(2)",
+      "evidence_id": "sha256:f052096789b47e986395b83ddc7cd031239555a76069e564d167512342ec7abc",
+      "indices": [
+        681,
+        688
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          130.9,
+          91.543026
+        ],
+        [
+          130.9,
+          92.038
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PA9",
+        "/PA10"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:e1c908df2b0f8f506255e68a29e0d587ea4bc0a3a03f4e49d4241528cf06ad23",
+      "indices": [
+        720,
+        954
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          137.3,
+          115.1
+        ],
+        [
+          136.8,
+          108.7
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWDIO",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:db23fc977ad5fc8595c70ade36b316363b8c26cec8618671809455e1aacd082b",
+      "indices": [
+        724,
+        1082
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          137.2,
+          104.107107
+        ],
+        [
+          137.7,
+          103.9
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWDIO",
+        "/SWCLK"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "removed",
+      "chord_display": 0.14999999999997726,
+      "chord_distance": "1319413953331/8796093022208",
+      "evidence_id": "sha256:4f71430f09e511ddbd24c5adf21daafe2b20d6dc0814f0ff5b6653cd04aad72d",
+      "indices": [
+        733,
+        962
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          137.7,
+          108.907107
+        ],
+        [
+          138.2,
+          108.7
+        ]
+      ],
+      "native_display": 0.15,
+      "native_distance": "3/20",
+      "nets": [
+        "/SWCLK",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": true,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938923538,
+      "chord_distance": "157645104173200094103141981/62720845870867674691178636142237429268480 √(3565267313141912080208080405)",
+      "evidence_id": "sha256:d0ab62db03365c02f639b7d6cb31d6035e1bbc0ef67c22b329d6f229b210e300",
+      "indices": [
+        759,
+        772
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.15,
+          106.99132
+        ],
+        [
+          131.5,
+          109.056609
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB7",
+        "/PB8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15007716938927015,
+      "chord_distance": "178138967715757166284294801/160176496185021498324059481346675105071104 √(18209959328603588156063265313)",
+      "evidence_id": "sha256:269974b4ca4da6a2c6769776aac51ad0a29961d147d72bcb7976c3735c6c7715",
+      "indices": [
+        761,
+        774
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          131.15,
+          108.911635
+        ],
+        [
+          130.9,
+          109.656609
+        ]
+      ],
+      "native_display": 0.14999947191103016,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB7",
+        "/PB8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15015179394552666,
+      "chord_distance": "1189967833352446692071605/1098515585519244220983008413578428416 √(19213348170091128237433)",
+      "evidence_id": "sha256:7d84f216acbcb5a3c667fc8d490fc612ff3a0cd61354bc7be8cc558cc256df18",
+      "indices": [
+        811,
+        963
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          142.3845,
+          104.6
+        ],
+        [
+          141.883637,
+          105.013509
+        ]
+      ],
+      "native_display": 0.14950245407542534,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15015179394552666,
+      "chord_distance": "1189967833352446692071605/1098515585519244220983008413578428416 √(19213348170091128237433)",
+      "evidence_id": "sha256:dbed4e081e8d18df5fb81e34cabd24b68c6d3261d89289ee15e639c4cb69ad62",
+      "indices": [
+        812,
+        964
+      ],
+      "layer": "In1.Cu",
+      "locations": [
+        [
+          142.3845,
+          104.6
+        ],
+        [
+          141.883637,
+          105.013509
+        ]
+      ],
+      "native_display": 0.14950245407542534,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15015179394552666,
+      "chord_distance": "1189967833352446692071605/1098515585519244220983008413578428416 √(19213348170091128237433)",
+      "evidence_id": "sha256:c6542861d720a39cb0666037164c355beb5d246268f70b28b5e13cdb1c7a36b1",
+      "indices": [
+        813,
+        965
+      ],
+      "layer": "In2.Cu",
+      "locations": [
+        [
+          142.3845,
+          104.6
+        ],
+        [
+          141.883637,
+          105.013509
+        ]
+      ],
+      "native_display": 0.14950245407542534,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15015179394552666,
+      "chord_distance": "1189967833352446692071605/1098515585519244220983008413578428416 √(19213348170091128237433)",
+      "evidence_id": "sha256:6bd6b3c5fcb9202f13836d5827c22c11984a4dc8489ecc6fe267cfc146bc7c3f",
+      "indices": [
+        814,
+        966
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          142.3845,
+          104.6
+        ],
+        [
+          141.883637,
+          105.013509
+        ]
+      ],
+      "native_display": 0.14950245407542534,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "+3.3V",
+        "GND"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15028129294718562,
+      "chord_distance": "2597885095294938646778401/16986747122655442064358276282800144384 √(965584781775728632985549)",
+      "evidence_id": "sha256:8be5adc0bbbaf90052c5dd8cc8dee12017eda901f0a42740365adf43c6267975",
+      "indices": [
+        1023,
+        1035
+      ],
+      "layer": "F.Cu",
+      "locations": [
+        [
+          136.896602,
+          97.078396
+        ],
+        [
+          136.496192,
+          97.589792
+        ]
+      ],
+      "native_display": 0.14950291524826892,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15028129294718562,
+      "chord_distance": "2597885095294938646778401/16986747122655442064358276282800144384 √(965584781775728632985549)",
+      "evidence_id": "sha256:08143cc0557b6850f5f1902b34a83496b148cd1256318a9d67cb7b7392a4d48f",
+      "indices": [
+        1024,
+        1036
+      ],
+      "layer": "In1.Cu",
+      "locations": [
+        [
+          136.896602,
+          97.078396
+        ],
+        [
+          136.496192,
+          97.589792
+        ]
+      ],
+      "native_display": 0.14950291524826892,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15028129294718562,
+      "chord_distance": "2597885095294938646778401/16986747122655442064358276282800144384 √(965584781775728632985549)",
+      "evidence_id": "sha256:cb89bc93450348b7cbe149e30c2243e8eaa7323ae2bf6a01aa7d0c772b2dc348",
+      "indices": [
+        1025,
+        1037
+      ],
+      "layer": "In2.Cu",
+      "locations": [
+        [
+          136.896602,
+          97.078396
+        ],
+        [
+          136.496192,
+          97.589792
+        ]
+      ],
+      "native_display": 0.14950291524826892,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.15028129294718562,
+      "chord_distance": "2597885095294938646778401/16986747122655442064358276282800144384 √(965584781775728632985549)",
+      "evidence_id": "sha256:0eac8e028d89c3747d90a1f4dff5c5ea668066da8375510e5fee437696f26450",
+      "indices": [
+        1026,
+        1038
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          136.896602,
+          97.078396
+        ],
+        [
+          136.496192,
+          97.589792
+        ]
+      ],
+      "native_display": 0.14950291524826892,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB14",
+        "/PB15"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": true,
+          "threshold": "3/20"
+        }
+      ]
+    },
+    {
+      "change": "added",
+      "chord_display": 0.19439933118490937,
+      "chord_distance": "13927614800425805680922703/145886181171173538085090419384711643136 √(4146334651158370493393773)",
+      "evidence_id": "sha256:7a6d265af1067b46e3218fe4b7076b9d665e48622939f29b6a653d8f7d101cb4",
+      "indices": [
+        1038,
+        1042
+      ],
+      "layer": "B.Cu",
+      "locations": [
+        [
+          136.496192,
+          97.589792
+        ],
+        [
+          136.151275,
+          98.19181
+        ]
+      ],
+      "native_display": 0.19382520076241105,
+      "native_distance": "1 x Irrational",
+      "nets": [
+        "/PB15",
+        "/PA8"
+      ],
+      "thresholds": [
+        {
+          "chords_below": false,
+          "class": "Default",
+          "native_below": false,
+          "threshold": "3/20"
+        }
+      ]
+    }
+  ],
+  "unmatched": []
+}
