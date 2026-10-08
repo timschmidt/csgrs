@@ -145,10 +145,15 @@ pub fn provisional<T>(evaluate: impl FnOnce() -> T) -> Provisional<T> {
 /// them exactly, even inside an enclosing [`provisional`] scope, so the result
 /// is certified. Any other policy evaluates them as [`provisional`] does. This
 /// is the entry point for callers whose predicate policy is configuration.
+/// An enclosing [`CurvePreviewOptions::evaluate`] scope is suspended: its
+/// display tolerances and preview policy cannot change this operation's
+/// topology decisions or retained evidence. The enclosing scope is restored
+/// on return or panic unwinding.
 pub fn evaluate_under<T>(
     policy: hyperlimit::PredicatePolicy,
     evaluate: impl FnOnce() -> T,
 ) -> Provisional<T> {
+    let _preview = PreviewFrame::suspend();
     if policy != hyperlimit::PredicatePolicy::STRICT {
         return provisional(evaluate);
     }
@@ -253,6 +258,14 @@ struct PreviewFrame {
 }
 
 impl PreviewFrame {
+    fn suspend() -> Self {
+        Self {
+            prior: ACTIVE_PREVIEW_TOLERANCE.with(Cell::take),
+            prior_context: ACTIVE_PREVIEW_CONTEXT.with(Cell::take),
+            active: true,
+        }
+    }
+
     fn begin(tolerance: PreviewTolerance, context: CurveContext) -> Self {
         Self {
             prior: ACTIVE_PREVIEW_TOLERANCE.with(|active| active.replace(Some(tolerance))),
@@ -1201,6 +1214,38 @@ mod tests {
         assert!(approximate_preview.accepts_retained_policy(strict_preview));
         assert!(!strict_preview.accepts_retained_policy(approximate_preview));
         assert!(!CurveContext::APPROXIMATE_512.accepts_retained_policy(strict_preview));
+    }
+
+    #[test]
+    fn explicit_policy_suspends_preview_and_restores_it_after_unwinding() {
+        let preview = CurvePreviewOptions::try_approximate_512(0.01, 0.02).unwrap();
+        preview.evaluate(|| {
+            let context = principal_context();
+            let tolerance = preview_tolerance();
+            for policy in [
+                hyperlimit::PredicatePolicy::STRICT,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            ] {
+                let result = super::evaluate_under(policy, || {
+                    assert!(!principal_context().is_edge_preview());
+                    assert_eq!(principal_context().predicate_policy(), policy);
+                    assert_eq!(preview_tolerance(), None);
+                    7
+                });
+                assert_eq!(result.certified(), Some(7));
+                assert_eq!(principal_context(), context);
+                assert_eq!(preview_tolerance(), tolerance);
+            }
+            let panic = std::panic::catch_unwind(|| {
+                super::evaluate_under(hyperlimit::PredicatePolicy::STRICT, || {
+                    panic!("exercise explicit policy scope restoration");
+                });
+            });
+            assert!(panic.is_err());
+            assert_eq!(principal_context(), context);
+            assert_eq!(preview_tolerance(), tolerance);
+        });
+        assert_eq!(preview_tolerance(), None);
     }
 
     #[test]
