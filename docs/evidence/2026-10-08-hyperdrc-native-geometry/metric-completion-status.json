@@ -1,0 +1,79 @@
+[
+  {
+    "name": "release",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 452.0466959476471,
+    "stdout": "/tmp/properties-native-metric-final-release.log",
+    "stderr": null
+  },
+  {
+    "name": "doctests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 6.509201288223267,
+    "stdout": "/tmp/properties-native-metric-final-doctests.log",
+    "stderr": null
+  },
+  {
+    "name": "wasm",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--profile",
+      "wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 14.159281492233276,
+    "stdout": "/tmp/properties-native-metric-final-wasm.log",
+    "stderr": null
+  },
+  {
+    "name": "bench",
+    "command": [
+      "cargo",
+      "bench",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--bench",
+      "segment_metric",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 53.638301372528076,
+    "stdout": "/tmp/properties-native-metric-final-bench.jsonl",
+    "stderr": "/tmp/properties-native-metric-final-bench.log"
+  }
+]

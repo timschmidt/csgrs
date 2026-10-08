@@ -1,0 +1,10 @@
+{
+  "base_revision": "92083372c5da64b22456dcc5010246a133d40cc6",
+  "scope": "Source of the initial passing 9-test metric matrix and complete 1,713-test release unit suite, before the final post-operation budget guard and explicit-policy preview regression.",
+  "files": {
+    "bench.rs": "6d19cdf56fa9b2fe3f7f8392ae1888631e502c6bdd5798f33a3a36f576614a43",
+    "segment_metric.rs": "bb7121d7b097bab481eceb1707c752d84b1e098597c304ca585dbb3243cd9800",
+    "tests.rs": "5d75b1ab1d3e4064183470024b12f0a34cafbe8715974e325c4695e4cfa43e6f",
+    "tracked.patch": "0ab0cfae310e475ff8f15d88bcc8849bf8bd97be457c363de1bfc0a406a40a2c"
+  }
+}

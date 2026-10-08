@@ -1,0 +1,117 @@
+{
+  "base_revision": "92083372c5da64b22456dcc5010246a133d40cc6",
+  "scope": "Exact native Segment2 minimum squared-distance queries and typed failure propagation. This does not repair the retained DRC via/import or report-metric failures.",
+  "contract": "metric-contract.json",
+  "sources": "metric-sources.json",
+  "checks": [
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log": "metric-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "debug",
+      "command": "cargo test --locked -p hypercurve --all-features --lib segment_metric",
+      "exit_code": 0,
+      "log": "metric-debug.log",
+      "sha256": "1fd28fa9eb68f3cb70448694787856b346ffad6c199dae9332bd0fcf05fa44fa",
+      "tests": {
+        "passed": 11,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --locked -p hypercurve --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "metric-clippy.log",
+      "sha256": "75ceee214c55d4d2401c42cb0dca44c88afd08e41a3ae84916c62aaaff69b7f3"
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p hypercurve --all-features --no-deps",
+      "exit_code": 0,
+      "log": "metric-docs.log",
+      "sha256": "c66c7b948443bfafc57f2505a20dc1a15c2b9a11197c069ff665c081cfbf6414"
+    },
+    {
+      "name": "release",
+      "command": "cargo test --locked --release -p hypercurve --all-features --lib -- --test-threads=2",
+      "exit_code": 0,
+      "log": "metric-release.log",
+      "sha256": "fecaf6e57a6129dc856f069eed5d47348cf49153c35287ca738cf8dadc7b8775",
+      "tests": {
+        "passed": 1715,
+        "failed": 0,
+        "ignored": 6
+      }
+    },
+    {
+      "name": "doctests",
+      "command": "cargo test --locked -p hypercurve --all-features --doc",
+      "exit_code": 0,
+      "log": "metric-doctests.log",
+      "sha256": "48738517c742e6a2dc98c023b6730a1ed1892c2dbc50d83a18af993788e17bec",
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "wasm",
+      "command": "cargo clippy --locked --profile wasm --target wasm32-unknown-unknown --no-default-features --features wasm --lib -- -D warnings",
+      "exit_code": 0,
+      "log": "metric-wasm.log",
+      "sha256": "f3a9478f7063306c67b8fbd445487ab0c60369c427fa1db23099c56a0e801aa3"
+    },
+    {
+      "name": "bench",
+      "command": "cargo bench --locked -p hypercurve --all-features --bench segment_metric --no-run --message-format=json",
+      "exit_code": 0,
+      "log": "metric-bench.log",
+      "sha256": "c527119a0f29f136ee380646c0d701913ab4199efebf272d908190f837321361"
+    }
+  ],
+  "benchmark": {
+    "manifest": "metric-probe/manifest.json",
+    "fixture_validation": "metric-probe/fixtures.log",
+    "fixtures": 6,
+    "rows": 12,
+    "exit_code": 0,
+    "build_json": "metric-bench-build.jsonl"
+  },
+  "completion_record": "metric-completion-status.json",
+  "iterations": [
+    {
+      "name": "initial-construction-diagnostic",
+      "log": "metric-initial-source/initial.log",
+      "detail": "Borrowed Real::sqrt calls required an owned radius scalar. Corrected before the initial test matrix passed. Intermediate failing source was not snapshotted."
+    },
+    {
+      "name": "initial-test-compilation-diagnostic",
+      "log": "metric-initial-source/tests-initial.log",
+      "detail": "Corrected the integer-power method and explicit unverified Provisional accessor. Intermediate failing source was not snapshotted."
+    },
+    {
+      "name": "initial-passing-source",
+      "manifest": "metric-initial-source/manifest.json",
+      "detail": "Nine focused tests, 1,713 release unit tests plus one doctest passed, with six existing ignored unit tests. Added a post-operation resource guard and two more regressions during review before final validation."
+    },
+    {
+      "name": "interrupted-final-release-run",
+      "manifest": "metric-release-interrupted.json",
+      "detail": "The execution handle was missing after goal continuation, before a full result summary or exit status. Retained the partial log, then reran the full release unit suite and remaining commands to completion."
+    }
+  ],
+  "limits": [
+    "Native line/arc primitives only; this does not admit general Bezier/NURBS distance queries or filled-region boundary regularization.",
+    "Both supported predicate policies have exact fixture oracles and explicit approximate-consumption tests. Display-preview isolation is tested through evaluate_under; direct preview operations retain the existing display-only policy semantics.",
+    "A constant candidate count and propagation of existing budget exhaustion do not bound scalar precision, expression growth, memory, or elapsed time. No new scalar-work accounting is asserted.",
+    "The configured full Hypercurve integration suite was last run successfully at 774de5d9c before this additive API. The current source has the complete release unit suite and doctest checks listed above; no new full integration, full workspace pre-push matrix, coverage percentage, sanitizer, formal-proof, or directed-fuzz claim is made.",
+    "DRC source circles, authoritative bounds and projections, and readiness uncertainty propagation remain open. The DRC measurement repair is separate pending work."
+  ]
+}

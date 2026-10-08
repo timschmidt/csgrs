@@ -1,0 +1,50 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 44.52s
+     Running unittests src/lib.rs (target/debug/deps/hyperdrc-cf4194d030c95f09)
+
+running 3 tests
+test geometry::types::tests::failed_source_construction_does_not_publish_placeholder_area_or_bounds ... FAILED
+test geometry::types::tests::denied_area_query_remains_retryable_and_cannot_use_report_area ... FAILED
+test geometry::types::tests::denied_bounds_query_remains_retryable ... FAILED
+
+failures:
+
+---- geometry::types::tests::failed_source_construction_does_not_publish_placeholder_area_or_bounds stdout ----
+
+thread 'geometry::types::tests::failed_source_construction_does_not_publish_placeholder_area_or_bounds' (2185) panicked at crates/hyperdrc/src/geometry/types/tests.rs:36:5:
+assertion failed: invalid.exact_area().is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- geometry::types::tests::denied_area_query_remains_retryable_and_cannot_use_report_area stdout ----
+
+thread 'geometry::types::tests::denied_area_query_remains_retryable_and_cannot_use_report_area' (2183) panicked at crates/hyperdrc/src/geometry/types/tests.rs:59:5:
+assertion `left == right` failed
+  left: Some((Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }), Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })))
+ right: Some((None, None))
+
+---- geometry::types::tests::denied_bounds_query_remains_retryable stdout ----
+
+thread 'geometry::types::tests::denied_bounds_query_remains_retryable' (2184) panicked at crates/hyperdrc/src/geometry/types/tests.rs:74:5:
+assertion `left == right` failed
+  left: Some(Some([Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]))
+ right: Some(None)
+
+
+failures:
+    geometry::types::tests::denied_area_query_remains_retryable_and_cannot_use_report_area
+    geometry::types::tests::denied_bounds_query_remains_retryable
+    geometry::types::tests::failed_source_construction_does_not_publish_placeholder_area_or_bounds
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 1114 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

@@ -1,0 +1,19 @@
+{
+  "status": "planned; no HyperDRC runtime changes in the native-metric API batch",
+  "carrier": "PcbRegion retains CurveRegion2. Polygon report rings never become authoritative input when exact area, bounds, components, or metrics are unavailable.",
+  "source_geometry": "Via center and size tokens enter SourceScalar/Real directly, with a fallible two-semicircle native construction. Broader pad, track, slot, custom geometry and other formats remain separately tracked.",
+  "metric_consumers": "PreparedBoundaryDistance and point/boundary threshold helpers use authoritative native segments, including hole boundaries, and Segment2 distance queries. Component extraction and regularization must describe the filled-region boundary. Empty geometry is distinct from a failed measurement.",
+  "broad_phase": "Only certified conservative native bounds can reject a candidate. Finite indices use outward enclosures; an unavailable enclosure disables that rejection. Projected rings and nearest-rounded bounds are not rejection proofs.",
+  "uncertainty": "Retain failure from every relevant candidate and comparison. Convert failures into geometry-uncertainty findings attributed to the requested check, preserving readiness blocking behavior. Audit all callers that currently continue or is_some_and after a missing metric.",
+  "caches": "Area, bounds and component extraction cache completed certified values only. A denied operation cannot poison a later retry, and a source-construction error cannot publish the placeholder empty region area as valid.",
+  "projection": "Projection and component-extraction failures remain typed, and report profiles cannot fall back to Polygon::new over display chords. Legacy projection API migration must be explicit and cannot silently drop a failed component.",
+  "regressions": [
+    "Retained source-circle public loader fixture must pass for both F.Cu and B.Cu.",
+    "Exact decimal source centers and dimensions beyond binary64 resolution remain distinct.",
+    "Circle/line and circle/circle clearance cases between sampled chords and the authored boundary match independent analytic oracles.",
+    "Different report resolutions preserve area, bounds, distance and readiness decisions.",
+    "Unavailable geometry and exhausted queries block affected readiness checks; a subsequent admitted retry succeeds.",
+    "Existing exact line and hole metrics retain their answers."
+  ],
+  "validation": "Focused geometry/import/readiness tests first, then the configured HyperDRC release suite, strict all-target Clippy and docs. Preserve behavior changes justified by authored geometry; do not rewrite expected values merely to make tests pass. Compare performance on cases whose exact geometry and answers match, and label newly supported native-circle measurements separately."
+}

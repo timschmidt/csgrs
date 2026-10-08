@@ -1,0 +1,273 @@
+{
+  "scope": "New native segment metric capability probe; no previous implementation or speedup comparison.",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/segment_metric-b206b7b9e8d0e265",
+    "copied_to": "/tmp/properties-native-metric-bin",
+    "bytes": 4752824,
+    "sha256": "c4437d9d68cf2a36d18ca40c0a93501de7a24d677386a693015c338a050ea7cc"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "host": "Linux fedora 7.2.5-100.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026 x86_64 GNU/Linux\n",
+  "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 5800X3D 8-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      80%\nCPU max MHz:                             4552.9521\nCPU min MHz:                             575.9760\nBogoMIPS:                                6800.15\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                96 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "affinity": [
+    0
+  ],
+  "environment": {
+    "HYPERCURVE_METRIC_ITERATIONS": "1000"
+  },
+  "features": "hypercurve --all-features",
+  "profile": "Workspace release defaults: opt-level 3, debug false, debug-assertions false, overflow-checks false. No RUSTFLAGS override.",
+  "build_command": "cargo bench --locked -p hypercurve --all-features --bench segment_metric --no-run --message-format=json",
+  "workspace_manifest_sha256": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+  "lock_sha256": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+  "execution": "All task build/test sessions had exited before these sequential, CPU-0-pinned trials.",
+  "limitations": [
+    "The six fixtures are a cost probe, not a statistically established regression ceiling or a cross-library comparison.",
+    "Warm queries reuse their inputs after one oracle-checked query. construct_and_query includes new fixture and oracle construction; global scalar caches may already be warm.",
+    "Timing loops check the initial and final results against exact independent fixture oracles; they do not compare a stored output for every iteration.",
+    "/usr/bin/time reports whole-process peak resident memory, not per-query heap usage or allocation counts.",
+    "Binary size is for this benchmark executable with all features; no library-size delta is asserted."
+  ],
+  "runs": [
+    {
+      "trial": 1,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/trial-1-resources.log",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/properties-native-metric-bin"
+      ],
+      "exit_code": 0,
+      "stdout": "trial-1.jsonl",
+      "resources": "trial-1-resources.log"
+    },
+    {
+      "trial": 2,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/trial-2-resources.log",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/properties-native-metric-bin"
+      ],
+      "exit_code": 0,
+      "stdout": "trial-2.jsonl",
+      "resources": "trial-2-resources.log"
+    },
+    {
+      "trial": 3,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/trial-3-resources.log",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/properties-native-metric-bin"
+      ],
+      "exit_code": 0,
+      "stdout": "trial-3.jsonl",
+      "resources": "trial-3-resources.log"
+    },
+    {
+      "trial": 4,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/trial-4-resources.log",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/properties-native-metric-bin"
+      ],
+      "exit_code": 0,
+      "stdout": "trial-4.jsonl",
+      "resources": "trial-4-resources.log"
+    },
+    {
+      "trial": 5,
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/trial-5-resources.log",
+        "taskset",
+        "-c",
+        "0",
+        "/tmp/properties-native-metric-bin"
+      ],
+      "exit_code": 0,
+      "stdout": "trial-5.jsonl",
+      "resources": "trial-5-resources.log"
+    }
+  ],
+  "summary": [
+    {
+      "fixture": "arc_arc",
+      "mode": "warm",
+      "ns_per_iteration": [
+        26792.973,
+        30609.381,
+        46823.999,
+        26266.499,
+        27729.328
+      ],
+      "median_ns": 27729.328
+    },
+    {
+      "fixture": "arc_arc",
+      "mode": "construct_and_query",
+      "ns_per_iteration": [
+        29437.472,
+        31876.134,
+        50308.86,
+        28272.421,
+        28077.394
+      ],
+      "median_ns": 29437.472
+    },
+    {
+      "fixture": "concentric",
+      "mode": "warm",
+      "ns_per_iteration": [
+        4914.543,
+        4912.833,
+        9054.279,
+        4889.024,
+        4829.999
+      ],
+      "median_ns": 4912.833
+    },
+    {
+      "fixture": "concentric",
+      "mode": "construct_and_query",
+      "ns_per_iteration": [
+        6429.329,
+        8204.267,
+        11586.606,
+        6312.027,
+        6254.622
+      ],
+      "median_ns": 6429.329
+    },
+    {
+      "fixture": "disjoint_sweeps",
+      "mode": "warm",
+      "ns_per_iteration": [
+        7063.966,
+        6954.943,
+        12474.425,
+        7510.396,
+        6872.119
+      ],
+      "median_ns": 7063.966
+    },
+    {
+      "fixture": "disjoint_sweeps",
+      "mode": "construct_and_query",
+      "ns_per_iteration": [
+        8498.998,
+        8705.104,
+        14785.426,
+        9729.973,
+        8110.364
+      ],
+      "median_ns": 8705.104
+    },
+    {
+      "fixture": "independent_radicals",
+      "mode": "warm",
+      "ns_per_iteration": [
+        69549.201,
+        72674.457,
+        104401.561,
+        68304.086,
+        67743.575
+      ],
+      "median_ns": 69549.201
+    },
+    {
+      "fixture": "independent_radicals",
+      "mode": "construct_and_query",
+      "ns_per_iteration": [
+        74430.927,
+        77049.017,
+        73214.51,
+        74435.776,
+        71653.457
+      ],
+      "median_ns": 74430.927
+    },
+    {
+      "fixture": "line_arc",
+      "mode": "warm",
+      "ns_per_iteration": [
+        17772.152,
+        18183.393,
+        17860.926,
+        17031.642,
+        17050.541
+      ],
+      "median_ns": 17772.152
+    },
+    {
+      "fixture": "line_arc",
+      "mode": "construct_and_query",
+      "ns_per_iteration": [
+        18569.847,
+        19776.574,
+        23697.645,
+        18119.848,
+        18800.361
+      ],
+      "median_ns": 18800.361
+    },
+    {
+      "fixture": "line_line",
+      "mode": "warm",
+      "ns_per_iteration": [
+        2415.994,
+        1949.546,
+        1933.257,
+        2098.036,
+        2441.042
+      ],
+      "median_ns": 2098.036
+    },
+    {
+      "fixture": "line_line",
+      "mode": "construct_and_query",
+      "ns_per_iteration": [
+        3222.409,
+        2480.4,
+        3031.002,
+        2576.264,
+        2576.623
+      ],
+      "median_ns": 2576.623
+    }
+  ],
+  "files": {
+    "fixtures.log": "9e9a59652834760a5a6ce0847da6386774d142f000ee77079990312004644d31",
+    "trial-1-resources.log": "66ebf989f6edcc86c81221b197e7541dad114e45717939a7e32166cb70652993",
+    "trial-1.jsonl": "9d68208930e2ccab76e62e91fc8b3549f728d569ecb673facb4c4d35c7ce3b60",
+    "trial-2-resources.log": "ec8c5602e64c96eee36d8beb34cffaf5064732b2a5ac46cea229e97a89dec7b6",
+    "trial-2.jsonl": "2ef5ec5aa3caeda7bf5169f96729ca18cae14b87d0e93baff30bc8040830a2e4",
+    "trial-3-resources.log": "a54e145ac479dd58658faba9fda9f53238f07708a5413adbc15662ddd2d368bf",
+    "trial-3.jsonl": "08e5be35636e87fb2e105db3bfca3c897972996006ab9449f8e4521c15f098ad",
+    "trial-4-resources.log": "23f3e7b4d63ad38e2e3eb07c6ce56930eef8e6de78f2d2305929fb176e30d513",
+    "trial-4.jsonl": "0df18e834e4333c50c17209cf3dfa222d383908eec4d7801de787d167a178443",
+    "trial-5-resources.log": "d1a6db9cec44100702d0531833494dcac9dd5cfbdb27e76c7994c61e1e36f126",
+    "trial-5.jsonl": "bd67d8b8ffdab5f017a8fffa38380b5c4b08527fd2cb764c6babe1773c5044d7"
+  }
+}

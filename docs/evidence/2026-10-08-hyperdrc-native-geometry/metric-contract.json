@@ -1,0 +1,23 @@
+{
+  "owner": "hypercurve",
+  "operation": "Minimum squared Euclidean distance between closed native line/arc segments, and from an exact point to one segment.",
+  "public_api": [
+    "Segment2::distance_squared",
+    "Segment2::point_distance_squared"
+  ],
+  "domain": "Existing exact Real Point2, LineSeg2 and CircularArc2 carriers; unchecked zero-length line segments are treated as singleton points. General Bezier/NURBS and filled-region boundary extraction are outside this primitive API.",
+  "output": "ExactCurveResult<Real>; operation Evaluation. Existing evaluate_under / evaluate_with_budget retain the selected policy and certainty receipt.",
+  "witness": "A minimum over exact intersection, endpoint-to-segment, and interior stationary candidates. A point/arc interior minimum is radial; a line/arc interior pair lies on a circle normal perpendicular to the line; two nonconcentric arcs have interior stationary points on their center line. Concentric arcs need endpoint/radial candidates only. Every finite-domain and ordering decision uses the active curve policy.",
+  "identity": "Input segments remain untouched. The returned scalar is a measurement; no reconstructed boundary or chord is promoted to topology.",
+  "failure": "Invalid scalar operations or invariant failures return ExactCurveError::Invalid; undecided predicates and active work exhaustion return ExactCurveError::Blocked. An unknown candidate is never dropped from the minimum.",
+  "budget": "A constant-size native candidate set, with existing shared work accounting in dependent predicates/intersections and explicit propagation of prior exhaustion. This is not a bound on scalar precision, coefficient growth, bytes, or elapsed time.",
+  "validation_plan": [
+    "Independent rational and radical distance oracles across line/line, line/arc, arc/arc and point pairs.",
+    "Crossing, tangency, overlap, concentric and disjoint sweeps, degenerate lines, reversal, swapped operands and exact tiny separation.",
+    "Both predicate policies and exhausted-budget retry without negative result caching.",
+    "Focused debug/release tests, existing segment/intersection consumers, strict Clippy/docs/fmt, a reproducible native-distance performance probe with scope and resource limitations stated."
+  ],
+  "dependent_work": "DRC must retain authored geometry and use this native metric with authoritative bounds and typed uncertainty. The existing failing via probe stays open until those consumers are repaired.",
+  "status": "native primitive API implemented and validated; DRC source and consumer integration remains open",
+  "evidence": "metric-manifest.json"
+}

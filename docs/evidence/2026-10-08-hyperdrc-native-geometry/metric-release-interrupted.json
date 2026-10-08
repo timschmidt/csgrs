@@ -1,0 +1,8 @@
+{
+  "command": "cargo test --locked --release -p hypercurve --all-features --lib -- --test-threads=2",
+  "state": "execution handle 59808 missing after goal continuation; no complete test summary or exit status was recorded",
+  "exit_code": null,
+  "log": "metric-release-interrupted.log",
+  "sha256": "bf15198345b34f4a0be0c5ea37c540639fd21aa3c32a5ff3926f3c769432b9af",
+  "claim": "Partial execution only; the unfinished validation is being rerun."
+}

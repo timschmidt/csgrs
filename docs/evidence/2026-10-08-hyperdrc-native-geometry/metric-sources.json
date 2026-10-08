@@ -1,0 +1,16 @@
+{
+  "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+  "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f",
+  "crates/hypercurve/Cargo.toml": "ea02192fc4699f0182c12a09690c50a40f3109ece96ed6a9a5f3a745df443c27",
+  "crates/hypercurve/src/lib.rs": "299e5dc4033d4b9e06e15010711a87adcb9ad1c14fdac0683852421ee8a5b4f4",
+  "crates/hypercurve/src/segment_metric.rs": "d45440480e380eb4d137567f05eb8c36803e9c064d5c22232056b3c56de2ae9e",
+  "crates/hypercurve/src/segment_metric/tests.rs": "cfb47e101949eb27201c5a0928db5f3f0b34ffe7feaee82c6dc2b001dff813e9",
+  "crates/hypercurve/benches/segment_metric.rs": "6d19cdf56fa9b2fe3f7f8392ae1888631e502c6bdd5798f33a3a36f576614a43",
+  "crates/hypercurve/README.md": "836d3a84dd102b5ecc05d88502559bbc7c27e6574a2a6162f8237c16cfd70ebc",
+  "crates/hypercurve/PERFORMANCE.md": "8ec5d48d67e44163dda61bd05df1fd9d844f2a18c25d99de355b072f9db81f68",
+  "crates/hypersolve/Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+  "crates/hypersolve/src/work_budget.rs": "01cefba2901bc0e390f10934c65372c0fb35b5c1460397f542c6794ac9a3eac1",
+  "crates/hyperlimit/Cargo.toml": "0c5b6e7b3d7460898971309d06d8b5c2f75b3d04d410fbc11df0ed1c671c4d6c",
+  "crates/hyperreal/Cargo.toml": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306",
+  "crates/hyperlattice/Cargo.toml": "f2e6f9d051560b5550e4326c354f96e65af66b38117743f7fa05fb2548df229d"
+}

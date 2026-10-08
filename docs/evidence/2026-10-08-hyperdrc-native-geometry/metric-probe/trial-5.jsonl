@@ -1,0 +1,12 @@
+{"fixture":"line_line","mode":"warm","iterations":1000,"elapsed_ns":2441042,"oracle":"passed"}
+{"fixture":"line_line","mode":"construct_and_query","iterations":1000,"elapsed_ns":2576623,"oracle":"passed"}
+{"fixture":"line_arc","mode":"warm","iterations":1000,"elapsed_ns":17050541,"oracle":"passed"}
+{"fixture":"line_arc","mode":"construct_and_query","iterations":1000,"elapsed_ns":18800361,"oracle":"passed"}
+{"fixture":"arc_arc","mode":"warm","iterations":1000,"elapsed_ns":27729328,"oracle":"passed"}
+{"fixture":"arc_arc","mode":"construct_and_query","iterations":1000,"elapsed_ns":28077394,"oracle":"passed"}
+{"fixture":"concentric","mode":"warm","iterations":1000,"elapsed_ns":4829999,"oracle":"passed"}
+{"fixture":"concentric","mode":"construct_and_query","iterations":1000,"elapsed_ns":6254622,"oracle":"passed"}
+{"fixture":"disjoint_sweeps","mode":"warm","iterations":1000,"elapsed_ns":6872119,"oracle":"passed"}
+{"fixture":"disjoint_sweeps","mode":"construct_and_query","iterations":1000,"elapsed_ns":8110364,"oracle":"passed"}
+{"fixture":"independent_radicals","mode":"warm","iterations":1000,"elapsed_ns":67743575,"oracle":"passed"}
+{"fixture":"independent_radicals","mode":"construct_and_query","iterations":1000,"elapsed_ns":71653457,"oracle":"passed"}

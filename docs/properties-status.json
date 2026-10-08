@@ -90,9 +90,11 @@
     {
       "id": "P11",
       "requirement": "Never wrong, only unsure. Where a decision cannot be certified in budget, return Unknown — never a guess. *Criterion:* adversarial corpus contains zero false-positive/false-negative predicate answers at any policy.",
-      "status": "unverified",
-      "evidence": [],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+      "status": "in-progress",
+      "evidence": [
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
+      ],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open."
     },
     {
       "id": "P12",
@@ -111,9 +113,11 @@
     {
       "id": "P14",
       "requirement": "Uncertainty is a typed value. `Classification<T>` (decided/uncertain), `Provisional<T>`, `evaluate_under`: approximate evaluation is explicitly qualified and certainty-carrying. *Criterion:* no approximate answer is ever unlabelled or mislabeled as exact.",
-      "status": "unverified",
-      "evidence": [],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property."
+      "status": "in-progress",
+      "evidence": [
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
+      ],
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open."
     },
     {
       "id": "P15",
@@ -127,9 +131,10 @@
       "requirement": "Lossless promotion, typed blockers. Exact line/arc promotes losslessly to downstream consumers; anything uncertifiable (e.g. a general cubic) fails with a typed blocker rather than borrowing lossy display chords — unless a distinct bounded certificate admits it. *Criterion:* no display approximation ever feeds an exact downstream decision.",
       "status": "in-progress",
       "evidence": [
-        "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
       ],
-      "remaining": "Audit production behavior and gather evidence at the full scope of this property. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open."
+      "remaining": "Audit production behavior and gather evidence at the full scope of this property. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open."
     },
     {
       "id": "P17",
@@ -225,9 +230,10 @@
         "crates/hypercurve/src/policy.rs",
         "tests/geometry_context.rs",
         "docs/evidence/2026-10-08-properties/manifest.json",
-        "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json"
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
       ],
-      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open."
+      "remaining": "Explicit curve policy now suspends enclosing preview state, with query and unwind regressions. The rest of the stack still requires a full policy/display-isolation audit. HyperDRC now has a retained failing source-circle probe and a source audit of display-dependent metric consumers; repairs and complete stack-wide validation remain open. Native line/arc squared-distance queries now preserve unresolved candidates and exhaustion, with 11 focused regressions and a cost probe. DRC adoption and the property-wide audit remain open."
     },
     {
       "id": "P30",
@@ -391,7 +397,8 @@
         "crates/hypercurve/src/bezier_offset/parallel_components/budget_tests.rs",
         "crates/hypercurve/src/bezier_offset/multivariate_sign.rs",
         "docs/evidence/2026-10-08-curve-budget-components/manifest.json",
-        "docs/evidence/2026-10-08-curve-budget-components/hypercurve-configured-ci.log"
+        "docs/evidence/2026-10-08-curve-budget-components/hypercurve-configured-ci.log",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json"
       ],
       "remaining": "Shared synchronous accounting covers instrumented root/selected-fiber refinements, represented images, selected-fiber norms, tagged projections, bivariate and constrained tensor-axis resultants, fixed-rank norms/subresultants, cofactor lifts, common-component discovery, and axis-factor extraction. Curve selectors, saturation, multiplicity reduction, source correspondences, and trivariate factor replay preserve typed exhaustion and complete exact retries; partially processed support cannot become a completed result. Complete accounting across remaining elimination and curve dispatch paths, scalar precision, and coefficient growth; prove per-operation bounds and extend adversarial/performance evidence. Current counters are not a wall-clock or whole-operation resource guarantee."
     },
@@ -521,7 +528,10 @@
       "title": "Future work",
       "requirement": "each crate may have documentation discussing crate-specific future work which is also in scope.",
       "status": "open",
-      "evidence": [],
+      "evidence": [
+        "crates/hyperlimit/STACK_PREDICATE_AUDIT.md",
+        "docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-failures/manifest.json"
+      ],
       "remaining": "each crate may have documentation discussing crate-specific future work which is also in scope."
     }
   ],
@@ -557,13 +567,18 @@
         "path": "docs/fully-certified-sdf-meshing-plan.md",
         "status": "open",
         "remaining": "Entire 325-line plan read on 2026-10-08. All six delivery milestones, the separate mesh-validity/ambient-isotopy and exact-error receipts, adaptive topology/edge ownership, CSG degeneracies, and hardening gates remain in scope. The proposed certified API was not found in the inspected implicit/SDF sources; a complete implementation audit remains open."
+      },
+      {
+        "path": "crates/hyperlimit/STACK_PREDICATE_AUDIT.md",
+        "status": "open",
+        "remaining": "Entire original 147-line audit read on 2026-10-08; a follow-up now links the independently reproduced DRC source/measurement failures. The remaining borrowed-coordinate 3D crossing construction must reuse certified components/numerators and be gated by a boundary T-junction fixture. The ordered exact AABB2 lift must preserve preview behavior and rejection ordering, with sparse curve-string, unordered native-region, Boolean, and profile-primitive gates. Historical performance and already-routed claims still need executable revalidation."
       }
     ]
   },
   "next_actions": [
     "The complete configured Hypercurve CI command passed at 774de5d9c with sources held fixed through rustdoc: 2,417 passed, 33 existing ignored. Preserve the earlier 4d3ec0237 compiled-test/source-overlap and separate committed-source doctest replay records. Complete the full repository pre-push matrix before any push.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
-    "Repair the confirmed HyperDRC source-circle loss with authoritative geometry and metrics, typed uncertainty propagation, and retained pass/fail fixtures; preserve the original failing probe.",
+    "Integrate the validated native segment metrics into HyperDRC, preserve exact source circles and authoritative bounds/projections, and propagate unavailable measurements into readiness diagnostics. The retained source-circle and four measurement failures remain open until their runtime paths and consumers are repaired.",
     "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."
   ],

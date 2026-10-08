@@ -1,0 +1,19 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.61s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-d2a908ce8e621ff9)
+
+running 11 tests
+test segment_metric::tests::nested_exhaustion_survives_success_and_numeric_error_adapters ... ok
+test segment_metric::tests::exhausted_scope_blocks_queries_without_poisoning_retry ... ok
+test segment_metric::tests::point_arc_metrics_retain_radial_and_endpoint_domains ... ok
+test segment_metric::tests::line_metrics_cover_interior_endpoints_crossings_and_singletons ... ok
+test segment_metric::tests::uncertain_candidate_order_is_not_replaced_with_an_endpoint_or_zero ... ok
+test segment_metric::tests::explicit_metric_policy_suspends_enclosing_display_preview ... ok
+test segment_metric::tests::line_arc_metrics_include_stationary_feet_and_reject_outside_feet ... ok
+test segment_metric::tests::arc_arc_metrics_cover_stationary_concentric_nested_and_contact_pairs ... ok
+test segment_metric::tests::split_circle_pairs_match_independent_full_circle_distance_oracle ... ok
+test segment_metric::tests::split_circles_match_independent_horizontal_segment_distance_oracle ... ok
+test segment_metric::tests::exact_rotation_large_translation_and_tiny_separation_preserve_distances ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1710 filtered out; finished in 0.13s
+

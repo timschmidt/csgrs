@@ -1,0 +1,29 @@
+{
+  "base_revision": "92083372c5da64b22456dcc5010246a133d40cc6",
+  "command": "cargo test --locked -p hyperdrc --lib geometry::types::tests",
+  "exit_code": 101,
+  "log": "four-failures.log",
+  "source_note": "The DRC production measurement code is unchanged from the base revision; types.rs only adds mod tests. Hypercurve additionally contains the new native-metric module, which these DRC measurements do not call. Retained tests.rs is the complete four-test failing source.",
+  "failures": [
+    "Invalid source construction publishes its placeholder empty region area.",
+    "An already exhausted budget scope can obtain and retain successful polygon area and bounds values.",
+    "A degree-five rational cap with unavailable authoritative area publishes a rational area computed from its three finite report samples."
+  ],
+  "limitations": [
+    "These probes do not demonstrate a previously cached None poisoning a later admitted query. That risk remains a source-audit finding.",
+    "The report triangle is a deliberate coarse display projection at exact source parameters 0, 1/2 and 1; the full degree-five native fixture is retained."
+  ],
+  "sources": {
+    "crates/hyperdrc/src/geometry/types.rs": "abdf8fe96418b7aa55041f87d5b6eb559111c00db153d0a9b5ad0698f8597020",
+    "crates/hyperdrc/src/geometry/violations.rs": "83dfd8982bffa1bf8d026a43019ac9bc71ff6775c33c1e6a240e232c5eb9d73a",
+    "crates/hypercurve/src/segment_metric.rs": "d45440480e380eb4d137567f05eb8c36803e9c064d5c22232056b3c56de2ae9e",
+    "crates/hypercurve/src/lib.rs": "299e5dc4033d4b9e06e15010711a87adcb9ad1c14fdac0683852421ee8a5b4f4",
+    "crates/hypersolve/src/work_budget.rs": "01cefba2901bc0e390f10934c65372c0fb35b5c1460397f542c6794ac9a3eac1",
+    "Cargo.lock": "a7dbc742cdf1683a4fc6b9b666910cdb583efca8a0475647827e048d6903402f"
+  },
+  "files": {
+    "four-failures.log": "e3336a421d44dd66be6a34c4239384a299a5bb548338fc6c6e6515ec44886263",
+    "initial-three.log": "33c8b2552058eaf31a5ae422b10266f352f3cfce01bf08d64b08f8801c25d0a4",
+    "tests.rs": "07850d08c5107eb89edca55fa01a17f89f7b8f9d2c7a97712c9a21e2c3967de8"
+  }
+}

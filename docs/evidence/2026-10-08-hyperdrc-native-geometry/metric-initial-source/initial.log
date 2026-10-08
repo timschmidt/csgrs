@@ -1,0 +1,71 @@
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0507]: cannot move out of a shared reference
+   --> crates/hypercurve/src/segment_metric.rs:135:19
+    |
+135 |                 - arc.radius_squared_ref().sqrt().map_err(Self::invalid)?;
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^ ------ value moved due to this method call
+    |                   |
+    |                   move occurs because value has type `hyperreal::Real`, which does not implement the `Copy` trait
+    |
+note: `hyperreal::Real::sqrt` takes ownership of the receiver `self`, which moves value
+   --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:145:17
+    |
+145 |     pub fn sqrt(self) -> Result<Real, Problem> {
+    |                 ^^^^
+help: consider cloning the value if the performance cost is acceptable
+    |
+135 |                 - arc.radius_squared_ref().clone().sqrt().map_err(Self::invalid)?;
+    |                                           ++++++++
+
+error[E0507]: cannot move out of a shared reference
+   --> crates/hypercurve/src/segment_metric.rs:205:22
+    |
+205 |         let radius = arc.radius_squared_ref().sqrt().map_err(Self::invalid)?;
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^ ------ value moved due to this method call
+    |                      |
+    |                      move occurs because value has type `hyperreal::Real`, which does not implement the `Copy` trait
+    |
+note: `hyperreal::Real::sqrt` takes ownership of the receiver `self`, which moves value
+   --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:145:17
+    |
+145 |     pub fn sqrt(self) -> Result<Real, Problem> {
+    |                 ^^^^
+help: consider cloning the value if the performance cost is acceptable
+    |
+205 |         let radius = arc.radius_squared_ref().clone().sqrt().map_err(Self::invalid)?;
+    |                                              ++++++++
+
+error[E0507]: cannot move out of a shared reference
+   --> crates/hypercurve/src/segment_metric.rs:233:27
+    |
+233 |         let left_radius = left.radius_squared_ref().sqrt().map_err(Self::invalid)?;
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^ ------ value moved due to this method call
+    |                           |
+    |                           move occurs because value has type `hyperreal::Real`, which does not implement the `Copy` trait
+    |
+note: `hyperreal::Real::sqrt` takes ownership of the receiver `self`, which moves value
+   --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:145:17
+    |
+145 |     pub fn sqrt(self) -> Result<Real, Problem> {
+    |                 ^^^^
+help: consider cloning the value if the performance cost is acceptable
+    |
+233 |         let left_radius = left.radius_squared_ref().clone().sqrt().map_err(Self::invalid)?;
+    |                                                    ++++++++
+
+error[E0507]: cannot move out of a shared reference
+   --> crates/hypercurve/src/segment_metric.rs:234:28
+    |
+234 |         let right_radius = right.radius_squared_ref().sqrt().map_err(Self::invalid)?;
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^ ------ value moved due to this method call
+    |                            |
+    |                            move occurs because value has type `hyperreal::Real`, which does not implement the `Copy` trait
+    |
+help: consider cloning the value if the performance cost is acceptable
+    |
+234 |         let right_radius = right.radius_squared_ref().clone().sqrt().map_err(Self::invalid)?;
+    |                                                      ++++++++
+
+For more information about this error, try `rustc --explain E0507`.
+error: could not compile `hypercurve` (lib) due to 4 previous errors

@@ -1,0 +1,29 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0308]: mismatched types
+    --> crates/hypercurve/src/segment_metric/tests.rs:165:46
+     |
+ 165 |     let translation = Real::from(10_i64).pow(20).unwrap();
+     |                                          --- ^^ expected `Real`, found integer
+     |                                          |
+     |                                          arguments to this method are incorrect
+     |
+note: method defined here
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:4118:12
+     |
+4118 |     pub fn pow(self, exponent: Self) -> Result<Self, Problem> {
+     |            ^^^
+
+error[E0599]: no method named `into_value` found for struct `Provisional<T>` in the current scope
+   --> crates/hypercurve/src/segment_metric/tests.rs:193:32
+    |
+193 |                 assert!(result.into_value().is_ok());
+    |                                ^^^^^^^^^^ method not found in `Provisional<Result<hyperreal::Real, error::ExactCurveError>>`
+    |
+   ::: crates/hypercurve/src/policy.rs:84:1
+    |
+ 84 | pub struct Provisional<T> {
+    | ------------------------- method `into_value` not found for this struct
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `hypercurve` (lib test) due to 2 previous errors
