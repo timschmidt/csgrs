@@ -97,42 +97,45 @@ pub fn polygons_to_profile(
 }
 
 fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> (Option<[hyperreal::Real; 4]>, bool) {
-    let mut bounds: Option<[f64; 4]> = None;
-    for polygon in polygons {
-        for coordinate in polygon
+    let had_non_finite_input = polygons.iter().any(|polygon| {
+        polygon
             .exterior()
             .0
             .iter()
             .chain(polygon.interiors().iter().flat_map(|ring| ring.0.iter()))
-        {
-            if !coordinate.x.is_finite() || !coordinate.y.is_finite() {
-                return (None, true);
+            .any(|coordinate| !coordinate.x.is_finite() || !coordinate.y.is_finite())
+    });
+    let bounds = hypercurve::evaluate_under(crate::PREDICATE_POLICY, || {
+        let mut bounds: Option<[hyperreal::Real; 4]> = None;
+        for polygon in polygons {
+            polygon.exact_construction_error().is_none().then_some(())?;
+            if polygon.exact_region().is_empty() {
+                continue;
             }
-            match &mut bounds {
-                Some([min_x, min_y, max_x, max_y]) => {
-                    *min_x = min_x.min(coordinate.x);
-                    *min_y = min_y.min(coordinate.y);
-                    *max_x = max_x.max(coordinate.x);
-                    *max_y = max_y.max(coordinate.y);
+            let next = polygon.exact_bounds()?;
+            if let Some(bounds) = &mut bounds {
+                for axis in 0..4 {
+                    let order = crate::scalar::compare(&next[axis], &bounds[axis])?;
+                    if (axis < 2 && order.is_lt()) || (axis >= 2 && order.is_gt()) {
+                        bounds[axis] = next[axis].clone();
+                    }
                 }
-                None => {
-                    bounds = Some([coordinate.x, coordinate.y, coordinate.x, coordinate.y]);
-                }
+            } else {
+                bounds = Some(next.clone());
             }
         }
-    }
-    let Some([min_x, min_y, max_x, max_y]) = bounds else {
-        return (None, false);
+        bounds
+    })
+    .certified()
+    .flatten();
+    // A missing certificate disables this shortcut. Report samples can be
+    // interior to a curve and cannot prove a rejection bound.
+    let bounds = if hypersolve::work_budget::exhaustion().is_some() {
+        None
+    } else {
+        bounds
     };
-    (
-        Some([
-            hyperreal::Real::try_from(min_x).expect("finite polygon bounds promote exactly"),
-            hyperreal::Real::try_from(min_y).expect("finite polygon bounds promote exactly"),
-            hyperreal::Real::try_from(max_x).expect("finite polygon bounds promote exactly"),
-            hyperreal::Real::try_from(max_y).expect("finite polygon bounds promote exactly"),
-        ]),
-        false,
-    )
+    (bounds, had_non_finite_input)
 }
 
 /// Create an empty native filled region with layer metadata.

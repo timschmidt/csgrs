@@ -1,0 +1,86 @@
+use super::*;
+use crate::scalar::scalar;
+
+#[test]
+fn authored_via_contains_points_between_its_circle_and_report_chords() {
+    let board = load_kicad_pcb(Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/native-circle-via.kicad_pcb"
+    )))
+    .unwrap();
+    let x = scalar("0.999");
+    let y = scalar("0.03");
+    assert!(&x * &x + &y * &y < Scalar::one());
+    assert_eq!(board.copper.len(), 2);
+    assert_eq!(board.copper[0].layer, "F.Cu");
+    assert_eq!(board.copper[1].layer, "B.Cu");
+    for feature in &board.copper {
+        assert_eq!(feature.region.contains_xy(x.clone(), y.clone()), Some(true));
+    }
+}
+
+fn parse_via(source: &str) -> (Vec<CopperFeature>, Vec<DrillFeature>) {
+    let root = sexp::parse(source).unwrap();
+    let mut copper = vec![];
+    let mut drills = vec![];
+    parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+    (copper, drills)
+}
+
+#[test]
+fn via_source_center_and_size_retain_all_decimal_digits() {
+    let (copper, drills) = parse_via(
+        "(kicad_pcb (via (at 9007199254740992.1 -0.00000000000000000000001)
+         (size 0.20000000000000000000004) (drill 0.05) (layers F.Cu B.Cu)))",
+    );
+    assert_eq!(copper.len(), 2);
+    assert_eq!(drills.len(), 1);
+    let center = [
+        scalar("9007199254740992.1"),
+        scalar("-0.00000000000000000000001"),
+    ];
+    let radius = scalar("0.10000000000000000000002");
+    let tiny = scalar("0.000000000000000000000000000001");
+    assert_eq!(drills[0].location, center);
+    for feature in &copper {
+        assert_eq!(feature.location, center);
+        assert!(feature.region.exact_construction_error().is_none());
+        let bounds = feature.region.bounds().unwrap().unwrap();
+        assert_eq!(bounds.min_x(), &(&center[0] - &radius));
+        assert_eq!(bounds.max_x(), &(&center[0] + &radius));
+        assert_eq!(bounds.min_y(), &(&center[1] - &radius));
+        assert_eq!(bounds.max_y(), &(&center[1] + &radius));
+        assert_eq!(
+            feature
+                .region
+                .contains_xy(&center[0] + &radius - &tiny, center[1].clone()),
+            Some(true)
+        );
+        assert_eq!(
+            feature
+                .region
+                .contains_xy(&center[0] + &radius + &tiny, center[1].clone()),
+            Some(false)
+        );
+    }
+}
+
+#[test]
+fn invalid_via_size_is_retained_as_a_geometry_failure() {
+    for size in ["-2", "0", "NaN"] {
+        let (copper, _) = parse_via(&format!(
+            "(kicad_pcb (via (at 0 0) (size {size}) (drill 0.4) (layers F.Cu B.Cu)))"
+        ));
+        assert_eq!(copper.len(), 2);
+        for feature in &copper {
+            assert!(feature.region.exact_construction_error().is_some());
+            assert!(feature.region.offset(scalar("0.1")).is_err());
+            let findings = crate::checks::layer_sanity(&feature.layer, &feature.region, None);
+            assert!(
+                findings
+                    .iter()
+                    .any(|finding| finding.severity == crate::report::Severity::Error)
+            );
+        }
+    }
+}

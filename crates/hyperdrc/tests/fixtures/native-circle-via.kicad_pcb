@@ -1,0 +1,5 @@
+(kicad_pcb (version 20240108) (generator pcbnew)
+ (layers (0 "F.Cu" signal) (31 "B.Cu" signal))
+ (net 1 "N")
+ (via (at 0 0) (size 2) (drill 0.4) (layers "F.Cu" "B.Cu") (net 1))
+)

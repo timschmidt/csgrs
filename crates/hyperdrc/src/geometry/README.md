@@ -6,10 +6,19 @@ repeatable polygon and profile mechanics underneath those concepts.
 
 ## Geometry Choices
 
-`hyperdrc` treats polygon geometry as an analysis substrate, not as a lossless
-copy of every source format. Parsers preserve source intent separately, then
-project the manufacturable parts of pads, traces, drills, apertures, outlines,
-and graphics into polygons or point features that checks can compare.
+`Polygon` retains an authoritative `CurveRegion2` and finite report rings.
+`circle_polygon` imports its finite center/radius exactly and constructs a native
+circle; its segment count controls only the report ring. KiCad vias construct
+their native circles directly from exact decimal source values. Other parser
+primitives still have documented approximation boundaries and need further
+source-fidelity work.
+
+Exact polygon area and bounds come from the retained region. Profile construction
+combines those native bounds; report samples cannot establish a conservative
+curve bound. Missing area certificates remain unavailable instead of borrowing
+report-ring area. Some readiness consumers still need migration to propagate
+that unavailability, and existing finite spatial indices require a separate
+conservative-enclosure audit.
 
 This split keeps geometry helpers small and predictable:
 
@@ -28,6 +37,8 @@ This split keeps geometry helpers small and predictable:
 - [`primitives.rs`](primitives.rs) builds common PCB shapes: circles,
   rectangles, trapezoids, rounded and chamfered rectangles, traces, arcs,
   Bezier strokes, transforms, and polygons from point lists.
+- [`circle.rs`](circle.rs) constructs native circles under STRICT policy and
+  retains construction or budget failures for source adapters to report.
 - [`region.rs`](region.rs) combines exact-backed polygon inputs into native
   [Hypercurve](https://github.com/timschmidt/hypercurve) filled regions while
   preserving layer metadata.

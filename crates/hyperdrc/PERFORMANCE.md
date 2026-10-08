@@ -44,6 +44,45 @@ This repair covers the measurement boundary. Readiness consumers that discard
 `None`, component/projection caches, native source geometry, and conservative
 spatial rejection still require integration work.
 
+## Native circle and source-bound repair, 2026-10-08
+
+`circle_polygon` now constructs native arcs while retaining every requested
+report sample. KiCad via copper retains the exact decimal center and diameter
+on each copper layer, and profile bounds come from authoritative regions. The
+configured `cargo test --locked -p hyperdrc --release` command passed 1,126 library
+tests, two README integration tests, and two doctests. Strict all-target Clippy,
+rustdoc, and formatting pass. The
+[source and validation record](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json)
+retains the original failing source-via case and the unchanged million-sample
+fixture alongside the completed checks.
+
+Five sequential processes, pinned to CPU 0 after builds/tests ended, measured
+100 iterations per case. Median microseconds per observation:
+
+| Report samples | Native area/bounds on an existing circle | Construct report ring and measure |
+| ---: | ---: | ---: |
+| 16 | 32.862 | 163.279 |
+| 48 | 23.082 | 148.839 |
+| 128 | 22.130 | 157.832 |
+| 1,000,000 | 22.048 | 14,034.286 |
+
+These queries call the native region directly under STRICT, rather than the
+Polygon measurement cache measured above. The source-via load/classification
+case took a median 188.375 microseconds, including file reading and exact
+membership checks on both copper layers. Report coordinate counts, payload sizes
+and bit-pattern checksums are stable across circle trials; the million-sample
+case retains all 1,000,001 closed coordinates. Whole-process peak RSS was
+24,212–24,384 KiB, and the linked probe was 19,035,736 bytes. No allocation count or
+library-size delta was measured.
+
+This is capability cost evidence: the former chord constructor represented a
+different exact region. Small-case and warm timings varied substantially, so no
+general speedup is claimed. The
+[raw probe and replay inputs](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/manifest.json)
+retain every trial. Native clearance consumers, projection/component failures,
+conservative spatial rejection, and readiness uncertainty propagation remain
+open; the source-circle repair does not certify those paths.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

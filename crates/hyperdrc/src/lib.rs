@@ -396,28 +396,14 @@ pub(crate) fn translated_circle(
     x: Scalar,
     y: Scalar,
 ) -> CurveRegion2 {
-    use hypercurve::{CircularArc2, Contour2, Point2, Segment2};
-
-    match crate::scalar::sign(&radius) {
-        Some(hyperlimit::Sign::Positive) => {}
-        Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Zero) => {
-            return CurveRegion2::empty();
-        }
-        None => {
-            panic!("translated circle radius sign is unresolved under the workspace policy");
-        }
+    if matches!(
+        crate::scalar::sign(&radius),
+        Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Zero)
+    ) {
+        return CurveRegion2::empty();
     }
-    let center = Point2::new(x.clone(), y.clone());
-    let right = Point2::new(&x + &radius, y.clone());
-    let left = Point2::new(&x - &radius, y);
-    let first = CircularArc2::try_from_center(right.clone(), left.clone(), center.clone(), false)
-        .expect("positive-radius translated circle must construct its first exact semicircle");
-    let second = CircularArc2::try_from_center(left, right, center, false)
-        .expect("positive-radius translated circle must construct its second exact semicircle");
-    let contour = Contour2::try_new(vec![Segment2::Arc(first), Segment2::Arc(second)])
-        .expect("two exact semicircles must form a closed translated-circle contour");
-    CurveRegion2::try_from_native_material_contours(vec![contour])
-        .expect("closed translated-circle contour must construct an exact material region")
+    geometry::circle_region(&[x, y], &radius)
+        .expect("legacy translated-circle caller must supply admitted positive geometry")
 }
 
 impl Deref for PcbRegion {

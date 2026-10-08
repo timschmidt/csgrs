@@ -4,12 +4,14 @@
 //! report projections. Primitive construction and report conversion stay
 //! separate from topology decisions.
 
+mod circle;
 mod primitives;
 mod region;
 mod source_units;
 mod types;
 mod violations;
 
+pub(crate) use circle::circle_region;
 pub use primitives::{
     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
     polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
